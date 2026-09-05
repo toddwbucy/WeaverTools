@@ -1,54 +1,30 @@
 # weaver-web - PRD (crate charter)
 
-**Status:** MERGED. In `main` and the source of truth. Ratified on its own
-terms under the per-charter rule of 2026-08-23, conforming to the pattern the
-2026-08-04 act established.
+**Status:** DRAFT, unratified. **This is a rewrite of this crate's charter,
+not a new one.** The document ID, the crate, and its node are unchanged; the
+prior text is archived rather than amended, per the operator's ruling of
+2026-09-04, because the purpose clause is what changed and every section
+below it was that clause's consequence.
 
-**Revised:** 2026-08-25, the confirm view, second revision of the day.
-The admin surface gains a composed view at section 4.4: pull a run from
-the record, drive its turns back through the gate on a fresh load, and
-show the verdict beside the stats. It is not a fourth surface and adds
-no reach - the source is the record (4.3), the fresh load is the verbs
-(4.2), and the reissue is gate turns (4.1's own boundary). It stops at
-the serving path: anything past gate-shaped reissue is the diagnostic
-domain's, per the lab report of 2026-08-25.
+**Prior version:** the charter of 2026-08-04 as amended through 2026-08-25,
+replaced whole by this text. **Git is the archive and the tree is not**, per
+the Working Rules, so the prior charter is in this file's history rather
+than beside it. It described a web surface over the suite's
+agents serving two roles, a user who converses and an operator who drives
+lifecycle and reads the record. That description was written for an
+interface to an individuated agent, which remains the program's research
+direction and is not retired by this act. It is not what this crate is for
+now.
 
-**Revised:** 2026-08-25, the two-process shape. The deployment section
-now states the architecture as two processes joined by one dialed link:
-the connector holds the box-bound reaches and the server holds the
-presentation stack, colocated by default and separated by changing one
-address. The operator's direction of 2026-08-25 makes this the shape
-from the beginning rather than a later mode. The Spec's section 16 pins
-the link, and the refactor of the built one-binary v1 into the shape is
-owed as its own code act.
+**Placement is held.** The deployment topology is ruled: this crate and its
+store run on one machine, the agents on another, and the only crossing is
+store traffic and a queue. Whether these papers eventually move to a
+separate corpus follows from that but is not identical to it, and stays
+decision two of #439.
 
-**Revised:** 2026-08-24, the crate takes its place. It lands at
-`crates/weaver-web/` and this document at `docs/crates/weaver-web/`,
-container coming from the directory so placement is the declaration. The
-seam is unchanged: this crate is contract-coupled across
-`weaver-gate-world-contract` and `weaver-admin-operator-contract` and links
-no crate of this workspace. Three collisions are surfaced and held rather than
-resolved: the edition, the licence, and the first database dependency in
-the workspace.
-
-**Revised:** 2026-08-19, the channel amendment. The chat surface becomes the
-multi-party channel surface on the operator's adoption of the front-end
-architecture exploration's three positions, per the buzz prior-art survey of
-2026-08-19, held in the operator's report archive. The browser-as-display-engine
-rule hardens from stack preference to constraint, the IAM roadmap item gains
-its mechanism (passkeys, TLS bundled), and the authorship-responsibility
-ruling lands in section 6.
-
-**Date filed:** 2026-08-19
+**Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
-**Parent:** the WeaverTools suite, whose governing document is deliberately
-not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
-names the `WeaverTools` system node, and the header and the edge name the
-same thing. **This crate sits outside the agent boundary and does not enter
-the `weaver-agents` roster**, per that document's section 0: it reaches
-inward as a consumer of the two external contracts, and the agent never
-grips it.
-**Editorial:** Per the Working Rules.
+**Editorial:** Per the Working Rules. ASCII, absolute dates.
 
 ```graph
 node: weaver-web
@@ -57,395 +33,412 @@ kind: crate
 edge: parent
 from: weaver-web
 to: WeaverTools
+
+edge: seam
+from: weaver-web
+to: weaver-gate
+via: weaver-gate-world-contract
+tag: socket
+
+edge: seam
+from: weaver-web
+to: weaver-admin
+via: weaver-admin-operator-contract
+tag: verb
+
+edge: seam
+from: weaver-web
+to: weaver-analysis
+via: weaver-analysis-web-contract
+tag: stream
 ```
 
----
+## 1. What this crate is
 
-## 1. Purpose
+WeaverTools is a diagnostic and analytic instrument. It lets an engineer
+stage an entire agent on one machine, run it under controlled conditions,
+and take baseline readings of its behavior and cost that a second person can
+reproduce. Having taken the baseline, the engineer loosens the arrangement
+one variable at a time and reads what each loosening did.
 
-weaver-web is the frontend of the WeaverTools suite: a web surface over the
-suite's agents, serving the two roles the framework already recognizes. The
-*user* converses with agents. The *operator* drives their lifecycle and
-reads their record. It is the suite's first consumer application, per the
-vision document's section 13, and its discipline is the section's closing
-rule: satellites are consumers or contract peers, never retrofits. Nothing
-here reaches into the organism. What weaver-web needs and does not have, it
-asks for through the framework's own change protocol.
+**The back end already takes these readings, and nobody but their author can
+operate it.** This crate is what makes them operable by an engineer who did
+not build the apparatus. That is the whole of its claim, and it is why the
+crate exists at all.
 
-The conversation surface is a **multi-party channel**: multiple humans,
-multiple local weaver agents, and eventually upstream foundation models,
-participating in one channel toward a shared goal. The channel is
-weaver-web's own construct entirely - see the scope ruling in section 5.
+The one-sentence job: **compose a configuration, run it, and return behavior
+and cost together, with the configuration declared well enough that a second
+person can rerun it.** Every surface serves that sentence or it does not
+ship.
 
-The application also carries a second, quieter purpose: it is the "real
-consumer at a real rate" several framework elections are waiting on. Its
-honest limitations are the demand signal that pulls streaming, a status
-verb, and an operator state read through the framework's front doors.
+The person in front of it is an engineer deploying a local model as an
+agent, who needs to know before shipping what the arrangement can tolerate,
+and who has been working on intuition because no instrument existed.
 
-## 2. Build surface
+**The positioning rule reaches the interface.** The tool measures. It does
+not testify. Every reading this crate shows is labelled as a reading of
+something. A surprisal spike is a property of a distribution over tokens. A
+lens readout is availability of a feature for downstream computation.
+Neither is an inner state, and no copy on any surface may imply one. This is
+the standing overclaiming discipline pointed outward, and its purpose is
+that anyone quoting the tool as evidence for a ghost in the machine can be
+shown, from the tool's own labels, to be wrong.
 
-weaver-web builds against published pages and observable behavior, nothing
-else:
+## 2. What it is not
 
-- **`weaver-gate-world-contract`** - the client boundary. Newline-delimited
-  JSON over the gate's Unix socket, one request line in, one close line out
-  per turn. The close names its kind (`answered`, `stopped`, `refused`)
-  and, where a turn opened, the `turn` and `run` it answers.
-- **`weaver-admin-operator-contract`** - the trace's exit. The program tees
-  its record to an NDJSON stream at the operator-declared sink, ordered,
-  with loss bounded and always marked in-stream. Every view weaver-web
-  builds on the record is built on this stream, on weaver-web's own
-  compute, per the live-view ruling.
-- **The verb invocation surface** - `weaver-admin {validate|load|unload}
-  <agent>`, run as root, one JSON object on stdout per verb. This surface
-  is currently documented by deployment fact rather than by a page written
-  for an outside consumer, and section 9 files the ask.
+- **Not a chat client with a settings page.** A conversation is one way to
+  produce a reading, not the product's centre.
+- **Not an operator console for a production agent.** Production deployment
+  is a private derivation and out of scope.
+- **Not a door to a hosted inference endpoint.** The instrument measures a
+  model whose process the operator compiles. Point it at a foundry API and
+  the trace is a transcript, the residual stream is gone, and every surface
+  past the first is dead.
+- **Not a mutator of a loaded agent.** No in-RAM edit of behavior,
+  parameters, or loop logic exists in any path. Every change is a reload,
+  and the interface makes the reload the visible event it is.
+- **Not a judge of a declared boundary.** It requires the declaration and
+  displays it. It does not grade it.
+- **Not a knowledge-graph governance layer.** No axioms, smells, gates, or
+  conformance as product features.
 
-Prohibitions, absolute: no parsing of anything a contract calls opaque, no
-channel to the program other than the gate socket and the verb invocation,
-no reading past the published stream, no workaround where a contract falls
-short.
+## 3. The surfaces
 
-## 3. Deployment shape
+Nine, in two groups. **Every surface has a direction**: you enter somewhere,
+you end somewhere, and the screen says where you are on that path. The
+failure to avoid is the interface that exposes its graph before it shows the
+artifact, so that nothing on screen says what you came to produce. Each
+surface below states its destination in its own header, and the top bar
+carries the whole path on every screen.
 
-Two processes, one crate, split by what each must touch. The
-**connector** (`weaver-web-connector`) runs on the agents' own box as
-the operator's uid (the principal the gate's predicate admits) and holds
-every box-bound reach: the gate sockets, the verb invocation, the trace
-sinks, the load-state observable, and the read of the agent
-declarations. It renders nothing and stores nothing. The **server**
-(`weaver-web`) presents HTTP on the LAN and holds everything that is not
-box-bound: the channel store, the registry, the router and queues,
-rendering, and the SSE fan-out. It reaches the box only through the
-connector.
+Clean does not mean barren. A screen with nothing on it is not clean, it is
+empty. Clean means the next step is obvious and the numbers appear when
+asked for.
 
-They meet over links the connectors dial: one connection per box, any
-number of boxes, the server listening on one address its config names,
-loopback by default, each connector's config naming that same address.
-Colocated, the link is loopback and the deployment is one box exactly
-as before. Offloading the presentation stack to another device on the
-LAN is deploying the server there and changing that one address - a
-deployment fact, never an architectural event - and a second agents'
-box is a second connector dialing the same server with its own roster.
-No agents' box opens a listening port for this in any shape, because
-connectors only dial out.
+**Each surface below is drawn.** The figures are the design canvas of
+2026-09-04, authored from the thinkpad seat against measurements taken on
+that box, and they are a reading aid rather than an authority: where a
+figure and this text disagree, this text governs and the figure is owed a
+redraw.
 
-The trust posture does not move with the address. The verb surface is
-already network-reachable through the listener under the posture section
-6 states, and a link whose remote peer is one server is a narrower
-admission than that listener. The IAM act is where peer proof arrives,
-for the listener and the link alike. The custody invariant survives the
-split intact: the thing that speaks on the network is the thing that
-holds the socket, and the connector is that thing, exactly as the one
-process was.
+### 3.1 Compose, ends with a runnable declaration
 
-State and connection, by owner:
+You cannot load an agent you have not created, so the first surface authors
+one. The artifact is the declaration, presented as a composition surface
+rather than as a text file, with the text always reachable and always the
+authority: edits in either place round-trip to the other.
 
-1. The **gate sockets** (`/run/weaver-<agent>/gate.sock`) - the
-   connector's, one client connection per turn, for turns.
-2. The **verb invocation**, via a sudoers rule scoped to exactly the
-   three lifecycle verbs on the admin binary, `NOPASSWD`, for the
-   operator's uid - the connector's. This is the one privilege widening
-   the application asks of the box, and it is narrow, auditable, and
-   declared in the deployment notes.
-3. The **trace sinks** (the NDJSON files the agents' configurations
-   declare), tailed read-only - the connector's.
-4. The **channel store**: weaver-web's own record of channel logs and
-   the participant registry, on the server's own disk - the server's. It
-   is not the trace, never touches the trace, and links to traces by run
-   and turn label only. Custody follows the trace's philosophy: one
-   trusted writer, the server, and no other.
+The declaration is a roster plus a wiring. Each declared component resolves
+its artifact, sets its elections, and takes its own socket. The wiring is
+the loop, and it is real topology the operator draws.
 
-**The browser is a display engine. This is a constraint, not a
-preference.** The browser receives a rendered projection and submits
-authored text, and holds nothing else: no keys, no signatures, no protocol
-state, no routing or ordering logic, no identity assertion beyond the
-transport session. All processing that means anything happens server-side,
-where the trace boundary and the operator's trust already live. Any future
-architecture change is tested against this constraint first.
+**The roster offers the organ kinds the framework charters, and carries no
+enumeration of its own.** As of 2026-09-05 that is the decoder, mandatory,
+and the classifier, optional since 2026-08-19. Encoders and further kinds
+arrive as their own charters land. This is a dated fact rather than a
+definition, and the direction of authority is the point: **a new kind is a
+charter act before it is a row on this surface**, so a list maintained here
+would be a second place for a fact the charters already hold, and would
+drift from them silently.
 
-The browser side is server-rendered HTML with htmx. Server-sent events
-carry what must move without a page turn: channel events as they append,
-and the trace view's live tail. The channel surface is built from day one
-as a bounded component fed by a server-owned channel event stream, so that
-if interactive density later demands it (threads, in-place editing,
-virtualized history - the named triggers), the rendering of that one
-region can be replaced by a small scripted island consuming the same
-stream, without touching the shell or moving any processing into the
-browser. No separate frontend toolchain, no SPA.
+Offering a kind the framework will not load is therefore the failure to
+avoid, not offering too few.
 
-## 4. The three surfaces, on two boundaries
+**Whether a given declaration will load is not this crate's judgment
+either.** It writes the draft and asks `validate`, which transitions
+nothing, refuses an incoherent declaration naming the field, and carries the
+box facts a load would meet. Composition-time refusal is that verb one hop
+from this surface, and it cannot drift because it is the load's own
+judgment.
 
-The surfaces group by the framework boundary they cross and the role
-that boundary belongs to, per the operator's ruling of 2026-08-19. The
-channel (4.1) is the **user surface**, crossing the gate. Lifecycle
-(4.2) and trace (4.3) are the **admin surface**, crossing the operator
-boundary, and sit behind the admin role. The separation is structural -
-routes, modules, and the role gate exist now - so the IAM act attaches
-authentication to standing roles instead of rearchitecting, and so the
-frontend never presents as one combined mechanic what the framework
-holds as two boundaries with different owners.
+<!-- figure: Main | Compose -->
 
-### 4.1 Channel
+### 3.2 Live, ends with an exchange you can read the numbers on
 
-The conversation surface: a multi-party channel over one server-side log.
+The exploratory surface. An engineer types, the agent answers, and **the
+per-token measurement rides beside the reply rather than behind a role**.
+This is the ruling that supersedes the archived charter's split of a
+conversation surface from a record surface: an engineer cannot troubleshoot
+a prompt when the thing they typed and the numbers it produced sit on
+different pages.
 
-**Participants.** A participant is an identity in the registry plus an
-adapter plus a respond policy. Three adapter kinds:
+Every exchange is a cell, so behavior and cost arrive together here as they
+do everywhere. An exchange that interests the operator is saved as a cell
+and becomes repeatable, which is the promotion this crate turns on.
 
-- **Browser session** - a human. Display surface only, per section 3.
-- **Weaver agent** - a client connection to that agent's gate socket,
-  held by weaver-web. The adapter serializes channel context into the
-  request line, speaker-labeled and windowed server-side to the line
-  bound, sends one line, receives one close, and appends it to the log
-  with its run and turn labels.
-- **Upstream model** - a stateless HTTP call (Claude, GPT) behind the
-  same adapter interface. An upstream model is weaver-web's guest and
-  never the framework's concern, its credentials being weaver-web
-  configuration.
+<!-- figure: Chat | Live -->
 
-Agents are first-class participants: their own registry identity, their
-own channel membership, their own name on every message. Agent-ness is
-additive metadata on a common participant shape, never a parallel type.
+### 3.3 Measure, ends with behavior and cost, together
 
-**Invocation.** Mention-gated by default: an agent speaks when named. Each
-participant carries a respond policy (anyone, allowlist, nobody). Self-
-and agent-authored messages do not trigger agents by default, so two
-agents cannot ping-pong, an agent-to-agent exchange happening only under an
-explicit policy, never emergently.
+The scripted surface. **A cell is a declared configuration, a task, and a
+run**, and what it returns is a pair: what the agent did, and what it cost
+to do it. Both axes appear on every result and every comparison. A loop that
+reaches the right action four times slower has moved the trade rather than
+won it, and a result that shows correctness without latency is half a
+reading.
 
-**Queue discipline.** The gate serves one turn at a time and later
-requests wait. weaver-web holds that queue itself, per agent, in front of
-the gate connection - visible, inspectable - rather than letting requests
-stack invisibly inside the socket. One turn in flight per agent, and queued
-mentions batch into a single turn on drain. The channel renders the truth:
-an agent shown answering, with its queue depth, is the honest presentation
-of whole-turn latency in a room.
+**The task is a first class element with four sources**: a turn list, a
+benchmark suite and an item within it, a corpus walk, or a session promoted
+from Live. The task joins the run's tuple, because two runs of "the same
+task" are not the same task unless it matches.
 
-**Design constraints taken from the gate contract rather than chosen:**
+The comparison this crate exists to make cheap is one cell against another
+differing in one declared variable, and the difference is legible at a
+glance: this cell is that cell with the device moved, or the transport
+moved, or the seed moved.
 
-- **Whole-turn answers, presented whole.** The gate does not stream. A
-  clear in-flight state, never simulated streaming.
-- **Closes render by kind.** `answered` is the message body. `stopped`
-  and `refused` render distinctly with the reason the close carries. An
-  unnamed close (a line that never parsed) is weaver-web's own defect,
-  since weaver-web authors the request lines, and surfaces as an
-  application error, never styled as an agent's message.
-- **Run and turn labels are kept and shown.** Every agent close lands in
-  the log carrying them, and a visible turn label links to that turn in
-  the trace surface - what the agent said, joined to what the agent did.
-- **The line bound is enforced before sending** (32 KiB inclusive today,
-  the Spec's number), since a violating line closes the connection below
-  any turn. Context windowing to fit the bound is the server's job.
+<!-- figure: Cell | Measure -->
 
-### 4.2 Lifecycle
+### 3.4 Open a trace, ends with a located position
 
-The operator's control surface, over the declared agents (one, `alpha`,
-today):
+**Text is the surface. Numbers are on demand.** The transcript of a run,
+token-addressable, with the measurement drawn as a timeline over it.
+**Per-token entropy comes off the ordinary logit stream and rides every
+generation unconditionally**, so an entropy timeline is populated on every
+run at no cost. **Surprisal rides only where its election stands**, so a run
+that did not elect it has no surprisal timeline, and the surface says the
+election did not stand rather than drawing a floor.
 
-- The three verbs as actions, each rendering the JSON answer the
-  invocation returns, success and refusal alike, verbatim and formatted.
-- Load state, shown from the one observable the boundary offers: the gate
-  socket's existence. The view labels this as an inference until the
-  status verb lands, and never presents it as the program's own word.
-- No verb chains another, mirroring the framework's own rule. The surface
-  offers `validate`, `load`, `unload` as separate acts and nothing
-  composite.
+A spike on the graph resolves to the token that produced it and jumps the
+transcript there. **A surprisal graph nobody can click is decoration; a
+spike that resolves to a token is an instrument.** Clicking a position pulls
+that position's alternatives and their mass from the capture, and the
+operator walks upstream watching the mass move until the position where the
+fork was decided is found, which is usually earlier than the spike.
 
-### 4.3 Trace
+The lens readout is the deep view and it is elected rather than free. It
+requires a reload under the diagnostic binding and captures at every
+position of the prefix, because the choice at position N was built by
+everything before N. The cheap signal tells the operator where to spend the
+expensive one, and that funnel is the honest reason diagnostics are off by
+default.
 
-The operator's read on the record, and the live-view ruling made real. The
-server tails each agent's NDJSON stream and serves a turn-bracketed live
-view:
+<!-- figure: Trace | Open a trace -->
 
-- Events grouped by run, and within a run by turn, presented in stream
-  order.
-- Event kinds rendered distinctly, with `fault` events prominent - the
-  stream is the program's one fault carrier, and this view is where an
-  operator sees a fault at all.
-- Loss marks (the shed-gap and detachment marks the tee promise defines)
-  rendered as first-class objects, never dropped or smoothed over, so the
-  view's completeness claim is exactly the stream's.
-- Channel turns link here by run and turn label, closing the loop between
-  what an agent said and what it did.
+### 3.5 Stage, ends with a registered experiment
 
-The view interprets the durable event schema as published format. Where an
-event kind is unknown to the view, it renders as raw JSON rather than
-being hidden, so schema growth degrades the view gracefully instead of
-silently.
+**This crate branches nothing.** The viewer holds no model. A click on an
+alternative authors a staged experiment carrying the parent run reference,
+the branch position, the forced token where one is forced, and the parent
+declaration with its diff. A runner drains the queue, and **the reload that
+runs it is the branch**.
 
-### 4.4 Confirm
+That is not a new rule. The load boundary is the only change boundary; a
+branch is a change; therefore a branch is a load. An interface that branched
+directly would be mutating a loaded agent, which section 2 refuses.
 
-A composed admin view, not a fourth surface: it asks one question of the
-two surfaces above it - does this record reproduce? The operator picks a
-run from the record. The view unloads and reloads the agent by the verbs,
-reissues each recorded turn's request text byte-exact through the gate in
-order, and compares the fresh record against the source field by field:
-rendered prompt, derived seed, knobs, emission, token ids, entropies.
-The verdict renders per turn beside the stats the record carries (whole
-turn latency, tokens in and out), and a divergence renders as itself,
-never smoothed.
+**A forced token is not a sampled one**, and a trajectory reached by forcing
+is never quotable as something the model produced on its own. The forcing is
+declared on the branch run and the record carries it.
 
-Three honesty rules, stated because the view drives a live agent:
+Fork the same position many times under fresh seeds and the result is the
+distribution that one repeatable line was drawn from. A deterministic run is
+not an average of anything; it is one sample that can be fetched again, so
+determinism buys reproducibility rather than centrality. Because the seed is
+drawn per generation from the declared seed, the turn's reference and the
+ordinal, **a branch that changes nothing draws what its parent drew**, and
+the control arm is free.
 
-- The confirm is disruptive and says so: it unloads the agent it
-  confirms, and the operator is told before the verbs run.
-- Replay runs beside live traffic. A channel turn landing mid-confirm
-  shifts the turn ordinals and the confirm fails honestly rather than
-  serializing the world to protect itself.
-- The boundary is the serving path. The view reissues what the gate can
-  carry and reads what the record says, and nothing else: instrumented
-  replay, capture, and perturbation are the diagnostic domain's, and
-  this view is not their door.
+<!-- figure: Branch | Stage -->
 
-## 5. Scope ruling: the channel is weaver-web's
+### 3.6 The three lists
 
-Adopted 2026-08-19 on the exploration's third position. The multi-party
-channel is deployment, not framework. The decisive structural fact: from
-each weaver agent's perspective, the channel does not exist - the agent
-sees its gate socket, one request line, one close, exactly as it does
-today. A construct the framework cannot even observe is not a framework
-surface. The corpus's guardrails say the same from the other side:
-multi-participant coordination toward a shared goal is orchestration,
-which the primitives program refuses.
+Global, filtered, and written into by every surface above.
 
-Consequences: weaver-web owns the channel log, the participant registry,
-the routing, and the invocation policy, wholly. The framework changes
-nothing. The channel makes the streaming ask more urgent (rooms amplify
-whole-turn latency, since turns serialize per agent), and at most one
-future ask exists - multi-party attribution reaching an agent as structure
-rather than as speaker-labeled prompt text, which would enter through the
-gate contract's Spec field list. Today, labeled text within the line bound
-is sufficient and honest, and no such ask is filed.
+**One navigational grammar: a chip is a query rather than a location.**
+Clearing it widens the list where the operator stands, and nothing
+navigates, so it is always visible what is not being seen. A card carries
+the operator into a list with a chip already set.
 
-## 6. Identity, authorship, and responsibility
+**Agents** holds the saved declarations, loadable at any time, each carrying
+its parent and the one thing that moved where it is derived.
 
-**Authentication identifies. Authorship responsibility follows the
-authenticated account.** A session left open and abused remains the
-account holder's responsibility, remediated outside this application's
-scope. This ruling (2026-08-19) permanently excludes per-message
-cryptographic signing from the requirements - not deferred, excluded. The
-record is single-writer testimony end to end, matching the trace's custody
-model: identity is established at admission, and what a session authors,
-the account owns.
+<!-- figure: Library | Agents -->
 
-What the application owes in exchange, so responsibility is assignable in
-practice:
+**Experiments** holds every experiment and where it stands across five
+states: draft, registered, queued, running, returned. **Registering freezes
+the configuration and puts the claim on the record whether or not it ever
+runs**, and queueing is a separate act. So an experiment registered and
+never run stays visible, saying what was meant to be asked, and
+pre-registration falls out of the interface rather than being imposed on it.
 
-- **Session boundaries reconstructible in the record.** The channel log
-  marks when a session opens and closes and how it authenticated, so
-  "everything between these marks was this session" is readable after the
-  fact.
-- **Revocation as a first-class verb** (IAM era): list active sessions,
-  kill one.
-- **Session expiry** as standing policy.
+Experiments belong to no agent. An experiment's parent is a run, its diff
+may move the declaration, and the run it produces can belong to a different
+agent than the one it branched from, so it appears under both.
 
-**Roles exist now and proof arrives with IAM.** Every participant holds a
-role, `user` or `admin`. Holding auth to converse with an agent never
-implies admin access: the admin role gates the operator surface, and v1
-assigns it by the operator's declaration in config. The accepted
-development-cycle caveat: sessions are anonymous until the IAM act, so
-the role gate is boundary hygiene rather than access control until
-sessions prove who they are. The IAM act changes the proof, never the
-gate.
+<!-- figure: Experiments | Experiments -->
 
-In v1 there is no authentication: the trust boundary is the LAN and the
-box, and a session is whoever holds the connection. The participant
-registry carries an unused credential slot from day one so the IAM era is
-additive rather than a migration.
+Opening one goes to its own view, which is where the configuration is
+changed and registered. **The diff is split by when it takes effect**,
+because a load-time move and a per-generation move differ in what the result
+licenses: a load-time move re-feeds the prefix under different weights or a
+different window, so the parent's internal state is not reproduced, the text
+upstream matches and the state does not, and the comparison is structural
+rather than byte-exact. A load-time move also derives a declaration, which
+stands in Agents beside its parent.
 
-## 7. Non-goals for v1
+**An experiment is validated when it is authored, not when it is drained.**
+A capacity that cannot hold the prefix, a forced token absent from the
+capture, an artifact that will not resolve: each refuses at the point of
+authoring rather than at three in the morning by a runner that cannot ask.
 
-- **Identity, authentication, and transport encryption.** No login and no
-  TLS. Deliberate deferral, held on the roadmap with a named trigger and
-  now a named mechanism (section 8). **Roles are not among the deferrals
-  and are not access control either**: the user and admin roles exist and
-  are assigned from the configuration's admin list, which is boundary
-  hygiene over anonymous sessions until IAM supplies the identity proof
-  that would make them enforceable.
-- **Per-message signing and keys in the browser, permanently.** Excluded
-  by the section 6 ruling and the section 3 constraint respectively, at
-  every horizon, not merely in v1.
-- **Multi-agent fleet UI.** One agent exists, so the surfaces take the agent
-  as a parameter internally so the assumption stays shallow, but no fleet
-  surface is built.
-- **Streaming simulation.** No token-drip theater over a whole-turn
-  answer.
-- **Anything of weaver-store or the memory leg.** A record, a memory, and
-  a commons are three things. This application renders the first and
-  touches neither of the others.
-- **Trace persistence, indexing, or retention tooling.** Durability is
-  the operator's per the contract, so v1 renders the live stream and reads
-  the file as it stands.
+<!-- figure: Experiment | Experiment -->
 
-## 8. Roadmap
+**Record** holds every run, branch and deposit with the tuple that produced
+it. A reading without its tuple is a reading of an unnamed compound, and a
+registry that cannot hold a failure is a marketing surface.
 
-Held in order, each with its trigger:
+<!-- figure: Lineage | Record -->
 
-1. **v1, the three surfaces** - this document. The channel surface may
-   land single-human-plus-one-agent first and grow participants without
-   architectural change, since the routing layer is multi-party from the
-   start.
-2. **IAM and network encryption, one act** - passkeys (WebAuthn) for
-   human participants: the private key lives in the user's platform
-   authenticator, never in the browser page and never on this server,
-   which stores public keys only. Sessions are minted and verified
-   server-side. TLS arrives in the same act by necessity, since WebAuthn
-   requires a secure context. Includes session listing, revocation, and
-   expiry per section 6. Trigger: the three surfaces stable in daily use.
-   Release blocker for any exposure beyond the LAN, and nothing before it
-   is.
-3. **Streaming chat** - when the gate's streaming extension lands
-   upstream. The channel surface is built so a streamed body slots into
-   the same conversation view.
-4. **Channel surface carve-out** - only if triggered: threads, in-place
-   editing, or virtualized history, whichever is demanded first, per
-   section 3.
-5. **Fleet view** - when a second agent is declared and the need is real.
-   The link makes the shape additive: a second box is a second connector
-   dialing the same server, carrying its own roster (Spec section 16).
+## 4. The record this crate holds
 
-## 9. Asks upstream
+The front end holds the cell registry, on its own store. The grain is the
+grain the interface clicks at: **one row per position per run, addressed by
+the run, the turn, and the position**. All three are needed because turn
+keys repeat across a serving record's runs, and because a position is the
+resident length at the draw rather than an ordinal within its turn.
 
-The gaps this application designs around, each an ask into the framework
-by its own change protocol, routed through the human between seats:
+Each position carries the emitted token by identifier and surface text, the
+surprisal and entropy there, and the ranked alternatives with their
+probability mass. The alternative count is a declared capture parameter
+rather than a fixed number, because the number one wishes had been kept is
+discovered after the run. Raw residual rides alongside rather than a
+projected readout, so a future refitted lens can read an old run.
 
-1. **Token streaming through the gate.** The largest UX gap, and the
-   channel amendment raises its urgency: turns serialize per agent, so a
-   busy room multiplies whole-turn waits. The contract already names the
-   token workflow as the door.
-2. **A status verb on admin.** The lifecycle view infers load state from
-   socket existence, where a `status` ask would let it report the program's own
-   word. The split sharpens the ask: load state now crosses the link as
-   a relayed inference, one hop further from that word.
-3. **An operator read on agent state.** Session state exists within the
-   agent, so the operator has no window on it. Deferred need, filed when the
-   concrete read is known.
-4. **A published page for the verb invocation surface.** The operator
-   contract's recut moved the verbs to the invocation, whose shape lives
-   in `weaver-admin-PRD` section 8 and the admin Spec - documents an
-   outside consumer is not meant to build against. weaver-web builds today
-   on deployment fact, where a page written for the outside party would close
-   the gap the two-contract rule intends to cover.
+**Everything identifying the conditions lives in the run's own row**:
+artifact identity at a grain fine enough to catch a quantization difference,
+seed, the full sampler configuration, device, precision, the batching
+election, the task, and the declared boundary set.
 
-Nothing in this list blocks v1. Each is designed around, and the designing
-around is itself the evidence the ask carries upstream.
+The write path is a consumer rather than a step in the loop, and **the
+decoder never waits on a database**. The read path is what the schema is
+for, and nothing is computed at read time: a value computed in the interface
+is a value nobody else can reproduce.
 
-## 10. Prior art
+## 5. Placement, and the boundary rule
 
-The channel design adapts, with credit, patterns read from Buzz
-(`github.com/block/buzz`, Block Inc., Apache 2.0), surveyed 2026-08-19:
-the symmetric participant abstraction with agent-ness as additive metadata
-and an ownership edge, mention-gated invocation with per-participant
-respond policies and self-invocation suppression (agent-to-agent routing
-opened 2026-08-20 for coordination), and per-channel single-flight
-queueing with batch-on-drain. The survey's full read and the falsification
-case against forking are recorded in the exploration's report, the buzz
-prior-art survey of 2026-08-19 in the operator's report archive, and this
-section carries the three positions the operator adopted from it. Buzz's
-identity architecture - participant-held keys, client-side signing, the
-browser as protocol participant - is deliberately not adopted, per
-sections 3 and 6: its trust problem, verifiable authorship among mutually
-untrusting network peers, does not exist on a box where the OS
-adjudicates identity, and its client-side custody is the surface this
-project refuses on principle.
+Composition includes placement. Each declared component has its own socket
+and its own surface, so each can be placed independently, and moving one
+while holding the rest still is the loosening the instrument is for. This
+crate offers a ladder of presets, and a preset stages a runnable declaration
+the operator can then edit by hand.
+
+```text
+rung one    everything local, Unix sockets only
+rung two    everything local, loopback network
+rung three  any service off the host
+```
+
+**Every service reachable other than by kernel-enforced peer identity
+carries a declared boundary.** The socket rung is exempt because the kernel
+is the boundary. Loopback is not exempt, because a bound port is a bound
+port. This crate refuses to load a declaration with an undeclared boundary
+on a reachable service, and that is a load refusal rather than a warning.
+
+The rule sets no minimum on what the boundary is. A username and password
+over a public address is a legitimate declaration and this crate holds no
+opinion about it, because refusing it would mean the instrument cannot
+measure the arrangement most people ship. **The mechanic is the requirement
+to declare**, and it is a completeness requirement on the record rather than
+a security feature: whatever is declared becomes part of the cell's
+identity, so a reading can never be quoted without saying what was holding
+the boundary when it was taken.
+
+**This crate's own crossing is a declared boundary like any other.** Nothing
+in the read or write path requires the viewer, the store, or the queue to
+sit on the machine that runs the agents. The reader is a store client and
+the runner is a queue consumer, so the front end and its store run on one
+machine while the agents run on another, and that crossing appears in the
+cell record.
+
+## 6. Identity and roles
+
+Roles exist and are structural, so the identity act attaches authentication
+to standing roles rather than a rearchitecture. **Co-locating a reading with
+an exchange is a presentation ruling and spends neither the role separation
+nor the gate**: the reach stays gated where it was.
+
+Identity, authentication, and transport encryption are deferred with a named
+trigger, and roles are not among the deferrals and are not access control
+either.
+
+## 7. What the rewrite keeps, and what it retires
+
+**Nothing survives because the prior charter had it.** The crate is the
+same crate and its code is where it was, so no boundary is being crossed
+here - what is being decided is what this charter still charters. Each item
+is ruled on its own:
+
+- **The two-process shape and its link** - a connector holding the
+  box-bound reaches, a server holding the presentation stack, colocated by
+  default and separated by changing one address. Carried: the placement
+  ruling of section 5 makes it the shape rather than a mode.
+- **The trace tail** - the record follow, the per-agent rings, and loss and
+  discontinuity marks rendered as first-class objects. Carried: the
+  completeness claim of a view is exactly the stream's.
+- **The field-by-field comparison** of the confirm view. Carried, and
+  generalized by Measure in section 3.3.
+- **The lifecycle verbs** and their verbatim refusal rendering. Carried.
+- **The multi-party channel**, with upstream models as guests. **Retired
+  from this charter.** The Live surface of section 3.2 is a different
+  construct that resembles it. A channel belongs to the individuated-agent
+  direction the prior text was written for, and that direction is not
+  retired by this act - it simply is not what this charter now covers. The
+  built channel code remains in the crate and is unchartered until a later
+  act rules on it, which is a state this document names rather than
+  resolving.
+
+## 8. Asks upstream
+
+Each is filed as its own issue against the seat that owns the apparatus, and
+this crate designs around the gap until it closes.
+
+- **The observation exchange**, #435, landed 2026-09-04 at #440. Load state
+  is answered by the harness's own word rather than inferred from a socket's
+  existence. The archived charter's sentence naming this an inference is
+  retired by that act.
+- **The position's alternatives**, #436, landed 2026-09-05 at #444. They
+  were never missing: `model.field` carries the ranked candidates and their
+  mass at every generated position under the declaration's field election,
+  and the act added the per-position read. **The election's depth is the
+  operator's ruling** and is open, section 9.
+- **The component catalogue**, #437, answered by a finding rather than a
+  catalogue on 2026-09-05, and the finding is adopted above: the charters
+  hold the roster, `validate` is the composition oracle, and this crate
+  carries the declaration's field shape written against `weaver-types-Spec`
+  section 2 **at a named corpus commit, that commit being its staleness
+  rule**. What remains worth an act is narrow - a describing invocation
+  answering the family registry and the per-family knob names, which the
+  crates hold and do not publish, so that a control labelled with a knob's
+  name is labelled from the framework rather than from a copy here.
+- **The declared boundary and its load refusal**, #438. Without it section
+  5's ladder has rungs that mean nothing.
+- **A session stands from a record**, #432. It is section 3.5 entire.
+- **The queue runner and forced decoding**, #442.
+
+## 9. Open cells, each named rather than implied
+
+- **The name and the placement of these papers**, decisions one and two of
+  #439.
+- **Whether this crate scores.** Behavior and cost are measurements. A
+  benchmark score is a correctness judgment, and section 1 holds that the
+  tool measures and does not testify. Three answers are open: this crate
+  does not score and records the emission for an external scorer; it scores
+  and records the scorer in the tuple, so the judgment is attributable to a
+  named thing rather than to the instrument; or scoring lives in the
+  benchmark harness and this crate cites its verdict. **The interface draws
+  the score as present and unfilled, naming no scorer, until this closes.**
+- **The word "cell" carries two senses** and the corpus must settle one. A
+  matrix coordinate, which is what the cross-precision configs and the
+  confirm driver mean by it today, and a declaration plus a task plus a run,
+  which is what this document means. G5 reads two authorities for one word.
+- **The field election's depth**, which sets how many alternatives a
+  position keeps. The records on hand carry forty and fifty. It is the
+  operator's ruling and the number one wishes had been kept is discovered
+  after the run.
+- **Whether the describing invocation of section 8 is an admin verb or an
+  invocation of the SPU binary**, each a Spec question for its own crate.
+- **Whether surprisal and entropy draw as one timeline or two.**
+- **Whether the preset ladder is a picker or a wizard.**
+- **The registry's schema**, which is `weaver-web-Spec` section 3's and
+  not this document's.

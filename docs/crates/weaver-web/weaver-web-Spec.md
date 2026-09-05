@@ -1,617 +1,322 @@
 # weaver-web - Spec
 
-**Status:** MERGED. In `main` and the source of truth.
+**Status:** DRAFT, unratified. **A rewrite of this crate's Spec, not a new
+one.** Authored 2026-09-04 from the thinkpad seat beside the rewritten
+`weaver-web-PRD` of the same date. The prior text is replaced whole rather than
+amended, and git is its archive.
 
-**Revised:** 2026-08-25, the robustness findings land (issue #337),
-third revision of the day. The prompt window carries other
-participants' closes (section 7), the line bound is measured
-serialized with a marked single-message truncation (section 7), the
-turn-deadline election is re-asked and reaffirmed (section 6), and
-the wrapper makes the sudoers widening exact (sections 3 and 11).
+**Revised:** 2026-09-05, against the acts of that date. The observation
+exchange landed, issue #435 at PR #440, and the per-position read landed,
+issue #436 at PR #444. The component catalogue, issue #437, was answered
+with a finding rather than a catalogue. Two facts the record spells
+corrected this document where it had guessed: the address carries the turn,
+and a position is a resident
+length rather than an ordinal.
 
-**Revised:** 2026-08-25, the confirm view, second revision of the day
-(PRD section 4.4). The link gains a sixth and seventh service, the
-record reads (section 16), and section 17 pins the view: the job's
-order, the compared fields, and the honest-failure rules.
-
-**Revised:** 2026-08-25, the two-process shape (PRD section 3). The
-crate becomes two binaries joined by one dialed link: the connector
-holds the box-bound reaches (sections 6, 11, and 12) and the server
-holds the rest, with section 16 pinning the link. New content lands at
-the end because code comments cite section numbers. The code act landed
-the same day: both binaries build clean, clippy-strict and tested, and
-the link protocol is exercised end to end against the built connector.
-The crate briefly resolved its own lockfile against the libsqlite3-sys
-collision; the olympus act of the same day dissolved the collision
-itself (sqlx 0.9, the sqlite driver absent from the built graph) and
-membership stands - section 2 carries the story.
-
-**Revised:** 2026-08-24, three elections recorded at section 15 as held
-rather than settled: the crate pins edition 2021 against the workspace's
-2024, it carries Apache-2.0 against the workspace's UNLICENSED, and its
-store is the first database dependency in the tree.
-
-**Date filed:** 2026-08-19
+**Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
-**Parent:** `weaver-web-PRD`
-**Editorial:** Per the Working Rules.
+**Editorial:** Per the Working Rules. ASCII, absolute dates.
 
-This document pins representation: what the PRD's requirements become in
-code. Where the PRD states a constraint, this document cites it rather
-than restating its rationale. Elections still open are named in the final
-section rather than left implicit.
+## 0. What this document is
 
----
+The charter says what this crate is for. This document says what it is made
+of, in the order a reader needs it: the store first, because every surface
+reads from it, then the paths into and out of that store, then the seams,
+then what holds each claim.
 
-## 1. Stack elections
+**Where this document elects something the charter left open, it says so.**
+Where it leaves something open, section 10 names it rather than letting
+silence settle it.
 
-- **Language and runtime:** Rust, async on **tokio**. The framework's own
-  harness refuses tokio, but that is the framework's editorial rule for
-  its own crates. weaver-web is an outside consumer and elects its own
-  runtime. axum is tokio-native and the choice follows from that.
-- **HTTP server:** **axum**, in the server binary, one listener for
-  browsers. The link's listener (section 16) is plain TCP, not HTTP.
-- **Templating:** **askama** - compile-time checked HTML templates, so a
-  template referencing a field that no longer exists is a build failure
-  rather than a blank region at runtime.
-- **Store:** **Postgres** via **sqlx**, one database, `weaver_web`, owned
-  by the operator's role. Elected on the operator's ruling of 2026-08-19:
-  the suite trajectory (weaver-store, weaver-train) makes Postgres the
-  engine the satellites converge on, and Postgres-to-Postgres movement is
-  a dump where SQLite-to-Postgres is a migration project. Relational over
-  NDJSON-per-channel because the registry, sessions, and channel logs are
-  relational the moment a message references a participant. The
-  connection is the local Unix socket with peer authentication - identity
-  by OS uid, the box's own idiom - so no credential exists in config.
-  Sharing is of the engine, never the schema: a later satellite gets its
-  own database and role on the same cluster, and integration happens at
-  contract boundaries, never by reading another satellite's tables.
-  Single writer task regardless (section 5).
-- **Browser assets:** htmx and its SSE extension **vendored into the
-  binary** (`include_bytes!`), no CDN and no node toolchain. The box is
-  LAN-only, a CDN reference being both a privacy leak and a broken page.
-- **Serialization:** serde + serde_json everywhere a JSON boundary
-  exists (gate lines, link frames, verb answers, trace events, config
-  is TOML).
+## 1. The crate
 
-## 2. Crate layout
-
-One crate, two binaries, per the deployment shape (PRD section 3).
-Modules, not a workspace - the project splits into crates only when a
-second consumer of some module exists. The crate is a workspace member
-and resolves in the workspace lock. That fact was fought for twice in
-one day: this crate's sqlx 0.8 and weaver-state's rusqlite could not
-share one resolution graph (cargo's links uniqueness over
-libsqlite3-sys, discovered 2026-08-25 on the crate's first resolution
-in this tree), this seat answered by excluding the crate to its own
-lockfile, and the olympus act of the same day answered better - on
-sqlx 0.9 the sqlite driver is optional and absent from the built
-graph, so membership stands with nothing of weaver-state moved. The
-second answer supersedes the first, and the manifest's sqlx comment
-carries the mechanism.
-
-```
+```text
 src/
-  bin/
-    weaver-web.rs            server startup: config, store open, link
-                             listener, router, axum
-    weaver-web-connector.rs  connector startup: config, reaches, dial
-  config.rs        TOML config for both processes (section 3)
-  wire.rs          the link: NDJSON frames, seven services (section 16)
-  repro.rs         server. the confirm job (section 17)
-  store.rs         server. Postgres pool, migrations, single writer
-  registry.rs      server. participants: identity, adapters, policies
-  channel.rs       server. channel log: append, read, projection types
-  router.rs        server. invocation policy, mention parsing, dispatch
-  queue.rs         server. per-agent queue: single-flight, batch-on-drain
-  adapters/
-    gate.rs        connector. weaver agent adapter: dial, frame, close
-    upstream.rs    server. upstream model adapter: HTTP providers
-  lifecycle.rs     connector. verb invocation via sudo, JSON answer
-  traceview.rs     connector tails and streams, server rings and renders
-  web/
-    mod.rs         server. shared plumbing: state, sessions, errors
-    user.rs        server. the user surface: gate-boundary routes
-    admin.rs       server. the admin surface: operator-boundary routes
-                   (lifecycle, trace), behind the role gate
-    templates/     askama templates: shell, channel, lifecycle, trace
+  store/        the registry: schema, migrations, the three reads
+  ingest/       the write path, a consumer of the analysis stream
+  queue/        staged experiments and their states
+  surfaces/     one module per surface of charter section 3
+  seams/        gate client, admin verbs, analysis stream reader
+  link/         the connector and server halves
 ```
 
-## 3. Configuration
+**This crate links no crate of the agent workspace** and reaches the agent
+exactly as an outside consumer does: a socket dialed by path, a binary run
+by the operator's verb, and a record read where the operator keeps it. That
+property is load-bearing and is not spent by the seam of section 7.3, which
+is a stream this crate reads rather than a crate it links.
 
-TOML, path given by `--config`, one file per process. Box facts live in
-the box's config: the agent roster with its socket and sink paths is
-the connector's declaration, announced to the server in the link's
-hello (section 16), so an agent exists to the server because the box
-that runs it said so, never by double entry.
+## 2. The store
 
-The server's, default `/etc/weaver-web/config.toml`:
+The grain is the grain the interface clicks at.
 
-```
-listen      = "0.0.0.0:8080"     # browsers
-link_listen = "127.0.0.1:8081"   # the connector's dial target
-database    = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth
-admins      = ["todd"]   # participant names holding the admin role
+### 2.1 The position
 
-[[providers]]
-name    = "claude"
-api     = "anthropic"
-model   = "claude-fable-5"
-key_env = "ANTHROPIC_API_KEY"
-```
+**The address is the run, the turn, and the position**, and the composite of
+the three is the primary key.
 
-The connector's, default `/etc/weaver-web/connector.toml`:
+**This corrects the two-part key this document first carried.** The record's
+own spelling is what settles it: turn keys repeat across a serving record's
+runs, so an address without the run answers one line per run, which is why
+`weaver-analysis field` takes `<turn>:<position>` and an optional `--run`.
 
-```
-server             = "127.0.0.1:8081"      # the link's dial target
-agent_declarations = "/etc/weaver/agents"  # the admin surface's read
-admin_bin          = "/usr/local/libexec/weaver/weaver-admin"
-admin_config       = "/etc/weaver/config"
+**And `position` is the resident length at the draw, not an ordinal within
+the turn.** The first generated token of a sixty-token prompt is position
+sixty. Verified 2026-09-05 against a field-bearing record on the pool, whose
+first `model.field` event carries `position: 60`. A surface that treats the
+two as one word will address the wrong token, and section 6 states the
+conversion.
 
-[[agents]]
-name  = "alpha"
-gate  = "/run/weaver-alpha/gate.sock"
-trace = "/home/todd/.weaveragents/weaver-alpha/trace.out"
-```
+Each row carries:
 
-The admin binary's install path and its config location are deployment
-facts that differ per box, so they ride the connector's config with the
-original deployment's paths as defaults (the second box taught this:
-its admin lives under `/opt/weaver`). `admin_env` (default true) says
-whether the invocation passes the config location through sudo's
-environment: false pairs with the root-owned wrapper from `deploy/`,
-which validates its verb and agent and fixes the config itself - the
-shape that makes the sudoers widening exact (section 11, issue #337).
+- the emitted token, by identifier and by surface text
+- the surprisal and the entropy at that position
+- the ranked alternatives with their probability mass
+- the raw residual where the capture holds one
 
-Agents and providers declared here are *available*, and whether one
-participates in a given channel is registry state, not config. Upstream
-credentials enter by environment variable only, named by `key_env`, never
-stored in the config file or the database. Providers and their
-credentials are the server's business alone, so nothing upstream-facing
-touches the agents' box.
+**`realized` is a rank and not a token.** It names which rank the draw
+landed on, so a row carries `realized` as the record spells it and the drawn
+token resolved beside it, and neither is presented as the other.
 
-## 4. Store schema
+**The alternative count is the declaration's field election, not this
+crate's parameter.** `model.field` carries the ranked candidates under
+`field-election: { depth }`, and the records on hand carry forty and fifty.
+The depth is the operator's ruling, open at the charter's section 9, and
+this crate stores what the election kept rather than choosing a number.
 
-Postgres, five tables, in the `weaver_web` database. Four are laid out
-here and the fifth, `sessions`, is section 14's. Migrations are sqlx
-migration files in `migrations/`, applied at startup.
+**Raw residual rides alongside rather than a projected readout**, so a lens
+refitted later can read a run captured earlier. This is the standing
+raw-residual ruling and this document does not disturb it.
 
-```
-CREATE TABLE participants (
-  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name        TEXT NOT NULL UNIQUE,      -- mention handle, kebab-case
-  display     TEXT NOT NULL,
-  kind        TEXT NOT NULL,             -- 'human' | 'agent' | 'model'
-  adapter     TEXT,                      -- agents: config agent name
-                                         -- models: config provider name
-                                         -- humans: NULL
-  respond     TEXT NOT NULL DEFAULT 'mention',
-                                         -- 'mention' | 'never'
-  credential  BYTEA,                     -- NULL in v1; passkey public
-                                         -- key in the IAM era (PRD 6)
-  role        TEXT NOT NULL DEFAULT 'user'
-                                         -- 'user' | 'admin'; see
-                                         -- section 14
-);
+### 2.2 The run
 
-CREATE TABLE channels (
-  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name        TEXT NOT NULL UNIQUE,
-  topic       TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+Everything identifying the conditions lives in the run's own row:
 
-CREATE TABLE members (
-  channel_id     BIGINT NOT NULL REFERENCES channels(id),
-  participant_id BIGINT NOT NULL REFERENCES participants(id),
-  joined_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (channel_id, participant_id)
-);
+- artifact identity **at a grain fine enough to catch a quantization
+  difference**
+- seed, and the full sampler configuration
+- device, and precision
+- the batching election
+- the task, by source and identity
+- the declared boundary set
+- the parent run reference and branch position, where the run is a branch
+- whether a token was forced, and which
 
-CREATE TABLE channel_events (
-  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                         -- global monotonic, the SSE cursor
-  channel_id     BIGINT NOT NULL REFERENCES channels(id),
-  ts             TIMESTAMPTZ NOT NULL DEFAULT now(),
-                                         -- server receipt time, the order
-  participant_id BIGINT REFERENCES participants(id),
-  kind           TEXT NOT NULL,
-  body           TEXT,                   -- message text, or detail JSON
-  run_label      TEXT,                   -- agent closes only, verbatim
-  turn_label     TEXT,                   -- agent closes only, verbatim
-  close_kind     TEXT                    -- 'answered'|'stopped'|'refused'
-);
-CREATE INDEX idx_events_channel ON channel_events(channel_id, id);
+**A reading without its tuple is a reading of an unnamed compound.** The
+task is in this list for the same reason the artifact is: two runs of the
+same benchmark item under different suite versions are not the same task,
+and nothing else in the row would say so.
+
+### 2.3 The indexes
+
+```text
+primary       (run, turn, position)
+secondary     (run, surprisal)
 ```
 
-The identity column's monotonicity as an SSE cursor holds because all
-writes flow through the single writer (section 5) - with one writer there
-are no interleaved transactions to commit out of id order.
+The secondary index exists so the largest spikes in a run are reachable
+without pulling the run down. **Nothing is computed at read time.** A value
+that must be derived is derived once at ingest and stored, because a value
+computed in the interface is a value nobody else can reproduce.
 
-`channel_events.kind` vocabulary, closed set, unknown kinds are a defect:
+## 3. The write path
 
-| kind            | meaning                                            |
-|-----------------|----------------------------------------------------|
-| `message`       | a participant spoke, `body` is the text            |
-| `close`         | an agent turn closed, labels and `close_kind` set  |
-| `turn-open`     | an agent turn was dispatched, `body` names whom    |
-| `session-open`  | a browser session attached (PRD 6), `body` detail  |
-| `session-close` | a browser session ended                            |
-| `member-change` | join or leave, `body` detail JSON                  |
-| `app-error`     | weaver-web's own defect surfaced (PRD 4.1)         |
+**The write path is a consumer rather than a step in the loop.** The
+analysis emission leaves over its own socket, a process on this side reads
+it and lands it in the store, and **the decoder never waits on the store.**
 
-The run and turn labels are stored verbatim as opaque text, per the gate
-contract: they are labels the program minted and this store never
-interprets them beyond equality, which is all the trace link needs.
+- Writes are **bulk per turn or per window**, never per token.
+- Writes are **idempotent on the run, turn and position key**, so a replayed
+  or partially failed ingest cannot produce two truths about one position.
+- **The run row is written first and closed last**, carrying a status a
+  surface can read, so a partially ingested run is visibly partial rather
+  than quietly short.
 
-## 5. The single writer
+## 4. The read path
 
-One tokio task owns all writes. Every mutation - message posted, close
-landed, member change - is a command on an mpsc channel to that task,
-which appends through its own connection, then broadcasts the appended
-event (with its assigned `id`) on a `tokio::sync::broadcast` in the
-server process. SSE handlers and page renders read through an sqlx pool, and late
-joiners read the table up to the broadcast's current position, then
-follow. This gives the log its single ordering (the writer's) with no
-write contention anywhere, and is the trace custody model restated in
-code (PRD 3). Postgres LISTEN/NOTIFY is deliberately not used in v1 -
-the server is its own fan-out - but it is the named seam if an
-out-of-process follower of the log ever becomes legitimate, and such a
-follower enters by a declared interface on weaver-web, never by SQL
-grants on the tables (section 1's engine-not-schema rule).
+Three queries, and the schema of section 2 exists to make each an index hit.
 
-## 6. The gate adapter
+1. **One position's alternatives**, by run, turn and position. This is the
+   click, and it is `weaver-analysis field` served from the store rather
+   than re-derived.
+2. **A contiguous range of positions** carrying the emitted token, surprisal
+   and entropy. This is the timeline and the transcript.
+3. **The run's tuple.** This is the label on every reading taken from it.
 
-One adapter instance per declared agent, living in the connector and
-serving the link's `turn` asks (section 16).
+A surface that needs a fourth query is a surface this document has not
+described, and it returns here before it is built.
 
-- **Dial per turn.** The adapter connects to the gate socket when it has
-  a turn to send and drops the connection after the close. Elected over a
-  held connection because the contract promises a response by the path
-  its request took, one turn is in flight per agent anyway (so a held
-  connection buys no ordering), and dial-per-turn is self-healing across
-  agent unload/load. Connection refused or absent socket is reported as
-  the agent being unloaded, typed distinctly from a turn failure.
-- **Framing:** one JSON object `{"text": "..."}`, newline terminated,
-  UTF-8, per the contract and deployment facts. The serialized line is
-  length-checked against the 32 KiB inclusive bound *after* JSON
-  encoding, before write, and a violation is weaver-web's own `app-error`,
-  never sent.
-- **The close** is read as one line, parsed as JSON, and mapped: `kind`
-  to `close_kind`, `run` and `turn` (when present) to the labels. A close
-  that answers no turn - the unnamed close - is recorded as `app-error`
-  per PRD 4.1, since weaver-web authors every request line and a line
-  that never parsed is its own defect.
-- **Timeouts:** none on the turn itself in v1. The gate serializes turns
-  and a queued turn legitimately waits, so a read deadline would convert
-  another client's long turn into a false failure. A socket-level error
-  or EOF mid-turn is reported as delivery lost, with the trace view as
-  the recovery path (the contract: the record holds the close).
-  Re-asked and reaffirmed by the operator 2026-08-25 (issue #337): in a
-  one-consumer deployment the only waiter a wedged turn blocks is the
-  operator, who holds the release - the unload verb frees the slot
-  through this same typing - and the gate is a passthrough, so a
-  deadline here would be the frontend holding an opinion about
-  generation time, which is the class of opinion the PRD refuses.
+## 5. Staged experiments
 
-## 7. Prompt serialization
+**This crate has no model behind it and forks nothing.** A click authors a
+staged experiment holding the parent run reference, the branch position, the
+forced alternative token where one is forced, and the parent declaration
+with its diff. A runner drains the queue, and each result returns as a run
+in the schema of section 2 carrying its parent reference and branch
+position, so the comparison needs no reconstruction.
 
-The adapter builds the request `text` from the channel log, server-side
-(PRD 4.1):
+### 5.1 The five states
 
-```
-[#general] Turn context. You are alpha. Messages since your last turn:
-todd: <text>
-claude: <text>
-todd: @alpha <text>
+```text
+draft       editable in every field
+registered  frozen, the claim on the record, eligible for a batch
+queued      handed to a runner, waiting
+running     a runner holds it
+returned    results in the store
 ```
 
-- Window: what was said since the agent's last `close` in this channel -
-  messages and other participants' closes alike, an agent's answer
-  being conversation the next speaker must see (revised 2026-08-25,
-  issue #337: selecting only messages made agents blind to each other
-  in a shared room). The read is capped at the newest 500 rows, more
-  than the line bound can carry at any plausible line size, so a
-  long-idle agent never drags a channel's whole history through the
-  trim. Newest-last, trimmed oldest-first to fit the line bound, with
-  two rules the widened window made explicit (review of #350): a
-  window holding no `message` does not invoke - another agent's close
-  is context, never a justification - and the newest message is
-  pinned, so no close that landed after it can displace the mention
-  that justified the turn. The bound is measured on the serialized
-  line, escaping included, computed once per row rather than per drop,
-  and the pinned message exceeding the bound alone truncates on a
-  character boundary with a marker counted inside the bound - trimmed
-  and marked serves where refused drops.
-- Speaker labels are participant `name` values. The format is a v1
-  election, deliberately plain text: structured attribution is the
-  named future ask (PRD 5) and is not smuggled in as ad hoc syntax.
-- Batch-on-drain (PRD 4.1): all queued mentions of this agent in this
-  channel land in one context block, one turn.
+**Registration is the freeze**, not the launch. A draft is a draft and
+editing one is what drafts are for, because a draft has no result its author
+could have seen. Registering puts the claim on the record whether or not it
+ever runs, and queueing is a separate act. **What was registered and never
+run stays in the record**, which is what makes pre-registration a property
+of the interface rather than a discipline imposed on it.
 
-## 8. The queue
+### 5.2 The diff is split by when it takes effect
 
-Per agent: an mpsc of pending invocations and a worker. The worker
-drains everything pending into one batch, marks `turn-open`, runs the
-gate adapter, lands the `close`. Queue depth and in-flight state are
-readable (an atomic snapshot per agent) and rendered in the channel view
-(PRD 4.1: queueing is visible truth). One worker per agent is the
-single-flight rule made structural - there is no code path that could
-send a second concurrent turn.
+Both kinds reach the agent through a reload, since the load boundary is the
+only change boundary. They differ in **what the result licenses**:
 
-## 9. The router
+- **Per generation** - seed, temperature, top-p, top-k, repetition,
+  maximum tokens. Same weights, same window. The recorded prefix re-feeds to
+  the state the parent had, so divergence below the branch position is
+  attributable to the one value moved.
+- **Load-time** - artifact, precision, devices, context capacity, and the
+  elections. The prefix re-feeds **under different weights or a different
+  window**, so the parent's internal state is not reproduced. The text
+  upstream matches and the state does not, and **the comparison is
+  structural rather than byte-exact.** A load-time move also derives a
+  declaration, which stands in Agents beside its parent.
 
-On each appended `message` event:
+The interface states both consequences where the change is made.
 
-1. Parse mentions: `@name` tokens matched against channel members.
-2. For each mentioned participant whose `kind` is not `human` and whose
-   `respond` policy admits the author: enqueue an invocation.
-3. Agent-authored messages route the same way since the coordination
-   change of 2026-08-20 (agents coordinate by mentioning each other),
-   with two exclusions. The author itself, so a self-mention never
-   self-invokes. And the hello-loop counter, added the same day after
-   the first open volley greeted itself in circles: the router serves
-   `agent_hop_budget` agent-to-agent hops since the last human message
-   (config, default 8), then pauses the volley visibly with an app-note
-   naming the count and the cure - any human word resets the budget.
-   A volley also ends on its own when a message carries no mention, and
-   the operator's stop and unload verbs remain the hard kill.
-   Model-authored messages still trigger nothing until the upstream
-   adapter exists.
+### 5.3 Validation at authoring
 
-`respond = 'mention'` is the only active policy in v1, and `never` exists so
-an agent can be parked in a channel silently. The allowlist policy enters
-with IAM-era identity, not before.
+An experiment is refused when it is authored, not when it is drained.
 
-## 10. Upstream adapter
-
-Same interface as the gate adapter (an async `turn(context) -> reply`),
-implemented as one HTTP request to the configured provider (Anthropic
-Messages API first). No streaming in v1 - the provider's streamed reply
-is collected whole so both participant kinds present identically in the
-channel, per the PRD's honesty rule: the surface does not simulate for
-one participant a liveness the other cannot have. Upstream replies land
-as `message` events with no run or turn labels (they have no trace).
-
-## 11. Lifecycle runner
-
-In the connector, on the link's `verb` ask (section 16), via
-`tokio::process::Command`:
-
-```
-sudo WEAVER_ADMIN_CONFIG=/etc/weaver/config \
-  /usr/local/libexec/weaver/weaver-admin <verb> <agent>
+```text
+the parent record is readable, and holds the branch position
+the context capacity holds the prefix
+the forced token is present in the capture at that position
+every artifact the diff names resolves
 ```
 
-stdout parsed as one JSON object, rendered verbatim and formatted,
-non-zero exit with unparseable stdout rendered as the raw bytes and the
-exit code, never swallowed. The environment line rides only when
-`admin_env` is true (section 3): the recommended shape is the
-root-owned wrapper `deploy/weaver-admin-verb`, which validates its
-verb against the closed set and its agent name's characters, fixes the
-config itself, and makes the sudoers rule exactly one command wide
-(issue #337 - the direct-binary rule needed wildcarded arguments and
-the config through sudo's environment, which "narrow" overstated).
-Both fragment shapes ship in `deploy/weaver-web.sudoers`, the wrapper
-uncommented.
+**A runner cannot ask.** A refusal discovered at three in the morning costs
+a batch window; the same refusal at authoring costs nothing.
 
-Load state: the gate socket path's existence, answered by the
-connector's `status` service (section 16), polled by the server on a
-short interval and on demand before render, labeled as an inference in
-the UI (PRD 4.2).
+## 6. The surfaces
 
-## 12. Trace view
+One module each, and their destinations are the charter's section 3 and are
+not restated.
 
-Per agent, a tailer task in the connector: open the NDJSON file, seek
-to a bounded backfill window (last N bytes, N elected at 1 MiB), read
-forward, then follow appends (inotify via `notify`, falling back to
-polling). Every event and mark crosses the link's `trace` stream
-(section 16). Each
-line parses as JSON into a tolerant shape: known envelope fields typed,
-everything else retained raw. Unknown event kinds render as raw JSON
-(PRD 4.3). Events group by run then turn in a bounded in-memory ring per
-agent, held by the server (elected: 10,000 events), because the trace
-surface is a live view, not a query engine, per the PRD's retention
-non-goal. Loss marks render as
-first-class objects.
+**A surface that renders what is kept reads the store and nothing else** -
+Open a trace, Record, Experiments, and the returned half of Stage. That is
+what makes section 4's three reads sufficient for them.
 
-The view carries two operator filters, both applied server-side per the
-display-engine constraint and both riding the SSE stream's own URL so
-the live tail obeys them: field selection (hide top-level keys or
-`payload.<key>` subkeys, the list discovered from the record itself)
-and a substring search over the full raw event, so a hidden field
-still matches. Discontinuity marks ignore both filters - a gap in the
-record is never filterable out of sight. A file rotation or truncation
-(detected by inode or shrink) is surfaced in the view as a discontinuity
-mark, mirroring the stream's own honesty rule, and a link drop or
-reconnect is surfaced the same way (section 16).
+**A surface that authors or exchanges also holds a seam**, and section 7
+names each: Compose writes its draft and asks `validate`; Live carries a
+turn to the gate and reads the measurement that comes back; Agents drives
+the lifecycle verbs and reads the observation exchange; Stage submits a
+registered experiment to the queue. **None of them writes the registry** -
+the write path of section 3 is the only writer - and none reads the agent
+except through a seam that is named.
 
-## 13. HTTP surface
+**The state a surface holds is a query, never a location.** A filter chip is
+a clause; clearing it widens the list in place. A card carries the operator
+into a list with a chip already set, and no surface has a variant that
+differs only by a pre-applied filter.
 
-Two route families mirror the two boundaries and the two roles, per
-the operator's ruling of 2026-08-19: the user surface crosses the gate,
-the admin surface crosses the operator boundary, and every `/admin/*`
-route sits behind the role gate. The split is structural so the IAM act
-attaches authentication to existing roles rather than rearchitecting.
+**A timeline is drawn on ordinals and a click addresses a position, and the
+surface converts between them.** The per-generation series is indexed by the
+ordinal within its generation; the field is addressed by the resident length
+at the draw. They are different coordinates and the record spells both, so
+the conversion is the surface's to make and to make once. A view that passes
+an ordinal where a position is expected reads a different token and says
+nothing about it.
 
-```
-GET  /                                shell, redirects to /channels
-POST /session                         open a session (v1: anonymous)
-GET  /channels                        channel list
-POST /channels                        create channel
-GET  /channels/{name}                 channel view (page)
-POST /channels/{name}/messages        post a message (form)
-POST /channels/{name}/members         add participant
-GET  /channels/{name}/stream          SSE: channel events from cursor
+**Absence renders as absence.** Entropy rides every generation
+unconditionally; surprisal rides only where its election stands. A surface
+that plots an absent surprisal as zero is lying about the election, so where
+the election did not stand the surface says so rather than drawing a floor.
 
-GET  /admin/lifecycle                 lifecycle surface     [admin]
-POST /admin/lifecycle/{agent}/{verb}  run a verb            [admin]
-GET  /admin/agents/{agent}/config     declaration, read-only [admin]
-GET  /admin/trace/{agent}             trace surface         [admin]
-GET  /admin/trace/{agent}/stream      SSE: trace events     [admin]
-GET  /admin/repro/{agent}             confirm view (17)     [admin]
-POST /admin/repro/{agent}             start a confirm (17)  [admin]
+**A reading is produced only where the record's own bracket permits it.** A
+serving record carries no gate. A diagnostic record carries one, and a
+reading from an uncertified replay is a picture of an unknown run. This
+crate honors that gate rather than re-deciding it.
 
-GET  /assets/*                        vendored static assets
-```
+## 7. The seams
 
-SSE events are named: the channel stream emits `event: channel` with an
-HTML fragment (htmx SSE swap) and `id:` set to the `channel_events.id`
-cursor so `Last-Event-ID` reconnection resumes without gaps. The same
-endpoint serves `Accept: application/json` with the event as JSON - the
-carve-out seam (PRD 3) built as content negotiation on one stream rather
-than as a second endpoint.
+### 7.1 The gate
 
-## 14. Sessions and roles in v1
+A turn crosses at the gate as any client's does. The gate does not stream,
+so a whole-turn answer is presented whole and an in-flight state is clear
+rather than simulated. Closes render by kind, and an unnamed close is this
+crate's own defect and surfaces as an application error rather than as an
+agent's words.
 
-A browser session is an anonymous server-minted cookie whose only job is
-continuity: it binds a human's messages to one `human` participant
-(picked or created on first visit by name). Sessions are recorded in the
-`sessions` table, so the record's shape does not change when passkeys
-replace anonymity - the IAM era swaps how a session is minted, not what
-the record says about it.
+### 7.2 The admin verbs
 
-**Roles.** Every participant carries a role, `user` or `admin`. The
-admin surface is gated on it at the router. v1 assignment is the
-config's `admins` list, reconciled at startup and at session open, so
-the access rule stays the operator's declaration. The honest caveat,
-accepted as a development-cycle fact: until the IAM act, sessions are
-anonymous, so anyone on the LAN can claim an admin name. The separation
-is boundary hygiene and structural readiness now, and it becomes access
-control when the IAM act makes sessions prove who they are. The gate
-itself does not move then - only the proof does.
+`validate`, `load`, `unload`, and as of 2026-09-04 the observation exchange:
+`show` answers one agent's load facts and `list` answers one summary per
+admitted agent in a single ask. Load state is therefore **the harness's own
+word rather than an inference from a socket's existence**, and no surface
+labels it as inferred.
 
-## 15. Open elections
+No verb chains another. This crate offers each as a separate act and nothing
+composite.
 
-- **The context window rule** (section 7): "since the agent's last close"
-  is the v1 election, and whether an agent should also receive a bounded tail
-  of older context is deferred until real use shows the need.
-- **The channel store's growth policy:** no pruning in v1, and an archival
-  election is owed when a real channel's size makes the question concrete.
-- **Provider set:** Anthropic first, the adapter trait being the seam and
-  further providers are additive elections.
-- **The JSON projection's shape** (section 13) is minimally specified on
-  purpose, and it hardens when the carve-out triggers, not before.
-- **The link's peer proof:** none in v1, per section 16's trust clause.
-  The mechanism is the IAM act's election, arriving there for the
-  listener and the link together.
+**`validate` is also the composition oracle.** It transitions nothing,
+refuses an incoherent declaration naming the field, and carries the box
+facts a load would meet, so the Compose surface writes its draft and asks
+rather than judging. **This crate therefore carries no second copy of the
+rules**, only a copy of the declaration's field shape written against
+`weaver-types-Spec` section 2 **at a named corpus commit**, which is that
+copy's staleness rule: when the floor moves, the pin says so and `validate`
+refuses in a way the surface can name.
 
-**Three elections stand held rather than settled**, each one the operator's
-to close:
+### 7.3 The analysis stream
 
-- **The edition.** This crate pins `edition = "2021"` where the workspace
-  carries 2024 and every other member inherits it. The migration is real
-  work rather than a manifest line, the derive-heavy dependencies being
-  where an edition move bites. The crate's tree resolved and built for
-  the first time 2026-08-25, in the workspace lock (the manifest carries the collision story), so the alignment act
-  now has a build to stand behind it. The pin states the fact until that
-  act runs, and aligning remains its own act.
-- **The licence.** This crate carries `Apache-2.0` and its own `LICENSE`
-  file where the workspace carries `UNLICENSED`. The suite's licence
-  boundary is an open operator question, so neither inheritance nor silence
-  settles it. Both facts stand.
-- **The store.** `sqlx` with `postgres` is the first database dependency in
-  this workspace. A frontend holding its own store is ordinary and this one
-  is this crate's alone. Whether the tree now has a database, or whether
-  this stays a property of one member, is open.
+The emission this crate ingests. Its shape is a contract between the two
+crates and is owed as its own act, per issue #418. This document names the
+seam and does not restate the contract.
 
-**The seam is what it always was.** This crate links no crate of this
-workspace and reaches the agent exactly as an outside consumer does: a
-socket dialed by path, a binary run by the operator's verb, and a record
-read where the operator keeps it. Living in one repository with the agent
-is a fact about the source and not about the boundary.
+## 8. Placement and the link
 
-## 16. The link
+Two processes joined by one dialed link: a connector holding the box-bound
+reaches, a server holding the presentation stack. Colocated by default and
+separated by changing one address.
 
-Landed 2026-08-25 with the two-process shape (PRD section 3), placed
-after section 15 so the section numbers code comments cite stay stable.
-The connector dials the server's `link_listen` address and holds one
-persistent connection, redialing with backoff when it drops. **The
-server accepts any number of connectors, one per box, served
-concurrently** - the fleet shape, made real the same day on the
-operator's direction. Each hello homes its agents to its own
-connection, first hello winning a name (a collision from another live
-box is skipped and logged, never silently rehomed). Asks route to the
-agent's own connection, status merges every box's answer, and a box's
-drop tears down exactly its own agents, pending asks, and roster -
-the other boxes never notice.
+**Nothing in the read or write path is box-bound to the agents.** The reader
+is a store client, the runner is a queue consumer, and the front end with
+its store runs on one machine while the agents run on another. That crossing
+is a declared boundary under the charter's section 5 rule and appears in the
+cell record like any other.
 
-**Transport: TCP, NDJSON frames.** One JSON object per line, both
-directions. Elected over a local Unix socket so that colocated and
-offloaded differ by an address and nothing else. The link carries whole
-turns and a trace tail, nothing that earns a second transport.
+## 9. What is enforced, and by which instrument
 
-**Hello.** The connector's first frame announces the box's agent roster
-by name. Socket and sink paths stay on the box, because the server has
-no use for them. The server reconciles its registry from the hello,
-creating agent participants and starting queues as the roster requires.
+| claim | instrument |
+|---|---|
+| a position is addressed by run, turn and position | compile-pin on the key type |
+| ingest is idempotent on that key | perturbation: replay one window twice |
+| nothing is computed at read time | review, over the three reads |
+| a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
+| a forced run is marked in the record | perturbation: strip the mark, the read refuses |
+| an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
+| an undeclared boundary refuses the load | perturbation, at the admit path |
 
-**Seven services**, named in each frame's `svc` member, ask and answer
-correlated by `id` where the shape is ask-answer:
+**A watch that cannot fail is not a test.** For each perturbation above, the
+act that lands it states what removal makes it fail and confirms it does.
 
-1. `turn` - the server asks with assembled context, the connector dials
-   the gate per turn (section 6), and one answer frame carries the
-   close or the typed error, section 6's variants verbatim in kind.
-2. `verb` - the server asks, the connector runs the invocation
-   (section 11), and one answer frame carries the outcome object.
-3. `trace` - the connector streams, unasked, every trace event and
-   discontinuity mark its tailers emit (section 12), tagged by agent.
-4. `status` - the server asks, the connector answers the load-state
-   observable per agent, the socket path's existence.
-5. `declaration` - the server asks, the connector answers one agent's
-   declaration file as text, the admin surface's read-only view.
-6. `trace_runs` - the server asks, the connector scans one agent's sink
-   file and answers the run inventory: each run's label, turn count,
-   event count, and first wall clock. The authoritative read for the
-   confirm view (section 17), against the file rather than the bounded
-   ring.
-7. `trace_run` - the server asks with a run label, the connector
-   answers that run's events parsed from the sink file, capped (the
-   cap elected at 10,000 events) with the truncation stated in the
-   answer, never silent.
+## 10. Open elections
 
-**Link loss is marked, never smoothed.** A dropped link fails in-flight
-turns as delivery-lost (section 6's typing), shows agents unreachable
-on the lifecycle view, and lands a discontinuity mark in every trace
-view. Reconnection re-runs the hello and a fresh trace backfill, and
-the reconnect is itself a mark, so a viewer's completeness claim stays
-exactly the stream's.
-
-**Trust.** The link's posture is the listener's (PRD section 3): no
-peer proof on loopback or on the v1 LAN, and the IAM act is where proof
-arrives for both. `link_listen` defaults to loopback, so any exposure
-is the operator's explicit widening.
-
-## 17. The confirm view
-
-PRD section 4.4 in representation. One job at a time, held in server
-memory (`repro.rs`), started from `/admin/repro/{agent}` behind the
-role gate, its progress and report rendered by the same page. Nothing
-of the job touches the channel store: a confirm is the operator asking
-the record a question, not conversation, so its turns land in no
-channel and its report is ephemeral until the operator runs another.
-
-The job's order, each step logged to the page as it runs:
-
-1. Fetch the source run over `trace_run` and cut it into turns: events
-   grouped by turn reference, each turn's request text taken as its
-   last `message.user` event (identity messages precede the request in
-   render order), each turn's request, output, and measurement payloads
-   held for comparison.
-2. `verb` unload, then `verb` load, then poll `status` until the gate
-   socket stands (bounded, the bound elected at 120 s). A load refusal
-   renders verbatim and ends the job.
-3. Reissue each turn's request text byte-exact over `turn`, in source
-   order. The first close names the replay run's label.
-4. Fetch the replay run over `trace_run` and compare per turn:
-   rendered prompt, derived generation seed, effective knobs, emission
-   bytes, finish kind and resident count, input token ids, and
-   per-token entropies float-exact - the lab report's field list,
-   mechanized.
-5. Render the verdict per turn beside both records' stats (whole-turn
-   wall time, tokens in and out), divergence shown as itself.
-
-Failure is a report, not an exception: an unloaded agent that will not
-load, a turn the gate refuses, a mid-confirm channel turn shifting the
-ordinals - each ends the job with the step's own answer on the page,
-per the PRD's honest-failure rules.
+- **The store engine and its migrations.** Postgres is the charter's
+  election; the schema's expression is this document's and lands with the
+  first code act.
+- **The field election's depth**, which is the charter's open cell and not
+  this crate's to set.
+- **Whether surprisal and entropy draw as one timeline or two.**
+- **Whether the preset ladder is a picker or a wizard.**
+- **Whether this crate scores**, which the charter's section 9 holds open
+  and which decides whether a score column exists in section 2.2 at all.
+- **The word "cell"**, which carries a second sense elsewhere in the corpus
+  and must be settled once rather than twice.
