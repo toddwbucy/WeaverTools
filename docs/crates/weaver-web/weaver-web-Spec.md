@@ -10,46 +10,56 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
-**Revised:** 2026-09-05, against the acts of that date. The observation
-exchange landed, issue #435 at PR #440, and the per-position read landed,
-issue #436 at PR #444. The component catalogue, issue #437, was answered
-with a finding rather than a catalogue. Two facts the record spells
-corrected this document where it had guessed: the address carries the turn,
-and a position is a resident
-length rather than an ordinal.
+**Revised:** 2026-09-05, sixth of this date, the second review pass. Four
+sentences lost a word to the semicolon sweep and are restored. **A sharded
+GGUF carries no index**, so section 2.3 enumerates it by the
+`-NNNNN-of-NNNNN` pattern `weaver-spu-Spec` section 3's pin collects on, the
+earlier wording having named a split manifest that does not exist for the
+format this catalog most holds. The identity cites the manifest member the
+owning Spec declares rather than a Rust item it does not. Section 6 no
+longer says section 7 names a queue seam, which it does not. The semicolon
+count in the second entry was low by two. Entries now run newest first.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. Section 2.3 gains the recorded query, which section 4 required and
-section 2 gave nowhere to put, and the indexes renumber to 2.4 with both
-citations following. The engine's identity enters the run's row, and **the
-deposit regime behind it is cited to `weaver-analysis-PRD` section 3**
-rather than asserted, an uncited regime in a Spec being testimony. The
-scorer leaves the run's tuple for the verdict. Semicolons swept from the
-whole document under G1, six of them older than this act.
-
-**Revised:** 2026-09-05, third of this date, the Models surface and the
-review of PR #455. Section 2.3 gains the artifact catalog with one derived
-identity rule, the complete set the model's own index names. The join
-resolves to that set or to nothing, so a lens relation and a reference
-cell relation each name one unambiguous artifact. Presence carries its
-reporter and its date and gates nothing. The lens row cites
-`weaver-analysis-PRD` section 3 rather than restating it, correcting an
-earlier draft of this act. Two assertion rows added. Semicolons swept
-under G1.
+**Revised:** 2026-09-05, fifth of this date. Section 2.3's artifact identity
+becomes the shape `weaver-analysis-Spec` section 3 gives
+`model_safetensors_sha256` rather than a composite this document defined,
+equality being set equality with no order imposed. Section 2.2 states that
+the parent run and branch position are lineage outside tuple equality, so
+two rows differing only in them remain comparable, which is what makes a
+branch reproducible against its parent. Section 2.4 carries the lens
+artifact a reading was taken through and the weights it was fitted to. Per
+the review of PR `#453`.
 
 **Revised:** 2026-09-05, fourth of this date, the run's row carries the
 field election's depth, which sets the length of every position's
 alternative list and which the charter's section 4 compares. Per the review
 of PR `#453`.
 
-**Revised:** 2026-09-05, fifth of this date. Section 2.3's artifact
-identity becomes `weaver-analysis-Spec` section 3's `WeightsDigest` rather
-than a composite this document defined, equality being set equality with no
-order imposed. Section 2.2 states that the parent run and branch position
-are lineage outside tuple equality, so two rows differing only in them
-remain comparable, which is what makes a branch reproducible against its
-parent. Section 2.4 carries the lens artifact a reading was taken through
-and the weights it was fitted to. Per the review of PR `#453`.
+**Revised:** 2026-09-05, third of this date, the Models surface and the
+review of PR #455. Section 2.3 gains the artifact catalog with one derived
+identity rule, the complete set the model's own index names. The join
+resolves to that set or to nothing, so a lens relation and a reference cell
+relation each name one unambiguous artifact. Presence carries its reporter
+and its date and gates nothing. The lens row cites `weaver-analysis-PRD`
+section 3 rather than restating it, correcting an earlier draft of this act.
+Two assertion rows added. Semicolons swept under G1.
+
+**Revised:** 2026-09-05, second of this date, against two reviews on PR
+`#453`. Section 2.3 gains the recorded query, which section 4 required and
+section 2 gave nowhere to put, the indexes moving down and their citations
+following. The artifact catalog of the act below later took 2.3 and the
+recorded query became 2.4. The engine's identity enters the run's row, and
+**the deposit regime behind it is cited to `weaver-analysis-PRD` section 3**
+rather than asserted, an uncited regime in a Spec being testimony. The
+scorer leaves the run's tuple for the verdict. Semicolons swept from the
+whole document under G1, eight of them older than this act.
+
+**Revised:** 2026-09-05, against the acts of that date. The observation
+exchange landed, issue #435 at PR #440, and the per-position read landed,
+issue #436 at PR #444. The component catalogue, issue #437, was answered
+with a finding rather than a catalogue. Two facts the record spells
+corrected this document where it had guessed: the address carries the turn,
+and a position is a resident length rather than an ordinal.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -177,13 +187,20 @@ two boxes are one artifact.
 
 **The identity is the corpus's existing one and this document defines no
 second**, because a catalog that dedupes on one rule while a lens refuses
-on another is two rules for one subject. **An artifact is the complete set
-of files its own index enumerates** - the safetensors index, or the split
-manifest a sharded GGUF carries - **and its identity is the set of per-file
-content digests keyed by file name**, which is the shape
-`weaver-analysis-Spec` section 3 already carries as `WeightsDigest`, one
-digest for a model kept in one file and a map from shard name to digest for
-a sharded one.
+on another is two rules for one subject. **Its identity is the set of
+per-file content digests keyed by file name**, which is the shape
+`weaver-analysis-Spec` section 3 gives `fitted_for`'s
+`model_safetensors_sha256`: one digest for a model kept in one file, and a
+digest per shard keyed by shard name for a sharded one.
+
+**What the complete set is depends on the container, and both cases are
+named.** A safetensors model enumerates its shards in its own index,
+`model.safetensors.index.json`, which the analysis reader follows. **A
+sharded GGUF carries no index.** Its set is the siblings matching the
+`-NNNNN-of-NNNNN` pattern, which is how `weaver-spu-Spec` section 3's pin
+collects them, and a single-file GGUF is the one-file case unchanged. This
+catalog holds GGUFs, so the rule that names only an index would leave the
+format the box actually runs without one.
 
 **Equality is set equality and no order is imposed**, the map being keyed
 rather than sequenced. **A set missing a file the index names is unequal to
@@ -387,31 +404,36 @@ destinations are the charter's section 3 and are not restated.
 Open a trace, Record, Experiments, and the returned half of Stage. That is
 what makes section 4's three reads sufficient for them.
 
-**A surface that authors or exchanges also holds a seam**, and section 7
-names each. Compose writes its draft and asks `validate`. Live carries a
-turn to the gate and reads the measurement that comes back. Agents drives
-the lifecycle verbs and reads the observation exchange. Stage submits a
-registered experiment to the queue. **None of them writes the registry** -
+**A surface that authors or exchanges also holds a seam.** Compose writes
+its draft and asks `validate`. Live carries a turn to the gate and reads
+the measurement that comes back. Agents drives the lifecycle verbs and
+reads the observation exchange. Section 7 names those three. **Stage
+submits a registered experiment to the queue, and section 7 names no queue
+seam**, the queue being the harness's per the charter's section 3.5 and
+this crate's part in it a write the runner drains rather than an exchange
+it holds open. **None of them writes the registry** -
 the write path of section 3 is the only writer - and none reads the agent
 except through a seam that is named.
 
 **The state a surface holds is a query, never a location.** A filter chip is
 a clause, and clearing it widens the list in place. A card carries the
-into a list with a chip already set, and no surface has a variant that
-differs only by a pre-applied filter.
+operator into a list with a chip already set, and no surface has a variant
+that differs only by a pre-applied filter.
 
 **A timeline is drawn on ordinals and a click addresses a position, and the
 surface converts between them.** The per-generation series is indexed by the
 ordinal within its generation, and the field is addressed by the resident
-at the draw. They are different coordinates and the record spells both, so
-the conversion is the surface's to make and to make once. A view that passes
-an ordinal where a position is expected reads a different token and says
+length at the draw. They are different coordinates and the record spells
+both, so the conversion is the surface's to make and to make once. A view
+that passes an ordinal where a position is expected reads a different token
+and says
 nothing about it.
 
 **Absence renders as absence.** Entropy rides every generation
 unconditionally, and surprisal rides only where its election stands. A
-that plots an absent surprisal as zero is lying about the election, so where
-the election did not stand the surface says so rather than drawing a floor.
+surface that plots an absent surprisal as zero is lying about the election,
+so where the election did not stand the surface says so rather than drawing
+a floor.
 
 **A reading is produced only where the record's own bracket permits it.** A
 serving record carries no gate. A diagnostic record carries one, and a
@@ -496,7 +518,7 @@ act that lands it states what removal makes it fail and confirms it does.
 
 - **The store engine and its migrations.** Postgres is the charter's
   election, and the schema's expression is this document's and lands with
-  first code act.
+  the first code act.
 - **The field election's depth**, which is the charter's open cell and not
   this crate's to set.
 - **Whether surprisal and entropy draw as one timeline or two.**

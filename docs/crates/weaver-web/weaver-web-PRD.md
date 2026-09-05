@@ -8,8 +8,8 @@ the operator's to say.
 
 **This is a rewrite of this crate's charter, not a new one.** The document
 ID, the crate, and its node are unchanged, and the prior text is archived
-than amended, per the operator's ruling of 2026-09-04, because the purpose
-clause is what changed and every section below it was that clause's
+rather than amended, per the operator's ruling of 2026-09-04, because the
+purpose clause is what changed and every section below it was that clause's
 consequence.
 
 **Prior version:** the charter of 2026-08-04 as amended through 2026-08-25,
@@ -28,21 +28,37 @@ store traffic and a queue. Whether these papers eventually move to a
 separate corpus follows from that but is not identical to it, and stays
 decision two of #439.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. The engine joins the run's tuple at build grain. **The scorer is
-named on the verdict and never in the run's tuple**, correcting a clause
-that put it in both and contradicted itself four lines apart.
-**Reproduction states its projection** and leaves section 9, which held a
-settled half in a list of open ones. **The lens clause is withdrawn to
-`weaver-analysis-PRD` section 3's identity**, the weights by content hash:
-this document had asserted a trained-weights identity inherited through
-provenance, which the owning charter states otherwise and
-`analysis-lens-refuses-other-weights` pins otherwise, and the 8B
-measurement it rested on was taken by naming the fitted weights to the
-reader rather than by any mechanism. Reuse across a conversion is an
-operator election, and whether a lineage should ever let the tool answer
-it is section 9's. Semicolons swept from the whole document under G1, five
-of them older than this act.
+**Revised:** 2026-09-05, sixth of this date, the second review pass. Five
+sentences lost a word to the semicolon sweep of the second act and are
+restored, the sweep having rewrapped line pairs and dropped the word at the
+old break. The preset ladder is introduced before section 9 defers its
+shape. The artifact identity's citation splits, the rule being
+`weaver-analysis-PRD` section 3's and the shape its Spec's. **No surface
+writes the registry**, correcting this act's own earlier wording against
+`weaver-web-Spec` section 6, which has said so throughout: a surface
+authors across its seam and the ingest path is the only writer. The
+semicolon counts in the second entry were low by two. Entries now run
+newest first, per the corpus's convention.
+
+**Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
+and the election is recorded. The artifact identity rule this crate had
+derived for itself is withdrawn for the one `weaver-analysis` already
+carries, the set of per-file content digests keyed by file name, compared
+as a set: a rolled-up digest of this crate's own devising was a second rule
+for one subject, which is what the lens paragraph beside it refuses. An
+elected lens reuse is recorded with both weights identities, so a reading
+through a lens fitted to other weights says so. Section 3.6 states which
+surface writes what rather than claiming all of them write. Per the review
+of PR `#453`.
+
+**Revised:** 2026-09-05, fourth of this date, the tuple carries what the
+projection compares. The field election's depth and the forced token join
+the run's tuple: a run keeping forty alternatives and one keeping fifty
+differ in every position's list length by declaration, and section 4's
+comparison would have read that as a divergence. The row is told from the
+tuple, the parent run and the branch position being lineage rather than
+condition, which is what makes a branch comparable to its parent. Per the
+review of PR `#453`.
 
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
@@ -57,25 +73,21 @@ dated observation and never a gate.** Three cells named in section 9 that
 this act's pull request had named only in its body. Semicolons swept
 under G1.
 
-**Revised:** 2026-09-05, fourth of this date, the tuple carries what the
-projection compares. The field election's depth and the forced token join
-the run's tuple: a run keeping forty alternatives and one keeping fifty
-differ in every position's list length by declaration, and section 4's
-comparison would have read that as a divergence. The row is told from the
-tuple, the parent run and the branch position being lineage rather than
-condition, which is what makes a branch comparable to its parent. Per the
-review of PR `#453`.
-
-**Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
-and the election is recorded. The artifact identity rule this crate had
-derived for itself is withdrawn for the one `weaver-analysis` already
-carries, the set of per-file content digests keyed by file name, compared
-as a set: a rolled-up digest of this crate's own devising was a second rule
-for one subject, which is what the lens paragraph beside it refuses. An
-elected lens reuse is recorded with both weights identities, so a reading
-through a lens fitted to other weights says so. Section 3.6 states which
-surface writes what rather than claiming all of them write. Per the review
-of PR `#453`.
+**Revised:** 2026-09-05, second of this date, against two reviews on PR
+`#453`. The engine joins the run's tuple at build grain. **The scorer is
+named on the verdict and never in the run's tuple**, correcting a clause
+that put it in both and contradicted itself four lines apart.
+**Reproduction states its projection** and leaves section 9, which held a
+settled half in a list of open ones. **The lens clause is withdrawn to
+`weaver-analysis-PRD` section 3's identity**, the weights by content hash:
+this document had asserted a trained-weights identity inherited through
+provenance, which the owning charter states otherwise and
+`analysis-lens-refuses-other-weights` pins otherwise, and the 8B
+measurement it rested on was taken by naming the fitted weights to the
+reader rather than by any mechanism. Reuse across a conversion is an
+operator election, and whether a lineage should ever let the tool answer
+it is section 9's. Semicolons swept from the whole document under G1, seven
+of them older than this act.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
@@ -308,19 +320,19 @@ the control arm is free.
 
 ### 3.6 The five on the list side
 
-Global and filtered. **Every surface above writes what it authors and
-nothing else**: Compose lands a declaration, Stage lands a staged
-experiment, and the runs and positions arrive by the ingest path of section
-4 rather than from any screen. These surfaces read the result and filter
-it. **Four of the five are lists and the fifth is not.** Agents, Models,
-Experiments and Record are list destinations. The Experiment view is the
-detail surface one of them opens into, and it is a surface rather than a
-mode of the list
-above it: its own destination, its own state, and its own module under the
-Spec's rule of one module each. **The group is named for how it is
-reached** - by a chip-query rather than along the path - and not for the
-shape of what it holds, so no implementer reads the detail view as a fifth
-list. Five on the path and five here are the ten this section opens with.
+Global and filtered. **No surface writes the registry.** Each authors across
+its own seam, Compose asking `validate` and Stage submitting to the queue,
+and what lands in the store lands by the ingest path of section 4. These
+lists read that store and filter it, which is why a chip can be a query
+rather than a location. **Four of the five are lists and the fifth is not.**
+Agents, Models, Experiments and Record are list destinations. The Experiment
+view is the detail surface one of them opens into, and it is a surface
+rather than a mode of the list above it: its own destination, its own state,
+and its own module under the Spec's rule of one module each. **The group is
+named for how it is reached** - by a chip-query rather than along the path -
+and not for the shape of what it holds, so no implementer reads the detail
+view as a fifth list. Five on the path and five here are the ten this
+section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -346,16 +358,18 @@ to other weights where the operator elected that reuse, and the reference
 cells taken against them.
 
 **An artifact is the complete set its own index names, and one rule decides
-identity** - the corpus's own, the set of per-file content digests keyed by
-file name that `weaver-analysis-PRD` section 3 already carries. Equality is
-set equality, so a set missing a file the index names is unequal to the
-complete one and is not that artifact, and the catalog dedupes on that and
-nothing else. **This crate defines no digest of its own**, a second rule for
-one subject being what the paragraph below refuses for the lens. **The
-provenance chain is recorded and is not a second identity**: it says what
-an artifact was made from, which is what makes an elected lens reuse across
-a conversion legible afterward, and it does not version a lens. Section 3's
-lens identity is the analysis charter's, and a conversion changes it.
+identity** - the corpus's own. `weaver-analysis-PRD` section 3 carries the
+rule, the weights by content hash, and that charter's Spec section 3 carries
+the shape it takes on disk: one digest for a model kept in one file, and a
+digest per shard keyed by shard name for a sharded one. Equality is set
+equality, so a set missing a file the index names is unequal to the complete
+one and is not that artifact, and the catalog dedupes on that and nothing
+else. **This crate defines no digest of its own**, a second rule for one
+subject being what the paragraph below refuses for the lens. **The
+provenance chain is recorded and is not a second identity**: it says what an
+artifact was made from, which is what makes an elected lens reuse across a
+conversion legible afterward, and it does not version a lens. The lens
+identity is `weaver-analysis-PRD` section 3's, and a conversion changes it.
 
 **Presence is an observation and never a gate.** Which box holds an
 artifact is dated, attributed, and advisory, and a box that has not
@@ -468,7 +482,8 @@ different compound and equality was not the question asked of it.
 
 Composition includes placement. Each declared component has its own socket
 and its own surface, so each can be placed independently, and moving one
-while holding the rest still is the loosening the instrument is for.
+while holding the rest still is the loosening the instrument is for. **This
+crate offers a ladder of presets**, whose shape section 9 holds open.
 
 **A preset stages a runnable declaration the operator can then edit by
 hand**, and placement is one axis of that mechanic rather than the whole of
