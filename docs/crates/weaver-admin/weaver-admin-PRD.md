@@ -681,27 +681,30 @@ this charter does not govern.
 operator's ruling of 2026-09-05 on issue #438.** Every service reachable other than by
 kernel-enforced peer identity carries a declared boundary on the declaration, placement
 and boundary moving together because they are one fact about where the agent's identity
-can be reached from. The Unix socket arrangement is exempt, the kernel having already
-answered, and loopback is not, a bound port being reachable by anything that can reach
-the host. The inventory refuses a load where a reachable organ carries no boundary,
-naming the organ, at the load's cheapest moment as the family and election refusals are,
-and the load event records what was declared so the record carries it. **The rule sets
-no minimum on what a boundary is.** A username and a password over a public address is a
-legitimate declaration and this crate holds no opinion about it, because the instrument
-has to be able to measure the arrangement most people ship and the unsafe declaration is
-the useful case rather than the tolerated one. The mechanic is the requirement to
-declare, and what a good boundary is belongs to the operator. The ground is completeness
-of the record rather than security: whatever is declared becomes part of the cell's
-identity, so a reading can never be quoted without saying what was holding the boundary
-when it was taken. **The rule stands ahead of any organ it binds.** Every organ in the
-base today is reached by kernel peer identity over a Unix socket under a named contract,
-per apex section 5, and the SPU's charter reserves no shape for a member off the host,
-so no declaration member exists for a boundary and none is added here: a field whose
-only reader is unbuilt is the reserved slot apex section 7 refuses. The member arrives
-with the first act that charters a loopback or off-host organ, born carrying the
-boundary rather than gaining it as a retrofit, and until then a declaration naming such
-an organ is refused by the floor's parse as an unknown field, which is the one refusal
-the framework can make today and the one the front end may present.
+can be reached from. A Unix socket is exempt exactly where its peer is judged by kernel
+peer identity, by credential where the channel has a name and by descriptor possession
+where it does not, per the apex's first invariant, because there the kernel has already
+answered. A Unix socket reachable without that judgment is not exempt, and loopback is
+not, a bound port being reachable by anything that can reach the host. The inventory
+refuses a load where a reachable organ carries no boundary, naming the organ, at the
+load's cheapest moment as the family and election refusals are, and the load event
+records what was declared so the record carries it. **The rule sets no minimum on what a
+boundary is.** A username and a password over a public address is a legitimate
+declaration and this crate holds no opinion about it, because the instrument has to be
+able to measure the arrangement most people ship and the unsafe declaration is the
+useful case rather than the tolerated one. The mechanic is the requirement to declare,
+and what a good boundary is belongs to the operator. The ground is completeness of the
+record rather than security: whatever is declared becomes part of the cell's identity,
+so a reading can never be quoted without saying what was holding the boundary when it
+was taken. **The rule stands ahead of any organ it binds.** Every organ in the base
+today is reached by kernel peer identity over a Unix socket under a named contract, per
+apex section 5, and the SPU's charter reserves no shape for a member off the host, so no
+declaration member exists for a boundary and none is added here: a field whose only
+reader is unbuilt is the reserved slot apex section 7 refuses. The member arrives with
+the first act that charters a loopback or off-host organ, born carrying the boundary
+rather than gaining it as a retrofit, and until then a declaration naming such an organ
+is refused by the floor's parse as an unknown field, which is the one refusal the
+framework can make today and the one the front end may present.
 
 ### 4.4 Session close, and removal
 
