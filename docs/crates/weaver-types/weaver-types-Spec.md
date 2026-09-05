@@ -1364,6 +1364,7 @@ pub struct LoadFacts {
     pub declaration: String,
     pub artifact: ArtifactRef,
     pub residual_readout: bool,
+    pub field: Option<u32>,
     pub surprisal: bool,
     pub state_election: StateElection,
     pub state_store: StateStore,
@@ -1637,9 +1638,9 @@ produces is a reserved slot.
 
 **`LoadFacts` is what the observation carries beside the state, and it is the floor's
 shape of what the `load` event already names**: the session and run, the declaration's
-digest as admin read the file at the enter, the artifact, the readout and surprisal
-elections, the tee's election, the store the member stands on and whether its end
-arrived, and the composing loop by binary and, where it is a file, path and digest.
+digest as admin read the file at the enter, the artifact, the readout, field, and
+surprisal elections, the tee's election, the store the member stands on and whether its
+end arrived, and the composing loop by binary and, where it is a file, path and digest.
 `Composer` is this crate's spelling of the loop's identity because the record's own is
 `weaver-trace`'s and the floor links downward only. `AgentSummary` carries the same
 `load` beside its name and state, so `list` answers for every admitted agent in one ask,

@@ -107,13 +107,13 @@ and `weaver-harness-PRD`, and none of the three is complete without the other tw
 
 **The seam has two initiators at the channel and there is one document for it.** Either
 party may open an exchange by the channel's mechanics, and the two-initiator channel is
-what makes admin an organ: an organ owns a domain and holds a two-initiator channel
-with the harness, both properties and not either, and admin owns the lifecycle domain.
-The property is the channel's rather than the exchange census's, the same reading the
-half-chartered organ seams take, so the census standing at three exchanges, all
-admin's since the fault-carrier ruling of 2026-08-01 rerouted the fault to the
-stream, retires no half of what makes admin an organ. The invariant is authored in
-the apex and this document is downstream of it.
+what makes admin an organ: an organ owns a domain and holds a two-initiator channel with
+the harness, both properties and not either, and admin owns the lifecycle domain. The
+property is the channel's rather than the exchange census's, the same reading the
+half-chartered organ seams take, so the census standing at four exchanges since the
+observation exchange of 2026-09-05, all admin's since the fault-carrier ruling of
+2026-08-01 rerouted the fault to the stream, retires no half of what makes admin an
+organ. The invariant is authored in the apex and this document is downstream of it.
 
 **Two layers meet in this document and the boundary between them is a draw.** Sections 1
 and 2 draw `weaver-organ-channel`, which states the channel mechanics once for every
@@ -251,7 +251,7 @@ second dial waiting at the listener rather than being answered concurrently.
 
 ## 3. The exchanges
 
-Three, and no others, all opened by admin.
+Four, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
 session identity, the run reference, the kind of the binding, the trace sink handle, the

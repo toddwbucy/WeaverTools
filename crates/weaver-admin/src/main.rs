@@ -781,6 +781,10 @@ fn list(config: &ServiceConfig) -> Result<LifecycleAnswer, LifecycleRefusal> {
     let mut agents = Vec::new();
     for name in config.allow_list.names() {
         let agent = AgentName(name.clone());
+        // The allow-list is the operator's file and its entries are judged
+        // as every verb's argument is, so a malformed name never composes a
+        // socket path outside the coordination root.
+        admissible(config, &agent)?;
         let (state, load) = observe(config, &agent)?;
         agents.push(weaver_types::AgentSummary {
             name: agent,

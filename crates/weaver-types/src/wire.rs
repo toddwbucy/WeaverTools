@@ -279,6 +279,10 @@ pub struct LoadFacts {
     pub declaration: String,
     pub artifact: crate::ArtifactRef,
     pub residual_readout: bool,
+    /// The field election's depth where one stands, as the load event's
+    /// `field` member carries it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field: Option<u32>,
     pub surprisal: bool,
     pub state_election: crate::config::StateElection,
     pub state_store: crate::config::StateStore,

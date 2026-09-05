@@ -1462,6 +1462,12 @@ impl Harness {
                     .artifact
                     .clone(),
                 residual_readout: payload.spu_instruction.decoder.residual_readout_election,
+                field: payload
+                    .spu_instruction
+                    .decoder
+                    .field_election
+                    .as_ref()
+                    .map(|election| election.depth),
                 surprisal: payload.spu_instruction.decoder.surprisal_election,
                 state_election: payload.state_election.clone(),
                 state_store: payload.state_store.clone(),
@@ -2428,6 +2434,7 @@ mod tests {
                     declaration: String::new(),
                     artifact: weaver_types::ArtifactRef("a".into()),
                     residual_readout: false,
+                    field: None,
                     surprisal: false,
                     state_election: Default::default(),
                     state_store: Default::default(),
