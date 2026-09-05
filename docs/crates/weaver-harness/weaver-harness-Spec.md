@@ -2267,10 +2267,12 @@ and the floor a flush returns to, because the point of standing from a record is
 condition the possibility space the way the identity does, only longer, and a prefix a
 flush could drop would not be one. The window pays for it and the declaration's capacity
 is where the operator sees the cost. **The turn ordinal starts at the cut**: the first
-turn of a restoring run is numbered one past the turn the holdings stop at, so the
-derived seeds of `weaver-spu-Spec` section 8.5, which fix a generation's stream from the
-declared seed, the turn's reference, and the generation ordinal, continue the parent's
-streams, and a branch that changes nothing draws what the parent drew.
+turn of a restoring run is numbered one past the turn the enter's lineage names, within
+the parent run it names, a bare turn number recurring across a session's runs and naming
+nothing on its own, so the derived seeds of `weaver-spu-Spec` section 8.5, which fix a
+generation's stream from the declared seed, the turn's reference, and the generation
+ordinal, continue the parent's streams, and a branch that changes nothing draws what the
+parent drew.
 
 **The column ask is written where and only where the binding is diagnostic
 and the readout is elected**, per `weaver-spu-PRD` section 13.7's cadence

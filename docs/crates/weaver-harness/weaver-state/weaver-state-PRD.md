@@ -275,15 +275,20 @@ governs alone, which is what it did before the ruling.
 2026-09-04 on issue #432.** Under a load that elects a restore, admin preloads the
 declared record through this member's door before the enter, whole or through a named
 turn, and the session's holdings are the record's up to that point: the identity as the
-first of them, the conversation after it, and the shape the asks answer from. A whole
-record under the declaration's own session name is a resume, the holdings retired and
-re-landed as every preload does. A cut record under a new session name is a branch,
-standing on a prefix another session produced. Custody is indifferent to which: it holds
-what it was handed and answers what it is asked, and the record that stood the session
-is named on the new record's load, per `weaver-trace-PRD` section 3.1. The ground is the
-same as the identity's and the vectors': the record is the source, the prefix it
-conditions is computed from it on demand under the conditions the load declares, and
-nothing derived from it is kept.
+first of them, the conversation after it, and the shape the asks answer from. The
+session name decides which, and every combination is ruled. The declaration's own
+session name with the record whole is a resume, the holdings retired and re-landed as
+every preload does. A new session name is a branch, standing on a prefix another session
+produced, at the cut where one is named and at the record's end where none is, and every
+distillate lands under the new name with its run and sequence as recorded, because
+custody bounds its answers to the session the opener declared. A cut under the record's
+own session name is refused before the preload, per `weaver-admin-Spec` section 4,
+because a session cannot rewind under its own name while its record carries what the cut
+would drop. Custody is indifferent to which: it holds what it was handed and answers
+what it is asked, and the record that stood the session is named on the new record's
+load, per `weaver-trace-PRD` section 3.1. The ground is the same as the identity's and
+the vectors': the record is the source, the prefix it conditions is computed from it on
+demand under the conditions the load declares, and nothing derived from it is kept.
 
 One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and

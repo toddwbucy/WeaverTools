@@ -4,29 +4,27 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
-judges the restore election, the record readable under this crate's custody and the
-cut a turn it holds, and section 6 stands the member's door under a restoring load
-with this crate as its peer, preloading the record through the cut before the enter.
-Per issue #432.
-**Revised:** 2026-09-04, second of this date, the vector's flags and the socket's
-key are spelled. Section 6 names the four flags the member's vector carries ahead
-of its positionals, and section 9 names `state-store-socket`, the one value the
-store's inventory reads from this crate's own file. Per issue #411's code act.
-**Revised:** 2026-09-04, first of this date, the store election is judged at the
-inventory and
-rides the member's vector. Section 4 resolves an absent election to the
-embedded engine and requires the member's binary, refuses a service election
-whose socket, role mapping, or agent refusal the box does not hold, and takes
-`none` as a declared absence, so the leg stands where the declaration says and
-not where a binary happens to sit. Section 6's vector gains the engine and,
-under the service engine, its socket, database, and role. Per issue #411.
-**Revised:** 2026-08-31, second of this date, the census counts what the
-file holds. Per the review seat on PR 393: section 10's totals move from
-thirty-four to thirty-eight and the perturbation count from fourteen to
-eighteen, this act's own record counted with the three that arrived
-uncounted from the doors and boundary acts, each named. Section 7's new
-clause gains the removal sentence its neighbours carry. The entry below
-gains the ordinal the convention asks for, which it was filed without.
+judges the restore election, the record readable under this crate's custody, the cut a
+run and a turn it holds, and the session name deciding resume from branch with every
+combination ruled, and section 6 stands the member's door under a restoring load with
+this crate as its peer, preloading the record through the cut before the enter and
+rewriting the session member where the name differs. Per issue #432. **Revised:**
+2026-09-04, second of this date, the vector's flags and the socket's key are spelled.
+Section 6 names the four flags the member's vector carries ahead of its positionals, and
+section 9 names `state-store-socket`, the one value the store's inventory reads from
+this crate's own file. Per issue #411's code act. **Revised:** 2026-09-04, first of this
+date, the store election is judged at the inventory and rides the member's vector.
+Section 4 resolves an absent election to the embedded engine and requires the member's
+binary, refuses a service election whose socket, role mapping, or agent refusal the box
+does not hold, and takes `none` as a declared absence, so the leg stands where the
+declaration says and not where a binary happens to sit. Section 6's vector gains the
+engine and, under the service engine, its socket, database, and role. Per issue #411.
+**Revised:** 2026-08-31, second of this date, the census counts what the file holds. Per
+the review seat on PR 393: section 10's totals move from thirty-four to thirty-eight and
+the perturbation count from fourteen to eighteen, this act's own record counted with the
+three that arrived uncounted from the doors and boundary acts, each named. Section 7's
+new clause gains the removal sentence its neighbours carry. The entry below gains the
+ordinal the convention asks for, which it was filed without.
 
 **Revised:** 2026-08-31, first of this date, the permission members are
 this crate's to set.
@@ -822,12 +820,20 @@ enter and again at the leave, per `weaver-trace-PRD` section 3.1.
 
 **A restore is judged here too, as of 2026-09-04, per issue #432.** A declaration
 electing one names a record, and the walk reads it under this crate's own custody: a
-record that cannot be read refuses `BoundaryUnverified`, and a `through-turn` naming a
-turn the record does not hold refuses `ConfigInvalid` naming `restore.through-turn`, the
-record being the one fact that can say whether the cut exists. The record is never
-handed to the agent and never named to the worker, on the same descriptor discipline as
-the sink: what the harness receives is the enter's copy of the election, and what the
-member receives is the record's holdings through the door of section 6.
+record that cannot be read refuses `BoundaryUnverified`, and a cut naming a run the
+record does not hold, or a turn that run does not hold, refuses `ConfigInvalid` naming
+`restore.through`, the record being the one fact that can say whether the cut exists.
+**The session name decides what the restore is, and every combination is ruled.** The
+declaration's own session name with the record whole is a resume. A new session name is
+a branch, at the cut where one is named and at the record's end where none is. A cut
+under the record's own session name refuses `ConfigInvalid` naming `restore.through`,
+because a session cannot rewind under its own name while its record carries the turns
+the cut would drop. The lineage that crosses the enter is resolved here: the parent's
+session and run and the turn the holdings stop at, a whole record resolved to its last
+run's last turn. The record is never handed to the agent and never named to the worker,
+on the same descriptor discipline as the sink: what the harness receives is the enter's
+copy of the election, and what the member receives is the record's holdings through the
+door of section 6.
 
 **One check in that list is the second walk's mechanism and is held
 mechanically instead.** The sink path's containing directory is root-owned
@@ -1328,7 +1334,12 @@ in the record's order, and the seal, the same three things in the same order
 parked replay ask and the harness's first ask alike find the holdings standing. The cut
 is by turn, the record's own unit: every event through the named turn's close and none
 after it. The preload is admin's under this binding because the record is admin's to
-read and the operator's surface starts the load with one verb.
+read and the operator's surface starts the load with one verb. Where the declared
+session name differs from the record's, every distillate's session member is rewritten
+to the declared name as it crosses, run and sequence as recorded, because the member
+bounds every answer to the session its opener declared and rows landed under the
+parent's name would answer no ask. The parent's name survives on the load event's
+lineage alone.
 
 **The instrument is perturbation, and the claim is this site's half of a
 two-sided one.** **What is watched is the vector this crate composes, in both

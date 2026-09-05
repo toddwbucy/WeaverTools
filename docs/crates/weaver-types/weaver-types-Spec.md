@@ -4,27 +4,23 @@
 one's Spec pass. Code is written against it under the gates of Working Process section
 6.
 
-**Date filed:** 2026-08-01
-**Revised:** 2026-09-04, fourth of this date, a session stands from a record.
-Section 2 gains `restore`, optional, the record the session stands from and the
-turn it stops at, and section 4's enter carries it resolved beside `stack`, the
-digests of the organ binaries admin started. Per issue #432.
-**Revised:** 2026-09-04, second of this date, admin is the sink field's reader.
-Section 2 names it beside the discriminant's argument, per `weaver-admin-Spec`
-section 5 and issue #311.
-**Revised:** 2026-09-04, first of this date, the identity field is the seed.
-Section 2 states that
-`identity` seeds the session's first load and that the store governs every load
-after it where a state member stands, per `weaver-state-PRD` section 4 as revised
-this date and issue #422. The shape and the refusals are unchanged.
-**Revised:** 2026-09-01, the column registry's refusals are typed.
-`TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`,
-and `ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's
-open registry in that clause's own order - no permission, no readout
-election, no column in the family's declaration - each a unit variant
-because the fact refused carries no value the record holds nowhere else,
-on the registry-typing pattern the re-feed's arms set. The refused ask is
-`Open`, which `TokenAsk` already names, so no ask joins.
+**Date filed:** 2026-08-01 **Revised:** 2026-09-04, fourth of this date, a session
+stands from a record. Section 2 gains `restore`, optional, the record the session stands
+from and the cut, a run and a turn within it, and section 4's enter carries its lineage
+resolved beside `stack`, never the record's path, the digests of the organ binaries
+admin started. Per issue #432. **Revised:** 2026-09-04, second of this date, admin is
+the sink field's reader. Section 2 names it beside the discriminant's argument, per
+`weaver-admin-Spec` section 5 and issue #311. **Revised:** 2026-09-04, first of this
+date, the identity field is the seed. Section 2 states that `identity` seeds the
+session's first load and that the store governs every load after it where a state member
+stands, per `weaver-state-PRD` section 4 as revised this date and issue #422. The shape
+and the refusals are unchanged. **Revised:** 2026-09-01, the column registry's refusals
+are typed. `TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`, and
+`ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's open registry in
+that clause's own order - no permission, no readout election, no column in the family's
+declaration - each a unit variant because the fact refused carries no value the record
+holds nowhere else, on the registry-typing pattern the re-feed's arms set. The refused
+ask is `Open`, which `TokenAsk` already names, so no ask joins.
 
 **Revised:** 2026-08-31, fifth of this date, the permission members take a
 parse the seam survives. The unknown-field mechanism the second entry of
@@ -883,10 +879,13 @@ record with no reductions in it. This is why `AgentConfig` derives no `Default` 
 section 4 rules what absence means, the load standing from nothing, which is what every
 load did before the ruling of 2026-09-04 on issue #432. Present, it names the record the
 session stands from, a path admin reads under its own custody and the harness never
-sees, and `through_turn`, the turn the restored holdings stop at, absent meaning the
-record whole. A whole record under the declaration's own session name is a resume and a
-cut record under a new one is a branch, per that section, and which it is the record
-says.
+sees, and `through`, the cut, a run of the record by its reference and a turn within it,
+because a turn's number recurs across a session's runs and a cut that named the turn
+alone would name several. Absent, the record whole. The session name decides what the
+restore is, per that section and `weaver-admin-Spec` section 4: the declaration's own
+session name with the record whole is a resume, a new session name is a branch, at the
+cut where one is named and at the record's end where none is, and a cut under the
+record's own session name refuses at the inventory.
 
 ```graph
 node: types-required-field-refuses
@@ -1380,8 +1379,14 @@ pub struct EnterPayload {
     pub binding: EnterBinding,
     pub state_election: StateElection,
     pub state_store: StateStore,
-    pub restore: Option<Restore>,
+    pub restore: Option<Lineage>,
     pub stack: BTreeMap<String, String>,
+}
+
+pub struct Lineage {
+    pub parent: SessionId,
+    pub run: RunId,
+    pub through: u64,
 }
 
 pub enum EnterBinding {
@@ -1419,15 +1424,17 @@ rule having been judged before any process existed, and the member's own
 vector carries the same three, per `weaver-admin-Spec` section 6, so the two
 parties that need them read one resolution.
 
-**`restore` and `stack` ride the enter as of 2026-09-04, per issue #432.** `restore` is
-the declaration's election carried whole where it made one, so the harness knows the
-session stands from a record and where the cut fell, and it names the parent on the load
-event without opening the record, which admin preloaded into the member before the enter
-per `weaver-admin-Spec` section 6. `stack` is the digests of the organ binaries admin
-started, keyed by the binary's name, so the load event names the stack that ran it and a
-record is sufficient for its own conditions without a deposit beside it, per
-`weaver-trace-PRD` section 3.1. Both are admin's facts and the harness authors them as
-it authors the store's.
+**`restore` and `stack` ride the enter as of 2026-09-04, per issue #432.** `restore`
+rides as `Lineage`, resolved by admin: the parent's session, the run the cut falls in,
+and the turn the holdings stop at, a whole record resolved to its last run's last turn,
+and never the record's path, which admin read under its own custody and the harness has
+no business holding, on the same discipline as the sink. The harness names the parent on
+the load event and starts its turn ordinal from the cut without opening anything, the
+record having been preloaded into the member before the enter per `weaver-admin-Spec`
+section 6. `stack` is the digests of the organ binaries admin started, keyed by the
+binary's name, so the load event names the stack that ran it and a record is sufficient
+for its own conditions without a deposit beside it, per `weaver-trace-PRD` section 3.1.
+Both are admin's facts and the harness authors them as it authors the store's.
 
 **`EnterBinding` is the kind resolved, and a directive disagreeing with its
 kind is unrepresentable rather than refused.** The config holds the kind as
