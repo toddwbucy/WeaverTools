@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, seventh of this date. Section 7.3 cites
+`weaver-analysis-web-contract`, landed this date per issue #418, and names
+the two clauses of it that reach back here: the position rides beside the
+ordinal, converted once at the drain, and an uncertified diagnostic record
+is not drawn. Section 7.2's account of `validate` is bounded against the
+custody ruling of this date, issue #456: the verb reaches what admin holds
+custody of, and a clean answer is acceptance for filing rather than approval
+to load.
+
 **Revised:** 2026-09-05, sixth of this date, the second review pass. Four
 sentences lost a word to the semicolon sweep and are restored. **A sharded
 GGUF carries no index**, so section 2.3 enumerates it by the
@@ -469,10 +478,18 @@ would have designed around a refusal that no longer stands.
 No verb chains another. This crate offers each as a separate act and nothing
 composite.
 
-**`validate` is also the composition oracle.** It transitions nothing,
-refuses an incoherent declaration naming the field, and carries the box
-facts a load would meet, so the Compose surface writes its draft and asks
-rather than judging. **This crate therefore carries no second copy of the
+**`validate` is also the composition oracle, and what it can answer is
+bounded.** It transitions nothing, refuses an incoherent declaration naming
+the field, and reaches **the box facts admin holds custody of**, per
+`weaver-admin-PRD` section 4.3 as ruled 2026-09-05 on issue #456: admin
+adjudicates what it provisions, asks the owner where one can be asked
+before a process exists, and leaves to the organ what only the organ can
+judge. So the Compose surface writes its draft and asks rather than
+judging, **and a clean `validate` is acceptance for filing rather than
+approval to load.** Whether the artifact resolves, whether the family
+exposes the taps the declaration elects, and whether these weights load at
+this precision are answered at admission under the agent's identity and
+not here. **This crate therefore carries no second copy of the
 rules**, only a copy of the declaration's field shape written against
 `weaver-types-Spec` section 2 **at a named corpus commit**, which is that
 copy's staleness rule: when the floor moves, the pin says so and `validate`
@@ -480,9 +497,15 @@ refuses in a way the surface can name.
 
 ### 7.3 The analysis stream
 
-The emission this crate ingests. Its shape is a contract between the two
-crates and is owed as its own act, per issue #418. This document names the
-seam and does not restate the contract.
+The emission this crate ingests. **Its shape is
+`weaver-analysis-web-contract`**, landed 2026-09-05 per issue #418, and this
+document names the seam and restates none of it. Two of that contract's
+clauses reach back into this document and are worth naming where a reader
+of this section stands: the series carries the position beside the ordinal,
+converted once at the drain rather than in any consumer, per section 2.1's
+rule that the two are different coordinates, and a diagnostic record whose
+bracket did not close certified is not drawn, the refusal naming the
+outcome.
 
 ## 8. Placement and the link
 
