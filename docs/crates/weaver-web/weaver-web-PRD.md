@@ -256,13 +256,17 @@ the control arm is free.
 
 <!-- figure: Branch | Stage -->
 
-### 3.6 The four lists
+### 3.6 The four on the list side
 
-Global, filtered, and written into by every surface above. **The Experiment
-view is the fourth**, and it is a surface rather than a mode of the list
-above it: its own destination, its own state, and its own module under the
-Spec's rule of one module each. Five on the path and four here are the nine
-this section opens with.
+Global, filtered, and written into by every surface above. **Three of the
+four are lists and the fourth is not.** Agents, Experiments and Record are
+list destinations; the Experiment view is the detail surface one of them
+opens into, and it is a surface rather than a mode of the list above it:
+its own destination, its own state, and its own module under the Spec's
+rule of one module each. **The group is named for how it is reached** - by
+a chip-query rather than along the path - and not for the shape of what it
+holds, so no implementer reads the detail view as a fourth list. Five on
+the path and four here are the nine this section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -355,14 +359,21 @@ of its own. What a fine-tune changed becomes a cell with its tuple that a
 reviewer reruns, rather than a claim about a training run.
 
 **Whether the lens is reused or refitted is answered by the tool rather than
-by the operator.** A lens artifact is versioned by the weights hash it was
-fitted to, so a read pointed at weights it was not fitted for refuses by
-name, and that refusal is the refit's trigger. The two cases differ:
-post-trained weights are a different function and want a refit, while a
-quantization is the same trained weights in a lossy encoding and may not -
-measured at the 8B, GGUF columns read through a safetensors-fitted lens
-scored a fraction above the torch reference on the same tokens at both
-bf16 and q8_0.
+by the operator.** A lens artifact is versioned by the **trained-weights
+identity** it was fitted to, and that identity is not the artifact's
+serialized digest. A derived artifact inherits it through its recorded
+provenance - the source artifact, with the converter and the pin that
+produced it - and a read pointed at weights whose trained-weights identity
+the lens was not fitted to refuses by name, that refusal being the refit's
+trigger. **Versioning against the serialized bytes instead would make every
+quantization a refit**, which is the opposite of what the measurement
+shows. The two cases differ: post-trained weights are a different function
+and want a refit, while a quantization is the same trained weights in a
+lossy encoding and inherits the fit - measured at the 8B, GGUF columns read
+through a safetensors-fitted lens scored a fraction above the torch
+reference on the same tokens at both bf16 and q8_0. **A derived artifact
+whose provenance is unrecorded inherits nothing and refuses**, so the reuse
+is a fact the catalog carries rather than an assumption the reader makes.
 
 **A refit is a new artifact, and two readings through two lenses are not
 directly comparable.** Base against fine-tune compares two models through
@@ -478,13 +489,24 @@ this crate designs around the gap until it closes.
   #439.
 - **Whether this crate scores**, which splits in two and **half of it
   closes here.** **Reproduction is measurement**: a comparison of two rows
-  this crate already holds, byte against byte, attributed to the comparison
-  rather than to a judge, and it is in scope and drawn. **Correctness is
+  this crate already holds, attributed to the comparison rather than to a
+  judge, and it is in scope and drawn. **The comparison is projected and
+  the projection is stated.** Two rows align on turn and position, which
+  are the address rather than the subject, and compare on the emitted
+  token, the surprisal, the entropy, and the ranked alternatives with their
+  mass. **Byte equality is claimed only where the tuple is held.** Where
+  any member of the tuple differs the result is a divergence report naming
+  which member differs, never a verdict: a decode under a different engine
+  build is a different compound, and equality was not the question asked
+  of it. **Correctness is
   testimony** and needs a scorer, which section 1's discipline forbids this
   crate from being. The open half is which of three answers that takes: this
   crate does not score and records the emission for an external scorer; it
-  records a scorer's verdict with the scorer named in the tuple, so the
-  judgment is attributable to a named thing rather than to the instrument;
+  records a scorer's verdict with **the scorer named on the verdict and
+  never in the run's tuple**, so the judgment is attributable to a named
+  thing rather than to the instrument, and a second scorer applied to the
+  same run adds a verdict rather than changing what the run was or
+  duplicating its row;
   or scoring lives in the benchmark harness and this crate cites it. **The
   two are separate columns and the correctness one stays unfilled until a
   scorer is named**, because a column that mixes them would let a

@@ -122,7 +122,28 @@ task is in this list for the same reason the artifact is: two runs of the
 same benchmark item under different suite versions are not the same task,
 and nothing else in the row would say so.
 
-### 2.3 The indexes
+### 2.3 The recorded query
+
+Section 4 admits an open query surface on the condition that the query is
+recorded beside its result, and that condition needs somewhere to land.
+Each recorded query is its own row under its own identifier, carrying:
+
+- the query text as issued, verbatim
+- the runs it addressed, each by identity
+- the reader that served it, by name and version
+- when it was taken
+
+**The result is not stored beside it.** A stored result would be a second
+truth about positions section 2.1 already holds, and it would go stale the
+moment a later ingest completed the run. The row stores what reruns the
+query, and the rerun is what produces the result again - which is the whole
+of what a quotable reading claims.
+
+**A query that cannot name every run it addressed is not recorded and not
+quotable.** Section 4's condition is that a second person can rerun it, and
+a reader that cannot say what it read cannot be rerun by anyone.
+
+### 2.4 The indexes
 
 ```text
 primary       (run, turn, position)
@@ -164,9 +185,10 @@ described, and it returns here before it is built.
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
 so a result whose query text was not stored is not quotable and this crate
-does not present it as one. That keeps section 2.3's rule rather than
-spending it: the derivation is recorded rather than absent, and what section
-2.3 forbids is a derivation nobody can find.
+does not present it as one. **Section 2.3 is where it lands.** That keeps
+section 2.4's rule rather than spending it: the derivation is recorded
+rather than absent, and what section 2.4 forbids is a derivation nobody can
+find.
 
 ## 5. Staged experiments
 
@@ -330,6 +352,7 @@ cell record like any other.
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
 | nothing is computed at read time | review, over the three reads |
+| a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
@@ -349,8 +372,12 @@ act that lands it states what removal makes it fail and confirms it does.
 - **Whether the preset ladder is a picker or a wizard.**
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
-  score: it is the comparison of two rows this crate holds, and section 2.2
-  carries it. What stays open is whether a correctness column exists beside
-  it and who is named in it.
+  score: it is the projected comparison of two rows this crate holds, on
+  the fields the charter's section 9 names, and section 2.2 carries the
+  tuple that decides whether equality is claimed or a divergence is
+  reported. What stays open is whether a correctness column exists beside
+  it. Where one does, **the scorer is named on the verdict and never in the
+  run's tuple**, so a second scorer adds a verdict rather than changing what
+  the run was.
 - **The word "cell"**, which carries a second sense elsewhere in the corpus
   and must be settled once rather than twice.
