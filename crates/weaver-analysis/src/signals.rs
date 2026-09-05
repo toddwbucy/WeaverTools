@@ -1,4 +1,7 @@
-//! The per-position signals, read as a series, per the drain of section 5.
+//! conforms: analysis-signals-keep-absence
+//!
+//! The per-position signals, read as a series, per `weaver-analysis-Spec`
+//! section 5 as of 2026-09-05.
 //!
 //! **This reader needs no tap, no lens, and no weights.** The entropy at
 //! each decode position rides every generation's measurement

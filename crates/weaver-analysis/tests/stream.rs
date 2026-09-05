@@ -1,4 +1,5 @@
 //! conforms: analysis-reading-drains-within-a-turn
+//! conforms: analysis-signals-keep-absence
 //!
 //! The streaming reading's watches, per `weaver-analysis-Spec` section 5.
 //! The fixtures are shaped like the real records the live run drained.
@@ -89,6 +90,10 @@ fn the_outcome_is_read_from_the_close() {
 /// **The signals reader rides the same drain and needs nothing else**: no
 /// lens, no weights, no tap. The entropies ride every generation and the
 /// surprisals ride their election, and an absent vector stays absent.
+///
+/// Perturbation: fill an absent surprisal with zero in the reader and this
+/// fails, the bare record's points carrying a surprisal the election never
+/// produced. Watched under exactly that change.
 #[test]
 fn the_signals_series_pairs_and_keeps_absence() {
     let text = record(Some("certified"), "");
