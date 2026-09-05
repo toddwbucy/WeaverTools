@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, the family key is folded across containers. Section
+5's registry clause compares the entry's spelling and the artifact's under one
+fold, lower case with `_`, `-`, and `.` dropped, so a safetensors `model_type`
+and a GGUF `general.architecture` naming one architecture select one entry,
+per #212's finding of 2026-08-21. The registry's spellings do not move, two
+spellings may not fold to one key and the build says so, and a different
+family spelled differently is a registry question rather than the fold's.
+
 **Revised:** 2026-09-02, the qwen3 family declares its taps. Section 7
 records the measurement that bought them - both halves against
 `Qwen3-8B-BF16` on a real device, the neutrality bar at two seeds and the
@@ -1825,6 +1833,28 @@ edge: asserts
 from: weaver-spu
 to: spu-registry-no-silent-substitution
 ```
+
+**The key is compared folded, so the two containers' spellings of one
+architecture select one entry.** GGUF writes `general.architecture` and a
+safetensors export writes `config.json`'s `model_type`, and the two do not
+spell several families alike: `qwen35moe` against `qwen3_5_moe`, `qwen3moe`
+against `qwen3_moe`, `gpt-oss` against `gpt_oss`, per #212's finding of
+2026-08-21. A table keyed on the verbatim string carries a family for one
+container and refuses it at admission for the other while reading as carried
+for both, which is a declared capability nothing implements. So the comparison,
+and only the comparison, folds both spellings to one key: ASCII letters fold to
+lower case, the separators `_`, `-`, and `.` are dropped, and every other byte
+stands as written, the key the entry declares and the key the artifact carries
+both passing through the same fold before they meet. The registry's spelling is
+unchanged, each entry keeping the spelling it was declared with, and the
+refusal still names the spelling the artifact's header declared. Two entries
+spelled differently may not fold to one key, and the build says so beside the
+marker-set uniqueness above, so the contested-architecture reading is what it
+was: entries sharing a key compete on their markers. **A spelling difference
+that is a different family is not the fold's to bridge.** Safetensors `mistral`
+and the registry's `mistral3` are two names for two things and stay two keys,
+and a family the registry spells otherwise than a container does is a registry
+question, answered by a row and never by widening the fold.
 
 **Both directions of the template requirement bind here, per the charter, and
 both are bought.** Inbound, the reference test shape is the archived tree's
