@@ -267,6 +267,14 @@ admitted agent in a single ask. Load state is therefore **the harness's own
 word rather than an inference from a socket's existence**, and no surface
 labels it as inferred.
 
+**The observation answers from any position, a running turn included**, as
+of 2026-09-05. It is served from inside the turn between tokens, touching no
+bracket and cancelling nothing, and the one bound is the single token whose
+decode is in progress. So **a roster may read while an agent is answering**,
+and a surface has no reason to withhold a status read during activity or to
+present a stale one as current. A view built against the earlier posture
+would have designed around a refusal that no longer stands.
+
 No verb chains another. This crate offers each as a separate act and nothing
 composite.
 
