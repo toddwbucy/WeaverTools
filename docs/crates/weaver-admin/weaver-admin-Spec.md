@@ -4,6 +4,15 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-09-05, second of this date, the artifact is named here and resolved
+at admission. Section 4's existence checks are restated under charter section 4.3's
+custody rule: what admin provisions it looks at, what another organ owns it asks about
+or leaves to that organ, and the model binding's artifact is checked for presence
+alone, an empty member refusing `ConfigInvalid` and `ArtifactUnresolvable` leaving this
+crate's refusals for the SPU's admit, where the agent's identity is the one that
+decides. Section 3's validate clause names the store's seam as the one the verb
+touches, and section 6's ordering clause loses the artifact from its older facts. Per
+issue #456.
 **Revised:** 2026-09-05, a reachable organ's boundary is judged at the inventory.
 Section 4 fixes the refusal's shape ahead of the organ that will need it,
 `ConfigInvalid` naming the organ's `boundary` member, and states that today's parse
@@ -639,9 +648,10 @@ to: admin-inventory-one-function
 ```
 
 **What the call graph does not hold is where the verb stops.** Invoked as a
-verb the inventory run ends at the report and answers `Validated`, touching
-no seam and starting no process, which is a behaviour no signature states and
-no count of callers reaches. It is review's and takes its own record, because
+verb the inventory run ends at the report and answers `Validated`, having asked
+the store where the declaration elects one and touched no other seam, and
+starting no process, which is a behaviour no signature states and no count of
+callers reaches. It is review's and takes its own record, because
 a single record tagged for the mechanical half would claim the compiler for
 the whole.
 
@@ -787,13 +797,20 @@ carried. That the parse is total and exposes no partial value is
 `weaver-types-Spec` section 2's claim and asserted there, so what this crate
 adds is the mapping and not a second statement of the parse.
 
-**The existence checks are admin's, and each is a look rather than an ask.**
-The model binding resolves to a readable artifact. The sink exists, or its
-creation flag is set, per the discriminated cases of section 5. The agent's
-uid resolves and its home directory exists with the expected ownership and
-modes. Any failure refuses with `BoundaryUnverified` or the artifact case
-that names it, nothing is repaired, and nothing is built, per charter
-section 2. No test below reaches that set, which is stated rather
+**The existence checks are admin's where admin holds custody, and an ask where
+another organ does, per charter section 4.3 as ruled 2026-09-05 on issue #456.**
+The sink exists, or its creation flag is set, per the discriminated cases of
+section 5. The agent's uid resolves and its home directory exists with the
+expected ownership and modes. Any failure refuses with `BoundaryUnverified`,
+nothing is repaired, and nothing is built, per charter section 2. **The model
+binding's artifact is checked for presence and never resolved here.** An empty
+member refuses `ConfigInvalid` naming
+`spu-instruction.decoder.model-binding.artifact`, the omission being the
+declaration's, and whether the named artifact resolves is the SPU's at
+admission under the agent's identity, per `weaver-spu-Spec` section 3: a look
+from here runs as root and cannot see a directory the agent uid is denied, so
+`ArtifactUnresolvable` is never this crate's refusal and the walk raises it at
+no site. No test below reaches that set, which is stated rather
 than left to look like an omission: the checks are a list a reviewer reads
 against the charter's boundary, and review is the instrument that holds them.
 
@@ -1145,9 +1162,9 @@ to refuse. So the set is `User`, `Group`, `SupplementaryGroups`,
 what would have to hold rather than enumerated from what is set.
 
 **The check runs last of the inventory's walks**, so it preempts none of them:
-an unreadable artifact or an unverified boundary is the older and narrower
-fact, and a check running ahead of those made three inventory tests depend on
-whether the box carried the agent's group. **Unresolvable is not unreachable**:
+an unverified boundary is the older and narrower fact, and a check running
+ahead of it made three inventory tests depend on whether the box carried the
+agent's group. **Unresolvable is not unreachable**:
 where the group cannot be read this asserts nothing and the load fails later
 and loudly, rather than refusing on a fact it never established.
 
@@ -2085,7 +2102,7 @@ whether this file's convention was universal, on the occasion of a record that
 follows it. The elections take nodes
 because gate H1 would otherwise leave the largest decisions in this Spec
 untraceable, and two review tags come from the sorting rather than from an
-election: the verb's stopping short of any seam and the existence checks no
+election: the verb's starting no process and the existence checks no
 test reaches are the review halves of splits this section's own bullets take,
 and a divided half counts with the bullet it divided out of, per Document
 Format section 3.

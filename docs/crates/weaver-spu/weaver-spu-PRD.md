@@ -7,6 +7,16 @@ chartered by ruling rather than incomplete:** a crate is chartered workflow by w
 and this crate's part in the workflow now finishing is one thing, admitting a model and
 later releasing it.
 
+**Revised:** 2026-09-05, second of this date, the refusal's account names its step.
+Section 4.1 step 1 requires the step beside the path and the identity, matching
+what the Spec's section 3 already carried, per the review of PR #457.
+
+**Revised:** 2026-09-05, the artifact refusal names its path and its identity.
+Section 4.1 step 1 and section 7 carry the operator's ruling on issue #456: admin
+checks that the binding names an artifact and nothing more, this crate resolves it
+as the agent uid, and a refusal on the artifact names the path and the identity it
+was judged under, the fault admin's root-side look could never see.
+
 **Revised:** 2026-08-31, third of this date, the re-feed drive is chartered.
 Section 13.14 lands per `diagnostic-replay-loop` section 2's owed act: one
 drive per recorded generation, the draw computed as a generation would
@@ -363,7 +373,12 @@ Opened by the harness, carrying the SPU instruction it was handed in the enter
 directive. It ends in residency confirmed or in a typed refusal.
 
 1. **Resolve the binding to an artifact.** A binding naming a model this crate
-   cannot find is refused before the device is touched.
+   cannot find is refused before the device is touched, and the refusal's account
+   names the path that failed, the step that failed on it, and the identity it
+   was judged under, because this crate runs as the agent and admin does not,
+   per section 7: the operator's
+   likeliest fault, an artifact readable to root under a directory the agent uid
+   cannot traverse, is visible from here and nowhere earlier.
 2. **Read what the artifact declares about itself, without loading it.** The old
    tree reads a model file's header and metadata block to answer what family this is
    and what its basic dimensions are, without reading tensor data and without
@@ -661,9 +676,15 @@ property comes from non-ownership rather than from the bits.
 **It is an operator artifact and this program verifies rather than authors it.** That is
 the same posture `weaver-admin-PRD` section 1 takes toward the boundary, and it reaches
 here through the two failure points admin already names. Admin refuses a load whose
-configuration names a binding it cannot satisfy, before a process exists. This crate
-refuses an admit whose artifact it cannot read or parse, which is the failure admin
-could not have seen. Neither repairs anything.
+configuration leaves the binding's artifact unnamed, before a process exists, and
+judges nothing else about it, per `weaver-admin-PRD` section 4.3 as ruled 2026-09-05
+on issue #456. This crate refuses an admit whose artifact it cannot resolve, read, or
+parse, judged as the agent uid, which is the failure admin could not have seen: a
+look from admin's side runs as root and passes a directory the agent is denied. The
+refusal that crosses the seam is the floor's typed case, and the account that stays
+on this side names the path and the identity, so the operator reads which file and
+which uid rather than a sound binding refused for no stated reason. Neither repairs
+anything.
 
 **This crate's code compiles into this crate's processes and into no other.** It is
 not linked into the worker's address space, so no build exists in which harness code

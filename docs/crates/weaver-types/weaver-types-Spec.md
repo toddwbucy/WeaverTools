@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-05, the artifact is named at the inventory and resolved at
+admission. Section 2's account of what admin adds beyond the parse loses the claim
+that the model artifact resolves there, per `weaver-admin-PRD` section 4.3 as ruled
+this date on issue #456: admin checks that the artifact is named, and whether it
+resolves is the SPU's under the agent's identity. Found by the review seat on PR #457.
 **Revised:** 2026-09-04, fourth of this date, a session stands from a record. Section 2
 gains `restore`, optional, the record the session stands from and the cut, a run and a
 turn within it, and section 4's enter carries its lineage resolved beside `stack`, never
@@ -1026,10 +1031,11 @@ to: types-config-parse-total
 ```
 
 What admin adds beyond the parse is
-existence, that the model artifact resolves, the sink exists or its creation flag
-is set, and the boundary is as the operator wrote it, per `weaver-admin-PRD`
-section 4.3. The parse answers well-formed and the checks answer real, and this
-crate owns the first only.
+existence where admin holds custody, that the model artifact is named, the sink
+exists or its creation flag is set, and the boundary is as the operator wrote it,
+per `weaver-admin-PRD` section 4.3, whether the artifact resolves being the SPU's
+to answer at admission under the agent's identity. The parse answers well-formed
+and the checks answer real, and this crate owns the first only.
 
 **A field no organ registered refuses rather than being ignored.** Unknown is measured
 against the declared surface, per `weaver-types-PRD` section 2.1. **The derive this

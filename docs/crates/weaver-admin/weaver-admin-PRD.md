@@ -5,6 +5,16 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-09-05, second of this date, admin adjudicates what it holds custody
+of. Section 4.3 states the rule the device carve-out and the grant surface were two
+instances of: admin judges what it provisions and holds custody of, asks the owner
+where one can be asked without a process, and never substitutes its own test for the
+owner's judgment. The model artifact joins them as the third instance, the inventory
+checking that it is named and the SPU judging its resolution at admission under the
+agent's identity, because a look from admin's side runs as root and passes a directory
+the agent is denied. The no-seam claim retires, the inventory having reached the
+store's seam since 2026-09-04, and load step 2 follows. Per issue #456.
+
 **Revised:** 2026-09-05, a reachable organ declares its boundary. Section 4.3 carries
 the rule the operator ruled into the corpus this date: every service reachable other
 than by kernel-enforced peer identity declares a boundary, the inventory refuses a load
@@ -240,8 +250,9 @@ refuses the load, and nothing here is repaired.
 crate and the harness read it, per `weaver-types-PRD` section 2.1. It is declarative,
 read at load, and fixed for the run, carrying the model binding, the tool set, the
 permission mode, and the two elections. Validating it before a process exists is this
-crate's, because a file naming a model binding admin cannot satisfy must fail the load
-at the cheapest possible moment.
+crate's, because a file that is malformed, or that leaves unnamed what a load needs,
+must fail the load at the cheapest possible moment, and what it names is judged by
+the organ that owns it, per section 4.3.
 
 ```graph
 edge: reads
@@ -539,8 +550,9 @@ order is the substance.
    name: the agent is on the operator's allow-list and shaped as a name rather than
    a path, or the verb refuses without touching anything else.
 2. **Read and validate the agent's configuration file.** A file that is absent, that
-   is missing a required field, or that names a model binding admin cannot satisfy
-   fails the load before any process exists.
+   is missing a required field, or that leaves the model binding's artifact unnamed
+   fails the load before any process exists. Whether the artifact it names resolves
+   is the SPU's to answer at admission, per section 4.3.
 3. **Verify the boundary the operator wrote.** The OS identity resolves, the home
    directory exists with the expected ownership and modes, and the trace directory is
    root-owned and not searchable by the agent uid. Any failure refuses. Nothing here
@@ -656,17 +668,39 @@ started against them. It is the front half of `load` and it is also invocable al
 which is one code path entered two ways rather than two checks free to drift apart.
 
 What it inventories is what a load depends on and cannot discover later. The
-configuration file is present and parses. Its required fields are there. The model it
-names resolves to a real artifact in the format it is expected to be in, and the
-settings it carries resolve the same way **except for the devices it assigns,
-which this crate does not reason about at all**, per ruling C and the
-device-assignment ruling of 2026-08-03: their existence is the SPU's to answer
-at admission. The stream sink it declares exists, or the flag
-that orders one created is set. The boundary checks of load step 3 run against the
-operator's provisioning. Every one of these is a question about whether a named
-thing exists and is what it claims to be, and admin answers it by looking rather
-than by asking another crate, which is why this verb reaches no seam and starts no
-process.
+configuration file is present and parses. Its required fields are there, the model
+binding's artifact among them. The stream sink it declares exists, or the flag that
+orders one created is set. The boundary checks of load step 3 run against the
+operator's provisioning, and where the declaration elects a store the walk asks the
+store the two questions its gates pose, per `weaver-state-PRD` section 4. Every one of
+these is a question about a thing admin provisioned or holds custody of, or an answer
+the owner gave when asked, and this verb reaches one seam, the store's, and starts no
+process, which is what keeps it cheap and free of side effects.
+
+**Admin adjudicates what it holds custody of, asks the owner about everything else,
+and never substitutes its own test for the owner's judgment, per the operator's ruling
+of 2026-09-05 on issue #456.** The uid, the home, the sink, and the boundary's members
+with their modes are admin's to judge, because admin provisions them and holds custody
+of where the record leaves the system. A fact interior to another organ is not:
+whether these weights load at this precision, whether this family exposes the taps the
+declaration elects, whether a Postgres account carries the grant it claims. Where the
+owner can be asked before any process exists, the inventory asks and carries the
+answer, telling a refusal from an owner that could not be reached, which is the
+distinction an ask has and a look does not. Where the owner is the organ a load stands
+up, the question waits for admission and the inventory checks only that the
+declaration names the thing. The devices are the oldest instance of the rule, **which
+this crate does not reason about at all**, per ruling C and the device-assignment
+ruling of 2026-08-03: their existence is the SPU's to answer at admission. The grant
+surface is the second, read at the enter and never judged, per `weaver-trace-PRD`
+section 3.1. **The model artifact is the third, and the one the inventory had been
+judging.** Whether it resolves, in the format it is expected to be in, is the SPU's to
+answer at admission under the agent's identity, per `weaver-spu-PRD` section 4.1, and
+a look taken here runs as root: an artifact readable to root under a directory the
+agent uid cannot traverse passes such a check and fails the load, so the check turns
+unenforced into documented as enforced, which is worse than no check. The inventory
+therefore checks that the artifact is named and nothing more, an empty member refusing
+as the declaration's fault, and the SPU's refusal is the one that names the path and
+the identity it was judged under, per that charter's section 7.
 
 Reached as the front half of a load, a clean inventory flows into step 4 and a failure
 refuses before any process exists. Invoked alone, it stops at the result and reports,

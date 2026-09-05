@@ -217,9 +217,26 @@ fn take_inventory_against(
         });
     }
 
-    // The model artifact resolves to something readable. Nothing is repaired.
-    if !artifact_readable(&config.spu_instruction.decoder.model_binding.artifact.0) {
-        return Err(LifecycleRefusal::ArtifactUnresolvable);
+    // **The model binding's artifact is checked for presence and never
+    // resolved here**, per `weaver-admin-Spec` section 4 as ruled 2026-09-05
+    // on issue #456. Whether it resolves is the SPU's to answer at admission
+    // under the agent's identity: a look from here runs as root and passes a
+    // directory the agent uid is denied, which would document as enforced a
+    // check that enforces nothing. An empty member is the declaration's own
+    // omission and refuses as one.
+    if config
+        .spu_instruction
+        .decoder
+        .model_binding
+        .artifact
+        .0
+        .is_empty()
+    {
+        return Err(LifecycleRefusal::ConfigInvalid {
+            field: Some(FieldName(
+                "spu-instruction.decoder.model-binding.artifact".into(),
+            )),
+        });
     }
 
     // The agent's home exists.
@@ -674,16 +691,6 @@ fn unreachable_peer_against(
     // which this crate has no reason to do, so the rule's gid half rests on
     // the credential check alone and this says so rather than guessing.
     None
-}
-
-fn artifact_readable(artifact: &str) -> bool {
-    let path = Path::new(artifact);
-    // An artifact named by an absolute path must be readable; a bare name is
-    // the operator's own reference and resolution beyond this crate's reach.
-    if path.is_absolute() {
-        return path.exists();
-    }
-    !artifact.is_empty()
 }
 
 pub(crate) fn sink_directory(sink: &TraceSink) -> &Path {
@@ -1518,5 +1525,47 @@ mod tests {
         );
         assert!(matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)));
         assert!(!absent_home.exists(), "nothing was built");
+    }
+
+    /// **The artifact is named here and resolved at admission**, per
+    /// `weaver-admin-Spec` section 4 as ruled 2026-09-05 on issue #456. A
+    /// binding naming a path this box does not hold passes the inventory,
+    /// because resolution is the SPU's under the agent's identity and a
+    /// root-side look would pass what the agent is denied. An empty member is
+    /// the declaration's omission and refuses naming the field.
+    ///
+    /// Perturbation: restore a resolution check on the artifact and the first
+    /// assertion refuses on the absent path, or drop the presence check and
+    /// the second admits an unnamed binding. Watched under both.
+    #[test]
+    fn the_artifact_is_named_here_and_resolved_at_admission() {
+        let root = scratch("artifact");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink dir");
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o750)).expect("mode");
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".into());
+        let bound = boundary(&home, 65533);
+
+        let absent = config_source(&sink_dir).replace(
+            "artifact: qwen3-4b-instruct",
+            "artifact: /no/such/directory/model.gguf",
+        );
+        let admitted = take_inventory(&name, &absent, &allow, &bound);
+        assert!(
+            admitted.is_ok(),
+            "an absent artifact path is the SPU's to refuse, got {admitted:?}"
+        );
+
+        let unnamed =
+            config_source(&sink_dir).replace("artifact: qwen3-4b-instruct", "artifact: \"\"");
+        let refused = take_inventory(&name, &unnamed, &allow, &bound);
+        match refused {
+            Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) })
+                if f.0 == "spu-instruction.decoder.model-binding.artifact" => {}
+            other => panic!("an unnamed artifact refuses naming the field, got {other:?}"),
+        }
     }
 }

@@ -338,8 +338,10 @@ pub enum TraceSink {
     Socket { path: PathBuf },
 }
 
-/// What an operator writes to name a model artifact. Resolution is admin's and
-/// readability is the SPU's; this crate answers well-formed only.
+/// What an operator writes to name a model artifact. Resolution and readability
+/// are the SPU's at admission, under the agent's identity, admin asking only that
+/// it is named, per `weaver-admin-PRD` section 4.3. This crate answers well-formed
+/// only.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArtifactRef(pub String);
 
