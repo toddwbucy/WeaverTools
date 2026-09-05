@@ -27,6 +27,16 @@ rather than asserted, an uncited regime in a Spec being testimony. The
 scorer leaves the run's tuple for the verdict. Semicolons swept from the
 whole document under G1, six of them older than this act.
 
+**Revised:** 2026-09-05, third of this date, the Models surface and the
+review of PR #455. Section 2.3 gains the artifact catalog with one derived
+identity rule, the complete set the model's own index names. The join
+resolves to that set or to nothing, so a lens relation and a reference
+cell relation each name one unambiguous artifact. Presence carries its
+reporter and its date and gates nothing. The lens row cites
+`weaver-analysis-PRD` section 3 rather than restating it, correcting an
+earlier draft of this act. Two assertion rows added. Semicolons swept
+under G1.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -151,32 +161,34 @@ on that digest and on nothing else, and it is the grain section 2.2's tuple
 means by artifact identity, fine enough to separate two quantizations
 because their files differ.
 
-**Trained-weights identity is the identity of the root of the provenance
-chain**, the artifact above which no source artifact stands. A conversion
-or a quantization records its source, so a derived artifact inherits a lens
-fit by walking that chain to its root, and one whose chain does not reach a
-root inherits nothing. One rule serves both readings: the catalog dedupes
-on artifact identity, and a lens is versioned by the trained-weights
-identity the chain resolves to.
+**The provenance chain is recorded and is not an identity.** A conversion
+or a quantization records its source artifact with the converter and the
+pin, so the chain says what an artifact was made from. It does not version
+a lens: `weaver-analysis-PRD` section 3 owns that and versions by the
+weights content hash, which a conversion changes. The chain is what makes
+an elected reuse across a conversion legible after the fact, per the
+charter's section 5, and this crate records the election rather than
+deriving it.
 
 Each row carries:
 
 - the artifact identity, derived as above
 - the identity **per file**, following the model's own index, each shard
   under its own name and verified against it
-- the trained-weights identity its provenance chain resolves to
 - the provenance: a repository and revision, or a source artifact with the
   converter and pin that produced it
 - where it is present, by box, as an observation rather than a fact
-- the lens artifacts fitted to these weights, each versioned by the
-  trained-weights identity rather than by a serialized digest
+- the lens artifacts fitted to these weights, each versioned as
+  `weaver-analysis-PRD` section 3 versions them, by the weights content
+  hash
 - the reference cells taken against it
 
 **This is the join the run's row points at.** Section 2.2 holds artifact
-identity in the tuple so a reading names its conditions; this table is what
-that identity resolves to, and it is why a lens refusing weights it was not
-fitted for is answerable here rather than only at the read. **The join
-resolves to the complete set or to nothing**, so a lens relation and a
+identity in the tuple so a reading names its conditions, and this table is
+what that identity resolves to. It is also where an elected lens reuse is
+legible, the fitted weights and the read weights both resolving here.
+**The join resolves to the complete set or to nothing**, so a lens
+relation and a
 reference cell relation each name one unambiguous artifact and never a
 shard of one.
 
@@ -446,6 +458,10 @@ act that lands it states what removal makes it fail and confirms it does.
   this crate's to set.
 - **Whether surprisal and entropy draw as one timeline or two.**
 - **Whether the preset ladder is a picker or a wizard.**
+- **Who reports an artifact's presence on a box**, which the charter's
+  section 9 holds open. Section 2.3 stores the entry with its reporter and
+  its date whichever answer lands, and no read of it gates anything, so
+  this document is not blocked on the choice.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on

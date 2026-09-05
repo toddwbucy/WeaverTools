@@ -44,6 +44,19 @@ operator election, and whether a lineage should ever let the tool answer
 it is section 9's. Semicolons swept from the whole document under G1, five
 of them older than this act.
 
+**Revised:** 2026-09-05, third of this date, the Models surface and the
+review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
+and 5 already assumed, and the list-side group grows to five with four of
+them lists. **One rule decides artifact identity**: the complete set the
+model's own index names, digested over the per-file identities in that
+order, which closes a subject the documents had stated four ways. **The
+provenance chain is recorded and is not a second identity**, corrected
+from an earlier draft of this act that had it version a lens, which
+`weaver-analysis-PRD` section 3 owns and does otherwise. **Presence is a
+dated observation and never a gate.** Three cells named in section 9 that
+this act's pull request had named only in its body. Semicolons swept
+under G1.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -300,20 +313,21 @@ already assume. Section 3.1's roster resolves each component's artifact and
 section 5's qualification runs a reference against one, and neither says
 where the artifact came from or what is known about it. This surface does:
 **the artifact's identity per file**, following the model's own index and
-verifying each shard under its own name; its provenance, downloaded from a
+verifying each shard under its own name. Its provenance, downloaded from a
 repository at a revision or converted from another artifact by a named
-converter at a pin; which box holds it, since this crate runs on one machine
-and the agents on another; and its relations - the lens artifacts fitted to
+converter at a pin. Which box holds it, since this crate runs on one
+machine and the agents on another. And its relations, the lens artifacts
+fitted to
 these weights, and the reference cells taken against them.
 
 **An artifact is the complete set its own index names, and one rule decides
 identity.** That identity derives from the per-file identities in the order
-the index gives them; a set missing a file the index names is not that
-artifact; and the catalog dedupes on that and nothing else. **The
-trained-weights identity is the root of the provenance chain**, which is
-what a quantization inherits a lens fit through and what an artifact with
-no recorded chain has none of. Two rules for one subject would let the
-catalog merge what the lens refuses.
+the index gives them. A set missing a file the index names is not that
+artifact, and the catalog dedupes on that and nothing else. **The
+provenance chain is recorded and is not a second identity**: it says what
+an artifact was made from, which is what makes an elected lens reuse across
+a conversion legible afterward, and it does not version a lens. Section 3's
+lens identity is the analysis charter's, and a conversion changes it.
 
 **Presence is an observation and never a gate.** Which box holds an
 artifact is dated, attributed, and advisory, and a box that has not
@@ -330,7 +344,7 @@ the wrong noun is where a catalog goes wrong.
 **It catalogs artifacts and not organ kinds.** The charters hold the roster
 per section 3.1, and a kind is a charter act before it is a row anywhere, so
 an artifact acquires a kind when a declaration references it and admit
-judges the family. Encoders and further kinds need no special case here;
+judges the family. Encoders and further kinds need no special case here,
 they arrive with their charters.
 
 <!-- figure: Models | Models -->
@@ -591,3 +605,24 @@ this crate designs around the gap until it closes.
 - **Whether the preset ladder is a picker or a wizard.**
 - **The registry's schema**, which is `weaver-web-Spec` section 3's and
   not this document's.
+- **How presence on another box is answered.** Section 3.6 records which
+  box holds an artifact as a dated observation, and who reports it is
+  unchosen. Three answers stand. An operator registers it, which is a
+  claim. Admin answers it on the observation exchange's pattern, which
+  #457's rule argues against, admin adjudicating only what it holds custody
+  of and the artifact being the organ's. Or **the SPU hashes the weights at
+  admit and the record carries them**, making presence derivable from
+  recorded admits, a fact rather than a claim, with "never admitted here"
+  the honest reading of an artifact no box has loaded. The third fits this
+  crate's measure-rather-than-testify rule and is the seat's
+  recommendation, and the choice is the operator's.
+- **Whether import fetches.** Section 3.6 records provenance by repository
+  and revision, which is what a fetch would need, and this crate has no
+  ruling that it may reach the network. Until one lands, import records an
+  artifact already on a box.
+- **Whether a trained-weights lineage should exist at all.** Section 5
+  makes reuse across a conversion an operator election because
+  `weaver-analysis-PRD` section 3 versions a lens by the weights content
+  hash. A lineage would let the tool answer instead. It would be that
+  charter's fact to state and its Spec's record to change, so this cell is
+  named here and owned there.
