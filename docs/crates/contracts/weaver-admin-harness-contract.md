@@ -5,6 +5,11 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+**Revised:** 2026-09-05, the observation answers from inside a turn. Section 3's observe
+clause no longer defers `Active` to a threading ruling: the harness's streaming poll
+takes the directive between tokens and answers it with the load's facts, per issue #441
+as closed by the act of this date.
+
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3
 gains the fourth exchange, admin asking what stands and the harness answering `State`
 from whichever position it holds with the load's facts beside it, the exchange the
@@ -332,13 +337,12 @@ composing loop by binary and, where it is a file, path and digest, the same fact
 `load` event carries and read from the run rather than the record. After a leave,
 `Unloaded` and no load, the position being terminal. The answer is the harness's own
 word and never a read of the deployment, it touches no bracket and authors no event, and
-an observation arriving during a turn is answered after the turn closes, as `Idle`, for
-as long as the harness serves this channel's directives on the turn's own thread, per
-`weaver-harness-Spec` section 2 and issue #441: the `Active` answer is chartered here
-and reached by the seam only once that ruling lands, so a reader trusts the observation
-between turns until then. Where no worker answers the dial at all, admin has no exchange
-to open and reports `Unloaded` from the absence, per `weaver-admin-Spec` section 3, the
-one place residency is read.
+an observation arriving during a turn is answered from inside it, between tokens, as
+`Active` with the load's facts, since 2026-09-05 per issue #441, so the answer is
+trustworthy at every moment a dial is accepted, the one bound being the single token
+whose decode is in progress. Where no worker answers the dial at all, admin has no
+exchange to open and reports `Unloaded` from the absence, per `weaver-admin-Spec`
+section 3, the one place residency is read.
 
 **There is no alert exchange, per the fault-carrier ruling of 2026-08-01.** A fault
 the worker survives is a `fault` event, authored by the harness into the stream

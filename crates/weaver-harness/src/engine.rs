@@ -73,6 +73,18 @@ pub struct Ports<'a> {
     author: &'a Author,
     recorder: &'a mut Record,
     turn_ordinal: &'a mut u64,
+    /// The run's turn key while a turn runs, per `weaver-harness-Spec`
+    /// section 3's observe and stop clauses: set when the bracket opens and
+    /// cleared when its close lands, so the run reads `Active` for exactly
+    /// the bracket's extent. Lent by the run beside the ordinal because the
+    /// engine is where the key is minted and where the close is authored,
+    /// and a second site predicting the key would be a second source for
+    /// one fact.
+    turn_in_flight: &'a mut Option<TurnKey>,
+    /// What the run was built from, lent so an observation arriving between
+    /// tokens is answered from inside the turn with the facts beside the
+    /// state, per `weaver-admin-harness-contract` section 3.
+    load: &'a weaver_types::LoadFacts,
     assembled: Option<Prompt>,
     /// The coordination listener, waited against beside the decode channel
     /// while a generation streams, per Spec 6.1: the stop is heard
@@ -183,6 +195,8 @@ impl<'a> Ports<'a> {
         author: &'a Author,
         recorder: &'a mut Record,
         turn_ordinal: &'a mut u64,
+        turn_in_flight: &'a mut Option<TurnKey>,
+        load: &'a weaver_types::LoadFacts,
         assembled: Option<Prompt>,
         coordination: &'a CoordinationListener,
         pending: Option<&'a mut Option<OrganChannel>>,
@@ -197,6 +211,8 @@ impl<'a> Ports<'a> {
             author,
             recorder,
             turn_ordinal,
+            turn_in_flight,
+            load,
             assembled,
             coordination,
             pending,
@@ -681,6 +697,10 @@ impl<'a> Ports<'a> {
                 None,
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        // **The key stands from here until the close lands.** The run's
+        // slot is what the observe and stop arms read, and it is set at the
+        // one site that knows the key rather than predicted by a caller.
+        *self.turn_in_flight = Some(turn.clone());
 
         // **Every exit past the open closes the bracket.** A turn that opened
         // and then lost the channel or met a refusal must not leave a
@@ -744,6 +764,11 @@ impl<'a> Ports<'a> {
                     Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
                 ) {
                     Ok(_) => {
+                        // The close landed, so no turn stands: cleared
+                        // here and not on the arm below, because a close
+                        // that could not author leaves the bracket open
+                        // and the key standing for the unwind to name.
+                        *self.turn_in_flight = None;
                         // **Announce after record**, on the failure path as on
                         // the clean one: the turn the stop asked to end has
                         // ended, its close in the record naming the fault, and
@@ -1117,6 +1142,26 @@ impl<'a> Ports<'a> {
                                         .map_err(|_| TurnError::ChannelLost)?;
                                     *stop = Some(exchange);
                                 }
+                                // **An observation is answered from inside
+                                // the turn**, per `weaver-admin-harness-contract`
+                                // section 3: the state is `Active` for exactly
+                                // the turn's extent and the facts are the run's,
+                                // lent to this seat, so the seam reaches what
+                                // the watch reaches. It touches no bracket.
+                                weaver_types::Payload::Directive(
+                                    weaver_types::LifecycleDirective::Observe,
+                                ) => {
+                                    let _ = connection.send(&weaver_types::OrganEnvelope {
+                                        exchange,
+                                        position: weaver_types::Position::Close,
+                                        payload: weaver_types::Payload::Answer(
+                                            weaver_types::LifecycleAnswer::State {
+                                                state: weaver_types::AgentState::Active,
+                                                load: Some(self.load.clone()),
+                                            },
+                                        ),
+                                    });
+                                }
                                 // A second stop, a leave, and everything
                                 // else are out of order for a turn in
                                 // flight, refused and not queued.
@@ -1234,6 +1279,7 @@ impl<'a> Ports<'a> {
                 None,
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = Some(turn.clone());
         Ok(())
     }
 
@@ -1250,6 +1296,7 @@ impl<'a> Ports<'a> {
                 Some(Payload::TurnClosed(TurnClose::Clean)),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = None;
         Ok(())
     }
 
@@ -1270,6 +1317,7 @@ impl<'a> Ports<'a> {
                 Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = None;
         Ok(())
     }
 
@@ -1544,6 +1592,8 @@ impl<'a> Ports<'a> {
                 })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        // The close landed, so no turn stands.
+        *self.turn_in_flight = None;
 
         // **Announce after record**: the stop's answer follows the close it
         // reports, carrying the turn's fate, aborted or completed-at-rest,
@@ -1617,6 +1667,28 @@ enum StreamWake {
     Decode,
     Dial,
     Directive,
+}
+
+/// The load facts a test lends the seat, where no enter built them.
+#[cfg(test)]
+pub(crate) fn test_load_facts() -> weaver_types::LoadFacts {
+    weaver_types::LoadFacts {
+        session: weaver_types::SessionId("s".into()),
+        run: weaver_types::RunId("r-1".into()),
+        declaration: String::new(),
+        artifact: weaver_types::ArtifactRef("a".into()),
+        residual_readout: false,
+        field: None,
+        surprisal: false,
+        state_election: Default::default(),
+        state_store: Default::default(),
+        state_member: false,
+        composer: weaver_types::Composer {
+            binary: "test".into(),
+            file: None,
+            sha256: None,
+        },
+    }
 }
 
 #[cfg(test)]
@@ -1908,15 +1980,19 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2032,15 +2108,19 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let answered = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2151,15 +2231,19 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let counts = {
             let mut fullness = Some((1237, 8191));
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2296,16 +2380,20 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2483,16 +2571,20 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
         let listener = test_listener();
         let error = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2687,6 +2779,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut gate_ordinal = 0u64;
         let mut held = std::collections::VecDeque::new();
 
@@ -2694,11 +2787,14 @@ mod tests {
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2867,15 +2963,19 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,
@@ -2954,14 +3054,18 @@ mod tests {
         );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let mut fullness = None;
         let mut pressure_reported = false;
+        let load_facts = crate::engine::test_load_facts();
         let mut ports = Ports::grant(
             &decode,
             &author,
             &mut recorder,
             &mut turn_ordinal,
+            &mut turn_in_flight,
+            &load_facts,
             None,
             &listener,
             None,
@@ -3002,6 +3106,167 @@ mod tests {
     /// fate after the record. Perturbation: collapse the streaming wait to
     /// the decode channel alone and the cancel this scripted peer waits
     /// for never arrives.
+    /// **An observation dialed mid-stream is answered from inside the turn**,
+    /// per `weaver-admin-harness-contract` section 3: the streaming poll takes
+    /// it between tokens and answers `Active` with the load's facts, the stream
+    /// runs to its own close, and nothing is cancelled. Perturbation: remove
+    /// the observe arm and the answer is the `OutOfOrder` refusal the wildcard
+    /// gives; answer `Idle` there and the match below fails.
+    #[test]
+    fn an_observation_dialed_mid_stream_answers_active_and_disturbs_nothing() {
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let listener = test_listener();
+        let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("pair");
+        let admin = admin_end.into_channel();
+
+        // The operator's stop is already on the connection when the turn
+        // begins, the way the poll's readiness would deliver it mid-stream.
+        admin
+            .send(&weaver_types::OrganEnvelope {
+                exchange: weaver_types::ExchangeId {
+                    opener: weaver_types::Opener::Admin,
+                    ordinal: 9,
+                },
+                position: weaver_types::Position::Open,
+                payload: weaver_types::Payload::Directive(
+                    weaver_types::LifecycleDirective::Observe,
+                ),
+            })
+            .expect("the observe sends");
+
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            // The cancel arrives because the wait heard the stop.
+            let send_answer = |answer: &weaver_types::TokenAnswer| {
+                let bytes = serde_json::to_vec(answer).expect("answer renders");
+                send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            };
+            send_answer(&weaver_types::TokenAnswer::Token {
+                token: 7,
+                piece: "par".into(),
+            });
+            let request = serde_json::value::RawValue::from_string(
+                r#"{"rendered":"r","template":"t","sampling":{}}"#.to_string(),
+            )
+            .unwrap();
+            let measurement = serde_json::value::RawValue::from_string(
+                r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[7],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#
+                    .to_string(),
+            )
+            .unwrap();
+            send_answer(&weaver_types::TokenAnswer::Generated(Generation {
+                content: vec![],
+                emission: "par".into(),
+                finish: Finish::Completed,
+                resident: 64,
+                capacity: 4096,
+                request,
+                measurement,
+            }));
+        });
+
+        let session = SessionId("s-3".into());
+        let sink = tempfile();
+        let mut recorder = crate::record::Record::Serving(
+            Recorder::receive(sink, RunRef("r-1".into()), SessionRef(session.0.clone()))
+                .expect("recorder"),
+        );
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    declaration: Default::default(),
+                    state_store: Default::default(),
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
+        let mut slot = Some(verb_end);
+
+        let outcome = {
+            let mut fullness = None;
+            let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                Some(&mut slot),
+                None,
+                None,
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            let delta = vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "observe me".into(),
+                }],
+            }];
+            ports.turn(delta).expect("the observed turn returns")
+        };
+        peer.join().expect("the decode peer finishes");
+
+        assert!(!outcome.aborted, "an observation aborts nothing");
+        assert_eq!(
+            outcome.emission, "par",
+            "the turn completed as it would have"
+        );
+
+        match admin.recv().expect("the observation's answer").payload {
+            weaver_types::Payload::Answer(weaver_types::LifecycleAnswer::State {
+                state: weaver_types::AgentState::Active,
+                load: Some(load),
+            }) => assert_eq!(load.run.0, "r-1", "the load's facts ride beside the state"),
+            other => {
+                panic!("an observation mid-stream answers active with its load, got {other:?}")
+            }
+        }
+        let close = recorder
+            .structure()
+            .expect("the serving record")
+            .by_kind(Kind::TurnClosed)
+            .next()
+            .expect("the close authored")
+            .line
+            .to_string();
+        assert!(
+            close.contains(r#""close":"clean""#),
+            "the close is the turn's own: {close}"
+        );
+    }
+
     #[test]
     fn a_stop_dialed_mid_stream_cancels_the_turn() {
         let (near, far) = socketpair(
@@ -3100,16 +3365,20 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut slot = Some(verb_end);
 
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 Some(&mut slot),
@@ -3209,15 +3478,19 @@ mod tests {
         );
         let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &listener,
                 None,

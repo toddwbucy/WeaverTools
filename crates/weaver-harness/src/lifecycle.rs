@@ -703,6 +703,8 @@ impl Harness {
             &run.author,
             &mut run.recorder,
             &mut run.turn_ordinal,
+            &mut run.turn_in_flight,
+            &run.load,
             // No frame, no prompt: the replay feeds the record's rendered
             // forms and assembles nothing.
             None,
@@ -886,6 +888,8 @@ impl Harness {
                         &run.author,
                         &mut run.recorder,
                         &mut run.turn_ordinal,
+                        &mut run.turn_in_flight,
+                        &run.load,
                         Some(prompt),
                         &self.coordination,
                         Some(pending),
@@ -1848,6 +1852,8 @@ impl Harness {
                     &run.author,
                     &mut run.recorder,
                     &mut run.turn_ordinal,
+                    &mut run.turn_in_flight,
+                    &run.load,
                     Some(prompt),
                     &self.coordination,
                     // A seat granted outside the serve loop streams without
@@ -4026,6 +4032,193 @@ mod tests {
         assert!(
             !entered,
             "no seat was granted for a line that did not parse"
+        );
+    }
+
+    /// **The run's turn key stands while a turn runs**, per
+    /// `weaver-harness-Spec` section 3's observe and stop clauses and issue
+    /// #441. Driven through the gate's wake, the slot on the run is empty
+    /// before any turn, empty after a turn that closed clean, and empty
+    /// after a turn the decode seam refused, whose close lands on the
+    /// engine's error path. The record pairs each `turn.started` with its
+    /// `turn.closed`, so the slot's emptiness after each wake is the close
+    /// having cleared it and not the set never having happened.
+    ///
+    /// Perturbation: drop the clear in the engine's clean close and the
+    /// slot holds `t-1` after the first wake; drop the clear on the
+    /// error-path close and it holds `t-2` after the second. **What this
+    /// watch cannot see is the key standing mid-turn.** The slot lives on
+    /// the serving thread and the bracket runs to its close inside the
+    /// seat's turn with no test-supplied code on that thread inside it, so
+    /// dropping the set is invisible here. That is issue #441's other half
+    /// stated as a test's limit, and the set's reader, the observe arm, is
+    /// watched with a standing key in
+    /// `observe_answers_from_any_position_and_authors_nothing`.
+    #[test]
+    fn the_turn_key_stands_while_a_turn_runs() {
+        use std::os::fd::AsRawFd;
+
+        use nix::sys::socket::{
+            AddressFamily, MsgFlags, SockFlag, SockType, recv as sock_recv, send as sock_send,
+            socketpair,
+        };
+
+        let (mut run, _spare, _sink) = entered_run(None);
+        assert!(
+            run.turn_in_flight.is_none(),
+            "an idle run holds no turn key"
+        );
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        run.spu.as_mut().expect("the arm stands").decode = crate::channel::decode_from_owned(near);
+        let (gate_end, gate_peer) = OrganChannel::pair().expect("gate pair");
+        run.gate = Some(GateChannel {
+            channel: gate_end,
+            pid: nix::unistd::Pid::from_raw(1),
+            last_word: crate::spawn::LastWord::quiet(),
+        });
+        let gate_peer = gate_peer.into_channel();
+
+        let decode_peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            // The first append is answered, so the bracket closes clean.
+            let n = sock_recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            let request = serde_json::value::RawValue::from_string(
+                r#"{"rendered":"user: say a word","template":"qwen2","sampling":{}}"#.to_string(),
+            )
+            .unwrap();
+            let measurement = serde_json::value::RawValue::from_string(
+                r#"{"model":"m","weights_hash":"h","input_tokens":[1],"output_tokens":[2],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#
+                    .to_string(),
+            )
+            .unwrap();
+            let answer = weaver_types::TokenAnswer::Generated(weaver_types::Generation {
+                content: vec![],
+                emission: "one word".into(),
+                finish: weaver_types::Finish::Completed,
+                request,
+                measurement,
+                resident: 64,
+                capacity: 4096,
+            });
+            let bytes = serde_json::to_vec(&answer).expect("answer renders");
+            sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+            // The second append is refused, so the bracket closes on the
+            // engine's error path with the refusal as its reason.
+            let n = sock_recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv append");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("append parses");
+            assert!(matches!(
+                directive,
+                weaver_types::TokenDirective::AppendAndGenerate { .. }
+            ));
+            let refusal = weaver_types::TokenRefusal::OutOfOrder;
+            let bytes = serde_json::to_vec(&refusal).expect("refusal renders");
+            sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send refusal");
+        });
+
+        let mut harness = Harness {
+            coordination: test_listener(),
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent".into(),
+                gate: "/nonexistent".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::Entered(Box::new(run)),
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
+        };
+        let mut entry = |ports: &mut crate::engine::Ports<'_>, text: &str| {
+            let delta = vec![weaver_traits::Message {
+                role: weaver_traits::Role::User,
+                content: vec![weaver_traits::ContentBlock::Text {
+                    text: text.to_string(),
+                }],
+            }];
+            ports.turn(delta)
+        };
+
+        let expected = [
+            r#"{"kind":"answered","run":"r-1","text":"one word","turn":"t-1"}"#,
+            r#"{"kind":"stopped","reason":"the ask was out of order for the seam","run":"r-1","turn":"t-2"}"#,
+        ];
+        for (ordinal, line) in (1u64..).zip(expected) {
+            gate_peer
+                .send(&OrganEnvelope {
+                    exchange: ExchangeId {
+                        opener: Opener::Gate,
+                        ordinal,
+                    },
+                    position: Position::Open,
+                    payload: weaver_types::Payload::Frame(weaver_types::TurnFrame::carry(
+                        b"{\"text\":\"say a word\"}",
+                    )),
+                })
+                .expect("frame sends");
+            harness
+                .serve_gate_wake("identity", &[], &mut entry, &mut None)
+                .expect("the wake serves");
+            let answer = gate_peer.recv().expect("the response frame returns");
+            assert_eq!(answer.exchange.ordinal, ordinal);
+            let weaver_types::Payload::Frame(frame) = answer.payload else {
+                panic!("a frame answers a frame");
+            };
+            assert_eq!(
+                String::from_utf8(frame.octets().expect("canonical")).expect("utf8"),
+                line
+            );
+            let ChannelState::Entered(run) = &harness.state else {
+                panic!("the position stays entered");
+            };
+            assert!(
+                run.turn_in_flight.is_none(),
+                "the close of turn {ordinal} cleared the run's key"
+            );
+        }
+        decode_peer.join().expect("the decode peer finishes");
+
+        // Both brackets stand closed in the record, each close naming the
+        // turn its open did, which is what makes the empty slot the clear's
+        // work.
+        let ChannelState::Entered(run) = &harness.state else {
+            panic!("the position stays entered");
+        };
+        let brackets: Vec<(String, Kind)> = run
+            .recorder
+            .structure()
+            .expect("the serving record")
+            .iter()
+            .filter(|r| matches!(r.kind, Kind::TurnStarted | Kind::TurnClosed))
+            .map(|r| {
+                (
+                    r.turn
+                        .as_ref()
+                        .expect("a bracket event names its turn")
+                        .0
+                        .clone(),
+                    r.kind,
+                )
+            })
+            .collect();
+        assert_eq!(
+            brackets,
+            vec![
+                ("t-1".to_string(), Kind::TurnStarted),
+                ("t-1".to_string(), Kind::TurnClosed),
+                ("t-2".to_string(), Kind::TurnStarted),
+                ("t-2".to_string(), Kind::TurnClosed),
+            ]
         );
     }
 }

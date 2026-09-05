@@ -567,14 +567,18 @@ mod tests {
 
         let coordination = listener();
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut fullness = None;
         let mut pressure_reported = false;
         let outcome = {
+            let load_facts = crate::engine::test_load_facts();
             let mut ports = Ports::grant(
                 &decode,
                 &author,
                 &mut record,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
                 None,
                 &coordination,
                 None,

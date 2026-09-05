@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, the turn key stands while a turn runs. Section 3's observe
+paragraph said the run's turn key was never set on the serving path. It is now: the seat
+sets it where the key is minted and clears it where the close lands, on every close
+path, so `Active` is the run's own fact for the bracket's extent. The engine's streaming
+poll answers an observation between tokens as `Active` with the load's facts, so the
+seam reaches what the watch reached, and issue #441 closes with this act.
+
 **Revised:** 2026-09-04, fifth of this date, the observation exchange lands. Section 2
 answers `Observe` from any position with the load's facts held on the run, authoring
 nothing, and section 6.1's load event gains the declaration's digest the enter carries.
@@ -1639,15 +1646,21 @@ facts the load event was authored from and held on the run for this exchange. Af
 leave the answer is `Unloaded` with no load, the position being terminal and the
 observation not an act, so it is the one directive the left position answers rather than
 refuses. No event is authored and no bracket touched: an observation mid-turn reads the
-turn key and the held facts and disturbs nothing. **Any position is, today, any position
-between turns**, and that is a Level A fact of this crate rather than a footnote:
-section 3's serve loop takes the coordination directives and the gate's wake from one
-poll on the serving thread with the turn running inside it, and the run's turn key is
-never set on the serving path, so an observation arriving during a turn is answered
-after the turn closes as `Idle` and the `Active` arm, like stop's `TurnAborted`, is
-reachable by the watch and not by the seam. Issue #441 holds the repair, which is a
-ruling on this crate's threading before it is code, and until it lands a reader of the
-observation trusts it between turns only.
+turn key and the held facts and disturbs nothing. **The state the observation answers is
+true of the run.** Since 2026-09-05 the turn key stands on the run from the bracket's
+open until its close lands, set by the seat where the key is minted and cleared where
+the close is authored, on the clean path and on every error path alike, so `Active` is
+the run's own fact for exactly the turn's extent and a close that never landed leaves
+the key standing for the unwind to name. **And any position is any position, a running
+turn included.** The serve loop of section 3 takes this channel's directives between
+turns, and the engine's streaming poll takes them between tokens while a turn runs,
+where a stop cancels the generation and answers `TurnAborted` after the record and,
+since 2026-09-05, an observation answers `Active` with the load's facts lent to the
+seat, touching no bracket. The one bound that stands is the token: a directive arriving
+inside a single token's decode waits for that token, which is the seam's grain and not a
+gap. What issue #441 recorded as a threading fact was two smaller ones, the key never
+set and the observation refused out of order between tokens, and both close with this
+act.
 
 ```graph
 node: harness-announce-after-record
