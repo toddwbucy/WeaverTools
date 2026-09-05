@@ -3,6 +3,11 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
+judges the restore election, the record readable under this crate's custody and the
+cut a turn it holds, and section 6 stands the member's door under a restoring load
+with this crate as its peer, preloading the record through the cut before the enter.
+Per issue #432.
 **Revised:** 2026-09-04, second of this date, the vector's flags and the socket's
 key are spelled. Section 6 names the four flags the member's vector carries ahead
 of its positionals, and section 9 names `state-store-socket`, the one value the
@@ -815,6 +820,15 @@ refused with `BoundaryUnverified` and never `ConfigInvalid`, for the reason the
 group case below gives. The grant surface is not judged here, only read, at the
 enter and again at the leave, per `weaver-trace-PRD` section 3.1.
 
+**A restore is judged here too, as of 2026-09-04, per issue #432.** A declaration
+electing one names a record, and the walk reads it under this crate's own custody: a
+record that cannot be read refuses `BoundaryUnverified`, and a `through-turn` naming a
+turn the record does not hold refuses `ConfigInvalid` naming `restore.through-turn`, the
+record being the one fact that can say whether the cut exists. The record is never
+handed to the agent and never named to the worker, on the same descriptor discipline as
+the sink: what the harness receives is the enter's copy of the election, and what the
+member receives is the record's holdings through the door of section 6.
+
 **One check in that list is the second walk's mechanism and is held
 mechanically instead.** The sink path's containing directory is root-owned
 and not searchable by the agent uid, whatever the sink's kind: the agent uid
@@ -1282,8 +1296,9 @@ a privilege drop at the spawn. The isolation it exists to buy holds meanwhile
 by a weaker route, the territory being unreachable to the agent's uid either
 way, which is why nothing has tripped on the gap.
 
-**Its vector is the territory and, under a diagnostic binding, the preload socket path,
-with the first door's end inherited beside it rather than named on it.** Per the
+**Its vector is the territory and, under a diagnostic binding or a restoring load,
+the preload socket path, with the first door's end inherited beside it rather than
+named on it.** Per the
 operator's ruling of 2026-08-26 the first door is a socketpair this crate creates at the
 spawn: the member's end crosses by inheritance, its number the code act's one remaining
 election, and the harness's end crosses inside the enter directive, so no socket path
@@ -1304,6 +1319,16 @@ stands no named door by the value not being there. The kind is section 4's inven
 resolved once and read here, which is the same single-resolution rule the enter
 payload's `EnterBinding` follows in section 7 - the verb and the load cannot resolve
 differently because only one site resolves.
+
+**Under a restoring load this crate is the door's peer**, per issue #432: the member
+stands with the door, and before the enter crosses admin preloads the declared record
+through it, the election opening the channel, one distillate per event through the cut
+in the record's order, and the seal, the same three things in the same order
+`weaver-analysis-Spec` section 4 sends under the diagnostic binding, so the member's
+parked replay ask and the harness's first ask alike find the holdings standing. The cut
+is by turn, the record's own unit: every event through the named turn's close and none
+after it. The preload is admin's under this binding because the record is admin's to
+read and the operator's surface starts the load with one verb.
 
 **The instrument is perturbation, and the claim is this site's half of a
 two-sided one.** **What is watched is the vector this crate composes, in both

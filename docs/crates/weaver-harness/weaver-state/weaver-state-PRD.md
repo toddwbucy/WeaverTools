@@ -2,6 +2,10 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, third of this date, a session may stand on another record's
+holdings. Section 4 states the restore: admin preloads a declared record through the
+door before the enter, whole or through a turn, a resume under the same session name
+and a branch under a new one, custody indifferent to which. Per issue #432.
 **Revised:** 2026-09-04, second of this date, the identity is the session's first
 holding. Section 4 lands the three rulings of issue #422: the declaration seeds
 and the store governs, a missed read of the identity fails the enter closed, and
@@ -266,6 +270,20 @@ nothing moves, per apex section 9: an identity that individuates across sessions
 memory leg's, a schema extension with its own socket and contract, and this ruling is
 compatible with that path and does not take it. Where no member stands, the declaration
 governs alone, which is what it did before the ruling.
+
+**A session may stand on another record's holdings, per the operator's ruling of
+2026-09-04 on issue #432.** Under a load that elects a restore, admin preloads the
+declared record through this member's door before the enter, whole or through a named
+turn, and the session's holdings are the record's up to that point: the identity as the
+first of them, the conversation after it, and the shape the asks answer from. A whole
+record under the declaration's own session name is a resume, the holdings retired and
+re-landed as every preload does. A cut record under a new session name is a branch,
+standing on a prefix another session produced. Custody is indifferent to which: it holds
+what it was handed and answers what it is asked, and the record that stood the session
+is named on the new record's load, per `weaver-trace-PRD` section 3.1. The ground is the
+same as the identity's and the vectors': the record is the source, the prefix it
+conditions is computed from it on demand under the conditions the load declares, and
+nothing derived from it is kept.
 
 One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and

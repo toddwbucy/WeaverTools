@@ -4,6 +4,10 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Revised:** 2026-09-04, second of this date, the enter carries the restore and the
+stack. Section 3's enter supplies the restore the session stands from where the
+declaration elects one and the digests of the organ binaries admin started, both
+admin's facts, per `weaver-types-Spec` section 4 and issue #432.
 **Revised:** 2026-09-04, the enter carries the store election. Section 3's enter
 supplies the engine the member stands on and, under the service engine, its
 database and role, beside the state election and on the same ground: admin has
@@ -386,8 +390,10 @@ the gate instruction the fan-out starts where the kind declares a Gate, the
 state election the tee applies,
 resolved to the ruled default where the declaration is silent, the store
 election the member stands on with its database and role under the service
-engine, resolved to the embedded engine where the declaration is silent, and
-the intent to stop.
+engine, resolved to the embedded engine where the declaration is silent, the
+restore the session stands from where the declaration elects one, the record and
+the turn it stops at, carried so the harness can name its parent, the digests of
+the organ binaries admin started, keyed by name, and the intent to stop.
 
 **Admin guarantees** that the trace sink handle it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run

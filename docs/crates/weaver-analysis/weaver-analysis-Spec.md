@@ -4,15 +4,18 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-04, third of this date, the preload takes a cut. Section 4's
+`preload` accepts `--through-turn`, projecting the record through the named turn's
+close, the turn being the record's own unit. Per issue #432.
 **Revised:** 2026-09-04, second of this date, the file's default spread is
 defined. Section 5 names it eight positions evenly spaced over the record's
 generated positions by index, first and last included, taken by a second read
 of the file, where the clause had named a default and defined none. Per the
 last open defect of issue #386.
-**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The derivation's
-prefix member names its standing under `weaver-state-PRD` section 4 as revised
-this date: the seed of the derived declaration, the preloaded store answering the
-replayed run's identity ask from the same events. Per issue #422.
+**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The
+derivation's prefix member names its standing under `weaver-state-PRD` section 4 as
+revised this date: the seed of the derived declaration, the preloaded store answering
+the replayed run's identity ask from the same events. Per issue #422.
 **Revised:** 2026-09-03, the head is applied across the cores. Section 5
 states that the unembedding's rows are split across scoped threads with
 each row summed in one order, so the reading is bit-identical to the
@@ -445,6 +448,16 @@ seam and reads nothing from it.
 crate writes that spelling. A blank line is framing residue and not a seal, per the
 contract, so a driver that emitted one would have closed without sealing and the
 parked replay ask on the other door would never answer.
+
+**The preload takes a cut, as of 2026-09-04.** `preload` accepts `--through-turn <n>`
+and projects every event of the record through the named turn's close and none after it,
+the seal following as before, so a session can stand on a prefix of a record rather than
+the whole, per `weaver-state-PRD` section 4 and issue #432. The cut is by turn because
+the turn is the record's own unit and a cut inside one would land a generation without
+its close. A turn the record does not hold refuses before anything is sent, naming it.
+Under a restoring load admin sends the same three things in the same order through the
+same door, per `weaver-admin-Spec` section 6, and this verb is the analyst's way of
+doing by hand what admin does at the load.
 
 ```graph
 node: analysis-seal-ends-the-preload
