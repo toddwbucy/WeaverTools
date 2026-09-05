@@ -8,6 +8,10 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-04, third of this date, the load names its lineage and its
+stack. Section 3.1's `load` event gains the parent session, run, and cut where the
+session stands from a record, and the digests of the organ binaries that ran it on
+every load. Per issue #432.
 **Revised:** 2026-09-04, second of this date, the seated prefix crosses the tee
 whole. Section 11 states the one exception to the key-based election: the
 turnless `message.system` at the run's opening distills with its payload under
@@ -653,23 +657,28 @@ not by that election but by whether its end arrived on the enter, which is the
 harness's own knowledge whatever admin decided from.
 
 **The store the member stands on is a third such fact, as of 2026-09-04.** Per
-`weaver-state-PRD` section 4 as revised that date the engine is the
-deployment's election and, under the service engine, the database and the role
-are the object gate's own members, changing only across the load boundary.
-What a record was built into decides what can be asked of it later, so the
-`load` event names the engine and, where the service engine stands, its
-database and role, resolved as the enter carried them. **The leave reads the
-boundary back**: the harness reads the role's grant surface from the store's
-catalog at the enter through the member and again at the leave, and the
-`unload` event carries the reading as unchanged, varied, or unreadable, the
-envelope the confirm drivers already carry for the engine libraries. A grant
-surface that varied inside a session is a boundary move the record carries and
-never absorbs, and one unreadable at the close is said to be so rather than
-reported unchanged.
-Absence means a record older than the act and is read as those facts being
-unrecoverable, never as a default. The record then says what the agent's
-prompts were built by and what its state was built into, which the elections
-alone could not.
+`weaver-state-PRD` section 4 as revised that date the engine is the deployment's
+election and, under the service engine, the database and the role are the object gate's
+own members, changing only across the load boundary. What a record was built into
+decides what can be asked of it later, so the `load` event names the engine and, where
+the service engine stands, its database and role, resolved as the enter carried them.
+**The leave reads the boundary back**: the harness reads the role's grant surface from
+the store's catalog at the enter through the member and again at the leave, and the
+`unload` event carries the reading as unchanged, varied, or unreadable, the envelope the
+confirm drivers already carry for the engine libraries. A grant surface that varied
+inside a session is a boundary move the record carries and never absorbs, and one
+unreadable at the close is said to be so rather than reported unchanged. Absence means a
+record older than the act and is read as those facts being unrecoverable, never as a
+default. The record then says what the agent's prompts were built by and what its state
+was built into, which the elections alone could not. **The `load` event names its
+lineage and its stack as of 2026-09-04**, per issue #432. Where the session stands from
+a record it names the parent's session and run and the turn the holdings stop at, so a
+resume and a branch each say what they came from, and every load names the digests of
+the organ binaries that ran it, keyed by name, so a record is sufficient for its own
+conditions and the experiment deposits stop being where the stack is remembered. The
+record is the cache's canonical form and nothing derived from it is kept: a session that
+stands from a record recomputes its prefix from the record under whatever conditions the
+load declares, and the load event is where those conditions and that lineage are read.
 
 **A replay under the wrong projection does not fail.** It lands, the loop asks,
 an answer comes back, and what the run produces is a plausible replay of a

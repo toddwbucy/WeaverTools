@@ -3,37 +3,34 @@
 **Status:** MERGED. Cut 2026-08-27, the second Spec of the diagnostic leg. Code is
 written against it under the gates of Working Process section 6.
 
-**Date filed:** 2026-08-27
-**Revised:** 2026-09-04, second of this date, the file's default spread is
-defined. Section 5 names it eight positions evenly spaced over the record's
-generated positions by index, first and last included, taken by a second read
-of the file, where the clause had named a default and defined none. Per the
-last open defect of issue #386.
-**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The derivation's
-prefix member names its standing under `weaver-state-PRD` section 4 as revised
-this date: the seed of the derived declaration, the preloaded store answering the
-replayed run's identity ask from the same events. Per issue #422.
-**Revised:** 2026-09-03, the head is applied across the cores. Section 5
-states that the unembedding's rows are split across scoped threads with
-each row summed in one order, so the reading is bit-identical to the
-single-thread one, and the claim gains its record,
-`analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose
-control over two thousand positions took fifteen minutes on one core.
-**Revised:** 2026-09-03, the weights identity is per file. Section 3's lens
-manifest carries its weights digest in the shape the model on disk takes, a
-map of shard digests for a sharded model, and the reader follows the model's
-index to the shards it needs, verifying each under its own name. The
-identity refusal gains its record, `analysis-lens-refuses-other-weights`,
-which the clause had argued without one. Forced by the 8B, whose head and
-final norm sit in different shards.
-**Revised:** 2026-09-02, the reading drains the stream. Section 3 states
-that the analyst's sink input carries its shape, so a pipe elects the
-discard and a file declines it, and section 5 states how a reading is
-taken as the stream drains: one drain for the class with readers above
-it, the held state bounded by the turn in flight and the analyst's named
-positions, the named positions required where no whole record exists to
-spread over, and the reading emitted only after a certified close. One
-assertion, bought by the act that streams.
+**Date filed:** 2026-08-27 **Revised:** 2026-09-04, third of this date, the preload
+takes a cut. Section 4's `preload` accepts `--through <run>:<turn>`, projecting the
+record through that turn's close, and `--as <session>`, landing the projection under
+another session name. Per issue #432. **Revised:** 2026-09-04, second of this date, the
+file's default spread is defined. Section 5 names it eight positions evenly spaced over
+the record's generated positions by index, first and last included, taken by a second
+read of the file, where the clause had named a default and defined none. Per the last
+open defect of issue #386. **Revised:** 2026-09-04, first of this date, the derived
+identity is the seed. The derivation's prefix member names its standing under
+`weaver-state-PRD` section 4 as revised this date: the seed of the derived declaration,
+the preloaded store answering the replayed run's identity ask from the same events. Per
+issue #422. **Revised:** 2026-09-03, the head is applied across the cores. Section 5
+states that the unembedding's rows are split across scoped threads with each row summed
+in one order, so the reading is bit-identical to the single-thread one, and the claim
+gains its record, `analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose
+control over two thousand positions took fifteen minutes on one core. **Revised:**
+2026-09-03, the weights identity is per file. Section 3's lens manifest carries its
+weights digest in the shape the model on disk takes, a map of shard digests for a
+sharded model, and the reader follows the model's index to the shards it needs,
+verifying each under its own name. The identity refusal gains its record,
+`analysis-lens-refuses-other-weights`, which the clause had argued without one. Forced
+by the 8B, whose head and final norm sit in different shards. **Revised:** 2026-09-02,
+the reading drains the stream. Section 3 states that the analyst's sink input carries
+its shape, so a pipe elects the discard and a file declines it, and section 5 states how
+a reading is taken as the stream drains: one drain for the class with readers above it,
+the held state bounded by the turn in flight and the analyst's named positions, the
+named positions required where no whole record exists to spread over, and the reading
+emitted only after a certified close. One assertion, bought by the act that streams.
 
 **Revised:** 2026-09-01, third of this date, the reading takes its surface.
 Section 5 gains what the crate-borne read needs and no more: the lens
@@ -445,6 +442,23 @@ seam and reads nothing from it.
 crate writes that spelling. A blank line is framing residue and not a seal, per the
 contract, so a driver that emitted one would have closed without sealing and the
 parked replay ask on the other door would never answer.
+
+**The preload takes a cut, as of 2026-09-04.** `preload` accepts `--through
+<run>:<turn>`, a run of the record by its reference and a turn within it, and projects
+every event of the record through that turn's close and none after it, the seal
+following as before, so a session can stand on a prefix of a record rather than the
+whole, per `weaver-state-PRD` section 4 and issue #432. The cut is by turn because the
+turn is the record's own unit and a cut inside one would land a generation without its
+close. A run the record does not hold, or a turn that run does not hold, refuses before
+anything is sent, naming it, and a turn named without its run is refused for the same
+reason the floor's `Cut` carries one: a turn's number recurs across runs. `--as
+<session>` lands the projection under another session name, every distillate's session
+member rewritten as it crosses and run and sequence as recorded, which is what a branch
+needs, because the member bounds every answer to the session its opener declared. Under
+a restoring load this verb is the door's driver as it is under the diagnostic binding,
+per `weaver-analysis-state-contract` section 1 as revised 2026-09-04: admin names the
+door and dials it never, the load's enter parks until this verb's seal, and the operator
+runs the two side by side as the diagnostic flow already does.
 
 ```graph
 node: analysis-seal-ends-the-preload

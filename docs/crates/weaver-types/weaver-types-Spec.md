@@ -4,23 +4,23 @@
 one's Spec pass. Code is written against it under the gates of Working Process section
 6.
 
-**Date filed:** 2026-08-01
-**Revised:** 2026-09-04, second of this date, admin is the sink field's reader.
-Section 2 names it beside the discriminant's argument, per `weaver-admin-Spec`
-section 5 and issue #311.
-**Revised:** 2026-09-04, first of this date, the identity field is the seed.
-Section 2 states that
-`identity` seeds the session's first load and that the store governs every load
-after it where a state member stands, per `weaver-state-PRD` section 4 as revised
-this date and issue #422. The shape and the refusals are unchanged.
-**Revised:** 2026-09-01, the column registry's refusals are typed.
-`TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`,
-and `ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's
-open registry in that clause's own order - no permission, no readout
-election, no column in the family's declaration - each a unit variant
-because the fact refused carries no value the record holds nowhere else,
-on the registry-typing pattern the re-feed's arms set. The refused ask is
-`Open`, which `TokenAsk` already names, so no ask joins.
+**Date filed:** 2026-08-01 **Revised:** 2026-09-04, fourth of this date, a session
+stands from a record. Section 2 gains `restore`, optional, the record the session stands
+from and the cut, a run and a turn within it, and section 4's enter carries its lineage
+resolved beside `stack`, never the record's path, the digests of the organ binaries
+admin started. Per issue #432. **Revised:** 2026-09-04, second of this date, admin is
+the sink field's reader. Section 2 names it beside the discriminant's argument, per
+`weaver-admin-Spec` section 5 and issue #311. **Revised:** 2026-09-04, first of this
+date, the identity field is the seed. Section 2 states that `identity` seeds the
+session's first load and that the store governs every load after it where a state member
+stands, per `weaver-state-PRD` section 4 as revised this date and issue #422. The shape
+and the refusals are unchanged. **Revised:** 2026-09-01, the column registry's refusals
+are typed. `TokenRefusal` gains `ColumnPermissionAbsent`, `ColumnReadoutUnelected`, and
+`ColumnUndeclared`, the three arms of `weaver-spu-PRD` section 13.7's open registry in
+that clause's own order - no permission, no readout election, no column in the family's
+declaration - each a unit variant because the fact refused carries no value the record
+holds nowhere else, on the registry-typing pattern the re-feed's arms set. The refused
+ask is `Open`, which `TokenAsk` already names, so no ask joins.
 
 **Revised:** 2026-08-31, fifth of this date, the permission members take a
 parse the seam survives. The unknown-field mechanism the second entry of
@@ -551,6 +551,17 @@ pub struct AgentConfig {
     pub state_election: Option<StateElection>,
     pub state_store: Option<StateStore>,
     pub loop_file: Option<PathBuf>,
+    pub restore: Option<Restore>,
+}
+
+pub struct Restore {
+    pub record: PathBuf,
+    pub through: Option<Cut>,
+}
+
+pub struct Cut {
+    pub run: RunId,
+    pub turn: u64,
 }
 
 pub struct StateStore {
@@ -802,79 +813,79 @@ to: types-config-names-kebab
 
 **Every field of the declared surface is required and absence is a refusal, with the
 temptation named.** The surface is the union of what the organs register, per
-`weaver-types-PRD` section 2.1, so what is required is a per-binary fact rather than
-one struct's field list, and the refusal is against that surface rather than against a
-fixed type. The property below is unchanged by that and is why the rule exists.
-Charter section 5 rules that absence is never read as a default unless the charter
-says a field is optional and says what its absence means. Three fields are
-optional by exactly that rule's own terms, and one more is an option at the
-parse for a different reason, named after them. `state_election` may be
-absent because `weaver-state-PRD` section 4 rules what absence means, the
-default election, the envelope of every kind and nothing more, so a deployment
-that elects nothing still holds the session's shape by the charter's sentence
-rather than by a parser's guess. The resolved spelling of that default is
-fixed here so two resolvers cannot disagree: `all_kinds` true and `keys`
-empty. The empty list is only the default's spelling, not a constraint on
-the pair: `keys` stays meaningful beside `all_kinds` true, each named kind
-adding payload paths on top of the envelope every kind already crosses
-with. `EnterPayload` carries the election resolved,
-admin filling that ruled default at inventory, so the worker never re-derives
-an absence. When the block is present, both its members are required, the
-required-field discipline resuming inside it. `loop_file` may be absent
-because `weaver-harness-PRD` section 2 rules what absence means, the worker's
-own default loop, the compiled body or the installed file, so a declaration
-written before the member existed still parses and still means what it meant.
-Present, it names the loop file the agent's worker runs, the loop being a
-member of that agent's harness and unique to it per the same section's ruling
-of 2026-08-20, and it reaches the worker in the unit's argument vector per
-`weaver-admin-Spec` section 6 rather than in any exchange, because no exchange
-carries a path. `state_store` may be absent because `weaver-state-PRD` section
-4 rules what absence means, the embedded engine, so a declaration written
-before the member existed still parses and still means what it meant, and the
-state member stands. Present, its `engine` names which port the deployment
-elects, as of 2026-09-04: `none` declares that no member stands, which is a
-deployment's real posture and the one the instrument-validation matrices ran
-under, `sqlite` the embedded engine, and `postgres` the service engine, for
-which `database` and `role` are required and for the other two are refused if
-present, the same cross-field rule admin holds for the gate instruction, judged
-at inventory before a process exists. **`none` beside a present
-`state_election` is refused by the same rule**: the election says what the tee
-sends to the
-member, and a declaration that elects what to send to a member it declined is
-malformed rather than surplus, refused `ConfigInvalid` naming the election, the
-way a granted permission naming a field is. `none` with the election absent is
-whole, the ruled default still written on the load event as the record's
-posture, per `weaver-trace-PRD` section 3.1, beside a `state_member` of false.
-The three are the binding's members: they
-change only across the load boundary, they ride the enter directive resolved,
-and the load event records them, per `weaver-trace-PRD` section 3.1. The enum
-is closed at three because the state charter charters two engines and the
-absence of a member, and a further engine is a state act before it is a
-variant. `binding_kind` may be absent because `weaver-types-PRD`
-section 2.1 rules what absence means, a serving binding, so a declaration
-written before the member existed still parses and still means what it meant,
-on the same footing as `loop_file` above. The enum is closed at two cases
-because `weaver-agents-PRD` section 6 names exactly two kinds, and a third
-kind is an apex act before it is a variant. `gate_instruction` is an `Option`
-for a reason the three above do not share: presence follows the resolved kind
-rather than standing alone, a serving binding requiring it and a diagnostic
-binding excluding it, per the contract's shape rule of 2026-08-24. The parse
-cannot see a cross-field rule, checking each field alone, so it parses as an
-option and the rule is admin's at inventory, before a process exists, per
-`weaver-admin-Spec` section 4. **`trace_sink` is required under either kind**,
-and briefly was not: an act of 2026-08-24 made it conditional on the reading
-that a diagnostic binding authors nothing, and the operator's ruling of the
-same date replaced that reading with a composition, every binding authoring a
-record and the kind selecting the mechanism rather than the presence, per
-`weaver-agents-PRD` section 6. What the declaration names is a sink, and what
-the run writes into it follows the kind without the field moving. Every other
-field is required.
-The residual-readout election is what a builder will reach to default,
-to off, and it is exactly the one that must not: an operator who stated no readout
-has not thereby declined it, and admin refusing the load is how that operator
-learns the file is incomplete rather than discovering it in a record with no
-reductions in it. This is why `AgentConfig` derives no `Default` and `parse`
-returns no partial value.
+`weaver-types-PRD` section 2.1, so what is required is a per-binary fact rather than one
+struct's field list, and the refusal is against that surface rather than against a fixed
+type. The property below is unchanged by that and is why the rule exists. Charter
+section 5 rules that absence is never read as a default unless the charter says a field
+is optional and says what its absence means. Three fields are optional by exactly that
+rule's own terms, and one more is an option at the parse for a different reason, named
+after them. `state_election` may be absent because `weaver-state-PRD` section 4 rules
+what absence means, the default election, the envelope of every kind and nothing more,
+so a deployment that elects nothing still holds the session's shape by the charter's
+sentence rather than by a parser's guess. The resolved spelling of that default is fixed
+here so two resolvers cannot disagree: `all_kinds` true and `keys` empty. The empty list
+is only the default's spelling, not a constraint on the pair: `keys` stays meaningful
+beside `all_kinds` true, each named kind adding payload paths on top of the envelope
+every kind already crosses with. `EnterPayload` carries the election resolved, admin
+filling that ruled default at inventory, so the worker never re-derives an absence. When
+the block is present, both its members are required, the required-field discipline
+resuming inside it. `loop_file` may be absent because `weaver-harness-PRD` section 2
+rules what absence means, the worker's own default loop, the compiled body or the
+installed file, so a declaration written before the member existed still parses and
+still means what it meant. Present, it names the loop file the agent's worker runs, the
+loop being a member of that agent's harness and unique to it per the same section's
+ruling of 2026-08-20, and it reaches the worker in the unit's argument vector per
+`weaver-admin-Spec` section 6 rather than in any exchange, because no exchange carries a
+path. `state_store` may be absent because `weaver-state-PRD` section 4 rules what
+absence means, the embedded engine, so a declaration written before the member existed
+still parses and still means what it meant, and the state member stands. Present, its
+`engine` names which port the deployment elects, as of 2026-09-04: `none` declares that
+no member stands, which is a deployment's real posture and the one the
+instrument-validation matrices ran under, `sqlite` the embedded engine, and `postgres`
+the service engine, for which `database` and `role` are required and for the other two
+are refused if present, the same cross-field rule admin holds for the gate instruction,
+judged at inventory before a process exists. **`none` beside a present `state_election`
+is refused by the same rule**: the election says what the tee sends to the member, and a
+declaration that elects what to send to a member it declined is malformed rather than
+surplus, refused `ConfigInvalid` naming the election, the way a granted permission
+naming a field is. `none` with the election absent is whole, the ruled default still
+written on the load event as the record's posture, per `weaver-trace-PRD` section 3.1,
+beside a `state_member` of false. The three are the binding's members: they change only
+across the load boundary, they ride the enter directive resolved, and the load event
+records them, per `weaver-trace-PRD` section 3.1. The enum is closed at three because
+the state charter charters two engines and the absence of a member, and a further engine
+is a state act before it is a variant. `binding_kind` may be absent because
+`weaver-types-PRD` section 2.1 rules what absence means, a serving binding, so a
+declaration written before the member existed still parses and still means what it
+meant, on the same footing as `loop_file` above. The enum is closed at two cases because
+`weaver-agents-PRD` section 6 names exactly two kinds, and a third kind is an apex act
+before it is a variant. `gate_instruction` is an `Option` for a reason the three above
+do not share: presence follows the resolved kind rather than standing alone, a serving
+binding requiring it and a diagnostic binding excluding it, per the contract's shape
+rule of 2026-08-24. The parse cannot see a cross-field rule, checking each field alone,
+so it parses as an option and the rule is admin's at inventory, before a process exists,
+per `weaver-admin-Spec` section 4. **`trace_sink` is required under either kind**, and
+briefly was not: an act of 2026-08-24 made it conditional on the reading that a
+diagnostic binding authors nothing, and the operator's ruling of the same date replaced
+that reading with a composition, every binding authoring a record and the kind selecting
+the mechanism rather than the presence, per `weaver-agents-PRD` section 6. What the
+declaration names is a sink, and what the run writes into it follows the kind without
+the field moving. Every other field is required. The residual-readout election is what a
+builder will reach to default, to off, and it is exactly the one that must not: an
+operator who stated no readout has not thereby declined it, and admin refusing the load
+is how that operator learns the file is incomplete rather than discovering it in a
+record with no reductions in it. This is why `AgentConfig` derives no `Default` and
+`parse` returns no partial value. `restore` may be absent because `weaver-state-PRD`
+section 4 rules what absence means, the load standing from nothing, which is what every
+load did before the ruling of 2026-09-04 on issue #432. Present, it names the record the
+session stands from, a path admin reads under its own custody and the harness never
+sees, and `through`, the cut, a run of the record by its reference and a turn within it,
+because a turn's number recurs across a session's runs and a cut that named the turn
+alone would name several. Absent, the record whole. The session name decides what the
+restore is, per that section and `weaver-admin-Spec` section 4: the declaration's own
+session name with the record whole is a resume, a new session name is a branch, at the
+cut where one is named and at the record's end where none is, and a cut under the
+record's own session name refuses at the inventory.
 
 ```graph
 node: types-required-field-refuses
@@ -1368,6 +1379,14 @@ pub struct EnterPayload {
     pub binding: EnterBinding,
     pub state_election: StateElection,
     pub state_store: StateStore,
+    pub restore: Option<Lineage>,
+    pub stack: BTreeMap<String, String>,
+}
+
+pub struct Lineage {
+    pub parent: SessionId,
+    pub run: RunId,
+    pub through: u64,
 }
 
 pub enum EnterBinding {
@@ -1404,6 +1423,18 @@ resolved value exactly where the engine is the service one, the cross-field
 rule having been judged before any process existed, and the member's own
 vector carries the same three, per `weaver-admin-Spec` section 6, so the two
 parties that need them read one resolution.
+
+**`restore` and `stack` ride the enter as of 2026-09-04, per issue #432.** `restore`
+rides as `Lineage`, resolved by admin: the parent's session, the run the cut falls in,
+and the turn the holdings stop at, a whole record resolved to its last run's last turn,
+and never the record's path, which admin read under its own custody and the harness has
+no business holding, on the same discipline as the sink. The harness names the parent on
+the load event and starts its turn ordinal from the cut without opening anything, the
+record having been preloaded into the member before the enter per `weaver-admin-Spec`
+section 6. `stack` is the digests of the organ binaries admin started, keyed by the
+binary's name, so the load event names the stack that ran it and a record is sufficient
+for its own conditions without a deposit beside it, per `weaver-trace-PRD` section 3.1.
+Both are admin's facts and the harness authors them as it authors the store's.
 
 **`EnterBinding` is the kind resolved, and a directive disagreeing with its
 kind is unrepresentable rather than refused.** The config holds the kind as

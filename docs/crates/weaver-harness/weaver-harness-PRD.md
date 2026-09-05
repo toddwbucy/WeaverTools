@@ -8,6 +8,10 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
+**Revised:** 2026-09-04, third of this date, the restored conversation is prefix.
+Section 2's prompt assembly names the recorded conversation through the cut as prefix
+material under a restoring load, seated beside the identity and permanent for the
+residency. Per issue #432.
 **Revised:** 2026-09-04, second of this date, the `reads` edge to the declaration
 retires. Section 4's boundary paragraph declared a read this crate does not
 perform, admin reading the file and this crate receiving the enter, the
@@ -281,7 +285,11 @@ the family library renders, and the rendered reality returns on the report path,
 template identity, token identifiers, and block partition, so the harness authors what
 the model saw without having rendered it. No model is a build or run dependency of this
 crate, now stronger than a discipline: the per-model knowledge lives across a seam
-entirely. The deterministic assembly floor stands alone, always.
+entirely. The deterministic assembly floor stands alone, always. Under a restoring load,
+per the ruling of 2026-09-04 on issue #432, the recorded conversation through the cut is
+prefix material beside the identity, seated once and permanent for the residency,
+because a session standing from a record is conditioned by that record the way every
+session is conditioned by its system prompt.
 
 **Decode against a resident session.** The harness issues decode requests over the
 decode socket against a resident KV session rather than resending the conversation

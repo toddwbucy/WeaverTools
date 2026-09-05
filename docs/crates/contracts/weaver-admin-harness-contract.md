@@ -4,44 +4,43 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Revised:** 2026-09-04, second of this date, the enter carries the restore and the
+stack. Section 3's enter supplies the lineage of the restore where the declaration
+elects one, resolved and never the record's path, and the digests of the organ binaries
+admin started, both admin's facts, per `weaver-types-Spec` section 4 and issue #432.
 **Revised:** 2026-09-04, the enter carries the store election. Section 3's enter
-supplies the engine the member stands on and, under the service engine, its
-database and role, beside the state election and on the same ground: admin has
-no channel to the member, and the harness authors the load event that records
-them. Section 5's supplies follow by derivation. Per issue #411.
-**Revised:** 2026-08-26, the enter carries a second handle. Per the operator's
-ruling of this date, the supply list gains the state channel's end, the
-harness half of the socketpair admin creates at the member's spawn: admin
-couriers what it never speaks on, the harness receives its member's channel
-the way it receives the sink, and no dial at a derived name remains anywhere
-in the load. The sink's count-is-one sentence scopes to the sink and the
-state end's own rule stands beside it, following the leg rather than the
-kind.
-**Date filed:** 2026-07-29
-**Revised:** 2026-08-24, third of this date, the diagnostic member composes
-inside. The entry below is reversed rather than amended and stands so the
-reversal is visible: the sink handle crosses the enter under either kind and
-its count is one, both kinds authoring a record, per `weaver-agents-PRD`
-section 6 as ruled this date. Admin's supply list and its sink guarantee lose
-the scoping with it.
-**Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
-record. The sink handle joins the gate instruction under the kind's scoping,
-section 3 carrying it where the kind declares a record and nowhere else, so the
-descriptor count on an enter follows the kind rather than standing at one. A
-handle arriving on a diagnostic enter is named a defect in the sender. Admin's
-supply list and its sink guarantee scope the same way, the guarantee reading
-vacuously on a kind that takes none. Per `weaver-agents-PRD` section 6 as
-amended this date, which carries the argument. The entry below gains the
-ordinal the convention asks for, which it was filed without.
-**Revised:** 2026-08-24, first of this date, the kind crosses the enter. Per
-`weaver-agents-PRD` section 6 as amended this date, a binding declares its kind and the
-lifecycle measures a load against the components the kind declares. The enter carries
-the kind, resolved to serving where the declaration is silent, and the gate instruction
-crosses where the kind declares a Gate and is absent as shape where it does not. The
-enter's gate-last and the leave's gate-first scope to a Gate that stands, and the ready
-guarantee reads against the declared components. Section 8 draws `binding-kind` from
-`weaver-types-PRD` section 2.1. Which refusal catches a directive whose members disagree
-with its kind is named as the Spec round's.
+supplies the engine the member stands on and, under the service engine, its database and
+role, beside the state election and on the same ground: admin has no channel to the
+member, and the harness authors the load event that records them. Section 5's supplies
+follow by derivation. Per issue #411. **Revised:** 2026-08-26, the enter carries a
+second handle. Per the operator's ruling of this date, the supply list gains the state
+channel's end, the harness half of the socketpair admin creates at the member's spawn:
+admin couriers what it never speaks on, the harness receives its member's channel the
+way it receives the sink, and no dial at a derived name remains anywhere in the load.
+The sink's count-is-one sentence scopes to the sink and the state end's own rule stands
+beside it, following the leg rather than the kind. **Date filed:** 2026-07-29
+**Revised:** 2026-08-24, third of this date, the diagnostic member composes inside. The
+entry below is reversed rather than amended and stands so the reversal is visible: the
+sink handle crosses the enter under either kind and its count is one, both kinds
+authoring a record, per `weaver-agents-PRD` section 6 as ruled this date. Admin's supply
+list and its sink guarantee lose the scoping with it. **Revised:** 2026-08-24, second of
+this date, the diagnostic binding writes no record. The sink handle joins the gate
+instruction under the kind's scoping, section 3 carrying it where the kind declares a
+record and nowhere else, so the descriptor count on an enter follows the kind rather
+than standing at one. A handle arriving on a diagnostic enter is named a defect in the
+sender. Admin's supply list and its sink guarantee scope the same way, the guarantee
+reading vacuously on a kind that takes none. Per `weaver-agents-PRD` section 6 as
+amended this date, which carries the argument. The entry below gains the ordinal the
+convention asks for, which it was filed without. **Revised:** 2026-08-24, first of this
+date, the kind crosses the enter. Per `weaver-agents-PRD` section 6 as amended this
+date, a binding declares its kind and the lifecycle measures a load against the
+components the kind declares. The enter carries the kind, resolved to serving where the
+declaration is silent, and the gate instruction crosses where the kind declares a Gate
+and is absent as shape where it does not. The enter's gate-last and the leave's
+gate-first scope to a Gate that stands, and the ready guarantee reads against the
+declared components. Section 8 draws `binding-kind` from `weaver-types-PRD` section 2.1.
+Which refusal catches a directive whose members disagree with its kind is named as the
+Spec round's.
 
 **Revised:** 2026-08-22, the lifecycle refusal is clerked. An enter refused
 after its bracket stands reaches the record as a `refusal` carrying
@@ -249,43 +248,37 @@ second dial waiting at the listener rather than being answered concurrently.
 Three, and no others, all opened by admin.
 
 **Enter the run.** Opened by admin. Admin directs the harness to enter, supplying the
-session identity, the run reference, the kind of the binding, the trace sink
-handle, the state channel's end where the member stands, the
-SPU instruction, the gate instruction where the kind declares a Gate, the state
-election the tee applies, and the store election the member stands on, resolved
-to the embedded engine where the declaration is silent, per `weaver-state-PRD`
-section 4 as revised 2026-09-04. The state channel's end is the harness half of the
-socketpair admin created at the member's spawn, per the operator's ruling of
-2026-08-26 carried at `weaver-harness-state-contract`: admin couriers it and
-speaks on it never. Its absence is the state leg not standing, never a
-refused load, and the two failure moments read differently on purpose: a
-member whose spawn failed puts no end on the enter, and one that died after
-the spawn is delivered and discovered as the closed pair the state
-contract's dead-peer clause already covers. The
-instructions and the election are in the directive because the
-ruling of `weaver-admin-PRD` section 6 gives admin no channel to the SPU, the gate,
-or the state member, so if admin's intent for any of them does not cross this
-seam it crosses nowhere. The kind is in the directive on the same argument one
-step earlier: it decides which components the fan-out stands up, the fan-out is
-the harness's, and a kind that does not cross here reaches no party that acts
-on it. On a diagnostic enter the gate instruction is absent as a matter of
-shape rather than omission, because the instruction names what the fan-out is
-to start and a diagnostic fan-out starts no Gate. Which refusal catches a
-directive whose members disagree with its kind is the Spec round's to place.
-The harness
-stands up an empty working structure, authors its opening event, `load` on a
-serving binding and whatever the diagnostic mechanism's own vocabulary names,
-which `weaver-harness-Spec` section 9 and `weaver-diagnostic-PRD` section 6
-hold open, asks the SPU to
-admit against the instruction it was handed, and starts Gate last where the
-kind declares one. It answers ready
-only when
-every step of the fan-out its kind declares has confirmed, or it refuses, and a
-refusal names where the
-fan-out stopped, so that admin rolls back what was built without asking a second
-question. The answer, either way, closes the exchange and is the aggregate: one
-directive out, one answer back, and the organs appear in the answer's content rather
-than as parties to this seam.
+session identity, the run reference, the kind of the binding, the trace sink handle, the
+state channel's end where the member stands, the SPU instruction, the gate instruction
+where the kind declares a Gate, the state election the tee applies, the store election
+the member stands on, resolved to the embedded engine where the declaration is silent,
+per `weaver-state-PRD` section 4 as revised 2026-09-04, the lineage of the restore where
+the declaration elects one, and the digests of the organ binaries admin started. The
+state channel's end is the harness half of the socketpair admin created at the member's
+spawn, per the operator's ruling of 2026-08-26 carried at
+`weaver-harness-state-contract`: admin couriers it and speaks on it never. Its absence
+is the state leg not standing, never a refused load, and the two failure moments read
+differently on purpose: a member whose spawn failed puts no end on the enter, and one
+that died after the spawn is delivered and discovered as the closed pair the state
+contract's dead-peer clause already covers. The instructions and the election are in the
+directive because the ruling of `weaver-admin-PRD` section 6 gives admin no channel to
+the SPU, the gate, or the state member, so if admin's intent for any of them does not
+cross this seam it crosses nowhere. The kind is in the directive on the same argument
+one step earlier: it decides which components the fan-out stands up, the fan-out is the
+harness's, and a kind that does not cross here reaches no party that acts on it. On a
+diagnostic enter the gate instruction is absent as a matter of shape rather than
+omission, because the instruction names what the fan-out is to start and a diagnostic
+fan-out starts no Gate. Which refusal catches a directive whose members disagree with
+its kind is the Spec round's to place. The harness stands up an empty working structure,
+authors its opening event, `load` on a serving binding and whatever the diagnostic
+mechanism's own vocabulary names, which `weaver-harness-Spec` section 9 and
+`weaver-diagnostic-PRD` section 6 hold open, asks the SPU to admit against the
+instruction it was handed, and starts Gate last where the kind declares one. It answers
+ready only when every step of the fan-out its kind declares has confirmed, or it
+refuses, and a refusal names where the fan-out stopped, so that admin rolls back what
+was built without asking a second question. The answer, either way, closes the exchange
+and is the aggregate: one directive out, one answer back, and the organs appear in the
+answer's content rather than as parties to this seam.
 
 **Leave the run.** Opened by admin. Admin directs the harness to leave. The harness
 stops Gate first where one stands, refuses while a turn is in flight, authors
@@ -377,17 +370,17 @@ This section is derived from section 3 rather than prose beside it, because ever
 exchange payload change is a supplies change by construction, and a Spec writer reads
 this list.
 
-**Admin supplies** the session identity and the run reference for the run being
-entered, the kind of the binding, resolved to serving where the declaration is
-silent, the
-trace sink handle, the state channel's end where the member stands, the SPU
-instruction the fan-out admits,
-the gate instruction the fan-out starts where the kind declares a Gate, the
-state election the tee applies,
-resolved to the ruled default where the declaration is silent, the store
-election the member stands on with its database and role under the service
-engine, resolved to the embedded engine where the declaration is silent, and
-the intent to stop.
+**Admin supplies** the session identity and the run reference for the run being entered,
+the kind of the binding, resolved to serving where the declaration is silent, the trace
+sink handle, the state channel's end where the member stands, the SPU instruction the
+fan-out admits, the gate instruction the fan-out starts where the kind declares a Gate,
+the state election the tee applies, resolved to the ruled default where the declaration
+is silent, the store election the member stands on with its database and role under the
+service engine, resolved to the embedded engine where the declaration is silent, the
+lineage of the restore where the declaration elects one, the parent's session, the run
+the cut falls in, and the turn the holdings stop at, resolved by admin and never the
+record's path, so the harness names its parent without opening anything, the digests of
+the organ binaries admin started, keyed by name, and the intent to stop.
 
 **Admin guarantees** that the trace sink handle it passes refers to the sink the
 session's configuration declares, that the run reference distinguishes this run

@@ -2,6 +2,11 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, fifth of this date, the door stands under a restoring load.
+Section 4's two-sided claim names the other half's new case: admin's vector carries
+the door's name under a diagnostic binding or a serving load that elects a restore,
+and this crate's half, that the member binds no name it is not given, is unchanged.
+Per issue #432.
 **Revised:** 2026-09-04, fourth of this date, the identity answer is the newest
 run's. Section 4's identity query binds to the run of the newest turnless system
 message, per `weaver-harness-state-contract` section 2 as revised the same date.
@@ -196,8 +201,9 @@ traffic and close it on exit. The probe borrows and owns nothing, so the refusal
 nothing that is not this process's own. The choreography election below is narrowed once
 already by section 4 and now again by the ruling: what remains that act's is the number
 and the probe's mechanics. The preload door's name arrives on the vector under a
-diagnostic binding and binds under this member's own territory, the credential judgment
-of section 4 unchanged on it.
+diagnostic binding or a serving load that elects a restore, per issue #432, this member
+binding whatever name it is given and none it is not, and binds under this member's own
+territory, the credential judgment of section 4 unchanged on it.
 
 ## 3. The store
 
@@ -395,35 +401,32 @@ custodian wedged on its behalf would cost the session its custody, so the
 seam retires with the holdings standing. The values are this act's and a
 measurement may move them, the meanings being the elections.
 
-**The preload door lands its distillates through the same path the first
-door does, and that is the mechanism of the contract's indistinguishability
-claim.** A distillate arriving on the preload channel parses, transacts, and
-lands exactly as one arriving from the tee, one code path and one store, so
-nothing marks how a holding arrived and the serve restriction binds to the
-preload opener's session the way it binds to the harness opener's. **The one
-act the preload path adds is the opener's retirement**: receiving the
-preload election deletes the declared session's event and field rows in the
-same transaction that records the opener, before any distillate lands, per
-the contract's section 2. The path is thereby idempotent at the preload
-grain - re-running it replaces the session's holdings rather than appending
-to them - and a dead driver's prefix needs no cleanup act, the next opener
-being the cleanup. The first door's path performs no retirement and gains no
-branch: the delete hangs on the preload opener alone. What is
-new is the door's standing and its judgment, and both are conditioned facts:
-the member binds the preload name only where the party that stands it names
-one, and that party names it only under a diagnostic binding, holding the
-resolved kind from the inventory per `weaver-admin-Spec` section 4. **That
-party is `weaver-admin` and the name rides the vector**, per that Spec's
-section 6 as amended 2026-08-25, no exchange this member holds carrying a
-path. **Section 2's election is narrowed rather than closed**: the descriptor
-choreography it leaves to the code act is still that act's, and what is
-settled here is only that a name arrives on the vector and not on a
-descriptor. The credential judgment is this member's one, the first door
-authenticating by possession per the operator's ruling of 2026-08-26: the
-accept on the preload name admits the operator principal and refuses every
-other peer before any byte is read, the agent's among them and no longer
-knowable by number, the vector having dropped the agent's uid with the first
-door's judgment.
+**The preload door lands its distillates through the same path the first door does, and
+that is the mechanism of the contract's indistinguishability claim.** A distillate
+arriving on the preload channel parses, transacts, and lands exactly as one arriving
+from the tee, one code path and one store, so nothing marks how a holding arrived and
+the serve restriction binds to the preload opener's session the way it binds to the
+harness opener's. **The one act the preload path adds is the opener's retirement**:
+receiving the preload election deletes the declared session's event and field rows in
+the same transaction that records the opener, before any distillate lands, per the
+contract's section 2. The path is thereby idempotent at the preload grain - re-running
+it replaces the session's holdings rather than appending to them - and a dead driver's
+prefix needs no cleanup act, the next opener being the cleanup. The first door's path
+performs no retirement and gains no branch: the delete hangs on the preload opener
+alone. What is new is the door's standing and its judgment, and both are conditioned
+facts: the member binds the preload name only where the party that stands it names one,
+and that party names it under a diagnostic binding or a serving load that elects a
+restore, per issue #432, holding the resolved kind from the inventory per
+`weaver-admin-Spec` section 4. **That party is `weaver-admin` and the name rides the
+vector**, per that Spec's section 6 as amended 2026-08-25, no exchange this member holds
+carrying a path. **Section 2's election is narrowed rather than closed**: the descriptor
+choreography it leaves to the code act is still that act's, and what is settled here is
+only that a name arrives on the vector and not on a descriptor. The credential judgment
+is this member's one, the first door authenticating by possession per the operator's
+ruling of 2026-08-26: the accept on the preload name admits the operator principal and
+refuses every other peer before any byte is read, the agent's among them and no longer
+knowable by number, the vector having dropped the agent's uid with the first door's
+judgment.
 
 **The seal is a per-standing fact, held apart from the transport, and the
 replay ask reads it alone.** The member holds, for its own standing's life,
@@ -493,18 +496,17 @@ from: weaver-state
 to: state-preload-door-states-its-mode
 ```
 
-**`state-preload-door-stands-only-diagnostic`, below, is one half of a
-two-sided claim.** This crate's half is that the member binds no name it is not
-given. The other half is
-`weaver-admin`'s, `admin-preload-name-follows-the-kind` at
-`weaver-admin-Spec` section 6, which holds the vector in **both** directions: a
-serving inventory carries no name and a diagnostic one carries one. **The two
-records do not divide the fact evenly.** This crate's covers what the member
-does with what it is given, and the vector is entirely the other side's, because
-a member given a name binds it and a member given none binds none, which is this
-record holding rather than failing whichever way the name was wrong. The claim is
-recorded twice because the two crates' behaviours are two facts, and the seam
-between them is the other record's alone.
+**`state-preload-door-stands-only-diagnostic`, below, is one half of a two-sided
+claim.** This crate's half is that the member binds no name it is not given. The other
+half is `weaver-admin`'s, `admin-preload-name-follows-the-kind` at `weaver-admin-Spec`
+section 6, which holds the vector in **both** directions: a serving inventory carries no
+name, and a diagnostic one, or a serving one whose declaration elects a restore, carries
+one, per issue #432. **The two records do not divide the fact evenly.** This crate's
+covers what the member does with what it is given, and the vector is entirely the other
+side's, because a member given a name binds it and a member given none binds none, which
+is this record holding rather than failing whichever way the name was wrong. The claim
+is recorded twice because the two crates' behaviours are two facts, and the seam between
+them is the other record's alone.
 
 **The identifier below still names the pair's claim and this half is narrower
 than its name.** `state-preload-door-stands-only-diagnostic` reads as the whole

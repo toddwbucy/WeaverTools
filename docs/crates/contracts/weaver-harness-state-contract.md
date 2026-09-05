@@ -2,6 +2,10 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, fifth of this date, the enter's asks park under a restoring
+load. Section 2's parking clause admits the `identity` and `recall` asks the harness
+sends at the enter where the load elects a restore, answering at the driver's seal like
+the replay ask, per `weaver-state-PRD` section 4 as revised this date and issue #432.
 **Revised:** 2026-09-04, fourth of this date, the identity answer is the newest run's.
 Section 2's `identity` ask serves the turnless system messages of the session's most
 recent run that holds any, not of every run, because every load records the prefix
@@ -285,40 +289,44 @@ the answer serves every held event of the declared session as the
 distillate's own shape, envelope and pairs, in landing order, no more
 replayable than it was distillable.
 
-**On a member standing with the preload door, a replay ask answers only at
-a seal.** The preload door of `weaver-analysis-state-contract` seals its
-stream, and the ask parks until a seal has landed, whatever the door's
-transport is doing: not yet dialed, open mid-stream, or closed without the
-seal all park it alike. The last is the clause's point, because a dead
-driver's channel closes and its prefix then looks exactly like holdings at
-rest, and a retry's opener may yet retire that prefix and seal a whole
-preload the parked ask should answer against. So the seal is the only fact
-that answers, transport openness answers nothing, and an ask on a standing
-that never seals is converted by the asker's bound into the missing answer
-it always was, per section 3's bounded-wait rule. This is the one ask whose
-answer may wait, the waiting is not the custodian initiating, and one
-answer still follows one ask. **The parked ask steps out of the arrival
-order, and that is this clause's stated exception to section 4's ordering
-rule**: a shape or recall ask arriving while a replay ask parks is answered
-in its own arrival order, against the holdings the stream carried before
-it, and the replay's answer follows the seal whenever that is, its view
-the seal's position, every distillate received through the seal in it. What keeps
-the pairing unambiguous without a correlation member is that every answer
-names the ask it answers, per the answer's own shape, and at most one
-replay ask parks per channel: **a second replay ask arriving while one
-parks replaces it**, the first cleared unanswered, the seal answering the
-newest alone. Replacement is the retry's whole mechanism, because the
-asker's bound is the asker's own and its expiry crosses this seam as
-nothing at all: the custodian cannot clear a parked ask on a fact it
-cannot see, so what clears one is the next ask or the channel's close, and
-an asker whose patience ran out retries by asking again rather than by any
-un-ask this seam does not carry. The cleared ask's answer is never owed,
-its asker's bound having already converted it to the missing answer.
-An asker that cannot tell a late replay answer from a prompt shape answer
-has not read the answer's name, and no further identity crosses the seam
-for it. On a member standing without the preload
-door, the ask answers immediately, against the holdings the stream carried
-before it, like its two siblings.
+**On a member standing with the preload door, a replay ask answers only at a seal.** The
+preload door of `weaver-analysis-state-contract` seals its stream, and the ask parks
+until a seal has landed, whatever the door's transport is doing: not yet dialed, open
+mid-stream, or closed without the seal all park it alike. The last is the clause's
+point, because a dead driver's channel closes and its prefix then looks exactly like
+holdings at rest, and a retry's opener may yet retire that prefix and seal a whole
+preload the parked ask should answer against. So the seal is the only fact that answers,
+transport openness answers nothing, and an ask on a standing that never seals is
+converted by the asker's bound into the missing answer it always was, per section 3's
+bounded-wait rule. **Under a restoring load the `identity` and `recall` asks the harness
+sends at the enter park the same way**, per `weaver-state-PRD` section 4 as revised
+2026-09-04: the session stands from holdings the driver has yet to seal, so the enter
+waits on the seal rather than seeding from a store that is empty for a moment, and the
+identity ask's refusal of the dead-peer conversion is unchanged, a channel closed
+unsealed converting to the missed answer that refuses the enter. On a serving load
+electing no restore they answer immediately as before. The replay ask was the one ask
+whose answer may wait, and these two join it under that binding alone, the waiting is
+not the custodian initiating, and one answer still follows one ask. **The parked ask
+steps out of the arrival order, and that is this clause's stated exception to section
+4's ordering rule**: a shape or recall ask arriving while a replay ask parks is answered
+in its own arrival order, against the holdings the stream carried before it, except the
+enter's `identity` and `recall` asks under a restoring load, which park on the seal
+themselves per the clause below and step out of the order the same way, and the replay's
+answer follows the seal whenever that is, its view the seal's position, every distillate
+received through the seal in it. What keeps the pairing unambiguous without a
+correlation member is that every answer names the ask it answers, per the answer's own
+shape, and at most one replay ask parks per channel: **a second replay ask arriving
+while one parks replaces it**, the first cleared unanswered, the seal answering the
+newest alone. Replacement is the retry's whole mechanism, because the asker's bound is
+the asker's own and its expiry crosses this seam as nothing at all: the custodian cannot
+clear a parked ask on a fact it cannot see, so what clears one is the next ask or the
+channel's close, and an asker whose patience ran out retries by asking again rather than
+by any un-ask this seam does not carry. The cleared ask's answer is never owed, its
+asker's bound having already converted it to the missing answer. An asker that cannot
+tell a late replay answer from a prompt shape answer has not read the answer's name, and
+no further identity crosses the seam for it. On a member standing without the preload
+door, the ask answers immediately, against the holdings the stream carried before it,
+like its two siblings.
 
 **The `grants` ask returns the boundary as the store states it**, added 2026-09-04
 against the leave clause of `weaver-trace-PRD` section 3.1: the record names what its
