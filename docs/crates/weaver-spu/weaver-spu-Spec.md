@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, second of this date, the artifact refusal carries its
+account. Section 3 states what a refusal on the artifact leaves on this side of
+the seam, one typed line on standard error naming the refusal, the path, the
+step, and the identity, and tells absent from denied at the resolve, per
+charter section 4.1 step 1 and section 7 as ruled on issue #456. Section 10's
+total moves by the one record.
+
 **Revised:** 2026-09-05, the family key is folded across containers. Section
 5's registry clause compares the entry's spelling and the artifact's under one
 fold, lower case with `_`, `-`, and `.` dropped, so a safetensors `model_type`
@@ -932,6 +939,35 @@ tag: perturbation
 edge: asserts
 from: weaver-spu
 to: spu-header-read-touches-no-device
+```
+
+**A refusal on the artifact names the path and the identity it was judged
+under, and the account stays on this side of the seam**, per charter section
+4.1 step 1 and section 7. What crosses is the floor's typed case,
+`ArtifactUnresolvable` where nothing stands at the path as this process and
+`ArtifactUnreadable` where something does and will not open, read, or parse,
+and the closed set carries no detail field, so the account lands on standard
+error as one typed line, the way the engine's account of a failed load
+already does: the refusal's name, the path the step failed on, the step, and
+the uid and gid this process runs under. The line rides the worker's pipe to
+the journal per `weaver-harness-Spec` section 2.2, and is the one place an
+operator reads the fault the charter's step names. **Absent and denied are
+told apart at the resolve.** A lookup the kernel refuses is a present
+artifact this identity cannot reach, so it refuses unreadable rather than
+unresolvable, the reading the pin already gives an open that fails for a
+reason other than absence. The perturbation is dropping the path from the
+line, under which the test that reads the line back fails, and the resolve's
+own test skips as root rather than passing on nothing, a uid that no
+directory denies being unable to see the difference it watches.
+
+```graph
+node: spu-artifact-refusal-names-path-and-identity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-artifact-refusal-names-path-and-identity
 ```
 
 **The devices are the binding's and this crate selects none.** The assignment
@@ -3202,7 +3238,8 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Eighty-six records in all,
+general prohibition, and the kernels' comparisons. Eighty-seven records in
+all, the custody act of 2026-09-05 adding the artifact refusal's account,
 the elections taking nodes because gate H1 would otherwise leave the largest
 decisions in this Spec untraceable. Four of these arrived with the
 re-feed act of 2026-08-31 without this count moving, that act's own
