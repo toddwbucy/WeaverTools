@@ -19,7 +19,7 @@ and a position is a resident
 length rather than an ordinal.
 
 **Revised:** 2026-09-05, second of this date, against two reviews on PR
-#453. Section 2.3 gains the recorded query, which section 4 required and
+`#453`. Section 2.3 gains the recorded query, which section 4 required and
 section 2 gave nowhere to put, and the indexes renumber to 2.4 with both
 citations following. The engine's identity enters the run's row, and **the
 deposit regime behind it is cited to `weaver-analysis-PRD` section 3**
@@ -36,6 +36,11 @@ reporter and its date and gates nothing. The lens row cites
 `weaver-analysis-PRD` section 3 rather than restating it, correcting an
 earlier draft of this act. Two assertion rows added. Semicolons swept
 under G1.
+
+**Revised:** 2026-09-05, fourth of this date, the run's row carries the
+field election's depth, which sets the length of every position's
+alternative list and which the charter's section 4 compares. Per the review
+of PR `#453`.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -123,6 +128,8 @@ Everything identifying the conditions lives in the run's own row:
 - **the engine's identity at build grain**: the libraries the decode ran
   through, each by name and digest, with the build that produced them
 - the batching election
+- **the field election's depth**, because it sets the length of every
+  position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
 - the declared boundary set
 - the parent run reference and branch position, where the run is a branch

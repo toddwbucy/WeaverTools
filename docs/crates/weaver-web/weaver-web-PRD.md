@@ -29,7 +29,7 @@ separate corpus follows from that but is not identical to it, and stays
 decision two of #439.
 
 **Revised:** 2026-09-05, second of this date, against two reviews on PR
-#453. The engine joins the run's tuple at build grain. **The scorer is
+`#453`. The engine joins the run's tuple at build grain. **The scorer is
 named on the verdict and never in the run's tuple**, correcting a clause
 that put it in both and contradicted itself four lines apart.
 **Reproduction states its projection** and leaves section 9, which held a
@@ -56,6 +56,15 @@ from an earlier draft of this act that had it version a lens, which
 dated observation and never a gate.** Three cells named in section 9 that
 this act's pull request had named only in its body. Semicolons swept
 under G1.
+
+**Revised:** 2026-09-05, fourth of this date, the tuple carries what the
+projection compares. The field election's depth and the forced token join
+the run's tuple: a run keeping forty alternatives and one keeping fifty
+differ in every position's list length by declaration, and section 4's
+comparison would have read that as a divergence. The row is told from the
+tuple, the parent run and the branch position being lineage rather than
+condition, which is what makes a branch comparable to its parent. Per the
+review of PR `#453`.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
@@ -403,9 +412,24 @@ projected readout, so a future refitted lens can read an old run.
 artifact identity at a grain fine enough to catch a quantization difference,
 **the engine's identity at a grain fine enough to catch a library
 revision**, seed, the full sampler configuration, device, precision, the
-batching election, the task, and the declared boundary set. The engine is in
+batching election, **the field election's depth**, the task, the declared
+boundary set, and **whether a token was forced and which**. The engine is in
 the compound the tuple names, and a divergence between two runs differing in
 both silicon and library revision names neither cause unless both are held.
+
+**The field election's depth is in the tuple because the projection below
+compares what it decides.** A run keeping forty alternatives and one keeping
+fifty differ in the length of every position's list by declaration rather
+than by behaviour, and a comparison that held the rest of the tuple would
+report that as a divergence. Forcing is in for the same reason under the
+rule of section 3.5: a forced token is not a sampled one, so two rows
+differing in it are not two readings of one condition.
+
+**The row holds more than the tuple, and the difference is lineage.** The
+parent run reference and the branch position say where a run came from
+rather than what it ran under. They are the row's and not the compound's, so
+two rows are comparable across them, which is what makes a branch
+measurable against its parent at all.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is
@@ -579,11 +603,12 @@ this crate designs around the gap until it closes.
   #439.
 - **Whether this crate scores a correctness verdict.** Reproduction is not
   in this list: it is measurement, it is in scope and drawn, and section 4
-  states its projection. **Correctness is testimony** and needs a scorer,
-  which section 1's discipline forbids this crate from being. What stays
-  open is which of three answers that takes. This crate does not score and
-  records the emission for an external scorer. Or it records a scorer's
-  verdict with **the scorer named on the verdict and never in the run's
+  states its projection. **Correctness is testimony** and needs a scorer.
+  Section 1's discipline forbids this crate from scoring correctness, so
+  what stays open is which of three answers that takes. This crate does not
+  score and records the emission for an external scorer. Or it records a
+  scorer's verdict with **the scorer named on the verdict and never in the
+  run's
   tuple**, so the judgment is attributable to a named thing rather than to
   the instrument, and a second scorer applied to the same run adds a
   verdict rather than changing what the run was or duplicating its row.
