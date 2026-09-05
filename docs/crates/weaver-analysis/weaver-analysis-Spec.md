@@ -4,6 +4,15 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-05, the signals reader is authorized. Section 5 gains the clause
+for the class's second reader, standing in code since #408 on 2026-09-02 with no
+sentence here: the per-position series paired from every generation's measurement on
+the same drain, addressed by ordinal where the field read is addressed by position,
+absence kept, the spike a rule whose caller names `k`, gated only where the record
+has a gate, with the `signals` verb's usage. Section 1's layout gains `stream.rs`
+and `signals.rs`. Section 6's counts are retaken from the records. Section 7 names
+what the series must carry for a store keyed by position as open, the record's
+residency the source and the input count ruled out by measurement. Per issue #451.
 **Revised:** 2026-09-04, fourth of this date, a position's field is read from the
 record. Section 5 gains the `field` verb: the one `model.field` event at an asked turn
 and position, drained from a serving or diagnostic record, file or pipe, spliced as the
@@ -123,6 +132,8 @@ finished record from a truncated one could hold this shape and not use it.
     src/lens.rs       the lens artifact, loaded and applied, section 5
     src/capture.rs    a capture's columns and their comparison, section 5
     src/field.rs      a position's field, read from the record, section 5
+    src/stream.rs     the drain, one road under every reader, section 5
+    src/signals.rs    the per-position series, read on the drain, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -758,6 +769,52 @@ as the field not having been elected, or as elected and unproduced where the `lo
 carried a depth. A position the record does not hold at that turn refuses naming the
 address. An address that is not `<turn>:<position>` refuses naming what was given.
 
+**The per-position signals are read from the record on the same drain, as a
+series, and this reader needs no tap, no lens, and no weights.** Every generation's
+`model.measurement` carries the tokens it drew, the distribution's entropy at each
+position unconditionally, the drawn token's surprisal where that election stands,
+each paired position for position with the drawn tokens, and a `perplexity` for the
+generation wherever a distribution was read, per `weaver-spu-Spec` section 6. So the
+series a reader wants, where the model was uncertain and where the token it drew
+surprised it, is in every record, serving and diagnostic alike, and this reader
+pairs and emits it and derives nothing. It is the class's second reader, standing
+since 2026-09-02 with the drain: it rides the road the lens rides, holds one turn at
+a time, and shares nothing with the lens but the road. **A point is addressed by its
+ordinal within its generation**, zero-based, which is what a series is drawn
+against, **and not by the position the field read above addresses**, the resident
+length at the draw. The record carries both coordinates for one drawn token, each
+reader emits the one it reads by, and the conversion between them belongs to a
+reader of the record, which holds the residency fact it needs, and never to a
+consumer of the series, which does not, per section 7's open election. **Absent
+stays absent.** A missing
+vector is not invented and a vector shorter than the tokens is not stretched, so a
+generation without the surprisal election carries an entropy at every point and a
+surprisal at none, and a consumer that fills an absence with a zero is lying about
+the election. **A spike is a rule and not a threshold**: the positions whose
+surprisal exceeds the series' mean by `k` of its deviations, the caller naming `k`,
+empty where fewer than two positions carry a surprisal, and which figure a view may
+draw from is a contract's clause rather than this crate's. **It gates only the
+record that has a gate.** A serving record carries no bracket and none is owed, it
+being an account of what happened rather than a claim that something was
+reproduced, and a diagnostic record's series is produced only where its own bracket
+closed certified, per the gate above and `weaver-diagnostic-PRD` section 4, the
+close ending the read as it ends every reader's. The `signals <record> [<k>]` verb,
+`k` two deviations where none is named, renders the summary first, one object
+naming the position count, how many carry an entropy and how many a surprisal, and
+the perplexities by turn, then one line per point carrying turn, ordinal, token,
+entropy, and surprisal, and the spikes with their bar on standard error. A record
+holding no measured generation refuses, typed as the others are.
+
+```graph
+node: analysis-signals-keep-absence
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-signals-keep-absence
+```
+
 **How this crate reaches the sink follows the operator's declaration and not this
 document.** The charter's section 3 assumes no discriminant, so this crate takes a
 byte stream from its invocation and reads records off it, and whether that stream
@@ -801,6 +858,9 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
 - The null replay gates the rest: a reader pass's outcome produces nothing where no
   certified null pass stands in the record, watched to fail when the ordering is
   removed.
+- Absence stays absent in the series: a record without the surprisal election
+  yields points carrying an entropy and no surprisal, watched to fail when the
+  reader fills an absent vector with zero.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
@@ -813,14 +873,16 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Fourteen sit there and none sits here.
+section 6. Twenty-one sit there and none sits here, retaken from the records on
+2026-09-05, the count having read fourteen while acts since 2026-09-01 added six
+without moving it, and this act adding the twenty-first.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Thirteen claims grounding in no
+The other four axioms reach none of these claims. **Twenty claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 
@@ -846,3 +908,21 @@ most of this document is representation.
   builder is complete rather than implied.
 - **The licence boundary** is the operator's, per the charter, and this document
   takes no position beyond noting that nothing here carries cut-and-recompute.
+- **What the series carries so a store keyed by position can address it.** The
+  series is addressed by ordinal and the field by position, per section 5, and a
+  consumer of the series holds no residency fact and cannot convert, so a store
+  keyed by position cannot address the series as it crosses today. What resolves
+  the two is the record's own residency and not the measurement's input count:
+  `model.output` carries the session's resident count as the generation closed,
+  per `weaver-trace-PRD` section 3.1, and on the 8B cell records the first draw's
+  position is that count less the output count less one terminator, where the
+  input count answers wrongly at the first turn, framing tokens standing resident
+  before the turn's delta that no measurement member carries, and a cumulative
+  count answers wrongly for the same reason. Two shapes are open, both new
+  behaviour, named here and not built. The emitter reports the first draw's
+  position once per generation on the summary, derived from the record's residency
+  with the terminator's width the family's to state. Or the record carries the
+  resident count as the generation opened, as the flush already carries both
+  counts, so the position is stated rather than derived, which is a trace and SPU
+  documents question before it is this crate's. The contract that reads the series
+  binds to whichever lands and to neither before.
