@@ -79,7 +79,10 @@ ship.
 
 The person in front of it is an engineer deploying a local model as an
 agent, who needs to know before shipping what the arrangement can tolerate,
-and who has been working on intuition because no instrument existed.
+and who has been working on intuition because **nothing accumulates**.
+Readings exist and are taken every day. What has not existed is a reading
+that comes back as a cell carrying its declared tuple, which a second person
+reruns and gets again.
 
 **The positioning rule reaches the interface.** The tool measures. It does
 not testify. Every reading this crate shows is labelled as a reading of
@@ -105,6 +108,12 @@ shown, from the tool's own labels, to be wrong.
   and the interface makes the reload the visible event it is.
 - **Not a judge of a declared boundary.** It requires the declaration and
   displays it. It does not grade it.
+- **Not a logprob viewer.** Per-token logprobs are drawn by a dozen tools,
+  and an engineer meeting section 3.4 will name one they already use. The
+  difference is not the picture. It is that a reading here is a cell with
+  its declared tuple, addressed by run, turn and position, and rerunnable by
+  someone who was not there. Claiming the picture as the novelty would be
+  the overclaim section 1 forbids, pointed at ourselves.
 - **Not a knowledge-graph governance layer.** No axioms, smells, gates, or
   conformance as product features.
 
@@ -247,9 +256,13 @@ the control arm is free.
 
 <!-- figure: Branch | Stage -->
 
-### 3.6 The three lists
+### 3.6 The four lists
 
-Global, filtered, and written into by every surface above.
+Global, filtered, and written into by every surface above. **The Experiment
+view is the fourth**, and it is a surface rather than a mode of the list
+above it: its own destination, its own state, and its own module under the
+Spec's rule of one module each. Five on the path and four here are the nine
+this section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -313,8 +326,11 @@ projected readout, so a future refitted lens can read an old run.
 
 **Everything identifying the conditions lives in the run's own row**:
 artifact identity at a grain fine enough to catch a quantization difference,
-seed, the full sampler configuration, device, precision, the batching
-election, the task, and the declared boundary set.
+**the engine's identity at a grain fine enough to catch a library
+revision**, seed, the full sampler configuration, device, precision, the
+batching election, the task, and the declared boundary set. The engine is in
+the compound the tuple names, and a divergence between two runs differing in
+both silicon and library revision names neither cause unless both are held.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is
@@ -325,9 +341,43 @@ is a value nobody else can reproduce.
 
 Composition includes placement. Each declared component has its own socket
 and its own surface, so each can be placed independently, and moving one
-while holding the rest still is the loosening the instrument is for. This
-crate offers a ladder of presets, and a preset stages a runnable declaration
-the operator can then edit by hand.
+while holding the rest still is the loosening the instrument is for.
+
+**A preset stages a runnable declaration the operator can then edit by
+hand**, and placement is one axis of that mechanic rather than the whole of
+it. The other axis is **qualification: establishing what a reference is
+worth on weights nobody has measured** - a quantization, a fine-tune, a
+merge, a different conversion. The cell is the same shape in each case: the
+family's reference task, the artifact moved, the control compared.
+
+**Post-training is a first-class use of that axis** and needs no machinery
+of its own. What a fine-tune changed becomes a cell with its tuple that a
+reviewer reruns, rather than a claim about a training run.
+
+**Whether the lens is reused or refitted is answered by the tool rather than
+by the operator.** A lens artifact is versioned by the weights hash it was
+fitted to, so a read pointed at weights it was not fitted for refuses by
+name, and that refusal is the refit's trigger. The two cases differ:
+post-trained weights are a different function and want a refit, while a
+quantization is the same trained weights in a lossy encoding and may not -
+measured at the 8B, GGUF columns read through a safetensors-fitted lens
+scored a fraction above the torch reference on the same tokens at both
+bf16 and q8_0.
+
+**A refit is a new artifact, and two readings through two lenses are not
+directly comparable.** Base against fine-tune compares two models through
+two lenses, so what carries across is the control and the trajectory's
+shape rather than a rank. A surface that placed those ranks side by side
+would invite the comparison the refit makes invalid.
+
+**This axis is why an unmeasured reading is offered rather than withheld.**
+It is not this crate's burden to have measured every artifact in advance;
+it is this crate's job to make measuring one cheap. Where a reading has no
+control on the artifact in hand, the surface says so and offers the cell
+that takes one, because a caveat leaves the operator holding a doubt and a
+preset hands them the answer.
+
+The placement axis is a ladder of three rungs.
 
 ```text
 rung one    everything local, Unix sockets only
@@ -426,14 +476,19 @@ this crate designs around the gap until it closes.
 
 - **The name and the placement of these papers**, decisions one and two of
   #439.
-- **Whether this crate scores.** Behavior and cost are measurements. A
-  benchmark score is a correctness judgment, and section 1 holds that the
-  tool measures and does not testify. Three answers are open: this crate
-  does not score and records the emission for an external scorer; it scores
-  and records the scorer in the tuple, so the judgment is attributable to a
-  named thing rather than to the instrument; or scoring lives in the
-  benchmark harness and this crate cites its verdict. **The interface draws
-  the score as present and unfilled, naming no scorer, until this closes.**
+- **Whether this crate scores**, which splits in two and **half of it
+  closes here.** **Reproduction is measurement**: a comparison of two rows
+  this crate already holds, byte against byte, attributed to the comparison
+  rather than to a judge, and it is in scope and drawn. **Correctness is
+  testimony** and needs a scorer, which section 1's discipline forbids this
+  crate from being. The open half is which of three answers that takes: this
+  crate does not score and records the emission for an external scorer; it
+  records a scorer's verdict with the scorer named in the tuple, so the
+  judgment is attributable to a named thing rather than to the instrument;
+  or scoring lives in the benchmark harness and this crate cites it. **The
+  two are separate columns and the correctness one stays unfilled until a
+  scorer is named**, because a column that mixes them would let a
+  reproduction verdict be read as a verdict on the answer.
 - **The word "cell" carries two senses** and the corpus must settle one. A
   matrix coordinate, which is what the cross-precision configs and the
   confirm driver mean by it today, and a declaration plus a task plus a run,

@@ -101,11 +101,21 @@ Everything identifying the conditions lives in the run's own row:
   difference**
 - seed, and the full sampler configuration
 - device, and precision
+- **the engine's identity at build grain**: the libraries the decode ran
+  through, each by name and digest, with the build that produced them
 - the batching election
 - the task, by source and identity
 - the declared boundary set
 - the parent run reference and branch position, where the run is a branch
 - whether a token was forced, and which
+
+**The engine is in the compound, so the row holds it.** The tuple is a model
+on a device under a kernel at a precision, and a divergence between two rows
+differing in both silicon and library revision names neither cause unless
+both are recorded. The measurement regime already deposits the engine
+libraries by digest beside the binaries, the build flags and the toolchain;
+this row carries the same fact so a reading drawn from the store needs no
+deposit beside it to be read.
 
 **A reading without its tuple is a reading of an unnamed compound.** The
 task is in this list for the same reason the artifact is: two runs of the
@@ -150,6 +160,13 @@ Three queries, and the schema of section 2 exists to make each an index hit.
 
 A surface that needs a fourth query is a surface this document has not
 described, and it returns here before it is built.
+
+**An open query surface is admissible on one condition: the query is
+recorded beside its result.** A reading is a thing a second person reruns,
+so a result whose query text was not stored is not quotable and this crate
+does not present it as one. That keeps section 2.3's rule rather than
+spending it: the derivation is recorded rather than absent, and what section
+2.3 forbids is a derivation nobody can find.
 
 ## 5. Staged experiments
 
@@ -211,8 +228,9 @@ a batch window; the same refusal at authoring costs nothing.
 
 ## 6. The surfaces
 
-One module each, and their destinations are the charter's section 3 and are
-not restated.
+One module each, the Experiment view included: it is a surface with its own
+destination rather than a mode of the list above it. Their destinations are
+the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** -
 Open a trace, Record, Experiments, and the returned half of Stage. That is
@@ -329,7 +347,10 @@ act that lands it states what removal makes it fail and confirms it does.
   this crate's to set.
 - **Whether surprisal and entropy draw as one timeline or two.**
 - **Whether the preset ladder is a picker or a wizard.**
-- **Whether this crate scores**, which the charter's section 9 holds open
-  and which decides whether a score column exists in section 2.2 at all.
+- **Whether this crate scores a correctness verdict**, which the charter's
+  section 9 holds open. The reproduction verdict is not open and is not a
+  score: it is the comparison of two rows this crate holds, and section 2.2
+  carries it. What stays open is whether a correctness column exists beside
+  it and who is named in it.
 - **The word "cell"**, which carries a second sense elsewhere in the corpus
   and must be settled once rather than twice.
