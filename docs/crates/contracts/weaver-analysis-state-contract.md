@@ -2,6 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-04, second of this date, the door stands under a restoring load
+too. Section 1's condition widens: the door exists where admin named it on the
+member's vector, under a diagnostic binding or a serving load that elects a restore,
+the driver the same operator principal projecting the same three things, with the
+cut and the session rewrite of `weaver-analysis-Spec` section 4 where a branch needs
+them. The parties, the peer's authentication, and the record's replacement at the
+opener are unchanged. Per issue #432.
 **Revised:** 2026-09-04, the store and not its file. One phrase, per
 `weaver-state-PRD` section 4 as revised this date: the engine behind the store
 is elected and may hold no file. Nothing crossing this door moves.
@@ -135,11 +142,13 @@ to: canonical-event
 
 ## 1. What this contract governs
 
-The second door on the state member: the preload traffic that flows when a
-diagnostic binding stands, the condition under which the door exists, what
-each party owes, how the seam fails, and what neither party may do. It is
-read alongside `weaver-analysis-PRD` and `weaver-state-PRD` section 3, and
-none of the three is complete without the others.
+The second door on the state member: the preload traffic that flows when a diagnostic
+binding stands or a serving load elects a restore, per `weaver-state-PRD` section 4 as
+revised 2026-09-04, the condition under which the door exists being that admin named it
+on the member's vector under either, what each party owes, the cut and the session
+rewrite the driver may apply to what it projects, what each party owes, how the seam
+fails, and what neither party may do. It is read alongside `weaver-analysis-PRD` and
+`weaver-state-PRD` section 3, and none of the three is complete without the others.
 
 ## 2. The traffic
 

@@ -2260,19 +2260,21 @@ is a refused enter, returned through the fan-out's after-load failure so the aut
 bracket stands for the leave to unwind, the aggregate naming the decode seam as where
 the fan-out stopped. **Under a restoring load the open carries the restored conversation
 beside the identity**, per the ruling of 2026-09-04 on issue #432: the harness asks the
-store for the session's messages whole, the `recall` ask with no bound, and the message
-events through the cut, rebuilt as canonical messages in landing order, follow the
-identity in the open's `messages`. They are prefix material, permanent for the residency
-and the floor a flush returns to, because the point of standing from a record is to
-condition the possibility space the way the identity does, only longer, and a prefix a
-flush could drop would not be one. The window pays for it and the declaration's capacity
-is where the operator sees the cost. **The turn ordinal starts at the cut**: the first
-turn of a restoring run is numbered one past the turn the enter's lineage names, within
-the parent run it names, a bare turn number recurring across a session's runs and naming
-nothing on its own, so the derived seeds of `weaver-spu-Spec` section 8.5, which fix a
-generation's stream from the declared seed, the turn's reference, and the generation
-ordinal, continue the parent's streams, and a branch that changes nothing draws what the
-parent drew.
+store for the session's messages whole, the `recall` ask with no bound, the identity ask
+and this one parking until the driver's seal per the contract's section 2 because the
+holdings are being landed through the door as the enter stands, and the message events
+through the cut, rebuilt as canonical messages in landing order, follow the identity in
+the open's `messages`. They are prefix material, permanent for the residency and the
+floor a flush returns to, because the point of standing from a record is to condition
+the possibility space the way the identity does, only longer, and a prefix a flush could
+drop would not be one. The window pays for it and the declaration's capacity is where
+the operator sees the cost. **The turn ordinal starts at the cut**: the first turn of a
+restoring run is numbered one past the turn the enter's lineage names, within the parent
+run it names, a bare turn number recurring across a session's runs and naming nothing on
+its own, so the derived seeds of `weaver-spu-Spec` section 8.5, which fix a generation's
+stream from the declared seed, the turn's reference, and the generation ordinal,
+continue the parent's streams, and a branch that changes nothing draws what the parent
+drew.
 
 **The column ask is written where and only where the binding is diagnostic
 and the readout is elected**, per `weaver-spu-PRD` section 13.7's cadence

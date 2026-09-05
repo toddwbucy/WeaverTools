@@ -6,25 +6,25 @@ agent. Code is written against it under the gates of Working Process section 6.
 **Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
 judges the restore election, the record readable under this crate's custody, the cut a
 run and a turn it holds, and the session name deciding resume from branch with every
-combination ruled, and section 6 stands the member's door under a restoring load with
-this crate as its peer, preloading the record through the cut before the enter and
-rewriting the session member where the name differs. Per issue #432. **Revised:**
-2026-09-04, second of this date, the vector's flags and the socket's key are spelled.
-Section 6 names the four flags the member's vector carries ahead of its positionals, and
-section 9 names `state-store-socket`, the one value the store's inventory reads from
-this crate's own file. Per issue #411's code act. **Revised:** 2026-09-04, first of this
-date, the store election is judged at the inventory and rides the member's vector.
-Section 4 resolves an absent election to the embedded engine and requires the member's
-binary, refuses a service election whose socket, role mapping, or agent refusal the box
-does not hold, and takes `none` as a declared absence, so the leg stands where the
-declaration says and not where a binary happens to sit. Section 6's vector gains the
-engine and, under the service engine, its socket, database, and role. Per issue #411.
-**Revised:** 2026-08-31, second of this date, the census counts what the file holds. Per
-the review seat on PR 393: section 10's totals move from thirty-four to thirty-eight and
-the perturbation count from fourteen to eighteen, this act's own record counted with the
-three that arrived uncounted from the doors and boundary acts, each named. Section 7's
-new clause gains the removal sentence its neighbours carry. The entry below gains the
-ordinal the convention asks for, which it was filed without.
+combination ruled, and section 6 names the member's door on the vector under a restoring
+load as under a diagnostic binding, the preload being the analyst's verb through that
+door and never this crate's, the enter's asks parking on the seal. Per issue #432.
+**Revised:** 2026-09-04, second of this date, the vector's flags and the socket's key
+are spelled. Section 6 names the four flags the member's vector carries ahead of its
+positionals, and section 9 names `state-store-socket`, the one value the store's
+inventory reads from this crate's own file. Per issue #411's code act. **Revised:**
+2026-09-04, first of this date, the store election is judged at the inventory and rides
+the member's vector. Section 4 resolves an absent election to the embedded engine and
+requires the member's binary, refuses a service election whose socket, role mapping, or
+agent refusal the box does not hold, and takes `none` as a declared absence, so the leg
+stands where the declaration says and not where a binary happens to sit. Section 6's
+vector gains the engine and, under the service engine, its socket, database, and role.
+Per issue #411. **Revised:** 2026-08-31, second of this date, the census counts what the
+file holds. Per the review seat on PR 393: section 10's totals move from thirty-four to
+thirty-eight and the perturbation count from fourteen to eighteen, this act's own record
+counted with the three that arrived uncounted from the doors and boundary acts, each
+named. Section 7's new clause gains the removal sentence its neighbours carry. The entry
+below gains the ordinal the convention asks for, which it was filed without.
 
 **Revised:** 2026-08-31, first of this date, the permission members are
 this crate's to set.
@@ -1302,53 +1302,49 @@ a privilege drop at the spawn. The isolation it exists to buy holds meanwhile
 by a weaker route, the territory being unreachable to the agent's uid either
 way, which is why nothing has tripped on the gap.
 
-**Its vector is the territory and, under a diagnostic binding or a restoring load,
-the preload socket path, with the first door's end inherited beside it rather than
-named on it.** Per the
-operator's ruling of 2026-08-26 the first door is a socketpair this crate creates at the
-spawn: the member's end crosses by inheritance, its number the code act's one remaining
-election, and the harness's end crosses inside the enter directive, so no socket path
-for that door rides the vector and no name exists to ride it. The agent's uid retires
-from the vector with both of its uses, the first door judging no credential under
-possession and the preload door admitting the operator principal and refusing the rest
-without knowing the agent by number. The territory is what the member needs to open the
-embedded store, and under the service engine the vector carries the store's socket, the
-database, and the role beside it, per `weaver-state-Spec` section 2, the engine itself
-first so the member knows which port to stand. The spelling is four flags ahead of the
-positionals, `--engine`, `--store-socket`, `--database`, and `--role`, each followed by
-its value, the first on every vector and the other three under the service engine alone,
-so the territory and the preload path keep their places behind them. **The preload path
-is present only where the resolved kind is diagnostic**, per `weaver-agents-PRD` section
-6 as ruled 2026-08-24, and its absence is a serving load rather than a defect: the
-member binds the preload name only where this vector carries one, so a serving binding
-stands no named door by the value not being there. The kind is section 4's inventory's,
-resolved once and read here, which is the same single-resolution rule the enter
-payload's `EnterBinding` follows in section 7 - the verb and the load cannot resolve
-differently because only one site resolves.
+**Its vector is the territory and, under a diagnostic binding or a restoring load, the
+preload socket path, with the first door's end inherited beside it rather than named on
+it.** Per the operator's ruling of 2026-08-26 the first door is a socketpair this crate
+creates at the spawn: the member's end crosses by inheritance, its number the code act's
+one remaining election, and the harness's end crosses inside the enter directive, so no
+socket path for that door rides the vector and no name exists to ride it. The agent's
+uid retires from the vector with both of its uses, the first door judging no credential
+under possession and the preload door admitting the operator principal and refusing the
+rest without knowing the agent by number. The territory is what the member needs to open
+the embedded store, and under the service engine the vector carries the store's socket,
+the database, and the role beside it, per `weaver-state-Spec` section 2, the engine
+itself first so the member knows which port to stand. The spelling is four flags ahead
+of the positionals, `--engine`, `--store-socket`, `--database`, and `--role`, each
+followed by its value, the first on every vector and the other three under the service
+engine alone, so the territory and the preload path keep their places behind them. **The
+preload path is present where the resolved kind is diagnostic, and since 2026-09-04
+where a serving declaration elects a restore**, per `weaver-agents-PRD` section 6 as
+ruled 2026-08-24 and issue #432, and its absence is a serving load standing from nothing
+rather than a defect: the member binds the preload name only where this vector carries
+one, so a serving binding electing no restore stands no named door by the value not
+being there. The kind is section 4's inventory's, resolved once and read here, which is
+the same single-resolution rule the enter payload's `EnterBinding` follows in section 7
+- the verb and the load cannot resolve differently because only one site resolves.
 
-**Under a restoring load this crate is the door's peer**, per issue #432: the member
-stands with the door, and before the enter crosses admin preloads the declared record
-through it, the election opening the channel, one distillate per event through the cut
-in the record's order, and the seal, the same three things in the same order
-`weaver-analysis-Spec` section 4 sends under the diagnostic binding, so the member's
-parked replay ask and the harness's first ask alike find the holdings standing. The cut
-is by turn, the record's own unit: every event through the named turn's close and none
-after it. The preload is admin's under this binding because the record is admin's to
-read and the operator's surface starts the load with one verb. Where the declared
-session name differs from the record's, every distillate's session member is rewritten
-to the declared name as it crosses, run and sequence as recorded, because the member
-bounds every answer to the session its opener declared and rows landed under the
-parent's name would answer no ask. The parent's name survives on the load event's
-lineage alone.
+**Under a restoring load this crate names the door and dials it never**, per issue #432
+as corrected on review: the member stands with the door because the vector carries its
+name, as under a diagnostic binding, and the preload is the driver's, `weaver-analysis
+preload` under the operator principal, with the cut and the session rewrite of that
+Spec's section 4 where a branch needs them, per `weaver-analysis-state-contract`. This
+crate sends the enter as it always has, and the harness's asks at the open park until
+the driver's seal lands, per `weaver-harness-state-contract` section 2, so the load's
+answer arrives when the holdings stand. One party dials the door under every binding,
+the seam keeps its one via, and this crate reads the record for judgment alone. The
+parent's name survives on the load event's lineage alone.
 
-**The instrument is perturbation, and the claim is this site's half of a
-two-sided one.** **What is watched is the vector this crate composes, in both
-directions, and each names its removal.** A serving inventory puts one value
-on it, watched to fail when the arm that appends the preload name is made
-unconditional and a serving load carries two. A diagnostic inventory puts two,
-watched to fail when that same arm is removed and a diagnostic load carries
-one. **Two watches rather than one, because one would not fail on both
-directions**, and the pair is what apex section 11 asks of a perturbation
+**The instrument is perturbation, and the claim is this site's half of a two-sided
+one.** **What is watched is the vector this crate composes, in both directions, and each
+names its removal.** A serving inventory electing no restore puts one value on it,
+watched to fail when the arm that appends the preload name is made unconditional and
+such a load carries two. A diagnostic inventory, or a serving one whose declaration
+elects a restore, puts two, watched to fail when that same arm is removed and a
+diagnostic load carries one. **Two watches rather than one, because one would not fail
+on both directions**, and the pair is what apex section 11 asks of a perturbation
 record.
 
 **Both directions are this crate's alone and the member's record covers

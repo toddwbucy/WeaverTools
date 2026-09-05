@@ -455,9 +455,10 @@ reason the floor's `Cut` carries one: a turn's number recurs across runs. `--as
 <session>` lands the projection under another session name, every distillate's session
 member rewritten as it crosses and run and sequence as recorded, which is what a branch
 needs, because the member bounds every answer to the session its opener declared. Under
-a restoring load admin sends the same three things in the same order through the same
-door, per `weaver-admin-Spec` section 6, and this verb is the analyst's way of doing by
-hand what admin does at the load.
+a restoring load this verb is the door's driver as it is under the diagnostic binding,
+per `weaver-analysis-state-contract` section 1 as revised 2026-09-04: admin names the
+door and dials it never, the load's enter parks until this verb's seal, and the operator
+runs the two side by side as the diagnostic flow already does.
 
 ```graph
 node: analysis-seal-ends-the-preload

@@ -3,14 +3,15 @@
 **Status:** MERGED. In `main` and the source of truth.
 
 **Revised:** 2026-09-04, third of this date, a session may stand on another record's
-holdings. Section 4 states the restore: admin preloads a declared record through the
-door before the enter, whole or through a turn, a resume under the same session name
-and a branch under a new one, custody indifferent to which. Per issue #432.
+holdings. Section 4 states the restore: the door stands under a restoring load as under
+a diagnostic binding and the driver preloads the declared record through it, whole or
+through a turn, the enter's asks parking on the seal, a resume under the same session
+name and a branch under a new one, custody indifferent to which. Per issue #432.
 **Revised:** 2026-09-04, second of this date, the identity is the session's first
-holding. Section 4 lands the three rulings of issue #422: the declaration seeds
-and the store governs, a missed read of the identity fails the enter closed, and
-the seated prefix crosses the tee whole under every election. Within a session
-only, the memory leg untouched.
+holding. Section 4 lands the three rulings of issue #422: the declaration seeds and the
+store governs, a missed read of the identity fails the enter closed, and the seated
+prefix crosses the tee whole under every election. Within a session only, the memory leg
+untouched.
 
 **Revised:** 2026-09-04, the store is a port and the engine is the deployment's
 election. Section 4 recuts the representation ruling: the seam names asks and
@@ -272,23 +273,26 @@ compatible with that path and does not take it. Where no member stands, the decl
 governs alone, which is what it did before the ruling.
 
 **A session may stand on another record's holdings, per the operator's ruling of
-2026-09-04 on issue #432.** Under a load that elects a restore, admin preloads the
-declared record through this member's door before the enter, whole or through a named
-turn, and the session's holdings are the record's up to that point: the identity as the
-first of them, the conversation after it, and the shape the asks answer from. The
-session name decides which, and every combination is ruled. The declaration's own
-session name with the record whole is a resume, the holdings retired and re-landed as
-every preload does. A new session name is a branch, standing on a prefix another session
-produced, at the cut where one is named and at the record's end where none is, and every
-distillate lands under the new name with its run and sequence as recorded, because
-custody bounds its answers to the session the opener declared. A cut under the record's
-own session name is refused before the preload, per `weaver-admin-Spec` section 4,
-because a session cannot rewind under its own name while its record carries what the cut
-would drop. Custody is indifferent to which: it holds what it was handed and answers
-what it is asked, and the record that stood the session is named on the new record's
-load, per `weaver-trace-PRD` section 3.1. The ground is the same as the identity's and
-the vectors': the record is the source, the prefix it conditions is computed from it on
-demand under the conditions the load declares, and nothing derived from it is kept.
+2026-09-04 on issue #432.** Under a load that elects a restore the door of section 3
+stands as it does under a diagnostic binding, admin having named it on the vector, and
+the driver of `weaver-analysis-state-contract` preloads the declared record through it,
+whole or through a named turn, the harness's asks at the open parking until the seal per
+`weaver-harness-state-contract` section 2, and the session's holdings are the record's
+up to that point: the identity as the first of them, the conversation after it, and the
+shape the asks answer from. The session name decides which, and every combination is
+ruled. The declaration's own session name with the record whole is a resume, the
+holdings retired and re-landed as every preload does. A new session name is a branch,
+standing on a prefix another session produced, at the cut where one is named and at the
+record's end where none is, and every distillate lands under the new name with its run
+and sequence as recorded, because custody bounds its answers to the session the opener
+declared. A cut under the record's own session name is refused before the preload, per
+`weaver-admin-Spec` section 4, because a session cannot rewind under its own name while
+its record carries what the cut would drop. Custody is indifferent to which: it holds
+what it was handed and answers what it is asked, and the record that stood the session
+is named on the new record's load, per `weaver-trace-PRD` section 3.1. The ground is the
+same as the identity's and the vectors': the record is the source, the prefix it
+conditions is computed from it on demand under the conditions the load declares, and
+nothing derived from it is kept.
 
 One member instance serves one session: it stands with each run, ingests a
 stream whose events already carry their session, run, and turn identity, and
