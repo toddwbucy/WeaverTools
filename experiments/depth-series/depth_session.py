@@ -99,7 +99,10 @@ def main():
         # short session.
         refused = base.assert_loop(cfg, trace, before)
         if refused:
-            report["loop_refused"] = refused; run_id = refused["run"]; report["run"] = run_id
+            # The refused run is named in `loop_refused` and nowhere else:
+            # `run_id` stays unset so the deposit below writes no session
+            # for it, per the README's word that a refusal deposits no run.
+            report["loop_refused"] = refused
             failed = {"turn": 0, "why": "loop refused: declared "
                       f"{refused['declared']}, recorded {refused['recorded']}"}
             report["failed"] = failed
@@ -147,6 +150,14 @@ def main():
     # run the gate named are kept, turn-level events only for the turns the
     # gate answered here, so another dialer's turn in the same residency
     # cannot ride into the record or into `resident`.
+    if "loop_refused" in report:
+        # **A refused load deposits the refusal and no session.** The report
+        # carries both digests and the refused run's reference; the trace
+        # slice, the load event, and `session.ndjson` are not written, so
+        # nothing under this deposit can be read as a run of the campaign.
+        json.dump(report, open(f"{a.outdir}/report.json", "w"), indent=1)
+        print(json.dumps({"loop_refused": report["loop_refused"], "restored": report["declaration_restored"]}), flush=True)
+        sys.exit(1)
     with open(trace, "rb") as f:
         f.seek(start_bytes); data = f.read()
     kept, dropped, kinds = [], 0, {}

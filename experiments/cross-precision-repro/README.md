@@ -110,7 +110,7 @@ written against a name passes a box running either. The loop a box runs is
 named by its declaration's `loop-file:` key, `dev_loop.py` when the key is
 absent, and the value to declare is read from the deployed file:
 
-```
+```bash
 sha256sum /usr/local/libexec/weaver/loops/alpha_loop.py
 ```
 
@@ -128,13 +128,13 @@ names and what the live record shows.
 
 Run:
 
-```
+```bash
 python3 confirm_cells.py --config thinkpad.json --outdir <deposit>
 ```
 
 The watches for the loop check run without a box:
 
-```
+```bash
 python3 test_loop_digest.py
 ```
 
