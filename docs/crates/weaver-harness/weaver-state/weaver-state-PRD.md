@@ -171,29 +171,29 @@ could reach is the one place a name can be replaced before it is dialed, so
 the channel that needs no name carries none. How the ends travel is the
 contract's mechanics, deliberately absent here.
 
-**A second door stands on this member as of 2026-08-24, under a diagnostic binding and,
-since 2026-09-04, under a serving load that elects a restore, per section 4 and issue
-#432.** `weaver-analysis-state-contract` names it, initiator first: the driver, an
-operator principal, preloads the holdings from a finished record it parsed outside the
-agent, whole under a diagnostic binding and whole or cut under a restore, and this
-member receives on a second socket what a live tee would have fed on the first, the same
-distillate shapes drawn from the first door's contract rather than redefined. The door's
-judgment is a credential's, this member's one such judgment since the first door
-authenticates by possession: it admits the operator principal and refuses every other
-peer, the agent's among them. Its name stands in this member's own territory, per the
-operator's ruling of 2026-08-26, where the agent's identity holds nothing. The door
-itself does not exist under a serving load that elects no restore, so the serving
-membrane of `weaver-agents-PRD` section 0 is untouched for every agent that stands from
-nothing, and a restoring load opens it to the one operator principal the diagnostic
-binding already admits and to nobody else. No ask crosses it, ever: the driver is a
-sender and never an asker, so section 5's who-else-may-ask cell keeps its answer, the
-serve direction having exactly the two ends it had. The door's opener retires the
-declared session's prior holdings in the same transaction, per the contract's section 2,
-so a preload lands against empty whatever stood, and a retry after a dead driver is a
-replacement rather than a double - the recovery invariant stated before the loss clause
-leans on it. With that in place the loss clause below covers the new door without
-amendment, the preload being rebuildable from the record more directly than any holding
-the tee fed.
+**A second door stands on this member as of 2026-08-24, under a diagnostic binding
+and, since 2026-09-04, under a serving load that elects a restore, per section 4 and
+issue #432.** `weaver-analysis-state-contract` names it, initiator first: the driver,
+an operator principal, preloads the holdings from a finished record it parsed outside
+the agent, whole under a diagnostic binding and whole or cut under a restore, and this
+member receives on a second socket what a live tee would have fed on the first, the
+same distillate shapes drawn from the first door's contract rather than redefined. The
+door's judgment is a credential's, this member's one such judgment since the first
+door authenticates by possession: it admits the operator principal and refuses every
+other peer, the agent's among them. Its name stands in this member's own territory,
+per the operator's ruling of 2026-08-26, where the agent's identity holds nothing. The
+door itself does not exist under a serving load that elects no restore, so the serving
+membrane of `weaver-agents-PRD` section 0 is untouched for every agent that stands
+from nothing, and a restoring load opens it to the one operator principal the
+diagnostic binding already admits and to nobody else. No ask crosses it, ever: the
+driver is a sender and never an asker, so section 5's who-else-may-ask cell keeps its
+answer, the serve direction having exactly the two ends it had. The door's opener
+retires the declared session's prior holdings in the same transaction, per the
+contract's section 2, so a preload lands against empty whatever stood, and a retry
+after a dead driver is a replacement rather than a double - the recovery invariant
+stated before the loss clause leans on it. With that in place the loss clause below
+covers the new door without amendment, the preload being rebuildable from the record
+more directly than any holding the tee fed.
 
 The nesting under `weaver-harness` carries domain membership and nothing else,
 per apex section 5.4: nesting is never process topology, and this member

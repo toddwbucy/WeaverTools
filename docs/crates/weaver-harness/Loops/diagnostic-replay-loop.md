@@ -9,12 +9,11 @@ charters, and a graph block here would duplicate a record that already has a hom
 Section 3's step 3 compares the reader's vectors exact within one device
 model, per `weaver-diagnostic-PRD` section 4 as amended on the
 differencing measurement of this date.
-**Revised:** 2026-09-01, first of this date, the driver derives the
-declaration. Section 2's
-step 2 carries `weaver-analysis-PRD` section 3's rule as amended on issue
-#394: the declaration step one loads is derived from the record by the
-driver, the analyst declaring only the replay's own three facts, so the
-driver's act brackets the load rather than following it.
+**Revised:** 2026-09-01, first of this date, the driver derives the declaration. Section
+2's step 2 carries `weaver-analysis-PRD` section 3's rule as amended on issue #394: the
+declaration step one loads is derived from the record by the driver, the analyst
+declaring only the replay's own three facts, so the driver's act brackets the load
+rather than following it.
 **Revised:** 2026-08-27, second of this date, the driver's Spec is authoritative
 for the election. Section 2's step 2 sketched what the driver elects and now says
 so, naming `weaver-analysis-Spec` section 3 as the authority per G5 and gaining

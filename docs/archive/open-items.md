@@ -1,9 +1,9 @@
 # Open items
 
-**Status:** ARCHIVED 2026-08-24. Nine items, verified one by one on that date: four
-were done, two had stopped being relevant, and three were live and became issues #309,
-#310, and #311. Those issues carry their own evidence rather than citing this file,
-because a working list that was never ratified is not an authority to cite.
+**Status:** ARCHIVED 2026-08-24. Nine items, verified one by one on that date: four were
+done, two had stopped being relevant, and three were live and became issues #309, #310,
+and #311. Those issues carry their own evidence rather than citing this file, because a
+working list that was never ratified is not an authority to cite.
 
 **It was tracked briefly before it was untracked, and an earlier reading of this
 header said it never was.** It entered the tree 2026-07-28 at `594f48a`, took two
