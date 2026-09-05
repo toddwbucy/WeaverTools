@@ -133,7 +133,70 @@ task is in this list for the same reason the artifact is: two runs of the
 same benchmark item under different suite versions are not the same task,
 and nothing else in the row would say so.
 
-### 2.3 The recorded query
+### 2.3 The artifact
+
+The catalog the charter's section 3.6 surfaces. **Keyed by the artifact's
+weights identity rather than by a path**, because a path is where a file
+sits and an identity is what it is, and the same weights under two paths on
+two boxes are one artifact.
+
+**The identity is derived and its derivation is stated here**, because a
+catalog that dedupes on one rule while a lens refuses on another is two
+rules for one subject. **An artifact is the complete set of files its own
+index enumerates** - the safetensors index, or the split manifest a sharded
+GGUF carries - **and its identity is the digest over the per-file
+identities in the order that index names them.** A set missing a file the
+index names is not that artifact and joins to nothing. The catalog dedupes
+on that digest and on nothing else, and it is the grain section 2.2's tuple
+means by artifact identity, fine enough to separate two quantizations
+because their files differ.
+
+**Trained-weights identity is the identity of the root of the provenance
+chain**, the artifact above which no source artifact stands. A conversion
+or a quantization records its source, so a derived artifact inherits a lens
+fit by walking that chain to its root, and one whose chain does not reach a
+root inherits nothing. One rule serves both readings: the catalog dedupes
+on artifact identity, and a lens is versioned by the trained-weights
+identity the chain resolves to.
+
+Each row carries:
+
+- the artifact identity, derived as above
+- the identity **per file**, following the model's own index, each shard
+  under its own name and verified against it
+- the trained-weights identity its provenance chain resolves to
+- the provenance: a repository and revision, or a source artifact with the
+  converter and pin that produced it
+- where it is present, by box, as an observation rather than a fact
+- the lens artifacts fitted to these weights, each versioned by the
+  trained-weights identity rather than by a serialized digest
+- the reference cells taken against it
+
+**This is the join the run's row points at.** Section 2.2 holds artifact
+identity in the tuple so a reading names its conditions; this table is what
+that identity resolves to, and it is why a lens refusing weights it was not
+fitted for is answerable here rather than only at the read. **The join
+resolves to the complete set or to nothing**, so a lens relation and a
+reference cell relation each name one unambiguous artifact and never a
+shard of one.
+
+**Presence is a dated observation by a named reporter, and it is
+advisory.** Each entry carries the box, the reporter, and when it was last
+confirmed. A box that has not reported is unknown rather than empty,
+because this crate runs on one machine and the agents on another, and
+silence from a box that is merely offline is not evidence about its disk.
+
+**No load consults it.** The load resolves the artifact on the box it runs
+on and is refused there under that box's own rules. Presence here is an
+index for an operator choosing where to place a run, never the thing
+deciding whether the run may proceed: a gate built on a stale observation
+refuses a box that holds the artifact and admits one that lost it.
+
+**Nothing here fetches.** An entry says an artifact was seen, not that it
+can be obtained. Whether a missing one is fetchable is the provenance's
+question, answered by the repository and revision the row already carries.
+
+### 2.4 The recorded query
 
 Section 4 admits an open query surface on the condition that the query is
 recorded beside its result, and that condition needs somewhere to land.
@@ -154,7 +217,7 @@ of what a quotable reading claims.
 quotable.** Section 4's condition is that a second person can rerun it, and
 a reader that cannot say what it read cannot be rerun by anyone.
 
-### 2.4 The indexes
+### 2.5 The indexes
 
 ```text
 primary       (run, turn, position)
@@ -196,9 +259,9 @@ described, and it returns here before it is built.
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
 so a result whose query text was not stored is not quotable and this crate
-does not present it as one. **Section 2.3 is where it lands.** That keeps
-section 2.4's rule rather than spending it: the derivation is recorded
-rather than absent, and what section 2.4 forbids is a derivation nobody can
+does not present it as one. **Section 2.4 is where it lands.** That keeps
+section 2.5's rule rather than spending it: the derivation is recorded
+rather than absent, and what section 2.5 forbids is a derivation nobody can
 find.
 
 ## 5. Staged experiments
@@ -261,9 +324,9 @@ a batch window, and the same refusal at authoring costs nothing.
 
 ## 6. The surfaces
 
-One module each, the Experiment view included: it is a surface with its own
-destination rather than a mode of the list above it. Their destinations are
-the charter's section 3 and are not restated.
+One module each, the Experiment view and Models included: each is a surface
+with its own destination rather than a mode of a list beside it. Their
+destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** -
 Open a trace, Record, Experiments, and the returned half of Stage. That is
@@ -364,6 +427,8 @@ cell record like any other.
 | ingest is idempotent on that key | perturbation: replay one window twice |
 | nothing is computed at read time | review, over the three reads |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
+| an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
+| presence never gates a load | review, over the load path: this crate's catalog is not read there |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |

@@ -135,7 +135,7 @@ shown, from the tool's own labels, to be wrong.
 
 ## 3. The surfaces
 
-Nine, in two groups. **Every surface has a direction**: you enter somewhere,
+Ten, in two groups. **Every surface has a direction**: you enter somewhere,
 you end somewhere, and the screen says where you are on that path. The
 failure to avoid is the interface that exposes its graph before it shows the
 artifact, so that nothing on screen says what you came to produce. Each
@@ -273,17 +273,17 @@ the control arm is free.
 
 <!-- figure: Branch | Stage -->
 
-### 3.6 The four on the list side
+### 3.6 The five on the list side
 
-Global, filtered, and written into by every surface above. **Three of the
-four are lists and the fourth is not.** Agents, Experiments and Record are
-list destinations. The Experiment view is the detail surface one of them
-opens into, and it is a surface rather than a mode of the list above it:
-its own destination, its own state, and its own module under the Spec's
-rule of one module each. **The group is named for how it is reached** - by
-a chip-query rather than along the path - and not for the shape of what it
-holds, so no implementer reads the detail view as a fourth list. Five on
-the path and four here are the nine this section opens with.
+Global, filtered, and written into by every surface above. **Four of the
+five are lists and the fifth is not.** Agents, Models, Experiments and
+Record are list destinations. The Experiment view is the detail surface one
+of them opens into, and it is a surface rather than a mode of the list
+above it: its own destination, its own state, and its own module under the
+Spec's rule of one module each. **The group is named for how it is
+reached** - by a chip-query rather than along the path - and not for the
+shape of what it holds, so no implementer reads the detail view as a fifth
+list. Five on the path and five here are the ten this section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -294,6 +294,46 @@ the operator into a list with a chip already set.
 its parent and the one thing that moved where it is derived.
 
 <!-- figure: Library | Agents -->
+
+**Models** holds the artifacts, which is the catalog two surfaces above
+already assume. Section 3.1's roster resolves each component's artifact and
+section 5's qualification runs a reference against one, and neither says
+where the artifact came from or what is known about it. This surface does:
+**the artifact's identity per file**, following the model's own index and
+verifying each shard under its own name; its provenance, downloaded from a
+repository at a revision or converted from another artifact by a named
+converter at a pin; which box holds it, since this crate runs on one machine
+and the agents on another; and its relations - the lens artifacts fitted to
+these weights, and the reference cells taken against them.
+
+**An artifact is the complete set its own index names, and one rule decides
+identity.** That identity derives from the per-file identities in the order
+the index gives them; a set missing a file the index names is not that
+artifact; and the catalog dedupes on that and nothing else. **The
+trained-weights identity is the root of the provenance chain**, which is
+what a quantization inherits a lens fit through and what an artifact with
+no recorded chain has none of. Two rules for one subject would let the
+catalog merge what the lens refuses.
+
+**Presence is an observation and never a gate.** Which box holds an
+artifact is dated, attributed, and advisory, and a box that has not
+reported is unknown rather than empty. No load consults it - the load
+resolves the artifact on the box it runs on and is refused there - because
+a gate built on a stale observation refuses a box that has the artifact and
+admits one that lost it.
+
+It is a surface rather than a mode of Agents because an agent is a
+configuration and a model is an artifact: **many agents share one model and
+many lenses attach to one model**, and a many-to-one relation held inside
+the wrong noun is where a catalog goes wrong.
+
+**It catalogs artifacts and not organ kinds.** The charters hold the roster
+per section 3.1, and a kind is a charter act before it is a row anywhere, so
+an artifact acquires a kind when a declaration references it and admit
+judges the family. Encoders and further kinds need no special case here;
+they arrive with their charters.
+
+<!-- figure: Models | Models -->
 
 **Experiments** holds every experiment and where it stands across five
 states: draft, registered, queued, running, returned. **Registering freezes
