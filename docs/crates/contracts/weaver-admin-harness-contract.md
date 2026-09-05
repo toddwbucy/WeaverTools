@@ -4,33 +4,39 @@
 `weaver-admin-PRD` as one act, per apex section 10, and the two moved together on the
 human's ruling of 2026-07-31.
 
+**Date filed:** 2026-07-29
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3
 gains the fourth exchange, admin asking what stands and the harness answering `State`
 from whichever position it holds with the load's facts beside it, the exchange the
 parties named as owed on 2026-08-06 when `StateNotObservable` was minted to die with it.
 Section 5's enter supplies the declaration's digest. Per issue #435 and the front end
 epic #434.
+
 **Revised:** 2026-09-04, second of this date, the enter carries the restore and the
 stack. Section 3's enter supplies the lineage of the restore where the declaration
 elects one, resolved and never the record's path, and the digests of the organ binaries
 admin started, both admin's facts, per `weaver-types-Spec` section 4 and issue #432.
+
 **Revised:** 2026-09-04, the enter carries the store election. Section 3's enter
 supplies the engine the member stands on and, under the service engine, its database and
 role, beside the state election and on the same ground: admin has no channel to the
 member, and the harness authors the load event that records them. Section 5's supplies
 follow by derivation. Per issue #411.
+
 **Revised:** 2026-08-26, the enter carries a second handle. Per the operator's ruling of
 this date, the supply list gains the state channel's end, the harness half of the
 socketpair admin creates at the member's spawn: admin couriers what it never speaks on,
 the harness receives its member's channel the way it receives the sink, and no dial at a
 derived name remains anywhere in the load. The sink's count-is-one sentence scopes to
 the sink and the state end's own rule stands beside it, following the leg rather than
-the kind. **Date filed:** 2026-07-29
+the kind.
+
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes inside. The
 entry below is reversed rather than amended and stands so the reversal is visible: the
 sink handle crosses the enter under either kind and its count is one, both kinds
 authoring a record, per `weaver-agents-PRD` section 6 as ruled this date. Admin's supply
 list and its sink guarantee lose the scoping with it.
+
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no record.
 The sink handle joins the gate instruction under the kind's scoping, section 3 carrying
 it where the kind declares a record and nowhere else, so the descriptor count on an
@@ -39,6 +45,7 @@ enter is named a defect in the sender. Admin's supply list and its sink guarante
 the same way, the guarantee reading vacuously on a kind that takes none. Per
 `weaver-agents-PRD` section 6 as amended this date, which carries the argument. The
 entry below gains the ordinal the convention asks for, which it was filed without.
+
 **Revised:** 2026-08-24, first of this date, the kind crosses the enter. Per
 `weaver-agents-PRD` section 6 as amended this date, a binding declares its kind and the
 lifecycle measures a load against the components the kind declares. The enter carries
@@ -55,22 +62,41 @@ by the harness into the run, which stays entered until the operator's `leave` un
 it, per `weaver-trace-PRD` section 3.1's twenty-first kind and the operator's ruling of
 this date. The answer to admin is unchanged. A refusal falling before the bracket
 reaches no record, which is named rather than closed.
+
 **Revised:** 2026-08-21, the elections become three at this seam. Section 8 draws
 `surprisal-election` on `weaver-spu-PRD` section 13.12 and draws `field-election`,
 defined on this date and drawn by neither contract it crosses. Both ride inside
 `spu-instruction` in the enter directive, as the readout's election has since the route
 act. No exchange changes.
+
+**Revised:** 2026-08-19, the enter carries the tee's election. Section 3's enter
+supplies the state election beside the two instructions, on the same ground the ruling
+of `weaver-admin-PRD` section 6 gives them: admin has no channel to the state member, so
+if the operator's election does not cross this seam it crosses nowhere. Section 5's
+supplies follow by derivation. Admin resolves an absent declaration to the ruled default
+of `weaver-state-PRD` section 4 before the directive, so what crosses is always the
+election whole.
+
 **Revised:** 2026-08-17, the gate instruction's draw is closed. The route act named the
 gap and did not close it, its extent being the election's route, so section 8's clause
 read as complete while a payload term crossed it unnamed. Section 8 draws
 `gate-instruction`, and `weaver-types-PRD` section 2.1's count of the contracts drawing
 it moves from two to three. Owed by #105.
+
+**Revised:** 2026-08-14, the run identifies itself. Section 5's guarantee that the run
+ordinal is the next one for its session becomes a guarantee that the run reference
+distinguishes this run from every other run of that session. The earlier wording assumed
+a standing admin and the recut of 2026-08-05 removed that premise, so the clause asked
+for something a per-invocation party cannot know. Section 3's supplies list renames with
+it.
+
 **Revised:** 2026-08-10, the route act. The enter directive carries the SPU instruction
 rather than the bare model binding, per `weaver-types-Spec` section 2, so the readout
 election the SPU judges at admit crosses this seam first, admin holding no channel to
 the SPU. Section 8 draws `model-binding`, owed from the cut, and
 `residual-readout-election`, and names the gate instruction's matching gap as owed
 rather than closed.
+
 **Revised:** 2026-08-05, the socket inversion and the admin recut, one act. The creating
 party inverts: the harness binds the coordination socket inside the agent's sandbox as
 its first act and admin dials in, one connection per verb, so the channel authenticates
@@ -79,20 +105,10 @@ earlier form argued the second. The init system carries no handle, admin is
 per-invocation with no standing end, and the connection-lifetime rule restates against
 the listener. Section 5 gains the harness's refusal guarantee, section 6 its case, and
 section 8's possession negative inverts to a `peer-identity` draw.
-**Revised:** 2026-08-19, the enter carries the tee's election. Section 3's enter
-supplies the state election beside the two instructions, on the same ground the ruling
-of `weaver-admin-PRD` section 6 gives them: admin has no channel to the state member, so
-if the operator's election does not cross this seam it crosses nowhere. Section 5's
-supplies follow by derivation. Admin resolves an absent declaration to the ruled default
-of `weaver-state-PRD` section 4 before the directive, so what crosses is always the
-election whole.
-**Revised:** 2026-08-14, the run identifies itself. Section 5's guarantee that the run
-ordinal is the next one for its session becomes a guarantee that the run reference
-distinguishes this run from every other run of that session. The earlier wording assumed
-a standing admin and the recut of 2026-08-05 removed that premise, so the clause asked
-for something a per-invocation party cannot know. Section 3's supplies list renames with
-it. **Document ID:** `weaver-admin-harness-contract` **Parent:** `weaver-agents-PRD`,
-invariant 5.3 **Editorial:** Per the Working Rules.
+
+**Document ID:** `weaver-admin-harness-contract`
+**Parent:** `weaver-agents-PRD`, invariant 5.3
+**Editorial:** Per the Working Rules.
 
 ---
 

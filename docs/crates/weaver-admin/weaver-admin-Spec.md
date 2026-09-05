@@ -3,22 +3,26 @@
 **Status:** MERGED. Cut 2026-08-02, fifth of the Spec pass and the first outside the
 agent. Code is written against it under the gates of Working Process section 6.
 
+**Date filed:** 2026-08-02
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3's
 `show` and `list` answer through `weaver-admin-harness-contract` section 3's fourth
 exchange, the harness's own word with the load's facts beside it, residency read only
 where no worker answers the dial, and the record's instrument follows. Section 1 takes
 `sha2` for the declaration's digest the enter now supplies. Section 11's election of
 2026-08-06 is settled. Per issue #435 and the front end epic #434.
+
 **Revised:** 2026-09-04, third of this date, a session stands from a record. Section 4
 judges the restore election, the record readable under this crate's custody, the cut a
 run and a turn it holds, and the session name deciding resume from branch with every
 combination ruled, and section 6 names the member's door on the vector under a restoring
 load as under a diagnostic binding, the preload being the analyst's verb through that
 door and never this crate's, the enter's asks parking on the seal. Per issue #432.
+
 **Revised:** 2026-09-04, second of this date, the vector's flags and the socket's key
 are spelled. Section 6 names the four flags the member's vector carries ahead of its
 positionals, and section 9 names `state-store-socket`, the one value the store's
 inventory reads from this crate's own file. Per issue #411's code act.
+
 **Revised:** 2026-09-04, first of this date, the store election is judged at the
 inventory and rides the member's vector. Section 4 resolves an absent election to the
 embedded engine and requires the member's binary, refuses a service election whose
@@ -26,6 +30,7 @@ socket, role mapping, or agent refusal the box does not hold, and takes `none` a
 declared absence, so the leg stands where the declaration says and not where a binary
 happens to sit. Section 6's vector gains the engine and, under the service engine, its
 socket, database, and role. Per issue #411.
+
 **Revised:** 2026-08-31, second of this date, the census counts what the file holds. Per
 the review seat on PR 393: section 10's totals move from thirty-four to thirty-eight and
 the perturbation count from fourteen to eighteen, this act's own record counted with the
@@ -65,7 +70,7 @@ squat, without the account act the squat clause predicted. The pathname wait, th
 stale-name removal, and the shared-derivation authority retire with the name they
 served. Section 6's perturbation watches recount to one value serving and two
 diagnostic.
-**Date filed:** 2026-08-02
+
 **Revised:** 2026-08-25, eleventh of this date, the watch stops degenerating and the
 pair stops claiming symmetry. Section 6's serving direction was watched by removing the
 kind's read, which degenerates to the serving default, so that half would have passed
@@ -81,6 +86,7 @@ under its description rather than its identifier, which a search keyed on identi
 could not see. **Entries in this stack stop correcting each other**: two corrections
 pointed at text later commits had already edited away, and since nothing here has
 merged, the entry is amended rather than answered.
+
 **Revised:** 2026-08-25, tenth of this date, the reconciliation counts the move and the
 convention stops being called universal. The recut lead asserted twelve departures while
 the sentence reconciling it to the lists said ten, the lists naming ten retired and one
@@ -90,6 +96,7 @@ two of the fourteen name none anywhere in this document, and section 10 records 
 because a perturbation tag without a named removal says a test exists and not what
 breaks it. Found while checking whether this file's convention was universal rather than
 assumed, which is the check the claim should have had before it was written.
+
 **Revised:** 2026-08-25, ninth of this date, the recut's arithmetic is measured rather
 than asserted. The recut paragraph asserted an endpoint its own lists did not reach, and
 measuring the file's assertion identifiers across the recut's span gives twelve
@@ -105,6 +112,7 @@ cannot fail on it: a member given a name binds it, which is that record holding 
 than failing. **Both directions are this crate's alone**, the member's claim being about
 what it does with what it is given and the vector being the seam between the two crates
 rather than either one's behaviour.
+
 **Revised:** 2026-08-25, eighth of this date, the watch reads both directions. Moving it
 off the door and onto the vector left one direction unwatched, and it is the direction
 neither half of the split claim covers: a diagnostic load that silently loses its fourth
@@ -119,6 +127,7 @@ distinction the claim rests on is the conducting party's and the other two floor
 are not a running unit's to report at all. Narrowed to the distinction that party does
 hold. The fourth edge's argument is argued once, in the lead that enumerates it, the
 later site correcting the unedged list without re-arguing.
+
 **Revised:** 2026-08-25, seventh of this date, the watch reads this crate's own
 observable. Section 6's new record was perturbed by watching a serving load stand a
 door, which is the member's observable and not this crate's, so a member-side regression
@@ -130,6 +139,7 @@ four-edge lead gains its fourth conjunct beside the other three, the recut's del
 named as the recut's so a rebuild does not read it as this Spec's, and both records
 added since are named so the figure is checkable. The argument's second copy forty lines
 down survived this act and is struck by the next.
+
 **Revised:** 2026-08-25, sixth of this date, the prose that spends the census catches up
 with it. The restatement of the fifth act corrected three totals and left three clauses
 that consume them, so section 10 disagreed with itself twice inside sixty lines, which
@@ -140,6 +150,7 @@ sentence sixty lines on called it unedged. And the recut's arithmetic is named a
 recut's, taking thirty-six to thirty-two, with the two records added since reaching
 thirty-four. **The lesson the banner already carried, one level in**: an act that
 restates a count owes a read of the prose that spends it, not only of the totals.
+
 **Revised:** 2026-08-25, fifth of this date, the census catches up with the records.
 Section 10 read ten of thirty-one carrying eleven `grounds` edges, thirty-two records by
 tag, and twenty-one claims grounding in no invariant. The file holds thirty-four
@@ -151,12 +162,14 @@ thirty-three - which is why the act adding a record is the act that owes the swe
 Measured from the file's own graph blocks rather than counted by hand. The new record
 also moves below the prose that argues it, per Document Format section 6, and the
 sentence its insertion had split is rejoined.
+
 **Revised:** 2026-08-25, fourth of this date, the assertion arrives with its clause.
 `admin-preload-name-follows-the-kind` was filed in the charter by the act of this date
 and belongs here, an assertion being a claim a Spec makes per the Document Format. It
 sits under section 6's vector clause with its instrument, and it is half of
 `state-preload-door-stands-only-diagnostic`, the member's side asserted in
 `weaver-state-Spec` section 4.
+
 **Revised:** 2026-08-25, third of this date, the second review's findings land. Four
 sentences gain the fact that makes them true rather than asserted. The runtime directory
 exists before the member binds because step 5's unit ask runs first, which the clause
@@ -170,6 +183,7 @@ not yet met, per G5. **A defect is named rather than a cost**: the runtime direc
 carries the agent's `User=`, so an agent that could act there could replace the preload
 name before the operator dials it, which the credential check does not reach. Owed with
 the member's own account, and exercised by nothing today.
+
 **Revised:** 2026-08-25, second of this date, the review's findings land. The member's
 clause overclaimed three ways and each is withdrawn. It gave the member a uid of its
 own, which `weaver-state-PRD` asserts and the spawn does not implement, now recorded as
@@ -182,6 +196,7 @@ start and the worker's directory sweep does not reach a direct child, and the tw
 derivations of the member's path are named with this section as their authority per G5.
 The runtime directory's lifetime coupling is stated rather than assumed, and named as
 unexamined for the preload door, whose peer is the operator's.
+
 **Revised:** 2026-08-25, first of this date, admin names the preload door. Section 6
 gains the state member's start and its vector, which this Spec has never carried while
 the code has started that member since the ingest act: it is a direct child rather than
@@ -191,11 +206,13 @@ that fourth value is a serving load rather than a defect, which is how a serving
 stands one door. The kind is section 4's, resolved once, on the same single-resolution
 rule section 7 already runs for `EnterBinding`. The wait after the start is for the name
 and not the process, and the preload door is not waited on at all.
+
 **Revised:** 2026-08-24, third of this date, the diagnostic member composes inside. The
 entry below is reversed rather than amended and stands so the reversal is visible:
 section 5 runs for every binding again and reads no kind, a diagnostic sink being a
 sink, and section 7's cross-field rule goes back to `gate-instruction` alone. Per
 `weaver-agents-PRD` section 6 as ruled this date.
+
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no record.
 Section 5 scopes to a serving binding, no sink opening and no descriptor crossing for a
 diagnostic one, the kind being resolved at the inventory before the open site is
@@ -203,6 +220,7 @@ reached. Section 7's cross-field rule runs over `gate-instruction` and `trace-si
 alike, and names the one field it refused on. Per `weaver-agents-PRD` section 6 as
 amended this date, which carries the argument this section represents. The entry below
 gains the ordinal the convention asks for, which it was filed without.
+
 **Revised:** 2026-08-24, first of this date, the kind takes its shape. The inventory
 resolves the declaration's binding kind, absence meaning serving, and constructs the
 enter payload's `EnterBinding` from it, refusing a declaration whose gate instruction
@@ -217,22 +235,40 @@ unchanged: the declaration is the operator's file, validated at inventory before
 unit is asked, and the worker resolves the path under the agent's own identity, so
 nothing the invocation's input composes reaches the vector and nothing the agent uid
 lacked is granted.
+
 **Revised:** 2026-08-16, a failed prior unit stops being called a bind failure. The
 refusal is read from the state ask, where `failed` covers one condition, rather than
 from the start ask's status, which the systemd contract measures as unable to say which
 failure it was. Found by running the verb: a load whose organ refused a construction
 parameter left a failed unit and every load after it answered `bind_failed` over a
 healthy socket.
-**Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
-assumed by a human and never by an AI or an automation, a statement of design intent and
-not a guarantee about conduct. `weaver-admin-user` is a static service account rather
-than a login account and is where the delegation attaches, and the crate is the peer
-organ that account runs, whose narrow domain includes custody of where the record leaves
-the system. One unit per agent is named as the sandbox pattern rather than a fleet, and
-the agent's uid is statically provisioned, a dynamic identity excluded for two
-independent reasons. The sandbox's properties are required and its directives stay the
-operator's. Section 10's descriptor-route cell reopens with the sudo measurement
-attached.
+
+**Revised:** 2026-08-15, the state ask decides the unload. Section 6's clause refused on
+a stop ask that failed as well as on a unit a state ask still found active, and its
+reason named only the second, so it over-fired: a transient unit is collected when its
+main process exits, which the confirmed leave causes, and the stop that follows names a
+unit the manager no longer knows. Found by running the verb, every unload of a live
+agent answering `bind_failed` over a freed device and a closed record. The state ask now
+decides and the stop ask's status does not, on the ground that
+`weaver-admin-systemd-contract` section 3 already measures that status as unable to say
+which failure it was.
+
+**Revised:** 2026-08-14, the run identifies itself. Section 7 gains the clause that
+mints the run reference and reads the session, and draws the line between that reference
+and the exchange ordinal beside it, which stays a counter because a connection does not
+outlive the invocation. One assertion is added and section 10's counts are restated to
+thirty-two.
+
+**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the ruling
+landed in `weaver-admin-PRD` load step 5: section 6's ask gains an argument vector
+taking no second variable, and the reading of bare narrows to descriptors, which leaves
+the no-descriptor assertion standing unchanged. Section 9's list of the operator's
+installed values gains the two organ binary paths, on the ruling that one installation's
+fact does not belong in one agent's declaration, and that section's claim that the
+worker's composition root reads the file is corrected to what happens, the root
+receiving the values it needs and reading nothing. Section 11 gains the two values the
+act declined to route.
+
 **Revised:** 2026-08-05, second this date, the admin recut and the socket inversion, one
 act of three rulings. The crate becomes one invocation per verb run with root: the
 operator socket, its accept-time predicate, and the fleet map retire with the service
@@ -244,30 +280,21 @@ unit declares no open, its reliance set moving to `weaver-admin-systemd-contract
 its election's ground restated to what holds, and a failed dial now consults the unit's
 state so a refusal names the right failure. Section 10's walks and counts are restated
 against the surviving set.
-**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the ruling
-landed in `weaver-admin-PRD` load step 5: section 6's ask gains an argument vector
-taking no second variable, and the reading of bare narrows to descriptors, which leaves
-the no-descriptor assertion standing unchanged. Section 9's list of the operator's
-installed values gains the two organ binary paths, on the ruling that one installation's
-fact does not belong in one agent's declaration, and that section's claim that the
-worker's composition root reads the file is corrected to what happens, the root
-receiving the values it needs and reading nothing. Section 11 gains the two values the
-act declined to route.
-**Revised:** 2026-08-14, the run identifies itself. Section 7 gains the clause that
-mints the run reference and reads the session, and draws the line between that reference
-and the exchange ordinal beside it, which stays a counter because a connection does not
-outlive the invocation. One assertion is added and section 10's counts are restated to
-thirty-two.
-**Revised:** 2026-08-15, the state ask decides the unload. Section 6's clause refused on
-a stop ask that failed as well as on a unit a state ask still found active, and its
-reason named only the second, so it over-fired: a transient unit is collected when its
-main process exits, which the confirmed leave causes, and the stop that follows names a
-unit the manager no longer knows. Found by running the verb, every unload of a live
-agent answering `bind_failed` over a freed device and a closed record. The state ask now
-decides and the stop ask's status does not, on the ground that
-`weaver-admin-systemd-contract` section 3 already measures that status as unable to say
-which failure it was. **Document ID:** `weaver-admin-Spec` **Parent:**
-`weaver-admin-PRD` **Editorial:** Per the Working Rules.
+
+**Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
+assumed by a human and never by an AI or an automation, a statement of design intent and
+not a guarantee about conduct. `weaver-admin-user` is a static service account rather
+than a login account and is where the delegation attaches, and the crate is the peer
+organ that account runs, whose narrow domain includes custody of where the record leaves
+the system. One unit per agent is named as the sandbox pattern rather than a fleet, and
+the agent's uid is statically provisioned, a dynamic identity excluded for two
+independent reasons. The sandbox's properties are required and its directives stay the
+operator's. Section 10's descriptor-route cell reopens with the sudo measurement
+attached.
+
+**Document ID:** `weaver-admin-Spec`
+**Parent:** `weaver-admin-PRD`
+**Editorial:** Per the Working Rules.
 
 ---
 
