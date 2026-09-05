@@ -5,6 +5,13 @@ reshaped this charter are recorded in it rather than pending against it, and sec
 10 now carries a shorter list than it did. The header moved on the human's ruling of
 2026-07-31 with no other edit.
 
+**Revised:** 2026-09-05, a reachable organ declares its boundary. Section 4.3 carries
+the rule the operator ruled into the corpus this date: every service reachable other than
+by kernel-enforced peer identity declares a boundary, the inventory refuses a load
+whose reachable organ carries none, the record carries what was declared, and no
+minimum is set on what a boundary is. The declaration member waits for the first
+chartered reachable organ, per the apex's rule against reserved slots. Per issue #438.
+
 **Revised:** 2026-09-04, second of this date, the observation exchange lands. Section
 8's operator interface reports the harness's own word on an agent's state through the
 fourth exchange of `weaver-admin-harness-contract`, the init system consulted only where
@@ -669,6 +676,32 @@ It changes no agent state either way.
 **It repairs nothing and concludes nothing.** A check that fails emits what was expected
 against what was found, per section 2, and the remedy is the operator's over artifacts
 this charter does not govern.
+
+**A reachable organ declares its boundary, and a load without one is refused, per the
+operator's ruling of 2026-09-05 on issue #438.** Every service reachable other than by
+kernel-enforced peer identity carries a declared boundary on the declaration, placement
+and boundary moving together because they are one fact about where the agent's identity
+can be reached from. The Unix socket arrangement is exempt, the kernel having already
+answered, and loopback is not, a bound port being reachable by anything that can reach
+the host. The inventory refuses a load where a reachable organ carries no boundary,
+naming the organ, at the load's cheapest moment as the family and election refusals are,
+and the load event records what was declared so the record carries it. **The rule sets
+no minimum on what a boundary is.** A username and a password over a public address is a
+legitimate declaration and this crate holds no opinion about it, because the instrument
+has to be able to measure the arrangement most people ship and the unsafe declaration is
+the useful case rather than the tolerated one. The mechanic is the requirement to
+declare, and what a good boundary is belongs to the operator. The ground is completeness
+of the record rather than security: whatever is declared becomes part of the cell's
+identity, so a reading can never be quoted without saying what was holding the boundary
+when it was taken. **The rule stands ahead of any organ it binds.** Every organ in the
+base today is reached by kernel peer identity over a Unix socket under a named contract,
+per apex section 5, and the SPU's charter reserves no shape for a member off the host,
+so no declaration member exists for a boundary and none is added here: a field whose
+only reader is unbuilt is the reserved slot apex section 7 refuses. The member arrives
+with the first act that charters a loopback or off-host organ, born carrying the
+boundary rather than gaining it as a retrofit, and until then a declaration naming such
+an organ is refused by the floor's parse as an unknown field, which is the one refusal
+the framework can make today and the one the front end may present.
 
 ### 4.4 Session close, and removal
 

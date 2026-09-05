@@ -4,6 +4,11 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-09-05, a reachable organ's boundary is judged at the inventory. Section 4
+fixes the refusal's shape ahead of the organ that will need it, `ConfigInvalid` naming the
+organ's `boundary` member, and states that today's parse refuses any such binding as an
+unknown field, per charter section 4.3 as ruled this date and issue #438.
+
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3's
 `show` and `list` answer through `weaver-admin-harness-contract` section 3's fourth
 exchange, the harness's own word with the load's facts beside it, residency read only
@@ -837,6 +842,19 @@ run's last turn. The record is never handed to the agent and never named to the 
 on the same descriptor discipline as the sink: what the harness receives is the enter's
 copy of the election, and what the member receives is the record's holdings through the
 door of section 6.
+
+**A reachable organ's boundary is judged here when one exists, per charter section 4.3
+as ruled 2026-09-05 on issue #438.** The refusal's shape is fixed now so the act that
+charters the first loopback or off-host organ lands it rather than electing it: a
+declaration whose reachable organ carries no boundary refuses `ConfigInvalid` naming
+that organ's `boundary` member, ahead of every look at the box, because the omission is
+the declaration's and not the provisioning's, and admin grades nothing about the
+boundary it finds, a declared one being accepted whatever it is. Today no organ in the
+base is reachable other than by kernel peer identity, no such member exists on the
+declaration, and the floor's parse refuses a binding to a loopback port or an off-host
+endpoint as an unknown field, so this clause binds the future act and judges nothing on
+this date. The load event's carrying of what was declared is `weaver-trace-PRD` section
+3.1's to state with that act.
 
 **One check in that list is the second walk's mechanism and is held
 mechanically instead.** The sink path's containing directory is root-owned
