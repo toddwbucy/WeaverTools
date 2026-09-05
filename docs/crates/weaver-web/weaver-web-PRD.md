@@ -99,6 +99,15 @@ conversion is an operator election, and whether a lineage should ever let
 the tool answer it is section 9's. Semicolons swept from the whole document
 under G1, seven of them older than this act.
 
+**Revised:** 2026-09-05, eighth of this date, the seam's record agrees with
+its contract. Section 3's seam edge to `weaver-analysis` reverses to run
+from the emitter, which initiates and is named first under the Document
+Format's rule, and its tag becomes `socket` from `stream`, which was outside
+that document's seam vocabulary. The position the store keys on is derived
+by this crate at ingest rather than carried on the wire, per the Spec's
+section 3, the contract asking the emitter only for the two counts the
+derivation reads. Per the review of PR #459 and issue #461.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -124,10 +133,10 @@ via: weaver-admin-operator-contract
 tag: verb
 
 edge: seam
-from: weaver-web
-to: weaver-analysis
+from: weaver-analysis
+to: weaver-web
 via: weaver-analysis-web-contract
-tag: stream
+tag: socket
 ```
 
 ## 1. What this crate is

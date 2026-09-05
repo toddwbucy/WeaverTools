@@ -70,6 +70,17 @@ with a finding rather than a catalogue. Two facts the record spells
 corrected this document where it had guessed: the address carries the turn,
 and a position is a resident length rather than an ordinal.
 
+**Revised:** 2026-09-05, eighth of this date, the position is derived at
+ingest. Section 3's write path carries the rule, `(R - O - 1) + j` over the
+generation's closing resident count, its output token count and the ordinal,
+measured on 2026-09-05 against three records and nine generations rather
+than reasoned, with the alternative that fails on the first generation
+stated so no later act rediscovers it. Section 7.3 no longer states the
+contract's ask as landed: the two counts it converts from are owed at issue
+#461, and until they cross this seam carries the ordinal alone and this
+crate cannot key its store from it. Section 9 gains the two rows the
+contract's conformance clause named. Per the review of PR #459.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -323,6 +334,26 @@ it and lands it in the store, and **the decoder never waits on the store.**
   surface can read, so a partially ingested run is visibly partial rather
   than quietly short.
 
+**The position is derived here and nowhere later.** The stream is addressed
+by the ordinal within a generation and section 2.1's key is the position,
+the resident length at the draw. Where `R` is the generation's resident
+count at close, `O` its output token count, and `j` the ordinal, the
+position is `(R - O - 1) + j`, the subtracted one being the turn terminator
+the SPU makes resident before the answer returns.
+
+**The rule is measured rather than reasoned**, checked on 2026-09-05 against
+three records across nine generations, two precisions and two finish kinds,
+each derivation compared to the position `model.field` reports directly. The
+alternative that suggests itself, the previous generation's resident count
+plus the turn's input delta, is exact from the second generation and wrong
+on the first by the session prefix, which the first turn's delta does not
+carry. **This crate takes the first rule and states the second's failure so
+no later act rediscovers it.**
+
+Deriving here rather than at the read is section 2.5's rule and not a
+preference: a value derived once at ingest and stored is one a second reader
+reproduces, and one computed in a view is one nobody can.
+
 ## 4. The read path
 
 Three queries, and the schema of section 2 exists to make each an index hit.
@@ -501,11 +532,20 @@ The emission this crate ingests. **Its shape is
 `weaver-analysis-web-contract`**, landed 2026-09-05 per issue #418, and this
 document names the seam and restates none of it. Two of that contract's
 clauses reach back into this document and are worth naming where a reader
-of this section stands: the series carries the position beside the ordinal,
-converted once at the drain rather than in any consumer, per section 2.1's
-rule that the two are different coordinates, and a diagnostic record whose
-bracket did not close certified is not drawn, the refusal naming the
-outcome.
+of this section stands.
+
+**The series is addressed by the ordinal and this crate's store by the
+position**, per section 2.1, and the conversion is this crate's to make at
+ingest. **What it converts from is owed and does not cross yet**, issue
+#461: the contract's section 3 asks the emitter for the resident count at a
+generation's close and its output token count, on the summary stream, and
+until that lands this seam carries the ordinal alone. **A reader in that
+state cannot key its store** and stores what crosses without converting,
+rather than deriving an address from a figure that does not answer.
+
+**A diagnostic record whose bracket did not close certified is not drawn**,
+the refusal naming the outcome. A serving record has no gate and none is
+owed.
 
 ## 8. Placement and the link
 
@@ -532,6 +572,8 @@ cell record like any other.
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
+| the position is derived at ingest and stored | perturbation: derive at the read, a second reader disagrees |
+| an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
 | an undeclared boundary refuses the load | perturbation, at the admit path |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
