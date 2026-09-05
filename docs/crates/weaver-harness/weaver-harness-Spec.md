@@ -7,9 +7,9 @@ floor. Code is written against it under the gates of Working Process section 6.
 paragraph said the run's turn key was never set on the serving path. It is now: the seat
 sets it where the key is minted and clears it where the close lands, on every close
 path, so `Active` is the run's own fact for the bracket's extent, and what remains bound
-is the serving thread, the other half of issue #441. Per issue #441. The engine's
-streaming poll answers an observation between tokens as `Active` with the load's facts,
-so the seam reaches what the watch reached, and issue #441 closes with this act.
+is the serving thread, the other half of issue #441. The engine's streaming poll answers
+an observation between tokens as `Active` with the load's facts, so the seam reaches
+what the watch reached, and issue #441 closes with this act.
 
 **Revised:** 2026-09-04, fifth of this date, the observation exchange lands. Section 2
 answers `Observe` from any position with the load's facts held on the run, authoring
