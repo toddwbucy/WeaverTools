@@ -320,10 +320,13 @@ composing loop by binary and, where it is a file, path and digest, the same fact
 `load` event carries and read from the run rather than the record. After a leave,
 `Unloaded` and no load, the position being terminal. The answer is the harness's own
 word and never a read of the deployment, it touches no bracket and authors no event, and
-an observation arriving mid-turn is answered without disturbing the turn, the facts
-being held on the run and the state a read of whether a turn key stands. Where no worker
-answers the dial at all, admin has no exchange to open and reports `Unloaded` from the
-absence, per `weaver-admin-Spec` section 3, the one place residency is read.
+an observation arriving during a turn is answered after the turn closes, as `Idle`, for
+as long as the harness serves this channel's directives on the turn's own thread, per
+`weaver-harness-Spec` section 2 and issue #441: the `Active` answer is chartered here
+and reached by the seam only once that ruling lands, so a reader trusts the observation
+between turns until then. Where no worker answers the dial at all, admin has no exchange
+to open and reports `Unloaded` from the absence, per `weaver-admin-Spec` section 3, the
+one place residency is read.
 
 **There is no alert exchange, per the fault-carrier ruling of 2026-08-01.** A fault
 the worker survives is a `fault` event, authored by the harness into the stream

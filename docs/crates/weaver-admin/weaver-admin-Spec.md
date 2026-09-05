@@ -2152,51 +2152,52 @@ directive is asserted where the run happens.
 Each names what settles it, and none is this Spec's to settle alone.
 
 - **How an agent's lifecycle state is observed. Settled 2026-09-04** by the observation
-exchange of `weaver-admin-harness-contract` section 3, per issue #435: the harness
-answers its state from the run with the load's facts beside it, section 3 above says how
-`show` and `list` use it, and `StateNotObservable` left the floor with it. The entry
-stood as: **How an agent's lifecycle state is observed, and what the `State` answer
-carries meanwhile.** Section 3 reports residency in the manager's own three values
-because that is what the init system can answer, and apex section 6's four states are
-the harness's to know. The two halves are one election: the manager's `active` covers
-both `Idle` and `Active` and its `failed` has no `AgentState` case, so
-`lifecycle-answer`'s `State` case has no producer for these verbs until an observation
-reaches the party that holds the run. **Settled by:** an observation exchange on
-`weaver-admin-harness-contract`, which charters enter, leave, and stop and no query,
-together with whatever `weaver-types` owes its enumeration once that exchange fixes what
-can be observed. The answer arrives with that contract's next opening rather than from a
-mapping this Spec could invent. - **The session-close cue and the enter question.**
-Charter section 10's two cells, settled by the human's ruling and the memory-and-state
-round respectively, carried here only so this list is complete. - **The log's field set
-and rotation policy.** Satellites of section 8, the fields a builder's choice with no
-cross-crate consequence, the rotation elected against a measurement of what accumulates.
-- **The service configuration's shape.** Section 9's file: its format and field list are
-a builder's choice bounded by what that section fixes, and the natural candidate is the
-same dialect the agent config elected, one syntax for everything the operator writes,
-per the common-syntax direction the composability batch recorded on the working list. -
-**`AgentState` and `AgentSummary` field lists.** The floor names the types in
-`lifecycle-answer` and their fields are satellites there, consumed here as drawn. -
-**The two values the argument vector does not carry.** Section 6's vector carries the
-socket path and the two organ binaries and stops there, and the worker's remaining two
-inputs are named here rather than routed, because routing either now would carry a value
-nothing reads. The assembled prompt's identity is one: the agent's declaration holds an
-identity the SPU makes resident as the session's prefix, the assembled prompt holds a
-second the loop reads, and whether those are one thing is the assembly question rather
-than this act's. The tool schemas are the other, the declaration's tool set reaching
-this crate and going no further while nothing dispatches a tool. **Settled by:** the
-assembly and distillation act for the first, and the tool workflow that charters
-dispatch for the second. Until then the worker defaults both, which is why a load stands
-without either. - **The unit template's hardening set.** Which properties beyond `User=`
-the fixed template carries is the operator's policy surface, named in section 9's
-configuration and deliberately not enumerated by this Spec, because a hardening list
-frozen in a Spec is a security posture that cannot track its host. **The properties the
-sandbox must deliver are required and their directives are not**, per the operator's
-ruling of 2026-08-05 and `weaver-admin-PRD` section 7: no privilege escalation from
-inside, no reach into another principal's home, and a bound on what the agent may
-consume. The operator owns the posture the way an operator owns a firewall
-configuration. - **Whether the unit restricts the agent's address families to
-`AF_UNIX`.** Open with a stated cost rather than required, per the same ruling. It is
-**not** a restatement of the rule that no crate here exposes a network surface: that
-rule binds what these crates link, and this would bind what an agent's tools may reach,
-so an agent whose tools fetch anything would break under it. Settled by an operator who
-knows which tools their agents carry.
+  exchange of `weaver-admin-harness-contract` section 3, per issue #435: the harness
+  answers its state from the run with the load's facts beside it, section 3 above says
+  how `show` and `list` use it, and `StateNotObservable` left the floor with it. The
+  entry stood as: **How an agent's lifecycle state is observed, and what the `State`
+  answer carries meanwhile.** Section 3 reports residency in the manager's own three
+  values because that is what the init system can answer, and apex section 6's four
+  states are the harness's to know. The two halves are one election: the manager's
+  `active` covers both `Idle` and `Active` and its `failed` has no `AgentState` case, so
+  `lifecycle-answer`'s `State` case has no producer for these verbs until an observation
+  reaches the party that holds the run. **Settled by:** the observation exchange on
+  `weaver-admin-harness-contract`, `Observe`, which supplies lifecycle state beside the
+  enter, leave, and stop that contract already chartered, together with whatever
+  `weaver-types` owes its enumeration once that exchange fixes what can be observed. The
+  answer arrives with that contract's next opening rather than from a mapping this Spec
+  could invent. - **The session-close cue and the enter question.** Charter section 10's
+  two cells, settled by the human's ruling and the memory-and-state round respectively,
+  carried here only so this list is complete. - **The log's field set and rotation
+  policy.** Satellites of section 8, the fields a builder's choice with no cross-crate
+  consequence, the rotation elected against a measurement of what accumulates. - **The
+  service configuration's shape.** Section 9's file: its format and field list are a
+  builder's choice bounded by what that section fixes, and the natural candidate is the
+  same dialect the agent config elected, one syntax for everything the operator writes,
+  per the common-syntax direction the composability batch recorded on the working list.
+  - **`AgentState` and `AgentSummary` field lists.** The floor names the types in
+  `lifecycle-answer` and their fields are satellites there, consumed here as drawn. -
+  **The two values the argument vector does not carry.** Section 6's vector carries the
+  socket path and the two organ binaries and stops there, and the worker's remaining two
+  inputs are named here rather than routed, because routing either now would carry a
+  value nothing reads. The assembled prompt's identity is one: the agent's declaration
+  holds an identity the SPU makes resident as the session's prefix, the assembled prompt
+  holds a second the loop reads, and whether those are one thing is the assembly
+  question rather than this act's. The tool schemas are the other, the declaration's
+  tool set reaching this crate and going no further while nothing dispatches a tool.
+  **Settled by:** the assembly and distillation act for the first, and the tool workflow
+  that charters dispatch for the second. Until then the worker defaults both, which is
+  why a load stands without either. - **The unit template's hardening set.** Which
+  properties beyond `User=` the fixed template carries is the operator's policy surface,
+  named in section 9's configuration and deliberately not enumerated by this Spec,
+  because a hardening list frozen in a Spec is a security posture that cannot track its
+  host. **The properties the sandbox must deliver are required and their directives are
+  not**, per the operator's ruling of 2026-08-05 and `weaver-admin-PRD` section 7: no
+  privilege escalation from inside, no reach into another principal's home, and a bound
+  on what the agent may consume. The operator owns the posture the way an operator owns
+  a firewall configuration. - **Whether the unit restricts the agent's address families
+  to `AF_UNIX`.** Open with a stated cost rather than required, per the same ruling. It
+  is **not** a restatement of the rule that no crate here exposes a network surface:
+  that rule binds what these crates link, and this would bind what an agent's tools may
+  reach, so an agent whose tools fetch anything would break under it. Settled by an
+  operator who knows which tools their agents carry.
