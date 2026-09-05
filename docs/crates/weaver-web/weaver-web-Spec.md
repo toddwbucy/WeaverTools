@@ -465,7 +465,7 @@ act that lands it states what removal makes it fail and confirms it does.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on
-  the fields the charter's section 9 names, and section 2.2 carries the
+  the fields the charter's section 4 names, and section 2.2 carries the
   tuple that decides whether equality is claimed or a divergence is
   reported. What stays open is whether a correctness column exists beside
   it. Where one does, **the scorer is named on the verdict and never in the
