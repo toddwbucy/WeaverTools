@@ -560,7 +560,12 @@ pub struct AgentConfig {
 
 pub struct Restore {
     pub record: PathBuf,
-    pub through_turn: Option<u64>,
+    pub through: Option<Cut>,
+}
+
+pub struct Cut {
+    pub run: RunId,
+    pub turn: u64,
 }
 
 pub struct StateStore {
