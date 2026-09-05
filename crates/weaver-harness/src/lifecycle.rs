@@ -704,6 +704,7 @@ impl Harness {
             &mut run.recorder,
             &mut run.turn_ordinal,
             &mut run.turn_in_flight,
+            &run.load,
             // No frame, no prompt: the replay feeds the record's rendered
             // forms and assembles nothing.
             None,
@@ -888,6 +889,7 @@ impl Harness {
                         &mut run.recorder,
                         &mut run.turn_ordinal,
                         &mut run.turn_in_flight,
+                        &run.load,
                         Some(prompt),
                         &self.coordination,
                         Some(pending),
@@ -1851,6 +1853,7 @@ impl Harness {
                     &mut run.recorder,
                     &mut run.turn_ordinal,
                     &mut run.turn_in_flight,
+                    &run.load,
                     Some(prompt),
                     &self.coordination,
                     // A seat granted outside the serve loop streams without
