@@ -37,6 +37,7 @@ fn main() -> std::process::ExitCode {
             }
         },
         Some(("lens", rest)) => run_lens(rest),
+        Some(("field", rest)) => run_field(rest),
         _ => refused(
             "usage: weaver-analysis derive <trace> --devices <n,..> --sink <path> \
              [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
@@ -44,7 +45,8 @@ fn main() -> std::process::ExitCode {
              | signals <record> [spike-bar] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
              [--positions p,.. (a file defaults to a spread of eight)] [--topk 5] \
-             [--min-top5 0.9] [--rms-epsilon 1e-6]",
+             [--min-top5 0.9] [--rms-epsilon 1e-6] \
+             | field <record> --position <turn>:<position> [--run <run>]",
         ),
     }
 }
@@ -744,8 +746,94 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
     std::process::ExitCode::SUCCESS
 }
 
-/// Whether a path names a FIFO, which is how a reading learns it is
-/// draining rather than reading a record that stands still.
+/// A position's field, per `weaver-analysis-Spec` section 5 as of
+/// 2026-09-04: the one `model.field` event at the asked turn and position,
+/// drained from any record - serving or diagnostic, file or pipe - and
+/// spliced as the record spelled it. Gated on no certified close, because
+/// the field is the record's own fact about a position rather than a
+/// reading taken over a replay.
+fn run_field(rest: &[String]) -> std::process::ExitCode {
+    let refused = |why: String| {
+        eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        std::process::ExitCode::FAILURE
+    };
+    let mut record = None;
+    let mut position = None;
+    let mut run = None;
+    let mut it = rest.iter();
+    while let Some(argument) = it.next() {
+        match argument.as_str() {
+            "--position" => match it.next().filter(|v| !v.starts_with("--")) {
+                Some(v) => position = Some(v.clone()),
+                None => return refused("--position takes <turn>:<position>".to_string()),
+            },
+            "--run" => match it.next().filter(|v| !v.starts_with("--")) {
+                Some(v) => run = Some(v.clone()),
+                None => return refused("--run takes a run".to_string()),
+            },
+            other if record.is_none() && !other.starts_with('-') => {
+                record = Some(other.to_string())
+            }
+            other => return refused(format!("unknown argument {other}")),
+        }
+    }
+    let (Some(record), Some(position)) = (record, position) else {
+        return refused("field takes <record> and --position <turn>:<position>".to_string());
+    };
+    let address = match weaver_analysis::Address::parse(&position) {
+        Ok(address) => address,
+        Err(why) => return refused(why),
+    };
+    let source = match weaver_analysis::stream::open(&record) {
+        Ok(source) => source,
+        Err(error) => return refused(format!("the record does not open: {error}")),
+    };
+    // **Each answer leaves as it completes**, so what the read holds is
+    // never more than the one position it was asked for.
+    let mut emit = |answer: &weaver_analysis::Answer| {
+        println!(
+            "{}",
+            serde_json::to_string(answer).expect("an answer renders")
+        );
+    };
+    let mut reader = weaver_analysis::FieldReader::new(address.clone(), run.clone(), &mut emit);
+    match weaver_analysis::drain(source, &mut reader) {
+        weaver_analysis::Drained::Refused(why) => return refused(why),
+        weaver_analysis::Drained::Exhausted => reader.finish(),
+        weaver_analysis::Drained::Stopped => {}
+    }
+    // **A missing election and a missing position are two refusals**, told
+    // apart by whether any field landed at all: the record says which.
+    if !reader.seen_field {
+        return refused(match reader.elected_depth {
+            Some(depth) => format!(
+                "the record elected the field at depth {depth} and holds no model.field event"
+            ),
+            None if reader.diagnostic() => {
+                "the record holds no model.field event: the field was not elected for the \
+                 replay"
+                    .to_string()
+            }
+            None => "the record holds no model.field event: the field was not elected at its \
+                     load"
+                .to_string(),
+        });
+    }
+    if reader.answered == 0 {
+        return refused(match run {
+            Some(run) => format!(
+                "the record holds no field at {}:{} in run {run}",
+                address.turn, address.position
+            ),
+            None => format!(
+                "the record holds no field at {}:{}",
+                address.turn, address.position
+            ),
+        });
+    }
+    std::process::ExitCode::SUCCESS
+}
+
 /// The file's default spread, per Spec section 5 as of 2026-09-04.
 const DEFAULT_SPREAD: usize = 8;
 
@@ -756,6 +844,8 @@ fn file_identity(path: &str) -> Option<(u64, std::time::SystemTime)> {
     Some((meta.len(), meta.modified().ok()?))
 }
 
+/// Whether a path names a FIFO, which is how a reading learns it is
+/// draining rather than reading a record that stands still.
 fn is_fifo(path: &str) -> bool {
     use std::os::unix::fs::FileTypeExt;
     std::fs::metadata(path)

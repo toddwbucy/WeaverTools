@@ -3,78 +3,87 @@
 **Status:** MERGED. Cut 2026-08-27, the second Spec of the diagnostic leg. Code is
 written against it under the gates of Working Process section 6.
 
-**Date filed:** 2026-08-27 **Revised:** 2026-09-04, third of this date, the preload
-takes a cut. Section 4's `preload` accepts `--through <run>:<turn>`, projecting the
-record through that turn's close, and `--as <session>`, landing the projection under
-another session name. Per issue #432. **Revised:** 2026-09-04, second of this date, the
-file's default spread is defined. Section 5 names it eight positions evenly spaced over
-the record's generated positions by index, first and last included, taken by a second
-read of the file, where the clause had named a default and defined none. Per the last
-open defect of issue #386. **Revised:** 2026-09-04, first of this date, the derived
-identity is the seed. The derivation's prefix member names its standing under
-`weaver-state-PRD` section 4 as revised this date: the seed of the derived declaration,
-the preloaded store answering the replayed run's identity ask from the same events. Per
-issue #422. **Revised:** 2026-09-03, the head is applied across the cores. Section 5
-states that the unembedding's rows are split across scoped threads with each row summed
-in one order, so the reading is bit-identical to the single-thread one, and the claim
-gains its record, `analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose
-control over two thousand positions took fifteen minutes on one core. **Revised:**
-2026-09-03, the weights identity is per file. Section 3's lens manifest carries its
-weights digest in the shape the model on disk takes, a map of shard digests for a
-sharded model, and the reader follows the model's index to the shards it needs,
+**Date filed:** 2026-08-27
+**Revised:** 2026-09-04, fourth of this date, a position's field is read from the
+record. Section 5 gains the `field` verb: the one `model.field` event at an asked turn
+and position, drained from a serving or diagnostic record, file or pipe, spliced as the
+record spelled it, holding one position and never the record, and gated on no certified
+close because the field is the record's own fact about a position rather than a reading
+over a replay. Section 1's layout gains `field.rs`. Per issue #436.
+
+**Revised:** 2026-09-04, third of this date, the preload takes a cut. Section 4's
+`preload` accepts `--through <run>:<turn>`, projecting the record through that turn's
+close, and `--as <session>`, landing the projection under another session name. Per
+issue #432.
+
+**Revised:** 2026-09-04, second of this date, the file's default spread is defined.
+Section 5 names it eight positions evenly spaced over the record's generated positions
+by index, first and last included, taken by a second read of the file, where the clause
+had named a default and defined none. Per the last open defect of issue #386.
+
+**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The
+derivation's prefix member names its standing under `weaver-state-PRD` section 4 as
+revised this date: the seed of the derived declaration, the preloaded store answering
+the replayed run's identity ask from the same events. Per issue #422.
+
+**Revised:** 2026-09-03, the head is applied across the cores. Section 5 states that the
+unembedding's rows are split across scoped threads with each row summed in one order, so
+the reading is bit-identical to the single-thread one, and the claim gains its record,
+`analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose control over two
+thousand positions took fifteen minutes on one core.
+
+**Revised:** 2026-09-03, the weights identity is per file. Section 3's lens manifest
+carries its weights digest in the shape the model on disk takes, a map of shard digests
+for a sharded model, and the reader follows the model's index to the shards it needs,
 verifying each under its own name. The identity refusal gains its record,
 `analysis-lens-refuses-other-weights`, which the clause had argued without one. Forced
-by the 8B, whose head and final norm sit in different shards. **Revised:** 2026-09-02,
-the reading drains the stream. Section 3 states that the analyst's sink input carries
-its shape, so a pipe elects the discard and a file declines it, and section 5 states how
-a reading is taken as the stream drains: one drain for the class with readers above it,
-the held state bounded by the turn in flight and the analyst's named positions, the
-named positions required where no whole record exists to spread over, and the reading
-emitted only after a certified close. One assertion, bought by the act that streams.
+by the 8B, whose head and final norm sit in different shards.
 
-**Revised:** 2026-09-01, third of this date, the reading takes its surface.
-Section 5 gains what the crate-borne read needs and no more: the lens
-loaded and applied by the source's own arithmetic against the artifact's
-own weights, the control gating every reading, the by-turn pairing rule,
-and the exact capture comparison that performs certification step 3 where
-both records are held and licenses the discard. Section 1's layout gains
-`lens.rs` and `capture.rs`, and its dependency set gains `safetensors` and
-`sha2`, the format reader the artifact election implies and the digest its
-identity check recomputes, neither an engine. The
-reading-as-artifact election narrows to its rendered form. Two assertions,
-bought by the code act in the same stack.
+**Revised:** 2026-09-02, the reading drains the stream. Section 3 states that the
+analyst's sink input carries its shape, so a pipe elects the discard and a file declines
+it, and section 5 states how a reading is taken as the stream drains: one drain for the
+class with readers above it, the held state bounded by the turn in flight and the
+analyst's named positions, the named positions required where no whole record exists to
+spread over, and the reading emitted only after a certified close. One assertion, bought
+by the act that streams.
 
-**Revised:** 2026-09-01, second of this date, the artifacts take their
-representation. Section 3 gains the lens artifact's shape - safetensors
-matrices, elected over the fitting tool's serialization so both sides of
-the boundary read the artifact without the other's runtime, beside the
-measured JSON manifest with its refusals - and states that the capture
-artifact has no second representation, being a certified record kept
-whole. Two open elections close. Per the charter as amended this date and
-the measurement acts of the same date.
+**Revised:** 2026-09-01, third of this date, the reading takes its surface. Section 5
+gains what the crate-borne read needs and no more: the lens loaded and applied by the
+source's own arithmetic against the artifact's own weights, the control gating every
+reading, the by-turn pairing rule, and the exact capture comparison that performs
+certification step 3 where both records are held and licenses the discard. Section 1's
+layout gains `lens.rs` and `capture.rs`, and its dependency set gains `safetensors` and
+`sha2`, the format reader the artifact election implies and the digest its identity
+check recomputes, neither an engine. The reading-as-artifact election narrows to its
+rendered form. Two assertions, bought by the code act in the same stack.
 
-**Revised:** 2026-09-01, first of this date, the declaration derives from
-the record. Section 3
-gains the third projection per the charter as amended on issue #394: every
-derived member names its record source, disagreement and absence each
-refuse naming the member, the analyst's three inputs and the two fixed
-spellings are enumerated, and section 1's layout gains `src/declare.rs`
-beside the invocation's composition root, which it had left implicit.
-The watch is the code act's, bought in the same stack.
+**Revised:** 2026-09-01, second of this date, the artifacts take their representation.
+Section 3 gains the lens artifact's shape - safetensors matrices, elected over the
+fitting tool's serialization so both sides of the boundary read the artifact without the
+other's runtime, beside the measured JSON manifest with its refusals - and states that
+the capture artifact has no second representation, being a certified record kept whole.
+Two open elections close. Per the charter as amended this date and the measurement acts
+of the same date.
 
-**Revised:** 2026-08-31, second of this date, the gate takes both members.
-Section 5's drain paragraph gates the reproducibility claim on the charter's
-whole licence by citation - the device model and the code identity, at the
-precisions that clause states - where the entry below records a single-member
-gate the body no longer has.
+**Revised:** 2026-09-01, first of this date, the declaration derives from the record.
+Section 3 gains the third projection per the charter as amended on issue #394: every
+derived member names its record source, disagreement and absence each refuse naming the
+member, the analyst's three inputs and the two fixed spellings are enumerated, and
+section 1's layout gains `src/declare.rs` beside the invocation's composition root,
+which it had left implicit. The watch is the code act's, bought in the same stack.
 
-**Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the
-pipe-shaped sink's discipline per the charter's section 3 as amended: read
-once, keep the report and its evidence, retain nothing drained, and gate the
-reproducibility claim rather than the drain on naming the device model or
-stating it cannot be established. The kind-set count follows
-`weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts
-as an open election beside the capture artifact.
+**Revised:** 2026-08-31, second of this date, the gate takes both members. Section 5's
+drain paragraph gates the reproducibility claim on the charter's whole licence by
+citation - the device model and the code identity, at the precisions that clause states
+- where the entry below records a single-member gate the body no longer has.
+
+**Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the pipe-shaped
+sink's discipline per the charter's section 3 as amended: read once, keep the report and
+its evidence, retain nothing drained, and gate the reproducibility claim rather than the
+drain on naming the device model or stating it cannot be established. The kind-set count
+follows `weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts as
+an open election beside the capture artifact.
+
 **Document ID:** `weaver-analysis-Spec`
 **Parent:** `weaver-analysis-PRD`
 **Editorial:** Per the Working Rules.
@@ -113,6 +122,7 @@ finished record from a truncated one could hold this shape and not use it.
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
     src/lens.rs       the lens artifact, loaded and applied, section 5
     src/capture.rs    a capture's columns and their comparison, section 5
+    src/field.rs      a position's field, read from the record, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -719,6 +729,34 @@ edge: asserts
 from: weaver-analysis
 to: analysis-reading-drains-within-a-turn
 ```
+
+**A position's field is read from the record on the same drain, one position at a
+time and never the record.** The record already carries what else had mass at a
+generated position: under the field election a `model.field` event stands at every
+position the generation retained, per `weaver-trace-Spec` section 3, carrying the
+position as the resident length at the draw, the ranked candidates with their
+probabilities, and the rank the draw landed on. So the `field <record> --position
+<turn>:<position> [--run <run>]` verb, added 2026-09-04 for the trace surface's click
+on a spike, adds no reading of its own. Its reader drains a file or a stream as the
+signals reader does, keeps the one `model.field` event whose turn and position match
+the address, splices the ranked list as the record spelled it rather than parsing and
+re-rendering a probability, and drops every other event as it lands, so twenty
+thousand positions cost the read one position. **The drawn token is the candidate at
+the realized rank** where that rank is within the list, and where the draw fell past
+the reported depth it is the entry of the generation's `model.measurement`
+`output_tokens` at the field's ordinal within that generation, the fields pairing with
+the drawn tokens one for one in landing order because the stop token is neither
+retained nor ranked, and where neither answers it is absent rather than invented. One
+line answers per run holding the position, each naming its run, because turn keys
+repeat across the runs of a serving record, and `--run` narrows the read to one run
+and ends it when that run has answered. **It gates on no certified close**, unlike the
+lens: the field is the record's own fact about a position and not a reading taken
+over a replay, so a serving record and a diagnostic record answer alike, the
+diagnostic bracket's close ending the read as it ends every reader's. Three refusals,
+each typed as the others are. A record holding no `model.field` event at all refuses
+as the field not having been elected, or as elected and unproduced where the `load`
+carried a depth. A position the record does not hold at that turn refuses naming the
+address. An address that is not `<turn>:<position>` refuses naming what was given.
 
 **How this crate reaches the sink follows the operator's declaration and not this
 document.** The charter's section 3 assumes no discriminant, so this crate takes a
