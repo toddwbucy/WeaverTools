@@ -18,6 +18,15 @@ corrected this document where it had guessed: the address carries the turn,
 and a position is a resident
 length rather than an ordinal.
 
+**Revised:** 2026-09-05, second of this date, against two reviews on PR
+#453. Section 2.3 gains the recorded query, which section 4 required and
+section 2 gave nowhere to put, and the indexes renumber to 2.4 with both
+citations following. The engine's identity enters the run's row, and **the
+deposit regime behind it is cited to `weaver-analysis-PRD` section 3**
+rather than asserted, an uncited regime in a Spec being testimony. The
+scorer leaves the run's tuple for the verdict. Semicolons swept from the
+whole document under G1, six of them older than this act.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -112,9 +121,11 @@ Everything identifying the conditions lives in the run's own row:
 **The engine is in the compound, so the row holds it.** The tuple is a model
 on a device under a kernel at a precision, and a divergence between two rows
 differing in both silicon and library revision names neither cause unless
-both are recorded. The measurement regime already deposits the engine
-libraries by digest beside the binaries, the build flags and the toolchain;
-this row carries the same fact so a reading drawn from the store needs no
+both are recorded. **The regime that deposits these identifiers is
+`weaver-analysis-PRD` section 3's**, which carries code identity beside the
+device model, the commit by hash, the toolchain and driver by pinned
+version, and the binaries and engine libraries by the driver's sha256. This
+row carries the same fact so a reading drawn from the store needs no
 deposit beside it to be read.
 
 **A reading without its tuple is a reading of an unnamed compound.** The
@@ -246,7 +257,7 @@ every artifact the diff names resolves
 ```
 
 **A runner cannot ask.** A refusal discovered at three in the morning costs
-a batch window; the same refusal at authoring costs nothing.
+a batch window, and the same refusal at authoring costs nothing.
 
 ## 6. The surfaces
 
@@ -259,28 +270,28 @@ Open a trace, Record, Experiments, and the returned half of Stage. That is
 what makes section 4's three reads sufficient for them.
 
 **A surface that authors or exchanges also holds a seam**, and section 7
-names each: Compose writes its draft and asks `validate`; Live carries a
-turn to the gate and reads the measurement that comes back; Agents drives
-the lifecycle verbs and reads the observation exchange; Stage submits a
+names each. Compose writes its draft and asks `validate`. Live carries a
+turn to the gate and reads the measurement that comes back. Agents drives
+the lifecycle verbs and reads the observation exchange. Stage submits a
 registered experiment to the queue. **None of them writes the registry** -
 the write path of section 3 is the only writer - and none reads the agent
 except through a seam that is named.
 
 **The state a surface holds is a query, never a location.** A filter chip is
-a clause; clearing it widens the list in place. A card carries the operator
+a clause, and clearing it widens the list in place. A card carries the
 into a list with a chip already set, and no surface has a variant that
 differs only by a pre-applied filter.
 
 **A timeline is drawn on ordinals and a click addresses a position, and the
 surface converts between them.** The per-generation series is indexed by the
-ordinal within its generation; the field is addressed by the resident length
+ordinal within its generation, and the field is addressed by the resident
 at the draw. They are different coordinates and the record spells both, so
 the conversion is the surface's to make and to make once. A view that passes
 an ordinal where a position is expected reads a different token and says
 nothing about it.
 
 **Absence renders as absence.** Entropy rides every generation
-unconditionally; surprisal rides only where its election stands. A surface
+unconditionally, and surprisal rides only where its election stands. A
 that plots an absent surprisal as zero is lying about the election, so where
 the election did not stand the surface says so rather than drawing a floor.
 
@@ -364,7 +375,7 @@ act that lands it states what removal makes it fail and confirms it does.
 ## 10. Open elections
 
 - **The store engine and its migrations.** Postgres is the charter's
-  election; the schema's expression is this document's and lands with the
+  election, and the schema's expression is this document's and lands with
   first code act.
 - **The field election's depth**, which is the charter's open cell and not
   this crate's to set.
