@@ -73,6 +73,14 @@ pub struct Ports<'a> {
     author: &'a Author,
     recorder: &'a mut Record,
     turn_ordinal: &'a mut u64,
+    /// The run's turn key while a turn runs, per `weaver-harness-Spec`
+    /// section 3's observe and stop clauses: set when the bracket opens and
+    /// cleared when its close lands, so the run reads `Active` for exactly
+    /// the bracket's extent. Lent by the run beside the ordinal because the
+    /// engine is where the key is minted and where the close is authored,
+    /// and a second site predicting the key would be a second source for
+    /// one fact.
+    turn_in_flight: &'a mut Option<TurnKey>,
     assembled: Option<Prompt>,
     /// The coordination listener, waited against beside the decode channel
     /// while a generation streams, per Spec 6.1: the stop is heard
@@ -183,6 +191,7 @@ impl<'a> Ports<'a> {
         author: &'a Author,
         recorder: &'a mut Record,
         turn_ordinal: &'a mut u64,
+        turn_in_flight: &'a mut Option<TurnKey>,
         assembled: Option<Prompt>,
         coordination: &'a CoordinationListener,
         pending: Option<&'a mut Option<OrganChannel>>,
@@ -197,6 +206,7 @@ impl<'a> Ports<'a> {
             author,
             recorder,
             turn_ordinal,
+            turn_in_flight,
             assembled,
             coordination,
             pending,
@@ -681,6 +691,10 @@ impl<'a> Ports<'a> {
                 None,
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        // **The key stands from here until the close lands.** The run's
+        // slot is what the observe and stop arms read, and it is set at the
+        // one site that knows the key rather than predicted by a caller.
+        *self.turn_in_flight = Some(turn.clone());
 
         // **Every exit past the open closes the bracket.** A turn that opened
         // and then lost the channel or met a refusal must not leave a
@@ -744,6 +758,11 @@ impl<'a> Ports<'a> {
                     Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
                 ) {
                     Ok(_) => {
+                        // The close landed, so no turn stands: cleared
+                        // here and not on the arm below, because a close
+                        // that could not author leaves the bracket open
+                        // and the key standing for the unwind to name.
+                        *self.turn_in_flight = None;
                         // **Announce after record**, on the failure path as on
                         // the clean one: the turn the stop asked to end has
                         // ended, its close in the record naming the fault, and
@@ -1234,6 +1253,7 @@ impl<'a> Ports<'a> {
                 None,
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = Some(turn.clone());
         Ok(())
     }
 
@@ -1250,6 +1270,7 @@ impl<'a> Ports<'a> {
                 Some(Payload::TurnClosed(TurnClose::Clean)),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = None;
         Ok(())
     }
 
@@ -1270,6 +1291,7 @@ impl<'a> Ports<'a> {
                 Some(Payload::TurnClosed(TurnClose::Stopped { reason })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        *self.turn_in_flight = None;
         Ok(())
     }
 
@@ -1544,6 +1566,8 @@ impl<'a> Ports<'a> {
                 })),
             )
             .map_err(|_| TurnError::ChannelLost)?;
+        // The close landed, so no turn stands.
+        *self.turn_in_flight = None;
 
         // **Announce after record**: the stop's answer follows the close it
         // reports, carrying the turn's fate, aborted or completed-at-rest,
@@ -1908,6 +1932,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
@@ -1917,6 +1942,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2032,6 +2058,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let answered = {
             let mut fullness = None;
@@ -2041,6 +2068,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2151,6 +2179,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let counts = {
             let mut fullness = Some((1237, 8191));
@@ -2160,6 +2189,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2296,6 +2326,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
         let listener = test_listener();
         let outcome = {
@@ -2306,6 +2337,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2483,6 +2515,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
         let listener = test_listener();
         let error = {
@@ -2493,6 +2526,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2687,6 +2721,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut gate_ordinal = 0u64;
         let mut held = std::collections::VecDeque::new();
 
@@ -2699,6 +2734,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2867,6 +2903,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
@@ -2876,6 +2913,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,
@@ -2954,6 +2992,7 @@ mod tests {
         );
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let mut fullness = None;
         let mut pressure_reported = false;
@@ -2962,6 +3001,7 @@ mod tests {
             &author,
             &mut recorder,
             &mut turn_ordinal,
+            &mut turn_in_flight,
             None,
             &listener,
             None,
@@ -3100,6 +3140,7 @@ mod tests {
             )
             .expect("load");
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut slot = Some(verb_end);
 
         let outcome = {
@@ -3110,6 +3151,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 Some(&mut slot),
@@ -3209,6 +3251,7 @@ mod tests {
         );
         let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let listener = test_listener();
         let outcome = {
             let mut fullness = None;
@@ -3218,6 +3261,7 @@ mod tests {
                 &author,
                 &mut recorder,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &listener,
                 None,

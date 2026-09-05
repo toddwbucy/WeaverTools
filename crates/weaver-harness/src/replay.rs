@@ -567,6 +567,7 @@ mod tests {
 
         let coordination = listener();
         let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut fullness = None;
         let mut pressure_reported = false;
         let outcome = {
@@ -575,6 +576,7 @@ mod tests {
                 &author,
                 &mut record,
                 &mut turn_ordinal,
+                &mut turn_in_flight,
                 None,
                 &coordination,
                 None,
