@@ -76,6 +76,11 @@ pub fn identity_for(name: &AgentName) -> String {
 pub struct Inventory {
     pub config: AgentConfig,
     pub identity: String,
+    /// The declaration file's digest as this inventory read it, per
+    /// `weaver-admin-harness-contract` section 5 as of 2026-09-05: supplied
+    /// on the enter so the run and the record name what they were built
+    /// from, and this crate is the file's one reader.
+    pub declaration: String,
     /// The binding kind resolved, per `weaver-admin-Spec` section 7: the one
     /// inventory function resolves it, so the verb and the load cannot
     /// resolve differently, and what the enter carries is this value.
@@ -376,6 +381,7 @@ fn take_inventory_against(
     Ok(Inventory {
         config,
         identity,
+        declaration: declaration_digest(source),
         binding,
     })
 }
@@ -463,6 +469,26 @@ pub fn store_admits_as(boundary: &Boundary, database: &str, role: &str) -> std::
             "the probe under uid {} ended with {other:?}",
             boundary.agent_uid
         ))),
+    }
+}
+
+/// The declaration's digest, sha256 of the file's bytes as read, hex.
+pub fn declaration_digest(source: &str) -> String {
+    use sha2::Digest;
+    let digest = sha2::Sha256::digest(source.as_bytes());
+    let mut hex = String::with_capacity(64);
+    for byte in digest {
+        use std::fmt::Write;
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
+}
+
+/// The names the allow-list admits, in the operator's order, for the verbs
+/// that answer for every agent at once.
+impl AllowList {
+    pub fn names(&self) -> &[String] {
+        &self.names
     }
 }
 

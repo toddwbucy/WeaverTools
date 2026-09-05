@@ -319,6 +319,11 @@ struct Run {
     /// to compare against. `None` where no member stood under a serving
     /// record, or where the enter's ask missed.
     grants_at_enter: Option<Vec<String>>,
+    /// What this run was built from, held for the observation exchange of
+    /// `weaver-admin-harness-contract` section 3 as of 2026-09-05: the same
+    /// facts the load event was authored from, answered from the run and
+    /// never read from the record.
+    load: weaver_types::LoadFacts,
     /// The classify arm, per `weaver-harness-Spec` section 6: `None` where
     /// the declaration carried no binding, which the port serves as the
     /// missing leg's absence.
@@ -1144,6 +1149,40 @@ impl Harness {
                 }
                 Ok(Some(Outcome::Left))
             }
+            // **Observe answers from any position and authors nothing**, per
+            // `weaver-admin-harness-contract` section 3 as of 2026-09-05: the
+            // state is a read of whether a turn key stands, the facts are
+            // held on the run, and the left position answers rather than
+            // refuses because an observation is not an act.
+            (ChannelState::BeforeEnter, LifecycleDirective::Observe)
+            | (ChannelState::Left, LifecycleDirective::Observe) => {
+                self.answer(
+                    connection,
+                    &exchange,
+                    LifecycleAnswer::State {
+                        state: weaver_types::AgentState::Unloaded,
+                        load: None,
+                    },
+                )?;
+                Ok(None)
+            }
+            (ChannelState::Entered(run), LifecycleDirective::Observe) => {
+                let state = if run.turn_in_flight.is_some() {
+                    weaver_types::AgentState::Active
+                } else {
+                    weaver_types::AgentState::Idle
+                };
+                let load = run.load.clone();
+                self.answer(
+                    connection,
+                    &exchange,
+                    LifecycleAnswer::State {
+                        state,
+                        load: Some(load),
+                    },
+                )?;
+                Ok(None)
+            }
             (ChannelState::Entered(run), LifecycleDirective::Stop) => {
                 // Announce after record: the turn's close event is placed with
                 // the stop reason, and only then does the answer carry
@@ -1321,6 +1360,7 @@ impl Harness {
             // on this enter, and the composer is what the binary handed
             // `serve`. Neither is read from the deployment.
             state_member,
+            declaration: payload.declaration.clone(),
             state_store: weaver_trace::StoreIdentity {
                 engine: match payload.state_store.engine {
                     weaver_types::StoreEngine::None => "none",
@@ -1411,6 +1451,33 @@ impl Harness {
             gate: None,
             state: state_seam,
             grants_at_enter,
+            load: weaver_types::LoadFacts {
+                session: SessionId(payload.session.0.clone()),
+                run: payload.run.clone(),
+                declaration: payload.declaration.clone(),
+                artifact: payload
+                    .spu_instruction
+                    .decoder
+                    .model_binding
+                    .artifact
+                    .clone(),
+                residual_readout: payload.spu_instruction.decoder.residual_readout_election,
+                surprisal: payload.spu_instruction.decoder.surprisal_election,
+                state_election: payload.state_election.clone(),
+                state_store: payload.state_store.clone(),
+                state_member,
+                composer: {
+                    let loop_identity = self
+                        .composer
+                        .clone()
+                        .expect("serve names the composer before any enter");
+                    weaver_types::Composer {
+                        binary: loop_identity.binary,
+                        file: loop_identity.file.map(std::path::PathBuf::from),
+                        sha256: loop_identity.sha256,
+                    }
+                },
+            },
             fullness: None,
             pressure_reported: false,
             turn_in_flight: None,
@@ -2314,6 +2381,7 @@ mod tests {
                     surprisal: false,
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
+                    declaration: Default::default(),
                     state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
@@ -2354,6 +2422,22 @@ mod tests {
                 diagnostic: None,
                 state: None,
                 grants_at_enter: None,
+                load: weaver_types::LoadFacts {
+                    session: SessionId("s".into()),
+                    run: weaver_types::RunId("r-1".into()),
+                    declaration: String::new(),
+                    artifact: weaver_types::ArtifactRef("a".into()),
+                    residual_readout: false,
+                    surprisal: false,
+                    state_election: Default::default(),
+                    state_store: Default::default(),
+                    state_member: false,
+                    composer: weaver_types::Composer {
+                        binary: "test".into(),
+                        file: None,
+                        sha256: None,
+                    },
+                },
                 fullness: None,
                 pressure_reported: false,
                 turn_in_flight: turn.map(|t| TurnKey(t.to_string())),
@@ -2446,6 +2530,7 @@ mod tests {
                 },
             },
             state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: vec![weaver_types::ElectedKindConfig {
@@ -2567,6 +2652,7 @@ mod tests {
                 },
             },
             state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -2708,6 +2794,7 @@ mod tests {
                     },
                 },
                 state_store: weaver_types::StateStore::default(),
+                declaration: String::new(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: Vec::new(),
@@ -2805,6 +2892,7 @@ mod tests {
                 },
             },
             state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -2910,6 +2998,7 @@ mod tests {
                     },
                 },
                 state_store: weaver_types::StateStore::default(),
+                declaration: String::new(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: vec![weaver_types::ElectedKindConfig {
@@ -3045,6 +3134,7 @@ mod tests {
             },
             binding: weaver_types::EnterBinding::Diagnostic,
             state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
             state_election: weaver_types::StateElection::default(),
         };
 
@@ -3164,6 +3254,7 @@ mod tests {
                 },
             },
             state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
             state_election: weaver_types::StateElection::default(),
         };
 
@@ -3300,6 +3391,82 @@ mod tests {
     /// review, and `weaver-harness-Spec` section 8 tags
     /// `harness-announce-after-record` `perturbation` - a tension named here
     /// for the operator rather than hidden behind a green test.
+    /// **Observe answers from any position and authors nothing**, per
+    /// `weaver-admin-harness-contract` section 3 as of 2026-09-05: unloaded
+    /// with no load before an enter and after a leave, idle or active with
+    /// the load's facts while entered, the state a read of the turn key.
+    /// Perturbation: answer `Idle` for a run whose turn key stands and the
+    /// active case fails; author an event in the observe arm and the record
+    /// count below moves.
+    #[test]
+    fn observe_answers_from_any_position_and_authors_nothing() {
+        fn harness_at(state: ChannelState) -> Harness {
+            Harness {
+                coordination: test_listener(),
+                organs: OrganBinaries {
+                    classify: None,
+                    spu: "/nonexistent/spu".into(),
+                    gate: "/nonexistent/gate".into(),
+                },
+                parameters: OrganParameters::default(),
+                state,
+                composer: Some(weaver_trace::LoopIdentity::compiled("test")),
+            }
+        }
+        fn observed(harness: &mut Harness) -> LifecycleAnswer {
+            let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
+            harness
+                .dispatch_on(
+                    &harness_end,
+                    test_exchange(),
+                    LifecycleDirective::Observe,
+                    None,
+                    None,
+                )
+                .expect("observe dispatches");
+            match peer_end.into_channel().recv().expect("answer").payload {
+                weaver_types::Payload::Answer(answer) => answer,
+                other => panic!("observe answers, got {other:?}"),
+            }
+        }
+        let unloaded = LifecycleAnswer::State {
+            state: weaver_types::AgentState::Unloaded,
+            load: None,
+        };
+        assert_eq!(
+            observed(&mut harness_at(ChannelState::BeforeEnter)),
+            unloaded
+        );
+        assert_eq!(observed(&mut harness_at(ChannelState::Left)), unloaded);
+
+        let (run, _spare, _sink_path) = entered_run(Some("t-1"));
+        let before = run.recorder.structure().expect("record").len();
+        let mut harness = harness_at(ChannelState::Entered(Box::new(run)));
+        match observed(&mut harness) {
+            LifecycleAnswer::State {
+                state: weaver_types::AgentState::Active,
+                load: Some(load),
+            } => assert_eq!(load.run.0, "r-1", "the load's facts ride beside the state"),
+            other => panic!("a turn in flight observes active with its load, got {other:?}"),
+        }
+        let ChannelState::Entered(run) = &mut harness.state else {
+            panic!("the position stays entered")
+        };
+        assert_eq!(
+            run.recorder.structure().expect("record").len(),
+            before,
+            "an observation authors nothing"
+        );
+        run.turn_in_flight = None;
+        match observed(&mut harness) {
+            LifecycleAnswer::State {
+                state: weaver_types::AgentState::Idle,
+                load: Some(_),
+            } => {}
+            other => panic!("at rest observes idle with its load, got {other:?}"),
+        }
+    }
+
     #[test]
     fn stop_records_the_close_and_answers_turn_aborted() {
         let (run, _spare, _sink_path) = entered_run(Some("t-1"));

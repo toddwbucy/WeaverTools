@@ -42,6 +42,7 @@
 //!         LifecycleDirective::Validate { .. } => "validate",
 //!         LifecycleDirective::List => "list",
 //!         LifecycleDirective::Show { .. } => "show",
+//!         LifecycleDirective::Observe => "observe",
 //!     }
 //! }
 //! fn answer_name(a: &LifecycleAnswer) -> &'static str {
@@ -77,7 +78,6 @@
 //!         LifecycleRefusal::PriorUnitUnreaped => "prior_unit_unreaped",
 //!         LifecycleRefusal::OrganRefused { .. } => "organ_refused",
 //!         LifecycleRefusal::ActivityNotAtRest => "activity_not_at_rest",
-//!         LifecycleRefusal::StateNotObservable => "state_not_observable",
 //!     }
 //! }
 //! ```
@@ -96,10 +96,10 @@ pub use config::{
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
 pub use wire::{
-    AgentName, AgentState, AgentSummary, Candidate, DECODE_MESSAGE_BOUND, EnterBinding,
+    AgentName, AgentState, AgentSummary, Candidate, Composer, DECODE_MESSAGE_BOUND, EnterBinding,
     EnterPayload, ExchangeId, FaultCase, FaultReport, Finish, Generation, LabelAnswer,
     LabelDirective, LabelRefusal, LifecycleAnswer, LifecycleAsk, LifecycleDirective,
-    LifecycleRefusal, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position, RefusalRecord,
-    RefusingOrgan, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer, TokenAsk,
-    TokenDirective, TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
+    LifecycleRefusal, LoadFacts, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position,
+    RefusalRecord, RefusingOrgan, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer,
+    TokenAsk, TokenDirective, TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
 };

@@ -24,6 +24,9 @@ path = "src/main.rs"
 weaver-types = { path = "../weaver-types", features = ["config"] }
 serde_json.workspace = true
 nix = { version = "0.31", features = ["socket", "fs", "process", "uio", "user"] }
+# The declaration's digest, supplied on the enter per weaver-admin-Spec section 1
+# as of 2026-09-05, so the run and the record name what they were built from.
+sha2 = "0.10"
 
 [dev-dependencies]
 weaver-types = { path = "../weaver-types", features = ["config"] }

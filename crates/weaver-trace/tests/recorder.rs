@@ -70,6 +70,7 @@ fn elections() -> Payload {
         surprisal: false,
         tee: Some(weaver_trace::Election::default()),
         state_member: false,
+        declaration: Default::default(),
         state_store: Default::default(),
         composer: weaver_trace::LoopIdentity::compiled("test"),
     })
@@ -809,6 +810,7 @@ fn the_load_carries_the_tee_election() {
                 }],
             }),
             state_member: false,
+            declaration: Default::default(),
             state_store: Default::default(),
             composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
@@ -853,6 +855,7 @@ fn a_declined_surprisal_election_is_written_down() {
             surprisal: true,
             tee: Some(weaver_trace::Election::default()),
             state_member: false,
+            declaration: Default::default(),
             state_store: Default::default(),
             composer: weaver_trace::LoopIdentity::compiled("test"),
         })),
@@ -996,6 +999,7 @@ fn the_load_names_its_loop_and_its_member() {
         surprisal: false,
         tee: Some(weaver_trace::Election::default()),
         state_member: true,
+        declaration: "ab".repeat(32),
         state_store: weaver_trace::StoreIdentity {
             engine: "postgres".into(),
             database: Some("weaver_karl".into()),
@@ -1050,6 +1054,7 @@ fn the_load_names_its_loop_and_its_member() {
         surprisal: false,
         tee: None,
         state_member: false,
+        declaration: Default::default(),
         state_store: Default::default(),
         composer: weaver_trace::LoopIdentity::compiled("worker"),
     })
