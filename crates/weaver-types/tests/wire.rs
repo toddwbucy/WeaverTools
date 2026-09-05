@@ -54,10 +54,12 @@ fn sequence_carrying_answer_round_trips() {
                 AgentSummary {
                     name: AgentName("alpha".into()),
                     state: AgentState::Idle,
+                    load: None,
                 },
                 AgentSummary {
                     name: AgentName("beta".into()),
                     state: AgentState::Unloaded,
+                    load: None,
                 },
             ],
         }),

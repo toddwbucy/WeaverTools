@@ -490,6 +490,11 @@ pub struct Elections {
     /// questions: the election is what the deployment asked for and the
     /// member is whether an end arrived.
     pub state_store: StoreIdentity,
+    /// The declaration file's digest the load was built from, as admin read
+    /// it at the inventory and the enter carried it, per `weaver-trace-PRD`
+    /// section 3.1 as of 2026-09-04: a record names its own declaration
+    /// rather than leaning on a deposit beside it.
+    pub declaration: String,
     /// The loop that assembled this run's prompts, per `weaver-trace-Spec`
     /// section 3: the binary that ran it, and the file and its digest at
     /// the load where the loop is a file. Two loops assemble different

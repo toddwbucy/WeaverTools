@@ -133,15 +133,13 @@ fn dispatch(
         surface::Request::Load(agent) => load(config, &agent),
         surface::Request::Unload(agent) => unload(config, &agent),
         surface::Request::Stop(agent) => stop(config, &agent),
-        // **`show` and `list` refuse rather than construct an `AgentState`.**
-        // The two fitting answer cases both carry one, and this crate has no
-        // source for it: the party that knows an agent's lifecycle state is
-        // the harness, and no chartered exchange asks it. What admin can read
-        // is residency, which is a different fact, so the refusal is the
-        // smallest honest answer available, per Spec section 3.
-        surface::Request::Show(_) | surface::Request::List => {
-            Err(LifecycleRefusal::StateNotObservable)
-        }
+        // **`show` and `list` answer through the observation exchange**, per
+        // Spec section 3 as of 2026-09-04: the harness's own word where a
+        // worker answers the dial, and `Unloaded` from the absence where
+        // none does, which is the one place residency is read and it is
+        // read as the absence of a worker and not as a state.
+        surface::Request::Show(agent) => show(config, &agent),
+        surface::Request::List => list(config),
     }
 }
 
@@ -533,6 +531,7 @@ fn load(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, Li
             // from the unit, which could not tell idle from active.
             Ok(LifecycleAnswer::State {
                 state: weaver_types::AgentState::Idle,
+                load: None,
             })
         }
         Err(refusal) => {
@@ -658,6 +657,7 @@ fn run_load(
                 // section 4 as of 2026-09-04: an absent election is the
                 // embedded engine, and the record names what was resolved.
                 state_store: inventory.config.state_store.clone().unwrap_or_default(),
+                declaration: inventory.declaration.clone(),
             },
         }),
     };
@@ -739,6 +739,62 @@ fn start_refusal_for_residency(
 /// thing; `Inactive` covers a unit that stopped cleanly, one that never
 /// existed, and one whose exec never succeeded, so nothing is claimed beyond
 /// the value.
+/// **Observe one agent**, per `weaver-admin-harness-contract` section 3 as
+/// of 2026-09-04: dial the coordination socket and open the exchange, and
+/// carry the harness's answer whole. No socket, or no worker answering the
+/// dial, is `Unloaded` with no load, read from the absence and never from
+/// the unit.
+fn observe(
+    config: &ServiceConfig,
+    agent: &AgentName,
+) -> Result<(weaver_types::AgentState, Option<weaver_types::LoadFacts>), LifecycleRefusal> {
+    let socket_path = config.coordination_socket(&agent.0);
+    let Ok(mut coordination) = channel::dial(&socket_path) else {
+        return Ok((weaver_types::AgentState::Unloaded, None));
+    };
+    let ordinal = coordination.next_ordinal();
+    if coordination
+        .send_directive(ordinal, LifecycleDirective::Observe)
+        .is_err()
+    {
+        return Ok((weaver_types::AgentState::Unloaded, None));
+    }
+    match coordination.recv() {
+        Ok(answer) => match answer.payload {
+            weaver_types::Payload::Answer(LifecycleAnswer::State { state, load }) => {
+                Ok((state, load))
+            }
+            weaver_types::Payload::Refusal(refusal) => Err(refusal),
+            _ => Err(LifecycleRefusal::Malformed),
+        },
+        Err(_) => Ok((weaver_types::AgentState::Unloaded, None)),
+    }
+}
+
+fn show(config: &ServiceConfig, agent: &AgentName) -> Result<LifecycleAnswer, LifecycleRefusal> {
+    admissible(config, agent)?;
+    let (state, load) = observe(config, agent)?;
+    Ok(LifecycleAnswer::State { state, load })
+}
+
+fn list(config: &ServiceConfig) -> Result<LifecycleAnswer, LifecycleRefusal> {
+    let mut agents = Vec::new();
+    for name in config.allow_list.names() {
+        let agent = AgentName(name.clone());
+        // The allow-list is the operator's file and its entries are judged
+        // as every verb's argument is, so a malformed name never composes a
+        // socket path outside the coordination root.
+        admissible(config, &agent)?;
+        let (state, load) = observe(config, &agent)?;
+        agents.push(weaver_types::AgentSummary {
+            name: agent,
+            state,
+            load,
+        });
+    }
+    Ok(LifecycleAnswer::Agents { agents })
+}
+
 fn refusal_for_absent_worker(config: &ServiceConfig, agent: &str) -> LifecycleRefusal {
     refusal_for_residency(unit::residency(&config.unit, agent))
 }
@@ -838,6 +894,7 @@ fn unload_answer(residency: unit::Residency) -> Result<LifecycleAnswer, Lifecycl
         unit::Residency::Unknown => Err(LifecycleRefusal::BindFailed),
         unit::Residency::Inactive | unit::Residency::Failed => Ok(LifecycleAnswer::State {
             state: weaver_types::AgentState::Unloaded,
+            load: None,
         }),
     }
 }
@@ -1251,19 +1308,38 @@ mod tests {
     }
 
     #[test]
-    fn show_and_list_construct_no_agent_state() {
+    fn show_and_list_answer_the_absence_as_unloaded() {
+        // **Where no worker answers the dial, the answer is `Unloaded` from
+        // the absence and constructs no state from the unit**, per Spec
+        // section 3 as of 2026-09-04. Perturbation: map the manager's
+        // `active` onto `Idle` in `observe` and a box with the unit running
+        // fails this, which is the invention the clause forbids. The
+        // coordination root below does not exist, so no socket does.
         let config = unread_config();
-        for request in [
-            surface::Request::Show(AgentName("alpha".into())),
-            surface::Request::List,
-        ] {
-            let answered = dispatch(&config, request.clone());
-            assert_eq!(
-                answered,
-                Err(LifecycleRefusal::StateNotObservable),
-                "{request:?} refuses as not observable rather than answering"
-            );
+        assert_eq!(
+            dispatch(&config, surface::Request::Show(AgentName("alpha".into()))),
+            Ok(LifecycleAnswer::State {
+                state: weaver_types::AgentState::Unloaded,
+                load: None
+            }),
+            "an admitted agent with no socket answers unloaded with no load"
+        );
+        match dispatch(&config, surface::Request::List) {
+            Ok(LifecycleAnswer::Agents { agents }) => {
+                assert_eq!(agents.len(), config.allow_list.names().len());
+                assert!(
+                    agents
+                        .iter()
+                        .all(|a| a.state == weaver_types::AgentState::Unloaded && a.load.is_none())
+                );
+            }
+            other => panic!("list answers one summary per admitted agent, got {other:?}"),
         }
+        assert_eq!(
+            dispatch(&config, surface::Request::Show(AgentName("nobody".into()))),
+            Err(LifecycleRefusal::NoSuchAgent),
+            "a name the allow-list does not admit refuses as every verb does"
+        );
     }
 }
 
@@ -1285,7 +1361,8 @@ mod unload_answer_tests {
         assert!(matches!(
             unload_answer(unit::Residency::Inactive),
             Ok(LifecycleAnswer::State {
-                state: weaver_types::AgentState::Unloaded
+                state: weaver_types::AgentState::Unloaded,
+                load: None,
             })
         ));
     }
@@ -1376,7 +1453,8 @@ mod unload_answer_tests {
         assert!(matches!(
             unload_answer(unit::Residency::Failed),
             Ok(LifecycleAnswer::State {
-                state: weaver_types::AgentState::Unloaded
+                state: weaver_types::AgentState::Unloaded,
+                load: None,
             })
         ));
     }

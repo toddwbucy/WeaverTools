@@ -22,6 +22,11 @@ declaration - each a unit variant because the fact refused carries no value the 
 holds nowhere else, on the registry-typing pattern the re-feed's arms set. The refused
 ask is `Open`, which `TokenAsk` already names, so no ask joins.
 
+**Revised:** 2026-09-04, second of this date, the observation exchange lands. Section
+4's `lifecycle-directive` gains `Observe`, its `State` answer and `AgentSummary` gain
+`load`, `LoadFacts` and `Composer` are declared, `EnterPayload` gains the declaration's
+digest, and `StateNotObservable` leaves `lifecycle-refusal` on the scheduled death
+section 4.2 gave it on 2026-08-06. Per issue #435.
 **Revised:** 2026-08-31, fifth of this date, the permission members take a
 parse the seam survives. The unknown-field mechanism the second entry of
 this date elected for `refeed_permission`, and the column entry for its
@@ -233,7 +238,7 @@ turn's token limit was reached, a third fact the two-case set flattened
 into `Completed`, which issue #218 found from the record's own evidence -
 a capped answer reporting itself complete. The trace's mirror and the
 close's member move in the same act.
-**Revised:** 2026-09-04, the store election reaches the declaration.
+**Revised:** 2026-09-04, first of this date, the store election reaches the declaration.
 `AgentConfig` gains `state_store`, optional, its absence meaning the embedded
 engine per `weaver-state-PRD` section 4 as revised this date, its `engine`
 closed at three cases, and `database` and `role` required under the service
@@ -1327,6 +1332,7 @@ pub enum LifecycleDirective {
     Enter { payload: EnterPayload },
     Leave,
     Stop,
+    Observe,
     Admit { instruction: SpuInstruction },
     Release,
     Raise { instruction: GateInstruction, socket: PathBuf },
@@ -1348,8 +1354,28 @@ pub enum LifecycleAnswer {
     GateReady,
     GateStopped,
     Validated,
-    State { state: AgentState },
+    State { state: AgentState, load: Option<LoadFacts> },
     Agents { agents: Vec<AgentSummary> },
+}
+
+pub struct LoadFacts {
+    pub session: SessionId,
+    pub run: RunId,
+    pub declaration: String,
+    pub artifact: ArtifactRef,
+    pub residual_readout: bool,
+    pub field: Option<u32>,
+    pub surprisal: bool,
+    pub state_election: StateElection,
+    pub state_store: StateStore,
+    pub state_member: bool,
+    pub composer: Composer,
+}
+
+pub struct Composer {
+    pub binary: String,
+    pub file: Option<PathBuf>,
+    pub sha256: Option<String>,
 }
 
 pub enum LifecycleRefusal {
@@ -1369,7 +1395,6 @@ pub enum LifecycleRefusal {
     PriorUnitUnreaped,
     OrganRefused { organ: RefusingOrgan, reason: Box<LifecycleRefusal> },
     ActivityNotAtRest,
-    StateNotObservable,
 }
 
 pub struct EnterPayload {
@@ -1381,6 +1406,7 @@ pub struct EnterPayload {
     pub state_store: StateStore,
     pub restore: Option<Lineage>,
     pub stack: BTreeMap<String, String>,
+    pub declaration: String,
 }
 
 pub struct Lineage {
@@ -1435,6 +1461,9 @@ section 6. `stack` is the digests of the organ binaries admin started, keyed by 
 binary's name, so the load event names the stack that ran it and a record is sufficient
 for its own conditions without a deposit beside it, per `weaver-trace-PRD` section 3.1.
 Both are admin's facts and the harness authors them as it authors the store's.
+**`declaration` rides beside them as of 2026-09-04**, the digest of the declaration file
+as admin read it at the inventory, so the harness names it on the load event and answers
+it to an observation without holding the file, per issue #435.
 
 **`EnterBinding` is the kind resolved, and a directive disagreeing with its
 kind is unrepresentable rather than refused.** The config holds the kind as
@@ -1559,20 +1588,20 @@ raise and lower at the gate, and the verbs with the observations at the operator
 surface. The answer and the refusal follow the same rule.
 
 **Every directive receives exactly one answer, and the mapping from directive to
-answering case is stated because the operator contract requires that and a
-builder would otherwise invent it.** The case is determined per directive, and
-for `Stop` by what it interrupted. `Enter` answers
-`Ready`, `Leave` answers `Left`, `Stop` answers `TurnAborted` or `AtRest`,
-`Admit` answers `Admitted`, `Release` answers `Released`, `Raise` answers
-`GateReady`, `Lower` answers `GateStopped`, `Validate` answers `Validated`,
-`Load`, `Unload`, and `Show` answer `State`, and `List` answers `Agents`. Eleven
-of the twelve have a single answering case. `Stop` has two, `TurnAborted` or
-`AtRest`, selected by whether a turn was in flight, and both are clean closes
-rather than a refusal, per `weaver-admin-harness-contract` section 3. Any
-directive may answer a `LifecycleRefusal` instead, which is the second half of
-what one answer per request means. `Validated` exists because validation reports an
-outcome without transitioning anything, per `weaver-admin-PRD` section 4.3, and
-answering it with a state would report a transition that did not happen.
+answering case is stated because the operator contract requires that and a builder would
+otherwise invent it.** The case is determined per directive, and for `Stop` by what it
+interrupted. `Enter` answers `Ready`, `Leave` answers `Left`, `Stop` answers
+`TurnAborted` or `AtRest`, `Admit` answers `Admitted`, `Release` answers `Released`,
+`Raise` answers `GateReady`, `Lower` answers `GateStopped`, `Validate` answers
+`Validated`, `Load`, `Unload`, `Show`, and `Observe` answer `State`, the last carrying
+the load's facts beside the state where a run stands, and `List` answers `Agents`.
+Twelve of the thirteen have a single answering case. `Stop` has two, `TurnAborted` or
+`AtRest`, selected by whether a turn was in flight, and both are clean closes rather
+than a refusal, per `weaver-admin-harness-contract` section 3. Any directive may answer
+a `LifecycleRefusal` instead, which is the second half of what one answer per request
+means. `Validated` exists because validation reports an outcome without transitioning
+anything, per `weaver-admin-PRD` section 4.3, and answering it with a state would report
+a transition that did not happen.
 
 **A receiving party matches its own cases and refuses the rest as `OutOfOrder`,
 which is a real obligation rather than a formality.** The gate receiving an
@@ -1597,25 +1626,25 @@ this crate.** Whether the SPU's admit cases needed a type of their own was the
 cell `weaver-spu-PRD` section 10 held, and the naming ruling settled it as
 extension: they are loop 0 refusals because they refuse loop 0's directives.
 
-**`StateNotObservable` joins the set on 2026-08-06, and it refuses a question
-rather than an act.** Every other case here says an act could not be performed.
-This one says an answer cannot be formed: the party that knows an agent's
-lifecycle state is the harness, which holds the run, and
-`weaver-admin-harness-contract` section 3 charters enter, leave, and stop with
-no observation, so nothing asks it. Admin can read residency from the init
-system and residency is not lifecycle state, per `weaver-admin-Spec` section 3,
-so `show` and `list` refuse with this case rather than construct an `AgentState`
-the corpus has no source for.
+**`StateNotObservable` joined the set on 2026-08-06 and left it on 2026-09-04.** It
+refused a question rather than an act, because the party that knows an agent's lifecycle
+state is the harness and no exchange asked it, and it was minted as a marker with a
+scheduled death, leaving exactly one thing to delete when the observation exchange
+landed. The exchange landed with issue #435: `weaver-admin-harness-contract` section 3
+charters `Observe`, the harness answers `State` from whichever position it holds with
+`LoadFacts` beside it where a run stands, and `show` and `list` answer rather than
+refuse. The case is deleted rather than kept, per the apex's rule that a case nothing
+produces is a reserved slot.
 
-**It is a marker with a scheduled death, which is why it is a refusal and not a
-new answer.** Growing `AgentState` to carry a service manager's vocabulary would
-settle this crate's vocabulary from another party's representation, which gate
-G2 forbids, and adding an answer case for residency would make permanent a shape
-the observation exchange is expected to replace. A refusal states the absence
-plainly, reaches an operator as a typed value rather than as an empty result,
-and leaves exactly one thing to delete when the exchange lands. **Whoever
-charters that exchange retires this case in the same act**, and a corpus still
-carrying it afterwards has left a marker for a gap that closed.
+**`LoadFacts` is what the observation carries beside the state, and it is the floor's
+shape of what the `load` event already names**: the session and run, the declaration's
+digest as admin read the file at the enter, the artifact, the readout, field, and
+surprisal elections, the tee's election, the store the member stands on and whether its
+end arrived, and the composing loop by binary and, where it is a file, path and digest.
+`Composer` is this crate's spelling of the loop's identity because the record's own is
+`weaver-trace`'s and the floor links downward only. `AgentSummary` carries the same
+`load` beside its name and state, so `list` answers for every admitted agent in one ask,
+per issue #435.
 
 ### 4.3 The encoding
 
@@ -1837,6 +1866,7 @@ pub enum LifecycleAsk {
     Enter,
     Leave,
     Stop,
+    Observe,
     Admit,
     Release,
 }

@@ -198,6 +198,11 @@ pub enum LifecycleDirective {
     },
     Leave,
     Stop,
+    /// **Observe the run**, per `weaver-admin-harness-contract` section 3 as
+    /// of 2026-09-04: admin asks what stands and carries nothing, and the
+    /// harness answers `State` from whichever position it holds, the load's
+    /// facts beside the state where a run stands. Authors nothing.
+    Observe,
     Admit {
         instruction: SpuInstruction,
     },
@@ -240,15 +245,60 @@ pub enum LifecycleDirective {
 pub enum LifecycleAnswer {
     Ready,
     Left,
-    TurnAborted { turn: TurnKey },
+    TurnAborted {
+        turn: TurnKey,
+    },
     AtRest,
     Admitted,
     Released,
     GateReady,
     GateStopped,
     Validated,
-    State { state: AgentState },
-    Agents { agents: Vec<AgentSummary> },
+    /// The agent's state and, where a run stands, the load's facts, per
+    /// `weaver-types-Spec` section 4 as of 2026-09-04. `load` is absent
+    /// exactly where the state is `Absent` or `Unloaded`.
+    State {
+        state: AgentState,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        load: Option<LoadFacts>,
+    },
+    Agents {
+        agents: Vec<AgentSummary>,
+    },
+}
+
+/// **What a standing run was built from**, per `weaver-types-Spec` section
+/// 4.2 as of 2026-09-04: the floor's shape of what the `load` event names,
+/// answered to the observation exchange from the run and never read from the
+/// record.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LoadFacts {
+    pub session: SessionId,
+    pub run: RunId,
+    /// The declaration file's digest as admin read it at the inventory.
+    pub declaration: String,
+    pub artifact: crate::ArtifactRef,
+    pub residual_readout: bool,
+    /// The field election's depth where one stands, as the load event's
+    /// `field` member carries it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub field: Option<u32>,
+    pub surprisal: bool,
+    pub state_election: crate::config::StateElection,
+    pub state_store: crate::config::StateStore,
+    pub state_member: bool,
+    pub composer: Composer,
+}
+
+/// The composing loop, this crate's spelling: the record's own is
+/// `weaver-trace`'s and the floor links downward only.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Composer {
+    pub binary: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<std::path::PathBuf>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
 }
 
 /// The refusal cases, drawn from the merged contracts, the set closed at this
@@ -294,13 +344,6 @@ pub enum LifecycleRefusal {
         reason: Box<LifecycleRefusal>,
     },
     ActivityNotAtRest,
-    /// The answer cannot be formed, where every case above says an act could
-    /// not be performed. The party that knows an agent's lifecycle state is the
-    /// harness, and no chartered exchange asks it, so `show` and `list` refuse
-    /// with this rather than construct an `AgentState` from residency, which is
-    /// a different fact. Retired by the observation exchange that closes the
-    /// gap, per `weaver-types-Spec` section 4.2.
-    StateNotObservable,
 }
 
 /// What admin supplies in the enter directive, per
@@ -322,6 +365,11 @@ pub struct EnterPayload {
     /// the database and role, per `weaver-types-Spec` section 4 as of
     /// 2026-09-04. The harness names it on the load event.
     pub state_store: crate::config::StateStore,
+    /// The declaration file's digest as admin read it at the inventory, per
+    /// `weaver-types-Spec` section 4 as of 2026-09-04, so the run and the
+    /// record both name what they were built from and the harness holds no
+    /// file.
+    pub declaration: String,
 }
 
 /// The binding kind as admin resolved it, per `weaver-types-Spec` section 4:
@@ -390,6 +438,8 @@ pub enum AgentState {
 pub struct AgentSummary {
     pub name: AgentName,
     pub state: AgentState,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub load: Option<LoadFacts>,
 }
 
 /// A turn frame, opaque to the gate: whatever the client sent, and the
@@ -739,6 +789,7 @@ pub enum LifecycleAsk {
     Enter,
     Leave,
     Stop,
+    Observe,
     Admit,
     Release,
 }

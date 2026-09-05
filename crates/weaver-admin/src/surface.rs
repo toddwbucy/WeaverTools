@@ -110,9 +110,9 @@ mod tests {
             answer.contains("\"kind\":\"validated\""),
             "the answer renders with the floor's tag, got {answer}"
         );
-        let refusal = render_refusal(&LifecycleRefusal::StateNotObservable);
+        let refusal = render_refusal(&LifecycleRefusal::NoResidency);
         assert!(
-            refusal.contains("\"kind\":\"state_not_observable\""),
+            refusal.contains("\"kind\":\"no_residency\""),
             "the refusal renders with the floor's tag, got {refusal}"
         );
         // The two tag spaces are disjoint, which is what lets one status

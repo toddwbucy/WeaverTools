@@ -1536,6 +1536,7 @@ fn dispatch(
             | LifecycleDirective::Enter { .. }
             | LifecycleDirective::Leave
             | LifecycleDirective::Stop
+            | LifecycleDirective::Observe
             | LifecycleDirective::Raise { .. }
             | LifecycleDirective::Lower
             | LifecycleDirective::Load { .. }
