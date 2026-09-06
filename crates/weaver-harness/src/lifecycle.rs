@@ -2349,6 +2349,25 @@ mod tests {
     //! not buy, while the run struct itself is constructible here.
 
     use super::*;
+
+    /// **The turn ordinal starts at the cut**, per `weaver-harness-Spec`
+    /// section 2 as revised 2026-09-04 on issue #432: zero where the load
+    /// stands from nothing, the lineage's turn where it stands from a
+    /// record, so the first minted turn is one past the cut.
+    ///
+    /// Perturbation: return zero from `initial_turn_ordinal` whatever the
+    /// lineage and the second assertion fails. Watched under exactly that
+    /// change.
+    #[test]
+    fn the_turn_ordinal_starts_at_the_cut() {
+        assert_eq!(initial_turn_ordinal(None), 0);
+        let lineage = weaver_types::Lineage {
+            parent: weaver_types::SessionId("s-1".into()),
+            run: weaver_types::RunId("r-a".into()),
+            through: 7,
+        };
+        assert_eq!(initial_turn_ordinal(Some(&lineage)), 7);
+    }
     use std::fs::File;
     use weaver_trace::Kind;
 
