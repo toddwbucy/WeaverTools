@@ -522,8 +522,8 @@ runs the two side by side as the diagnostic flow already does. **The cut is the 
 turn's close event**, every event through it crossing and none after, and a turn the
 record holds without its close refuses naming the turn, because a cut inside a
 generation is what the cut-by-turn rule exists to refuse and a run that died mid-turn
-holds exactly that. The rename touches the envelope's session member alone. The perturbation is two-sided and each side names
-its removal: drop the cut and events past the named turn cross, drop the rename and
+holds exactly that. The rename touches the envelope's session member alone. The
+perturbation is two-sided and each side names its removal: drop the cut and events past the named turn cross, drop the rename and
 every distillate keeps the record's session under an opener that declared another.
 
 ```graph
