@@ -518,10 +518,11 @@ needs, because the member bounds every answer to the session its opener declared
 a restoring load this verb is the door's driver as it is under the diagnostic binding,
 per `weaver-analysis-state-contract` section 1 as revised 2026-09-04: admin names the
 door and dials it never, the load's enter parks until this verb's seal, and the operator
-runs the two side by side as the diagnostic flow already does. **The cut is the last
-event of the named turn in landing order**, every event before it crossing and none
-after, which is the turn's close where the record is whole, and the rename touches
-the envelope's session member alone. The perturbation is two-sided and each side names
+runs the two side by side as the diagnostic flow already does. **The cut is the named
+turn's close event**, every event through it crossing and none after, and a turn the
+record holds without its close refuses naming the turn, because a cut inside a
+generation is what the cut-by-turn rule exists to refuse and a run that died mid-turn
+holds exactly that. The rename touches the envelope's session member alone. The perturbation is two-sided and each side names
 its removal: drop the cut and events past the named turn cross, drop the rename and
 every distillate keeps the record's session under an opener that declared another.
 
