@@ -333,9 +333,14 @@ Each row carries:
 - the artifact identity, derived as above
 - **the record's identity**, the weights hash `weaver-spu-Spec` section 3
   states, computed at import over the files the row registers and unique
-  across rows, and where the same weights are imported again from a
-  directory differing in a file the index never names the new value joins
-  this row rather than opening one
+  across rows, a renamed split GGUF excepted per section 10, and where the
+  same weights are imported again from a directory differing in a file the
+  index never names the new value joins this row rather than opening one.
+  **The sentinel is never a record identity here**: an import that cannot
+  compute the value registers nothing, per the charter's section 3.6, and
+  a run carrying the empty string joins to nothing and is named as one
+  whose identity the SPU could not compute, which is a different fact from
+  a run no row carries
 - the identity **per file**, following the model's own index, each shard
   under its own name and verified against it
 - the provenance: a repository and revision, or a source artifact with the
@@ -353,7 +358,9 @@ join is a lookup on the record's identity**, as of 2026-09-06 per
 issue #465: the two identities are two rules at two grains, the record's over
 everything the binding named and this table's key over the weights alone,
 and the record's determines the key because a directory's hash fixes its
-shards, so one record identity names at most one row and the row carries
+shards, so one record identity names at most one row, a renamed split GGUF
+being the one case where it names two, which the lookup reports as
+ambiguous rather than picking, per section 10, and the row carries
 every record identity its weights have been admitted under. A run whose
 record identity no row carries joins to nothing and registers nothing, a
 record being a fact and not an import, until an import on that box
@@ -806,7 +813,8 @@ cell record like any other.
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
-| a record identity names at most one catalog row | compile-pin: the record identity is unique on the catalog, and a second import of the same weights joins its row |
+| a record identity names at most one catalog row | perturbation, at the schema: drop the unique index on the record identity, a second import of the same weights opens a second row and a lookup answers two |
+| the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
@@ -832,6 +840,17 @@ act that lands it states what removal makes it fail and confirms it does.
   seam carries as of the same date. Neither rule was dropped, because the
   lens's refusal rests on one and every record on the other, and the
   derivation between them runs one way. Per issue #465.
+- **The split GGUF's names, which the record's identity does not cover.**
+  `weaver-spu-Spec` section 3's hash of a split covers the shards' bytes in
+  split order and not their names, so two split sets of identical bytes
+  under different stems are one record identity and two rows of section
+  2.3, and the lookup reports both rather than picking. Two answers stand:
+  the SPU's split manifest carries the names, which changes the identity
+  every later admit of a split records and is that Spec's to rule, or this
+  catalog keys a GGUF by the record's identity alone, a GGUF's shard names
+  being the operator's and not the artifact's where a safetensors index is
+  the artifact's own. No split GGUF stands in a record or a model directory
+  this seat can reach, so the case is named before it is met.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on

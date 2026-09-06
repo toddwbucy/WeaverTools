@@ -10,8 +10,8 @@ carries as the record spelled it, sentinel included, so the run row of
 `weaver-web-Spec` section 2.2 has a source on the wire, under one perturbation
 record. Section 0 names `weaver-analysis-web-contract` among what this document is
 written against, the citation the contract's section 8 recorded as owed since
-2026-09-05, per issue #451's second half. Section 6's counts move by one. Per issue
-#465.
+2026-09-05, per issue #451's second half. Section 6's counts move by one, per
+issue #465.
 **Revised:** 2026-09-05, second of this date, the summary carries the residency. Section
 5's summary gains, per generation, the resident count as it closed and the count of
 output tokens beside the perplexity, both read from the record and neither derived,

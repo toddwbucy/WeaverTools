@@ -1152,7 +1152,13 @@ is the record's identity of the artifact and it is at the grain of everything th
 binding named**, which is coarser than one file and finer than the weights alone: two
 directories holding the same shards beside a different sidecar are two record
 identities, and the per-file digest map `weaver-analysis-Spec` section 3 keys a lens
-on is determined by this value and does not determine it.
+on is determined by this value for a file or a directory and does not determine it.
+**A split is the one case where the names are outside the hash**, so two split sets
+of identical bytes under different stems are one record identity and two per-file
+maps: this value fixes their digests and not their names. Whether the split's
+manifest should carry the names, which would change the identity every later admit
+of a split records, is the operator's to rule and is named at `weaver-web-Spec`
+section 10 where the consequence lands.
 
 ```graph
 node: spu-weights-hash-at-admit
