@@ -2327,9 +2327,9 @@ waited on and for how long before the first ask is written, so an operator who h
 not started the driver reads why the load stands still. The harness knows which load
 it holds where the member does not, and spends the bound on the diagnostic case
 anyway, because the member parks the identity ask under the door whatever the
-binding and a short bound there would refuse the enter unless the driver had sealed
-inside it, the identity ask's miss being the one the dead-peer clause does not
-convert. **A diagnostic enter therefore waits on the driver as its replay already
+binding and a short bound there would refuse the enter unless the driver had
+sealed inside it, the identity ask's miss being the one the dead-peer clause does
+not convert. **A diagnostic enter therefore waits on the driver as its replay already
 did and refuses without one after the bound**, where before this act it opened on
 the seed while the preload elected no prefix, and the answer it now opens on is the
 record's own. **The instrument is perturbation, as of 2026-09-06, on two claims this
