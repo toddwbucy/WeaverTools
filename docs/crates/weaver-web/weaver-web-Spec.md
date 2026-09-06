@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, fourteenth of this date, section 2.3 stops claiming
+a join section 10 says cannot be made. The table asserted that a run's
+artifact identity resolves to it while the open election two sections down
+states that the catalog's identity and the record's are two rules with
+nothing to join on. The claim becomes owed and the shape that does hold, a
+lookup resolving to the complete file set or to nothing, is stated
+separately from it. The three-crate settlement is issue #465 and not this
+document's alone. Per the review of PR #464.
+
 **Revised:** 2026-09-05, thirteenth of this date, the version the edit rule
 reads is a member the rows carry. Section 3.2 required an edit to carry the
 version it read and no table in section 2 held one, so the rule named a
@@ -320,14 +329,19 @@ Each row carries:
 - the reference cells taken against it
 - **the row's version**, per section 3.2
 
-**This is the join the run's row points at.** Section 2.2 holds artifact
-identity in the tuple so a reading names its conditions, and this table is
-what that identity resolves to. It is also where an elected lens reuse is
-legible, the fitted weights and the read weights both resolving here.
-**The join resolves to the complete set or to nothing**, so a lens
-relation and a
+**This table is what a run's artifact identity is meant to resolve to**,
+section 2.2 holding that identity in the tuple so a reading names its
+conditions. **The join is owed rather than held**, and section 10 says why:
+the identity this table keys on and the identity a record carries are two
+rules today, so a run row resolves to no catalog key until that election is
+answered. **This document does not present the join as working while it
+says elsewhere that it cannot be made.**
+
+**What does hold is the catalog's own shape.** A lookup by this table's key
+resolves to the complete file set or to nothing, so a lens relation and a
 reference cell relation each name one unambiguous artifact and never a
-shard of one.
+shard of one, and an elected lens reuse is legible here with the fitted
+weights and the read weights both resolving by the same rule.
 
 **Presence is a dated observation by a named reporter, and it is
 advisory.** Each entry carries the box, the reporter, and when it was last
