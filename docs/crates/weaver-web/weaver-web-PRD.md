@@ -28,6 +28,17 @@ store traffic and a queue. Whether these papers eventually move to a
 separate corpus follows from that but is not identical to it, and stays
 decision two of #439.
 
+**Revised:** 2026-09-05, seventh of this date, the analysis seam takes its
+contract. `weaver-analysis-web-contract` lands per issue #418 and section
+7.3 of this crate's Spec cites it. Section 3.1's account of `validate` is
+corrected against the custody ruling of this date, issue #456: the verb
+reaches the box facts admin holds custody of rather than every fact a load
+would meet, it cannot drift because it is the contract chain's shape at a
+pinned commit rather than the load's own judgment, and **a clean answer is
+acceptance for filing and not approval to load**. Compose therefore owes the
+engineer, per field, whether a mistake is caught now or at admission, an
+annotation the custody rule derives rather than one this document authors.
+
 **Revised:** 2026-09-05, sixth of this date, the second review pass. Five
 sentences lost a word to the semicolon sweep of the second act and are
 restored, the sweep having rewrapped line pairs and dropped the word at the
@@ -35,21 +46,21 @@ old break. The preset ladder is introduced before section 9 defers its
 shape. The artifact identity's citation splits, the rule being
 `weaver-analysis-PRD` section 3's and the shape its Spec's. **No surface
 writes the registry**, correcting this act's own earlier wording against
-`weaver-web-Spec` section 6, which has said so throughout: a surface
-authors across its seam and the ingest path is the only writer. The
-semicolon counts in the second entry were low by two. Entries now run
-newest first, per the corpus's convention.
+`weaver-web-Spec` section 6, which has said so throughout: a surface authors
+across its seam and the ingest path is the only writer. The semicolon counts
+in the second entry were low by two. Entries now run newest first, per the
+corpus's convention.
 
 **Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
 and the election is recorded. The artifact identity rule this crate had
 derived for itself is withdrawn for the one `weaver-analysis` already
-carries, the set of per-file content digests keyed by file name, compared
-as a set: a rolled-up digest of this crate's own devising was a second rule
-for one subject, which is what the lens paragraph beside it refuses. An
-elected lens reuse is recorded with both weights identities, so a reading
-through a lens fitted to other weights says so. Section 3.6 states which
-surface writes what rather than claiming all of them write. Per the review
-of PR `#453`.
+carries, the set of per-file content digests keyed by file name, compared as
+a set: a rolled-up digest of this crate's own devising was a second rule for
+one subject, which is what the lens paragraph beside it refuses. An elected
+lens reuse is recorded with both weights identities, so a reading through a
+lens fitted to other weights says so. Section 3.6 states which surface
+writes what rather than claiming all of them write. Per the review of
+PR #453.
 
 **Revised:** 2026-09-05, fourth of this date, the tuple carries what the
 projection compares. The field election's depth and the forced token join
@@ -58,7 +69,7 @@ differ in every position's list length by declaration, and section 4's
 comparison would have read that as a divergence. The row is told from the
 tuple, the parent run and the branch position being lineage rather than
 condition, which is what makes a branch comparable to its parent. Per the
-review of PR `#453`.
+review of PR #453.
 
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
@@ -66,28 +77,36 @@ and 5 already assumed, and the list-side group grows to five with four of
 them lists. **One rule decides artifact identity**: the complete set the
 model's own index names, digested over the per-file identities in that
 order, which closes a subject the documents had stated four ways. **The
-provenance chain is recorded and is not a second identity**, corrected
-from an earlier draft of this act that had it version a lens, which
+provenance chain is recorded and is not a second identity**, corrected from
+an earlier draft of this act that had it version a lens, which
 `weaver-analysis-PRD` section 3 owns and does otherwise. **Presence is a
 dated observation and never a gate.** Three cells named in section 9 that
-this act's pull request had named only in its body. Semicolons swept
-under G1.
+this act's pull request had named only in its body. Semicolons swept under
+G1.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. The engine joins the run's tuple at build grain. **The scorer is
+**Revised:** 2026-09-05, second of this date, against two reviews on
+PR #453. The engine joins the run's tuple at build grain. **The scorer is
 named on the verdict and never in the run's tuple**, correcting a clause
-that put it in both and contradicted itself four lines apart.
-**Reproduction states its projection** and leaves section 9, which held a
-settled half in a list of open ones. **The lens clause is withdrawn to
-`weaver-analysis-PRD` section 3's identity**, the weights by content hash:
-this document had asserted a trained-weights identity inherited through
-provenance, which the owning charter states otherwise and
-`analysis-lens-refuses-other-weights` pins otherwise, and the 8B
-measurement it rested on was taken by naming the fitted weights to the
-reader rather than by any mechanism. Reuse across a conversion is an
-operator election, and whether a lineage should ever let the tool answer
-it is section 9's. Semicolons swept from the whole document under G1, seven
-of them older than this act.
+that put it in both and contradicted itself four lines apart. **Reproduction
+states its projection** and leaves section 9, which held a settled half in a
+list of open ones. **The lens clause is withdrawn to `weaver-analysis-PRD`
+section 3's identity**, the weights by content hash: this document had
+asserted a trained-weights identity inherited through provenance, which the
+owning charter states otherwise and `analysis-lens-refuses-other-weights`
+pins otherwise, and the 8B measurement it rested on was taken by naming the
+fitted weights to the reader rather than by any mechanism. Reuse across a
+conversion is an operator election, and whether a lineage should ever let
+the tool answer it is section 9's. Semicolons swept from the whole document
+under G1, seven of them older than this act.
+
+**Revised:** 2026-09-05, eighth of this date, the seam's record agrees with
+its contract. Section 3's seam edge to `weaver-analysis` reverses to run
+from the emitter, which initiates and is named first under the Document
+Format's rule, and its tag becomes `socket` from `stream`, which was outside
+that document's seam vocabulary. The position the store keys on is derived
+by this crate at ingest rather than carried on the wire, per the Spec's
+section 3, the contract asking the emitter only for the two counts the
+derivation reads. Per the review of PR #459 and issue #461.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
@@ -114,10 +133,10 @@ via: weaver-admin-operator-contract
 tag: verb
 
 edge: seam
-from: weaver-web
-to: weaver-analysis
+from: weaver-analysis
+to: weaver-web
 via: weaver-analysis-web-contract
-tag: stream
+tag: socket
 ```
 
 ## 1. What this crate is
@@ -222,10 +241,20 @@ avoid, not offering too few.
 
 **Whether a given declaration will load is not this crate's judgment
 either.** It writes the draft and asks `validate`, which transitions
-nothing, refuses an incoherent declaration naming the field, and carries the
-box facts a load would meet. Composition-time refusal is that verb one hop
-from this surface, and it cannot drift because it is the load's own
-judgment.
+nothing, refuses an incoherent declaration naming the field, and reaches the
+box facts admin holds custody of. Composition-time refusal is that verb one
+hop from this surface, and it cannot drift because it is **the contract
+chain's own shape at a pinned commit** rather than a second copy of it.
+
+**A clean `validate` is acceptance for filing and not approval to load**,
+per `weaver-admin-PRD` section 4.3 as ruled 2026-09-05 on issue #456. Admin
+adjudicates what it provisions and asks the owner where one can be asked
+before a process exists, and what only the organ can judge waits for
+admission under the agent's identity. **This surface therefore owes the
+engineer, per field, whether a mistake there is caught now or at load**, and
+that annotation is derived rather than authored: caught now where admin
+holds custody or can ask synchronously, caught at load where only the organ
+can answer. The artifact is the clearest field of the second kind.
 
 <!-- figure: Main | Compose -->
 

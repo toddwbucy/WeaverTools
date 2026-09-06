@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, seventh of this date. Section 7.3 cites
+`weaver-analysis-web-contract`, landed this date per issue #418, and names
+the two clauses of it that reach back here: the position rides beside the
+ordinal, converted once at the drain, and an uncertified diagnostic record
+is not drawn. Section 7.2's account of `validate` is bounded against the
+custody ruling of this date, issue #456: the verb reaches what admin holds
+custody of, and a clean answer is acceptance for filing rather than approval
+to load.
+
 **Revised:** 2026-09-05, sixth of this date, the second review pass. Four
 sentences lost a word to the semicolon sweep and are restored. **A sharded
 GGUF carries no index**, so section 2.3 enumerates it by the
@@ -28,12 +37,12 @@ the parent run and branch position are lineage outside tuple equality, so
 two rows differing only in them remain comparable, which is what makes a
 branch reproducible against its parent. Section 2.4 carries the lens
 artifact a reading was taken through and the weights it was fitted to. Per
-the review of PR `#453`.
+the review of PR #453.
 
 **Revised:** 2026-09-05, fourth of this date, the run's row carries the
 field election's depth, which sets the length of every position's
 alternative list and which the charter's section 4 compares. Per the review
-of PR `#453`.
+of PR #453.
 
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 2.3 gains the artifact catalog with one derived
@@ -44,8 +53,8 @@ and its date and gates nothing. The lens row cites `weaver-analysis-PRD`
 section 3 rather than restating it, correcting an earlier draft of this act.
 Two assertion rows added. Semicolons swept under G1.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. Section 2.3 gains the recorded query, which section 4 required and
+**Revised:** 2026-09-05, second of this date, against two reviews on
+PR #453. Section 2.3 gains the recorded query, which section 4 required and
 section 2 gave nowhere to put, the indexes moving down and their citations
 following. The artifact catalog of the act below later took 2.3 and the
 recorded query became 2.4. The engine's identity enters the run's row, and
@@ -60,6 +69,36 @@ issue #436 at PR #444. The component catalogue, issue #437, was answered
 with a finding rather than a catalogue. Two facts the record spells
 corrected this document where it had guessed: the address carries the turn,
 and a position is a resident length rather than an ordinal.
+
+**Revised:** 2026-09-05, eighth of this date, the position is derived at
+ingest. Section 3's write path carries the rule, `(R - O - 1) + j` over the
+generation's closing resident count, its output token count and the ordinal,
+measured on 2026-09-05 against three records and nine generations rather
+than reasoned, with the alternative that fails on the first generation
+stated so no later act rediscovers it. Section 7.3 no longer states the
+contract's ask as landed: the two counts it converts from are owed at
+issue #461, and until they cross this seam carries the ordinal alone and
+this crate cannot key its store from it. Section 9 gains the two rows the
+contract's conformance clause named. Per the review of PR #459.
+
+**Revised:** 2026-09-05, ninth of this date, a position that was never
+established is not addressed. Section 3 states what the write path does
+where a generation's closing count is absent, no `model.output` having
+reported one: the address section 2.1 requires cannot be formed, so the rows
+do not land and the run reads partial rather than short. This is
+absent-not-empty at the write path, the rule that forbids drawing a missing
+surprisal as zero forbidding an invented key for the same reason. Per the
+review of PR #463, whose emitter carries the count as absent rather than
+derived.
+
+**Revised:** 2026-09-05, tenth of this date, the watch on the stored
+position is one that can fail. Section 9's row had read that a second reader
+disagrees where the position is derived at the read, which two readers
+deriving identically would satisfy while the property went unenforced. It
+now alters the summary's counts after ingest and rereads, which only a
+stored value survives. Section 3 says the points of an unaddressable
+generation do not land while its summary entry does. Per the review of
+PR #459.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -314,6 +353,37 @@ it and lands it in the store, and **the decoder never waits on the store.**
   surface can read, so a partially ingested run is visibly partial rather
   than quietly short.
 
+**The position is derived here and nowhere later.** The stream is addressed
+by the ordinal within a generation and section 2.1's key is the position,
+the resident length at the draw. Where `R` is the generation's resident
+count at close, `O` its output token count, and `j` the ordinal, the
+position is `(R - O - 1) + j`, the subtracted one being the turn terminator
+the SPU makes resident before the answer returns.
+
+**The rule is measured rather than reasoned**, checked on 2026-09-05 against
+three records across nine generations, two precisions and two finish kinds,
+each derivation compared to the position `model.field` reports directly. The
+alternative that suggests itself, the previous generation's resident count
+plus the turn's input delta, is exact from the second generation and wrong
+on the first by the session prefix, which the first turn's delta does not
+carry. **This crate takes the first rule and states the second's failure so
+no later act rediscovers it.**
+
+**A generation whose closing count the record does not carry has no
+position, and its points do not land, though its summary entry does.** The
+count is absent rather than derived where no `model.output` reported one, so
+the address section 2.1 requires cannot be formed, and this crate stores
+nothing it cannot address rather than storing rows under an invented key.
+The run's row carries the status, so a run short of a generation is visibly
+partial by the rule above rather than quietly short. **This is
+absent-not-empty at the write path**: the same discipline that forbids
+drawing a missing surprisal as zero forbids addressing a position that was
+never established.
+
+Deriving here rather than at the read is section 2.5's rule and not a
+preference: a value derived once at ingest and stored is one a second reader
+reproduces, and one computed in a view is one nobody can.
+
 ## 4. The read path
 
 Three queries, and the schema of section 2 exists to make each an index hit.
@@ -469,10 +539,18 @@ would have designed around a refusal that no longer stands.
 No verb chains another. This crate offers each as a separate act and nothing
 composite.
 
-**`validate` is also the composition oracle.** It transitions nothing,
-refuses an incoherent declaration naming the field, and carries the box
-facts a load would meet, so the Compose surface writes its draft and asks
-rather than judging. **This crate therefore carries no second copy of the
+**`validate` is also the composition oracle, and what it can answer is
+bounded.** It transitions nothing, refuses an incoherent declaration naming
+the field, and reaches **the box facts admin holds custody of**, per
+`weaver-admin-PRD` section 4.3 as ruled 2026-09-05 on issue #456: admin
+adjudicates what it provisions, asks the owner where one can be asked
+before a process exists, and leaves to the organ what only the organ can
+judge. So the Compose surface writes its draft and asks rather than
+judging, **and a clean `validate` is acceptance for filing rather than
+approval to load.** Whether the artifact resolves, whether the family
+exposes the taps the declaration elects, and whether these weights load at
+this precision are answered at admission under the agent's identity and
+not here. **This crate therefore carries no second copy of the
 rules**, only a copy of the declaration's field shape written against
 `weaver-types-Spec` section 2 **at a named corpus commit**, which is that
 copy's staleness rule: when the floor moves, the pin says so and `validate`
@@ -480,9 +558,24 @@ refuses in a way the surface can name.
 
 ### 7.3 The analysis stream
 
-The emission this crate ingests. Its shape is a contract between the two
-crates and is owed as its own act, per issue #418. This document names the
-seam and does not restate the contract.
+The emission this crate ingests. **Its shape is
+`weaver-analysis-web-contract`**, landed 2026-09-05 per issue #418, and this
+document names the seam and restates none of it. Two of that contract's
+clauses reach back into this document and are worth naming where a reader
+of this section stands.
+
+**The series is addressed by the ordinal and this crate's store by the
+position**, per section 2.1, and the conversion is this crate's to make at
+ingest. **What it converts from is owed and does not cross yet**,
+issue #461: the contract's section 3 asks the emitter for the resident count
+at a generation's close and its output token count, on the summary stream,
+and until that lands this seam carries the ordinal alone. **A reader in that
+state cannot key its store** and stores what crosses without converting,
+rather than deriving an address from a figure that does not answer.
+
+**A diagnostic record whose bracket did not close certified is not drawn**,
+the refusal naming the outcome. A serving record has no gate and none is
+owed.
 
 ## 8. Placement and the link
 
@@ -509,6 +602,8 @@ cell record like any other.
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
+| the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
+| an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
 | an undeclared boundary refuses the load | perturbation, at the admit path |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
