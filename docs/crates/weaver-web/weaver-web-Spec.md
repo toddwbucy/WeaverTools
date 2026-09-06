@@ -100,6 +100,17 @@ stored value survives. Section 3 says the points of an unaddressable
 generation do not land while its summary entry does. Per the review of
 PR #459.
 
+**Revised:** 2026-09-05, eleventh of this date, the store's authored half is
+written down. Section 2 had five tables and every one of them recorded:
+three surfaces have listed declarations, staged experiments and artifacts
+since the rewrite, and only the artifact had a row, which nothing could
+write into because section 3 was the ingest alone and section 6 called it
+the only writer. Sections 2.4 and 2.5 give the declaration and the staged
+experiment their rows, section 3 splits into the ingest and the authoring
+path, and section 6's rule narrows to what it meant: no surface writes a
+position or a run. Three conformance rows follow. The recorded query moves
+to 2.6 and the indexes to 2.7, with their citations. Per issue #454.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -120,7 +131,8 @@ silence settle it.
 ```text
 src/
   store/        the registry: schema, migrations, the three reads
-  ingest/       the write path, a consumer of the analysis stream
+  ingest/       section 3.1, a consumer of the analysis stream
+  authoring/    section 3.2, the writes a surface makes to its own table
   queue/        staged experiments and their states
   surfaces/     one module per surface of charter section 3
   seams/        gate client, admin verbs, analysis stream reader
@@ -136,6 +148,19 @@ is a stream this crate reads rather than a crate it links.
 ## 2. The store
 
 The grain is the grain the interface clicks at.
+
+**The store has two halves and they are written by different paths.** What
+the instrument recorded is sections 2.1 and 2.2, the position and the run,
+landed by the ingest of section 3.1 and never by a surface. What the
+engineer authored is sections 2.3 through 2.5, the artifact, the
+declaration and the staged experiment, landed by the authoring path of
+section 3.2 and never by the ingest. Section 2.6's recorded query is the
+read's own trace and belongs to neither.
+
+**The halves differ in what a rewrite means.** A recorded row is a fact
+about a run that happened, so a second write of it is a replay and must be
+idempotent. An authored row is a thing a person is still making, so a
+second write of it is an edit and must be ordered. Section 3 states each.
 
 ### 2.1 The position
 
@@ -296,7 +321,52 @@ refuses a box that holds the artifact and admits one that lost it.
 can be obtained. Whether a missing one is fetchable is the provenance's
 question, answered by the repository and revision the row already carries.
 
-### 2.4 The recorded query
+### 2.4 The declaration
+
+The saved configurations the charter's section 3.6 lists under Agents,
+**loadable at any time**, which is what makes them a table rather than a
+draft buffer. Each row carries:
+
+- the declaration as authored, whole, in the shape `weaver-types-Spec`
+  section 2 defines
+- **the corpus commit its field shape was written against**, which is this
+  row's staleness rule per section 7.2: when the floor moves, the pin says
+  so and `validate` refuses in a way the surface can name
+- the parent declaration where this one is derived, and **the one thing
+  that moved**, which is what the charter's section 3.6 draws
+- the last answer `validate` gave, with when it was given
+
+**The last answer is a reading and not a verdict.** It is what the verb said
+at a moment against a corpus commit, so a surface presents it with its date
+and re-asks rather than treating it as current. **A declaration this crate
+holds is not a declaration admin holds**: admin's own store is the authority
+on what a box will load, per `weaver-admin-PRD` section 4.3, and this table
+is where an engineer keeps what they are composing. The two agree only when
+the operator has installed one.
+
+### 2.5 The staged experiment
+
+The claims the charter's section 3.5 registers and section 3.6 lists, in the
+five states of section 5.1. Each row carries:
+
+- the state, and when it last changed
+- the parent run reference and the branch position
+- the forced alternative token where one is forced
+- the parent declaration and its diff, split by when the diff takes effect
+- **the question the engineer meant to ask**, which nothing upstream knows
+  and nothing else in this store holds
+- the runs it produced, where it ran
+
+**Registration freezes the row and not the table.** A registered experiment
+is immutable per section 9's pin, and the rows around it go on being
+edited, which is why the state is a member rather than a table each.
+
+**An experiment that never ran keeps its row.** That is pre-registration
+falling out of the interface rather than being imposed on it, per the
+charter's section 3.5, and it is the one thing here that would be lost by
+storing only what returned.
+
+### 2.6 The recorded query
 
 Section 4 admits an open query surface on the condition that the query is
 recorded beside its result, and that condition needs somewhere to land.
@@ -328,7 +398,7 @@ this row exists to prevent.**
 quotable.** Section 4's condition is that a second person can rerun it, and
 a reader that cannot say what it read cannot be rerun by anyone.
 
-### 2.5 The indexes
+### 2.7 The indexes
 
 ```text
 primary       (run, turn, position)
@@ -342,7 +412,14 @@ computed in the interface is a value nobody else can reproduce.
 
 ## 3. The write path
 
-**The write path is a consumer rather than a step in the loop.** The
+**There are two, because the store has two halves.** Section 3.1 lands what
+the instrument recorded and section 3.2 lands what the engineer authored.
+Neither writes the other's tables, and **no surface writes through 3.1**,
+which is what section 6's rule means and all it means.
+
+### 3.1 The ingest
+
+**The ingest is a consumer rather than a step in the loop.** The
 analysis emission leaves over its own socket, a process on this side reads
 it and lands it in the store, and **the decoder never waits on the store.**
 
@@ -380,9 +457,38 @@ absent-not-empty at the write path**: the same discipline that forbids
 drawing a missing surprisal as zero forbids addressing a position that was
 never established.
 
-Deriving here rather than at the read is section 2.5's rule and not a
+Deriving here rather than at the read is section 2.7's rule and not a
 preference: a value derived once at ingest and stored is one a second reader
 reproduces, and one computed in a view is one nobody can.
+
+### 3.2 The authoring path
+
+**A surface that authors writes the row it authors and nothing else.**
+Compose writes a declaration, Stage writes a staged experiment, and Models
+writes an artifact row on import. Each writes its own table of section 2 and
+no other, and none of them may write a position or a run, which is what
+keeps a recorded fact a recorded fact.
+
+- **Writes are ordered on the row, not idempotent.** An authored row is a
+  thing a person is still making, so a second write is an edit and the last
+  one wins. The recorded half's idempotence answers a replay, and there is
+  no replay here.
+- **An edit carries the version it read.** Where the stored version has
+  moved on, the write refuses and the surface says so, because two engineers
+  on one declaration is the case a last-write-wins rule loses silently.
+- **Registration is a state change and not a write of its own.** The row
+  moves from draft to registered and becomes immutable per section 9's pin,
+  and what made it immutable is a member the row already carried.
+- **Import registers what is present and fetches nothing.** An artifact row
+  names weights already on a box, its identity computed by the rule of
+  section 2.3 rather than accepted from the operator, and whether this crate
+  may ever fetch is open at the charter's section 9.
+
+**Nothing here reaches an agent.** The authoring path writes this crate's
+own store, and a declaration becomes something a box will load only when the
+operator installs it through admin, per section 7.2. **Writing a declaration
+here changes no agent**, which is what makes composing safe and what makes
+the last `validate` answer a reading rather than a promise.
 
 ## 4. The read path
 
@@ -401,9 +507,9 @@ described, and it returns here before it is built.
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
 so a result whose query text was not stored is not quotable and this crate
-does not present it as one. **Section 2.4 is where it lands.** That keeps
-section 2.5's rule rather than spending it: the derivation is recorded
-rather than absent, and what section 2.5 forbids is a derivation nobody can
+does not present it as one. **Section 2.6 is where it lands.** That keeps
+section 2.7's rule rather than spending it: the derivation is recorded
+rather than absent, and what section 2.7 forbids is a derivation nobody can
 find.
 
 ## 5. Staged experiments
@@ -474,16 +580,24 @@ destinations are the charter's section 3 and are not restated.
 Open a trace, Record, Experiments, and the returned half of Stage. That is
 what makes section 4's three reads sufficient for them.
 
+**Three surfaces author, and each writes one table.** Compose writes a
+declaration, Stage writes a staged experiment, and Models writes an
+artifact row on import, each through section 3.2 and each into the table
+section 2 gives it. **Models is the only one of the three that is not on
+the path**, which is why the group of section 3.6 is named for how it is
+reached rather than for what it does.
+
 **A surface that authors or exchanges also holds a seam.** Compose writes
-its draft and asks `validate`. Live carries a turn to the gate and reads
-the measurement that comes back. Agents drives the lifecycle verbs and
-reads the observation exchange. Section 7 names those three. **Stage
-submits a registered experiment to the queue, and section 7 names no queue
-seam**, the queue being the harness's per the charter's section 3.5 and
-this crate's part in it a write the runner drains rather than an exchange
-it holds open. **None of them writes the registry** -
-the write path of section 3 is the only writer - and none reads the agent
-except through a seam that is named.
+its draft and asks `validate`. Live carries a turn to the gate and reads the
+measurement that comes back. Agents drives the lifecycle verbs and reads the
+observation exchange. Section 7 names those three. **Stage submits a
+registered experiment to the queue, and section 7 names no queue seam**, the
+queue being the harness's per the charter's section 3.5 and this crate's
+part in it a write the runner drains rather than an exchange it holds open.
+**None of them writes the recorded half** - section 3.1's ingest is the only
+writer of a position or a run - and each writes only the authored table it
+owns, through section 3.2. None reads the agent except through a seam that
+is named.
 
 **The state a surface holds is a query, never a location.** A filter chip is
 a clause, and clearing it widens the list in place. A card carries the
@@ -605,6 +719,9 @@ cell record like any other.
 | the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
 | an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
 | an undeclared boundary refuses the load | perturbation, at the admit path |
+| no surface writes a position or a run | compile-pin: the recorded tables take no writer off an authoring path |
+| an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
+| import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.

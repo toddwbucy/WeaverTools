@@ -84,7 +84,7 @@ what this contract owes when that clause lands.
 
 **From `weaver-web-Spec`.** The **position**, the **run**, and the **turn**
 of section 2.1, which are the store's address, and the **recorded query** of
-section 2.4.
+section 2.6.
 
 **From `weaver-diagnostic-PRD` section 4.** The **certified** close of a
 replay bracket, which is the licence a diagnostic reading needs and a
@@ -216,7 +216,7 @@ delta, is exact from the second generation and wrong on the first by the
 session prefix, which the first turn's delta does not carry.
 
 **The arithmetic belongs to the reader and the facts to the emitter.** The
-reader derives once at ingest, per `weaver-web-Spec` section 2.5, a value
+reader derives once at ingest, per `weaver-web-Spec` section 2.7, a value
 derived at ingest and stored being one a second reader can reproduce and a
 value computed in the interface being one nobody can.
 
@@ -257,13 +257,13 @@ unconditionally and surprisal does not, so a timeline carrying both will
 routinely hold one series and not the other.
 
 **It records what it read.** A reading a second person reruns is a reading
-whose query was stored, per `weaver-web-Spec` section 2.4, and the reader
+whose query was stored, per `weaver-web-Spec` section 2.6, and the reader
 that served it is named there by name and version. This seam is one such
 reader.
 
 **It stores what it receives and draws from the store.** A value that must
 be derived is derived once at ingest and stored, per `weaver-web-Spec`
-section 2.5, so nothing on a screen is computed from the wire.
+section 2.7, so nothing on a screen is computed from the wire.
 
 ## 5. The licence, and which records answer
 

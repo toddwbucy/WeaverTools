@@ -108,6 +108,15 @@ by this crate at ingest rather than carried on the wire, per the Spec's
 section 3, the contract asking the emitter only for the two counts the
 derivation reads. Per the review of PR #459 and issue #461.
 
+**Revised:** 2026-09-05, eleventh of this date, the record has two halves.
+Section 4 names the authored one, the declarations, staged experiments and
+artifacts that sections 3.1, 3.5 and 3.6 produce, which the charter had left
+to be inferred from the surfaces that list them. Section 3.6 gives Models
+its motion and its ending: import points at weights already present,
+computes the identity rather than accepting one, and registers, so an
+artifact whose files do not answer the identity rule does not register. Per
+issue #454.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -386,6 +395,20 @@ artifacts fitted to these weights, the readings taken through a lens fitted
 to other weights where the operator elected that reuse, and the reference
 cells taken against them.
 
+**Models is the one surface on this side that authors, and its motion is
+import.** The others list what other surfaces produced. Import points at
+weights already present on a box, **computes the identity rather than
+accepting it**, and registers the artifact, which is what gives Compose
+something to resolve against and qualification something to run a reference
+against. **It ends with an artifact other surfaces can name.**
+
+**Computing the identity is the whole of the verification.** An operator who
+types a digest has told the catalog what they believe, and a catalog that
+records a belief cannot later say two boxes hold one artifact. So the
+surface reads the files the model's own index names and derives the identity
+by section 3.6's rule, and an artifact whose files do not answer that rule
+does not register.
+
 **An artifact is the complete set its own index names, and one rule decides
 identity** - the corpus's own. `weaver-analysis-PRD` section 3 carries the
 rule, the weights by content hash, and that charter's Spec section 3 carries
@@ -456,6 +479,21 @@ registry that cannot hold a failure is a marketing surface.
 <!-- figure: Lineage | Record -->
 
 ## 4. The record this crate holds
+
+**It holds two things and they are not the same kind of thing.** What the
+instrument recorded is a fact about a run that happened, and a second write
+of it is a replay. What the engineer authored is a thing someone is still
+making, and a second write of it is an edit. **The recorded half is
+described below. The authored half is the declarations, the staged
+experiments, and the artifact catalog**, which sections 3.1, 3.5 and 3.6
+each produce and which the Spec's section 2 gives their rows.
+
+**Naming the second half is not a widening of scope.** Three surfaces have
+listed those objects since this charter was rewritten, and a surface that
+lists what nothing stores is a surface drawn against nothing. What the
+distinction buys is that the two halves cannot be written by one path: an
+authored row edited under a replay's idempotence would silently lose an
+edit, and a recorded row written by a screen would stop being a record.
 
 The front end holds the cell registry, on its own store. The grain is the
 grain the interface clicks at: **one row per position per run, addressed by
