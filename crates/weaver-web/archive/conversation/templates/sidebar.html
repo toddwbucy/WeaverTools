@@ -1,0 +1,20 @@
+<aside class="sidebar">
+  <h2>Channels</h2>
+  <nav class="chanlist">
+    {% for c in channels %}
+    <a class="chan{% if c.name == sel %} sel{% endif %}" href="/channels/{{ c.name }}"><span class="hash">#</span>{{ c.name }}</a>
+    {% endfor %}
+  </nav>
+  <form method="post" action="/channels" class="newchan">
+    <input name="name" pattern="[a-z0-9][a-z0-9_-]*" required
+           placeholder="new-channel" aria-label="New channel name">
+    {% if !nav_agents.is_empty() %}
+    <div class="agentpick">
+      {% for agent in nav_agents %}
+      <label><input type="checkbox" name="agent_{{ agent }}" value="on"> @{{ agent }}</label>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <button type="submit">Create</button>
+  </form>
+</aside>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}#{{ channel_name }} - weaver-web{% endblock %}
+{% block mainclass %}app{% endblock %}
+{% block body %}
+{% include "sidebar.html" %}
+<section class="room">
+  <header class="room-head">
+    <h1><span class="hash">#</span>{{ channel_name }}</h1>
+    {% if !topic.is_empty() %}<span class="topic">{{ topic }}</span>{% endif %}
+  </header>
+  <div class="channel-layout">
+    <section class="log"
+             hx-ext="sse"
+             sse-connect="/channels/{{ channel_name }}/stream?after={{ cursor }}">
+      <div id="events" sse-swap="channel" hx-swap="beforeend">
+        {% for ev in events %}{{ ev|safe }}{% endfor %}
+      </div>
+    </section>
+    <aside class="members">
+      <h2>Members</h2>
+      <ul>
+        {% for m in members %}
+        <li class="member-{{ m.kind }}">{{ m.name }} <span class="mkind">{{ m.kind }}</span>
+          {% if !m.status.is_empty() %}<span class="mstatus">{{ m.status }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% if !addable.is_empty() %}
+      <form method="post" action="/channels/{{ channel_name }}/members">
+        <select name="name" required>
+          <option value="" disabled selected>add a participant...</option>
+          {% for p in addable %}
+          <option value="{{ p.name }}">{{ p.name }} ({{ p.kind }})</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Add</button>
+      </form>
+      {% endif %}
+    </aside>
+  </div>
+  <form class="compose" method="post" action="/channels/{{ channel_name }}/messages"
+        hx-post="/channels/{{ channel_name }}/messages" hx-swap="none"
+        hx-on::after-request="if(event.detail.successful) this.reset()">
+    <input name="text" required autofocus autocomplete="off"
+           placeholder="message #{{ channel_name }} - @name to invoke an agent">
+    <button type="submit">Send</button>
+  </form>
+</section>
+<script>
+  /* Display behavior only: keep the log pinned to the newest event
+     unless the reader has scrolled up. */
+  (function () {
+    const el = document.getElementById("events");
+    let stick = true;
+    el.addEventListener("scroll", function () {
+      stick = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    });
+    new MutationObserver(function () {
+      if (stick) el.scrollTop = el.scrollHeight;
+    }).observe(el, { childList: true });
+    el.scrollTop = el.scrollHeight;
+  })();
+</script>
+{% endblock %}
