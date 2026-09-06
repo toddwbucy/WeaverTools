@@ -2333,11 +2333,11 @@ not convert. **A diagnostic enter therefore waits on the driver as its replay al
 did and refuses without one after the bound**, where before this act it opened on
 the seed while the preload elected no prefix, and the answer it now opens on is the
 record's own. **The instrument is perturbation, as of 2026-09-06, on two claims this
-clause makes**: the restored conversation is the turned messages the recall answered, the
-turnless system rows being the identity ask's and seated once, watched to fail when the
-turn filter is dropped and the prefix is seated twice, and the first turn of a
-restoring run is numbered one past the cut, watched to fail when the ordinal starts at
-zero.
+clause makes**: the restored conversation is the turned messages the recall answered,
+the turnless system rows being the identity ask's and seated once, watched to fail
+when the turn filter is dropped and the prefix is seated twice, and the first turn of
+a restoring run is numbered one past the cut, watched to fail when the ordinal starts
+at zero.
 
 ```graph
 node: harness-restoring-open-seats-the-record
