@@ -3,6 +3,17 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-05, fourth of this date, the token members are defined and the
+closing count includes the terminator. Section 6 defines the measurement's token
+identifiers, the input the turn's delta with the identity prefix outside it and the
+output the drawn tokens with the terminator outside them, where the members had
+travelled undefined and a contract asserted the input was the resident length.
+Section 4 says why the count `weaver-types-Spec` section 4.4 has defined as
+terminator included since 2026-08-19 is so, the count being taken after the
+terminator lands, and states the derivation that follows, the terminator being one
+token by the shape the family declares. One review record.
+Section 10's total moves by it. Per issue #461.
+
 **Revised:** 2026-09-05, third of this date, the denied lookup confirms no presence.
 Section 3's resolve clause says the classification reads the observed error and
 does not infer that a denied artifact exists, per the review of PR #457.
@@ -1329,6 +1340,29 @@ terminator absent, and the next turn's framing is then malformed at a
 boundary nobody looks at. This crate decodes the terminator after the
 generation loop, **on the clean path and the cancelled path alike**, which is
 what makes the cancel of charter section 13.5 leave a well-framed session.
+**The resident count the generation reports includes it, as `weaver-types-Spec`
+section 4.4 has defined the member since 2026-08-19, and this is why.** Section 6's
+closing count is taken after the terminator lands, so the count as a generation closed
+exceeds the count as it opened by the turn's delta, the drawn tokens, and the
+terminator, and the terminator is one token by the shape the family declares, a
+single identifier the request's box names as `terminator`. A reader deriving the
+position of a generation's first draw from the closing count therefore subtracts
+the drawn tokens and one, and a reader adding the delta to the previous closing
+count is exact from the second generation and wrong on the first by the identity
+prefix, which the open made resident and no delta carries. Confirmed on 2026-09-05
+against the positions `model.field` reports across three records, nine generations,
+two precisions, and two finish kinds, per issue #461, which found the floor's
+definition unread rather than absent.
+
+```graph
+node: spu-closing-count-includes-the-terminator
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-spu
+to: spu-closing-count-includes-the-terminator
+```
 
 ```graph
 node: spu-terminator-on-every-path
@@ -2082,6 +2116,20 @@ edge: asserts
 from: weaver-spu
 to: spu-absent-shape-pinned-by-doctest
 ```
+
+**The token identifiers in and out are the turn's, and neither is the session's.**
+The input identifiers are the turn's delta as the family library rendered it, the
+span the partition labels `turn-delta`, and the identity prefix the open made
+resident per section 4 is outside them on every turn, the first included, so their
+count is not the resident length at the generation's first draw and a reader that
+takes it for one is wrong by the prefix. The output identifiers are the tokens the
+generation drew, paired one for one with the two signal vectors, and the turn
+terminator the generation makes resident after them per section 4 is outside them,
+so their count is not the generation's contribution to the resident count either.
+The session's own figure is the closing count below, and the two members are
+defined here because they travelled without a definition from the seam act to
+2026-09-05 and a contract read the input count as the resident length, per
+issue #461.
 
 **What travels with a generation.** The token identifiers in and out, the two
 signal vectors, the timings the charter's row names, the model identity and
@@ -3244,8 +3292,9 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Eighty-seven records in
-all, the custody act of 2026-09-05 adding the artifact refusal's account,
+general prohibition, and the kernels' comparisons. Eighty-eight records in
+all, the custody act of 2026-09-05 adding the artifact refusal's account and
+the definitions act of the same date the closing count's review record,
 the elections taking nodes because gate H1 would otherwise leave the largest
 decisions in this Spec untraceable. Four of these arrived with the
 re-feed act of 2026-08-31 without this count moving, that act's own
@@ -3273,7 +3322,8 @@ use them and listed in section 0, and the shape behind all nine is that this
 crate holds neither the floor's definitions nor the fork that creates its
 channels.
 
-**Thirty records carry `review` as of the column act's recount, and what
+**Thirty-one records carry `review` as of the definitions act of 2026-09-05,
+the closing count's record joining the thirty of the column act's recount, and what
 has moved off the tag is what needed neither hardware nor seam work, plus
 the one watch whose seam arrived.** The five that moved are
 the cheap refusals of section 3, the registry's refusal and the width refusal

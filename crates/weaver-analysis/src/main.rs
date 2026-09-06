@@ -712,8 +712,16 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
             "positions": series.points.len(),
             "with_entropy": with_entropy,
             "with_surprisal": with_surprisal,
-            "perplexities": series.perplexities.iter()
-                .map(|(turn, value)| serde_json::json!({"turn": turn, "perplexity": value}))
+            // **The summary carries what a store keyed by position converts
+            // from**, per Spec section 5: the closing count and the output
+            // count, reported and derived from nothing.
+            "generations": series.generations.iter()
+                .map(|g| serde_json::json!({
+                    "turn": g.turn,
+                    "perplexity": g.perplexity,
+                    "resident": g.resident,
+                    "output_count": g.output_count,
+                }))
                 .collect::<Vec<_>>(),
         })
     );

@@ -2,6 +2,7 @@
 //! conforms: spu-no-scoped-clear-surface
 //! conforms: spu-overflow-refuses-sheds-nothing
 //! conforms: spu-terminator-on-every-path
+//! conforms: spu-closing-count-includes-the-terminator
 //! conforms: spu-cancel-bounded-by-one-token
 //! conforms: spu-cancel-polled-not-signalled
 //! conforms: spu-flush-mechanism-from-declaration

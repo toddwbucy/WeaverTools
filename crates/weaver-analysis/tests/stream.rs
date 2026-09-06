@@ -1,5 +1,6 @@
 //! conforms: analysis-reading-drains-within-a-turn
 //! conforms: analysis-signals-keep-absence
+//! conforms: analysis-summary-reports-residency
 //!
 //! The streaming reading's watches, per `weaver-analysis-Spec` section 5.
 //! The fixtures are shaped like the real records the live run drained.
@@ -12,11 +13,15 @@ fn record(closed: Option<&str>, trailing: &str) -> String {
         r#"{"session":"s","run":"r","sequence":"0","kind":"replay.opened","payload":{"reader_elected":false}}"#.to_string(),
         r#"{"session":"s","run":"r","turn":"t-1","sequence":"1","kind":"residual.column","payload":{"position":10,"layers":2,"width":2,"values":[[1.0,2.0],[3.0,4.0]]}}"#.to_string(),
         r#"{"session":"s","run":"r","turn":"t-1","sequence":"2","kind":"residual.column","payload":{"position":11,"layers":2,"width":2,"values":[[5.0,6.0],[7.0,8.0]]}}"#.to_string(),
-        r#"{"session":"s","run":"r","turn":"t-1","sequence":"3","kind":"model.measurement","payload":{"output_tokens":[100,200],"entropies":[1.5,2.5],"surprisals":[0.5,9.5],"perplexity":2.0}}"#.to_string(),
+        // The closing count is 107 against a three-token delta and two drawn
+        // tokens, the shape of a first generation: the identity prefix is
+        // resident and no member carries it, so a derived count would say 3.
+        r#"{"session":"s","run":"r","turn":"t-1","sequence":"3","kind":"model.output","payload":{"emission":"ab","finish":"stop","resident":107,"capacity":8192}}"#.to_string(),
+        r#"{"session":"s","run":"r","turn":"t-1","sequence":"4","kind":"model.measurement","payload":{"input_tokens":[1,2,3],"output_tokens":[100,200],"entropies":[1.5,2.5],"surprisals":[0.5,9.5],"perplexity":2.0}}"#.to_string(),
     ];
     if let Some(outcome) = closed {
         lines.push(format!(
-            r#"{{"session":"s","run":"r","sequence":"4","kind":"replay.closed","payload":{{"outcome":{{"kind":"{outcome}"}}}}}}"#
+            r#"{{"session":"s","run":"r","sequence":"5","kind":"replay.closed","payload":{{"outcome":{{"kind":"{outcome}"}}}}}}"#
         ));
     }
     if !trailing.is_empty() {
@@ -36,7 +41,7 @@ fn record(closed: Option<&str>, trailing: &str) -> String {
 /// exactly that change.
 #[test]
 fn the_close_ends_the_drain_and_the_stream_does_not() {
-    let after = r#"{"session":"s","run":"r","turn":"t-2","sequence":"5","kind":"residual.column","payload":{"position":99,"layers":1,"width":1,"values":[[42.0]]}}"#;
+    let after = r#"{"session":"s","run":"r","turn":"t-2","sequence":"6","kind":"residual.column","payload":{"position":99,"layers":1,"width":1,"values":[[42.0]]}}"#;
     let text = record(Some("certified"), after);
     let mut seen: Vec<(Key, u32)> = Vec::new();
     let mut pair = |key: &Key, _column: &[f32], token: u32| seen.push((key.clone(), token));
@@ -104,7 +109,9 @@ fn the_signals_series_pairs_and_keeps_absence() {
     assert_eq!(series.points[0].token, 100);
     assert_eq!(series.points[0].entropy, Some(1.5));
     assert_eq!(series.points[1].surprisal, Some(9.5));
-    assert_eq!(series.perplexities, vec![(Some("t-1".to_string()), 2.0)]);
+    assert_eq!(series.generations.len(), 1);
+    assert_eq!(series.generations[0].turn.as_deref(), Some("t-1"));
+    assert_eq!(series.generations[0].perplexity, Some(2.0));
 
     // A record whose surprisal election did not stand carries entropies
     // and no surprisals, and the reading says so rather than inventing.
@@ -117,6 +124,45 @@ fn the_signals_series_pairs_and_keeps_absence() {
         reader.series.spikes(2.0).is_empty(),
         "no surprisal, no spike"
     );
+}
+
+/// **The summary reports the residency and derives nothing**, per
+/// `weaver-analysis-Spec` section 5 as of 2026-09-05: the resident count is
+/// the one `model.output` carried as the generation closed, the output
+/// count is the drawn tokens, and a generation whose record holds no
+/// `model.output` carries no resident count rather than a derived one.
+///
+/// Perturbation: report the previous closing count plus the delta's length
+/// in the resident's place and this fails, the fixture's first generation
+/// answering 3 where the record says 107, the identity prefix being resident
+/// and in no member. Watched under exactly that change.
+#[test]
+fn the_summary_reports_the_residency_and_derives_nothing() {
+    let text = record(Some("certified"), "");
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(text.as_bytes()), &mut reader);
+    let generation = &reader.series.generations[0];
+    assert_eq!(
+        generation.resident,
+        Some(107),
+        "the closing count as reported"
+    );
+    assert_eq!(
+        generation.output_count, 2,
+        "the drawn tokens, terminator outside"
+    );
+
+    // No `model.output` for the generation: absent, never derived.
+    let without = text
+        .lines()
+        .filter(|l| !l.contains("\"kind\":\"model.output\""))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(without.as_bytes()), &mut reader);
+    assert_eq!(reader.series.generations[0].resident, None);
+    assert_eq!(reader.series.generations[0].output_count, 2);
 }
 
 /// **A spike is a position that clears the caller's bar**, stated in
