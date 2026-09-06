@@ -10,10 +10,10 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
-**Revised:** 2026-09-06, fifth of this date, an election the rewrite dropped
-comes back. Section 10 carries the licence boundary again, which stood at
-section 15 of the Spec this one replaced and appears in no section of this
-one, so an open operator question was held nowhere while
+**Revised:** 2026-09-06, second of this date, an election the rewrite
+dropped comes back. Section 10 carries the licence boundary again, which
+stood at section 15 of the Spec this one replaced and appears in no section
+of this one, so an open operator question was held nowhere while
 `crates/weaver-web/Cargo.toml` still cited its old home. Restored rather
 than answered. Found by the edition alignment act, which needed the citation
 to resolve.
@@ -364,16 +364,17 @@ Each row carries:
 
 **This table is what a run's artifact identity resolves to**, section 2.2
 holding that identity in the tuple so a reading names its conditions. **The
-join is a lookup on the record's identity**, as of 2026-09-06 per issue
-#465: the two identities are two rules at two grains, the record's over
-everything the binding named and this table's key over the weights alone,
-and the record's determines the key because a directory's hash fixes its
-shards, so one record identity names at most one row, a renamed split GGUF
-being the one case where it names two, which the lookup reports as ambiguous
-rather than picking, per section 10, and the row carries every record
-identity its weights have been admitted under. A run whose record identity
-no row carries joins to nothing and registers nothing, a record being a fact
-and not an import, until an import on that box registers the files.
+join is a lookup on the record's identity**, as of 2026-09-06 per
+issue #465: the two identities are two rules at two grains, the record's
+over everything the binding named and this table's key over the weights
+alone, and the record's determines the key because a directory's hash fixes
+its shards, so one record identity names at most one row, a renamed split
+GGUF being the one case where it names two, which the lookup reports as
+ambiguous rather than picking, per section 10, and the row carries every
+record identity its weights have been admitted under. A run whose record
+identity no row carries joins to nothing and registers nothing, a record
+being a fact and not an import, until an import on that box registers the
+files.
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
