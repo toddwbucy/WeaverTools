@@ -1557,6 +1557,17 @@ impl Harness {
         } else {
             crate::state::ANSWER_BOUND_MS
         };
+        // **What is waited on is named before the wait**, per
+        // `weaver-harness-Spec` section 2 as of 2026-09-06: an operator who
+        // has not started the driver reads why the load stands still rather
+        // than meeting a refusal ten minutes on. This crate knows which load
+        // it holds where the member does not, and spends the bound on the
+        // diagnostic case anyway, because the member parks the identity ask
+        // under the door whatever the binding and a short bound would refuse
+        // the enter unless the driver had sealed inside it.
+        if let Some(line) = parked_ask_notice(diagnostic, restoring, ask_bound) {
+            eprintln!("{line}");
+        }
         let identity = {
             let seed = &payload.spu_instruction.decoder.identity;
             match run.state.as_mut() {
@@ -2255,6 +2266,24 @@ fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
     diagnostic && readout_elected
 }
 
+/// The typed line that names what the enter waits on where the door
+/// stands, per `weaver-harness-Spec` section 2 as of 2026-09-06, and
+/// nothing where no door stands and the asks answer at once.
+fn parked_ask_notice(diagnostic: bool, restoring: bool, bound_ms: u64) -> Option<String> {
+    if !diagnostic && !restoring {
+        return None;
+    }
+    Some(
+        serde_json::json!({
+            "organ": "harness",
+            "waiting": "the state member's preload seal",
+            "binding": if restoring { "restore" } else { "diagnostic" },
+            "bound_ms": bound_ms,
+        })
+        .to_string(),
+    )
+}
+
 /// **The turn ordinal a run starts from**, per `weaver-harness-Spec` section
 /// 2 as revised 2026-09-04 on issue #432: zero where the load stands from
 /// nothing, and the turn the lineage names where the session stands from a
@@ -2358,6 +2387,24 @@ mod tests {
     /// Perturbation: return zero from `initial_turn_ordinal` whatever the
     /// lineage and the second assertion fails. Watched under exactly that
     /// change.
+    /// **What the enter waits on is named where the door stands and not
+    /// otherwise**, per `weaver-harness-Spec` section 2 as of 2026-09-06.
+    ///
+    /// Perturbation: return the line for every load and the first
+    /// assertion fails, a serving load electing no restore announcing a
+    /// wait it does not make. Watched under exactly that change.
+    #[test]
+    fn the_wait_is_named_where_the_door_stands() {
+        assert!(parked_ask_notice(false, false, 2_000).is_none());
+        let line = parked_ask_notice(true, false, 600_000).expect("a diagnostic load waits");
+        let parsed: serde_json::Value = serde_json::from_str(&line).expect("one typed line");
+        assert_eq!(parsed["binding"], "diagnostic");
+        assert_eq!(parsed["bound_ms"], 600_000);
+        assert_eq!(parsed["waiting"], "the state member's preload seal");
+        let line = parked_ask_notice(false, true, 600_000).expect("a restoring load waits");
+        assert!(line.contains("\"binding\":\"restore\""));
+    }
+
     #[test]
     fn the_turn_ordinal_starts_at_the_cut() {
         assert_eq!(initial_turn_ordinal(None), 0);
