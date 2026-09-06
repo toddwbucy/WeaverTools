@@ -721,6 +721,7 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
                     "perplexity": g.perplexity,
                     "resident": g.resident,
                     "output_count": g.output_count,
+                    "weights_hash": g.weights_hash,
                 }))
                 .collect::<Vec<_>>(),
         })

@@ -1,5 +1,6 @@
 //! conforms: analysis-signals-keep-absence
 //! conforms: analysis-summary-reports-residency
+//! conforms: analysis-summary-reports-the-record-identity
 //!
 //! The per-position signals, read as a series, per `weaver-analysis-Spec`
 //! section 5 as of 2026-09-05.
@@ -59,6 +60,13 @@ pub struct GenerationSummary {
     pub resident: Option<u64>,
     /// How many tokens the generation drew, the terminator outside them.
     pub output_count: usize,
+    /// The record's identity of the artifact: the weights hash the
+    /// measurement carries, per `weaver-spu-Spec` section 3, spelled as the
+    /// record spelled it. **The sentinel crosses as the empty string it
+    /// is**, a hash the SPU could not compute being a fact of the record,
+    /// and the member is absent only where the measurement carries none,
+    /// so a reader can tell a failed identity from an older record.
+    pub weights_hash: Option<String>,
 }
 
 /// The series, and the generation-level figures beside it.
@@ -199,11 +207,17 @@ impl Reader for Signals {
         }
         let perplexity =
             value_at(payload, "perplexity").and_then(|raw| raw.get().parse::<f32>().ok());
+        // As spelled, sentinel included: the empty string is the record
+        // saying the hash could not be computed, and folding it into
+        // absence would hide that behind an older record's silence.
+        let weights_hash = value_at(payload, "weights_hash")
+            .and_then(|raw| serde_json::from_str::<String>(raw.get()).ok());
         self.series.generations.push(GenerationSummary {
             turn: event.envelope.turn.clone(),
             perplexity,
             resident,
             output_count,
+            weights_hash,
         });
         Step::Continue
     }
