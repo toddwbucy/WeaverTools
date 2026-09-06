@@ -839,8 +839,10 @@ from. The
 summary first, one object naming the position count, how many carry an entropy and
 how many a surprisal, and the generations by turn with those members, then one line
 per point carrying turn, ordinal, token, entropy, and surprisal, and the spikes with
-their bar on standard error. A record holding no measured generation refuses, typed
-as the others are.
+their bar on standard error. **An absent member is omitted from the object and never
+rendered null**, on the record's own absent-not-empty rule, so a reader tells a
+member this verb did not send from one it sent, and the sentinel is sent. A record
+holding no measured generation refuses, typed as the others are.
 
 ```graph
 node: analysis-summary-reports-residency
@@ -918,7 +920,9 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   previous closing count and the delta, which the first generation refutes.
 - The summary reports the record's identity as spelled: a measurement carrying the
   sentinel crosses as the empty string and one carrying no member crosses absent,
-  watched to fail when the reader folds the sentinel into absence.
+  watched to fail when the reader folds the sentinel into absence, and an absent
+  member is omitted at the wire rather than rendered null, watched to fail when the
+  verb renders the option directly.
 - Absence stays absent in the series: a record without the surprisal election
   yields points carrying an entropy and no surprisal, watched to fail when the
   reader fills an absent vector with zero.
