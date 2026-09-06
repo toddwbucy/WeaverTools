@@ -153,6 +153,13 @@ keyed to any one member's presence would drop the others where they are
 still wanted, which is the same absent-not-empty rule section 3 states for
 the series applied one grain up.
 
+**An absent resident count costs the reader its positions and not its
+entry.** The entry still lands, carrying the turn, the output count, and
+the perplexity where one was taken, and what the reader cannot do is form
+the address section 4 requires for that generation's points. The summary
+says what the record held either way, and a consumer reading it can tell a
+generation it could not address from one that was never measured.
+
 **No entry is ever synthesized from the series.** The output count is the
 generation's drawn tokens as the record spells them and not the length of
 what this seam happened to carry, so a truncated or partially ingested
@@ -176,7 +183,13 @@ wrong token.**
 
 **The emitter therefore carries, per generation, the resident count as the
 generation closed and the count of output tokens**, beside the perplexity on
-the summary stream. Both are facts the record already holds, on
+the summary stream. **The output count is the length of that generation's
+`model.measurement` `output_tokens` sequence**, the drawn tokens with the
+terminator outside them per `weaver-spu-Spec` section 6, and not a separate
+scalar the record carries. **A generation whose measurement holds no
+readable `output_tokens` produces no summary entry and no points at all**,
+so `O` is never absent from an entry that exists and a consumer never meets
+a half-formed one. Both are facts the record already holds, on
 `model.output` and `model.measurement`, so the emitter reports them and
 derives nothing, which is the property `weaver-analysis-Spec` section 5
 argues for.

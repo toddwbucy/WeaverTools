@@ -91,6 +91,15 @@ surprisal as zero forbidding an invented key for the same reason. Per the
 review of PR #463, whose emitter carries the count as absent rather than
 derived.
 
+**Revised:** 2026-09-05, tenth of this date, the watch on the stored
+position is one that can fail. Section 9's row had read that a second reader
+disagrees where the position is derived at the read, which two readers
+deriving identically would satisfy while the property went unenforced. It
+now alters the summary's counts after ingest and rereads, which only a
+stored value survives. Section 3 says the points of an unaddressable
+generation do not land while its summary entry does. Per the review of PR
+#459.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -361,14 +370,15 @@ carry. **This crate takes the first rule and states the second's failure so
 no later act rediscovers it.**
 
 **A generation whose closing count the record does not carry has no
-position, and its rows do not land.** The count is absent rather than
-derived where no `model.output` reported one, so the address section 2.1
-requires cannot be formed, and this crate stores nothing it cannot address
-rather than storing rows under an invented key. The run's row carries the
-status, so a run short of a generation is visibly partial by the rule above
-rather than quietly short. **This is absent-not-empty at the write path**:
-the same discipline that forbids drawing a missing surprisal as zero
-forbids addressing a position that was never established.
+position, and its points do not land, though its summary entry does.** The
+count is absent rather than derived where no `model.output` reported one, so
+the address section 2.1 requires cannot be formed, and this crate stores
+nothing it cannot address rather than storing rows under an invented key.
+The run's row carries the status, so a run short of a generation is visibly
+partial by the rule above rather than quietly short. **This is
+absent-not-empty at the write path**: the same discipline that forbids
+drawing a missing surprisal as zero forbids addressing a position that was
+never established.
 
 Deriving here rather than at the read is section 2.5's rule and not a
 preference: a value derived once at ingest and stored is one a second reader
@@ -592,7 +602,7 @@ cell record like any other.
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | a forced run is marked in the record | perturbation: strip the mark, the read refuses |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
-| the position is derived at ingest and stored | perturbation: derive at the read, a second reader disagrees |
+| the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
 | an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
 | an undeclared boundary refuses the load | perturbation, at the admit path |
 
