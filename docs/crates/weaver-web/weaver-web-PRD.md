@@ -6,6 +6,13 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-06, second of this date, the two identities are named
+apart in this document too. Section 4's run row holds **the record
+identity**, which it had called artifact identity while section 3.6 used the
+same words for the catalog's key, one term standing for two things. The
+names follow the Spec's section 2.3 as of this date. Per the review of
+PR #470.
+
 **Revised:** 2026-09-06, one artifact has two identities and the row holds both.
 Section 3.6 says the catalog's key and the record's identity are two rules at two
 grains, the record's determining the key, and section 4 says the run row's artifact
@@ -540,8 +547,8 @@ discovered after the run. Raw residual rides alongside rather than a
 projected readout, so a future refitted lens can read an old run.
 
 **Everything identifying the conditions lives in the run's own row**:
-artifact identity at a grain fine enough to catch a quantization difference,
-which is the record's own, the weights hash the SPU computed at admit per
+**the record identity** at a grain fine enough to catch a quantization
+difference, the weights hash the SPU computed at admit per
 `weaver-spu-Spec` section 3 and the analysis seam carries per generation,
 **the engine's identity at a grain fine enough to catch a library
 revision**, seed, the full sampler configuration, device, precision, the

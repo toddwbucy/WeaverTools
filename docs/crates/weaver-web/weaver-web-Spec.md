@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-06, third of this date, the two identities are named
+apart. Section 2.3 called the per-file digest set what section 2.2's tuple
+means by artifact identity, and section 2.2 says its member is the record's
+own hash, so **one term stood for two things in adjacent sections**. The set
+is the weights identity and the hash is the record identity throughout, the
+first being this table's key and the second what a join looks up, which the
+join paragraph now states rather than leaving to three bare possessives. Per
+the review of PR #470.
+
 **Revised:** 2026-09-06, second of this date, an election the rewrite
 dropped comes back. Section 10 carries the licence boundary again, which
 stood at section 15 of the Spec this one replaced and appears in no section
@@ -254,8 +263,8 @@ raw-residual ruling and this document does not disturb it.
 
 Everything identifying the conditions lives in the run's own row:
 
-- artifact identity **at a grain fine enough to catch a quantization
-  difference**, which is the record's own, the weights hash the SPU computed
+- **the record identity** at a grain fine enough to catch a quantization
+  difference, which is the weights hash the SPU computed
   at admit per `weaver-spu-Spec` section 3, taken from the summary the
   analysis seam carries per `weaver-analysis-web-contract` section 2.2 and
   never from the declaration, a declaration naming a path and being editable
@@ -325,8 +334,10 @@ rather than sequenced. **A set missing a file the index names is unequal to
 the complete set** and therefore joins to nothing, which is the whole of
 what the incompleteness rule needs and asks for no rolled-up digest of this
 crate's own devising. The catalog dedupes on that set and on nothing else,
-and it is the grain section 2.2's tuple means by artifact identity, fine
-enough to separate two quantizations because their files differ.
+and **this document calls it the weights identity** to keep it apart from
+the record identity beside it, which is the SPU's hash and is what section
+2.2's tuple holds. The weights identity is fine enough to separate two
+quantizations because their files differ.
 
 **The provenance chain is recorded and is not an identity.** A conversion
 or a quantization records its source artifact with the converter and the
@@ -339,7 +350,7 @@ deriving it.
 
 Each row carries:
 
-- the artifact identity, derived as above
+- **the weights identity**, this table's key, derived as above
 - **the record's identities**, the weights hashes `weaver-spu-Spec` section
   3 states, one computed at each import over the files that import
   registers and each unique across rows, a renamed split GGUF excepted per
@@ -362,19 +373,24 @@ Each row carries:
 - the reference cells taken against it
 - **the row's version**, per section 3.2
 
-**This table is what a run's artifact identity resolves to**, section 2.2
-holding that identity in the tuple so a reading names its conditions. **The
-join is a lookup on the record's identity**, as of 2026-09-06 per
-issue #465: the two identities are two rules at two grains, the record's
-over everything the binding named and this table's key over the weights
-alone, and the record's determines the key because a directory's hash fixes
-its shards, so one record identity names at most one row, a renamed split
-GGUF being the one case where it names two, which the lookup reports as
-ambiguous rather than picking, per section 10, and the row carries every
-record identity its weights have been admitted under. A run whose record
-identity no row carries joins to nothing and registers nothing, a record
-being a fact and not an import, until an import on that box registers the
-files.
+**Two identities name one artifact and the table carries both**, as of
+2026-09-06 per issue #465. **The weights identity is this table's key**, the
+per-file digest set above, at the grain of the weights alone, and it is what
+a lens refuses on. **The record identity is the SPU's weights hash**, at the
+grain of everything the binding named, and it is what section 2.2's run row
+holds and what a measurement carries.
+
+**The join from a run is a lookup on the record identity, not on the key.**
+The row carries every record identity its weights have been admitted under,
+so the lookup is against that set and the key is what the row is stored by.
+**The record identity determines the weights identity and not the reverse**,
+because a directory's hash fixes its shards, so one record identity names at
+most one row. A renamed split GGUF is the one case where it names two, which
+the lookup reports as ambiguous rather than picking, per section 10.
+
+**A run whose record identity no row carries joins to nothing and registers
+nothing**, a record being a fact and not an import, until an import on that
+box registers the files.
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
