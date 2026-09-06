@@ -863,7 +863,11 @@ session and run and the turn the holdings stop at, a whole record resolved to it
 run's last turn. The record is never handed to the agent and never named to the worker,
 on the same descriptor discipline as the sink: what the harness receives is the enter's
 copy of the election, and what the member receives is the record's holdings through the
-door of section 6. **The instrument is perturbation, as of 2026-09-06**: a cut naming
+door of section 6. **The judgment is this crate's because the record is**, per charter
+section 4.3's custody rule: a look at a thing admin holds, taken at the load's
+cheapest moment before any process exists, and an ask of nobody, which is the same
+rule that leaves the artifact to the organ answering the opposite way here. **The
+instrument is perturbation, as of 2026-09-06**: a cut naming
 a run the record does not hold refuses naming `restore.through`, watched to fail when
 the run check is dropped, and a cut under the record's own session name refuses the
 same way, watched to fail when the session rule is dropped and a rewind under its own
