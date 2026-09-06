@@ -4,6 +4,14 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-06, the summary carries the record's identity, and the contract
+is cited. Section 5's summary gains, per generation, the weights hash the measurement
+carries as the record spelled it, sentinel included, so the run row of
+`weaver-web-Spec` section 2.2 has a source on the wire, under one perturbation
+record. Section 0 names `weaver-analysis-web-contract` among what this document is
+written against, the citation the contract's section 8 recorded as owed since
+2026-09-05, per issue #451's second half. Section 6's counts move by one. Per issue
+#465.
 **Revised:** 2026-09-05, second of this date, the summary carries the residency. Section
 5's summary gains, per generation, the resident count as it closed and the count of
 output tokens beside the perplexity, both read from the record and neither derived,
@@ -111,8 +119,9 @@ an open election beside the capture artifact.
 The representation of the driver `weaver-analysis-PRD` charters: how it parses a
 finished record, what it projects across the preload seam, and how it reads the
 record a replay makes. It is written against that charter, against
-`weaver-analysis-state-contract`, and against `weaver-diagnostic-Spec` for the
-record it reads, and it develops no rationale of its own.
+`weaver-analysis-state-contract`, against `weaver-analysis-web-contract` for the
+shape the signals reader's summary crosses in, and against `weaver-diagnostic-Spec`
+for the record it reads, and it develops no rationale of its own.
 
 **What the charter left here is named there.** Section 4's closing cell owes this
 document the driver's shape and the parser's, and says the certification's
@@ -817,7 +826,15 @@ is the consumer's at ingest, subtracting the drawn
 tokens and the terminator from the closing count, and a reader that reported the
 previous closing count plus the delta in the resident's place would be wrong on
 every first generation by the identity prefix. A generation whose `model.output`
-the record does not hold carries no resident count, absent rather than derived. The
+the record does not hold carries no resident count, absent rather than derived.
+**The summary carries the record's identity of the artifact too**, as of 2026-09-06
+per issue #465 and `weaver-analysis-web-contract` section 3: the weights hash the
+generation's measurement carries, per `weaver-spu-Spec` section 3, spelled as the
+record spelled it, so the sentinel crosses as the empty string it is, a hash the SPU
+could not compute being a fact of the record and not an absence, and the member is
+absent only where the measurement carries none. This reader reports it and derives
+nothing, and it is the source the run row of `weaver-web-Spec` section 2.2 fills
+from. The
 `signals <record> [<k>]` verb, `k` two deviations where none is named, renders the
 summary first, one object naming the position count, how many carry an entropy and
 how many a surprisal, and the generations by turn with those members, then one line
@@ -833,6 +850,14 @@ tag: perturbation
 edge: asserts
 from: weaver-analysis
 to: analysis-summary-reports-residency
+
+node: analysis-summary-reports-the-record-identity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-identity
 ```
 
 ```graph
@@ -891,6 +916,9 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
 - The summary reports the residency: a generation's resident count is the one
   `model.output` carried, watched to fail when the reader derives it from the
   previous closing count and the delta, which the first generation refutes.
+- The summary reports the record's identity as spelled: a measurement carrying the
+  sentinel crosses as the empty string and one carrying no member crosses absent,
+  watched to fail when the reader folds the sentinel into absence.
 - Absence stays absent in the series: a record without the surprisal election
   yields points carrying an entropy and no surprisal, watched to fail when the
   reader fills an absent vector with zero.
@@ -906,7 +934,7 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-two sit there and none sits here, retaken from the records on
+section 6. Twenty-three sit there and none sits here, retaken from the records on
 2026-09-05, the count having read fourteen while acts since 2026-09-01 added six
 without moving it, and the two acts of 2026-09-05 adding the last two.
 
@@ -915,7 +943,7 @@ without moving it, and the two acts of 2026-09-05 adding the last two.
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-one claims grounding in no
+The other four axioms reach none of these claims. **Twenty-two claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

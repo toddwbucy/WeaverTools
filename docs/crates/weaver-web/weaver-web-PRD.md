@@ -6,6 +6,12 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-06, one artifact has two identities and the row holds both.
+Section 3.6 says the catalog's key and the record's identity are two rules at two
+grains, the record's determining the key, and section 4 says the run row's artifact
+identity is the record's, per `weaver-spu-Spec` section 3, and reaches this crate on
+the analysis seam. Per issue #465.
+
 **This is a rewrite of this crate's charter, not a new one.** The document
 ID, the crate, and its node are unchanged, and the prior text is archived
 rather than amended, per the operator's ruling of 2026-09-04, because the
@@ -435,7 +441,14 @@ digest per shard keyed by shard name for a sharded one. Equality is set
 equality, so a set missing a file the index names is unequal to the complete
 one and is not that artifact, and the catalog dedupes on that and nothing
 else. **This crate defines no digest of its own**, a second rule for one
-subject being what the paragraph below refuses for the lens. **The
+subject being what the paragraph below refuses for the lens. **The record
+carries a second identity at a second grain and the row holds it too**, as of
+2026-09-06 per issue #465: the weights hash the SPU computes at admit per
+`weaver-spu-Spec` section 3 covers everything the binding named, a sidecar the
+index never names included, so it determines the catalog's key and the key does
+not determine it, and import computes both over the files it registers. That is
+not a third rule. It is the record's, held where a run's row can resolve to a
+row of this catalog. **The
 provenance chain is recorded and is not a second identity**: it says what an
 artifact was made from, which is what makes an elected lens reuse across a
 conversion legible afterward, and it does not version a lens. The lens
@@ -528,6 +541,8 @@ projected readout, so a future refitted lens can read an old run.
 
 **Everything identifying the conditions lives in the run's own row**:
 artifact identity at a grain fine enough to catch a quantization difference,
+which is the record's own, the weights hash the SPU computed at admit per
+`weaver-spu-Spec` section 3 and the analysis seam carries per generation,
 **the engine's identity at a grain fine enough to catch a library
 revision**, seed, the full sampler configuration, device, precision, the
 batching election, **the field election's depth**, the task, the declared
