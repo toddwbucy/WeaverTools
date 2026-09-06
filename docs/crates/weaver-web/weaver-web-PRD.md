@@ -28,7 +28,36 @@ store traffic and a queue. Whether these papers eventually move to a
 separate corpus follows from that but is not identical to it, and stays
 decision two of #439.
 
-**Revised:** 2026-09-05, seventh of this date, the analysis seam takes its
+**Revised:** 2026-09-05, ninth of this date, against the review of PR #464.
+Section 3.6's own rule narrows as its Spec's did, no surface writing what
+the instrument recorded, where it had still said no surface writes the
+registry eleven lines above the paragraph that has Models register one, and
+its citation named a section holding no ingest. Import says which box it can
+read: on this crate's own the surface reads the files, and on the agents' it
+cannot, so an artifact there registers from what the record reports and
+until that path stands its entry is a presence observation. The membership
+rule names both containers rather than reverting to the index a split GGUF
+does not carry.
+
+**Revised:** 2026-09-05, eighth of this date, the record has two halves.
+Section 4 names the authored one, the declarations, staged experiments and
+artifacts that sections 3.1, 3.5 and 3.6 produce, which the charter had left
+to be inferred from the surfaces that list them. Section 3.6 gives Models
+its motion and its ending: import points at weights already present,
+computes the identity rather than accepting one, and registers, so an
+artifact whose files do not answer the identity rule does not register. Per
+issue #454.
+
+**Revised:** 2026-09-05, seventh of this date, the seam's record agrees with
+its contract. Section 3's seam edge to `weaver-analysis` reverses to run
+from the emitter, which initiates and is named first under the Document
+Format's rule, and its tag becomes `socket` from `stream`, which was outside
+that document's seam vocabulary. The position the store keys on is derived
+by this crate at ingest rather than carried on the wire, per the Spec's
+section 3, the contract asking the emitter only for the two counts the
+derivation reads. Per the review of PR #459 and issue #461.
+
+**Revised:** 2026-09-05, sixth of this date, the analysis seam takes its
 contract. `weaver-analysis-web-contract` lands per issue #418 and section
 7.3 of this crate's Spec cites it. Section 3.1's account of `validate` is
 corrected against the custody ruling of this date, issue #456: the verb
@@ -39,7 +68,7 @@ acceptance for filing and not approval to load**. Compose therefore owes the
 engineer, per field, whether a mistake is caught now or at admission, an
 annotation the custody rule derives rather than one this document authors.
 
-**Revised:** 2026-09-05, sixth of this date, the second review pass. Five
+**Revised:** 2026-09-05, fifth of this date, the second review pass. Five
 sentences lost a word to the semicolon sweep of the second act and are
 restored, the sweep having rewrapped line pairs and dropped the word at the
 old break. The preset ladder is introduced before section 9 defers its
@@ -51,7 +80,7 @@ across its seam and the ingest path is the only writer. The semicolon counts
 in the second entry were low by two. Entries now run newest first, per the
 corpus's convention.
 
-**Revised:** 2026-09-05, fifth of this date, the identity is the corpus's
+**Revised:** 2026-09-05, fourth of this date, the identity is the corpus's
 and the election is recorded. The artifact identity rule this crate had
 derived for itself is withdrawn for the one `weaver-analysis` already
 carries, the set of per-file content digests keyed by file name, compared as
@@ -62,7 +91,7 @@ lens fitted to other weights says so. Section 3.6 states which surface
 writes what rather than claiming all of them write. Per the review of
 PR #453.
 
-**Revised:** 2026-09-05, fourth of this date, the tuple carries what the
+**Revised:** 2026-09-05, third of this date, the tuple carries what the
 projection compares. The field election's depth and the forced token join
 the run's tuple: a run keeping forty alternatives and one keeping fifty
 differ in every position's list length by declaration, and section 4's
@@ -71,7 +100,7 @@ tuple, the parent run and the branch position being lineage rather than
 condition, which is what makes a branch comparable to its parent. Per the
 review of PR #453.
 
-**Revised:** 2026-09-05, third of this date, the Models surface and the
+**Revised:** 2026-09-05, second of this date, the Models surface and the
 review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
 and 5 already assumed, and the list-side group grows to five with four of
 them lists. **One rule decides artifact identity**: the complete set the
@@ -84,29 +113,20 @@ dated observation and never a gate.** Three cells named in section 9 that
 this act's pull request had named only in its body. Semicolons swept under
 G1.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on
-PR #453. The engine joins the run's tuple at build grain. **The scorer is
-named on the verdict and never in the run's tuple**, correcting a clause
-that put it in both and contradicted itself four lines apart. **Reproduction
-states its projection** and leaves section 9, which held a settled half in a
-list of open ones. **The lens clause is withdrawn to `weaver-analysis-PRD`
-section 3's identity**, the weights by content hash: this document had
-asserted a trained-weights identity inherited through provenance, which the
-owning charter states otherwise and `analysis-lens-refuses-other-weights`
-pins otherwise, and the 8B measurement it rested on was taken by naming the
+**Revised:** 2026-09-05, first of this date, against two reviews on PR #453.
+The engine joins the run's tuple at build grain. **The scorer is named on
+the verdict and never in the run's tuple**, correcting a clause that put it
+in both and contradicted itself four lines apart. **Reproduction states its
+projection** and leaves section 9, which held a settled half in a list of
+open ones. **The lens clause is withdrawn to `weaver-analysis-PRD` section
+3's identity**, the weights by content hash: this document had asserted a
+trained-weights identity inherited through provenance, which the owning
+charter states otherwise and `analysis-lens-refuses-other-weights` pins
+otherwise, and the 8B measurement it rested on was taken by naming the
 fitted weights to the reader rather than by any mechanism. Reuse across a
 conversion is an operator election, and whether a lineage should ever let
 the tool answer it is section 9's. Semicolons swept from the whole document
 under G1, seven of them older than this act.
-
-**Revised:** 2026-09-05, eighth of this date, the seam's record agrees with
-its contract. Section 3's seam edge to `weaver-analysis` reverses to run
-from the emitter, which initiates and is named first under the Document
-Format's rule, and its tag becomes `socket` from `stream`, which was outside
-that document's seam vocabulary. The position the store keys on is derived
-by this crate at ingest rather than carried on the wire, per the Spec's
-section 3, the contract asking the emitter only for the two counts the
-derivation reads. Per the review of PR #459 and issue #461.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
@@ -349,19 +369,20 @@ the control arm is free.
 
 ### 3.6 The five on the list side
 
-Global and filtered. **No surface writes the registry.** Each authors across
-its own seam, Compose asking `validate` and Stage submitting to the queue,
-and what lands in the store lands by the ingest path of section 4. These
-lists read that store and filter it, which is why a chip can be a query
-rather than a location. **Four of the five are lists and the fifth is not.**
-Agents, Models, Experiments and Record are list destinations. The Experiment
-view is the detail surface one of them opens into, and it is a surface
-rather than a mode of the list above it: its own destination, its own state,
-and its own module under the Spec's rule of one module each. **The group is
-named for how it is reached** - by a chip-query rather than along the path -
-and not for the shape of what it holds, so no implementer reads the detail
-view as a fifth list. Five on the path and five here are the ten this
-section opens with.
+Global and filtered. **No surface writes what the instrument recorded.** A
+position and a run land by the ingest alone, per the Spec's section 3.1.
+Three surfaces do author, each writing the one table section 4 names as its
+own: Compose a declaration, Stage a staged experiment, and Models an
+artifact. These lists read the store and filter it, which is why a chip can
+be a query rather than a location. **Four of the five are lists and the
+fifth is not.** Agents, Models, Experiments and Record are list
+destinations. The Experiment view is the detail surface one of them opens
+into, and it is a surface rather than a mode of the list above it: its own
+destination, its own state, and its own module under the Spec's rule of one
+module each. **The group is named for how it is reached** - by a chip-query
+rather than along the path - and not for the shape of what it holds, so no
+implementer reads the detail view as a fifth list. Five on the path and five
+here are the ten this section opens with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -385,6 +406,26 @@ machine and the agents on another. And its relations, the lens
 artifacts fitted to these weights, the readings taken through a lens fitted
 to other weights where the operator elected that reuse, and the reference
 cells taken against them.
+
+**Models is the one surface on this side that authors, and its motion is
+import.** The others list what other surfaces produced. Import registers an
+artifact, which is what gives Compose something to resolve against and
+qualification something to run a reference against, and **it ends with an
+artifact other surfaces can name.**
+
+**An identity is computed and never accepted, and where it is computed
+depends on which box holds the weights.** An operator who types a digest has
+told the catalog what they believe, and a catalog that records a belief
+cannot later say two boxes hold one artifact. **On this crate's own box the
+surface reads the files and derives the identity**, following the artifact's
+own membership rule, which is an index where the container carries one and a
+name pattern where it does not, per the Spec's section 2.3. **On the agents'
+box it cannot read anything**, this crate running on one machine and the
+agents on another, so an artifact there registers from what the record
+reports of it rather than from a read, and until that path stands an entry
+for it is a presence observation and not a registration. Which of the two
+this surface offers first is section 9's open cell on presence, and the
+answer chosen there is the answer here.
 
 **An artifact is the complete set its own index names, and one rule decides
 identity** - the corpus's own. `weaver-analysis-PRD` section 3 carries the
@@ -456,6 +497,21 @@ registry that cannot hold a failure is a marketing surface.
 <!-- figure: Lineage | Record -->
 
 ## 4. The record this crate holds
+
+**It holds two things and they are not the same kind of thing.** What the
+instrument recorded is a fact about a run that happened, and a second write
+of it is a replay. What the engineer authored is a thing someone is still
+making, and a second write of it is an edit. **The recorded half is
+described below. The authored half is the declarations, the staged
+experiments, and the artifact catalog**, which sections 3.1, 3.5 and 3.6
+each produce and which the Spec's section 2 gives their rows.
+
+**Naming the second half is not a widening of scope.** Three surfaces have
+listed those objects since this charter was rewritten, and a surface that
+lists what nothing stores is a surface drawn against nothing. What the
+distinction buys is that the two halves cannot be written by one path: an
+authored row edited under a replay's idempotence would silently lose an
+edit, and a recorded row written by a screen would stop being a record.
 
 The front end holds the cell registry, on its own store. The grain is the
 grain the interface clicks at: **one row per position per run, addressed by
