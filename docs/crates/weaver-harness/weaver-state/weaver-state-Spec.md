@@ -2,6 +2,12 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-06, the enter's asks park on the seal. Section 4's parking law
+holds the `identity` and `recall` asks beside the `replay` ask where the member
+stands with the preload door and no seal has landed, each answered at the seal in
+arrival order, per `weaver-harness-state-contract` section 2 as revised 2026-09-04 on
+issue #432, which stated the parking and this document's law had not carried it. The
+record `state-replay-answers-at-the-seal` covers the three. Found by the code act.
 **Revised:** 2026-09-04, fifth of this date, the door stands under a restoring load.
 Section 4's two-sided claim names the other half's new case: admin's vector carries
 the door's name under a diagnostic binding or a serving load that elects a restore,
@@ -436,6 +442,17 @@ mid-stream, false after a sealless close, and true from the seal frame on.
 Where the member stands with the preload door, a `replay` ask parks until
 the fact is true, surviving the preload channel's close, answered at the
 seal against the sealed holdings in one frame stream like any answer. **The
+`identity` and `recall` asks park on the same fact**, as of 2026-09-06 per
+the contract's section 2 as revised 2026-09-04 on issue #432: a session
+standing from a preloaded record asks for its prefix and its conversation at
+the enter, before the driver has sealed, so the two park where the door
+stands and no seal has landed and answer at the seal in arrival order,
+against the sealed holdings, the replay ask's replacement rule reaching the
+replay ask alone. Where no door stands they answer immediately as before.
+The member cannot tell a restoring load from a diagnostic one and need not:
+the door's standing is the fact, and a diagnostic load's `identity` ask
+answered at the seal is the record's own prefix, which is what
+`weaver-analysis-Spec` section 3 says the preloaded store answers. **The
 door itself survives the channel too**: on any close of the preload
 channel the member unlinks and rebinds the name and the per-channel opener
 state resets, per the contract's retry mechanism, while the seal fact

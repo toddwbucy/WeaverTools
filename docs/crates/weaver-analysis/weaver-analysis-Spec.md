@@ -4,6 +4,14 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-06, second of this date, the election names what the harness's
+open reads. Section 3's election gains the four message kinds with `role` and
+`content`, because a session standing from a record rebuilds its conversation from
+the preloaded holdings through the `identity` and `recall` asks, per
+`weaver-harness-Spec` section 2 as revised 2026-09-04 on issue #432, and an election
+naming only what the replay loop reads would land a session whose open had nothing to
+rebuild from. Section 4's cut and rename take a perturbation record. Section 6's
+counts move by one. Found by the code act of issue #432.
 **Revised:** 2026-09-06, the summary carries the record's identity, and the contract
 is cited. Section 5's summary gains, per generation, the weights hash the measurement
 carries as the record spelled it, sentinel included, so the run row of
@@ -328,6 +336,21 @@ section.
 section 2, because the loop's asks on the other door bind to the opener's session
 and a preload declaring anything else would land holdings no ask can reach.
 
+**The election names what the harness's open reads as well, as of 2026-09-06**, per
+`weaver-state-PRD` section 4 and `weaver-harness-Spec` section 2 as revised on
+issue #432: a session standing from a preloaded record asks the store for its seated
+prefix and its conversation, the `identity` and `recall` asks, and rebuilds each
+message from
+the `role` and `content` the distillate carried. So the election names the four
+message kinds the store's `recall` serves, `message.system`, `message.user`,
+`message.assistant`, and `message.tool_result`, each with `role` and `content`, beside
+the three the replay reads. The ceiling widens with the asker rather than moving from
+the rule: what bounds the election from above is what any party asks of the preloaded
+holdings, and the harness's open is the second such party after the replay loop. The
+same projection serves a diagnostic preload, whose loop reads past the four kinds
+untouched, so the verb elects one election and the driver need not know which load
+it feeds.
+
 **What the opener declares is what the stream delivers.** Kinds outside the
 election do not cross, which is the contract's owing in section 3 and is checkable
 against the opener the same channel carried.
@@ -495,7 +518,22 @@ needs, because the member bounds every answer to the session its opener declared
 a restoring load this verb is the door's driver as it is under the diagnostic binding,
 per `weaver-analysis-state-contract` section 1 as revised 2026-09-04: admin names the
 door and dials it never, the load's enter parks until this verb's seal, and the operator
-runs the two side by side as the diagnostic flow already does.
+runs the two side by side as the diagnostic flow already does. **The cut is the last
+event of the named turn in landing order**, every event before it crossing and none
+after, which is the turn's close where the record is whole, and the rename touches
+the envelope's session member alone. The perturbation is two-sided and each side names
+its removal: drop the cut and events past the named turn cross, drop the rename and
+every distillate keeps the record's session under an opener that declared another.
+
+```graph
+node: analysis-preload-cuts-and-renames
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-preload-cuts-and-renames
+```
 
 ```graph
 node: analysis-seal-ends-the-preload
@@ -918,6 +956,10 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
 - The summary reports the residency: a generation's resident count is the one
   `model.output` carried, watched to fail when the reader derives it from the
   previous closing count and the delta, which the first generation refutes.
+- The preload cuts and renames: a `--through` projects every event through the named
+  turn's last event and none after, watched to fail when the cut is dropped, and a
+  `--as` rewrites every envelope's session, watched to fail when the rewrite is
+  dropped and a distillate keeps the record's name.
 - The summary reports the record's identity as spelled: a measurement carrying the
   sentinel crosses as the empty string and one carrying no member crosses absent,
   watched to fail when the reader folds the sentinel into absence, and an absent
@@ -938,7 +980,7 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-three sit there and none sits here, retaken from the records on
+section 6. Twenty-four sit there and none sits here, retaken from the records on
 2026-09-05, the count having read fourteen while acts since 2026-09-01 added six
 without moving it, and the two acts of 2026-09-05 adding the last two.
 
@@ -947,7 +989,7 @@ without moving it, and the two acts of 2026-09-05 adding the last two.
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-two claims grounding in no
+The other four axioms reach none of these claims. **Twenty-three claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

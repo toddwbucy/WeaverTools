@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-06, the restoring open takes its record. Section 2's restore
+clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
+written the tests the clause described: the restored conversation is the turned
+messages the recall answered, the turnless prefix being the identity's and never
+seated twice, and the turn ordinal starts at the cut. Section 7's count carries it.
+Per the review of PR #473, the clause says what the enter's asks wait on where the
+door stands and what a diagnostic load pays for it.
+
 **Revised:** 2026-09-05, the turn key stands while a turn runs. Section 3's observe
 paragraph said the run's turn key was never set on the serving path. It is now: the seat
 sets it where the key is minted and clears it where the close lands, on every close
@@ -2311,7 +2319,35 @@ run it names, a bare turn number recurring across a session's runs and naming no
 its own, so the derived seeds of `weaver-spu-Spec` section 8.5, which fix a generation's
 stream from the declared seed, the turn's reference, and the generation ordinal,
 continue the parent's streams, and a branch that changes nothing draws what the parent
-drew.
+drew. **Where the door stands the enter's asks wait on the driver's seal**, under the
+parked ask's bound rather than the two seconds a member answering from holdings at
+rest takes, per `weaver-harness-state-contract` section 2 and `weaver-state-Spec`
+section 4 as of 2026-09-06, and one typed line on standard error names what is
+waited on and for how long before the first ask is written, so an operator who has
+not started the driver reads why the load stands still. The harness knows which load
+it holds where the member does not, and spends the bound on the diagnostic case
+anyway, because the member parks the identity ask under the door whatever the
+binding and a short bound there would refuse the enter unless the driver had sealed
+inside it, the identity ask's miss being the one the dead-peer clause does not
+convert. **A diagnostic enter therefore waits on the driver as its replay already
+did and refuses without one after the bound**, where before this act it opened on
+the seed while the preload elected no prefix, and the answer it now opens on is the
+record's own. **The instrument is perturbation, as of 2026-09-06, on two claims this
+clause makes**: the restored conversation is the turned messages the recall answered, the
+turnless system rows being the identity ask's and seated once, watched to fail when the
+turn filter is dropped and the prefix is seated twice, and the first turn of a
+restoring run is numbered one past the cut, watched to fail when the ordinal starts at
+zero.
+
+```graph
+node: harness-restoring-open-seats-the-record
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-restoring-open-seats-the-record
+```
 
 **The column ask is written where and only where the binding is diagnostic
 and the readout is elected**, per `weaver-spu-PRD` section 13.7's cadence
@@ -2889,7 +2925,10 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Forty-eight records in all as of the inversion of
+prohibition is section 2.3's. Sixty-six records in all as of 2026-09-06, measured
+from the records, the restoring open's joining that day, where the narrative below
+reads forty-eight as of the inversion of 2026-08-05 and did not move with the acts
+since, which is named here rather than restated. Forty-eight as of the inversion of
 2026-08-05, which retired the adopted end's close-on-exec, that end no longer
 existing, and added the coordination bind, the accept's credential check, and
 the bind's refusal to unlink, all three of section 2.3. Twenty come from this
