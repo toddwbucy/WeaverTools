@@ -10,11 +10,13 @@ conforms to.
 
 **Revised:** 2026-09-05, the closing count includes the terminator, and the token
 members have a definition. Section 3.1's row for `model.output` names the two counts
-it has carried since 2026-08-20, and section 3.2's clause on them says the resident
-count is taken after the turn terminator lands, one token, per `weaver-spu-Spec`
-section 4, and cites that Spec's section 6 for what the measurement's input and
-output identifiers are, the turn's delta and the drawn tokens, neither the session's.
-A reader deriving a position can now cite what it reads. Per issue #461.
+it has carried since 2026-08-20, and section 3.2's clause on them cites
+`weaver-types-Spec` section 4.4, which has defined the count as terminator included
+since 2026-08-19, and `weaver-spu-Spec` section 4 for why, the count being taken
+after the terminator lands, one token, and that Spec's section 6 for what the
+measurement's input and output identifiers are, the turn's delta and the drawn
+tokens, neither the session's. A reader deriving a position can now cite what it
+reads. Per issue #461.
 
 **Revised:** 2026-09-04, fourth of this date, the load names its declaration.
 Section 3.1's `load` event gains the declaration's digest as the enter carried it.
@@ -891,8 +893,9 @@ parser of every family.
 
 **It carries the session's two counts beside them: `resident`, the count as
 this generation closed, and `capacity`, the ceiling the load resolved.** The
-closing count is taken after the turn terminator lands, so it includes the
-terminator, one token, per `weaver-spu-Spec` section 4 as of 2026-09-05, and
+closing count includes the turn terminator, per `weaver-types-Spec` section 4.4
+as of 2026-08-19, because it is taken after the terminator lands, one token, per
+`weaver-spu-Spec` section 4 as of 2026-09-05, and
 the measurement's token identifiers beside it are the turn's rather than the
 session's, the input the turn's delta with the identity prefix outside it and
 the output the drawn tokens with the terminator outside them, per that Spec's

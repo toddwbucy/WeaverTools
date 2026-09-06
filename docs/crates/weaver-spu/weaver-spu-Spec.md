@@ -8,9 +8,10 @@ closing count includes the terminator. Section 6 defines the measurement's token
 identifiers, the input the turn's delta with the identity prefix outside it and the
 output the drawn tokens with the terminator outside them, where the members had
 travelled undefined and a contract asserted the input was the resident length.
-Section 4 states that the resident count a generation reports is taken after the
-terminator lands, so it exceeds the delta and the drawn tokens by one token, the
-terminator being one token by the shape the family declares. One review record.
+Section 4 says why the count `weaver-types-Spec` section 4.4 has defined as
+terminator included since 2026-08-19 is so, the count being taken after the
+terminator lands, and states the derivation that follows, the terminator being one
+token by the shape the family declares. One review record.
 Section 10's total moves by it. Per issue #461.
 
 **Revised:** 2026-09-05, third of this date, the denied lookup confirms no presence.
@@ -1339,17 +1340,19 @@ terminator absent, and the next turn's framing is then malformed at a
 boundary nobody looks at. This crate decodes the terminator after the
 generation loop, **on the clean path and the cancelled path alike**, which is
 what makes the cancel of charter section 13.5 leave a well-framed session.
-**The resident count the generation reports includes it.** Section 6's closing
-count is taken after the terminator lands, so the count as a generation closed
+**The resident count the generation reports includes it, as `weaver-types-Spec`
+section 4.4 has defined the member since 2026-08-19, and this is why.** Section 6's
+closing count is taken after the terminator lands, so the count as a generation closed
 exceeds the count as it opened by the turn's delta, the drawn tokens, and the
 terminator, and the terminator is one token by the shape the family declares, a
 single identifier the request's box names as `terminator`. A reader deriving the
 position of a generation's first draw from the closing count therefore subtracts
 the drawn tokens and one, and a reader adding the delta to the previous closing
 count is exact from the second generation and wrong on the first by the identity
-prefix, which the open made resident and no delta carries. Measured on 2026-09-05
+prefix, which the open made resident and no delta carries. Confirmed on 2026-09-05
 against the positions `model.field` reports across three records, nine generations,
-two precisions, and two finish kinds, per issue #461.
+two precisions, and two finish kinds, per issue #461, which found the floor's
+definition unread rather than absent.
 
 ```graph
 node: spu-closing-count-includes-the-terminator
@@ -2125,8 +2128,8 @@ terminator the generation makes resident after them per section 4 is outside the
 so their count is not the generation's contribution to the resident count either.
 The session's own figure is the closing count below, and the two members are
 defined here because they travelled without a definition from the seam act to
-2026-09-05 and a contract read the input count as the resident length, per issue
-#461.
+2026-09-05 and a contract read the input count as the resident length, per
+issue #461.
 
 **What travels with a generation.** The token identifiers in and out, the two
 signal vectors, the timings the charter's row names, the model identity and

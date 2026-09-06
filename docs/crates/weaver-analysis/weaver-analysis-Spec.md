@@ -811,8 +811,9 @@ issue #461: the turn, the perplexity where the record holds one, the resident co
 as the generation closed as `model.output` reported it, and the count of output
 tokens, and this reader reports the two counts and derives nothing from them. The
 counts are the record's own facts, the closing count including the terminator per
-`weaver-spu-Spec` section 4 and the input identifiers being the turn's delta per that
-Spec's section 6, so the derivation is the consumer's at ingest, subtracting the drawn
+`weaver-types-Spec` section 4.4, with `weaver-spu-Spec` section 4 for why, and the
+input identifiers being the turn's delta per that Spec's section 6, so the derivation
+is the consumer's at ingest, subtracting the drawn
 tokens and the terminator from the closing count, and a reader that reported the
 previous closing count plus the delta in the resident's place would be wrong on
 every first generation by the identity prefix. A generation whose `model.output`
@@ -946,4 +947,7 @@ most of this document is representation.
   derives the position once at ingest. The other shape, the record carrying the
   count as the generation opened, was not taken: the closing count and the drawn
   tokens already determine it once the terminator's width is stated, which
-  `weaver-spu-Spec` section 4 now does. Per issue #461.
+  `weaver-spu-Spec` section 4 now does, and the opening count would be a new
+  member on a new event where the closing count has been on the wire since
+  2026-08-19, so the cheaper answer is also the one that asks the record for
+  nothing. Per issue #461.
