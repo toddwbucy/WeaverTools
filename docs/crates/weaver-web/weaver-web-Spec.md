@@ -331,11 +331,12 @@ deriving it.
 Each row carries:
 
 - the artifact identity, derived as above
-- **the record's identity**, the weights hash `weaver-spu-Spec` section 3
-  states, computed at import over the files the row registers and unique
-  across rows, a renamed split GGUF excepted per section 10, and where the
-  same weights are imported again from a directory differing in a file the
-  index never names the new value joins this row rather than opening one.
+- **the record's identities**, the weights hashes `weaver-spu-Spec` section
+  3 states, one computed at each import over the files that import
+  registers and each unique across rows, a renamed split GGUF excepted per
+  section 10: the member is a set because the same weights imported again
+  from a directory differing in a file the index never names compute a new
+  value, and that value joins this row rather than opening one.
   **The sentinel is never a record identity here**: an import that cannot
   compute the value registers nothing, per the charter's section 3.6, and
   a run carrying the empty string joins to nothing and is named as one
@@ -849,8 +850,10 @@ act that lands it states what removal makes it fail and confirms it does.
   every later admit of a split records and is that Spec's to rule, or this
   catalog keys a GGUF by the record's identity alone, a GGUF's shard names
   being the operator's and not the artifact's where a safetensors index is
-  the artifact's own. No split GGUF stands in a record or a model directory
-  this seat can reach, so the case is named before it is met.
+  the artifact's own. A split BF16 of a thirty-five billion parameter model
+  stands staged on bulk-store since 2026-07-29 and in no record yet, so the
+  first import of it is where the ambiguity lands, and the ruling is owed
+  before that import rather than after.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on
