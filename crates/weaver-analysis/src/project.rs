@@ -68,7 +68,16 @@ pub const ELECTION: &[ElectedKind] = &[
 #[derive(Debug, Clone, PartialEq)]
 pub enum CutRefusal {
     RunNotHeld(String),
-    TurnNotHeld { run: String, turn: u64 },
+    TurnNotHeld {
+        run: String,
+        turn: u64,
+    },
+    /// The turn is held and its close is not: a run that died mid-turn, and
+    /// a cut inside a generation is what the cut-by-turn rule refuses.
+    TurnNotClosed {
+        run: String,
+        turn: u64,
+    },
 }
 
 impl std::fmt::Display for CutRefusal {
@@ -77,6 +86,9 @@ impl std::fmt::Display for CutRefusal {
             CutRefusal::RunNotHeld(run) => write!(f, "the record holds no run {run:?}"),
             CutRefusal::TurnNotHeld { run, turn } => {
                 write!(f, "run {run:?} holds no turn {turn}")
+            }
+            CutRefusal::TurnNotClosed { run, turn } => {
+                write!(f, "run {run:?} holds turn {turn} without its close")
             }
         }
     }
@@ -97,16 +109,26 @@ pub fn cut_through<'a>(
         return Err(CutRefusal::RunNotHeld(run.to_string()));
     }
     let key = format!("t-{turn}");
-    let last = events
+    let of_turn = |event: &Event| {
+        event.envelope.run == run && event.envelope.turn.as_deref() == Some(key.as_str())
+    };
+    if !events.iter().any(of_turn) {
+        return Err(CutRefusal::TurnNotHeld {
+            run: run.to_string(),
+            turn,
+        });
+    }
+    // **The cut is the turn's close event**, per Spec section 4: a turn the
+    // record holds without its close is a run that died mid-turn, and
+    // cutting there would land a generation without its close.
+    let close = events
         .iter()
-        .rposition(|event| {
-            event.envelope.run == run && event.envelope.turn.as_deref() == Some(key.as_str())
-        })
-        .ok_or_else(|| CutRefusal::TurnNotHeld {
+        .rposition(|event| of_turn(event) && event.envelope.kind == "turn.closed")
+        .ok_or_else(|| CutRefusal::TurnNotClosed {
             run: run.to_string(),
             turn,
         })?;
-    Ok(&events[..=last])
+    Ok(&events[..=close])
 }
 
 /// The opener's frame: the election whole, with the session it declares
@@ -207,22 +229,15 @@ mod tests {
 
     fn record() -> String {
         concat!(
-            r#"{"session":"s-1","run":"r-a","sequence":"0","kind":"load","payload":{"tee":{}}}"#, "
-",
-            r#"{"session":"s-1","run":"r-a","sequence":"1","kind":"message.system","payload":{"role":"system","content":[{"type":"text","text":"You are Karl."}]}}"#, "
-",
-            r#"{"session":"s-1","run":"r-a","turn":"t-1","sequence":"2","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"hi"}]}}"#, "
-",
-            r#"{"session":"s-1","run":"r-a","turn":"t-1","sequence":"3","kind":"turn.closed","payload":{}}"#, "
-",
-            r#"{"session":"s-1","run":"r-a","turn":"t-2","sequence":"4","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"more"}]}}"#, "
-",
-            r#"{"session":"s-1","run":"r-a","turn":"t-2","sequence":"5","kind":"turn.closed","payload":{}}"#, "
-",
-            r#"{"session":"s-1","run":"r-b","sequence":"6","kind":"load","payload":{"tee":{}}}"#, "
-",
-            r#"{"session":"s-1","run":"r-b","turn":"t-1","sequence":"7","kind":"turn.closed","payload":{}}"#, "
-",
+            r#"{"session":"s-1","run":"r-a","sequence":"0","kind":"load","payload":{"tee":{}}}"#, "\n",
+            r#"{"session":"s-1","run":"r-a","sequence":"1","kind":"message.system","payload":{"role":"system","content":[{"type":"text","text":"You are Karl."}]}}"#, "\n",
+            r#"{"session":"s-1","run":"r-a","turn":"t-1","sequence":"2","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"hi"}]}}"#, "\n",
+            r#"{"session":"s-1","run":"r-a","turn":"t-1","sequence":"3","kind":"turn.closed","payload":{}}"#, "\n",
+            r#"{"session":"s-1","run":"r-a","turn":"t-2","sequence":"4","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"more"}]}}"#, "\n",
+            r#"{"session":"s-1","run":"r-a","turn":"t-2","sequence":"5","kind":"turn.closed","payload":{}}"#, "\n",
+            r#"{"session":"s-1","run":"r-b","sequence":"6","kind":"load","payload":{"tee":{}}}"#, "\n",
+            r#"{"session":"s-1","run":"r-b","turn":"t-1","sequence":"7","kind":"turn.closed","payload":{}}"#, "\n",
+            r#"{"session":"s-1","run":"r-b","turn":"t-2","sequence":"8","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"cut off"}]}}"#, "\n",
         )
         .to_string()
     }
@@ -254,6 +269,15 @@ mod tests {
             Some(CutRefusal::TurnNotHeld {
                 run: "r-a".into(),
                 turn: 9
+            })
+        );
+        // A turn held without its close refuses distinctly: a run that
+        // died mid-turn is a cut inside a generation.
+        assert_eq!(
+            cut_through(&events, "r-b", 2).err(),
+            Some(CutRefusal::TurnNotClosed {
+                run: "r-b".into(),
+                turn: 2
             })
         );
     }

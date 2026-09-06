@@ -468,16 +468,18 @@ fn judge_restore(
     match restore.through.as_ref() {
         None => Ok(held.whole()),
         Some(cut) => {
-            let last = held
+            let turns = held
                 .runs
                 .iter()
                 .find(|(run, _)| *run == cut.run.0)
-                .map(|(_, last)| *last)
+                .map(|(_, turns)| turns)
                 .ok_or_else(|| {
                     eprintln!("config invalid: the record holds no run {:?}", cut.run.0);
                     through_refusal()
                 })?;
-            if cut.turn == 0 || cut.turn > last {
+            // Membership and never a bound: a run holding turns one and
+            // three holds no turn two, and a cut there names nothing.
+            if !turns.contains(&cut.turn) {
                 eprintln!(
                     "config invalid: run {:?} holds no turn {}",
                     cut.run.0, cut.turn
@@ -494,16 +496,20 @@ fn judge_restore(
 }
 
 /// What a record holds that a cut is judged against: its session, and its
-/// runs in landing order with each run's last turn number.
+/// runs in landing order with the turn numbers each run holds.
 struct RecordHoldings {
     session: String,
-    runs: Vec<(String, u64)>,
+    runs: Vec<(String, std::collections::BTreeSet<u64>)>,
 }
 
 impl RecordHoldings {
+    /// **The record's session is the first event's, and a line of another
+    /// session is not the record's**: a trace holds one session by
+    /// `weaver-trace-PRD` section 2, so a foreign line is skipped rather
+    /// than read as a run this session holds.
     fn read(text: &str) -> Option<RecordHoldings> {
         let mut session: Option<String> = None;
-        let mut runs: Vec<(String, u64)> = Vec::new();
+        let mut runs: Vec<(String, std::collections::BTreeSet<u64>)> = Vec::new();
         for line in text.lines() {
             let Ok(value) = serde_json::from_str::<serde_json::Value>(line) else {
                 continue;
@@ -511,24 +517,27 @@ impl RecordHoldings {
             let Some(run) = value.get("run").and_then(|r| r.as_str()) else {
                 continue;
             };
-            if session.is_none() {
-                session = value
-                    .get("session")
-                    .and_then(|s| s.as_str())
-                    .map(str::to_string);
+            let line_session = value.get("session").and_then(|s| s.as_str());
+            match (&session, line_session) {
+                (None, Some(found)) => session = Some(found.to_string()),
+                (Some(held), Some(found)) if held != found => continue,
+                (Some(_), None) | (None, None) => continue,
+                _ => {}
             }
             let turn = value
                 .get("turn")
                 .and_then(|t| t.as_str())
                 .and_then(|t| t.strip_prefix("t-"))
                 .and_then(|n| n.parse::<u64>().ok());
-            match runs.iter_mut().find(|(held, _)| held == run) {
-                Some((_, last)) => {
-                    if let Some(turn) = turn {
-                        *last = (*last).max(turn);
-                    }
+            let turns = match runs.iter_mut().find(|(held, _)| held == run) {
+                Some((_, turns)) => turns,
+                None => {
+                    runs.push((run.to_string(), std::collections::BTreeSet::new()));
+                    &mut runs.last_mut().expect("just pushed").1
                 }
-                None => runs.push((run.to_string(), turn.unwrap_or(0))),
+            };
+            if let Some(turn) = turn {
+                turns.insert(turn);
             }
         }
         Some(RecordHoldings {
@@ -537,12 +546,13 @@ impl RecordHoldings {
         })
     }
 
-    /// The whole record resolved to its last run's last turn.
+    /// The whole record resolved to its last run's last turn, zero where
+    /// that run holds no turn.
     fn whole(&self) -> weaver_types::Lineage {
         let (run, through) = self
             .runs
             .last()
-            .cloned()
+            .map(|(run, turns)| (run.clone(), turns.iter().next_back().copied().unwrap_or(0)))
             .unwrap_or_else(|| (String::new(), 0));
         weaver_types::Lineage {
             parent: weaver_types::SessionId(self.session.clone()),
@@ -1705,6 +1715,9 @@ mod tests {
                 "{\"session\":\"s-1\",\"run\":\"r-b\",\"sequence\":\"3\",\"kind\":\"load\"}\n",
                 "{\"session\":\"s-1\",\"run\":\"r-b\",\"turn\":\"t-1\",\"sequence\":\"4\",\"kind\":\"turn.opened\"}\n",
                 "{\"session\":\"s-1\",\"run\":\"r-b\",\"turn\":\"t-3\",\"sequence\":\"5\",\"kind\":\"turn.closed\"}\n",
+                // A line of another session is not this record's: a run it
+                // names is not held, and a turn it names is not either.
+                "{\"session\":\"s-other\",\"run\":\"r-x\",\"turn\":\"t-9\",\"sequence\":\"6\",\"kind\":\"turn.closed\"}\n",
             ),
         )
         .expect("the record writes");
@@ -1750,10 +1763,14 @@ mod tests {
             ("s-1", "r-a", 2)
         );
 
-        // A cut the record does not hold refuses naming the field, by run and by turn.
+        // A cut the record does not hold refuses naming the field: a run it
+        // lacks, a turn past the run's last, a turn the run skips where it
+        // holds one and three, and a run a foreign session's line named.
         for cut in [
             "  through:\n    run: r-zz\n    turn: 1\n",
             "  through:\n    run: r-a\n    turn: 9\n",
+            "  through:\n    run: r-b\n    turn: 2\n",
+            "  through:\n    run: r-x\n    turn: 9\n",
         ] {
             let source = format!("{branched}{}", restore(cut));
             let refused = take_inventory(&name, &source, &allow, &bound);

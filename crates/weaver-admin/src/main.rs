@@ -373,14 +373,21 @@ fn member_vector(
 /// binary's name, per `weaver-admin-harness-contract` section 3 as of
 /// 2026-09-04: the worker the unit runs and the state member beside it, each
 /// sha256 hex and the empty string where the file does not read.
-fn stack_digests(config: &ServiceConfig) -> std::collections::BTreeMap<String, String> {
+fn stack_digests(
+    config: &ServiceConfig,
+    member_started: bool,
+) -> std::collections::BTreeMap<String, String> {
     let worker = config.unit.worker.as_path();
     let member = worker
         .parent()
         .map(|directory| directory.join("weaver-state"))
         .unwrap_or_else(|| std::path::PathBuf::from("weaver-state"));
+    let mut binaries = vec![worker];
+    if member_started {
+        binaries.push(member.as_path());
+    }
     let mut stack = std::collections::BTreeMap::new();
-    for binary in [worker, member.as_path()] {
+    for binary in binaries {
         let name = binary
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
@@ -640,6 +647,11 @@ fn run_load(
     // down and the load unrefused, the harness's end below then absent from
     // the enter and the directive carrying the sink alone.
     let state_end = stand_state_member(config, &inventory);
+    // **The stack names the binaries this crate started**, per
+    // `weaver-admin-harness-contract` section 3: the worker always, and the
+    // member only where it stood, a declined or failed spawn being a binary
+    // admin did not start.
+    let stack = stack_digests(config, state_end.is_some());
 
     let ordinal = coordination.next_ordinal();
     // **The session is read and the run is minted**, per Spec section 7. The
@@ -690,7 +702,7 @@ fn run_load(
                 // starts, per `weaver-admin-harness-contract` section 3 as
                 // of 2026-09-04 and issue #432.
                 restore: inventory.lineage.clone(),
-                stack: stack_digests(config),
+                stack,
             },
         }),
     };
@@ -1243,6 +1255,24 @@ mod tests {
             restoring[3],
             territory.join("preload.sock").into_os_string()
         );
+    }
+
+    /// **The stack names the binaries this crate started**, per
+    /// `weaver-admin-harness-contract` section 3: the worker on every load,
+    /// the member only where it stood.
+    ///
+    /// Perturbation: name the member whatever stood and the first
+    /// assertion fails, a load that declined its member naming a binary
+    /// admin never started. Watched under exactly that change.
+    #[test]
+    fn the_stack_names_what_was_started() {
+        let config = unread_config();
+        let without = stack_digests(&config, false);
+        assert_eq!(without.len(), 1, "the worker alone");
+        assert!(!without.contains_key("weaver-state"));
+        let with = stack_digests(&config, true);
+        assert_eq!(with.len(), 2, "the worker and the member");
+        assert!(with.contains_key("weaver-state"));
     }
 
     /// A configuration whose values are never read by the arm under test.

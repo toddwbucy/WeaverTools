@@ -1565,7 +1565,9 @@ impl Harness {
         // diagnostic case anyway, because the member parks the identity ask
         // under the door whatever the binding and a short bound would refuse
         // the enter unless the driver had sealed inside it.
-        if let Some(line) = parked_ask_notice(diagnostic, restoring, ask_bound) {
+        // The door stands on the member, so where no member's end arrived
+        // there is no door and no wait to name.
+        if state_member && let Some(line) = parked_ask_notice(diagnostic, restoring, ask_bound) {
             eprintln!("{line}");
         }
         let identity = {

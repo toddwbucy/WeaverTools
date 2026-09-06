@@ -42,6 +42,7 @@ fn main() -> std::process::ExitCode {
             "usage: weaver-analysis derive <trace> --devices <n,..> --sink <path> \
              [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
              | read <diagnostic-trace> | compare <capture> <capture> \
+             | preload <trace> <socket> [--through <run>:<turn>] [--as <session>] \
              | signals <record> [spike-bar] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
              [--positions p,.. (a file defaults to a spread of eight)] [--topk 5] \
@@ -258,8 +259,10 @@ fn run_preload(rest: &[String]) -> std::process::ExitCode {
             Err(why) => return refused(why.to_string()),
         },
     };
+    // The rename is the `--as` name alone, per Spec section 4: absent, every
+    // distillate keeps the session the record spelled.
+    let distillates = weaver_analysis::project_as(projected, as_session.as_deref());
     let session = as_session.unwrap_or(session);
-    let distillates = weaver_analysis::project_as(projected, Some(&session));
     let outcome = std::os::unix::net::UnixStream::connect(socket).and_then(|stream| {
         let mut sender = weaver_analysis::preload::open(stream, &session)?;
         for distillate in &distillates {
