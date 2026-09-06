@@ -59,8 +59,8 @@ a set: a rolled-up digest of this crate's own devising was a second rule for
 one subject, which is what the lens paragraph beside it refuses. An elected
 lens reuse is recorded with both weights identities, so a reading through a
 lens fitted to other weights says so. Section 3.6 states which surface
-writes what rather than claiming all of them write. Per the review of PR
-`#453`.
+writes what rather than claiming all of them write. Per the review of
+PR #453.
 
 **Revised:** 2026-09-05, fourth of this date, the tuple carries what the
 projection compares. The field election's depth and the forced token join
@@ -69,7 +69,7 @@ differ in every position's list length by declaration, and section 4's
 comparison would have read that as a divergence. The row is told from the
 tuple, the parent run and the branch position being lineage rather than
 condition, which is what makes a branch comparable to its parent. Per the
-review of PR `#453`.
+review of PR #453.
 
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 3.6 gains **Models**, the catalog sections 3.1
@@ -84,8 +84,8 @@ dated observation and never a gate.** Three cells named in section 9 that
 this act's pull request had named only in its body. Semicolons swept under
 G1.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. The engine joins the run's tuple at build grain. **The scorer is
+**Revised:** 2026-09-05, second of this date, against two reviews on
+PR #453. The engine joins the run's tuple at build grain. **The scorer is
 named on the verdict and never in the run's tuple**, correcting a clause
 that put it in both and contradicted itself four lines apart. **Reproduction
 states its projection** and leaves section 9, which held a settled half in a

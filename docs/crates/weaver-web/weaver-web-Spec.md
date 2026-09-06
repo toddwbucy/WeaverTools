@@ -37,12 +37,12 @@ the parent run and branch position are lineage outside tuple equality, so
 two rows differing only in them remain comparable, which is what makes a
 branch reproducible against its parent. Section 2.4 carries the lens
 artifact a reading was taken through and the weights it was fitted to. Per
-the review of PR `#453`.
+the review of PR #453.
 
 **Revised:** 2026-09-05, fourth of this date, the run's row carries the
 field election's depth, which sets the length of every position's
 alternative list and which the charter's section 4 compares. Per the review
-of PR `#453`.
+of PR #453.
 
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 2.3 gains the artifact catalog with one derived
@@ -53,8 +53,8 @@ and its date and gates nothing. The lens row cites `weaver-analysis-PRD`
 section 3 rather than restating it, correcting an earlier draft of this act.
 Two assertion rows added. Semicolons swept under G1.
 
-**Revised:** 2026-09-05, second of this date, against two reviews on PR
-`#453`. Section 2.3 gains the recorded query, which section 4 required and
+**Revised:** 2026-09-05, second of this date, against two reviews on
+PR #453. Section 2.3 gains the recorded query, which section 4 required and
 section 2 gave nowhere to put, the indexes moving down and their citations
 following. The artifact catalog of the act below later took 2.3 and the
 recorded query became 2.4. The engine's identity enters the run's row, and
@@ -76,9 +76,9 @@ generation's closing resident count, its output token count and the ordinal,
 measured on 2026-09-05 against three records and nine generations rather
 than reasoned, with the alternative that fails on the first generation
 stated so no later act rediscovers it. Section 7.3 no longer states the
-contract's ask as landed: the two counts it converts from are owed at issue
-#461, and until they cross this seam carries the ordinal alone and this
-crate cannot key its store from it. Section 9 gains the two rows the
+contract's ask as landed: the two counts it converts from are owed at
+issue #461, and until they cross this seam carries the ordinal alone and
+this crate cannot key its store from it. Section 9 gains the two rows the
 contract's conformance clause named. Per the review of PR #459.
 
 **Revised:** 2026-09-05, ninth of this date, a position that was never
@@ -97,8 +97,8 @@ disagrees where the position is derived at the read, which two readers
 deriving identically would satisfy while the property went unenforced. It
 now alters the summary's counts after ingest and rereads, which only a
 stored value survives. Section 3 says the points of an unaddressable
-generation do not land while its summary entry does. Per the review of PR
-#459.
+generation do not land while its summary entry does. Per the review of
+PR #459.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -566,10 +566,10 @@ of this section stands.
 
 **The series is addressed by the ordinal and this crate's store by the
 position**, per section 2.1, and the conversion is this crate's to make at
-ingest. **What it converts from is owed and does not cross yet**, issue
-#461: the contract's section 3 asks the emitter for the resident count at a
-generation's close and its output token count, on the summary stream, and
-until that lands this seam carries the ordinal alone. **A reader in that
+ingest. **What it converts from is owed and does not cross yet**,
+issue #461: the contract's section 3 asks the emitter for the resident count
+at a generation's close and its output token count, on the summary stream,
+and until that lands this seam carries the ordinal alone. **A reader in that
 state cannot key its store** and stores what crosses without converting,
 rather than deriving an address from a figure that does not answer.
 
