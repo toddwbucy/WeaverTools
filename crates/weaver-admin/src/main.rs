@@ -247,6 +247,7 @@ fn stand_state_member(
         .args(member_vector(
             &territory,
             &inventory.binding,
+            inventory.lineage.is_some(),
             &store,
             &config.state_store_socket,
         ))
@@ -331,6 +332,7 @@ fn arm_member_end(raw_member_end: std::os::fd::RawFd) -> std::io::Result<()> {
 fn member_vector(
     territory: &std::path::Path,
     binding: &weaver_types::EnterBinding,
+    restoring: bool,
     store: &weaver_types::StateStore,
     store_socket: &std::path::Path,
 ) -> Vec<std::ffi::OsString> {
@@ -357,10 +359,35 @@ fn member_vector(
         }
     }
     vector.push(territory.as_os_str().to_owned());
-    if matches!(binding, weaver_types::EnterBinding::Diagnostic) {
+    // The door's name rides the vector under a diagnostic binding and,
+    // since 2026-09-04, under a serving load that elects a restore, per Spec
+    // section 6 and issue #432: the member binds the name only where this
+    // value is there, and this crate names the door and dials it never.
+    if matches!(binding, weaver_types::EnterBinding::Diagnostic) || restoring {
         vector.push(territory.join("preload.sock").into_os_string());
     }
     vector
+}
+
+/// The digests of the organ binaries this crate starts, keyed by the
+/// binary's name, per `weaver-admin-harness-contract` section 3 as of
+/// 2026-09-04: the worker the unit runs and the state member beside it, each
+/// sha256 hex and the empty string where the file does not read.
+fn stack_digests(config: &ServiceConfig) -> std::collections::BTreeMap<String, String> {
+    let worker = config.unit.worker.as_path();
+    let member = worker
+        .parent()
+        .map(|directory| directory.join("weaver-state"))
+        .unwrap_or_else(|| std::path::PathBuf::from("weaver-state"));
+    let mut stack = std::collections::BTreeMap::new();
+    for binary in [worker, member.as_path()] {
+        let name = binary
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        stack.insert(name, inventory::file_digest(binary));
+    }
+    stack
 }
 
 fn take_inventory(
@@ -658,6 +685,12 @@ fn run_load(
                 // embedded engine, and the record names what was resolved.
                 state_store: inventory.config.state_store.clone().unwrap_or_default(),
                 declaration: inventory.declaration.clone(),
+                // The lineage the inventory resolved, never the record's
+                // path, and the digests of the two binaries this crate
+                // starts, per `weaver-admin-harness-contract` section 3 as
+                // of 2026-09-04 and issue #432.
+                restore: inventory.lineage.clone(),
+                stack: stack_digests(config),
             },
         }),
     };
@@ -1162,20 +1195,16 @@ mod tests {
         let territory = std::path::Path::new("/dbpool/agents/alpha/state");
         let embedded = weaver_types::StateStore::default();
         let socket = std::path::Path::new("/run/postgresql");
-        let serving = member_vector(
-            territory,
-            &weaver_types::EnterBinding::Serving {
-                gate_instruction: weaver_types::GateInstruction {
-                    access_rule: weaver_types::AccessRule {
-                        allowed_uids: Default::default(),
-                        allowed_gids: Default::default(),
-                        denied_uids: Default::default(),
-                    },
+        let serving_binding = weaver_types::EnterBinding::Serving {
+            gate_instruction: weaver_types::GateInstruction {
+                access_rule: weaver_types::AccessRule {
+                    allowed_uids: Default::default(),
+                    allowed_gids: Default::default(),
+                    denied_uids: Default::default(),
                 },
             },
-            &embedded,
-            socket,
-        );
+        };
+        let serving = member_vector(territory, &serving_binding, false, &embedded, socket);
         assert_eq!(
             serving.len(),
             3,
@@ -1187,6 +1216,7 @@ mod tests {
         let diagnostic = member_vector(
             territory,
             &weaver_types::EnterBinding::Diagnostic,
+            false,
             &embedded,
             socket,
         );
@@ -1200,6 +1230,18 @@ mod tests {
             diagnostic[3],
             territory.join("preload.sock").into_os_string(),
             "the territory with the fixed leaf, no invocation input composing it"
+        );
+        // **A serving load that elects a restore names the door too**, per
+        // Spec section 6 as of 2026-09-04 and issue #432, the same arm.
+        let restoring = member_vector(territory, &serving_binding, true, &embedded, socket);
+        assert_eq!(
+            restoring.len(),
+            4,
+            "a restoring serving load carries the preload path"
+        );
+        assert_eq!(
+            restoring[3],
+            territory.join("preload.sock").into_os_string()
         );
     }
 

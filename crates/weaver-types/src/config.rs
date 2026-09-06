@@ -77,6 +77,34 @@ pub struct AgentConfig {
     /// exchange, because no exchange carries a path.
     #[serde(default)]
     pub loop_file: Option<PathBuf>,
+    /// The record the session stands from and the cut, per
+    /// `weaver-types-Spec` section 2 as of 2026-09-04 and issue #432: absent
+    /// means the load stands from nothing, which is what every load did
+    /// before the ruling. Present, it names a record admin reads under its
+    /// own custody and the harness never sees, and the session name decides
+    /// whether the restore is a resume or a branch, judged at the inventory.
+    #[serde(default)]
+    pub restore: Option<Restore>,
+}
+
+/// The restore election, per `weaver-types-Spec` section 2: the record's
+/// path and, where the session stands on a prefix of it, the cut.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct Restore {
+    pub record: PathBuf,
+    #[serde(default)]
+    pub through: Option<Cut>,
+}
+
+/// A cut in a record: a run by its reference and a turn within it, the run
+/// carried because a turn's number recurs across a session's runs and a cut
+/// naming the turn alone would name several.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+pub struct Cut {
+    pub run: crate::wire::RunId,
+    pub turn: u64,
 }
 
 /// The store election, per `weaver-types-Spec` section 2: which port the

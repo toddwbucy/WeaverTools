@@ -42,7 +42,9 @@ pub use lens::{
     Lens, LensRefusal, Manifest, Unembedding, WeightsDigest, manifest_path_for, read_manifest,
     rms_epsilon, sha256_hex, sha256_hex_of_file, shards_for, verify_weights,
 };
-pub use project::{Distillate, ELECTION, project, render_opener};
+pub use project::{
+    CutRefusal, Distillate, ELECTION, cut_through, project, project_as, render_opener,
+};
 pub use reading::{Bracket, Gated, Outcome, RecordKind, brackets, gate, record_kind};
 pub use record::{Envelope, Event, parse_record, value_at};
 pub use signals::{Point, Series, Signals};

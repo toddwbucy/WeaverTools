@@ -394,11 +394,11 @@ fn serve(
         // seal's position: every distillate received through the seal is in
         // the answer, which holds by construction here because the preload
         // frames of this wakeup landed above before the answer is built.
-        if parking.take_ready()
-            && let Ok(events) = store.replay(session)
-        {
-            let frame = render_replay_answer(&events);
-            if frame.len() <= ANSWER_BOUND && !harness.respond(frame.as_bytes()) {
+        for ask in parking.take_ready() {
+            if let Ok(frame) = answer_frame(&ask, store, session)
+                && frame.len() <= ANSWER_BOUND
+                && !harness.respond(frame.as_bytes())
+            {
                 return std::process::ExitCode::SUCCESS;
             }
         }
@@ -425,31 +425,18 @@ fn drain_harness_lines(
             continue;
         };
         // **The parked ask steps out of the arrival order**, per the
-        // contract's stated exception: a shape or recall ask arriving
-        // while a replay parks is answered in its own arrival order,
-        // against the holdings the stream carried before it.
-        if matches!(ask, Ask::Replay) && parking.parks() {
+        // contract's stated exception: a shape or grants ask arriving
+        // while an ask parks is answered in its own arrival order, against
+        // the holdings the stream carried before it, and the replay,
+        // identity, and recall asks park where the door stands and no seal
+        // has landed, per `weaver-state-Spec` section 4 as of 2026-09-06.
+        if parking.parks(&ask) {
             continue;
         }
         // A store that cannot answer, like an answer past the bound, is
         // silence the harness's bound converts, per the contract: custody
         // never invents an answer shape for a fault.
-        let frame = match ask {
-            Ask::Shape => store
-                .shape(session)
-                .map(|shape| render_shape_answer(&shape)),
-            Ask::Recall { last_turns } => store
-                .recall(session, last_turns)
-                .map(|events| render_recall_answer(&events)),
-            Ask::Replay => store
-                .replay(session)
-                .map(|events| render_replay_answer(&events)),
-            Ask::Grants => store.grants().map(|surface| render_grants_answer(&surface)),
-            Ask::Identity => store
-                .identity(session)
-                .map(|events| render_identity_answer(&events)),
-        };
-        if let Ok(frame) = frame
+        if let Ok(frame) = answer_frame(&ask, store, session)
             && frame.len() <= ANSWER_BOUND
             && !harness.respond(frame.as_bytes())
         {
@@ -459,19 +446,48 @@ fn drain_harness_lines(
     None
 }
 
+/// One ask's answer frame against the holdings as they stand, the one
+/// site the five asks are answered from, so a parked ask answers at the seal
+/// through the same path an immediate one does.
+fn answer_frame(
+    ask: &Ask,
+    store: &mut dyn Store,
+    session: &str,
+) -> Result<String, weaver_state::CustodyFault> {
+    match ask {
+        Ask::Shape => store
+            .shape(session)
+            .map(|shape| render_shape_answer(&shape)),
+        Ask::Recall { last_turns } => store
+            .recall(session, *last_turns)
+            .map(|events| render_recall_answer(&events)),
+        Ask::Replay => store
+            .replay(session)
+            .map(|events| render_replay_answer(&events)),
+        Ask::Grants => store.grants().map(|surface| render_grants_answer(&surface)),
+        Ask::Identity => store
+            .identity(session)
+            .map(|events| render_identity_answer(&events)),
+    }
+}
+
 /// **The parking law, one unit**, per `weaver-harness-state-contract`
 /// section 2 and `weaver-state-Spec` section 4's
 /// `state-replay-answers-at-the-seal`: on a member standing with the
 /// preload door, a replay ask parks until a seal has landed, whatever the
 /// transport is doing, and the seal is a per-standing fact nothing sets
-/// back. At most one replay parks, a second replacing the first, the
-/// replaced ask cleared unanswered because its asker's bound already
-/// converted it. Where no door stands, the ask answers immediately like
-/// its siblings.
+/// back. **The identity and recall asks park on the same fact**, as of
+/// 2026-09-06 per issue #432: a session standing from a preloaded record
+/// asks for its prefix and its conversation at the enter, before the
+/// driver has sealed, and each answers at the seal in arrival order. At
+/// most one replay parks, a second replacing the first, the replaced ask
+/// cleared unanswered because its asker's bound already converted it, and
+/// the replacement rule reaches the replay alone. Where no door stands, an
+/// ask answers immediately like its siblings.
 struct ReplayParking {
     door_stands: bool,
     sealed: bool,
-    parked: bool,
+    parked: Vec<Ask>,
 }
 
 impl ReplayParking {
@@ -479,18 +495,23 @@ impl ReplayParking {
         ReplayParking {
             door_stands,
             sealed: false,
-            parked: false,
+            parked: Vec::new(),
         }
     }
 
-    /// A replay ask arrives: `true` says it parks, replacing any parked
-    /// one, and `false` says it answers now.
-    fn parks(&mut self) -> bool {
-        if self.door_stands && !self.sealed {
-            self.parked = true;
-            return true;
+    /// An ask arrives: `true` says it parks and `false` says it answers
+    /// now. Only the replay, identity, and recall asks park, the shape and
+    /// grants asks answering against pre-ask holdings whatever stands.
+    fn parks(&mut self, ask: &Ask) -> bool {
+        let parkable = matches!(ask, Ask::Replay | Ask::Identity | Ask::Recall { .. });
+        if !parkable || !self.door_stands || self.sealed {
+            return false;
         }
-        false
+        if matches!(ask, Ask::Replay) {
+            self.parked.retain(|held| !matches!(held, Ask::Replay));
+        }
+        self.parked.push(ask.clone());
+        true
     }
 
     /// The seal lands. Nothing sets it back.
@@ -498,14 +519,13 @@ impl ReplayParking {
         self.sealed = true;
     }
 
-    /// Whether a parked ask is ready to answer, clearing the slot when it
-    /// is: the seal is the only fact that answers.
-    fn take_ready(&mut self) -> bool {
-        if self.parked && self.sealed {
-            self.parked = false;
-            return true;
+    /// The parked asks ready to answer, in arrival order, clearing the slots
+    /// when they are: the seal is the only fact that answers.
+    fn take_ready(&mut self) -> Vec<Ask> {
+        if self.sealed {
+            return std::mem::take(&mut self.parked);
         }
-        false
+        Vec::new()
     }
 }
 
@@ -977,18 +997,65 @@ mod tests {
     fn a_replay_parks_at_an_open_preload_until_the_seal() {
         // No door: never parks.
         let mut open_door = ReplayParking::new(false);
-        assert!(!open_door.parks(), "no door, the ask answers now");
+        assert!(
+            !open_door.parks(&Ask::Replay),
+            "no door, the ask answers now"
+        );
         // Door standing, no seal: parks, and a second ask replaces the
         // first rather than queueing a second answer.
         let mut parking = ReplayParking::new(true);
-        assert!(parking.parks(), "an open preload parks the ask");
-        assert!(parking.parks(), "a second ask replaces the first");
-        assert!(!parking.take_ready(), "the seal alone answers");
+        assert!(parking.parks(&Ask::Replay), "an open preload parks the ask");
+        assert!(
+            parking.parks(&Ask::Replay),
+            "a second ask replaces the first"
+        );
+        assert!(parking.take_ready().is_empty(), "the seal alone answers");
         parking.seal();
-        assert!(parking.take_ready(), "the seal readies the parked ask");
-        assert!(!parking.take_ready(), "one answer per parked ask");
+        assert_eq!(
+            parking.take_ready(),
+            vec![Ask::Replay],
+            "the seal readies one"
+        );
+        assert!(parking.take_ready().is_empty(), "one answer per parked ask");
         // After the seal, an ask answers immediately: sealed never unsets.
-        assert!(!parking.parks(), "after the seal nothing parks");
+        assert!(!parking.parks(&Ask::Replay), "after the seal nothing parks");
+    }
+
+    /// **The identity and recall asks park on the seal beside the replay**,
+    /// per `weaver-state-Spec` section 4 as of 2026-09-06 and the contract's
+    /// parking clause of 2026-09-04: where the door stands and no seal has
+    /// landed each parks, they answer at the seal in arrival order, the
+    /// replay's replacement rule reaches the replay alone, and the shape
+    /// and grants asks never park.
+    ///
+    /// Perturbation: park the replay alone, as the law did before this
+    /// act, and the identity ask answers before the seal from empty
+    /// holdings, the first assertion failing. Watched under exactly that
+    /// removal.
+    #[test]
+    fn the_enters_asks_park_on_the_seal_in_arrival_order() {
+        let mut parking = ReplayParking::new(true);
+        assert!(parking.parks(&Ask::Identity), "the identity ask parks");
+        assert!(
+            parking.parks(&Ask::Recall { last_turns: None }),
+            "the recall ask parks"
+        );
+        assert!(parking.parks(&Ask::Replay));
+        assert!(parking.parks(&Ask::Replay), "the replay replaces its own");
+        assert!(!parking.parks(&Ask::Shape), "a shape ask answers now");
+        assert!(!parking.parks(&Ask::Grants), "a grants ask answers now");
+        assert!(parking.take_ready().is_empty(), "nothing before the seal");
+        parking.seal();
+        assert_eq!(
+            parking.take_ready(),
+            vec![Ask::Identity, Ask::Recall { last_turns: None }, Ask::Replay],
+            "arrival order, the replay held once"
+        );
+        let mut doorless = ReplayParking::new(false);
+        assert!(
+            !doorless.parks(&Ask::Identity),
+            "no door, the identity answers now"
+        );
     }
 
     /// **The preload door admits the operator principal and refuses every

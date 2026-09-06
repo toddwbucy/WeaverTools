@@ -16,7 +16,7 @@ fn main() -> std::process::ExitCode {
     };
     match arguments.split_first().map(|(v, rest)| (v.as_str(), rest)) {
         Some(("derive", rest)) => run_derive(rest),
-        Some(("preload", [trace, socket])) => run_preload(trace, socket),
+        Some(("preload", rest)) => run_preload(rest),
         Some(("read", [trace])) => run_read(trace),
         Some(("compare", [left, right])) => run_compare(left, right),
         Some(("signals", [record])) => run_signals(record, 2.0),
@@ -192,7 +192,49 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
     }
 }
 
-fn run_preload(trace: &str, socket: &str) -> std::process::ExitCode {
+/// The preload, per `weaver-analysis-Spec` section 4: `preload <trace>
+/// <socket> [--through <run>:<turn>] [--as <session>]`, the cut projecting
+/// the record through the named turn's close and the rename landing it
+/// under another session name, both refusing before anything is sent.
+fn run_preload(rest: &[String]) -> std::process::ExitCode {
+    let refused = |why: String| {
+        eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        std::process::ExitCode::FAILURE
+    };
+    let mut positionals: Vec<&str> = Vec::new();
+    let mut through: Option<(String, u64)> = None;
+    let mut as_session: Option<String> = None;
+    let mut it = rest.iter();
+    while let Some(argument) = it.next() {
+        match argument.as_str() {
+            "--through" => {
+                let Some(cut) = it.next() else {
+                    return refused("--through takes <run>:<turn>".to_string());
+                };
+                let Some((run, turn)) = cut.rsplit_once(':') else {
+                    return refused(format!(
+                        "the cut is <run>:<turn>, and {cut:?} carries no colon"
+                    ));
+                };
+                let Ok(turn) = turn.parse::<u64>() else {
+                    return refused(format!("the cut's turn {turn:?} is not a number"));
+                };
+                through = Some((run.to_string(), turn));
+            }
+            "--as" => {
+                let Some(name) = it.next() else {
+                    return refused("--as takes <session>".to_string());
+                };
+                as_session = Some(name.clone());
+            }
+            other => positionals.push(other),
+        }
+    }
+    let [trace, socket] = positionals[..] else {
+        return refused(
+            "preload takes <trace> <socket> [--through <run>:<turn>] [--as <session>]".to_string(),
+        );
+    };
     let Ok(text) = read_stream(trace) else {
         eprintln!(
             "{}",
@@ -208,7 +250,16 @@ fn run_preload(trace: &str, socket: &str) -> std::process::ExitCode {
         );
         return std::process::ExitCode::FAILURE;
     };
-    let distillates = weaver_analysis::project(&events);
+    // **The cut refuses before anything is sent**, per Spec section 4.
+    let projected: &[weaver_analysis::Event] = match through.as_ref() {
+        None => &events,
+        Some((run, turn)) => match weaver_analysis::cut_through(&events, run, *turn) {
+            Ok(through) => through,
+            Err(why) => return refused(why.to_string()),
+        },
+    };
+    let session = as_session.unwrap_or(session);
+    let distillates = weaver_analysis::project_as(projected, Some(&session));
     let outcome = std::os::unix::net::UnixStream::connect(socket).and_then(|stream| {
         let mut sender = weaver_analysis::preload::open(stream, &session)?;
         for distillate in &distillates {
