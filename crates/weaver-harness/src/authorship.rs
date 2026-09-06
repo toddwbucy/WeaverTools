@@ -219,6 +219,51 @@ impl Author {
         ))
     }
 
+    /// The restored prefix's door, per `weaver-harness-Spec` section 6 as
+    /// revised 2026-09-04 on issue #432: under a restoring load the door
+    /// admits the roles the restored conversation carries, user, assistant,
+    /// and tool result beside system, each authored turnless as the identity
+    /// is, so the record of a branch is complete without its parent. The
+    /// system-only rule stands for the declaration's own field at
+    /// `author_identity`, still the only prefix a declaration can write.
+    pub fn author_restored(
+        &self,
+        recorder: &mut Record,
+        message: &Message,
+    ) -> Result<Result<Sequence, RecordFailure>, UnlicensedMessage> {
+        licensed(message)?;
+        let kind = match message.role {
+            Role::System => Kind::MessageSystem,
+            Role::User => Kind::MessageUser,
+            Role::Assistant => Kind::MessageAssistant,
+            Role::ToolResult => Kind::MessageToolResult,
+            // The floor's role set grows, per its non-exhaustive election,
+            // and a role this door has no kind for refuses by name rather
+            // than being written under a kind it is not.
+            _ => {
+                return Err(UnlicensedMessage {
+                    role: role_name(&message.role),
+                    block: "restored-door-no-kind",
+                });
+            }
+        };
+        let rendered = serde_json::to_string(message).map_err(|_| UnlicensedMessage {
+            role: role_name(&message.role),
+            block: "unrenderable",
+        })?;
+        let payload = raw_payload(&rendered).ok_or(UnlicensedMessage {
+            role: role_name(&message.role),
+            block: "unrenderable",
+        })?;
+        Ok(self.author(
+            recorder,
+            kind,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Message(payload)),
+        ))
+    }
+
     /// Authors a tool-result message from the granted value, the one door
     /// for the role, per `weaver-harness-Spec` section 6: the record is
     /// minted from the grant at this site and nowhere else, so what enters

@@ -186,8 +186,8 @@ fn no_kind_crosses_past_the_election() {
     }
     assert_eq!(
         project(&parse_record(SOURCE)).len(),
-        5,
-        "one load, two requests, two measurements"
+        10,
+        "one load, the prefix, two turns' messages, two requests, two measurements"
     );
 }
 
@@ -227,14 +227,22 @@ fn distillates_leave_in_landing_order() {
             frame["envelope"]["kind"].as_str().unwrap().to_string()
         })
         .collect();
+    // The election carries the four message kinds since 2026-09-06, per
+    // Spec section 3, so the interleaving holds the prefix and the turns'
+    // messages beside the requests and measurements, in landing order.
     assert_eq!(
         kinds,
         vec![
             "load",
+            "message.system",
+            "message.user",
             "model.request",
             "model.measurement",
+            "message.assistant",
+            "message.user",
             "model.request",
-            "model.measurement"
+            "model.measurement",
+            "message.assistant",
         ],
         "the record's own interleaving"
     );
@@ -259,7 +267,7 @@ fn the_seal_is_an_empty_object_on_its_own_line() {
     }
     let text = String::from_utf8(wire).unwrap();
     let lines: Vec<&str> = text.lines().collect();
-    assert_eq!(lines.len(), 7, "opener, five distillates, the seal");
+    assert_eq!(lines.len(), 12, "opener, ten distillates, the seal");
     assert_eq!(*lines.last().unwrap(), "{}", "the seal's one spelling");
     let opener: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
     assert_eq!(opener["session"], "s-karl-1", "the election opens the flow");

@@ -510,6 +510,78 @@ pub struct Elections {
     /// election was the default, so such a record replays its token path
     /// and cannot be certified for state.
     pub tee: Option<crate::tee::Election>,
+    /// Where the session stands from a record, per `weaver-trace-Spec`
+    /// section 3 as of 2026-09-06 and the charter's 3.1: the parent's
+    /// session, the run the cut falls in, and the turn the holdings stop at,
+    /// copied from the enter. Absent otherwise, never null.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lineage: Option<Box<Lineage>>,
+    /// The digests of the organ binaries admin started, keyed by name, per
+    /// the same section, so a record is sufficient for its own conditions.
+    pub stack: std::collections::BTreeMap<String, String>,
+}
+
+/// A restore's lineage as the load event names it, per `weaver-trace-Spec`
+/// section 3.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Lineage {
+    pub parent: String,
+    pub run: String,
+    pub through: u64,
+}
+
+#[cfg(test)]
+mod lineage_tests {
+    use super::*;
+
+    fn elections(lineage: Option<Box<Lineage>>) -> Elections {
+        let mut stack = std::collections::BTreeMap::new();
+        stack.insert("weaver-harness".to_string(), "ab12".to_string());
+        Elections {
+            residual_readout: false,
+            field: None,
+            surprisal: false,
+            state_member: true,
+            state_store: StoreIdentity {
+                engine: "sqlite".into(),
+                database: None,
+                role: None,
+            },
+            composer: LoopIdentity::compiled("test"),
+            declaration: "d".into(),
+            tee: None,
+            lineage,
+            stack,
+        }
+    }
+
+    /// **The load names its lineage where the session stands from a record
+    /// and its stack on every load**, per `weaver-trace-Spec` section 3 as
+    /// of 2026-09-06: the lineage absent rather than null where the load
+    /// stands from nothing, and the stack keyed by name.
+    ///
+    /// Perturbation: drop the `skip_serializing_if` on `lineage` and the
+    /// absence assertion fails on a null member. Watched under exactly that
+    /// removal.
+    #[test]
+    fn the_load_names_its_lineage_and_its_stack() {
+        let rendered = serde_json::to_string(&elections(None)).expect("renders");
+        assert!(
+            !rendered.contains("lineage"),
+            "absent, never null: {rendered}"
+        );
+        assert!(rendered.contains("\"stack\":{\"weaver-harness\":\"ab12\"}"));
+        let rendered = serde_json::to_string(&elections(Some(Box::new(Lineage {
+            parent: "s-1".into(),
+            run: "r-a".into(),
+            through: 2,
+        }))))
+        .expect("renders");
+        assert!(
+            rendered.contains("\"lineage\":{\"parent\":\"s-1\",\"run\":\"r-a\",\"through\":2}"),
+            "{rendered}"
+        );
+    }
 }
 
 /// How the generation ended, per the charter: completed or stopped.

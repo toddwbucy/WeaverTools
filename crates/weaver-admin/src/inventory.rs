@@ -4,6 +4,7 @@
 //! conforms: admin-checks-no-device
 //! conforms: admin-identity-from-validated-name
 //! conforms: admin-kind-mismatch-refused-at-inventory
+//! conforms: admin-restore-cut-judged-at-the-inventory
 //!
 //! The inventory, per `weaver-admin-Spec` section 4: **one function**, called
 //! by `validate` and by `load`'s steps 2 and 3, refusing at the first failure
@@ -85,6 +86,12 @@ pub struct Inventory {
     /// inventory function resolves it, so the verb and the load cannot
     /// resolve differently, and what the enter carries is this value.
     pub binding: EnterBinding,
+    /// The restore's lineage where the declaration elects one, resolved
+    /// here per `weaver-admin-Spec` section 4 as of 2026-09-04: the parent's
+    /// session, the run the cut falls in, and the turn the holdings stop
+    /// at, a whole record resolved to its last run's last turn. The record's
+    /// path never leaves this crate.
+    pub lineage: Option<weaver_types::Lineage>,
 }
 
 /// The one inventory function.
@@ -331,6 +338,19 @@ fn take_inventory_against(
         }
     }
 
+    // **A restore is judged here too**, per `weaver-admin-Spec` section 4 as
+    // of 2026-09-04 and issue #432. The record is read under this crate's
+    // own custody and never handed on: a record that cannot be read refuses
+    // `BoundaryUnverified`, a cut the record does not hold refuses
+    // `ConfigInvalid` naming `restore.through`, and the session name decides
+    // resume from branch, a cut under the record's own name refusing because
+    // a session cannot rewind under its own name while its record carries
+    // the turns the cut would drop.
+    let lineage = match config.restore.as_ref() {
+        None => None,
+        Some(restore) => Some(judge_restore(restore, &config.session)?),
+    };
+
     // **The access rule is checked against the mode that will carry it**, per
     // `weaver-admin-Spec` section 6 and the operator's ruling of 2026-08-28.
     //
@@ -400,7 +420,154 @@ fn take_inventory_against(
         identity,
         declaration: declaration_digest(source),
         binding,
+        lineage,
     })
+}
+
+/// The restore's judgment, per `weaver-admin-Spec` section 4 as of
+/// 2026-09-04: read the record, find what it holds, and resolve the lineage
+/// the enter carries.
+///
+/// **The record is the one fact that can say whether the cut exists**, so
+/// the walk reads its envelopes and nothing else: the session every event
+/// carries, the runs in landing order, and each run's last turn number. A
+/// turn key spells `t-<n>` per `weaver-trace-Spec` section 2, and a cut names
+/// the turn by that number beside its run.
+fn judge_restore(
+    restore: &weaver_types::Restore,
+    session: &weaver_types::SessionId,
+) -> Result<weaver_types::Lineage, LifecycleRefusal> {
+    let text = std::fs::read_to_string(&restore.record).map_err(|error| {
+        eprintln!(
+            "boundary unverified: the restore's record {} does not read: {error}",
+            restore.record.display()
+        );
+        LifecycleRefusal::BoundaryUnverified
+    })?;
+    let held = RecordHoldings::read(&text).ok_or_else(|| {
+        eprintln!(
+            "boundary unverified: the restore's record {} holds no event",
+            restore.record.display()
+        );
+        LifecycleRefusal::BoundaryUnverified
+    })?;
+    let through_refusal = || LifecycleRefusal::ConfigInvalid {
+        field: Some(FieldName("restore.through".into())),
+    };
+    // **The session name decides what the restore is.** The declaration's
+    // own name with the record whole is a resume, and a cut under it refuses.
+    if session.0 == held.session {
+        if restore.through.is_some() {
+            eprintln!("config invalid: a session cannot rewind under its own name");
+            return Err(through_refusal());
+        }
+        return Ok(held.whole());
+    }
+    // A new name is a branch, at the cut where one is named and at the
+    // record's end where none is.
+    match restore.through.as_ref() {
+        None => Ok(held.whole()),
+        Some(cut) => {
+            let last = held
+                .runs
+                .iter()
+                .find(|(run, _)| *run == cut.run.0)
+                .map(|(_, last)| *last)
+                .ok_or_else(|| {
+                    eprintln!("config invalid: the record holds no run {:?}", cut.run.0);
+                    through_refusal()
+                })?;
+            if cut.turn == 0 || cut.turn > last {
+                eprintln!(
+                    "config invalid: run {:?} holds no turn {}",
+                    cut.run.0, cut.turn
+                );
+                return Err(through_refusal());
+            }
+            Ok(weaver_types::Lineage {
+                parent: weaver_types::SessionId(held.session),
+                run: cut.run.clone(),
+                through: cut.turn,
+            })
+        }
+    }
+}
+
+/// What a record holds that a cut is judged against: its session, and its
+/// runs in landing order with each run's last turn number.
+struct RecordHoldings {
+    session: String,
+    runs: Vec<(String, u64)>,
+}
+
+impl RecordHoldings {
+    fn read(text: &str) -> Option<RecordHoldings> {
+        let mut session: Option<String> = None;
+        let mut runs: Vec<(String, u64)> = Vec::new();
+        for line in text.lines() {
+            let Ok(value) = serde_json::from_str::<serde_json::Value>(line) else {
+                continue;
+            };
+            let Some(run) = value.get("run").and_then(|r| r.as_str()) else {
+                continue;
+            };
+            if session.is_none() {
+                session = value
+                    .get("session")
+                    .and_then(|s| s.as_str())
+                    .map(str::to_string);
+            }
+            let turn = value
+                .get("turn")
+                .and_then(|t| t.as_str())
+                .and_then(|t| t.strip_prefix("t-"))
+                .and_then(|n| n.parse::<u64>().ok());
+            match runs.iter_mut().find(|(held, _)| held == run) {
+                Some((_, last)) => {
+                    if let Some(turn) = turn {
+                        *last = (*last).max(turn);
+                    }
+                }
+                None => runs.push((run.to_string(), turn.unwrap_or(0))),
+            }
+        }
+        Some(RecordHoldings {
+            session: session?,
+            runs,
+        })
+    }
+
+    /// The whole record resolved to its last run's last turn.
+    fn whole(&self) -> weaver_types::Lineage {
+        let (run, through) = self
+            .runs
+            .last()
+            .cloned()
+            .unwrap_or_else(|| (String::new(), 0));
+        weaver_types::Lineage {
+            parent: weaver_types::SessionId(self.session.clone()),
+            run: weaver_types::RunId(run),
+            through,
+        }
+    }
+}
+
+/// A file's digest, sha256 of its bytes, hex, and the empty string where the
+/// file does not read: a digest that cannot be computed reports that it
+/// could not rather than a wrong value, the sentinel `weaver-spu-Spec`
+/// section 3 keeps for the weights hash, kept here for the stack.
+pub fn file_digest(path: &Path) -> String {
+    use sha2::Digest;
+    let Ok(bytes) = std::fs::read(path) else {
+        return String::new();
+    };
+    let digest = sha2::Sha256::digest(&bytes);
+    let mut hex = String::with_capacity(64);
+    for byte in digest {
+        use std::fmt::Write;
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
 }
 
 /// The service engine's conventional socket directory, standing where this
@@ -1509,6 +1676,105 @@ mod tests {
     /// The inventory repairs nothing: a missing home refuses rather than being
     /// created.
     #[test]
+    /// **The restore is judged here, and the session name decides what it
+    /// is**, per `weaver-admin-Spec` section 4 as of 2026-09-04. The record's
+    /// own session name with the record whole is a resume resolved to the
+    /// last run's last turn, a cut under that name refuses, a new name is a
+    /// branch at the cut or at the end, a cut the record does not hold
+    /// refuses naming the field, and a record that does not read refuses
+    /// the boundary.
+    ///
+    /// Perturbation: drop the run check and the absent-run case resolves to
+    /// a lineage, or drop the session rule and a rewind under the record's
+    /// own name resolves. Watched under both.
+    #[test]
+    fn the_restore_is_judged_at_the_inventory() {
+        let root = scratch("restore");
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink dir");
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o750)).expect("mode");
+        let home = root.join("home");
+        std::fs::create_dir_all(&home).expect("home");
+        let record = root.join("s-1.ndjson");
+        std::fs::write(
+            &record,
+            concat!(
+                "{\"session\":\"s-1\",\"run\":\"r-a\",\"sequence\":\"0\",\"kind\":\"load\"}\n",
+                "{\"session\":\"s-1\",\"run\":\"r-a\",\"turn\":\"t-1\",\"sequence\":\"1\",\"kind\":\"turn.opened\"}\n",
+                "{\"session\":\"s-1\",\"run\":\"r-a\",\"turn\":\"t-2\",\"sequence\":\"2\",\"kind\":\"turn.opened\"}\n",
+                "{\"session\":\"s-1\",\"run\":\"r-b\",\"sequence\":\"3\",\"kind\":\"load\"}\n",
+                "{\"session\":\"s-1\",\"run\":\"r-b\",\"turn\":\"t-1\",\"sequence\":\"4\",\"kind\":\"turn.opened\"}\n",
+                "{\"session\":\"s-1\",\"run\":\"r-b\",\"turn\":\"t-3\",\"sequence\":\"5\",\"kind\":\"turn.closed\"}\n",
+            ),
+        )
+        .expect("the record writes");
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".into());
+        let bound = boundary(&home, 65533);
+        let restore = |cut: &str| format!("restore:\n  record: {}\n{cut}", record.display());
+
+        // A resume: the record's own session, whole, resolves to r-b's turn 3.
+        let source = format!("{}{}", config_source(&sink_dir), restore(""));
+        let taken = take_inventory(&name, &source, &allow, &bound).expect("a resume admits");
+        let lineage = taken.lineage.expect("a resume carries its lineage");
+        assert_eq!(lineage.parent.0, "s-1");
+        assert_eq!(lineage.run.0, "r-b");
+        assert_eq!(lineage.through, 3, "the last run's last turn");
+
+        // A cut under the record's own name refuses: no rewind under one name.
+        let source = format!(
+            "{}{}",
+            config_source(&sink_dir),
+            restore("  through:\n    run: r-b\n    turn: 1\n")
+        );
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(refused, Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == "restore.through"),
+            "a rewind under the record's own name refuses, got {refused:?}"
+        );
+
+        // A branch: a new session name at a named cut.
+        let branched = config_source(&sink_dir).replace("session: s-1", "session: s-2");
+        let source = format!(
+            "{branched}{}",
+            restore("  through:\n    run: r-a\n    turn: 2\n")
+        );
+        let taken = take_inventory(&name, &source, &allow, &bound).expect("a branch admits");
+        let lineage = taken.lineage.expect("a branch carries its lineage");
+        assert_eq!(
+            (
+                lineage.parent.0.as_str(),
+                lineage.run.0.as_str(),
+                lineage.through
+            ),
+            ("s-1", "r-a", 2)
+        );
+
+        // A cut the record does not hold refuses naming the field, by run and by turn.
+        for cut in [
+            "  through:\n    run: r-zz\n    turn: 1\n",
+            "  through:\n    run: r-a\n    turn: 9\n",
+        ] {
+            let source = format!("{branched}{}", restore(cut));
+            let refused = take_inventory(&name, &source, &allow, &bound);
+            assert!(
+                matches!(refused, Err(LifecycleRefusal::ConfigInvalid { field: Some(ref f) }) if f.0 == "restore.through"),
+                "an absent cut refuses naming the field, got {refused:?}"
+            );
+        }
+
+        // A record that does not read refuses the boundary.
+        let source = format!(
+            "{branched}restore:\n  record: {}\n",
+            root.join("no-such-record.ndjson").display()
+        );
+        let refused = take_inventory(&name, &source, &allow, &bound);
+        assert!(
+            matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)),
+            "got {refused:?}"
+        );
+    }
+
     fn the_inventory_repairs_nothing() {
         let root = scratch("repair");
         let sink_dir = root.join("sink");

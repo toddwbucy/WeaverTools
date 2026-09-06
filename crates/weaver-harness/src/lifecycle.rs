@@ -10,6 +10,7 @@
 //! conforms: harness-gate-pair-waits-on-residency
 //! conforms: harness-diagnostic-enter-forks-no-gate
 //! conforms: harness-scoped-refusal-account
+//! conforms: harness-restoring-open-seats-the-record
 //! conforms: harness-left-follows-drain
 //! conforms: harness-announce-after-record
 //! conforms: harness-dumpable-flag-cleared
@@ -1365,6 +1366,19 @@ impl Harness {
             // `serve`. Neither is read from the deployment.
             state_member,
             declaration: payload.declaration.clone(),
+            // **The load names its lineage and its stack**, per
+            // `weaver-trace-Spec` section 3 as of 2026-09-06 and issue #432:
+            // admin's facts, copied from the enter and read from no
+            // deployment, the lineage present only where the session stands
+            // from a record.
+            lineage: payload.restore.as_ref().map(|lineage| {
+                Box::new(weaver_trace::Lineage {
+                    parent: lineage.parent.0.clone(),
+                    run: lineage.run.0.clone(),
+                    through: lineage.through,
+                })
+            }),
+            stack: payload.stack.clone(),
             state_store: weaver_trace::StoreIdentity {
                 engine: match payload.state_store.engine {
                     weaver_types::StoreEngine::None => "none",
@@ -1494,7 +1508,11 @@ impl Harness {
             spu_ordinal: 0,
             gate_ordinal: 0,
             held_frames: std::collections::VecDeque::new(),
-            turn_ordinal: 0,
+            // **The turn ordinal starts at the cut**, per
+            // `weaver-harness-Spec` section 2 as revised 2026-09-04: the
+            // first turn of a restoring run is numbered one past the turn
+            // the lineage names, so the derived seeds continue the parent's.
+            turn_ordinal: initial_turn_ordinal(payload.restore.as_ref()),
             diagnostic: diagnostic.then(|| DiagnosticSeat {
                 reader_elected: payload.spu_instruction.decoder.residual_readout_election,
                 artifact: payload
@@ -1526,6 +1544,30 @@ impl Harness {
         // refusal is carried under `DescriptorsUnusable`, the enter's own
         // descriptor for the member having proved unusable for the one ask
         // the enter owes it, the refusal vocabulary naming no member.
+        // **The enter's asks wait on the seal where the door stands**, per
+        // `weaver-harness-state-contract` section 2 as revised 2026-09-04
+        // on issue #432: a diagnostic binding or a restoring load names the
+        // member's preload door, the identity and recall asks park there
+        // until the driver seals, and the bound is the parked ask's rather
+        // than the two seconds a member answering from holdings at rest
+        // takes. A serving load electing no restore keeps the short bound.
+        let restoring = payload.restore.is_some();
+        let ask_bound = if diagnostic || restoring {
+            crate::state::PARKED_ASK_BOUND_MS
+        } else {
+            crate::state::ANSWER_BOUND_MS
+        };
+        // **What is waited on is named before the wait**, per
+        // `weaver-harness-Spec` section 2 as of 2026-09-06: an operator who
+        // has not started the driver reads why the load stands still rather
+        // than meeting a refusal ten minutes on. This crate knows which load
+        // it holds where the member does not, and spends the bound on the
+        // diagnostic case anyway, because the member parks the identity ask
+        // under the door whatever the binding and a short bound would refuse
+        // the enter unless the driver had sealed inside it.
+        if let Some(line) = parked_ask_notice(diagnostic, restoring, ask_bound) {
+            eprintln!("{line}");
+        }
         let identity = {
             let seed = &payload.spu_instruction.decoder.identity;
             match run.state.as_mut() {
@@ -1534,11 +1576,36 @@ impl Harness {
                 // cannot be made, which is the miss and not the first load.
                 None if state_member => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                 None => seed.clone(),
-                Some(seam) => match crate::state::identity_material(seam.ask_identity(), seed) {
-                    Some(material) => material,
+                Some(seam) => {
+                    match crate::state::identity_material(seam.ask_identity_within(ask_bound), seed)
+                    {
+                        Some(material) => material,
+                        None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+                    }
+                }
+            }
+        };
+        // **Under a restoring load the open carries the restored
+        // conversation beside the identity**, per `weaver-harness-Spec`
+        // section 2 as revised 2026-09-04 on issue #432: the recall ask with
+        // no bound, parked until the driver's seal like the identity ask,
+        // its turned message events rebuilt as canonical messages in
+        // landing order, the turnless rows being the identity's and never
+        // seated twice. A miss refuses the enter on the identity ask's
+        // ground, a run whose prefix cannot be read being no run with none,
+        // and a restore with no member to ask is that miss too.
+        let restored: Vec<weaver_traits::Message> = if restoring {
+            match run.state.as_mut() {
+                None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+                Some(seam) => match crate::state::restored_conversation(
+                    seam.ask_recall_within(None, ask_bound),
+                ) {
+                    Some(messages) => messages,
                     None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                 },
             }
+        } else {
+            Vec::new()
         };
         // **The seated prefix reaches the record beside the load**, per
         // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5,
@@ -1548,7 +1615,20 @@ impl Harness {
         // conforms: harness-identity-refusal-authored-not-dropped
         if !diagnostic {
             seat_identity_prefix(&run.author, &mut run.recorder, &identity);
+            // The restored conversation reaches the record turnless beside
+            // the identity, through the door that admits its roles under a
+            // restoring load, so the record of a branch is complete without
+            // its parent, per `weaver-harness-Spec` section 6.
+            seat_restored_prefix(&run.author, &mut run.recorder, &restored);
         }
+        // The open's messages: the identity first and the restored
+        // conversation after it, prefix material permanent for the
+        // residency, per Spec section 2.
+        let opening = {
+            let mut messages = identity.clone();
+            messages.extend(restored.iter().cloned());
+            messages
+        };
         // The residency and decode pairs are created in one act before the SPU
         // fork: a socket with no address cannot be reached later by resolving
         // one, so the only moment it can reach a child is before that child
@@ -1638,7 +1718,7 @@ impl Harness {
         if let Err(refusal) = open_session(
             &spu.decode,
             SessionId(run.session.0.clone()),
-            identity,
+            opening,
             column_ask,
         ) {
             after_load!(run, refusal);
@@ -2186,6 +2266,69 @@ fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
     diagnostic && readout_elected
 }
 
+/// The typed line that names what the enter waits on where the door
+/// stands, per `weaver-harness-Spec` section 2 as of 2026-09-06, and
+/// nothing where no door stands and the asks answer at once.
+fn parked_ask_notice(diagnostic: bool, restoring: bool, bound_ms: u64) -> Option<String> {
+    if !diagnostic && !restoring {
+        return None;
+    }
+    Some(
+        serde_json::json!({
+            "organ": "harness",
+            "waiting": "the state member's preload seal",
+            "binding": if restoring { "restore" } else { "diagnostic" },
+            "bound_ms": bound_ms,
+        })
+        .to_string(),
+    )
+}
+
+/// **The turn ordinal a run starts from**, per `weaver-harness-Spec` section
+/// 2 as revised 2026-09-04 on issue #432: zero where the load stands from
+/// nothing, and the turn the lineage names where the session stands from a
+/// record, so the first minted turn is one past the cut and the derived
+/// seeds continue the parent's streams.
+fn initial_turn_ordinal(restore: Option<&weaver_types::Lineage>) -> u64 {
+    restore.map_or(0, |lineage| lineage.through)
+}
+
+/// The restored conversation reaches the record through the door that
+/// admits its roles, per `weaver-harness-Spec` section 6 as revised
+/// 2026-09-04: the same miss accounting as the identity's, a message the
+/// door refuses being named in a fault rather than dropped.
+fn seat_restored_prefix(
+    author: &crate::authorship::Author,
+    recorder: &mut crate::record::Record,
+    restored: &[weaver_traits::Message],
+) {
+    for message in restored {
+        let account = match author.author_restored(recorder, message) {
+            Ok(Ok(_)) => continue,
+            Err(unlicensed) => serde_json::json!({
+                "organ": "harness",
+                "miss": "restored-door-refused",
+                "role": unlicensed.role,
+                "block": unlicensed.block,
+            }),
+            Ok(Err(failure)) => serde_json::json!({
+                "organ": "harness",
+                "miss": "restored-prefix-unrecorded",
+                "failure": format!("{failure:?}"),
+            }),
+        };
+        let _ = author.author_fault(
+            recorder,
+            Subsystem::Harness,
+            None,
+            &crate::authorship::harness_report(
+                weaver_types::FaultCase::IdentityPrefixUnrecorded,
+                &account.to_string(),
+            ),
+        );
+    }
+}
+
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
     recorder: &mut crate::record::Record,
@@ -2235,6 +2378,43 @@ mod tests {
     //! not buy, while the run struct itself is constructible here.
 
     use super::*;
+
+    /// **The turn ordinal starts at the cut**, per `weaver-harness-Spec`
+    /// section 2 as revised 2026-09-04 on issue #432: zero where the load
+    /// stands from nothing, the lineage's turn where it stands from a
+    /// record, so the first minted turn is one past the cut.
+    ///
+    /// Perturbation: return zero from `initial_turn_ordinal` whatever the
+    /// lineage and the second assertion fails. Watched under exactly that
+    /// change.
+    /// **What the enter waits on is named where the door stands and not
+    /// otherwise**, per `weaver-harness-Spec` section 2 as of 2026-09-06.
+    ///
+    /// Perturbation: return the line for every load and the first
+    /// assertion fails, a serving load electing no restore announcing a
+    /// wait it does not make. Watched under exactly that change.
+    #[test]
+    fn the_wait_is_named_where_the_door_stands() {
+        assert!(parked_ask_notice(false, false, 2_000).is_none());
+        let line = parked_ask_notice(true, false, 600_000).expect("a diagnostic load waits");
+        let parsed: serde_json::Value = serde_json::from_str(&line).expect("one typed line");
+        assert_eq!(parsed["binding"], "diagnostic");
+        assert_eq!(parsed["bound_ms"], 600_000);
+        assert_eq!(parsed["waiting"], "the state member's preload seal");
+        let line = parked_ask_notice(false, true, 600_000).expect("a restoring load waits");
+        assert!(line.contains("\"binding\":\"restore\""));
+    }
+
+    #[test]
+    fn the_turn_ordinal_starts_at_the_cut() {
+        assert_eq!(initial_turn_ordinal(None), 0);
+        let lineage = weaver_types::Lineage {
+            parent: weaver_types::SessionId("s-1".into()),
+            run: weaver_types::RunId("r-a".into()),
+            through: 7,
+        };
+        assert_eq!(initial_turn_ordinal(Some(&lineage)), 7);
+    }
     use std::fs::File;
     use weaver_trace::Kind;
 
@@ -2394,6 +2574,8 @@ mod tests {
                     tee: Some(weaver_trace::Election::default()),
                     state_member: false,
                     declaration: Default::default(),
+                    lineage: None,
+                    stack: Default::default(),
                     state_store: Default::default(),
                     composer: weaver_trace::LoopIdentity::compiled("test"),
                 })),
@@ -2544,6 +2726,8 @@ mod tests {
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: vec![weaver_types::ElectedKindConfig {
@@ -2666,6 +2850,8 @@ mod tests {
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -2808,6 +2994,8 @@ mod tests {
                 },
                 state_store: weaver_types::StateStore::default(),
                 declaration: String::new(),
+                restore: None,
+                stack: Default::default(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: Vec::new(),
@@ -2906,6 +3094,8 @@ mod tests {
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),
@@ -3012,6 +3202,8 @@ mod tests {
                 },
                 state_store: weaver_types::StateStore::default(),
                 declaration: String::new(),
+                restore: None,
+                stack: Default::default(),
                 state_election: weaver_types::StateElection {
                     all_kinds: false,
                     keys: vec![weaver_types::ElectedKindConfig {
@@ -3148,6 +3340,8 @@ mod tests {
             binding: weaver_types::EnterBinding::Diagnostic,
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection::default(),
         };
 
@@ -3268,6 +3462,8 @@ mod tests {
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection::default(),
         };
 
