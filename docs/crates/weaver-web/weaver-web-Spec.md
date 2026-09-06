@@ -81,6 +81,16 @@ contract's ask as landed: the two counts it converts from are owed at issue
 crate cannot key its store from it. Section 9 gains the two rows the
 contract's conformance clause named. Per the review of PR #459.
 
+**Revised:** 2026-09-05, ninth of this date, a position that was never
+established is not addressed. Section 3 states what the write path does
+where a generation's closing count is absent, no `model.output` having
+reported one: the address section 2.1 requires cannot be formed, so the rows
+do not land and the run reads partial rather than short. This is
+absent-not-empty at the write path, the rule that forbids drawing a missing
+surprisal as zero forbidding an invented key for the same reason. Per the
+review of PR #463, whose emitter carries the count as absent rather than
+derived.
+
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -349,6 +359,16 @@ plus the turn's input delta, is exact from the second generation and wrong
 on the first by the session prefix, which the first turn's delta does not
 carry. **This crate takes the first rule and states the second's failure so
 no later act rediscovers it.**
+
+**A generation whose closing count the record does not carry has no
+position, and its rows do not land.** The count is absent rather than
+derived where no `model.output` reported one, so the address section 2.1
+requires cannot be formed, and this crate stores nothing it cannot address
+rather than storing rows under an invented key. The run's row carries the
+status, so a run short of a generation is visibly partial by the rule above
+rather than quietly short. **This is absent-not-empty at the write path**:
+the same discipline that forbids drawing a missing surprisal as zero
+forbids addressing a position that was never established.
 
 Deriving here rather than at the read is section 2.5's rule and not a
 preference: a value derived once at ingest and stored is one a second reader

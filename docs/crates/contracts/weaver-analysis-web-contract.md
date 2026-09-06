@@ -139,11 +139,24 @@ this seam carries no artifact identity.
 
 ### 2.2 The summary
 
-One entry per generation, carrying its turn, its perplexity where the record
-holds one, and **the resident count at the generation's close beside the
-count of output tokens**, which are what section 3's conversion reads. **A
-generation whose record holds no perplexity has no entry**, and an entry is
-never synthesized from the series.
+**One entry per measured generation, in landing order**, carrying its turn,
+its perplexity where the record holds one, and **the resident count at the
+generation's close beside the count of output tokens**, which are what
+section 3's conversion reads.
+
+**The entry does not depend on the perplexity.** A generation whose record
+carries none still carries its counts, because the residency is what a store
+keyed by position converts from and it is owed whether or not a perplexity
+was taken. **Each member is absent on its own terms**: a perplexity the
+record does not hold, a resident count no `model.output` reported. An entry
+keyed to any one member's presence would drop the others where they are
+still wanted, which is the same absent-not-empty rule section 3 states for
+the series applied one grain up.
+
+**No entry is ever synthesized from the series.** The output count is the
+generation's drawn tokens as the record spells them and not the length of
+what this seam happened to carry, so a truncated or partially ingested
+series never changes what a summary entry says.
 
 ### 2.3 The record's own facts ride beside both
 
