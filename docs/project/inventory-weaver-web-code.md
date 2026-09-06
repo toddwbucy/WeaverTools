@@ -13,6 +13,14 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
+**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table
+and the six templates the first draft left unclassified are classified.
+`web/admin.rs`'s routes are marked as inner and the `/admin` mount named.
+**And the claim that the store has no rows that matter is withdrawn**: it
+was a claim about every deployment made from one box's `systemctl`, and
+what stands in its place is the three questions someone with reach must
+answer before any drop.
+
 **Date filed:** 2026-09-06
 **Document ID:** `inventory-weaver-web-code`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
@@ -21,9 +29,9 @@ document in the corpus records the gap.
 
 **The charter describes a diagnostic instrument and the code implements a
 chat client.** The store's tables are `participants`, `channels`, `members`,
-`channel_events` and `sessions`. The templates are `channel.html`,
-`channels.html`, `sidebar.html`. The rewritten Spec's section 2 names seven
-tables and not one of them is among those five.
+`channel_events` and `sessions`. Among its eleven templates are
+`channel.html`, `channels.html` and `sidebar.html`. The rewritten Spec's
+section 2 names seven tables and not one of them is among those five.
 
 **Every module cites a document that does not exist.** `store.rs` cites
 "Spec section 12", `repro.rs` "section 17", `queue.rs` "section 8",
@@ -68,9 +76,21 @@ the operator says whether it is reworked or rewritten.
 | `channel.rs` | 130 | channel reads and log pages |
 | `registry.rs` | 111 | participants and providers reconciled into a participant registry. Section 2.4's table is declarations, which is a different noun |
 
-Templates `channel.html`, `channels.html`, `sidebar.html`, `name.html` and
-`event.html` go with them. So do the schema's `participants`, `channels`,
-`members` and `channel_events`.
+Five of the eleven templates go with them: `channel.html`, `channels.html`,
+`sidebar.html`, `name.html` and `event.html`. **The other six follow their
+modules** rather than retiring on their own: `base.html` carries,
+`lifecycle.html`, `agent_config.html`, `trace.html`, `trace_event.html` and
+`repro.html` want the ruling `web/admin.rs` wants, being that module's
+rendering.
+
+Four of the five tables go with them too: `participants`, `channels`,
+`members` and `channel_events`. **`sessions` wants a ruling and is the one
+table that is not simply retired.** It holds a token, an opened and a closed
+timestamp, and a `participant_id` referencing a table that retires, so its
+foreign key goes whatever else happens. Whether a browser session survives
+at all is the charter's section 6 question rather than this register's:
+identity and authentication are deferred there with a named trigger, so the
+table's subject is deferred with them.
 
 ### Carries, 1,770 lines
 
@@ -92,7 +112,7 @@ charter argues for, already built.
 
 | file | lines | the question |
 |---|---|---|
-| `web/admin.rs` | 598 | its routes are `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`, `/repro/{agent}`. Those are Agents, Compose, Open a trace and reproduction, at four of the ten surfaces. Reworked or redrawn |
+| `web/admin.rs` | 598 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`, `/repro/{agent}`, so the served paths carry that prefix. Those are Agents, Compose, Open a trace and reproduction, at four of the ten surfaces. Reworked or redrawn |
 | `repro.rs` | 369 | pull a run from the record, drive its turns back through the gate on a fresh load, compare field by field. **The rewrite keeps reproduction as measurement**, and its own comment already says a confirm is the operator asking the record a question rather than conversation. The comparison's projection is now section 4's and was not then |
 | `traceview.rs` | 327 | the connector tails the NDJSON and the server holds bounded rings. Section 3.4 keeps the surface, and section 7.3's analysis stream is a different seam from a raw tail |
 | `queue.rs` | 311 | per-agent single-flight with batch-on-drain. The rewrite has a queue and it holds staged experiments drained by a runner, so the mechanism survives and the subject changes |
@@ -105,9 +125,18 @@ charter argues for, already built.
    what it is. Leaving them means the crate builds and serves something
    while the instrument is written beside it.
 2. **Whether the schema is migrated or replaced.** The five tables share
-   nothing with the seven, so a migration would be a drop and a create. The
-   store has no rows anywhere that matter, which is what makes this the
-   cheap moment.
+   nothing with the seven, so a migration between them would be a drop and a
+   create rather than an alteration, and there is no column in the old set
+   that a new table wants. **What this register cannot tell you is what
+   would be discarded.** No store stands on the box this reading was taken
+   from, `postgresql` being inactive here, and this crate runs on one machine
+   while the agents run on another, so a deployed store elsewhere is exactly
+   the thing this seat cannot see. **Before any drop, someone with reach
+   answers three questions**: which boxes hold a store, what its tables carry
+   by row count, and whether anything in `channel_events` is wanted as a
+   record rather than as a chat log. This register asserts none of that and
+   an earlier draft did, saying the store has no rows that matter, which was
+   a claim about every deployment made from one box's `systemctl`.
 3. **What the four ruling-wanted modules become**, one by one, and in what
    order against the surfaces.
 4. **Whether the crate's edition alignment rides this work.** `Cargo.toml`
@@ -118,6 +147,10 @@ charter argues for, already built.
 
 **It proposes no act.** The register is what a reader needs to see before
 choosing one, and the choosing is the operator's.
+
+**And it makes no claim about a deployed store**, per the third question
+above, which is the one thing in this register that needs a reach this seat
+does not have.
 
 **It is not blocked by the artifact identity of issue #465**, which reaches
 the artifact table alone. Nothing above waits on it, and the store's schema
