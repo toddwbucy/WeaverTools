@@ -716,27 +716,12 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
             // from**, per Spec section 5: the closing count and the output
             // count, reported and derived from nothing.
             "generations": series.generations.iter()
-                .map(|g| serde_json::json!({
-                    "turn": g.turn,
-                    "perplexity": g.perplexity,
-                    "resident": g.resident,
-                    "output_count": g.output_count,
-                    "weights_hash": g.weights_hash,
-                }))
+                .map(render_generation)
                 .collect::<Vec<_>>(),
         })
     );
     for point in &series.points {
-        println!(
-            "{}",
-            serde_json::json!({
-                "turn": point.turn,
-                "ordinal": point.ordinal,
-                "token": point.token,
-                "entropy": point.entropy,
-                "surprisal": point.surprisal,
-            })
-        );
+        println!("{}", render_point(point));
     }
     // **The spikes are named rather than left to the reader's eye**: the
     // bar is the caller's, stated in deviations, and what clears it is
@@ -753,6 +738,51 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
         })
     );
     std::process::ExitCode::SUCCESS
+}
+
+/// One summary entry as the wire carries it, per `weaver-analysis-Spec`
+/// section 5 and `weaver-analysis-web-contract` section 2.2. **An absent
+/// member is omitted and never rendered null**, on the record's own
+/// absent-not-empty rule: a reader tells a member the emitter did not send
+/// from one it sent, and the sentinel is sent, as the empty string it is.
+fn render_generation(g: &weaver_analysis::signals::GenerationSummary) -> serde_json::Value {
+    let mut object = serde_json::Map::new();
+    if let Some(turn) = &g.turn {
+        object.insert("turn".into(), serde_json::Value::String(turn.clone()));
+    }
+    if let Some(perplexity) = g.perplexity {
+        object.insert("perplexity".into(), serde_json::json!(perplexity));
+    }
+    if let Some(resident) = g.resident {
+        object.insert("resident".into(), serde_json::json!(resident));
+    }
+    object.insert("output_count".into(), serde_json::json!(g.output_count));
+    if let Some(hash) = &g.weights_hash {
+        object.insert(
+            "weights_hash".into(),
+            serde_json::Value::String(hash.clone()),
+        );
+    }
+    serde_json::Value::Object(object)
+}
+
+/// One point as the wire carries it, on the same rule: an entropy the
+/// generation did not measure and a surprisal whose election did not stand
+/// are omitted, never null and never zero.
+fn render_point(p: &weaver_analysis::signals::Point) -> serde_json::Value {
+    let mut object = serde_json::Map::new();
+    if let Some(turn) = &p.turn {
+        object.insert("turn".into(), serde_json::Value::String(turn.clone()));
+    }
+    object.insert("ordinal".into(), serde_json::json!(p.ordinal));
+    object.insert("token".into(), serde_json::json!(p.token));
+    if let Some(entropy) = p.entropy {
+        object.insert("entropy".into(), serde_json::json!(entropy));
+    }
+    if let Some(surprisal) = p.surprisal {
+        object.insert("surprisal".into(), serde_json::json!(surprisal));
+    }
+    serde_json::Value::Object(object)
 }
 
 /// A position's field, per `weaver-analysis-Spec` section 5 as of
@@ -860,4 +890,50 @@ fn is_fifo(path: &str) -> bool {
     std::fs::metadata(path)
         .map(|m| m.file_type().is_fifo())
         .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use weaver_analysis::signals::{GenerationSummary, Point};
+
+    /// **An absent member is omitted at the wire and the sentinel is sent**,
+    /// per `weaver-analysis-web-contract` sections 2.2 and 7: a reader tells
+    /// a member never sent from one sent empty, which null would blur.
+    ///
+    /// Perturbation: render the option directly, so `None` becomes null,
+    /// and the omission assertions fail. Watched under exactly that change.
+    #[test]
+    fn absent_members_are_omitted_and_the_sentinel_is_sent() {
+        let sent = super::render_generation(&GenerationSummary {
+            turn: Some("t-1".into()),
+            perplexity: None,
+            resident: Some(107),
+            output_count: 11,
+            weights_hash: Some(String::new()),
+        });
+        assert_eq!(sent["weights_hash"], "", "the sentinel crosses as sent");
+        assert!(sent.get("perplexity").is_none(), "no perplexity, no member");
+        assert_eq!(sent["resident"], 107);
+
+        let older = super::render_generation(&GenerationSummary {
+            turn: None,
+            perplexity: Some(2.0),
+            resident: None,
+            output_count: 2,
+            weights_hash: None,
+        });
+        assert!(older.get("weights_hash").is_none(), "never sent, no member");
+        assert!(older.get("resident").is_none());
+        assert!(older.get("turn").is_none());
+
+        let point = super::render_point(&Point {
+            turn: Some("t-1".into()),
+            ordinal: 3,
+            token: 40,
+            entropy: Some(1.5),
+            surprisal: None,
+        });
+        assert!(point.get("surprisal").is_none(), "unelected, no member");
+        assert_eq!(point["entropy"], 1.5);
+    }
 }
