@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-06, one artifact has two identities and the join holds.
+Section 2.3's row carries the record's identity beside the per-file map it keys on,
+computed at import by `weaver-spu-Spec` section 3's rule over the files it registers
+and unique across rows, and the record's identity determines the key and not the
+reverse, so the join section 2.2 needs is a lookup on it. Section 2.2's artifact
+identity is that value, filled from the summary the analysis seam carries per
+`weaver-analysis-web-contract` section 2.2. Section 9 gains the row and section
+10's election closes. Per issue #465.
+
 **Revised:** 2026-09-05, fourteenth of this date, section 2.3 stops claiming
 a join section 10 says cannot be made. The table asserted that a run's
 artifact identity resolves to it while the open election two sections down
@@ -237,7 +246,11 @@ raw-residual ruling and this document does not disturb it.
 Everything identifying the conditions lives in the run's own row:
 
 - artifact identity **at a grain fine enough to catch a quantization
-  difference**
+  difference**, which is the record's own, the weights hash the SPU computed
+  at admit per `weaver-spu-Spec` section 3, taken from the summary the
+  analysis seam carries per `weaver-analysis-web-contract` section 2.2 and
+  never from the declaration, a declaration naming a path and being editable
+  after the run
 - seed, and the full sampler configuration
 - device, and precision
 - **the engine's identity at build grain**: the libraries the decode ran
@@ -318,6 +331,17 @@ deriving it.
 Each row carries:
 
 - the artifact identity, derived as above
+- **the record's identities**, the weights hashes `weaver-spu-Spec` section
+  3 states, one computed at each import over the files that import
+  registers and each unique across rows, a renamed split GGUF excepted per
+  section 10: the member is a set because the same weights imported again
+  from a directory differing in a file the index never names compute a new
+  value, and that value joins this row rather than opening one.
+  **The sentinel is never a record identity here**: an import that cannot
+  compute the value registers nothing, per the charter's section 3.6, and
+  a run carrying the empty string joins to nothing and is named as one
+  whose identity the SPU could not compute, which is a different fact from
+  a run no row carries
 - the identity **per file**, following the model's own index, each shard
   under its own name and verified against it
 - the provenance: a repository and revision, or a source artifact with the
@@ -329,13 +353,19 @@ Each row carries:
 - the reference cells taken against it
 - **the row's version**, per section 3.2
 
-**This table is what a run's artifact identity is meant to resolve to**,
-section 2.2 holding that identity in the tuple so a reading names its
-conditions. **The join is owed rather than held**, and section 10 says why:
-the identity this table keys on and the identity a record carries are two
-rules today, so a run row resolves to no catalog key until that election is
-answered. **This document does not present the join as working while it
-says elsewhere that it cannot be made.**
+**This table is what a run's artifact identity resolves to**, section 2.2
+holding that identity in the tuple so a reading names its conditions. **The
+join is a lookup on the record's identity**, as of 2026-09-06 per
+issue #465: the two identities are two rules at two grains, the record's over
+everything the binding named and this table's key over the weights alone,
+and the record's determines the key because a directory's hash fixes its
+shards, so one record identity names at most one row, a renamed split GGUF
+being the one case where it names two, which the lookup reports as
+ambiguous rather than picking, per section 10, and the row carries
+every record identity its weights have been admitted under. A run whose
+record identity no row carries joins to nothing and registers nothing, a
+record being a fact and not an import, until an import on that box
+registers the files.
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
@@ -784,6 +814,8 @@ cell record like any other.
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
+| a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |
+| the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
@@ -801,18 +833,27 @@ act that lands it states what removal makes it fail and confirms it does.
   section 9 holds open. Section 2.3 stores the entry with its reporter and
   its date whichever answer lands, and no read of it gates anything, so
   this document is not blocked on the choice.
-- **Which identity the catalog and the record share, and whether the join
-  section 2.3 claims can be made.** Section 2.3 keys the catalog by the
-  per-file digest map `weaver-analysis-Spec` section 3 carries. The SPU
-  hashes weights at admit as **BLAKE3 over a canonical manifest, one value
-  per artifact**, per `weaver-spu-Spec` section 3, and that is what a
-  measurement carries. Section 2.2's run row holds artifact identity and
-  2.3 says the run row points at the catalog, so **two rules stand for one
-  subject and the join has nothing to join on**. The analysis seam carries
-  no artifact identity at all, per its contract, so the run row's member has
-  no source on the wire either. This predates the act that names it, from
-  the catalog and tuple acts of 2026-09-05, and it is G5's subject rather
-  than this document's to settle alone.
+- **Which identity the catalog and the record share, closed 2026-09-06.**
+  Two rules stand at two grains and the row carries both: section 2.3 keys
+  on the per-file map the lens refuses on and carries the record's weights
+  hash beside it, computed at import by the rule `weaver-spu-Spec` section 3
+  now states, and the run row fills its member from the summary the analysis
+  seam carries as of the same date. Neither rule was dropped, because the
+  lens's refusal rests on one and every record on the other, and the
+  derivation between them runs one way. Per issue #465.
+- **The split GGUF's names, which the record's identity does not cover.**
+  `weaver-spu-Spec` section 3's hash of a split covers the shards' bytes in
+  split order and not their names, so two split sets of identical bytes
+  under different stems are one record identity and two rows of section
+  2.3, and the lookup reports both rather than picking. Two answers stand:
+  the SPU's split manifest carries the names, which changes the identity
+  every later admit of a split records and is that Spec's to rule, or this
+  catalog keys a GGUF by the record's identity alone, a GGUF's shard names
+  being the operator's and not the artifact's where a safetensors index is
+  the artifact's own. A split BF16 of a thirty-five billion parameter model
+  stands staged on bulk-store since 2026-07-29 and in no record yet, so the
+  first import of it is where the ambiguity lands, and the ruling is owed
+  before that import rather than after.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on

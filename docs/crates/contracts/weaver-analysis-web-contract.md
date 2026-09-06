@@ -5,6 +5,14 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+**Revised:** 2026-09-06, the summary carries the record's identity, and the owed
+sentences are current. Section 2.2 gains the weights hash per generation as the
+record spelled it, section 3 asks it of the emitter beside the two counts, and the
+vocabulary draws it from `weaver-spu-Spec` section 3, so the run row's artifact
+identity has a source on this seam, per issue #465. Section 3's and section 8's
+sentences reading the two counts as owed follow their landing at PR #462 and #463,
+the token members' definitions landed there too, and section 8 records that
+`weaver-analysis-Spec` now cites this document.
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
 
@@ -59,7 +67,14 @@ defined, and a group is stated even when empty.
 **From `weaver-spu-Spec` section 6.** The **entropy** at a decode position
 and the **surprisal** of the token drawn there, both in bits, defined there
 and drawn here rather than restated. **The election** that decides whether a
-surprisal is measured is the declaration's, per the same authority.
+surprisal is measured is the declaration's, per the same authority. The
+**input** and **output token identifiers**, the turn's delta and the drawn
+tokens, defined there since 2026-09-05.
+
+**From `weaver-spu-Spec` section 3.** The **weights hash**, the record's
+identity of the artifact, BLAKE3 over the canonical manifest that section
+states, and its **sentinel**, the empty string a hash that could not be
+computed reports.
 
 **From `weaver-trace-PRD` section 3.1.** The **`model.measurement`** event
 and its members, the output token identifiers, the entropies, the
@@ -68,13 +83,13 @@ The **`model.output`** event and its resident count and capacity as the
 generation closed. **`model.field`** and its ranked candidates, which this
 seam does not carry and which section 6 names as the other reader's.
 
-**Defined nowhere as of this date.** That section tables the measurement's
-members and defines none of them, so neither the input identifiers' meaning
-nor what the resident count counts is stated anywhere in the corpus. **This
-contract rests its section 3 on measurement rather than on a definition, and
-says so**, the definitions being asked at issue #461. A contract resting on
-an undefined member is how this document's first draft asserted an
-arithmetic the records refute.
+**Defined since 2026-09-05.** That section tables the measurement's members,
+and the two section 3 reads were defined at issue #461: the token
+identifiers by `weaver-spu-Spec` section 6 and the resident count by
+`weaver-types-Spec` section 4.4 with that Spec's section 4 for why it
+includes the terminator. This contract's first draft rested on the members'
+names and asserted an arithmetic the records refuted, which is why the
+definitions were asked before the ask was restated.
 
 **From `weaver-analysis-Spec`.** The **drain** of section 5, one for the
 class with readers above it, and the **signals reader** that rides it.
@@ -135,14 +150,26 @@ rather than carried on the wire.
 
 **The token identifier crosses and its surface text does not.** Detokenizing
 is the reader's, because the tokenizer that answers it is the artifact's and
-this seam carries no artifact identity.
+this seam carries the artifact's identity, on the summary, and never the
+artifact.
 
 ### 2.2 The summary
 
 **One entry per measured generation, in landing order**, carrying its turn,
-its perplexity where the record holds one, and **the resident count at the
+its perplexity where the record holds one, **the resident count at the
 generation's close beside the count of output tokens**, which are what
-section 3's conversion reads.
+section 3's conversion reads, and **the weights hash the generation's
+measurement carries**, the record's identity of the artifact per
+`weaver-spu-Spec` section 3, spelled as the record spelled it.
+
+**The weights hash is per generation on the wire and once per run in the
+reader's row.** A run admits one artifact, so its generations agree, and a
+run whose generations disagree is a defect the reader names rather than a
+run with two artifacts. **The sentinel crosses as the empty string it is**:
+a hash the SPU could not compute is a fact of the record, distinct from a
+measurement carrying no member, which crosses absent, and a reader that
+folded the two together could not tell a failed identity from an older
+record.
 
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store
@@ -194,10 +221,16 @@ a half-formed one. Both are facts the record already holds, on
 derives nothing, which is the property `weaver-analysis-Spec` section 5
 argues for.
 
-**This is the one ask, and it is tracked at issue #461** alongside the
-definitions the two members want, `weaver-trace` defining none of them
-today. Until it lands, this seam carries the ordinal alone and section 8
-says what that costs.
+**The two counts landed at PR #462 and #463 on 2026-09-05**, with the
+definitions the members wanted, and the emitter carries them today.
+
+**The emitter also carries, per generation, the weights hash the
+measurement holds**, as of 2026-09-06 per issue #465, so that the run row
+of `weaver-web-Spec` section 2.2 has a source on the wire: a reading without
+its artifact is a reading of an unnamed compound, and the identity is the
+recorded half's fact rather than the declaration's, a declaration naming a
+path and being editable after the run. The emitter reports the member as
+the record spelled it and derives nothing, per section 2.2.
 
 **The conversion is exact and was measured rather than reasoned.** Where `R`
 is the resident count at the generation's close, `O` the count of output
@@ -318,20 +351,20 @@ performed here.
 ## 8. Conformance
 
 **This contract is cited by both parties.** `weaver-web-Spec` section 7.3
-takes it with the act that lands this text. **`weaver-analysis-Spec` owes
-its citation and does not carry it yet.** Its clause for the signals reader
-landed 2026-09-05 at issue #451, so the trace G2 wants now has somewhere to
-land, and the citation follows in that crate's next act.
+took it with the act that landed this text, and `weaver-analysis-Spec`
+section 0 names it among what that document is written against as of
+2026-09-06, the citation having been owed since the signals reader's clause
+landed at issue #451.
 
-**Section 3's ask is owed and this document does not pretend otherwise.**
-Until issue #461 lands, the summary carries the perplexity alone and this
-seam therefore carries the ordinal and no position. **A reader binding
-against it in that state cannot key its store**, whose primary key is the
-run, the turn and the position, so what it may do in the meantime is store
-what crosses and address by ordinal within a run and turn, knowing that is
-not the corpus's address and converting nothing. The two states are told
-apart by whether the summary carries the two counts, which is a fact on the
-wire rather than a version to negotiate.
+**Section 3's asks have landed and the wire tells the states apart.** The
+two counts landed at PR #462 and #463 and the weights hash with issue #465,
+each an additive member per section 7. A reader meeting an older emitter
+finds the counts absent and cannot key its store, whose primary key is the
+run, the turn and the position, so it stores what crosses and addresses by
+ordinal within a run and turn, converting nothing. A reader finding the
+counts and no weights hash can key its store and cannot join the run to
+the catalog. Each state is a fact on the wire rather than a version to
+negotiate.
 
 **What this contract asserts is asserted in the parties' Specs and not
 here.** A contract carries no assertion records of its own, per the

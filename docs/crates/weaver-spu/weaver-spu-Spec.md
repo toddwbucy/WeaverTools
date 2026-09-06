@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-06, the weights hash's manifest is stated. Section 3's hash
+clause says what the canonical manifest is, a file's bytes with a split's shards in
+order and names excluded, or a directory's regular files walked in sorted order each
+as its relative path then its bytes, rendered as sixty-four hex characters, so a
+second party holding the same files computes the same value. The record's identity
+is thereby computable at a catalog's import and the run row of `weaver-web-Spec`
+section 2.2 has a source, per issue #465. No record moves.
+
 **Revised:** 2026-09-05, fourth of this date, the token members are defined and the
 closing count includes the terminator. Section 6 defines the measurement's token
 identifiers, the input the turn's delta with the identity prefix outside it and the
@@ -1130,7 +1138,27 @@ walk's test reaches the hash and not the sentinel,** an alteration between two
 admits showing a changed hash and showing nothing about a failure path. The
 sentinel is a claim of its own rather than the periphery of that one, and it is
 review's by non-purchase, an unreadable artifact being as reachable a fixture as
-an altered one.
+an altered one. **The manifest is stated so a second party computes the same
+value**, as of 2026-09-06 per issue #465, because a catalog that keys on another
+digest joins a record to nothing unless it can derive this one from the files it
+registers. A reference naming a file hashes that file's bytes, and where the file
+is one shard of a split every shard's bytes follow in split order, names excluded,
+read through the descriptors the load pinned. A reference naming a directory hashes
+every regular file beneath it, walked in sorted name order, each contributing its
+path relative to the directory and then its bytes, so a rename is a different
+identity and a sidecar the index never names is inside it. The value renders as
+sixty-four lower-case hex characters and the sentinel as the empty string. **This
+is the record's identity of the artifact and it is at the grain of everything the
+binding named**, which is coarser than one file and finer than the weights alone: two
+directories holding the same shards beside a different sidecar are two record
+identities, and the per-file digest map `weaver-analysis-Spec` section 3 keys a lens
+on is determined by this value for a file or a directory and does not determine it.
+**A split is the one case where the names are outside the hash**, so two split sets
+of identical bytes under different stems are one record identity and two per-file
+maps: this value fixes their digests and not their names. Whether the split's
+manifest should carry the names, which would change the identity every later admit
+of a split records, is the operator's to rule and is named at `weaver-web-Spec`
+section 10 where the consequence lands.
 
 ```graph
 node: spu-weights-hash-at-admit

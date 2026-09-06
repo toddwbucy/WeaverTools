@@ -1,6 +1,7 @@
 //! conforms: analysis-reading-drains-within-a-turn
 //! conforms: analysis-signals-keep-absence
 //! conforms: analysis-summary-reports-residency
+//! conforms: analysis-summary-reports-the-record-identity
 //!
 //! The streaming reading's watches, per `weaver-analysis-Spec` section 5.
 //! The fixtures are shaped like the real records the live run drained.
@@ -17,7 +18,7 @@ fn record(closed: Option<&str>, trailing: &str) -> String {
         // tokens, the shape of a first generation: the identity prefix is
         // resident and no member carries it, so a derived count would say 3.
         r#"{"session":"s","run":"r","turn":"t-1","sequence":"3","kind":"model.output","payload":{"emission":"ab","finish":"stop","resident":107,"capacity":8192}}"#.to_string(),
-        r#"{"session":"s","run":"r","turn":"t-1","sequence":"4","kind":"model.measurement","payload":{"input_tokens":[1,2,3],"output_tokens":[100,200],"entropies":[1.5,2.5],"surprisals":[0.5,9.5],"perplexity":2.0}}"#.to_string(),
+        r#"{"session":"s","run":"r","turn":"t-1","sequence":"4","kind":"model.measurement","payload":{"input_tokens":[1,2,3],"output_tokens":[100,200],"entropies":[1.5,2.5],"surprisals":[0.5,9.5],"perplexity":2.0,"weights_hash":"23dd1056"}}"#.to_string(),
     ];
     if let Some(outcome) = closed {
         lines.push(format!(
@@ -163,6 +164,43 @@ fn the_summary_reports_the_residency_and_derives_nothing() {
     drain(std::io::Cursor::new(without.as_bytes()), &mut reader);
     assert_eq!(reader.series.generations[0].resident, None);
     assert_eq!(reader.series.generations[0].output_count, 2);
+}
+
+/// **The summary reports the record's identity as spelled**, per
+/// `weaver-analysis-Spec` section 5 as of 2026-09-06: the weights hash
+/// crosses verbatim, the sentinel crosses as the empty string it is, and a
+/// measurement carrying no member crosses absent, so a reader tells a
+/// failed identity from an older record.
+///
+/// Perturbation: fold the empty string into `None` and this fails on the
+/// sentinel case. Watched under exactly that change.
+#[test]
+fn the_summary_reports_the_record_identity_as_spelled() {
+    let text = record(Some("certified"), "");
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(text.as_bytes()), &mut reader);
+    assert_eq!(
+        reader.series.generations[0].weights_hash.as_deref(),
+        Some("23dd1056"),
+        "the hash crosses as the record spelled it"
+    );
+
+    let sentinel = text.replace("\"weights_hash\":\"23dd1056\"", "\"weights_hash\":\"\"");
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(sentinel.as_bytes()), &mut reader);
+    assert_eq!(
+        reader.series.generations[0].weights_hash.as_deref(),
+        Some(""),
+        "the sentinel is the record's fact and crosses as the empty string"
+    );
+
+    let without = text.replace(",\"weights_hash\":\"23dd1056\"", "");
+    let mut reader = Signals::default();
+    drain(std::io::Cursor::new(without.as_bytes()), &mut reader);
+    assert_eq!(
+        reader.series.generations[0].weights_hash, None,
+        "no member crosses absent"
+    );
 }
 
 /// **A spike is a position that clears the caller's bar**, stated in
