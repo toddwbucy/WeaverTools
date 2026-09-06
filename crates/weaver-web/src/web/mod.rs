@@ -15,11 +15,11 @@ use crate::store::Store;
 use crate::traceview::TraceViews;
 use crate::wire::Link;
 use askama::Template;
+use axum::Router;
 use axum::extract::Path;
-use axum::http::{header, HeaderMap, StatusCode};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -129,7 +129,7 @@ pub fn sse_cursor(headers: &HeaderMap, params: &HashMap<String, String>) -> i64 
 /// participant-authored markup, and never receives a javascript: or
 /// data: destination.
 fn markdown_to_html(src: &str) -> String {
-    use pulldown_cmark::{html, Event, Options, Parser, Tag};
+    use pulldown_cmark::{Event, Options, Parser, Tag, html};
 
     fn safe_dest(dest: &str) -> bool {
         let d = dest.trim().to_ascii_lowercase();
@@ -197,16 +197,16 @@ fn escape_html(src: &str) -> String {
 /// into a collapsible section, the remainder renders as markdown.
 fn render_body(body: &str) -> String {
     let trimmed = body.trim_start();
-    if let Some(rest) = trimmed.strip_prefix("<think>") {
-        if let Some(end) = rest.find("</think>") {
-            let thought = &rest[..end];
-            let answer = &rest[end + "</think>".len()..];
-            return format!(
-                "<details class=\"think\"><summary>thinking</summary><pre>{}</pre></details>{}",
-                escape_html(thought.trim()),
-                markdown_to_html(answer.trim())
-            );
-        }
+    if let Some(rest) = trimmed.strip_prefix("<think>")
+        && let Some(end) = rest.find("</think>")
+    {
+        let thought = &rest[..end];
+        let answer = &rest[end + "</think>".len()..];
+        return format!(
+            "<details class=\"think\"><summary>thinking</summary><pre>{}</pre></details>{}",
+            escape_html(thought.trim()),
+            markdown_to_html(answer.trim())
+        );
     }
     markdown_to_html(body)
 }

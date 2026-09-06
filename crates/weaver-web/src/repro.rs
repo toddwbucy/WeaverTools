@@ -246,10 +246,10 @@ async fn job(repro: &Repro, link: &Link, agent: &str, run: &str) -> Result<(), S
     }
     let mut waited = 0;
     loop {
-        if let Some(status) = link.status().await {
-            if status.get(agent).copied().unwrap_or(false) {
-                break;
-            }
+        if let Some(status) = link.status().await
+            && status.get(agent).copied().unwrap_or(false)
+        {
+            break;
         }
         waited += 1;
         if waited > LOAD_WAIT_SECS {

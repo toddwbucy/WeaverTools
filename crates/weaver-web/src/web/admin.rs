@@ -4,21 +4,21 @@
 //! admin role. v1 role assignment is the config's admin list; IAM
 //! later changes how a session proves who it is, not this gate.
 
-use super::{nav_agents, session_participant, sse_cursor, AppResult, AppState};
+use super::{AppResult, AppState, nav_agents, session_participant, sse_cursor};
 use crate::lifecycle;
 use crate::registry::Participant;
 use crate::traceview::TraceEvent;
 use askama::Template;
+use axum::Router;
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
-use axum::Router;
 use std::collections::HashMap;
 use std::convert::Infallible;
-use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::ReceiverStream;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -479,11 +479,11 @@ async fn trace_page(
         if let Some(obj) = ev.raw.as_object() {
             for (k, v) in obj {
                 keys.insert(k.clone());
-                if k == "payload" {
-                    if let Some(p) = v.as_object() {
-                        for pk in p.keys() {
-                            keys.insert(format!("payload.{pk}"));
-                        }
+                if k == "payload"
+                    && let Some(p) = v.as_object()
+                {
+                    for pk in p.keys() {
+                        keys.insert(format!("payload.{pk}"));
                     }
                 }
             }

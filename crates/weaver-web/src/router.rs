@@ -79,14 +79,14 @@ async fn route(
         if Some(target.id) == exclude {
             continue;
         }
-        if target.kind == "agent" {
-            if let Err(e) = queues.enqueue(Invocation {
+        if target.kind == "agent"
+            && let Err(e) = queues.enqueue(Invocation {
                 channel_id: event.channel_id,
                 agent_participant_id: target.id,
                 agent_name: target.name.clone(),
-            }) {
-                failures.push(format!("@{}: {e}", target.name));
-            }
+            })
+        {
+            failures.push(format!("@{}: {e}", target.name));
         }
         // kind == "model": the upstream adapter is not yet implemented
         // (Spec section 10); a mention of a model participant is

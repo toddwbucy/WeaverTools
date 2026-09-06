@@ -80,10 +80,10 @@ impl TraceViews {
         let Some(view) = self.view(agent) else { return };
         {
             let mut ring = view.ring.lock().unwrap();
-            if let Some(last) = ring.back() {
-                if ev.seq <= last.seq {
-                    ev.seq = last.seq + 1;
-                }
+            if let Some(last) = ring.back()
+                && ev.seq <= last.seq
+            {
+                ev.seq = last.seq + 1;
             }
             if ring.len() == RING_CAP {
                 ring.pop_front();

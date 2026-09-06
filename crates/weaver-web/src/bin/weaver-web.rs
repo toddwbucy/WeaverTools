@@ -106,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
 /// named follow-up; a turn cut by shutdown lands as the link's
 /// delivery-lost error today.
 async fn shutdown_signal() {
-    use tokio::signal::unix::{signal, SignalKind};
+    use tokio::signal::unix::{SignalKind, signal};
     let mut term = signal(SignalKind::terminate()).expect("SIGTERM handler");
     tokio::select! {
         _ = tokio::signal::ctrl_c() => {}

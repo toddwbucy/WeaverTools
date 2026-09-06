@@ -5,8 +5,8 @@
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use tokio::sync::{broadcast, mpsc, oneshot};
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
