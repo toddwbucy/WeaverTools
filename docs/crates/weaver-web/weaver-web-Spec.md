@@ -10,6 +10,17 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, thirteenth of this date, the version the edit rule
+reads is a member the rows carry. Section 3.2 required an edit to carry the
+version it read and no table in section 2 held one, so the rule named a
+member that did not exist. Sections 2.3, 2.4 and 2.5 carry it, an accepted
+write advances it by one, a stale one refuses naming both, and registration
+freezes the row at the version it holds without advancing it, an edit
+against a registered row refusing on the state instead. The declaration's
+version is distinguished from its corpus commit: one answers whether the
+field shape is current, the other whether the row has moved since it was
+read. Per the review of PR #464.
+
 **Revised:** 2026-09-05, twelfth of this date, against the review of
 PR #464. Section 3.2 stated two rules for one write, last-write-wins beside
 a version check, and keeps the second. Section 3 counted two writers where
@@ -307,6 +318,7 @@ Each row carries:
   `weaver-analysis-PRD` section 3 versions them, by the weights content
   hash
 - the reference cells taken against it
+- **the row's version**, per section 3.2
 
 **This is the join the run's row points at.** Section 2.2 holds artifact
 identity in the tuple so a reading names its conditions, and this table is
@@ -347,6 +359,9 @@ draft buffer. Each row carries:
 - the parent declaration where this one is derived, and **the one thing
   that moved**, which is what the charter's section 3.6 draws
 - the last answer `validate` gave, with when it was given
+- **the row's version**, per section 3.2, which is not the corpus commit
+  above: that one answers whether the field shape is current, this one
+  whether the row has moved since it was read
 
 **The last answer is a reading and not a verdict.** It is what the verb said
 at a moment against a corpus commit, so a surface presents it with its date
@@ -370,6 +385,8 @@ five states of section 5.1. Each row carries:
 - **the question the engineer meant to ask**, which nothing upstream knows
   and nothing else in this store holds
 - the runs it produced, where it ran
+- **the row's version**, per section 3.2, frozen with the rest at
+  registration
 
 **Registration freezes the row and not the table.** A registered experiment
 is immutable per section 9's pin, and the rows around it go on being
@@ -487,16 +504,27 @@ writes an artifact row on import. Each writes its own table of section 2 and
 no other, and none of them may write a position or a run, which is what
 keeps a recorded fact a recorded fact.
 
+- **Every authored row carries a version, and it is the store's own
+  counter rather than anything the author supplies.** Sections 2.3, 2.4 and
+  2.5 each carry it. It has nothing to do with the declaration's corpus
+  commit, which pins the floor's field shape and answers staleness against
+  `weaver-types-Spec`: **one says whether the shape is current, the other
+  says whether this row has moved since you read it.**
 - **Writes are ordered on the row rather than idempotent, and the order is
-the version's.** An authored row is a thing a person is still making, so a
-second write is an edit. **An edit carries the version it read**, and where
-the stored version has moved on it refuses and the surface says so. The
-recorded half's idempotence answers a replay and there is no replay here,
-and a last-write-wins rule would lose the case this one is for, two
-engineers on one declaration.
-- **Registration is a state change and not a write of its own.** The row
+  the version's.** An authored row is a thing a person is still making, so a
+  second write is an edit. **An edit carries the version it read.** Where
+  that version is the stored one the write is accepted and **the stored
+  version advances by one**. Where the stored version has moved on the write
+  refuses, naming both versions, and the surface says so rather than
+  merging. The recorded half's idempotence answers a replay and there is no
+  replay here, and a last-write-wins rule would lose the case this one is
+  for, two engineers on one declaration.
+- **Registration freezes the row at the version it holds and advances
+  nothing.** It is a state change rather than a write of its own: the row
   moves from draft to registered and becomes immutable per section 9's pin,
-  and what made it immutable is a member the row already carried.
+  and what made it immutable is a member the row already carried. An edit
+  arriving against a registered row refuses on the state and not on the
+  version, which is a different refusal and says so.
 - **Import registers what is present and fetches nothing.** An artifact row
   names weights already on a box, its identity computed by the rule of
   section 2.3 rather than accepted from the operator, and whether this crate
