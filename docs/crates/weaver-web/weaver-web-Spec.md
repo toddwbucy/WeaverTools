@@ -813,7 +813,7 @@ cell record like any other.
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
-| a record identity names at most one catalog row | perturbation, at the schema: drop the unique index on the record identity, a second import of the same weights opens a second row and a lookup answers two |
+| a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
