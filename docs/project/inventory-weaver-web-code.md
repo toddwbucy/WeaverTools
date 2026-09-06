@@ -13,6 +13,17 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
+**Revised:** 2026-09-06, fourth of this date, the archive act reads back into the
+register. **`registry.rs` splits rather than retiring whole**: it carries
+`Participant`'s `role` and `is_admin()`, which is the role model the charter's section 6
+keeps as structural and which `web/admin.rs` gates on, so its separation is the section
+6 act. **The four retiring files cannot be lifted out independently**, nine call sites
+crossing into them from modules that do not retire, which is why the archive at
+`crates/weaver-web/archive/conversation/` is a frozen copy and the build still compiles
+the originals. Section 1's ruling list said four ruling-wanted modules where its own
+table has five. **And the edition alignment is measured**: it is not the real work its
+comment claims.
+
 **Revised:** 2026-09-06, third of this date, against the review of PR #468. The
 observation reports that no unit is installed rather than that nothing serves the
 database, a process or a hand-started binary not having been checked. **The 37 rows the
@@ -100,14 +111,20 @@ Three verdicts. **Retires** means the rewrite removed its subject.
 **Wants a ruling** means the mechanism survives and the subject moved, so
 the operator says whether it is reworked or rewritten.
 
-### Retires, 882 lines
+### Retires, 882 lines by file and fewer in fact
+
+**These four cannot be lifted out independently**, which this register did
+not say and the archive act of 2026-09-06 found by trying. Nine call sites
+cross into them from modules that do not retire, and one of those sites is
+the role model, so `registry.rs` splits rather than going. The lines below
+are the files' and the removable subset is smaller.
 
 | file | lines | why |
 |---|---|---|
 | `web/user.rs` | 429 | channels, messages, members, the session open. No surface in section 3 is a conversation |
 | `router.rs` | 212 | mention parsing and multi-agent invocation routing. The rewrite has no mentions and no volley |
 | `channel.rs` | 130 | channel reads and log pages |
-| `registry.rs` | 111 | participants and providers reconciled into a participant registry. Section 2.4's table is declarations, which is a different noun |
+| `registry.rs` | 111 | **splits, and does not retire whole.** The participant as a conversation member goes, and `Participant`'s `role` field with its `is_admin()` is the role model the charter's section 6 keeps as structural, which `web/admin.rs` gates on. Separating them is the section 6 act |
 
 Five of the eleven templates go with them: `channel.html`, `channels.html`,
 `sidebar.html`, `name.html` and `event.html`. **The other six follow their
@@ -175,11 +192,20 @@ charter argues for, already built.
    create rather than an alteration, and there is no column in the old set
    that a new table wants. **What would be discarded is answered for one box
    and open for the rest**, per the observation below.
-3. **What the four ruling-wanted modules become**, one by one, and in what
+3. **What the five ruling-wanted modules become**, one by one, and in what
    order against the surfaces.
-4. **Whether the crate's edition alignment rides this work.** `Cargo.toml`
-   pins 2021 against the workspace's 2024 and calls the migration real work,
-   citing a Spec section that no longer exists.
+4. **Whether the crate's edition alignment rides this work, and it is
+   smaller than its comment says.** `Cargo.toml` pins 2021 against the
+   workspace's 2024, calls the migration real work because "the sqlx and
+   askama derives are where an edition move bites", and holds it at "the
+   Spec's section 15", which is the archived Spec's open elections and is
+   section 10 in the rewritten one. **Measured on 2026-09-06 against the
+   crate as it stands, including the conversation half**: with `edition` set
+   to 2024, `cargo check` and `cargo test` pass with no error, so the
+   derives do not bite. What the move costs is twelve `clippy` warnings
+   where 2021 gives none, every one `collapsible_if`, and one `cargo fmt`
+   run, 2024 formatting differing from 2021's. That is an afternoon rather
+   than a project, and the comment should say so or go.
 
 ## What stands in the store, as reported
 

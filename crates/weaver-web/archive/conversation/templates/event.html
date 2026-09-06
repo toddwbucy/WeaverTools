@@ -1,0 +1,15 @@
+<div class="event kind-{{ kind }}{% if close_kind == "stopped" || close_kind == "refused" %} close-{{ close_kind }}{% endif %}" id="ev-{{ id }}">
+  <span class="ts">{{ ts }}</span>
+  <span class="author author-{{ author_kind }}">{{ author }}</span>
+  {% if kind == "message" || kind == "close" %}
+    <div class="body">{{ body_html|safe }}</div>
+    {% if !turn_link.is_empty() %}<a class="turnlink" href="{{ turn_link }}">turn {{ turn_label }}</a>{% endif %}
+    {% if close_kind == "stopped" || close_kind == "refused" %}<span class="closekind">[{{ close_kind }}]</span>{% endif %}
+  {% else if kind == "turn-open" %}
+    <span class="meta">turn dispatched to {{ body }}</span>
+  {% else if kind == "app-error" %}
+    <span class="apperror">weaver-web error: {{ body }}</span>
+  {% else %}
+    <span class="meta">{{ kind }}{% if !body.is_empty() %}: {{ body }}{% endif %}</span>
+  {% endif %}
+</div>
