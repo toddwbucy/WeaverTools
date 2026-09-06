@@ -10,6 +10,13 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-06, fourth of this date, the cardinality rule carries
+its exception in the same breath. Section 2.3 said one record identity names
+at most one row and then, in the next sentence, that a renamed split GGUF
+names two. The rule is now stated for a file or a directory artifact with
+the split named as the exception, which is the shape section 9's conformance
+row already had. Per the review of PR #470.
+
 **Revised:** 2026-09-06, third of this date, the two identities are named
 apart. Section 2.3 called the per-file digest set what section 2.2's tuple
 means by artifact identity, and section 2.2 says its member is the record's
@@ -384,9 +391,15 @@ holds and what a measurement carries.
 The row carries every record identity its weights have been admitted under,
 so the lookup is against that set and the key is what the row is stored by.
 **The record identity determines the weights identity and not the reverse**,
-because a directory's hash fixes its shards, so one record identity names at
-most one row. A renamed split GGUF is the one case where it names two, which
-the lookup reports as ambiguous rather than picking, per section 10.
+because a directory's hash fixes its shards. **So one record identity names
+at most one row for a file or a directory artifact, and a renamed split GGUF
+is the one exception, where it may name two**: the split's hash covers its
+shards' bytes and not their names, per `weaver-spu-Spec` section 3, so two
+sets of identical bytes under different stems are one record identity and
+two weights identities. **The lookup reports that as ambiguous rather than
+picking**, per section 10, which is where the exception is held open. The
+conformance row of section 9 watches the rule with its exception rather than
+the rule alone.
 
 **A run whose record identity no row carries joins to nothing and registers
 nothing**, a record being a fact and not an import, until an import on that
