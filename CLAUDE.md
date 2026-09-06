@@ -163,6 +163,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
+**Run from `WeaverTools/` on 2026-09-06 before being written here**, which
+is the difference between a command that works and one that ought to:
+`build --workspace` and `fmt --all -- --check` returned clean, and the
+clippy line returned the backlog section "Enforcement" describes. A later
+reader re-runs rather than trusting the date.
+
 **No `--features` flag belongs on the clippy line here.** `weaver-spu`
 declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
 on without one. **The quarry's command below is not this one** and carries a
@@ -257,13 +263,25 @@ when the graph lands — the graph indexes them, it does not replace them:
 4. Human and CodeRabbit review. Read the review **body**, not the thread count: CR posts
    findings outside the diff range that create no thread and are absent from the
    "actionable comments" total.
-5. **Clippy at `-D warnings` over the workspace**, on the operator's ruling of
-   2026-09-06. It is the cheapest of the five and the only one a person has to
-   type, which is how it went unrun: at the ruling, nine distinct findings stood
-   across four crates, one of them a 400-byte `LifecycleDirective` where every
-   unit variant pays for `EnterPayload`. **What it buys is the next nine rather
-   than these**, and it is a gate rather than advice because a lint backlog that
-   is nobody's act accumulates.
+5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
+   operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
+   workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
+   before that crate's act merges. It is the cheapest of the five and the only
+   one a person has to type, which is how it went unrun.
+
+   **Stated per crate because the workspace does not pass today and a gate
+   nobody can pass is a gate everyone learns to ignore.** Measured 2026-09-06:
+   ten findings of seven kinds across seven crates, `weaver-analysis` 7,
+   `weaver-types` 4, and `weaver-admin`, `weaver-gate`, `weaver-harness`,
+   `weaver-spu` and `weaver-state` 3 apiece. Five pass clean today:
+   `weaver-traits`, `weaver-trace`, `weaver-diagnostic`, `weaver-internal`,
+   `weaver-web`. **The backlog clears as each crate is next touched** rather
+   than as one act nobody owns, and the largest of the ten is a 400-byte
+   `LifecycleDirective` where every unit variant pays for `EnterPayload`, at
+   issue #475.
+
+   The workspace line above is the sweep that shows the backlog. It is not the
+   gate and does not pass until the seven clear.
 
 Every real defect found in the quarry's final week came from items 2–4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
