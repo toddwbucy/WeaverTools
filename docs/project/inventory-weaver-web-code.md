@@ -13,12 +13,14 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
-**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table and the six
-templates the first draft left unclassified are classified. `web/admin.rs`'s routes are
-marked as inner and the `/admin` mount named. **And the claim that the store has no rows
-that matter is withdrawn**: it was a claim about every deployment made from one box's
-`systemctl`, and what stands in its place is the three questions someone with reach must
-answer before any drop.
+**Revised:** 2026-09-06, third of this date, against the review of PR #468. The
+observation reports that no unit is installed rather than that nothing serves the
+database, a process or a hand-started binary not having been checked. **The 37 rows the
+mirror argument did not reach are classified**: twenty-one member changes, whose subject
+retires with `members`, and sixteen application errors, which no trace under admin's
+custody carries because they never reached an agent, both left open rather than answered
+by a claim about turns. The `src/` directory comparison says it is one. Entries run
+newest first, which the second of this date broke.
 
 **Revised:** 2026-09-06, second of this date, against the review of PR #468 and carrying
 the answer that review brought. **The store the register could not see is reported for
@@ -32,6 +34,13 @@ citation that resolves nowhere. `store.rs` cites sections 5 and 14 and not 12, w
 twice said one. `0002_roles.sql` joins the sessions paragraph, having made the charter's
 section 6 argument in the schema nine days before the rewrite made it in prose. Question
 1 gains its third answer, an archive at a named path.
+
+**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table and the six
+templates the first draft left unclassified are classified. `web/admin.rs`'s routes are
+marked as inner and the `/admin` mount named. **And the claim that the store has no rows
+that matter is withdrawn**: it was a claim about every deployment made from one box's
+`systemctl`, and what stands in its place is the three questions someone with reach must
+answer before any drop.
 
 **Date filed:** 2026-09-06
 **Document ID:** `inventory-weaver-web-code`
@@ -62,8 +71,11 @@ history**, so the schema alone has a stated authority that cannot be read.
 
 **And the crate has none of the seven directories the Spec draws.** Section
 1 names `store/`, `ingest/`, `authoring/`, `queue/`, `surfaces/`, `seams/`
-and `link/`. The crate's directories are `adapters/`, `bin/` and `web/`, and
-what carries the names above are files rather than modules: `store.rs`,
+and `link/`. Section 1's tree is a `src/` layout and this compares against it: the
+crate's `src/` directories are `adapters/`, `bin/` and `web/`. Beside `src/`
+the crate root holds `assets/`, `deploy/` and `migrations/`, which section 1
+does not draw and which this register counts elsewhere. What carries
+section 1's names are files rather than modules: `store.rs`,
 `queue.rs`, `wire.rs`, `traceview.rs`, `repro.rs`, `router.rs`,
 `registry.rs`, `lifecycle.rs`, `channel.rs` and `config.rs`.
 
@@ -189,17 +201,29 @@ with both migrations applied:
 
 **Every event falls between 2026-08-19 and 2026-08-20**, the two days around
 the roles ruling `0002_roles.sql` carries. The turn rows name eighteen runs
-of the alpha agent by run label and ten turns by turn label, so what
-`channel_events` holds is **a two-day mirror of turns whose canonical record
-is the trace under admin's custody**, and sixty-four messages beside it. No
-`weaver-web` unit is installed on that box, so the database stands with
-nothing serving it.
+of the alpha agent by run label and ten turns by turn label.
 
-**What this does and does not settle.** The turn rows are a mirror and the
-trace is the record, so dropping them loses a copy rather than a fact, on
-the condition that the eighteen runs' traces still stand, **which is a check
-for whoever rules on the drop and not a thing this register asserts**.
-Whether the sixty-four messages are wanted as anything is the operator's.
+**No `weaver-web` unit is installed on that box.** That is the observation.
+Whether a process, a container, or a hand-started binary serves the database
+was not checked, so this register says a unit is absent and does not say
+nothing is serving it.
+
+**What this does and does not settle, by row.** The 158 turn rows, opens and
+closes, are **a mirror of turns whose canonical record is the trace under
+admin's custody**, so dropping them loses a copy rather than a fact, on the
+condition that the eighteen runs' traces still stand, **which is a check for
+whoever rules on the drop and not a thing this register asserts**. The 64
+message rows are the conversation itself and have no record elsewhere, so
+whether they are wanted is the operator's.
+
+**The remaining 37 rows are unclassified and the mirror argument does not
+reach them.** Twenty-one member changes and sixteen application errors are
+neither a turn nor a message: the first is channel membership, whose subject
+retires with `members`, and the second is this crate's own faults, which no
+trace under admin's custody carries because they never reached an agent.
+**Whether either is wanted, and whether the app-error rows are the only
+record of a fault worth reading, is a question this register leaves open**
+rather than one the mirror answers.
 And **which other boxes hold a store, neither seat can see.** This crate
 runs on one machine while the agents run on another, per the charter's
 section 5, so a store on a box neither seat reaches is the expected case
