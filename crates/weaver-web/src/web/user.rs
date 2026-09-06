@@ -4,24 +4,24 @@
 //! surface's, behind its role gate.
 
 use super::{
-    nav_agents, render_event, session_participant, sse_cursor, valid_handle, AppResult, AppState,
+    AppResult, AppState, nav_agents, render_event, session_participant, sse_cursor, valid_handle,
 };
 use crate::channel::{self, EventView};
 use crate::registry;
 use crate::router as invocation_router;
 use crate::store::NewEvent;
 use askama::Template;
+use axum::Router;
 use axum::extract::{Form, Path, Query, State};
-use axum::http::{header, HeaderMap, StatusCode};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
-use axum::Router;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::convert::Infallible;
-use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::ReceiverStream;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -66,14 +66,14 @@ async fn open_session(
     if !valid_handle(&form.name) {
         return Ok((StatusCode::BAD_REQUEST, "name must be kebab-case").into_response());
     }
-    if let Some(existing) = registry::by_name(&state.store, &form.name).await? {
-        if existing.kind != "human" {
-            return Ok((
-                StatusCode::CONFLICT,
-                format!("'{}' is a {} participant", form.name, existing.kind),
-            )
-                .into_response());
-        }
+    if let Some(existing) = registry::by_name(&state.store, &form.name).await?
+        && existing.kind != "human"
+    {
+        return Ok((
+            StatusCode::CONFLICT,
+            format!("'{}' is a {} participant", form.name, existing.kind),
+        )
+            .into_response());
     }
     let pid = state
         .store
@@ -162,12 +162,11 @@ async fn create_channel(
     let cid = state.store.create_channel(&name, topic).await?;
     state.store.add_member(cid, me.id).await?;
     for key in form.keys() {
-        if let Some(agent) = key.strip_prefix("agent_") {
-            if let Some(p) = registry::by_name(&state.store, agent).await? {
-                if p.kind == "agent" {
-                    join_with_note(&state, cid, &p).await?;
-                }
-            }
+        if let Some(agent) = key.strip_prefix("agent_")
+            && let Some(p) = registry::by_name(&state.store, agent).await?
+            && p.kind == "agent"
+        {
+            join_with_note(&state, cid, &p).await?;
         }
     }
     Ok(Redirect::to(&format!("/channels/{name}")).into_response())

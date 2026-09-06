@@ -737,37 +737,37 @@ async fn connector_connection(
                 // whole-file read would hold it all at once.
                 ToConnector::TraceRuns { id, agent } => {
                     let mut runs: Vec<RunSummary> = Vec::new();
-                    if let Some(path) = trace_paths.get(&agent) {
-                        if let Ok(file) = tokio::fs::File::open(path).await {
-                            let mut lines = BufReader::new(file).lines();
-                            let mut order: Vec<String> = Vec::new();
-                            let mut map: HashMap<String, RunSummary> = HashMap::new();
-                            while let Ok(Some(line)) = lines.next_line().await {
-                                let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
-                                    continue;
-                                };
-                                let Some(run) = v.get("run").and_then(|r| r.as_str()) else {
-                                    continue;
-                                };
-                                let entry = map.entry(run.to_owned()).or_insert_with(|| {
-                                    order.push(run.to_owned());
-                                    RunSummary {
-                                        run: run.to_owned(),
-                                        turns: 0,
-                                        events: 0,
-                                        first_wall_ms: None,
-                                    }
-                                });
-                                entry.events += 1;
-                                if entry.first_wall_ms.is_none() {
-                                    entry.first_wall_ms = v.get("wall_ms").and_then(|w| w.as_i64());
+                    if let Some(path) = trace_paths.get(&agent)
+                        && let Ok(file) = tokio::fs::File::open(path).await
+                    {
+                        let mut lines = BufReader::new(file).lines();
+                        let mut order: Vec<String> = Vec::new();
+                        let mut map: HashMap<String, RunSummary> = HashMap::new();
+                        while let Ok(Some(line)) = lines.next_line().await {
+                            let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
+                                continue;
+                            };
+                            let Some(run) = v.get("run").and_then(|r| r.as_str()) else {
+                                continue;
+                            };
+                            let entry = map.entry(run.to_owned()).or_insert_with(|| {
+                                order.push(run.to_owned());
+                                RunSummary {
+                                    run: run.to_owned(),
+                                    turns: 0,
+                                    events: 0,
+                                    first_wall_ms: None,
                                 }
-                                if v.get("kind").and_then(|k| k.as_str()) == Some("turn.closed") {
-                                    entry.turns += 1;
-                                }
+                            });
+                            entry.events += 1;
+                            if entry.first_wall_ms.is_none() {
+                                entry.first_wall_ms = v.get("wall_ms").and_then(|w| w.as_i64());
                             }
-                            runs = order.into_iter().filter_map(|r| map.remove(&r)).collect();
+                            if v.get("kind").and_then(|k| k.as_str()) == Some("turn.closed") {
+                                entry.turns += 1;
+                            }
                         }
+                        runs = order.into_iter().filter_map(|r| map.remove(&r)).collect();
                     }
                     ToServer::TraceRuns { id, runs }
                 }
@@ -775,20 +775,20 @@ async fn connector_connection(
                     const RUN_CAP: usize = 10_000;
                     let mut events = Vec::new();
                     let mut truncated = false;
-                    if let Some(path) = trace_paths.get(&agent) {
-                        if let Ok(file) = tokio::fs::File::open(path).await {
-                            let mut lines = BufReader::new(file).lines();
-                            while let Ok(Some(line)) = lines.next_line().await {
-                                let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
-                                    continue;
-                                };
-                                if v.get("run").and_then(|r| r.as_str()) == Some(run.as_str()) {
-                                    if events.len() == RUN_CAP {
-                                        truncated = true;
-                                        break;
-                                    }
-                                    events.push(v);
+                    if let Some(path) = trace_paths.get(&agent)
+                        && let Ok(file) = tokio::fs::File::open(path).await
+                    {
+                        let mut lines = BufReader::new(file).lines();
+                        while let Ok(Some(line)) = lines.next_line().await {
+                            let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
+                                continue;
+                            };
+                            if v.get("run").and_then(|r| r.as_str()) == Some(run.as_str()) {
+                                if events.len() == RUN_CAP {
+                                    truncated = true;
+                                    break;
                                 }
+                                events.push(v);
                             }
                         }
                     }

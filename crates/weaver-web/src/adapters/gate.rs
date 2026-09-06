@@ -43,7 +43,10 @@ impl std::fmt::Display for GateError {
             GateError::DeliveryLost(e) => write!(f, "delivery lost mid-turn: {e}"),
             GateError::BadClose(s) => write!(f, "close line did not parse: {s}"),
             GateError::CloseTooLong(n) => {
-                write!(f, "close line exceeded the {CLOSE_BOUND} byte buffer cap ({n} bytes read, no delimiter)")
+                write!(
+                    f,
+                    "close line exceeded the {CLOSE_BOUND} byte buffer cap ({n} bytes read, no delimiter)"
+                )
             }
         }
     }

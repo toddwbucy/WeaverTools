@@ -10,14 +10,23 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-06, fifth of this date, an election the rewrite dropped
+comes back. Section 10 carries the licence boundary again, which stood at
+section 15 of the Spec this one replaced and appears in no section of this
+one, so an open operator question was held nowhere while
+`crates/weaver-web/Cargo.toml` still cited its old home. Restored rather
+than answered. Found by the edition alignment act, which needed the citation
+to resolve.
+
 **Revised:** 2026-09-06, one artifact has two identities and the join holds.
-Section 2.3's row carries the record's identity beside the per-file map it keys on,
-computed at import by `weaver-spu-Spec` section 3's rule over the files it registers
-and unique across rows, and the record's identity determines the key and not the
-reverse, so the join section 2.2 needs is a lookup on it. Section 2.2's artifact
-identity is that value, filled from the summary the analysis seam carries per
-`weaver-analysis-web-contract` section 2.2. Section 9 gains the row and section
-10's election closes. Per issue #465.
+Section 2.3's row carries the record's identity beside the per-file map it
+keys on, computed at import by `weaver-spu-Spec` section 3's rule over the
+files it registers and unique across rows, and the record's identity
+determines the key and not the reverse, so the join section 2.2 needs is a
+lookup on it. Section 2.2's artifact identity is that value, filled from the
+summary the analysis seam carries per `weaver-analysis-web-contract` section
+2.2. Section 9 gains the row and section 10's election closes. Per
+issue #465.
 
 **Revised:** 2026-09-05, fourteenth of this date, section 2.3 stops claiming
 a join section 10 says cannot be made. The table asserted that a run's
@@ -355,17 +364,16 @@ Each row carries:
 
 **This table is what a run's artifact identity resolves to**, section 2.2
 holding that identity in the tuple so a reading names its conditions. **The
-join is a lookup on the record's identity**, as of 2026-09-06 per
-issue #465: the two identities are two rules at two grains, the record's over
+join is a lookup on the record's identity**, as of 2026-09-06 per issue
+#465: the two identities are two rules at two grains, the record's over
 everything the binding named and this table's key over the weights alone,
 and the record's determines the key because a directory's hash fixes its
 shards, so one record identity names at most one row, a renamed split GGUF
-being the one case where it names two, which the lookup reports as
-ambiguous rather than picking, per section 10, and the row carries
-every record identity its weights have been admitted under. A run whose
-record identity no row carries joins to nothing and registers nothing, a
-record being a fact and not an import, until an import on that box
-registers the files.
+being the one case where it names two, which the lookup reports as ambiguous
+rather than picking, per section 10, and the row carries every record
+identity its weights have been admitted under. A run whose record identity
+no row carries joins to nothing and registers nothing, a record being a fact
+and not an import, until an import on that box registers the files.
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
@@ -854,6 +862,14 @@ act that lands it states what removal makes it fail and confirms it does.
   stands staged on bulk-store since 2026-07-29 and in no record yet, so the
   first import of it is where the ambiguity lands, and the ruling is owed
   before that import rather than after.
+- **The licence boundary**, carried forward 2026-09-06 from the Spec this
+  one replaced, where it stood at that document's section 15 and where the
+  rewrite dropped it. This crate carries `Apache-2.0` with its own `LICENSE`
+  file and the workspace carries `UNLICENSED`. **The suite's licence
+  boundary is an open operator question, so neither inheritance nor silence
+  settles it**, and both facts stand. It is restored rather than answered,
+  the edition act of this date having found `Cargo.toml` still pointing at
+  the section it used to live in.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on

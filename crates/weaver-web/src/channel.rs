@@ -46,8 +46,7 @@ pub async fn by_name(store: &Store, name: &str) -> anyhow::Result<Option<Channel
     .await?)
 }
 
-const EVENT_VIEW_COLUMNS: &str =
-    "e.id, e.channel_id, e.ts, e.kind, e.body, e.run_label, e.turn_label, e.close_kind, \
+const EVENT_VIEW_COLUMNS: &str = "e.id, e.channel_id, e.ts, e.kind, e.body, e.run_label, e.turn_label, e.close_kind, \
      p.name AS author_name, p.display AS author_display, p.kind AS author_kind";
 
 pub async fn events_after(
