@@ -151,6 +151,29 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
 - The pinned toolchain (`nightly-2026-02-13`, rustc `47611e160`) is installed and matches
   `rust-toolchain.toml`.
 
+## Building the new tree
+
+From `WeaverTools/`. Nightly, edition 2024, twelve packages.
+
+```bash
+cargo build --workspace
+cargo test --workspace
+cargo test -p weaver-harness            # one crate
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all -- --check
+```
+
+**No `--features` flag belongs on the clippy line here.** `weaver-spu`
+declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
+on without one. **The quarry's command below is not this one** and carries a
+`weaver-spu/inference` flag that is correct there and errors here, which is
+a mistake this file's own reader made on 2026-09-06 before these commands
+existed.
+
+`--features weaver-spu/cuda` will not compile on a box with no `nvcc`, which
+is why no gate command carries it: the CUDA path is verified where the
+hardware is, per issue #397's parking.
+
 ## Building the quarry (read-only verification)
 
 Nightly, edition 2024. From `WeaverTools-archived/`:
@@ -222,7 +245,7 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**During authoring, enforcement rests on four devices and no graph.** These do not retire
+**During authoring, enforcement rests on five devices and no graph.** These do not retire
 when the graph lands — the graph indexes them, it does not replace them:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
@@ -234,6 +257,13 @@ when the graph lands — the graph indexes them, it does not replace them:
 4. Human and CodeRabbit review. Read the review **body**, not the thread count: CR posts
    findings outside the diff range that create no thread and are absent from the
    "actionable comments" total.
+5. **Clippy at `-D warnings` over the workspace**, on the operator's ruling of
+   2026-09-06. It is the cheapest of the five and the only one a person has to
+   type, which is how it went unrun: at the ruling, nine distinct findings stood
+   across four crates, one of them a 400-byte `LifecycleDirective` where every
+   unit variant pays for `EnterPayload`. **What it buys is the next nine rather
+   than these**, and it is a gate rather than advice because a lint backlog that
+   is nobody's act accumulates.
 
 Every real defect found in the quarry's final week came from items 2–4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
