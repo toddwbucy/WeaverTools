@@ -13,13 +13,25 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
-**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table
-and the six templates the first draft left unclassified are classified.
-`web/admin.rs`'s routes are marked as inner and the `/admin` mount named.
-**And the claim that the store has no rows that matter is withdrawn**: it
-was a claim about every deployment made from one box's `systemctl`, and
-what stands in its place is the three questions someone with reach must
+**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table and the six
+templates the first draft left unclassified are classified. `web/admin.rs`'s routes are
+marked as inner and the `/admin` mount named. **And the claim that the store has no rows
+that matter is withdrawn**: it was a claim about every deployment made from one box's
+`systemctl`, and what stands in its place is the three questions someone with reach must
 answer before any drop.
+
+**Revised:** 2026-09-06, second of this date, against the review of PR #468 and carrying
+the answer that review brought. **The store the register could not see is reported for
+one box**, with its five tables' row counts, its two-day span, and the finding that its
+turn rows mirror traces held elsewhere, so question 2 is answered for olympus and open
+for every other box. **The module citations resolve** against the Spec at `13b8a6a` of
+2026-08-25, git being the archive, so a reader checks each verdict against the text its
+module was written to rather than finding nothing, and the schema is named as the one
+citation that resolves nowhere. `store.rs` cites sections 5 and 14 and not 12, which is
+`traceview.rs`'s. **The crate has none of the seven directories**, where this register
+twice said one. `0002_roles.sql` joins the sessions paragraph, having made the charter's
+section 6 argument in the schema nine days before the rewrite made it in prose. Question
+1 gains its third answer, an archive at a named path.
 
 **Date filed:** 2026-09-06
 **Document ID:** `inventory-weaver-web-code`
@@ -33,18 +45,27 @@ chat client.** The store's tables are `participants`, `channels`, `members`,
 `channel.html`, `channels.html` and `sidebar.html`. The rewritten Spec's
 section 2 names seven tables and not one of them is among those five.
 
-**Every module cites a document that does not exist.** `store.rs` cites
-"Spec section 12", `repro.rs` "section 17", `queue.rs` "section 8",
-`wire.rs` "section 16", `Cargo.toml` "the Spec's section 15". The rewritten
-Spec has ten sections. `migrations/0001_init.sql` cites
-`docs/SPEC.md section 4`, **a path that exists nowhere in the tree**, so the
-schema's stated authority cannot be read at all.
+**Every module cites a document the tree does not hold, and git does.**
+`traceview.rs` cites "Spec section 12", `repro.rs` "section 17", `queue.rs`
+"section 8", `wire.rs` "section 16", `store.rs` sections 5 and 14,
+`Cargo.toml` "the Spec's section 15". The rewritten Spec has ten sections
+and every one of those citations resolves against **the Spec at `13b8a6a`,
+2026-08-25, the last commit before the rewrite**, where section 12 is the
+trace view, 13 the HTTP surface, 14 sessions and roles, 15 the open
+elections, 16 the link and 17 the confirm view. Git is the archive and the
+tree is not, per the Working Rules, so **a reader checking any verdict below
+reads that commit** rather than finding nothing.
 
-**And the crate's own layout is not the one the Spec draws.** Section 1
-names `store/`, `ingest/`, `authoring/`, `queue/`, `surfaces/`, `seams/` and
-`link/`. The crate holds `adapters/`, `web/`, `channel.rs`, `router.rs`,
-`traceview.rs`, `repro.rs`, `wire.rs`, `registry.rs`, `lifecycle.rs`,
-`config.rs`, `store.rs` and `queue.rs`.
+The exception is the schema. `migrations/0001_init.sql` cites
+`docs/SPEC.md section 4`, **a path that exists nowhere in the tree or in its
+history**, so the schema alone has a stated authority that cannot be read.
+
+**And the crate has none of the seven directories the Spec draws.** Section
+1 names `store/`, `ingest/`, `authoring/`, `queue/`, `surfaces/`, `seams/`
+and `link/`. The crate's directories are `adapters/`, `bin/` and `web/`, and
+what carries the names above are files rather than modules: `store.rs`,
+`queue.rs`, `wire.rs`, `traceview.rs`, `repro.rs`, `router.rs`,
+`registry.rs`, `lifecycle.rs`, `channel.rs` and `config.rs`.
 
 ## The seam the code separates along
 
@@ -92,6 +113,15 @@ at all is the charter's section 6 question rather than this register's:
 identity and authentication are deferred there with a named trigger, so the
 table's subject is deferred with them.
 
+**The second migration is where that question was already anticipated.**
+`0002_roles.sql` adds `role` to `participants` on the operator's ruling of
+2026-08-19, its own comment saying the two surfaces separate now so that
+identity later attaches to standing roles rather than forcing a
+rearchitecture. **That is the charter's section 6 argument, made in the
+schema nine days before the rewrite made it in prose**, and it is the one
+place in the crate where a ruling is cited by date. The column retires with
+`participants` and the reasoning does not.
+
 ### Carries, 1,770 lines
 
 | file | lines | what the new documents call it |
@@ -120,28 +150,61 @@ charter argues for, already built.
 
 ## What the operator rules
 
-1. **Whether the retiring 882 lines come out in one act or stay until their
-   surfaces are built.** Deleting them is cheap and makes the crate read as
-   what it is. Leaving them means the crate builds and serves something
-   while the instrument is written beside it.
+1. **Whether the retiring 882 lines are deleted, kept, or moved.** Deleting
+   them is cheap and makes the crate read as what it is. Keeping them means
+   the crate builds and serves something while the instrument is written
+   beside it. **Moving them is the third answer**: an archive at a named path
+   with a checksum, which is the shape the quarry was frozen under, keeping
+   the conversation half reachable to whoever writes the chat interface the
+   vision still names. Git holds them either way, so the choice is about
+   what a reader of the tree meets rather than about loss.
 2. **Whether the schema is migrated or replaced.** The five tables share
    nothing with the seven, so a migration between them would be a drop and a
    create rather than an alteration, and there is no column in the old set
-   that a new table wants. **What this register cannot tell you is what
-   would be discarded.** No store stands on the box this reading was taken
-   from, `postgresql` being inactive here, and this crate runs on one machine
-   while the agents run on another, so a deployed store elsewhere is exactly
-   the thing this seat cannot see. **Before any drop, someone with reach
-   answers three questions**: which boxes hold a store, what its tables carry
-   by row count, and whether anything in `channel_events` is wanted as a
-   record rather than as a chat log. This register asserts none of that and
-   an earlier draft did, saying the store has no rows that matter, which was
-   a claim about every deployment made from one box's `systemctl`.
+   that a new table wants. **What would be discarded is answered for one box
+   and open for the rest**, per the observation below.
 3. **What the four ruling-wanted modules become**, one by one, and in what
    order against the surfaces.
 4. **Whether the crate's edition alignment rides this work.** `Cargo.toml`
    pins 2021 against the workspace's 2024 and calls the migration real work,
    citing a Spec section that no longer exists.
+
+## What stands in the store, as reported
+
+**A dated observation by a named reporter**, which is the shape this crate's
+own section 2.3 requires of presence and is the honest shape for this too.
+No store stands on the box this register was written from, `postgresql`
+being inactive there, and one stands on olympus.
+
+**Reported by the olympus seat on 2026-09-06**, from a `weaver_web` database
+with both migrations applied:
+
+| table | rows | |
+|---|---|---|
+| `participants` | 5 | one admin, four users |
+| `channels` | 11 | |
+| `members` | 32 | |
+| `channel_events` | 259 | turn-open 87, close 71, message 64, member-change 21, app-error 16 |
+| `sessions` | 5 | |
+
+**Every event falls between 2026-08-19 and 2026-08-20**, the two days around
+the roles ruling `0002_roles.sql` carries. The turn rows name eighteen runs
+of the alpha agent by run label and ten turns by turn label, so what
+`channel_events` holds is **a two-day mirror of turns whose canonical record
+is the trace under admin's custody**, and sixty-four messages beside it. No
+`weaver-web` unit is installed on that box, so the database stands with
+nothing serving it.
+
+**What this does and does not settle.** The turn rows are a mirror and the
+trace is the record, so dropping them loses a copy rather than a fact, on
+the condition that the eighteen runs' traces still stand, **which is a check
+for whoever rules on the drop and not a thing this register asserts**.
+Whether the sixty-four messages are wanted as anything is the operator's.
+And **which other boxes hold a store, neither seat can see.** This crate
+runs on one machine while the agents run on another, per the charter's
+section 5, so a store on a box neither seat reaches is the expected case
+rather than an unlikely one, and the answer above is one box's and is not
+the deployment's.
 
 ## What this does not decide
 
@@ -162,7 +225,7 @@ Two documents carry statements this reading falsifies, and each wants an act
 of its own rather than a line here.
 
 - **`weaver-web-Spec` section 1's layout is aspirational and reads as
-  descriptive.** It names seven directories, of which the crate has one.
+  descriptive.** It names seven directories and the crate has none of them.
 - **Nothing anywhere records that the implementation predates its charter.**
   A reader of the rewritten documents would take the crate for empty, and a
   reader of the crate would take the charter for unwritten.
