@@ -221,7 +221,10 @@ landed by the ingest of section 3.1 and never by a surface. What the
 engineer authored is sections 2.3 through 2.5, the artifact, the
 declaration and the staged experiment, landed by the authoring path of
 section 3.2 and never by the ingest. Section 2.6's recorded query is the
-read's own trace and belongs to neither.
+read's own trace and belongs to neither, written by the read that serves it
+and by nothing else. **Section 2.7 is not a table**: it is how the rows
+above are reached, and it carries the rule that a derived value is derived
+once at ingest rather than at any read.
 
 **The halves differ in what a rewrite means.** A recorded row is a fact
 about a run that happened, so a second write of it is a replay and must be
