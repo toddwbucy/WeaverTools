@@ -10,6 +10,59 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-05, twelfth of this date, against the review of
+PR #464. Section 3.2 stated two rules for one write, last-write-wins beside
+a version check, and keeps the second. Section 3 counted two writers where
+the document names three, the read path writing section 2.6's row, which is
+why 2.6 belongs to neither half. Section 2.4 said admin holds a store of
+declarations and 3.2 that the operator installs one through admin: admin
+stores none and takes none in, its verbs reading a configuration file the
+operator placed. Section 9's absence row buys its absence with compile-fail
+rather than a pin, per the corpus's own rule that a pin buys a shape that
+exists. Section 10 names the identity G5 the review found, two rules for one
+artifact identity with the join unable to join.
+
+**Revised:** 2026-09-05, eleventh of this date, the store's authored half is
+written down. Section 2 had five tables and every one of them recorded:
+three surfaces have listed declarations, staged experiments and artifacts
+since the rewrite, and only the artifact had a row, which nothing could
+write into because section 3 was the ingest alone and section 6 called it
+the only writer. Sections 2.4 and 2.5 give the declaration and the staged
+experiment their rows, section 3 splits into the ingest and the authoring
+path, and section 6's rule narrows to what it meant: no surface writes a
+position or a run. Three conformance rows follow. The recorded query moves
+to 2.6 and the indexes to 2.7, with their citations. Per issue #454.
+
+**Revised:** 2026-09-05, tenth of this date, the watch on the stored
+position is one that can fail. Section 9's row had read that a second reader
+disagrees where the position is derived at the read, which two readers
+deriving identically would satisfy while the property went unenforced. It
+now alters the summary's counts after ingest and rereads, which only a
+stored value survives. Section 3 says the points of an unaddressable
+generation do not land while its summary entry does. Per the review of
+PR #459.
+
+**Revised:** 2026-09-05, ninth of this date, a position that was never
+established is not addressed. Section 3 states what the write path does
+where a generation's closing count is absent, no `model.output` having
+reported one: the address section 2.1 requires cannot be formed, so the rows
+do not land and the run reads partial rather than short. This is
+absent-not-empty at the write path, the rule that forbids drawing a missing
+surprisal as zero forbidding an invented key for the same reason. Per the
+review of PR #463, whose emitter carries the count as absent rather than
+derived.
+
+**Revised:** 2026-09-05, eighth of this date, the position is derived at
+ingest. Section 3's write path carries the rule, `(R - O - 1) + j` over the
+generation's closing resident count, its output token count and the ordinal,
+measured on 2026-09-05 against three records and nine generations rather
+than reasoned, with the alternative that fails on the first generation
+stated so no later act rediscovers it. Section 7.3 no longer states the
+contract's ask as landed: the two counts it converts from are owed at
+issue #461, and until they cross this seam carries the ordinal alone and
+this crate cannot key its store from it. Section 9 gains the two rows the
+contract's conformance clause named. Per the review of PR #459.
+
 **Revised:** 2026-09-05, seventh of this date. Section 7.3 cites
 `weaver-analysis-web-contract`, landed this date per issue #418, and names
 the two clauses of it that reach back here: the position rides beside the
@@ -63,53 +116,12 @@ rather than asserted, an uncited regime in a Spec being testimony. The
 scorer leaves the run's tuple for the verdict. Semicolons swept from the
 whole document under G1, eight of them older than this act.
 
-**Revised:** 2026-09-05, against the acts of that date. The observation
-exchange landed, issue #435 at PR #440, and the per-position read landed,
-issue #436 at PR #444. The component catalogue, issue #437, was answered
-with a finding rather than a catalogue. Two facts the record spells
+**Revised:** 2026-09-05, first of this date, against the acts of that date.
+The observation exchange landed, issue #435 at PR #440, and the per-position
+read landed, issue #436 at PR #444. The component catalogue, issue #437, was
+answered with a finding rather than a catalogue. Two facts the record spells
 corrected this document where it had guessed: the address carries the turn,
 and a position is a resident length rather than an ordinal.
-
-**Revised:** 2026-09-05, eighth of this date, the position is derived at
-ingest. Section 3's write path carries the rule, `(R - O - 1) + j` over the
-generation's closing resident count, its output token count and the ordinal,
-measured on 2026-09-05 against three records and nine generations rather
-than reasoned, with the alternative that fails on the first generation
-stated so no later act rediscovers it. Section 7.3 no longer states the
-contract's ask as landed: the two counts it converts from are owed at
-issue #461, and until they cross this seam carries the ordinal alone and
-this crate cannot key its store from it. Section 9 gains the two rows the
-contract's conformance clause named. Per the review of PR #459.
-
-**Revised:** 2026-09-05, ninth of this date, a position that was never
-established is not addressed. Section 3 states what the write path does
-where a generation's closing count is absent, no `model.output` having
-reported one: the address section 2.1 requires cannot be formed, so the rows
-do not land and the run reads partial rather than short. This is
-absent-not-empty at the write path, the rule that forbids drawing a missing
-surprisal as zero forbidding an invented key for the same reason. Per the
-review of PR #463, whose emitter carries the count as absent rather than
-derived.
-
-**Revised:** 2026-09-05, tenth of this date, the watch on the stored
-position is one that can fail. Section 9's row had read that a second reader
-disagrees where the position is derived at the read, which two readers
-deriving identically would satisfy while the property went unenforced. It
-now alters the summary's counts after ingest and rereads, which only a
-stored value survives. Section 3 says the points of an unaddressable
-generation do not land while its summary entry does. Per the review of
-PR #459.
-
-**Revised:** 2026-09-05, eleventh of this date, the store's authored half is
-written down. Section 2 had five tables and every one of them recorded:
-three surfaces have listed declarations, staged experiments and artifacts
-since the rewrite, and only the artifact had a row, which nothing could
-write into because section 3 was the ingest alone and section 6 called it
-the only writer. Sections 2.4 and 2.5 give the declaration and the staged
-experiment their rows, section 3 splits into the ingest and the authoring
-path, and section 6's rule narrows to what it meant: no surface writes a
-position or a run. Three conformance rows follow. The recorded query moves
-to 2.6 and the indexes to 2.7, with their citations. Per issue #454.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
@@ -339,10 +351,12 @@ draft buffer. Each row carries:
 **The last answer is a reading and not a verdict.** It is what the verb said
 at a moment against a corpus commit, so a surface presents it with its date
 and re-asks rather than treating it as current. **A declaration this crate
-holds is not a declaration admin holds**: admin's own store is the authority
-on what a box will load, per `weaver-admin-PRD` section 4.3, and this table
-is where an engineer keeps what they are composing. The two agree only when
-the operator has installed one.
+holds is not a declaration a box will load.** Admin stores none and takes
+none in: its verbs read a configuration file the operator placed, and what a
+box will load is that file, judged by `validate` and then by the SPU at
+admission, per `weaver-admin-PRD` section 4.3. This table is where an
+engineer keeps what they are composing, and the two agree only where the
+operator has placed one.
 
 ### 2.5 The staged experiment
 
@@ -412,10 +426,14 @@ computed in the interface is a value nobody else can reproduce.
 
 ## 3. The write path
 
-**There are two, because the store has two halves.** Section 3.1 lands what
-the instrument recorded and section 3.2 lands what the engineer authored.
-Neither writes the other's tables, and **no surface writes through 3.1**,
-which is what section 6's rule means and all it means.
+**Three writers, and each owns its tables.** Section 3.1's ingest lands what
+the instrument recorded. Section 3.2's authoring path lands what the
+engineer authored. **The read path writes too**, one row and only one:
+section 4 admits an open query on the condition that the query is recorded,
+so the read that serves it writes section 2.6's row and nothing else. That
+is why 2.6 belongs to neither half. No writer touches another's tables, and
+**no surface writes through 3.1**, which is what section 6's rule means and
+all it means.
 
 ### 3.1 The ingest
 
@@ -469,13 +487,13 @@ writes an artifact row on import. Each writes its own table of section 2 and
 no other, and none of them may write a position or a run, which is what
 keeps a recorded fact a recorded fact.
 
-- **Writes are ordered on the row, not idempotent.** An authored row is a
-  thing a person is still making, so a second write is an edit and the last
-  one wins. The recorded half's idempotence answers a replay, and there is
-  no replay here.
-- **An edit carries the version it read.** Where the stored version has
-  moved on, the write refuses and the surface says so, because two engineers
-  on one declaration is the case a last-write-wins rule loses silently.
+- **Writes are ordered on the row rather than idempotent, and the order is
+the version's.** An authored row is a thing a person is still making, so a
+second write is an edit. **An edit carries the version it read**, and where
+the stored version has moved on it refuses and the surface says so. The
+recorded half's idempotence answers a replay and there is no replay here,
+and a last-write-wins rule would lose the case this one is for, two
+engineers on one declaration.
 - **Registration is a state change and not a write of its own.** The row
   moves from draft to registered and becomes immutable per section 9's pin,
   and what made it immutable is a member the row already carried.
@@ -485,10 +503,11 @@ keeps a recorded fact a recorded fact.
   may ever fetch is open at the charter's section 9.
 
 **Nothing here reaches an agent.** The authoring path writes this crate's
-own store, and a declaration becomes something a box will load only when the
-operator installs it through admin, per section 7.2. **Writing a declaration
-here changes no agent**, which is what makes composing safe and what makes
-the last `validate` answer a reading rather than a promise.
+own store, and a declaration becomes something a box will load only where
+the operator places it as that box's configuration file, which is an act
+outside this crate and outside admin's verbs. **Writing a declaration here
+changes no agent**, which is what makes composing safe and what makes the
+last `validate` answer a reading rather than a promise.
 
 ## 4. The read path
 
@@ -719,8 +738,9 @@ cell record like any other.
 | the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
 | an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
 | an undeclared boundary refuses the load | perturbation, at the admit path |
-| no surface writes a position or a run | compile-pin: the recorded tables take no writer off an authoring path |
+| no surface writes a position or a run | compile-fail: a doctest constructing a recorded-table writer from an authoring path does not compile |
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
+| a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
@@ -739,6 +759,18 @@ act that lands it states what removal makes it fail and confirms it does.
   section 9 holds open. Section 2.3 stores the entry with its reporter and
   its date whichever answer lands, and no read of it gates anything, so
   this document is not blocked on the choice.
+- **Which identity the catalog and the record share, and whether the join
+  section 2.3 claims can be made.** Section 2.3 keys the catalog by the
+  per-file digest map `weaver-analysis-Spec` section 3 carries. The SPU
+  hashes weights at admit as **BLAKE3 over a canonical manifest, one value
+  per artifact**, per `weaver-spu-Spec` section 3, and that is what a
+  measurement carries. Section 2.2's run row holds artifact identity and
+  2.3 says the run row points at the catalog, so **two rules stand for one
+  subject and the join has nothing to join on**. The analysis seam carries
+  no artifact identity at all, per its contract, so the run row's member has
+  no source on the wire either. This predates the act that names it, from
+  the catalog and tuple acts of 2026-09-05, and it is G5's subject rather
+  than this document's to settle alone.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on
