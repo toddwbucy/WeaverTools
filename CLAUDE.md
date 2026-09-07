@@ -271,28 +271,33 @@ when the graph lands - the graph indexes them, it does not replace them:
    before that crate's act merges. It is the cheapest of the five and the only
    one a person has to type, which is how it went unrun.
 
-   **Stated per crate because the workspace does not pass today and a gate
-   nobody can pass is a gate everyone learns to ignore.** Two counts, measured
-   2026-09-06, and they are different metrics rather than one:
+   **Stated per crate because the workspace did not pass when the gate
+   landed, and a gate nobody can pass is a gate everyone learns to ignore.**
+   The backlog clears as each crate is next touched rather than as one act
+   nobody owns.
 
-   **The workspace sweep deduplicates to ten findings of seven kinds.**
-   Three `collapsible_if`, two `large size difference between variants`, and
-   one each of `match` on a single pattern, a needless `mut`, an unused
-   import, `format!` in `format!` args, and a function at ten arguments.
+   **Issue #471 is the register and this file keeps no census.** A count
+   written here is stale by the next act and then argues with the command:
+   the table that stood here through 2026-09-06 named seven failing crates
+   and cited issue #475 as its largest item, and by 2026-09-07 #475 was
+   closed and three crates failed. Measure rather than read:
 
-   **The gate reports error lines per crate, which is what a person running
-   it sees**, higher because `--all-targets` reports a finding once per
-   target it compiles: `weaver-analysis` 7, `weaver-types` 4, and
-   `weaver-admin`, `weaver-gate`, `weaver-harness`, `weaver-spu` and
-   `weaver-state` 3 apiece. Five pass clean today: `weaver-traits`,
-   `weaver-trace`, `weaver-diagnostic`, `weaver-internal`, `weaver-web`.
+   ```bash
+   for c in $(ls crates); do
+     printf '%-18s %s\n' "$c" "$(cargo clippy -p "$c" --all-targets \
+       --message-format=short -- -D warnings 2>&1 |
+       grep -cE '^crates/.*: error:')"
+   done
+   ```
 
-   **The backlog clears as each crate is next touched** rather than as one act
-   nobody owns, and the largest of the ten is a 400-byte `LifecycleDirective`
-   where every unit variant pays for `EnterPayload`, at issue #475.
+   Run from `WeaverTools/` on 2026-09-07 that returned nine crates clean and
+   four findings across three: `weaver-admin` 2, `weaver-harness` 1,
+   `weaver-spu` 1. **That is a dated reading and not a current fact**, per
+   this file's own rule.
 
-   The workspace line above is the sweep that shows the backlog. It is not the
-   gate and does not pass until the seven clear.
+   **The workspace sweep is not the gate and under-reports it.** A crate that
+   fails stops its dependents from being checked at all, so
+   `--workspace` answers a smaller question than twelve per-crate runs do.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
