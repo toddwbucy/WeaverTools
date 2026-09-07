@@ -10,7 +10,6 @@ pub mod config;
 pub mod lifecycle;
 pub mod queue;
 pub mod registry;
-pub mod repro;
 pub mod router;
 pub mod store;
 pub mod traceview;
