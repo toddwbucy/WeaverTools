@@ -36,7 +36,8 @@ Everything else is the determinism matrix unchanged: the same protocol,
 the same prompts, depths, sweep order, comparison, and summary, imported
 and run rather than restated. This driver patches three seams in that
 harness, the admin `load`, the gate turn, and the session, and touches
-nothing else. The card is unlocked whichever way the run ends.
+nothing else. The card is unlocked on return, on an exception, on
+Ctrl-C, and on SIGTERM.
 
 Run:
 
@@ -48,6 +49,7 @@ import json
 import os
 import random
 import hashlib
+import signal
 import subprocess
 import sys
 import threading
@@ -273,6 +275,17 @@ def main():
 
     cond = Condition(rng, device, log)
     install(cond)
+    # **SIGTERM is turned into an exception so the `finally` below runs.**
+    # Python raises nothing into the stack on SIGTERM, so a `kill`, a unit
+    # stop, or a shutdown during a seven-hour run would otherwise leave the
+    # card at whatever lock the current half drew. Raised as `SystemExit`,
+    # it passes through the matrix's own `finally`, which unloads the agent
+    # and restores the declaration, before reaching the unlock here. Found
+    # by the thinkpad review seat on PR #483.
+    def on_term(signum, frame):
+        raise SystemExit(128 + signum)
+
+    signal.signal(signal.SIGTERM, on_term)
     sys.argv = [sys.argv[0], "--config", args.config, "--outdir", args.outdir,
                 "--hours", str(args.hours)]
     try:
