@@ -10,6 +10,18 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-07, second of this date, an authored row names its
+author. Sections 2.3 through 2.5 recorded what was authored and never who
+authored it, so the store held a declaration with no one behind it and a
+staged experiment carrying **the question the engineer meant to ask** with
+no engineer. Each of the three now carries a nullable author, section 3.2
+states what the member is and what its null means, and section 10 holds
+open what an author names, which the identity act of the charter's section 6
+settles. **The member is stated now because it is the one thing here that
+cannot be added later**: a row's author is knowable while the row is being
+written and unknowable afterward. Section 9 watches the null against a
+default that would guess. Per issue #454.
+
 **Revised:** 2026-09-07, the link boundary is the process line and not the
 workspace. Section 1 said this crate links no crate of the agent workspace
 and gave as its reason that it reaches the agent as an outside consumer
@@ -277,6 +289,12 @@ about a run that happened, so a second write of it is a replay and must be
 idempotent. An authored row is a thing a person is still making, so a
 second write of it is an edit and must be ordered. Section 3 states each.
 
+**They differ in a second way, and this document carried only the first
+until 2026-09-07.** A recorded row is about an instrument, so it names a run
+and no person. An authored row is about a person's work, so **it names who is
+making it**, per section 3.2. The recorded half needs no such member and
+carries none.
+
 ### 2.1 The position
 
 **The address is the run, the turn, and the position**, and the composite of
@@ -427,6 +445,9 @@ Each row carries:
   `weaver-analysis-PRD` section 3 versions them, by the weights content
   hash
 - the reference cells taken against it
+- **the author**, per section 3.2, which is not presence's reporter: the
+  reporter says who saw these weights on a box, the author says who
+  imported the row
 - **the row's version**, per section 3.2
 
 **Two identities name one artifact and the table carries both**, as of
@@ -490,6 +511,7 @@ draft buffer. Each row carries:
 - the parent declaration where this one is derived, and **the one thing
   that moved**, which is what the charter's section 3.6 draws
 - the last answer `validate` gave, with when it was given
+- **the author**, per section 3.2
 - **the row's version**, per section 3.2, which is not the corpus commit
   above: that one answers whether the field shape is current, this one
   whether the row has moved since it was read
@@ -516,6 +538,8 @@ five states of section 5.1. Each row carries:
 - **the question the engineer meant to ask**, which nothing upstream knows
   and nothing else in this store holds
 - the runs it produced, where it ran
+- **the author**, per section 3.2, which is who the question above was
+  meant by
 - **the row's version**, per section 3.2, frozen with the rest at
   registration
 
@@ -641,6 +665,21 @@ keeps a recorded fact a recorded fact.
   commit, which pins the floor's field shape and answers staleness against
   `weaver-types-Spec`: **one says whether the shape is current, the other
   says whether this row has moved since you read it.**
+- **Every authored row names its author, and the member is nullable.**
+  Sections 2.3, 2.4 and 2.5 each carry it. **Null means the store could not
+  name an author when the row was written, and it never means the
+  operator**, because a default that guesses writes a fact nobody can
+  correct later and an unknown that says so can be filled by anyone who
+  knows. The member holds the name the authoring surface had. **The
+  identity act of the charter's section 6 changes what fills it and not
+  whether it exists**, the act attaching authentication to the roles that
+  already stand rather than rearchitecting around them.
+- **It is stated now because it cannot be added later.** A row's author is
+  knowable while the row is being written and unknowable afterward, so a
+  schema that omits the member is not deferring the question, it is
+  answering it as no for every row written before it changes its mind.
+  Section 2.5's question is the case that shows it: **the question the
+  engineer meant to ask is not a whole fact without the engineer.**
 - **Writes are ordered on the row rather than idempotent, and the order is
   the version's.** An authored row is a thing a person is still making, so a
   second write is an edit. **An edit carries the version it read.** Where
@@ -899,6 +938,7 @@ cell record like any other.
 | an undeclared boundary refuses the load | perturbation, at the admit path |
 | no surface writes a position or a run | compile-fail: a doctest constructing a recorded-table writer from an authoring path does not compile |
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
+| an authored row names its author or names none | perturbation: default the null to the operator, a row nobody can attribute reads as attributed and is uncorrectable |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 | a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |
@@ -941,6 +981,12 @@ act that lands it states what removal makes it fail and confirms it does.
   stands staged on bulk-store since 2026-07-29 and in no record yet, so the
   first import of it is where the ambiguity lands, and the ruling is owed
   before that import rather than after.
+- **What an author names, which the identity act of the charter's section 6
+  settles.** Section 3.2's member holds the name the authoring surface had,
+  and whether that later resolves against an identity the act stands up or
+  stays a name is that act's ruling and not this document's. **The member
+  stands under either answer**, which is why the schema is not blocked on
+  the election and why the election is not blocked by the schema.
 - **The licence boundary**, carried forward 2026-09-06 from the Spec this
   one replaced, where it stood at that document's section 15 and where the
   rewrite dropped it. This crate carries `Apache-2.0` with its own `LICENSE`
