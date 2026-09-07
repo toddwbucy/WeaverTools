@@ -1,5 +1,6 @@
 //! conforms: admin-inventory-one-function
 //! conforms: admin-existence-checks-repair-nothing
+//! conforms: admin-missing-home-refuses-and-builds-nothing
 //! conforms: admin-boundary-denies-agent-traversal
 //! conforms: admin-checks-no-device
 //! conforms: admin-identity-from-validated-name
@@ -1683,9 +1684,6 @@ mod tests {
         assert_eq!(identity_for(&AgentName("alpha".into())), "weaver-alpha");
     }
 
-    /// The inventory repairs nothing: a missing home refuses rather than being
-    /// created.
-    #[test]
     /// **The restore is judged here, and the session name decides what it
     /// is**, per `weaver-admin-Spec` section 4 as of 2026-09-04. The record's
     /// own session name with the record whole is a resume resolved to the
@@ -1792,6 +1790,17 @@ mod tests {
         );
     }
 
+    /// **A missing home refuses and the walk builds nothing**, per
+    /// `weaver-admin-Spec` section 4 as of 2026-09-07 and issue #481: the
+    /// refusal is `BoundaryUnverified` and the directory is still absent
+    /// after it. This test stood from 2026-08-05 and lost its attribute on
+    /// 2026-09-06 when the restore test above was inserted between the
+    /// attribute and this function.
+    ///
+    /// Perturbation: create the home on the miss instead of refusing and the
+    /// second assertion fails on the directory it finds. Watched under
+    /// exactly that change.
+    #[test]
     fn the_inventory_repairs_nothing() {
         let root = scratch("repair");
         let sink_dir = root.join("sink");

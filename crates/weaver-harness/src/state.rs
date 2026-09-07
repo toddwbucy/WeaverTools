@@ -157,14 +157,10 @@ impl StateSeam {
 
     /// The session's seated prefix as custody holds it, per the contract's
     /// `identity` ask of 2026-09-04: asked once at the enter before the
-    /// decode open. An empty answer is an answer, the first load, and a
-    /// miss is the one the enter does not convert.
-    pub(crate) fn ask_identity(&mut self) -> Option<Vec<Recalled>> {
-        self.ask_identity_within(ANSWER_BOUND_MS)
-    }
-
-    /// The identity ask inside a caller's bound, the parked one where the
-    /// member's door stands, per the contract's parking clause.
+    /// decode open, inside the caller's bound, the parked one where the
+    /// member's door stands per the contract's parking clause. An empty
+    /// answer is an answer, the first load, and a miss is the one the enter
+    /// does not convert.
     pub(crate) fn ask_identity_within(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
         if self.dead {
             return None;
@@ -631,7 +627,7 @@ mod tests {
             .as_bytes(),
         )
         .expect("answers in advance");
-        let held = seam.ask_identity().expect("answered");
+        let held = seam.ask_identity_within(ANSWER_BOUND_MS).expect("answered");
         let material = identity_material(Some(held), &seed).expect("rebuilds");
         assert_eq!(material.len(), 1);
         assert!(matches!(material[0].role, weaver_traits::Role::System));
