@@ -5,6 +5,11 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+**Revised:** 2026-09-06, the two large variants box their payloads. Section 4.2's
+`Enter` carries its payload boxed and `State` its load boxed, so the unit variants of
+the two enums a status read goes through stop paying the largest variant's size, per
+issue #475 under the operator's ruling of this date that clippy is a gate. The wire's
+shape does not move, a boxed field crossing as the field does.
 **Revised:** 2026-09-05, the artifact is named at the inventory and resolved at
 admission. Section 2's account of what admin adds beyond the parse loses the claim
 that the model artifact resolves there, per `weaver-admin-PRD` section 4.3 as ruled
@@ -1337,7 +1342,7 @@ drawing rather than growing, and a floor edit every consumer's match then sees.
 
 ```rust
 pub enum LifecycleDirective {
-    Enter { payload: EnterPayload },
+    Enter { payload: Box<EnterPayload> },
     Leave,
     Stop,
     Observe,
@@ -1362,10 +1367,20 @@ pub enum LifecycleAnswer {
     GateReady,
     GateStopped,
     Validated,
-    State { state: AgentState, load: Option<LoadFacts> },
+    State { state: AgentState, load: Option<Box<LoadFacts>> },
     Agents { agents: Vec<AgentSummary> },
 }
+```
 
+**`Enter`'s payload and `State`'s load are boxed**, as of 2026-09-06 per issue #475:
+the two variants carried the whole of their enums' size onto every unit variant, four
+hundred bytes on the directive and two hundred and eighty on the answer, on the two
+channels a status read goes through since the observation exchange of 2026-09-04. A
+boxed field crosses this seam as the field does, the serialization treating the box as
+its content, so no contract's stated shape moves, and `OrganRefused`'s boxed reason
+below is the same demonstration made earlier for a different reason.
+
+```rust
 pub struct LoadFacts {
     pub session: SessionId,
     pub run: RunId,
