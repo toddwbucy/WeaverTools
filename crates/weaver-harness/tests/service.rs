@@ -357,6 +357,8 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                 },
                 state_store: weaver_types::StateStore::default(),
                 declaration: String::new(),
+                restore: None,
+                stack: Default::default(),
                 state_election: weaver_types::StateElection::default(),
             },
         },
@@ -590,6 +592,8 @@ fn serving_enter(session: &str) -> LifecycleDirective {
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
             state_election: weaver_types::StateElection {
                 all_kinds: false,
                 keys: Vec::new(),

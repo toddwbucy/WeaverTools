@@ -89,9 +89,9 @@ mod wire;
 #[cfg(feature = "config")]
 pub use config::parse;
 pub use config::{
-    AgentConfig, ArtifactRef, BindingKind, ClassifyInstruction, ConfigError, ConfigErrorKind,
+    AgentConfig, ArtifactRef, BindingKind, ClassifyInstruction, ConfigError, ConfigErrorKind, Cut,
     DecoderInstruction, DeviceOrdinal, ElectedKindConfig, FieldElection, FieldName,
-    GateInstruction, ModelBinding, SpuInstruction, StateElection, StateStore, StoreEngine,
+    GateInstruction, ModelBinding, Restore, SpuInstruction, StateElection, StateStore, StoreEngine,
     ToolName, TraceSink,
 };
 pub use identity::{AccessRule, PeerIdentity, authorized};
@@ -99,7 +99,8 @@ pub use wire::{
     AgentName, AgentState, AgentSummary, Candidate, Composer, DECODE_MESSAGE_BOUND, EnterBinding,
     EnterPayload, ExchangeId, FaultCase, FaultReport, Finish, Generation, LabelAnswer,
     LabelDirective, LabelRefusal, LifecycleAnswer, LifecycleAsk, LifecycleDirective,
-    LifecycleRefusal, LoadFacts, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload, Position,
-    RefusalRecord, RefusingOrgan, RunId, ScoredLabel, SegmentPreamble, SessionId, TokenAnswer,
-    TokenAsk, TokenDirective, TokenRefusal, ToolExecution, ToolOutcome, TurnFrame, TurnKey,
+    LifecycleRefusal, Lineage, LoadFacts, MAX_ENVELOPE_BYTES, Opener, OrganEnvelope, Payload,
+    Position, RefusalRecord, RefusingOrgan, RunId, ScoredLabel, SegmentPreamble, SessionId,
+    TokenAnswer, TokenAsk, TokenDirective, TokenRefusal, ToolExecution, ToolOutcome, TurnFrame,
+    TurnKey,
 };

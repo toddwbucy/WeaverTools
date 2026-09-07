@@ -370,6 +370,29 @@ pub struct EnterPayload {
     /// record both name what they were built from and the harness holds no
     /// file.
     pub declaration: String,
+    /// The lineage of the restore where the declaration elects one, resolved
+    /// by admin and never the record's path, per `weaver-types-Spec` section
+    /// 4 as of 2026-09-04 and issue #432: the harness names the parent on the
+    /// load event and starts its turn ordinal from the cut without opening
+    /// anything.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub restore: Option<Lineage>,
+    /// The digests of the organ binaries admin started, keyed by the
+    /// binary's name, so the load event names the stack that ran it, per the
+    /// same section. Admin's fact, authored by the harness as it authors the
+    /// store's.
+    #[serde(default)]
+    pub stack: std::collections::BTreeMap<String, String>,
+}
+
+/// A restore's lineage as admin resolved it: the parent's session, the run
+/// the cut falls in, and the turn the holdings stop at, a whole record
+/// resolved to its last run's last turn.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Lineage {
+    pub parent: SessionId,
+    pub run: RunId,
+    pub through: u64,
 }
 
 /// The binding kind as admin resolved it, per `weaver-types-Spec` section 4:

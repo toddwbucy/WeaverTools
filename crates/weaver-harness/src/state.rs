@@ -16,7 +16,15 @@ use std::os::unix::net::UnixStream;
 /// generous against a member whose answer is one pass over its own
 /// holdings, and an expiry is the dead peer converted into the same absence
 /// a missing leg serves.
-const ANSWER_BOUND_MS: u16 = 2_000;
+pub(crate) const ANSWER_BOUND_MS: u64 = 2_000;
+
+/// The bound on an ask that parks at the member until the driver seals,
+/// per `weaver-harness-state-contract` section 2 as revised 2026-09-04 on
+/// issue #432: the enter's identity and recall asks under a diagnostic
+/// binding or a restoring load wait on a preload the operator runs beside
+/// the load, so the bound is the replay ask's generous one and not the two
+/// seconds a member answering from holdings at rest takes.
+pub(crate) const PARKED_ASK_BOUND_MS: u64 = 600_000;
 
 /// The bound on the answer's size, matched by the member's own cap on
 /// what it renders: an answer still unframed past this many octets is not
@@ -116,7 +124,7 @@ impl StateSeam {
         if !self.send(b"{\"ask\":{\"shape\":{}}}\n") {
             return None;
         }
-        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        let line = self.await_line(ANSWER_BOUND_MS)?;
         parse_shape_answer(&line)
     }
 
@@ -143,7 +151,7 @@ impl StateSeam {
         if !self.send(b"{\"ask\":{\"grants\":{}}}\n") {
             return None;
         }
-        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        let line = self.await_line(ANSWER_BOUND_MS)?;
         parse_grants_answer(&line)
     }
 
@@ -152,29 +160,45 @@ impl StateSeam {
     /// decode open. An empty answer is an answer, the first load, and a
     /// miss is the one the enter does not convert.
     pub(crate) fn ask_identity(&mut self) -> Option<Vec<Recalled>> {
+        self.ask_identity_within(ANSWER_BOUND_MS)
+    }
+
+    /// The identity ask inside a caller's bound, the parked one where the
+    /// member's door stands, per the contract's parking clause.
+    pub(crate) fn ask_identity_within(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
         if self.dead {
             return None;
         }
-        let answered = self.identity_exchange();
+        let answered = self.identity_exchange(bound_ms);
         if answered.is_none() {
             self.dead = true;
         }
         answered
     }
 
-    fn identity_exchange(&mut self) -> Option<Vec<Recalled>> {
+    fn identity_exchange(&mut self, bound_ms: u64) -> Option<Vec<Recalled>> {
         if !self.send(b"{\"ask\":{\"identity\":{}}}\n") {
             return None;
         }
-        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        let line = self.await_line(bound_ms)?;
         parse_identity_answer(&line)
     }
 
     pub(crate) fn ask_recall(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
+        self.ask_recall_within(last_turns, ANSWER_BOUND_MS)
+    }
+
+    /// The recall ask inside a caller's bound, the parked one at the enter
+    /// of a restoring load, per the contract's parking clause.
+    pub(crate) fn ask_recall_within(
+        &mut self,
+        last_turns: Option<u64>,
+        bound_ms: u64,
+    ) -> Option<Vec<Recalled>> {
         if self.dead {
             return None;
         }
-        let answered = self.recall_exchange(last_turns);
+        let answered = self.recall_exchange(last_turns, bound_ms);
         if answered.is_none() {
             self.dead = true;
         }
@@ -209,7 +233,7 @@ impl StateSeam {
         parse_replay_answer(&line)
     }
 
-    fn recall_exchange(&mut self, last_turns: Option<u64>) -> Option<Vec<Recalled>> {
+    fn recall_exchange(&mut self, last_turns: Option<u64>, bound_ms: u64) -> Option<Vec<Recalled>> {
         let ask = match last_turns {
             Some(bound) => format!("{{\"ask\":{{\"recall\":{{\"last-turns\":{bound}}}}}}}\n"),
             None => "{\"ask\":{\"recall\":{}}}\n".to_string(),
@@ -217,7 +241,7 @@ impl StateSeam {
         if !self.send(ask.as_bytes()) {
             return None;
         }
-        let line = self.await_line(u64::from(ANSWER_BOUND_MS))?;
+        let line = self.await_line(bound_ms)?;
         parse_recall_answer(&line)
     }
 
@@ -346,6 +370,23 @@ pub(crate) fn identity_material(
         return Some(seed.to_vec());
     }
     held.iter().map(prefix_message).collect()
+}
+
+/// **The restored conversation, rebuilt from the recall answer**, per
+/// `weaver-harness-Spec` section 2 as revised 2026-09-04 on issue #432.
+/// `None` for the answer is the ask missed and refuses the enter. The
+/// turned message events rebuild as canonical messages in landing order,
+/// and the turnless rows are the identity ask's, seated once by it and
+/// skipped here, so a prefix does not reach the open twice. A message that
+/// does not rebuild refuses the same way a miss does.
+pub(crate) fn restored_conversation(
+    answer: Option<Vec<Recalled>>,
+) -> Option<Vec<weaver_traits::Message>> {
+    let held = answer?;
+    held.iter()
+        .filter(|event| event.turn.is_some())
+        .map(prefix_message)
+        .collect()
 }
 
 fn prefix_message(event: &Recalled) -> Option<weaver_traits::Message> {
@@ -519,6 +560,42 @@ mod tests {
             seam.ask_grants().is_none(),
             "a non-string entry is a malformed answer"
         );
+    }
+
+    /// **The restored conversation is the turned messages and the prefix is
+    /// seated once**, per `weaver-harness-Spec` section 2 as revised
+    /// 2026-09-04 on issue #432: the turnless system row is the identity
+    /// ask's and is skipped, the turned user and assistant rows rebuild in
+    /// landing order, and a miss refuses.
+    ///
+    /// Perturbation: drop the turn filter and the system row is seated a
+    /// second time, the first assertion failing on the count. Watched under
+    /// exactly that removal.
+    #[test]
+    fn the_restored_conversation_is_the_turned_messages_seated_once() {
+        let recalled = |turn: Option<&str>, kind: &str, role: &str, text: &str| Recalled {
+            kind: kind.into(),
+            run: "r-1".into(),
+            turn: turn.map(str::to_string),
+            sequence: "1".into(),
+            pairs: vec![
+                ("role".into(), format!("\"{role}\"")),
+                (
+                    "content".into(),
+                    format!("[{{\"type\":\"text\",\"text\":\"{text}\"}}]"),
+                ),
+            ],
+        };
+        let answer = vec![
+            recalled(None, "message.system", "system", "You are Karl."),
+            recalled(Some("t-1"), "message.user", "user", "hello"),
+            recalled(Some("t-1"), "message.assistant", "assistant", "hi"),
+        ];
+        let messages = restored_conversation(Some(answer)).expect("rebuilds");
+        assert_eq!(messages.len(), 2, "the turnless prefix is the identity's");
+        assert!(matches!(messages[0].role, weaver_traits::Role::User));
+        assert!(matches!(messages[1].role, weaver_traits::Role::Assistant));
+        assert!(restored_conversation(None).is_none(), "a miss refuses");
     }
 
     /// **The identity ask's three arms**, per `weaver-harness-Spec` section
