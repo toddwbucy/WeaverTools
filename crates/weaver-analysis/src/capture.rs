@@ -51,6 +51,34 @@ impl Provenance {
         }
     }
 
+    /// The provenance a `load` event's `composer` names, or none where the
+    /// shape is not the one `weaver-trace-Spec` section 3 spells: a binary
+    /// that names nothing, or a file without its digest or a digest without
+    /// its file, is a loop that cannot be known and reads as no loop named.
+    pub fn of(composer: &serde_json::Value, state_member: bool) -> Option<Provenance> {
+        let binary = composer.get("binary").and_then(|b| b.as_str())?;
+        if binary.is_empty() {
+            return None;
+        }
+        let file = composer
+            .get("file")
+            .and_then(|f| f.as_str())
+            .map(str::to_string);
+        let sha256 = composer
+            .get("sha256")
+            .and_then(|d| d.as_str())
+            .map(str::to_string);
+        if file.is_some() != sha256.is_some() {
+            return None;
+        }
+        Some(Provenance {
+            binary: binary.to_string(),
+            file,
+            sha256,
+            state_member,
+        })
+    }
+
     fn same_composer(&self, other: &Provenance) -> bool {
         self.binary == other.binary && self.file == other.file && self.sha256 == other.sha256
     }
@@ -100,21 +128,8 @@ impl Capture {
                         .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw.get()).ok());
                     let state_member = value_at(payload, "state_member")
                         .and_then(|raw| raw.get().parse::<bool>().ok());
-                    if let (Some(composer), Some(state_member)) = (composer, state_member)
-                        && let Some(binary) = composer.get("binary").and_then(|b| b.as_str())
-                    {
-                        capture.provenance = Some(Provenance {
-                            binary: binary.to_string(),
-                            file: composer
-                                .get("file")
-                                .and_then(|f| f.as_str())
-                                .map(str::to_string),
-                            sha256: composer
-                                .get("sha256")
-                                .and_then(|d| d.as_str())
-                                .map(str::to_string),
-                            state_member,
-                        });
+                    if let (Some(composer), Some(state_member)) = (composer, state_member) {
+                        capture.provenance = Provenance::of(&composer, state_member);
                     }
                 }
                 "residual.column" => {
@@ -510,5 +525,65 @@ impl crate::stream::Reader for Positions {
             }
         }
         Step::Continue
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::record::parse_record;
+
+    fn load(composer: &str, member: &str) -> String {
+        format!(
+            "{{\"session\":\"s\",\"run\":\"r\",\"sequence\":\"0\",\"kind\":\"load\",\"payload\":{{\"composer\":{composer},\"state_member\":{member}}}}}\n"
+        )
+    }
+
+    /// **The provenance is the load's composer in the Spec's shape and
+    /// nothing looser**, per `weaver-trace-Spec` section 3: a compiled loop
+    /// is a binary alone, a file loop is a file with its digest, and an
+    /// empty binary or an unpaired file or digest is a loop that cannot be
+    /// known, read as no loop named so the comparison refuses it.
+    ///
+    /// Perturbation: accept a file without its digest and the fourth case
+    /// carries a provenance. Watched under exactly that change.
+    #[test]
+    fn the_provenance_takes_the_specs_shape_and_nothing_looser() {
+        let compiled = Capture::of(&parse_record(&load(r#"{"binary":"worker"}"#, "false")));
+        assert_eq!(
+            compiled.provenance,
+            Some(Provenance {
+                binary: "worker".into(),
+                file: None,
+                sha256: None,
+                state_member: false
+            })
+        );
+        let file = Capture::of(&parse_record(&load(
+            r#"{"binary":"pyworker","file":"/l/a.py","sha256":"ab"}"#,
+            "true",
+        )));
+        assert_eq!(file.provenance.as_ref().map(|p| p.state_member), Some(true));
+        assert_eq!(
+            file.provenance.as_ref().unwrap().composer(),
+            "pyworker reading /l/a.py (ab)"
+        );
+        for loose in [
+            r#"{"binary":""}"#,
+            r#"{"binary":"pyworker","file":"/l/a.py"}"#,
+            r#"{"binary":"pyworker","sha256":"ab"}"#,
+            r#"{}"#,
+        ] {
+            let capture = Capture::of(&parse_record(&load(loose, "false")));
+            assert!(
+                capture.provenance.is_none(),
+                "{loose} names no loop that can be known"
+            );
+        }
+        let unnamed = Capture::of(&parse_record(&load(r#"{"binary":"worker"}"#, "null")));
+        assert!(
+            unnamed.provenance.is_none(),
+            "a member standing that is not stated"
+        );
     }
 }
