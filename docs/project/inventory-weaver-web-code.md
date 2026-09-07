@@ -98,11 +98,11 @@ chat client.** The store's tables are `participants`, `channels`, `members`,
 section 2 names seven tables and not one of them is among those five.
 
 **Every module cites a document the tree does not hold, and git does.**
-`traceview.rs` cites "Spec section 12", `repro.rs` "section 17" until PR
-#498 took it, `queue.rs` "section 8", `wire.rs` "section 16", `store.rs`
-sections 5 and 14,
-`Cargo.toml` "the Spec's section 15". The rewritten Spec has ten sections
-and every one of those citations resolves against **the Spec at `13b8a6a`,
+`traceview.rs` cites "Spec section 12", `repro.rs` cited "section 17" until
+PR #498 took the file, `queue.rs` "section 8", `wire.rs` "section 16",
+`store.rs` sections 5 and 14, and `Cargo.toml` "the Spec's section 15". The
+rewritten Spec has ten sections and every one of those citations resolves
+against **the Spec at `13b8a6a`,
 2026-08-25, the last commit before the rewrite**, where section 12 is the
 trace view, 13 the HTTP surface, 14 sessions and roles, 15 the open
 elections, 16 the link and 17 the confirm view. Git is the archive and the
@@ -271,32 +271,53 @@ wants entropy and surprisal timelines with absence stated and a click
 pulling a position's alternatives. **The tail becomes an ingest consumer and
 the rings, marks and broadcast stay.**
 
-### The two that still do, 872 lines, and it is not only the identity act
+### The two that still do, 713 lines, and now it is only the identity act
 
 | file | lines | the question |
 |---|---|---|
 | `web/admin.rs` | 440 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`. Those are Agents, Compose and Open a trace, at three of the ten surfaces, and its handlers gate on `registry::Participant`. **It was 598 lines and six routes at the reading**: the sixth was `/repro/{agent}` and it retired with its module at PR #498, which is why what remains to rule on is smaller than this register first measured |
-| `web/mod.rs` | 274 | the HTTP surface's split into `user` and `admin`. The split is the retired charter's two roles, the rewrite has one operator, and the gate is `is_admin()` |
+| `web/mod.rs` | 273 | the HTTP surface's split into `user` and `admin`. The split is the retired charter's two roles, the rewrite has one operator, and the gate is `is_admin()` |
 
-**They wait on two things and the identity act is only the first.**
+**They read 872 lines at the reading and stand at 713.** `web/admin.rs`
+lost its confirm surface at PR #498 and `web/mod.rs` lost the one line that
+held it in `AppState`, which is the whole of that module's contact with the
+retirement.
 
-**The charter's section 6 defers to a trigger it does not name.** It reads
+**They waited on two things, and as of 2026-09-07 one is discharged and the
+other is stated but not met.** What follows is the reading as it was made, with what
+closed each.
+
+**The charter's section 6 deferred to a trigger it did not name.** It read
 that identity, authentication and transport encryption "are deferred with a
-named trigger", and no trigger is named in either document. The retired
+named trigger", and no trigger was named in either document. The retired
 Spec's section 14 named the act plainly, "until the IAM act, sessions are
 anonymous, so anyone on the LAN can claim an admin name", and said what
 changes when it lands: "it becomes access control when the IAM act makes
 sessions prove who they are. The gate itself does not move then, only the
-proof does." **`IAM` appears zero times in the rewritten charter and Spec.**
-So the rewrite kept the deferral and dropped both the act's name and the
-condition. **Until section 6 says what it waits on, answering it is not a
-ruling anyone can make, because the question is not stated.** That is a
-documents act and it is this seat's.
+proof does." **`IAM` appeared zero times in the rewritten charter and
+Spec.** So the rewrite kept the deferral and dropped both the act's name and
+the condition, and until section 6 said what it waited on, answering it was
+not a ruling anyone could make.
 
-**And both modules are surfaces over a store that does not exist yet.**
-`web/admin.rs` serves four surfaces that read the Spec's section 2 tables,
-and the schema is unwritten. **The schema act comes before either of them
-whatever section 6 says.**
+**Closed at PR #493.** Section 6 names the IAM act, cites issue #336 as its
+register, and states two triggers rather than one because they are not one
+event: identity and authentication are due when the listener becomes
+reachable by anyone the operator has not already admitted, and transport
+encryption when the traffic leaves the network the listener was placed on.
+**Admission is by placement**, which that act had to say outright, because
+without it the first trigger reads as met on the day it was written.
+
+**So the question is stated and the answer is not this register's.** What
+these two modules wait on now is a trigger being **met**, which is an
+operator ruling about where the listener runs rather than a reading of the
+code.
+
+**Both modules were also surfaces over a store that did not exist.**
+`web/admin.rs` serves three surfaces that read the Spec's section 2 tables,
+and the schema was unwritten. **Closed at PR #499**: the Spec's seven tables
+stand in one migration and the five conversation tables are gone, so this
+condition is discharged rather than merely stated, and it is no longer the
+act that comes first.
 
 ## What the operator rules
 
