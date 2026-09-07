@@ -9,9 +9,24 @@ each part which of three things it is.
 **Why it exists.** `weaver-web-PRD` and `weaver-web-Spec` were rewritten
 whole on 2026-09-04 for the instrument, replacing a charter written for an
 interface to an individuated agent. **The implementation was not read in that
-act and has not been read since.** It stands at 4,531 lines of Rust, eleven
-templates, and a Postgres schema, all written to the retired text, and no
-document in the corpus records the gap.
+act and has not been read since.** At the opening of this register it stood
+at **4,532** lines of Rust, eleven templates, and a Postgres schema, all
+written to the retired text, and no document in the corpus recorded the gap.
+The figure read 4,531 until 2026-09-07 and was off by one.
+
+**Two of those acts have now landed.** The crate stands at **4,002 lines**
+and one migration, and the register below marks what moved.
+
+**Revised:** 2026-09-07, second of this date, the first two acts land and the register
+marks what moved. `repro.rs` is out at PR #498 with the surface that depended on it, 595
+lines against the 369 this register counted, because "clean to remove" was about its
+imports and its callers were a whole confirm surface. The schema is replaced at PR #499:
+the five conversation tables are gone and the Spec's seven are in one migration, so
+**ruling two is landed rather than merely settled**. Ruling three stands at three of five
+with `web/admin.rs` and `web/mod.rs` remaining, and **they now wait on one thing rather
+than two**, the schema having been the first of their two conditions. The reading also
+found two corpus facts this register had not: the crate's comments cite a charter that no
+longer exists, thirty-five times, and **no file in it carries a conformance header**.
 
 **Revised:** 2026-09-07, three of the five are decidable and the ruling count moves with
 them. Read module by module against the charter: `repro.rs` retires because it is
@@ -285,7 +300,14 @@ whatever section 6 says.**
    vision still names. Git holds them either way, so the choice is about
    what a reader of the tree meets rather than about loss.
 2. **Whether the schema is migrated or replaced. Ruled 2026-09-07:
-   replaced, and git is the archive.** The distinction was empty and this
+   replaced, and git is the archive. Landed the same date at PR #499.**
+   The five conversation tables are gone and the Spec's section 2 seven
+   stand in one migration, with three of their properties perturbed against
+   a live PostgreSQL before the file entered the tree. **An existing
+   development database is dropped rather than migrated**: `sqlx` checksums
+   each applied version against its source, so a database that ran the old
+   `0001_init` refuses at startup, and that refusal is this ruling working
+   rather than a defect. The distinction was empty and this
    register put it as a ruling anyway: the five tables share no column any of
    the seven wants, so a migration between them is a drop and a create
    wearing a migration's name, and the old file's history is in git whichever
@@ -296,9 +318,13 @@ whatever section 6 says.**
    order against the surfaces. **Three are answered as of 2026-09-07** and
    needed no ruling once read against the charter: `repro.rs` and `queue.rs`
    retire and `traceview.rs` keeps with one end rewritten, per the register
-   above. **The two that remain are `web/admin.rs` and `web/mod.rs`**, and
-   they wait on the schema and on section 6 naming what it defers to, in
-   that order.
+   above. `repro.rs` is out at PR #498. **The two that remain are
+   `web/admin.rs` and `web/mod.rs`**, and as of 2026-09-07 they wait on one
+   condition rather than two: the schema landed at PR #499 and the charter's
+   section 6 named its act and its two triggers at PR #493, so what they
+   wait on is the **trigger being met** rather than being stated. That is an
+   operator ruling about where the listener runs and not a reading of the
+   code, which is as far as this register can take them.
 4. **Whether the crate's edition alignment rides this work. Ruled
    2026-09-06 and landed at PR #470**, and it was smaller than its comment
    said. `Cargo.toml` pins 2021 against the
@@ -385,3 +411,26 @@ of its own rather than a line here.
 - **Nothing anywhere records that the implementation predates its charter.**
   A reader of the rewritten documents would take the crate for empty, and a
   reader of the crate would take the charter for unwritten.
+- **The crate's comments cite a charter that no longer exists, thirty-five
+  times**, found 2026-09-07 by the review of PR #498, which met one of them
+  in the deleted confirm section reading `PRD 4.4, Spec section 17`. **The
+  twenty-two that dangle are the safe ones.** They name Spec sections 11
+  through 17, which the rewritten Spec does not have, so a reader following
+  one finds nothing and knows it. **The thirteen that resolve are the
+  defect**: each names a section the rewritten Spec does have and means the
+  retired document's, so a reader lands on a real section about a different
+  subject. `config.rs` cites section 3 for TOML configuration where section
+  3 is the write path, `router.rs` cites section 9 for the invocation router
+  where section 9 is what is enforced, `store.rs` cites section 5 for the
+  single writer where section 5 is staged experiments. **A dangling citation
+  announces itself and a resolving one does not**, which is why the smaller
+  number is the worse one. Ten of the twenty-two are in `wire.rs`, which
+  this register carries, so this outlives the retirements.
+- **No file in the crate carries a conformance header**, zero of eighteen,
+  against seven of seven in `weaver-trace` and four of four in
+  `weaver-types`. The header is the middle term of the `code -> assertion ->
+  doc` chain that phase three runs on, so the crate stands outside that
+  regime entirely rather than partially. It is a consequence of the crate
+  being absorbed at PR #334 rather than written under the rule, and it is
+  not fixed by any retirement, because the files that carry forward are the
+  ones that would need headers.
