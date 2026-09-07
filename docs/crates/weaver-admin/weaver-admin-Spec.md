@@ -4,6 +4,14 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-09-07, the repair-nothing test takes its record. Section 4 said
+no test reaches the existence checks, and one has since the crate landed on
+2026-08-05: a missing home refuses and nothing is built, watched under perturbation.
+The sentence stood beside the test for a month, the test lost its attribute on
+2026-09-06 when the restore test of issue #432 was inserted between the attribute and
+its function, and issue #481 found both. The set stays review's, and the one member a
+test holds gets its own record so the tag names the instrument that holds it. Section
+10's count carries the record.
 **Revised:** 2026-09-06, the restore's judgment takes its record. Section 4's restore
 clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
 written the test the clause described without an instrument, and section 10's count
@@ -814,9 +822,14 @@ declaration's, and whether the named artifact resolves is the SPU's at
 admission under the agent's identity, per `weaver-spu-Spec` section 3: a look
 from here runs as root and cannot see a directory the agent uid is denied, so
 `ArtifactUnresolvable` is never this crate's refusal and the walk raises it at
-no site. No test below reaches that set, which is stated rather
-than left to look like an omission: the checks are a list a reviewer reads
-against the charter's boundary, and review is the instrument that holds them.
+no site. The checks are a list a reviewer reads against the charter's boundary,
+and review is the instrument that holds the set, stated rather than left to look
+like an omission. **One member of the set has a test and has had one since the
+crate landed**, as of 2026-09-07 per issue #481: a home that does not exist refuses
+`BoundaryUnverified` and the walk builds nothing, the absent directory still absent
+after the refusal. That claim is bought by perturbation, the walk creating the home
+on the miss and the test failing on the directory it finds, and it takes its own
+record below so that the tag on each record names the instrument that holds it.
 
 ```graph
 node: admin-existence-checks-repair-nothing
@@ -826,6 +839,14 @@ tag: review
 edge: asserts
 from: weaver-admin
 to: admin-existence-checks-repair-nothing
+
+node: admin-missing-home-refuses-and-builds-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-missing-home-refuses-and-builds-nothing
 ```
 
 **The store election is judged here too, as of 2026-09-04.** Every election but
@@ -2102,8 +2123,8 @@ sentence listed it as unedged while its own record carried the edge.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-nine records in all,
-fifteen tagged for review, nineteen for perturbation, three for the manifest,
+would sit apart from the prose that earns it. Forty records in all,
+fifteen tagged for review, twenty for perturbation, three for the manifest,
 and two for a compile pin, the restore's judgment joining on 2026-09-06. The
 residency record moved from review to
 perturbation on 2026-08-06, when the code act gave it a test. **Three of the

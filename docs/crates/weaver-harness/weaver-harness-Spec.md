@@ -3,6 +3,13 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-07, the receive site names the width it reads. Section 2.3's
+control-message walk read the kernel's two lengths through a cast to `usize` that is
+a no-op on glibc and real on musl, and the gate of enforcement device five named it
+on this box. The operator ruled 2026-09-07 on issue #481 that musl is out of scope,
+so the clause states the target the walk is written for, glibc Linux, where both
+lengths are `size_t`, and the site carries no width cast. A port to a libc where the
+field is `socklen_t` re-enters at this clause rather than at the line.
 **Revised:** 2026-09-06, the restoring open takes its record. Section 2's restore
 clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
 written the tests the clause described: the restored conversation is the turned
@@ -1045,6 +1052,15 @@ edge: grounds
 from: harness-trace-fd-cloexec-at-receive
 to: axiom-join-key-travels-with-the-work
 ```
+
+**The walk reads the kernel's lengths at glibc's width and names no other**, as of
+2026-09-07. The control buffer's length on the message header and the length on each
+control header are `size_t` on glibc Linux, which is where this crate runs, and
+`socklen_t` on musl and most other libcs. The operator ruled on issue #481 that musl
+is out of scope, so the site reads both lengths as the `usize` they are and carries
+no width cast, and the gate of enforcement device five, which names a same-type cast
+on this target, holds the line as written. A port to a libc where the field is
+narrower is a change to this clause first, naming the width, and to the line second.
 
 **The coordination socket is this crate's to create, and binding it is the
 worker's first act.** Per the inversion ruling of 2026-08-05 and
