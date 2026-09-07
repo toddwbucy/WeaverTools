@@ -621,7 +621,7 @@ fn the_load_names_what_serve_was_handed_and_what_the_enter_carried() {
         return;
     }
     for standing in [false, true] {
-        let (mut peer, handle) = Peer::stand_up_with(weaver_harness::LoopIdentity::file(
+        let (peer, handle) = Peer::stand_up_with(weaver_harness::LoopIdentity::file(
             "pyworker",
             std::path::Path::new("/deployed/loop.py"),
             Some("ef".repeat(32)),

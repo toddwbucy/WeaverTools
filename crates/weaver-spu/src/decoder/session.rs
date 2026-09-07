@@ -423,16 +423,13 @@ impl<'a> Session<'a> {
             // ranking costs no second read of the distribution and no
             // second copy of it. Absent where unelected, and absent rather
             // than empty where the distribution carried none.
-            if let Some(depth) = field {
-                if let Some((entropy_and_logits, position)) =
+            if let Some(depth) = field
+                && let Some((entropy_and_logits, position)) =
                     step.as_ref().map(|s| (s, self.resident.len() as u64))
-                {
-                    if let Some((ranked, realized)) =
-                        measurement::field(&entropy_and_logits.1, token.0 as usize, depth)
-                    {
-                        on_field(position, ranked, realized);
-                    }
-                }
+                && let Some((ranked, realized)) =
+                    measurement::field(&entropy_and_logits.1, token.0 as usize, depth)
+            {
+                on_field(position, ranked, realized);
             }
             match step.and_then(|(entropy, logits)| {
                 measurement::surprisal_bits(&logits, token.0 as usize)

@@ -1500,23 +1500,23 @@ fn dispatch(
             // the reporting, and telling them apart requires reporting past
             // the wall. Two integers answer it, so it is answered before any
             // device work rather than at the first turn.
-            if let Some(election) = &decoder.field_election {
-                if election.depth < resolved.knobs.top_k {
-                    *position = SeamPosition::AdmitRefused;
-                    eprintln!(
-                        "{}",
-                        serde_json::json!({
-                            "refusal": "field_depth_below_cutoff",
-                            "depth": election.depth,
-                            "cutoff": resolved.knobs.top_k,
-                        })
-                    );
-                    return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
-                        field: Some(weaver_types::FieldName(
-                            "spu-instruction.decoder.field-election.depth".to_string(),
-                        )),
-                    });
-                }
+            if let Some(election) = &decoder.field_election
+                && election.depth < resolved.knobs.top_k
+            {
+                *position = SeamPosition::AdmitRefused;
+                eprintln!(
+                    "{}",
+                    serde_json::json!({
+                        "refusal": "field_depth_below_cutoff",
+                        "depth": election.depth,
+                        "cutoff": resolved.knobs.top_k,
+                    })
+                );
+                return Payload::Refusal(LifecycleRefusal::ConfigInvalid {
+                    field: Some(weaver_types::FieldName(
+                        "spu-instruction.decoder.field-election.depth".to_string(),
+                    )),
+                });
             }
             match residency.admit(
                 &decoder.model_binding,
