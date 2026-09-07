@@ -447,9 +447,13 @@ impl OrganChannel {
         unsafe {
             let mut cmsg = nix::libc::CMSG_FIRSTHDR(&mhdr);
             while !cmsg.is_null() {
-                let header_len = (*cmsg).cmsg_len as usize;
+                // Both kernel lengths are `size_t` on glibc Linux, which is
+                // where this crate runs, per `weaver-harness-Spec` section
+                // 2.3 as of 2026-09-07: no width cast, and a libc where the
+                // field is `socklen_t` re-enters at that clause first.
+                let header_len = (*cmsg).cmsg_len;
                 let payload_offset = nix::libc::CMSG_LEN(0) as usize;
-                if header_len < payload_offset || header_len > mhdr.msg_controllen as usize {
+                if header_len < payload_offset || header_len > mhdr.msg_controllen {
                     // A header the kernel could not complete: nothing after it
                     // can be trusted, and nothing in it names a descriptor.
                     break;
