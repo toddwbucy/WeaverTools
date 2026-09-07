@@ -13,6 +13,23 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
+**Revised:** 2026-09-07, three of the five are decidable and the ruling count moves with
+them. Read module by module against the charter: `repro.rs` retires because it is
+built on the premise the rewrite retired, that reproduction is a verdict, and its
+successor is a different object split across two homes. `queue.rs` retires because every
+field of its payload is the retired charter's and the mechanism worth keeping is already
+placed with the runner at issue #442. `traceview.rs` keeps, its discontinuity marks
+being absent-not-empty at the viewer built twelve days before the charter argued for
+it, with the consuming end rewritten against the contract. **The two that remain wait on the
+schema first and on section 6 naming what it defers to**, that section deferring to "a
+named trigger" that is named nowhere while the retired Spec named the IAM act plainly.
+**Rulings one and four were landed at PRs #469 and #470 and are recorded here rather
+than answered here.** Ruling two is answered by this revision as the operator settled it,
+replaced with git as the archive and the schema virgin, and ruling three by three of its
+five. **So the register stands at three of the four answered whole and the fourth three
+fifths done**, which is a different count from the one this entry carried and the reason
+it is stated by ruling rather than by total.
+
 **Revised:** 2026-09-06, fourth of this date, the archive act reads back into the
 register. **`registry.rs` splits rather than retiring whole**: it carries
 `Participant`'s `role` and `is_admin()`, which is the role model the charter's section 6
@@ -167,19 +184,99 @@ never smoothed, pending asks failing typed, discontinuity marks inserted
 into every trace view: that is the absent-not-empty discipline the rewritten
 charter argues for, already built.
 
-### Wants a ruling, 1,879 lines
+### Wanted a ruling, 1,879 lines, and three of the five no longer do
+
+**Read against the charter on 2026-09-07, module by module.** Three of the
+five turn out to be decidable without the identity act, and the two that
+remain wait on more than it. **The five stay in one group because the
+register counted them as one**, the three ruled in prose below and the two
+that remain carrying a table of their own.
+
+**`repro.rs`, 369 lines: retires, and its successor is a different object.**
+Its comparison is seven JSON-pointer equalities at turn grain returning
+`reproduced: bool`. The charter's section 4 aligns on turn and position and
+compares the emitted token, the surprisal, the entropy and the ranked
+alternatives with their mass, claims byte equality only where the tuple is
+held, and returns a divergence report naming the differing member **and
+never a verdict**. One field overlaps and even that is compared as a whole
+vector rather than per position.
+
+**The deeper mismatch is what it does with conditions.** It compares
+`/rendered`, `/sampling` and the seed as checks that can fail. The charter
+puts those in the tuple and uses them to decide whether equality is the
+question being asked at all. Same values, opposite roles: a run under a
+different seed is a failed check in the old model and a different compound
+in the new one, where the question is malformed rather than false. **It is
+built on the premise the rewrite retired, that reproduction is a verdict.**
+
+It is also clean to remove, which the other retirees are not: its imports
+are `crate::wire::Link` and `serde_json`, and it touches the channel store
+nowhere, which its own comment was careful about. **Its name goes with it**:
+`repro` appears in no document of this crate, its own doc comment calls it
+the confirm job, and at a glance the file name reads as `repo.rs`, which is
+a misreading the operator made in this register's own review.
+
+**`queue.rs`, 311 lines: retires, and its mechanism is not this crate's to
+keep.** `Invocation` carries `channel_id` and `agent_participant_id`, and
+`AgentState` tracks the channel of the in-flight turn. Every field is the
+retired charter's. Single-flight-per-agent and batch-on-drain are worth
+keeping and **the charter has already placed them elsewhere**: a runner
+drains the queue and the reload that runs it is the branch, per section 3.5,
+and that runner is filed against the olympus seat at issue #442. What stays
+on this side is the authoring end, a staged experiment written into the
+Spec's section 2.5 table through its section 3.2 path, which is a row insert
+rather than a queue.
+
+**`traceview.rs`, 327 lines: keeps, and one end is rewritten.** It touches
+the retiring half nowhere: no `channel_id`, no participant, no registry, and
+its imports are tokio, serde and std. **What it holds has no home upstream
+and should not get one**: bounded rings, a per-agent broadcast, sequence ids
+kept monotonic across connector restarts, and rotation, truncation, parse
+failure and link loss all surfacing as discontinuity marks **never
+smoothed**. That is absent-not-empty at the viewer, built twelve days
+before the charter argued for it everywhere: `traceview.rs` arrived
+2026-08-24 at #334 and the charter was rewritten at `daa12ba` on 2026-09-05.
+
+What changes is what it consumes. It parses `serde_json::Value` by hand off
+a raw file tail, and section 7.3 now names `weaver-analysis-web-contract` as
+the shape with the position conversion made at ingest, while section 3.4
+wants entropy and surprisal timelines with absence stated and a click
+pulling a position's alternatives. **The tail becomes an ingest consumer and
+the rings, marks and broadcast stay.**
+
+### The two that still do, 872 lines, and it is not only the identity act
 
 | file | lines | the question |
 |---|---|---|
-| `web/admin.rs` | 598 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`, `/repro/{agent}`, so the served paths carry that prefix. Those are Agents, Compose, Open a trace and reproduction, at four of the ten surfaces. Reworked or redrawn |
-| `repro.rs` | 369 | pull a run from the record, drive its turns back through the gate on a fresh load, compare field by field. **The rewrite keeps reproduction as measurement**, and its own comment already says a confirm is the operator asking the record a question rather than conversation. The comparison's projection is now section 4's and was not then |
-| `traceview.rs` | 327 | the connector tails the NDJSON and the server holds bounded rings. Section 3.4 keeps the surface, and section 7.3's analysis stream is a different seam from a raw tail |
-| `queue.rs` | 311 | per-agent single-flight with batch-on-drain. The rewrite has a queue and it holds staged experiments drained by a runner, so the mechanism survives and the subject changes |
-| `web/mod.rs` | 274 | the HTTP surface's split into `user` and `admin`. The split itself is the retired charter's two roles and the rewrite has one operator |
+| `web/admin.rs` | 598 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`, `/repro/{agent}`. Those are Agents, Compose, Open a trace and reproduction, at four of the ten surfaces, and its handlers gate on `registry::Participant` |
+| `web/mod.rs` | 274 | the HTTP surface's split into `user` and `admin`. The split is the retired charter's two roles, the rewrite has one operator, and the gate is `is_admin()` |
+
+**They wait on two things and the identity act is only the first.**
+
+**The charter's section 6 defers to a trigger it does not name.** It reads
+that identity, authentication and transport encryption "are deferred with a
+named trigger", and no trigger is named in either document. The retired
+Spec's section 14 named the act plainly, "until the IAM act, sessions are
+anonymous, so anyone on the LAN can claim an admin name", and said what
+changes when it lands: "it becomes access control when the IAM act makes
+sessions prove who they are. The gate itself does not move then, only the
+proof does." **`IAM` appears zero times in the rewritten charter and Spec.**
+So the rewrite kept the deferral and dropped both the act's name and the
+condition. **Until section 6 says what it waits on, answering it is not a
+ruling anyone can make, because the question is not stated.** That is a
+documents act and it is this seat's.
+
+**And both modules are surfaces over a store that does not exist yet.**
+`web/admin.rs` serves four surfaces that read the Spec's section 2 tables,
+and the schema is unwritten. **The schema act comes before either of them
+whatever section 6 says.**
 
 ## What the operator rules
 
-1. **Whether the retiring 882 lines are deleted, kept, or moved.** Deleting
+1. **Whether the retiring 882 lines are deleted, kept, or moved. Ruled
+   2026-09-06: moved**, and landed at PR #469 as a frozen copy with a
+   manifest and checksums, the build still compiling the originals. The
+   options as they stood: deleting
    them is cheap and makes the crate read as what it is. Keeping them means
    the crate builds and serves something while the instrument is written
    beside it. **Moving them is the third answer**: an archive at a named path
@@ -187,15 +284,24 @@ charter argues for, already built.
    the conversation half reachable to whoever writes the chat interface the
    vision still names. Git holds them either way, so the choice is about
    what a reader of the tree meets rather than about loss.
-2. **Whether the schema is migrated or replaced.** The five tables share
-   nothing with the seven, so a migration between them would be a drop and a
-   create rather than an alteration, and there is no column in the old set
-   that a new table wants. **What would be discarded is answered for one box
-   and open for the rest**, per the observation below.
+2. **Whether the schema is migrated or replaced. Ruled 2026-09-07:
+   replaced, and git is the archive.** The distinction was empty and this
+   register put it as a ruling anyway: the five tables share no column any of
+   the seven wants, so a migration between them is a drop and a create
+   wearing a migration's name, and the old file's history is in git whichever
+   way. **The schema is also virgin**, per the operator: the store reported
+   below is a development box's and nothing downstream of the schema stands,
+   so the row counts settle nothing and were never a reason to hesitate.
 3. **What the five ruling-wanted modules become**, one by one, and in what
-   order against the surfaces.
-4. **Whether the crate's edition alignment rides this work, and it is
-   smaller than its comment says.** `Cargo.toml` pins 2021 against the
+   order against the surfaces. **Three are answered as of 2026-09-07** and
+   needed no ruling once read against the charter: `repro.rs` and `queue.rs`
+   retire and `traceview.rs` keeps with one end rewritten, per the register
+   above. **The two that remain are `web/admin.rs` and `web/mod.rs`**, and
+   they wait on the schema and on section 6 naming what it defers to, in
+   that order.
+4. **Whether the crate's edition alignment rides this work. Ruled
+   2026-09-06 and landed at PR #470**, and it was smaller than its comment
+   said. `Cargo.toml` pins 2021 against the
    workspace's 2024, calls the migration real work because "the sqlx and
    askama derives are where an edition move bites", and holds it at "the
    Spec's section 15", which is the archived Spec's open elections and is
