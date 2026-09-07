@@ -422,6 +422,36 @@ fn the_loop_file_is_optional_and_names_a_path_when_present() {
     );
 }
 
+/// **The restore is optional and names a record and a cut**, per
+/// `weaver-types-Spec` section 2 as of 2026-09-04 and issue #432: absent
+/// means the load stands from nothing, so every declaration written before
+/// the member existed still parses, and present it names the record and,
+/// where the session stands on a prefix, the cut by run and turn.
+#[test]
+fn the_restore_is_optional_and_names_a_record_and_a_cut() {
+    let config = parse(&full_config()).expect("parses");
+    assert_eq!(config.restore, None);
+    let whole = format!(
+        "{}restore:\n  record: /var/lib/weaver/s-1.ndjson\n",
+        full_config()
+    );
+    let config = parse(&whole).expect("parses");
+    let restore = config.restore.expect("present");
+    assert_eq!(
+        restore.record,
+        std::path::PathBuf::from("/var/lib/weaver/s-1.ndjson")
+    );
+    assert_eq!(restore.through, None, "no cut, the record whole");
+    let cut = format!(
+        "{}restore:\n  record: /var/lib/weaver/s-1.ndjson\n  through:\n    run: r-a\n    turn: 2\n",
+        full_config()
+    );
+    let config = parse(&cut).expect("parses");
+    let through = config.restore.expect("present").through.expect("the cut");
+    assert_eq!(through.run.0, "r-a");
+    assert_eq!(through.turn, 2);
+}
+
 /// A present election parses whole, keys meaningful beside all-kinds true.
 #[test]
 fn a_present_state_election_parses() {

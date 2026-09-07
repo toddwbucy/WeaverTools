@@ -4,6 +4,10 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+**Revised:** 2026-09-06, the restore's judgment takes its record. Section 4's restore
+clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
+written the test the clause described without an instrument, and section 10's count
+moves by one.
 **Revised:** 2026-09-05, second of this date, the artifact is named here and resolved
 at admission. Section 4's existence checks are restated under charter section 4.3's
 custody rule: what admin provisions it looks at, what another organ owns it asks about
@@ -859,7 +863,25 @@ session and run and the turn the holdings stop at, a whole record resolved to it
 run's last turn. The record is never handed to the agent and never named to the worker,
 on the same descriptor discipline as the sink: what the harness receives is the enter's
 copy of the election, and what the member receives is the record's holdings through the
-door of section 6.
+door of section 6. **The judgment is this crate's because the record is**, per charter
+section 4.3's custody rule: a look at a thing admin holds, taken at the load's
+cheapest moment before any process exists, and an ask of nobody, which is the same
+rule that leaves the artifact to the organ answering the opposite way here. **The
+instrument is perturbation, as of 2026-09-06**: a cut naming
+a run the record does not hold refuses naming `restore.through`, watched to fail when
+the run check is dropped, and a cut under the record's own session name refuses the
+same way, watched to fail when the session rule is dropped and a rewind under its own
+name resolves to a lineage.
+
+```graph
+node: admin-restore-cut-judged-at-the-inventory
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-restore-cut-judged-at-the-inventory
+```
 
 **A reachable organ's boundary is judged here when one exists, per charter section 4.3
 as ruled 2026-09-05 on issue #438.** The refusal's shape is fixed now so the act that
@@ -2080,9 +2102,10 @@ sentence listed it as unedged while its own record carried the edge.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Thirty-eight records in all,
-fifteen tagged for review, eighteen for perturbation, three for the manifest,
-and two for a compile pin. The residency record moved from review to
+would sit apart from the prose that earns it. Thirty-nine records in all,
+fifteen tagged for review, nineteen for perturbation, three for the manifest,
+and two for a compile pin, the restore's judgment joining on 2026-09-06. The
+residency record moved from review to
 perturbation on 2026-08-06, when the code act gave it a test. **Three of the
 perturbation records arrived without this count moving**, with the doors act
 and the boundary acts of 2026-08-26 and 2026-08-28:
