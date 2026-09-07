@@ -68,11 +68,27 @@ CLOCKS = [210, 420, 600, 900, 1200, 1500, 1800, 2100]
 READOUT = "nvidia-smi dmon -s pc -c 1"
 
 
+def smi(args, timeout):
+    """`nvidia-smi` under a bound, a hang reported as a failed command.
+
+    Every call here is on the path to the unlock: the sampler thread that
+    `gate_turn` joins, the settle loop before a load, and the reset in the
+    `finally`. An `nvidia-smi` that never returns would hold all three, so
+    each call is bounded and a timeout comes back as a non-zero result
+    rather than as an exception the caller did not plan for.
+    """
+    try:
+        return subprocess.run(args, capture_output=True, text=True,
+                              timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args, 124, "", f"nvidia-smi timed out after {timeout}s")
+
+
 def dmon(device):
     """One sample of power, temperature, memory clock, and SM clock."""
-    r = subprocess.run(
-        ["nvidia-smi", "dmon", "-i", str(device), "-s", "pc", "-c", "1"],
-        capture_output=True, text=True)
+    r = smi(["nvidia-smi", "dmon", "-i", str(device), "-s", "pc", "-c", "1"],
+            timeout=5)
     lines = [l for l in r.stdout.splitlines() if l.strip() and not l.startswith("#")]
     if r.returncode != 0 or not lines:
         return {"unreadable": (r.stderr or r.stdout).strip()[:200]}
@@ -94,8 +110,8 @@ def lock(device, mhz, settle=5.0):
     agrees is recorded as unsettled, and the run goes on, because the
     request was honored and the record says which it was.
     """
-    r = subprocess.run(["sudo", "-n", "nvidia-smi", "-i", str(device),
-                        "-lgc", str(mhz)], capture_output=True, text=True)
+    r = smi(["sudo", "-n", "nvidia-smi", "-i", str(device), "-lgc", str(mhz)],
+            timeout=10)
     t0 = time.time()
     if r.returncode != 0:
         return {"requested_mhz": mhz, "applied": False,
@@ -113,8 +129,7 @@ def lock(device, mhz, settle=5.0):
 
 
 def unlock(device):
-    r = subprocess.run(["sudo", "-n", "nvidia-smi", "-i", str(device), "-rgc"],
-                       capture_output=True, text=True)
+    r = smi(["sudo", "-n", "nvidia-smi", "-i", str(device), "-rgc"], timeout=10)
     return r.returncode == 0
 
 
@@ -244,8 +259,7 @@ def main():
     if "unreadable" in probe:
         print(f"dmon unreadable on device {device}: {probe}", file=sys.stderr)
         sys.exit(2)
-    if subprocess.run(["sudo", "-n", "nvidia-smi", "-i", str(device), "-rgc"],
-                      capture_output=True).returncode != 0:
+    if not unlock(device):
         print("cannot reset the graphics clock under sudo -n", file=sys.stderr)
         sys.exit(2)
 
