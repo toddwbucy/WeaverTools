@@ -327,7 +327,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
     peer.send(
         1,
         LifecycleDirective::Enter {
-            payload: Box::new(weaver_types::EnterPayload {
+            payload: weaver_types::EnterPayload {
                 session: weaver_types::SessionId("s-1".into()),
                 run: weaver_types::RunId("r-1".into()),
                 spu_instruction: weaver_types::SpuInstruction {
@@ -360,7 +360,7 @@ fn refused_enter_leaves_the_state_at_before_enter() {
                 restore: None,
                 stack: Default::default(),
                 state_election: weaver_types::StateElection::default(),
-            }),
+            },
         },
     );
     match peer.read() {
@@ -562,7 +562,7 @@ fn the_listener_survives_an_accept() {
 /// a test read the record the production path wrote.
 fn serving_enter(session: &str) -> LifecycleDirective {
     LifecycleDirective::Enter {
-        payload: Box::new(weaver_types::EnterPayload {
+        payload: weaver_types::EnterPayload {
             session: weaver_types::SessionId(session.into()),
             run: weaver_types::RunId("r-1".into()),
             spu_instruction: weaver_types::SpuInstruction {
@@ -598,7 +598,7 @@ fn serving_enter(session: &str) -> LifecycleDirective {
                 all_kinds: false,
                 keys: Vec::new(),
             },
-        }),
+        },
     }
 }
 
