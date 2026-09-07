@@ -12,6 +12,16 @@
 -- share no column any of these seven wants, so a migration between them would
 -- be a drop and a create wearing a migration's name. Git is the archive.
 
+-- The record spells several members as unsigned 64-bit values and SQL has
+-- no unsigned integer, so the widths below are chosen rather than inherited
+-- and are stated here once. The seed takes NUMERIC(20,0), which holds the
+-- full unsigned range exactly, because the records on hand carry seeds
+-- above the signed maximum. Positions, ranks and depths take INTEGER: a
+-- position is the resident length at the draw, a rank is bounded by the
+-- field election's depth, and neither approaches two billion in a session.
+-- Token identifiers take BIGINT, a vocabulary being far under it and the
+-- width costing nothing on a column that is not the table's key.
+
 -- =====================================================================
 -- The recorded half. Written only by the ingest of Spec section 3.1.
 -- No surface writes here, which is what Spec section 6's rule means.
@@ -24,7 +34,14 @@ CREATE TABLE run (
   -- The tuple. Spec 2.2: a reading without its tuple is a reading of an
   -- unnamed compound.
   record_identity  TEXT NOT NULL,
-  seed             BIGINT,
+
+  -- The record spells the seed as an unsigned 64-bit value and the suite's
+  -- own fixtures carry values above the signed maximum, so BIGINT refuses
+  -- them with `bigint out of range` and every run with the high bit set
+  -- would be unrecordable. NUMERIC(20,0) holds the full unsigned range
+  -- exactly and reads as the number it is, where a BIGINT reinterpreted in
+  -- two's complement would cost every reader the knowledge that it was.
+  seed             NUMERIC(20,0),
   sampler          JSONB NOT NULL,
   device           TEXT NOT NULL,
   compute_precision TEXT NOT NULL,
@@ -104,6 +121,12 @@ CREATE INDEX position_by_surprisal ON position (run_id, surprisal DESC);
 -- counter rather than anything the author supplies. Writes are ordered on
 -- the row rather than idempotent.
 --
+-- No trigger or rule below advances that counter, and none should. The
+-- authoring path reads the version, writes against it, and advances it by
+-- one in the same transaction, refusing where the stored version has moved.
+-- The column carries the counter and the write path carries the ordering,
+-- the same division as the author member below.
+--
 -- Spec 3.2: every authored row names its author and the member is nullable,
 -- its null meaning the store could not name an author when the row was
 -- written and never meaning the operator.
@@ -126,9 +149,16 @@ CREATE TABLE artifact (
 
   -- Spec 2.3: the weights identity is the set of per-file content digests
   -- keyed by file name. Equality is set equality and no order is imposed.
-  -- jsonb normalizes object key order and rejects duplicate keys, so a
-  -- UNIQUE on this column is set equality exactly, and this table asks for
-  -- no rolled-up digest of its own devising.
+  -- jsonb normalizes object key order, so a UNIQUE on this column is set
+  -- equality over a keyed map, and this table asks for no rolled-up digest
+  -- of its own devising.
+  --
+  -- What jsonb does NOT do is reject a duplicate key: it keeps the last
+  -- value and drops the rest silently. That does not reach this member,
+  -- because a directory holds no two files of one name, so a well-formed
+  -- digest map has no duplicate to collapse. A malformed one collapses
+  -- rather than refusing, and catching that is the import's job at Spec
+  -- 3.2 and not this column's.
   file_digests  JSONB NOT NULL UNIQUE,
 
   -- Spec 2.3: the provenance chain is recorded and is not an identity.
