@@ -163,9 +163,9 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-**Every one run from `WeaverTools/` on 2026-09-06 before being written
-here**, which is the difference between a command that works and one that
-ought to. `build --workspace` and `fmt --all -- --check` returned clean.
+**Every command was run from `WeaverTools/` on 2026-09-06 before being
+written here**, which is the difference between a command that works and one
+that ought to. `build --workspace` and `fmt --all -- --check` returned clean.
 `test --workspace` passed 584 and failed none. `test -p weaver-harness`
 passed 105 and failed none. The clippy line returned the backlog section
 "Enforcement" describes. A later reader re-runs rather than trusting the
