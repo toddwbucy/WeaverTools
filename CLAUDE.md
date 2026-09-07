@@ -280,7 +280,8 @@ when the graph lands - the graph indexes them, it does not replace them:
    written here is stale by the next act and then argues with the command:
    the table that stood here through 2026-09-06 named seven failing crates
    and cited issue #475 as its largest item, and by 2026-09-07 #475 was
-   closed and three crates failed. Measure rather than read:
+   closed and the table was naming crates that had since cleared. Measure
+   rather than read:
 
    ```bash
    for c in $(ls crates); do
@@ -290,14 +291,27 @@ when the graph lands - the graph indexes them, it does not replace them:
    done
    ```
 
-   Run from `WeaverTools/` on 2026-09-07 that returned nine crates clean and
-   four findings across three: `weaver-admin` 2, `weaver-harness` 1,
-   `weaver-spu` 1. **That is a dated reading and not a current fact**, per
-   this file's own rule.
+   **It counts the source lines the lint names**, so a finding whose path
+   clippy prints relative to the crate rather than the tree is not in the
+   count. That is not the case in this tree today, and it is where to look
+   first if a crate you know is dirty reads zero.
+
+   **The count is per box and this file records none.** Two seats ran that
+   loop against `704bb3d` on 2026-09-07 and got different answers, the
+   thinkpad seat four findings and the olympus seat five. The one they
+   disagree on is `mhdr.msg_controllen as usize` at
+   `crates/weaver-harness/src/channel.rs:452`, and the lint that names it
+   fires only where that cast is a no-op, which is a property of the target's
+   headers rather than of the tree. **Why the two boxes differ is not
+   established here** and is #471's to settle. What the disagreement settles
+   already is that **a count is a reading taken on a box**, which is the
+   second reason it does not live in this file, and #471 carries each reading
+   with the seat that took it.
 
    **The workspace sweep is not the gate and under-reports it.** A crate that
-   fails stops its dependents from being checked at all, so
-   `--workspace` answers a smaller question than twelve per-crate runs do.
+   fails does not compile under deny-warnings, so its dependents are not
+   linted at all and `--workspace` answers a smaller question than twelve
+   per-crate runs do.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
