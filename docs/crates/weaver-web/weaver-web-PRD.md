@@ -6,6 +6,15 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-07, an authored row is someone's work and the record
+says whose. Section 4 named the authored half and named no person, so the
+attribution the Spec's sections 2.3 through 2.5 now carry rested on an
+argument no charter clause held, which G2 does not allow. The clause states
+it and states why it is charter rather than schema: **who authored a row is
+knowable while the row is being written and unknowable afterward**, so a
+record that omits attribution has answered the question rather than
+deferred it. Found by the review of PR #487. Per issue #454.
+
 **Revised:** 2026-09-06, second of this date, the two identities are named
 apart in this document too. Section 4's run row holds **the record
 identity**, which it had called artifact identity while section 3.6 used the
@@ -532,6 +541,17 @@ lists what nothing stores is a surface drawn against nothing. What the
 distinction buys is that the two halves cannot be written by one path: an
 authored row edited under a replay's idempotence would silently lose an
 edit, and a recorded row written by a screen would stop being a record.
+
+**An authored row is someone's work and the record says whose, or says it
+could not be named.** The recorded half is about an instrument, so it names
+a run and no person. The authored half is about a person, so attribution is
+a member of the row rather than an annotation on it, and the Spec's section
+2 gives it the member and its shape. **It is charter rather than schema
+because it cannot be added later**: who authored a row is knowable while the
+row is being written and unknowable afterward, so a record that omits
+attribution has answered the question rather than deferred it. What an attribution is worth before the
+identity act of section 6 is that act's to change, and the member does not
+wait on it.
 
 The front end holds the cell registry, on its own store. The grain is the
 grain the interface clicks at: **one row per position per run, addressed by
