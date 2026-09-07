@@ -1099,7 +1099,7 @@ impl Harness {
     ) -> Result<Option<Outcome>, ChannelFault> {
         match (&mut self.state, directive) {
             (ChannelState::BeforeEnter, LifecycleDirective::Enter { payload }) => {
-                match self.enter(payload, sink, state_end) {
+                match self.enter(*payload, sink, state_end) {
                     Ok(run) => {
                         self.state = ChannelState::Entered(Box::new(run));
                         self.answer(connection, &exchange, LifecycleAnswer::Ready)?;
@@ -1183,7 +1183,7 @@ impl Harness {
                     &exchange,
                     LifecycleAnswer::State {
                         state,
-                        load: Some(load),
+                        load: Some(Box::new(load)),
                     },
                 )?;
                 Ok(None)
