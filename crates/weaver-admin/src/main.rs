@@ -668,7 +668,7 @@ fn run_load(
         },
         position: weaver_types::Position::Open,
         payload: weaver_types::Payload::Directive(LifecycleDirective::Enter {
-            payload: weaver_types::EnterPayload {
+            payload: Box::new(weaver_types::EnterPayload {
                 session: inventory.config.session.clone(),
                 run: run_reference,
                 // The permission member is written from the resolved kind,
@@ -703,7 +703,7 @@ fn run_load(
                 // of 2026-09-04 and issue #432.
                 restore: inventory.lineage.clone(),
                 stack,
-            },
+            }),
         }),
     };
     use std::os::fd::AsFd;
@@ -792,7 +792,13 @@ fn start_refusal_for_residency(
 fn observe(
     config: &ServiceConfig,
     agent: &AgentName,
-) -> Result<(weaver_types::AgentState, Option<weaver_types::LoadFacts>), LifecycleRefusal> {
+) -> Result<
+    (
+        weaver_types::AgentState,
+        Option<Box<weaver_types::LoadFacts>>,
+    ),
+    LifecycleRefusal,
+> {
     let socket_path = config.coordination_socket(&agent.0);
     let Ok(mut coordination) = channel::dial(&socket_path) else {
         return Ok((weaver_types::AgentState::Unloaded, None));
@@ -831,10 +837,13 @@ fn list(config: &ServiceConfig) -> Result<LifecycleAnswer, LifecycleRefusal> {
         // socket path outside the coordination root.
         admissible(config, &agent)?;
         let (state, load) = observe(config, &agent)?;
+        // The roster's summary carries the load unboxed: it sits in a
+        // vector rather than on a unit-variant enum, so it pays nothing
+        // for the size the boxing exists to lift, per issue #475.
         agents.push(weaver_types::AgentSummary {
             name: agent,
             state,
-            load,
+            load: load.map(|facts| *facts),
         });
     }
     Ok(LifecycleAnswer::Agents { agents })
