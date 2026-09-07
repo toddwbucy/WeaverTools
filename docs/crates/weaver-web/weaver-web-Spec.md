@@ -10,6 +10,21 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-07, the link boundary is the process line and not the
+workspace. Section 1 said this crate links no crate of the agent workspace
+and gave as its reason that it reaches the agent as an outside consumer
+does, which are two different scopes: a cargo workspace is a build fact and
+the agent's interior is a process fact. **The property protects the
+second.** `axiom-floor-is-vocabulary-behavior-is-socket` forbids a behavior
+reached by path dependency across a process line and names the library
+boundary as a seam of its own, tagged `link`, of which the base set already
+holds two. So the interior stays unlinkable and a crate that also runs
+outside the agent does not, `weaver-analysis` being the case in hand. **The
+link is permitted and not taken here**, so an act that wants it argues about
+where the work belongs rather than about whether the boundary allows it.
+Found in discussion with the operator, who was right that the floor rule and
+the composition rule are two questions.
+
 **Revised:** 2026-09-06, fourth of this date, the cardinality rule carries
 its exception in the same breath. Section 2.3 said one record identity names
 at most one row and then, in the next sentence, that a renamed split GGUF
@@ -202,14 +217,45 @@ src/
   queue/        staged experiments and their states
   surfaces/     one module per surface of charter section 3
   seams/        gate client, admin verbs, analysis stream reader
-  link/         the connector and server halves
+  link/         the connector and server halves, the dialed link
+                of section 8 and not the seam kind the clause below names
 ```
 
-**This crate links no crate of the agent workspace** and reaches the agent
-exactly as an outside consumer does: a socket dialed by path, a binary run
-by the operator's verb, and a record read where the operator keeps it. That
+**This crate links no crate of the agent** and reaches it exactly as an
+outside consumer does: a socket dialed by path, a binary run by the
+operator's verb, and a record read where the operator keeps it. That
 property is load-bearing and is not spent by the seam of section 7.3, which
 is a stream this crate reads rather than a crate it links.
+
+**The line is the agent's process boundary and not the cargo workspace**, as
+of 2026-09-07. `axiom-floor-is-vocabulary-behavior-is-socket` forbids "a
+behavior reached by path dependency across a process line, not a crate
+calling a crate inside one binary", and it names the library boundary as a
+seam in its own right, tagged `link` rather than `socket` so the difference
+is stated. Two such seams already stand in the base set, the harness to
+`weaver-trace` and the harness to `weaver-diagnostic`, each under its own
+contract, and `weaver-trace` is the standing proof that a crate outside the
+floor may be linked.
+
+**So what this crate may not link is the agent's interior**, whose crates
+run behind a process line this one never crosses: `weaver-harness`,
+`weaver-spu`, `weaver-admin`, `weaver-gate`, `weaver-state`. Linking any of
+them would make this crate a compile-time dependent of the interior, which
+is the reading `weaver-analysis-Spec` section 6 gives the same axiom for
+itself.
+
+**A crate that also runs outside the agent is not the interior.**
+`weaver-analysis` parses a finished record as an operator principal on the
+operator's own storage, which is this crate's own posture, so a link to it
+crosses no process line and takes nothing from the agent. **This document
+does not take that link.** It states that the axiom permits it, so a later
+act that wants it argues about whether the work belongs there rather than
+about whether the boundary allows it, and such an act owes a `link`-tagged
+seam and the contract half that governs it.
+
+**The earlier sentence said "the agent workspace" and its own reason said
+the agent.** A cargo workspace is a build fact and the interior is a
+process fact, and the scope this property protects is the second.
 
 ## 2. The store
 
