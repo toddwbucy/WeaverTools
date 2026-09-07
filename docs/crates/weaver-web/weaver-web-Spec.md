@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-07, third of this date, against the review of PR #487.
+Section 3.2's rationale for the author cited no charter clause, which G2
+does not allow, so the charter's section 4 gains the clause in the same act
+and this document restates it. Section 3.2 also says what the member holds
+before the identity act: **an author is asserted and not proved**, a session
+being continuity rather than a proof until the act, so a pre-act row records
+who claimed it. Section 9 gains the sibling perturbation the review offered,
+on a write path that omits the member and lets the column's default stand.
+
 **Revised:** 2026-09-07, second of this date, an authored row names its
 author. Sections 2.3 through 2.5 recorded what was authored and never who
 authored it, so the store held a declaration with no one behind it and a
@@ -674,12 +683,20 @@ keeps a recorded fact a recorded fact.
   identity act of the charter's section 6 changes what fills it and not
   whether it exists**, the act attaching authentication to the roles that
   already stand rather than rearchitecting around them.
-- **It is stated now because it cannot be added later.** A row's author is
-  knowable while the row is being written and unknowable afterward, so a
-  schema that omits the member is not deferring the question, it is
-  answering it as no for every row written before it changes its mind.
-  Section 2.5's question is the case that shows it: **the question the
-  engineer meant to ask is not a whole fact without the engineer.**
+- **It is stated now because it cannot be added later**, which is the
+  charter's section 4 and is restated here rather than argued. A row's
+  author is knowable while the row is being written and unknowable
+  afterward, so a schema that omits the member is not deferring the
+  question, it is answering it as no for every row written before it changes
+  its mind. Section 2.5's question is the case that shows it: **the question
+  the engineer meant to ask is not a whole fact without the engineer.**
+- **Before the identity act an author is asserted and not proved.** A
+  session is continuity rather than a proof until the act the charter's
+  section 6 names, so a row written before it records who claimed the row
+  and a reader treats the member as a claim. **The act changes what the
+  member is worth and not whether it is there**, which is the same shape as
+  the null rule above: an unknown that says so and a claim that says so are
+  both correctable, and a value presented as more than it is is not.
 - **Writes are ordered on the row rather than idempotent, and the order is
   the version's.** An authored row is a thing a person is still making, so a
   second write is an edit. **An edit carries the version it read.** Where
@@ -939,6 +956,7 @@ cell record like any other.
 | no surface writes a position or a run | compile-fail: a doctest constructing a recorded-table writer from an authoring path does not compile |
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | an authored row names its author or names none | perturbation: default the null to the operator, a row nobody can attribute reads as attributed and is uncorrectable |
+| every authoring write passes the member, deliberately where it passes none | perturbation: drop the member from one write path and let the column's default stand, the row the null exists for is the one written by the path that forgot to ask |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 | a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |
