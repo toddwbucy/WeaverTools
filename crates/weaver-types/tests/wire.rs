@@ -86,6 +86,98 @@ fn organ_refused_carries_the_inner_reason_unchanged() {
     assert_eq!(refusal, back);
 }
 
+/// **The two boxed payloads cross as the payloads do**, per
+/// `weaver-types-Spec` section 4.2 as of 2026-09-06 and issue #475: `Enter`
+/// carries its payload boxed and `State` its load boxed, and the box is not
+/// on the wire. Each value is serialized, read back, and compared whole, and
+/// the state's rendering is pinned to the shape a reader of `main` met, so
+/// a change to the wire's spelling fails here rather than at a peer.
+#[test]
+fn the_boxed_payloads_cross_as_the_payloads_do() {
+    let enter = LifecycleDirective::Enter {
+        payload: Box::new(weaver_types::EnterPayload {
+            session: weaver_types::SessionId("s-1".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("/models/a.gguf".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    surprisal_election: false,
+                    refeed_permission: false,
+                    column_permission: false,
+                    identity: Vec::new(),
+                    tunable_values: Default::default(),
+                },
+            },
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
+                },
+            },
+            state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
+            restore: None,
+            stack: Default::default(),
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+        }),
+    };
+    let json = serde_json::to_string(&enter).expect("serializes");
+    assert!(json.starts_with("{\"kind\":\"enter\",\"payload\":{\"session\":\"s-1\""));
+    let back: LifecycleDirective = serde_json::from_str(&json).expect("deserializes");
+    assert_eq!(enter, back);
+
+    let state = LifecycleAnswer::State {
+        state: AgentState::Idle,
+        load: Some(Box::new(weaver_types::LoadFacts {
+            session: weaver_types::SessionId("s-1".into()),
+            run: weaver_types::RunId("r-1".into()),
+            declaration: "d".into(),
+            artifact: weaver_types::ArtifactRef("/models/a.gguf".into()),
+            residual_readout: false,
+            field: None,
+            surprisal: false,
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+            state_store: weaver_types::StateStore::default(),
+            state_member: false,
+            composer: weaver_types::Composer {
+                binary: "weaver-harness".into(),
+                file: None,
+                sha256: None,
+            },
+        })),
+    };
+    let json = serde_json::to_string(&state).expect("serializes");
+    assert_eq!(
+        json,
+        concat!(
+            "{\"kind\":\"state\",\"state\":\"idle\",\"load\":{",
+            "\"session\":\"s-1\",\"run\":\"r-1\",\"declaration\":\"d\",",
+            "\"artifact\":\"/models/a.gguf\",\"residual_readout\":false,",
+            "\"surprisal\":false,\"state_election\":{\"all-kinds\":false,\"keys\":[]},",
+            "\"state_store\":{\"engine\":\"sqlite\",\"database\":null,\"role\":null},",
+            "\"state_member\":false,\"composer\":{\"binary\":\"weaver-harness\"}}}"
+        ),
+        "the load crosses unboxed and in the Spec's spelling"
+    );
+    let back: LifecycleAnswer = serde_json::from_str(&json).expect("deserializes");
+    assert_eq!(state, back);
+}
+
 /// An unknown payload kind refuses rather than defaulting, the same refusal
 /// posture the message model holds.
 #[test]
