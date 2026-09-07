@@ -98,8 +98,9 @@ chat client.** The store's tables are `participants`, `channels`, `members`,
 section 2 names seven tables and not one of them is among those five.
 
 **Every module cites a document the tree does not hold, and git does.**
-`traceview.rs` cites "Spec section 12", `repro.rs` "section 17", `queue.rs`
-"section 8", `wire.rs` "section 16", `store.rs` sections 5 and 14,
+`traceview.rs` cites "Spec section 12", `repro.rs` "section 17" until PR
+#498 took it, `queue.rs` "section 8", `wire.rs` "section 16", `store.rs`
+sections 5 and 14,
 `Cargo.toml` "the Spec's section 15". The rewritten Spec has ten sections
 and every one of those citations resolves against **the Spec at `13b8a6a`,
 2026-08-25, the last commit before the rewrite**, where section 12 is the
@@ -120,7 +121,9 @@ the crate root holds `assets/`, `deploy/` and `migrations/`, which section 1
 does not draw and which this register counts elsewhere. What carries
 section 1's names are files rather than modules: `store.rs`,
 `queue.rs`, `wire.rs`, `traceview.rs`, `repro.rs`, `router.rs`,
-`registry.rs`, `lifecycle.rs`, `channel.rs` and `config.rs`.
+`registry.rs`, `lifecycle.rs`, `channel.rs` and `config.rs`. **`repro.rs` is
+gone as of PR #498** and the other nine stand, so section 1 is one name
+closer to descriptive by subtraction rather than by anything it says.
 
 ## The seam the code separates along
 
@@ -160,10 +163,17 @@ are the files' and the removable subset is smaller.
 
 Five of the eleven templates go with them: `channel.html`, `channels.html`,
 `sidebar.html`, `name.html` and `event.html`. **The other six follow their
-modules** rather than retiring on their own: `base.html` carries,
+modules** rather than retiring on their own: `base.html` carries, and
 `lifecycle.html`, `agent_config.html`, `trace.html`, `trace_event.html` and
 `repro.html` want the ruling `web/admin.rs` wants, being that module's
 rendering.
+
+**`repro.html` is the first of the six to be answered**, and it did not need
+the ruling the other five wait on. It went with `repro.rs` at PR #498,
+because a template whose only handler has retired renders nothing. **Ten
+templates stand as of that date**, and the five that follow `web/admin.rs`
+are `lifecycle.html`, `agent_config.html`, `trace.html`, `trace_event.html`
+and the `base.html` that carries.
 
 Four of the five tables go with them too: `participants`, `channels`,
 `members` and `channel_events`. **`sessions` wants a ruling and is the one
@@ -207,7 +217,9 @@ remain wait on more than it. **The five stay in one group because the
 register counted them as one**, the three ruled in prose below and the two
 that remain carrying a table of their own.
 
-**`repro.rs`, 369 lines: retires, and its successor is a different object.**
+**`repro.rs`, 369 lines: retires, and its successor is a different object.
+Landed at PR #498**, where the removal came to 595 lines with the surface
+that depended on it. The reading below stands as it was made.
 Its comparison is seven JSON-pointer equalities at turn grain returning
 `reproduced: bool`. The charter's section 4 aligns on turn and position and
 compares the emitted token, the surprisal, the entropy and the ranked
@@ -263,7 +275,7 @@ the rings, marks and broadcast stay.**
 
 | file | lines | the question |
 |---|---|---|
-| `web/admin.rs` | 598 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`, `/repro/{agent}`. Those are Agents, Compose, Open a trace and reproduction, at four of the ten surfaces, and its handlers gate on `registry::Participant` |
+| `web/admin.rs` | 440 | **inner routes**, mounted by `web/mod.rs` under `/admin`: `/lifecycle`, `/lifecycle/{agent}/{verb}`, `/agents/{agent}/config`, `/trace/{agent}`, `/trace/{agent}/stream`. Those are Agents, Compose and Open a trace, at three of the ten surfaces, and its handlers gate on `registry::Participant`. **It was 598 lines and six routes at the reading**: the sixth was `/repro/{agent}` and it retired with its module at PR #498, which is why what remains to rule on is smaller than this register first measured |
 | `web/mod.rs` | 274 | the HTTP surface's split into `user` and `admin`. The split is the retired charter's two roles, the rewrite has one operator, and the gate is `is_admin()` |
 
 **They wait on two things and the identity act is only the first.**
