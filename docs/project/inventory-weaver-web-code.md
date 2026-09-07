@@ -271,7 +271,7 @@ wants entropy and surprisal timelines with absence stated and a click
 pulling a position's alternatives. **The tail becomes an ingest consumer and
 the rings, marks and broadcast stay.**
 
-### The two that still do, 713 lines, and now it is only the identity act
+### The two that still do, 713 lines, and what they wait on is a trigger met
 
 | file | lines | the question |
 |---|---|---|
