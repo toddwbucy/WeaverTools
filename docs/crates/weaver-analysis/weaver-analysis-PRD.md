@@ -5,6 +5,13 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+**Revised:** 2026-09-07, two captures compare only under one loop and one member.
+Section 3's comparison clause gains the condition `weaver-trace-PRD` section 3.1
+stated on 2026-09-03 for issues #381 and #382 and this document did not carry: two
+records that name different loops, or one standing the state member and one not, are
+not two captures of one run, and a record that names neither cannot be compared at
+all. The comparison refuses those before it reads a value, naming which fact differs,
+so a prompt difference is never reported as the engine's divergence.
 **Revised:** 2026-09-01, the kept artifacts take their identity. Section 3
 gains the capture-artifact clauses - identity as the closure of the claim,
 custody the sink's existing arrangement, shape the record's own, quota the
@@ -293,6 +300,21 @@ in hand is the measured half: within one device the weekend's replays of
 byte-identical across 5,530 sessions and five precisions - the reduction
 rather than the columns, which is why the tolerance clause above carries the
 columns' share.
+
+**Two captures are two captures of one run only under one loop and one member**,
+as of 2026-09-07. The loop assembles every prompt the model sees and a deployment
+can run more than one, so two records that name different loops were prompted
+differently and their disagreement is the prompt's and not the engine's, and a
+record whose loop injects the session's past is not byte-comparable with one whose
+loop did not, per `weaver-trace-PRD` section 3.1 as ruled 2026-09-03 on issues #381
+and #382. The state member's standing is the same fact one leg over. The `load`
+event names both since that date, so the comparison reads them from each record
+before it reads a value and refuses where they differ, naming which, and refuses a
+record that names neither, an older record being one whose loop cannot be known
+rather than one whose loop is the default. What this buys is that a verdict of
+divergence is always about the engine: the finding of 2026-08-29, a reissue reported
+as not reproduced because a standing member added a line to the prompt, is refused
+at the door with its cause named rather than reported as a determinism failure.
 
 **The licence is bounded by the device model the deposit names, and the
 report must name it or say that it cannot.** Reissue holds within one device
