@@ -162,9 +162,17 @@ def install(cond):
 
     def admin(cfg, verb):
         # The lock goes on before the load so the load, the socket, and
-        # every turn of the half run under one clock.
+        # every turn of the half run under one clock. **A lock that did not
+        # apply refuses the load**, answered in the shape the matrix already
+        # reads as a refusal, so the session lands as "load refused" with
+        # the failed lock in its record rather than as a reproduction under
+        # a clock nobody set. An unsettled lock is not a failed one: the
+        # request was honored and the readout lagged, or the card topped
+        # out below it, and the measured value rides the record.
         if verb == "load":
-            cond.next_half()
+            got = cond.next_half()
+            if not got.get("applied"):
+                return {"kind": "clock lock failed", "lock": got}
         return original_admin(cfg, verb)
 
     def gate_turn(cfg, text, timeout=600):
@@ -302,13 +310,33 @@ def main():
     signal.signal(signal.SIGTERM, on_term)
     sys.argv = [sys.argv[0], "--config", args.config, "--outdir", args.outdir,
                 "--hours", str(args.hours)]
+    # **A reset that cannot be confirmed fails the process.** The matrix
+    # always leaves through `sys.exit`, so what is in flight here is a
+    # `SystemExit` on the normal path and whatever else on the others. A
+    # failed reset is raised only where nothing worse is already
+    # propagating, and a clean exit is turned into a failed one, because a
+    # card left locked is not a clean end to the run whatever the verdict.
+    in_flight = None
     try:
         dm.main()
+    except BaseException as exc:  # noqa: BLE001 - re-raised below
+        in_flight = exc
+        raise
     finally:
-        ok = unlock(device)
+        ok = False
+        for attempt in range(3):
+            ok = unlock(device)
+            if ok:
+                break
+            log(f"graphics clock reset attempt {attempt + 1} failed")
+            time.sleep(1.0)
         time.sleep(2.5)  # the readout lags the reset like it lags the lock
         log(f"graphics clock reset: {'ok' if ok else 'FAILED'}, "
             f"reading {dmon(device)}")
+        clean = in_flight is None or (
+            isinstance(in_flight, SystemExit) and not in_flight.code)
+        if not ok and clean:
+            raise SystemExit(3)
 
 
 if __name__ == "__main__":
