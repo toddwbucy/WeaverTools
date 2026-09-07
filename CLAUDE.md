@@ -163,11 +163,13 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
-**Run from `WeaverTools/` on 2026-09-06 before being written here**, which
-is the difference between a command that works and one that ought to:
-`build --workspace` and `fmt --all -- --check` returned clean, and the
-clippy line returned the backlog section "Enforcement" describes. A later
-reader re-runs rather than trusting the date.
+**Every one run from `WeaverTools/` on 2026-09-06 before being written
+here**, which is the difference between a command that works and one that
+ought to. `build --workspace` and `fmt --all -- --check` returned clean.
+`test --workspace` passed 584 and failed none. `test -p weaver-harness`
+passed 105 and failed none. The clippy line returned the backlog section
+"Enforcement" describes. A later reader re-runs rather than trusting the
+date.
 
 **No `--features` flag belongs on the clippy line here.** `weaver-spu`
 declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
@@ -270,15 +272,24 @@ when the graph lands — the graph indexes them, it does not replace them:
    one a person has to type, which is how it went unrun.
 
    **Stated per crate because the workspace does not pass today and a gate
-   nobody can pass is a gate everyone learns to ignore.** Measured 2026-09-06:
-   ten findings of seven kinds across seven crates, `weaver-analysis` 7,
-   `weaver-types` 4, and `weaver-admin`, `weaver-gate`, `weaver-harness`,
-   `weaver-spu` and `weaver-state` 3 apiece. Five pass clean today:
-   `weaver-traits`, `weaver-trace`, `weaver-diagnostic`, `weaver-internal`,
-   `weaver-web`. **The backlog clears as each crate is next touched** rather
-   than as one act nobody owns, and the largest of the ten is a 400-byte
-   `LifecycleDirective` where every unit variant pays for `EnterPayload`, at
-   issue #475.
+   nobody can pass is a gate everyone learns to ignore.** Two counts, measured
+   2026-09-06, and they are different metrics rather than one:
+
+   **The workspace sweep deduplicates to ten findings of seven kinds.**
+   Three `collapsible_if`, two `large size difference between variants`, and
+   one each of `match` on a single pattern, a needless `mut`, an unused
+   import, `format!` in `format!` args, and a function at ten arguments.
+
+   **The gate reports error lines per crate, which is what a person running
+   it sees**, higher because `--all-targets` reports a finding once per
+   target it compiles: `weaver-analysis` 7, `weaver-types` 4, and
+   `weaver-admin`, `weaver-gate`, `weaver-harness`, `weaver-spu` and
+   `weaver-state` 3 apiece. Five pass clean today: `weaver-traits`,
+   `weaver-trace`, `weaver-diagnostic`, `weaver-internal`, `weaver-web`.
+
+   **The backlog clears as each crate is next touched** rather than as one act
+   nobody owns, and the largest of the ten is a 400-byte `LifecycleDirective`
+   where every unit variant pays for `EnterPayload`, at issue #475.
 
    The workspace line above is the sweep that shows the backlog. It is not the
    gate and does not pass until the seven clear.
