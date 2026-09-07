@@ -19,8 +19,8 @@ built on the premise the rewrite retired, that reproduction is a verdict, and it
 successor is a different object split across two homes. `queue.rs` retires because every
 field of its payload is the retired charter's and the mechanism worth keeping is already
 placed with the runner at issue #442. `traceview.rs` keeps, its discontinuity marks
-being absent-not-empty at the viewer built a month before the charter argued for it,
-with the consuming end rewritten against the contract. **The two that remain wait on the
+being absent-not-empty at the viewer built twelve days before the charter argued for
+it, with the consuming end rewritten against the contract. **The two that remain wait on the
 schema first and on section 6 naming what it defers to**, that section deferring to "a
 named trigger" that is named nowhere while the retired Spec named the IAM act plainly.
 Rulings one and four are recorded as landed, and ruling two as the operator settled it:
@@ -180,12 +180,13 @@ never smoothed, pending asks failing typed, discontinuity marks inserted
 into every trace view: that is the absent-not-empty discipline the rewritten
 charter argues for, already built.
 
-### Wants a ruling, 848 lines, and three of the five no longer do
+### Wanted a ruling, 1,879 lines, and three of the five no longer do
 
 **Read against the charter on 2026-09-07, module by module.** Three of the
 five turn out to be decidable without the identity act, and the two that
-remain wait on more than it. The five are kept in one table because the
-register counted them as one group, with each verdict stated.
+remain wait on more than it. **The five stay in one group because the
+register counted them as one**, the three ruled in prose below and the two
+that remain carrying a table of their own.
 
 **`repro.rs`, 369 lines: retires, and its successor is a different object.**
 Its comparison is seven JSON-pointer equalities at turn grain returning
@@ -227,8 +228,9 @@ its imports are tokio, serde and std. **What it holds has no home upstream
 and should not get one**: bounded rings, a per-agent broadcast, sequence ids
 kept monotonic across connector restarts, and rotation, truncation, parse
 failure and link loss all surfacing as discontinuity marks **never
-smoothed**. That is absent-not-empty at the viewer, built a month before the
-charter argued for it everywhere.
+smoothed**. That is absent-not-empty at the viewer, built twelve days
+before the charter argued for it everywhere: `traceview.rs` arrived
+2026-08-24 at #334 and the charter was rewritten at `daa12ba` on 2026-09-05.
 
 What changes is what it consumes. It parses `serde_json::Value` by hand off
 a raw file tail, and section 7.3 now names `weaver-analysis-web-contract` as
@@ -237,7 +239,7 @@ wants entropy and surprisal timelines with absence stated and a click
 pulling a position's alternatives. **The tail becomes an ingest consumer and
 the rings, marks and broadcast stay.**
 
-### The two that do want a ruling, and it is not only the identity act
+### The two that still do, 872 lines, and it is not only the identity act
 
 | file | lines | the question |
 |---|---|---|
