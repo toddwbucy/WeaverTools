@@ -6,6 +6,19 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-07, second of this date, section 6 names the act it
+defers to. The section said identity, authentication and transport
+encryption are deferred with a named trigger and then named none, and `IAM`
+appeared nowhere in this document or the Spec, while the prior Spec's
+section 14 named the IAM act plainly and stated its caveat. **A deferral
+against an unnamed trigger is not a deferral, it is a silence.** The act is
+named, and its two triggers are stated separately because they are not one
+event, so meeting one does not discharge the other. **Admission is by
+placement**, which the first trigger says outright: without it the trigger
+reads as met on the day it was written, the section's own caveat saying
+anyone on the network can claim an admin name. Issue #336 is the register.
+Found by the review of PR #493.
+
 **Revised:** 2026-09-07, an authored row is someone's work and the record
 says whose. Section 4 named the authored half and named no person, so the
 attribution the Spec's sections 2.3 through 2.5 now carry rested on an
@@ -549,9 +562,9 @@ a member of the row rather than an annotation on it, and the Spec's section
 2 gives it the member and its shape. **It is charter rather than schema
 because it cannot be added later**: who authored a row is knowable while the
 row is being written and unknowable afterward, so a record that omits
-attribution has answered the question rather than deferred it. What an attribution is worth before the
-identity act of section 6 is that act's to change, and the member does not
-wait on it.
+attribution has answered the question rather than deferred it. What an
+attribution is worth before the identity act of section 6 is that act's to
+change, and the member does not wait on it.
 
 The front end holds the cell registry, on its own store. The grain is the
 grain the interface clicks at: **one row per position per run, addressed by
@@ -700,9 +713,41 @@ to standing roles rather than a rearchitecture. **Co-locating a reading with
 an exchange is a presentation ruling and spends neither the role separation
 nor the gate**: the reach stays gated where it was.
 
-Identity, authentication, and transport encryption are deferred with a named
-trigger, and roles are not among the deferrals and are not access control
+Identity, authentication, and transport encryption are deferred with named
+triggers, and roles are not among the deferrals and are not access control
 either.
+
+**The act is the IAM act, and this section names it because the rewrite
+dropped the name.** The prior Spec's section 14 named it plainly and stated
+the caveat it still carries: until the act, a session is an anonymous
+server-minted cookie whose only job is continuity, so a name from the
+config's admin list is an admin session with no proof. Issue #336 is the
+register and carries the interim path for the case where the act is far off.
+
+**Two triggers, and either is enough.** Identity and authentication are due
+when the listener becomes reachable by anyone the operator has not already
+admitted, which is when a claimed name stops being continuity and becomes an
+assertion. **Admission is by placement**: the operator admits a network when
+the listener is put on it, so the trigger is the listener becoming reachable
+from beyond that network and not the fact that a second person shares it.
+Without that clause the trigger reads as met on the day it was written,
+because the caveat above says anyone on the network can claim an admin name.
+
+Transport encryption is due when the traffic leaves the network the listener
+was placed on. **The two are close and they are not one event.** Identity
+fails when someone claims a name that is not theirs, encryption when someone
+reads traffic that is not theirs, and the same placement can meet one
+without the other. Naming a single trigger would leave the second deferral
+standing against nothing, which is the state this section was in until
+2026-09-07.
+
+**The act changes the proof and not the gate.** Roles are structural and the
+reach stays gated where it was, so the act makes a session prove who it is
+and moves nothing else, which is what attaching
+authentication to standing roles means above. **One member does not wait on
+the act**: the Spec's section 3.2 gives every authored row a nullable
+author, an author being knowable while a row is written and unknowable
+afterward, so the member is written now and the act decides what fills it.
 
 ## 7. What the rewrite keeps, and what it retires
 
