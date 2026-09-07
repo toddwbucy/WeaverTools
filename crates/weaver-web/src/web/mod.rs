@@ -30,7 +30,6 @@ pub struct AppState {
     pub queues: Queues,
     pub traces: TraceViews,
     pub link: Link,
-    pub repro: crate::repro::Repro,
 }
 
 pub fn router(state: AppState) -> Router {

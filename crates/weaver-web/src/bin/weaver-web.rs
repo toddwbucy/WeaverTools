@@ -90,7 +90,6 @@ async fn main() -> anyhow::Result<()> {
         queues,
         traces,
         link,
-        repro: Default::default(),
     };
 
     let listener = tokio::net::TcpListener::bind(&cfg.listen).await?;
