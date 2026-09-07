@@ -1157,7 +1157,7 @@ impl<'a> Ports<'a> {
                                         payload: weaver_types::Payload::Answer(
                                             weaver_types::LifecycleAnswer::State {
                                                 state: weaver_types::AgentState::Active,
-                                                load: Some(self.load.clone()),
+                                                load: Some(Box::new(self.load.clone())),
                                             },
                                         ),
                                     });
