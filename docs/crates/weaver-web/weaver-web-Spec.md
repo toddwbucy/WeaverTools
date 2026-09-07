@@ -10,6 +10,19 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-07, fourth of this date, the omitted member and the
+absent one are told apart. Section 9's write-path perturbation could not
+fail: with a null default, dropping the member writes the same row as
+passing a null, so the watch proved nothing. **The column carries no
+default**, a write that omits the member is refused at the boundary, and a
+null is passed rather than fallen into, which is what separates an author
+nobody could name from an author nobody asked for. Section 3.2's pre-act
+clause narrows to a named author, **a null being no claim rather than a weak
+one**, and section 2's summary sentence stops saying the row names a person
+where it may say it could not name one. No sentinel is added: a second
+unknown value would be the absent-not-empty failure moved from the view into
+the store. Per the review of PR #487.
+
 **Revised:** 2026-09-07, third of this date, against the review of PR #487.
 Section 3.2's rationale for the author cited no charter clause, which G2
 does not allow, so the charter's section 4 gains the clause in the same act
@@ -300,9 +313,9 @@ second write of it is an edit and must be ordered. Section 3 states each.
 
 **They differ in a second way, and this document carried only the first
 until 2026-09-07.** A recorded row is about an instrument, so it names a run
-and no person. An authored row is about a person's work, so **it names who is
-making it**, per section 3.2. The recorded half needs no such member and
-carries none.
+and no person. An authored row is about a person's work, so **it carries who
+is making it, or says it could not be named**, per section 3.2. The recorded
+half needs no such member and carries none.
 
 ### 2.1 The position
 
@@ -683,6 +696,14 @@ keeps a recorded fact a recorded fact.
   identity act of the charter's section 6 changes what fills it and not
   whether it exists**, the act attaching authentication to the roles that
   already stand rather than rearchitecting around them.
+- **The column carries no default, so every write passes the member and a
+  null is passed rather than fallen into.** A nullable column with a null
+  default cannot tell an author nobody could name from an author nobody
+  asked for, and those are the two facts this member exists to keep apart.
+  A write that omits it is refused at the boundary and names the member,
+  which is the same refusal shape as the stale version below. **No sentinel
+  is added**: a second unknown value would be the absent-not-empty failure
+  moved from the view into the store.
 - **It is stated now because it cannot be added later**, which is the
   charter's section 4 and is restated here rather than argued. A row's
   author is knowable while the row is being written and unknowable
@@ -690,10 +711,12 @@ keeps a recorded fact a recorded fact.
   question, it is answering it as no for every row written before it changes
   its mind. Section 2.5's question is the case that shows it: **the question
   the engineer meant to ask is not a whole fact without the engineer.**
-- **Before the identity act an author is asserted and not proved.** A
+- **Before the identity act a named author is asserted and not proved.** A
   session is continuity rather than a proof until the act the charter's
-  section 6 names, so a row written before it records who claimed the row
-  and a reader treats the member as a claim. **The act changes what the
+  section 6 names, so where a row written before it carries a name, that
+  name is who claimed the row and a reader treats it as a claim. **A null is
+  not a weak claim, it is no claim**, and the two do not collapse into each
+  other before the act any more than after it. **The act changes what the
   member is worth and not whether it is there**, which is the same shape as
   the null rule above: an unknown that says so and a claim that says so are
   both correctable, and a value presented as more than it is is not.
@@ -956,7 +979,7 @@ cell record like any other.
 | no surface writes a position or a run | compile-fail: a doctest constructing a recorded-table writer from an authoring path does not compile |
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | an authored row names its author or names none | perturbation: default the null to the operator, a row nobody can attribute reads as attributed and is uncorrectable |
-| every authoring write passes the member, deliberately where it passes none | perturbation: drop the member from one write path and let the column's default stand, the row the null exists for is the one written by the path that forgot to ask |
+| every authoring write passes the member, and the column has no default | perturbation: give the column a null default and drop the member from one write path, the write lands and the row is indistinguishable from one whose author nobody could name |
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 | a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |

@@ -542,14 +542,14 @@ distinction buys is that the two halves cannot be written by one path: an
 authored row edited under a replay's idempotence would silently lose an
 edit, and a recorded row written by a screen would stop being a record.
 
-**An authored row is someone's work and the record says whose.** The
-recorded half is about an instrument, so it names a run and no person. The
-authored half is about a person, so attribution is a member of the row
-rather than an annotation on it, and the Spec's section 2 gives it the
-member. **It is charter rather than schema because it cannot be added
-later**: who authored a row is knowable while the row is being written and
-unknowable afterward, so a record that omits attribution has answered the
-question rather than deferred it. What an attribution is worth before the
+**An authored row is someone's work and the record says whose, or says it
+could not be named.** The recorded half is about an instrument, so it names
+a run and no person. The authored half is about a person, so attribution is
+a member of the row rather than an annotation on it, and the Spec's section
+2 gives it the member and its shape. **It is charter rather than schema
+because it cannot be added later**: who authored a row is knowable while the
+row is being written and unknowable afterward, so a record that omits
+attribution has answered the question rather than deferred it. What an attribution is worth before the
 identity act of section 6 is that act's to change, and the member does not
 wait on it.
 
