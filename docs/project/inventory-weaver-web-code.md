@@ -13,8 +13,8 @@ act and has not been read since.** It stands at 4,531 lines of Rust, eleven
 templates, and a Postgres schema, all written to the retired text, and no
 document in the corpus records the gap.
 
-**Revised:** 2026-09-07, three of the five are decidable and two of the four rulings are
-answered. Read module by module against the charter: `repro.rs` retires because it is
+**Revised:** 2026-09-07, three of the five are decidable and the ruling count moves with
+them. Read module by module against the charter: `repro.rs` retires because it is
 built on the premise the rewrite retired, that reproduction is a verdict, and its
 successor is a different object split across two homes. `queue.rs` retires because every
 field of its payload is the retired charter's and the mechanism worth keeping is already
@@ -23,8 +23,12 @@ being absent-not-empty at the viewer built twelve days before the charter argued
 it, with the consuming end rewritten against the contract. **The two that remain wait on the
 schema first and on section 6 naming what it defers to**, that section deferring to "a
 named trigger" that is named nowhere while the retired Spec named the IAM act plainly.
-Rulings one and four are recorded as landed, and ruling two as the operator settled it:
-replaced, git is the archive, and the schema is virgin.
+**Rulings one and four were landed at PRs #469 and #470 and are recorded here rather
+than answered here.** Ruling two is answered by this revision as the operator settled it,
+replaced with git as the archive and the schema virgin, and ruling three by three of its
+five. **So the register stands at three of the four answered whole and the fourth three
+fifths done**, which is a different count from the one this entry carried and the reason
+it is stated by ruling rather than by total.
 
 **Revised:** 2026-09-06, fourth of this date, the archive act reads back into the
 register. **`registry.rs` splits rather than retiring whole**: it carries
@@ -209,7 +213,8 @@ It is also clean to remove, which the other retirees are not: its imports
 are `crate::wire::Link` and `serde_json`, and it touches the channel store
 nowhere, which its own comment was careful about. **Its name goes with it**:
 `repro` appears in no document of this crate, its own doc comment calls it
-the confirm job, and it reads as `repo.rs`.
+the confirm job, and at a glance the file name reads as `repo.rs`, which is
+a misreading the operator made in this register's own review.
 
 **`queue.rs`, 311 lines: retires, and its mechanism is not this crate's to
 keep.** `Invocation` carries `channel_id` and `agent_participant_id`, and
