@@ -285,11 +285,26 @@ when the graph lands - the graph indexes them, it does not replace them:
 
    ```bash
    for c in $(ls crates); do
-     printf '%-18s %s\n' "$c" "$(cargo clippy -p "$c" --all-targets \
-       --message-format=short -- -D warnings 2>&1 |
-       grep -cE '^crates/.*: error:')"
+     if out=$(cargo clippy -p "$c" --all-targets --message-format=short \
+                -- -D warnings 2>&1); then
+       printf '%-18s %s\n' "$c" 0
+     else
+       n=$(printf '%s\n' "$out" | grep -cE '^crates/.*: error:') || true
+       [ "$n" -eq 0 ] && n=BROKEN
+       printf '%-18s %s\n' "$c" "$n"
+     fi
    done
    ```
+
+   **`BROKEN` means the run failed for a reason that is not a lint** and the
+   crate's gate is unknown rather than passed. It is separated because a
+   loop that counts lint lines out of a pipe reports the exit status of
+   `grep` and prints a clean zero for a run that never linted, which is how
+   issue #471's stale gate command went unnoticed. That command's
+   `--features weaver-spu/inference` errors on its first argument, and
+   through a counting pipe it reads as clean.
+   **The zero a broken run prints is the most expensive line in this
+   section**, so it prints a word instead.
 
    **It counts the source lines the lint names**, so a finding whose path
    clippy prints relative to the crate rather than the tree is not in the
