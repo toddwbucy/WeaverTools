@@ -2,17 +2,100 @@
 //! conforms: analysis-captures-compare-exactly
 //! conforms: analysis-threaded-head-is-bit-identical
 //! conforms: analysis-lens-refuses-other-weights
+//! conforms: analysis-compare-refuses-across-loops-and-members
 //!
 //! The reading's watches, per `weaver-analysis-Spec` sections 5 and 6. The
 //! fixtures are the real records of 2026-09-01: the certified column
 //! replay and its repeat, whose differencing measured the vector bar.
 
 use weaver_analysis::{
-    Capture, Comparison, LensRefusal, WeightsDigest, compare, manifest_path_for, parse_record,
+    Capture, Comparison, LensRefusal, Provenance, WeightsDigest, compare, manifest_path_for,
+    parse_record,
 };
 
 const CERTIFIED: &str = include_str!("fixtures/columns-a.ndjson");
 const REPEAT: &str = include_str!("fixtures/columns-b.ndjson");
+
+/// The two fixtures predate the `load` event naming its composer and its
+/// member, which the harness has done since 2026-09-03, so a comparison of
+/// them refuses as mute by `weaver-analysis-Spec` section 5. The tests of
+/// the value comparison seat the one provenance both records would have
+/// carried, the worker binary with no loop file and the member not standing.
+fn named(record: &str) -> Capture {
+    let mut capture = Capture::of(&parse_record(record));
+    capture.provenance = Some(Provenance {
+        binary: "worker".into(),
+        file: None,
+        sha256: None,
+        state_member: false,
+    });
+    capture
+}
+
+/// **Two captures compare only under one loop and one member**, per
+/// `weaver-analysis-Spec` section 5 as of 2026-09-07 and issue #381: the
+/// load is read before any value, a record naming neither refuses as one
+/// whose loop cannot be known, and two records naming different loops, or
+/// differing in whether the member stood, refuse with the fact named,
+/// ahead of the token-path check that would have called them two runs.
+///
+/// Perturbation: drop the composer check and the second case compares,
+/// drop the member check and the third compares, drop the mute rule and
+/// the first compares as though both named the same. Watched under each.
+#[test]
+fn two_captures_compare_only_under_one_loop_and_one_member() {
+    let mute = Capture::of(&parse_record(CERTIFIED));
+    assert!(
+        mute.provenance.is_none(),
+        "the 2026-09-01 record names no loop"
+    );
+    match compare(&mute, &named(REPEAT)) {
+        Comparison::Incomparable { detail } => {
+            assert!(detail.contains("names no loop"), "{detail}");
+            assert!(detail.contains("left"), "the mute side is named: {detail}");
+        }
+        other => panic!("a mute record refuses: {other:?}"),
+    }
+
+    let mut other_loop = named(REPEAT);
+    other_loop.provenance = Some(Provenance {
+        binary: "pyworker".into(),
+        file: Some("/usr/local/libexec/weaver/loops/alpha_loop.py".into()),
+        sha256: Some("5d34b9df996815d9f228a70f0d38f5dbbb17a878ed5ded578c5e87ec3071cc00".into()),
+        state_member: false,
+    });
+    match compare(&named(CERTIFIED), &other_loop) {
+        Comparison::Incomparable { detail } => {
+            assert!(detail.contains("the loops differ"), "{detail}");
+            assert!(
+                detail.contains("alpha_loop.py"),
+                "the other loop is named: {detail}"
+            );
+            assert!(detail.contains("5d34b9df9968"), "by its digest: {detail}");
+        }
+        other => panic!("two loops refuse: {other:?}"),
+    }
+
+    let mut with_member = named(REPEAT);
+    with_member.provenance.as_mut().unwrap().state_member = true;
+    match compare(&named(CERTIFIED), &with_member) {
+        Comparison::Incomparable { detail } => {
+            assert!(
+                detail.contains("the state member stood for the right"),
+                "{detail}"
+            );
+        }
+        other => panic!("a standing member on one side refuses: {other:?}"),
+    }
+
+    assert!(
+        matches!(
+            compare(&named(CERTIFIED), &named(REPEAT)),
+            Comparison::Identical { .. }
+        ),
+        "under one loop and one member the value comparison proceeds"
+    );
+}
 
 /// **Two captures of one run compare exactly**, which is certification
 /// step 3's own check: within one device model the bar is exact, per
@@ -23,8 +106,8 @@ const REPEAT: &str = include_str!("fixtures/columns-b.ndjson");
 /// by the divergence case below.
 #[test]
 fn two_captures_of_one_run_are_identical() {
-    let a = Capture::of(&parse_record(CERTIFIED));
-    let b = Capture::of(&parse_record(REPEAT));
+    let a = named(CERTIFIED);
+    let b = named(REPEAT);
     assert!(!a.columns.is_empty(), "the fixture holds columns");
     match compare(&a, &b) {
         Comparison::Identical { positions, values } => {
@@ -46,8 +129,8 @@ fn two_captures_of_one_run_are_identical() {
 /// difference passing as identical. Watched under exactly that change.
 #[test]
 fn one_bit_of_difference_diverges_naming_the_site() {
-    let a = Capture::of(&parse_record(CERTIFIED));
-    let mut b = Capture::of(&parse_record(REPEAT));
+    let a = named(CERTIFIED);
+    let mut b = named(REPEAT);
     let key = b.columns.keys().next().cloned().expect("a column");
     let held = b.columns[&key][0][0];
     b.columns.get_mut(&key).unwrap()[0][0] = f32::from_bits(held.to_bits() ^ 1);
@@ -66,8 +149,8 @@ fn one_bit_of_difference_diverges_naming_the_site() {
 /// comparison refuses rather than verdicting over what happens to align.
 #[test]
 fn ragged_and_empty_comparisons_refuse() {
-    let a = Capture::of(&parse_record(CERTIFIED));
-    let mut short = Capture::of(&parse_record(REPEAT));
+    let a = named(CERTIFIED);
+    let mut short = named(REPEAT);
     let key = short.columns.keys().next().cloned().expect("a column");
     short.columns.get_mut(&key).unwrap().pop();
     assert!(
@@ -75,14 +158,14 @@ fn ragged_and_empty_comparisons_refuse() {
         "a dropped layer refuses"
     );
 
-    let mut narrow = Capture::of(&parse_record(REPEAT));
+    let mut narrow = named(REPEAT);
     narrow.columns.get_mut(&key).unwrap()[0].pop();
     assert!(
         matches!(compare(&a, &narrow), Comparison::Incomparable { .. }),
         "a narrowed layer refuses"
     );
 
-    let mut hollow = Capture::of(&parse_record(REPEAT));
+    let mut hollow = named(REPEAT);
     for column in hollow.columns.values_mut() {
         column.clear();
     }
@@ -109,7 +192,7 @@ fn ragged_and_empty_comparisons_refuse() {
 /// Watched under exactly that change.
 #[test]
 fn signed_zeros_differ_and_equal_nans_do_not() {
-    let a = Capture::of(&parse_record(CERTIFIED));
+    let a = named(CERTIFIED);
     let key = a.columns.keys().next().cloned().expect("a column");
 
     let mut positive = a.clone_shallow();

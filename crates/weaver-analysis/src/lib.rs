@@ -35,7 +35,7 @@ pub mod record;
 pub mod signals;
 pub mod stream;
 
-pub use capture::{Capture, Comparison, compare};
+pub use capture::{Capture, Comparison, Provenance, compare};
 pub use declare::{AnalystInputs, DeriveRefusal, SinkKind, derive};
 pub use field::{Address, Answer, FieldReader};
 pub use lens::{

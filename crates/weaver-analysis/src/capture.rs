@@ -1,4 +1,5 @@
 //! conforms: analysis-captures-compare-exactly
+//! conforms: analysis-compare-refuses-across-loops-and-members
 //!
 //! A capture's columns and their comparison, per `weaver-analysis-Spec`
 //! section 5. A capture is a certified diagnostic record kept whole, so
@@ -21,11 +22,48 @@ use crate::record::{Event, value_at};
 /// a record holds several brackets and positions repeat across them.
 pub type Key = (Option<String>, u64);
 
-/// A capture's columns and the token each position drew.
+/// What a record's `load` event says about who composed the run and
+/// whether the state member stood, per `weaver-trace-Spec` section 3 as of
+/// 2026-09-03: the two facts that decide whether two records are two
+/// captures of one run, per `weaver-analysis-PRD` section 3.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Provenance {
+    pub binary: String,
+    pub file: Option<String>,
+    pub sha256: Option<String>,
+    pub state_member: bool,
+}
+
+impl Provenance {
+    /// The composer as a reader names it: the binary, and the file with its
+    /// digest where the loop is a file.
+    pub fn composer(&self) -> String {
+        match (&self.file, &self.sha256) {
+            (Some(file), Some(digest)) => {
+                format!(
+                    "{} reading {file} ({})",
+                    self.binary,
+                    &digest[..digest.len().min(12)]
+                )
+            }
+            (Some(file), None) => format!("{} reading {file}", self.binary),
+            _ => self.binary.clone(),
+        }
+    }
+
+    fn same_composer(&self, other: &Provenance) -> bool {
+        self.binary == other.binary && self.file == other.file && self.sha256 == other.sha256
+    }
+}
+
+/// A capture's columns, the token each position drew, and what its record
+/// says about the loop and the member, absent where the record predates
+/// the `load` event naming them.
 #[derive(Debug, Default)]
 pub struct Capture {
     pub columns: BTreeMap<Key, Vec<Vec<f32>>>,
     pub drawn: BTreeMap<Key, u32>,
+    pub provenance: Option<Provenance>,
 }
 
 impl Capture {
@@ -36,6 +74,7 @@ impl Capture {
         Capture {
             columns: self.columns.clone(),
             drawn: self.drawn.clone(),
+            provenance: self.provenance.clone(),
         }
     }
 
@@ -50,6 +89,34 @@ impl Capture {
         for event in events {
             let turn = event.envelope.turn.clone();
             match event.envelope.kind.as_str() {
+                // **The load names the loop and the member**, per
+                // `weaver-trace-Spec` section 3 as of 2026-09-03, and a
+                // record naming neither is one whose loop cannot be known.
+                "load" => {
+                    let Some(payload) = event.payload.as_deref() else {
+                        continue;
+                    };
+                    let composer = value_at(payload, "composer")
+                        .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw.get()).ok());
+                    let state_member = value_at(payload, "state_member")
+                        .and_then(|raw| raw.get().parse::<bool>().ok());
+                    if let (Some(composer), Some(state_member)) = (composer, state_member)
+                        && let Some(binary) = composer.get("binary").and_then(|b| b.as_str())
+                    {
+                        capture.provenance = Some(Provenance {
+                            binary: binary.to_string(),
+                            file: composer
+                                .get("file")
+                                .and_then(|f| f.as_str())
+                                .map(str::to_string),
+                            sha256: composer
+                                .get("sha256")
+                                .and_then(|d| d.as_str())
+                                .map(str::to_string),
+                            state_member,
+                        });
+                    }
+                }
                 "residual.column" => {
                     let Some(payload) = event.payload.as_deref() else {
                         continue;
@@ -123,6 +190,41 @@ pub enum Comparison {
 /// or widths refuse rather than comparing what happens to align, and an
 /// empty set refuses rather than verdicting over no evidence.
 pub fn compare(left: &Capture, right: &Capture) -> Comparison {
+    // **The load is read before any value**, per `weaver-analysis-Spec`
+    // section 5 as of 2026-09-07 and issue #381: a prompt assembled by
+    // another loop diverges at the first token, and the token-path refusal
+    // below would report that as two runs rather than as two loops.
+    let (a, b) = match (&left.provenance, &right.provenance) {
+        (Some(a), Some(b)) => (a, b),
+        (None, _) => {
+            return Comparison::Incomparable {
+                detail: "the left record's load names no loop and no member: a record older than the fact cannot be compared".to_string(),
+            };
+        }
+        (_, None) => {
+            return Comparison::Incomparable {
+                detail: "the right record's load names no loop and no member: a record older than the fact cannot be compared".to_string(),
+            };
+        }
+    };
+    if !a.same_composer(b) {
+        return Comparison::Incomparable {
+            detail: format!(
+                "the loops differ: {} composed the left record and {} the right, so the prompts are two loops' and no disagreement below is the engine's",
+                a.composer(),
+                b.composer()
+            ),
+        };
+    }
+    if a.state_member != b.state_member {
+        return Comparison::Incomparable {
+            detail: format!(
+                "the state member stood for the {} record and not the {}, so one session's past reached a prompt the other's did not",
+                if a.state_member { "left" } else { "right" },
+                if a.state_member { "right" } else { "left" }
+            ),
+        };
+    }
     if left.columns.is_empty() || right.columns.is_empty() {
         return Comparison::Incomparable {
             detail: "a record holds no residual column".to_string(),
