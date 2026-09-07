@@ -271,28 +271,62 @@ when the graph lands - the graph indexes them, it does not replace them:
    before that crate's act merges. It is the cheapest of the five and the only
    one a person has to type, which is how it went unrun.
 
-   **Stated per crate because the workspace does not pass today and a gate
-   nobody can pass is a gate everyone learns to ignore.** Two counts, measured
-   2026-09-06, and they are different metrics rather than one:
+   **Stated per crate because the workspace did not pass when the gate
+   landed, and a gate nobody can pass is a gate everyone learns to ignore.**
+   The backlog clears as each crate is next touched rather than as one act
+   nobody owns.
 
-   **The workspace sweep deduplicates to ten findings of seven kinds.**
-   Three `collapsible_if`, two `large size difference between variants`, and
-   one each of `match` on a single pattern, a needless `mut`, an unused
-   import, `format!` in `format!` args, and a function at ten arguments.
+   **Issue #471 is the register and this file keeps no census.** A count
+   written here is stale by the next act and then argues with the command:
+   the table that stood here through 2026-09-06 named seven failing crates
+   and cited issue #475 as its largest item, and by 2026-09-07 #475 was
+   closed and the table was naming crates that had since cleared. Measure
+   rather than read:
 
-   **The gate reports error lines per crate, which is what a person running
-   it sees**, higher because `--all-targets` reports a finding once per
-   target it compiles: `weaver-analysis` 7, `weaver-types` 4, and
-   `weaver-admin`, `weaver-gate`, `weaver-harness`, `weaver-spu` and
-   `weaver-state` 3 apiece. Five pass clean today: `weaver-traits`,
-   `weaver-trace`, `weaver-diagnostic`, `weaver-internal`, `weaver-web`.
+   ```bash
+   for c in $(ls crates); do
+     if out=$(cargo clippy -p "$c" --all-targets --message-format=short \
+                -- -D warnings 2>&1); then
+       printf '%-18s %s\n' "$c" 0
+     else
+       n=$(printf '%s\n' "$out" | grep -cE '^crates/.*: error:') || true
+       [ "$n" -eq 0 ] && n=BROKEN
+       printf '%-18s %s\n' "$c" "$n"
+     fi
+   done
+   ```
 
-   **The backlog clears as each crate is next touched** rather than as one act
-   nobody owns, and the largest of the ten is a 400-byte `LifecycleDirective`
-   where every unit variant pays for `EnterPayload`, at issue #475.
+   **`BROKEN` means the run failed for a reason that is not a lint** and the
+   crate's gate is unknown rather than passed. It is separated because a
+   loop that counts lint lines out of a pipe reports the exit status of
+   `grep` and prints a clean zero for a run that never linted, which is how
+   issue #471's stale gate command went unnoticed. That command's
+   `--features weaver-spu/inference` errors on its first argument, and
+   through a counting pipe it reads as clean.
+   **The zero a broken run prints is the most expensive line in this
+   section**, so it prints a word instead.
 
-   The workspace line above is the sweep that shows the backlog. It is not the
-   gate and does not pass until the seven clear.
+   **It counts the source lines the lint names**, so a finding whose path
+   clippy prints relative to the crate rather than the tree is not in the
+   count. That is not the case in this tree today, and it is where to look
+   first if a crate you know is dirty reads zero.
+
+   **The count is per box and this file records none.** Two seats ran that
+   loop against `704bb3d` on 2026-09-07 and got different answers, the
+   thinkpad seat four findings and the olympus seat five. The one they
+   disagree on is `mhdr.msg_controllen as usize` at
+   `crates/weaver-harness/src/channel.rs:452`, and the lint that names it
+   fires only where that cast is a no-op, which is a property of the target's
+   headers rather than of the tree. **Why the two boxes differ is not
+   established here** and is #471's to settle. What the disagreement settles
+   already is that **a count is a reading taken on a box**, which is the
+   second reason it does not live in this file, and #471 carries each reading
+   with the seat that took it.
+
+   **The workspace sweep is not the gate and under-reports it.** A crate that
+   fails does not compile under deny-warnings, so its dependents are not
+   linted at all and `--workspace` answers a smaller question than twelve
+   per-crate runs do.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
