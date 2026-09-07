@@ -32,3 +32,27 @@ dies keeps everything before it.
 
 The first result is `RESULT-2026-08-27.md`, and it is the baseline the
 protoautonomic calculator experiment measures against.
+
+## The clock-state matrix
+
+`clock_state_matrix.py` runs the same matrix with the graphics clock
+locked before every load to a seeded draw between 210 and 2100 MHz,
+independently on the source half and the replay half, and samples the
+card at every dispatch, during the turn, and at its close. It imports
+this driver and patches three seams, the admin load, the gate turn, and
+the session record, and touches nothing else. An idle between turns
+cannot move the clock, because the card holds boost for as long as the
+SPU's context exists, which is why the clock is locked rather than left
+to drift. The readout is `nvidia-smi dmon -s pc`, never the query path,
+which reports 210 MHz at full load on driver 610.57.04. Needs root for
+`nvidia-smi -lgc` under `sudo -n`, and resets the clock at exit.
+
+```shell
+python3 clock_state_matrix.py --config <cfg> --outdir <deposit> --hours 7
+```
+
+The olympus result of 2026-09-07, 2,616 of 2,616 reproduced with 2,293
+probe turns reissued under a clock other than the one that produced
+them, is deposited at
+`/bulk-store/weaver-testing/determinism-matrix-olympus-2026-09-06-clock/`
+with `RESULT-2026-09-07.md` beside it.
