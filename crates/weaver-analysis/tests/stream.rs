@@ -7,7 +7,7 @@
 //! The fixtures are shaped like the real records the live run drained.
 
 use weaver_analysis::capture::{Key, Streaming};
-use weaver_analysis::{Drained, Signals, Step, drain};
+use weaver_analysis::{Drained, Signals, drain};
 
 fn record(closed: Option<&str>, trailing: &str) -> String {
     let mut lines = vec![

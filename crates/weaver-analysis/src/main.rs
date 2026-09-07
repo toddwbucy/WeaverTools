@@ -591,9 +591,9 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
             positions.clone().unwrap_or_default(),
             &mut pair,
         );
-        match weaver_analysis::drain(source, &mut reader) {
-            weaver_analysis::Drained::Refused(why) => return refused(why),
-            _ => {}
+        if let weaver_analysis::Drained::Refused(why) = weaver_analysis::drain(source, &mut reader)
+        {
+            return refused(why);
         }
         outcome = reader.outcome.clone();
         kept = std::mem::take(&mut reader.kept);

@@ -217,14 +217,15 @@ fn a_named_run_ends_the_read_and_an_unnamed_one_answers_per_run() {
 #[test]
 fn a_diagnostic_record_answers_whatever_its_outcome() {
     for outcome in ["certified", "diverged", "abandoned"] {
+        let closed = format!(
+            r#"{{"session":"s","run":"d","sequence":"3","kind":"replay.closed","payload":{{"outcome":{{"kind":"{outcome}"}}}}}}"#
+        );
         let text = format!(
             "{}\n{}\n{}\n{}\n{}\n",
             r#"{"session":"s","run":"d","sequence":"0","kind":"replay.opened","payload":{"reader_elected":true}}"#,
             r#"{"session":"s","run":"d","turn":"t-1","sequence":"1","kind":"model.field","payload":{"position":60,"ranked":[{"token":1,"probability":0.5},{"token":2,"probability":0.4}],"realized":1}}"#,
             r#"{"session":"s","run":"d","turn":"t-1","sequence":"2","kind":"model.measurement","payload":{"output_tokens":[2]}}"#,
-            format!(
-                r#"{{"session":"s","run":"d","sequence":"3","kind":"replay.closed","payload":{{"outcome":{{"kind":"{outcome}"}}}}}}"#
-            ),
+            closed,
             r#"{"session":"s","run":"d","turn":"t-9","sequence":"4","kind":"model.field","payload":{"position":60,"ranked":[{"token":3,"probability":0.5}],"realized":0}}"#,
         );
         let (answers, drained, _, _) = read(&text, "t-1:60", None);
