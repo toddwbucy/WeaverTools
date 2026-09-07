@@ -193,8 +193,11 @@ pub enum RefusingOrgan {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum LifecycleDirective {
+    /// Boxed, per `weaver-types-Spec` section 4.2 as of 2026-09-06 and issue
+    /// #475: the payload carried the enum's whole size onto every unit
+    /// variant, and a boxed field crosses the seam as the field does.
     Enter {
-        payload: EnterPayload,
+        payload: Box<EnterPayload>,
     },
     Leave,
     Stop,
@@ -259,8 +262,10 @@ pub enum LifecycleAnswer {
     /// exactly where the state is `Absent` or `Unloaded`.
     State {
         state: AgentState,
+        /// Boxed on the same ground as the enter's payload, per the same
+        /// section and issue.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        load: Option<LoadFacts>,
+        load: Option<Box<LoadFacts>>,
     },
     Agents {
         agents: Vec<AgentSummary>,
