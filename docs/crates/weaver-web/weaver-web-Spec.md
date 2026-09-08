@@ -10,6 +10,24 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-08, the session stands and the ingest names its source.
+Two things this document assumed are stated. **Section 2.8 gives the session
+a row**, admitted on section 2.6's ground that a rule stated elsewhere needs
+somewhere to land: section 3.2's author member held the name the authoring
+surface had and no section said where the surface had it from, HTTP carrying
+no name between requests. The row stores the bearer as a digest and never in
+the clear, which is free to state before a token exists and expensive after,
+per issue #336. **Before the identity act a role is a property of the session
+and not of a person**, because no person is proved, which is what the
+charter's section 6 means by structural without access control. **Section
+3.1 names the trace as the ingest's source and names the reader**, the
+emission being `weaver-analysis` parsing a finished record after the fact
+over the analysis seam and not an independent production, so this store reads
+as the derivative it is rather than as a second record of the same events.
+The harness's tee feeds the state member and is set aside by name, two
+candidate producers being worse than none. Section 3's writers go from three
+to four. Per issue #508.
+
 **Revised:** 2026-09-07, fourth of this date, the omitted member and the
 absent one are told apart. Section 9's write-path perturbation could not
 fail: with a null default, dropping the member writes the same row as
@@ -304,7 +322,11 @@ section 3.2 and never by the ingest. Section 2.6's recorded query is the
 read's own trace and belongs to neither, written by the read that serves it
 and by nothing else. **Section 2.7 is not a table**: it is how the rows
 above are reached, and it carries the rule that a derived value is derived
-once at ingest rather than at any read.
+once at ingest rather than at any read. **Section 2.8's session belongs to
+neither half either and sits last**, after the indexes, because it is the
+only row here that is about the operator rather than about the instrument or
+the work. It is admitted on the same ground section 2.6 was: a rule stated
+elsewhere needs somewhere to land.
 
 **The halves differ in what a rewrite means.** A recorded row is a fact
 about a run that happened, so a second write of it is a replay and must be
@@ -618,22 +640,105 @@ without pulling the run down. **Nothing is computed at read time.** A value
 that must be derived is derived once at ingest and stored, because a value
 computed in the interface is a value nobody else can reproduce.
 
+### 2.8 The session
+
+**Admitted on the same ground section 2.6 was: a rule stated elsewhere needs
+somewhere to land.** Section 3.2 gives every authored row a nullable author
+and says the member holds the name the authoring surface had. **HTTP carries
+no name between requests**, so a surface can only have one if something holds
+it, and that something is this row. Without it the author member has a value
+and no source, which is the state this document was in until 2026-09-08.
+
+**It is continuity and it is not a person.** A session is opened by an
+operator who claims a name, and what is stored is the claim. Nothing here
+proves anyone is anyone, per the charter's section 6, and nothing here is
+access control.
+
+Each row carries:
+
+- the session's own identifier
+- **the bearer's digest and never the bearer.** The value the browser holds
+  is hashed before it is stored and the lookup is on the digest, so a read of
+  this table is not a set of live sessions
+- **the name claimed at open**, which is what section 3.2's author member
+  takes its value from
+- **the role**, per the charter's section 6
+- when it was opened, and when it closed where it has
+
+**The digest rule is stated before there is a token to migrate.** The prior
+schema stored the bearer in the clear and the fix would have wanted a
+migration and an invalidation path for everything already issued, per
+issue #336. That table retired with the conversation half at PR #499, so this
+document states the shape while stating it is free, on the same reasoning
+section 3.2's author member was landed under: the cheap moment is before the
+first row exists.
+
+**Before the identity act a role is a property of the session and not of a
+person**, because no person is proved and a role has nothing else to attach
+to. That is what the charter's section 6 means by roles being structural
+while not being access control: the structure stands, and what is missing is
+the proof rather than the shape. **When the act's trigger fires, the role
+attaches to the proved identity and this row references it.** The column
+moves and the gate does not, which is section 6's own promise made checkable
+rather than left as a sentence.
+
+**A session is not an authored row and takes no version.** Section 3.2's
+ordering rule answers two engineers editing one declaration, and nobody edits
+a session: it is opened once, closed once, and read in between. **Nor is it a
+recorded row**, carrying no run and no position, which is why it stands here
+after the indexes rather than in either half.
+
 ## 3. The write path
 
-**Three writers, and each owns its tables.** Section 3.1's ingest lands what
+**Four writers, and each owns its tables.** Section 3.1's ingest lands what
 the instrument recorded. Section 3.2's authoring path lands what the
 engineer authored. **The read path writes too**, one row and only one:
 section 4 admits an open query on the condition that the query is recorded,
 so the read that serves it writes section 2.6's row and nothing else. That
-is why 2.6 belongs to neither half. No writer touches another's tables, and
-**no surface writes through 3.1**, which is what section 6's rule means and
-all it means.
+is why 2.6 belongs to neither half. **And the surface writes one row of its
+own**, section 2.8's session, at the open and at the close and never in
+between, which is the fourth and is why that table belongs to neither half
+either. No writer touches another's tables, and **no surface writes through
+3.1**, which is what section 6's rule means and all it means.
 
 ### 3.1 The ingest
 
 **The ingest is a consumer rather than a step in the loop.** The
 analysis emission leaves over its own socket, a process on this side reads
 it and lands it in the store, and **the decoder never waits on the store.**
+
+**And the source of that emission is the trace, read after the fact, which
+this document assumed until 2026-09-08 and now states.** The harness writes
+the trace. `weaver-analysis` reads the finished record, "parses a finished
+record outside the agent as an operator principal" and "drains a file or a
+stream" in `weaver-analysis-web-contract`'s own words, and emits derived
+readings over the analysis seam this crate consumes. **Nothing on that path
+reaches the agent**, which the contract states of both parties, and the kinds
+the readings are named against are `weaver-trace-PRD` section 3.1's.
+
+**The harness's tee is a different surface and is not this one.** It feeds
+the state member under the declaration's `state-election`, its parties being
+the harness and `weaver-state`, and it has fed a member live. It is named
+here only to be set aside, because a document that says "the trace" without
+saying which reader would leave two candidate producers standing.
+
+**Stating it is not a formality, because the store is a derivative and reads
+as a source.** The trace is the program's primary artifact and every row in
+section 2's recorded half descends from it through that reader. A reader
+meeting this section without that sentence could take the store for a second
+record of the same events, and two records of one fact is the shape the
+corpus refuses everywhere else. **This crate holds a projection of the trace and never a
+rival to it**, which is also why section 2.6 stores a query rather than its
+result: a stored result would be a second truth about positions the trace
+already fixed.
+
+**And this crate's ingest of that seam has not run.** The emission is
+chartered and its shape is contracted, and no deposit in the record was
+produced by consuming it into a store. **The act that builds the ingest is
+integrating rather than consuming something proven, and the producer it
+integrates against is `weaver-analysis`**, which is worth naming because a
+first consumer that goes looking for faults in the wrong crate spends the
+difference. That is a fact about the schedule and not a defect.
 
 - Writes are **bulk per turn or per window**, never per token.
 - Writes are **idempotent on the run, turn and position key**, so a replayed
@@ -692,9 +797,13 @@ keeps a recorded fact a recorded fact.
   name an author when the row was written, and it never means the
   operator**, because a default that guesses writes a fact nobody can
   correct later and an unknown that says so can be filled by anyone who
-  knows. The member holds the name the authoring surface had. **The
-  identity act of the charter's section 6 changes what fills it and not
-  whether it exists**, the act attaching authentication to the roles that
+  knows. **The member holds the name the authoring surface had, and section
+  2.8 says where the surface had it from**: the session the operator opened,
+  which holds a claimed name and not a proved one. That is the whole of why
+  a pre-act author is asserted rather than proved, and it is stated in two
+  places because the member is in one section and its source in another.
+  **The identity act of the charter's section 6 changes what fills it and
+  not whether it exists**, the act attaching authentication to the roles that
   already stand rather than rearchitecting around them.
 - **The column carries no default, so every write passes the member and a
   null is passed rather than fallen into.** A nullable column with a null
@@ -983,6 +1092,8 @@ cell record like any other.
 | a registered experiment's question is immutable with the rest of it | compile-pin: no mutating path off the frozen type reaches it |
 | import computes the identity rather than accepting one | perturbation: take the operator's digest, two boxes disagree about one artifact |
 | a record identity names at most one catalog row for a file or a directory artifact, a renamed split excepted per sections 2.3 and 10 | perturbation, at the schema: drop the unique index that holds for every shape but a split, a second import of the same file or directory opens a second row and a lookup answers two where it owes one |
+| the bearer is stored as a digest and never in the clear | perturbation, at the schema: store the bearer and look up on it, a read of the session table is a set of live sessions |
+| a session carries a claimed name and never a proof | review, over the open path: nothing between the posted name and the row tests it, which is the posture section 6 defers and not a defect |
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
@@ -1023,8 +1134,11 @@ act that lands it states what removal makes it fail and confirms it does.
   first import of it is where the ambiguity lands, and the ruling is owed
   before that import rather than after.
 - **What an author names, which the identity act of the charter's section 6
-  settles.** Section 3.2's member holds the name the authoring surface had,
-  and whether that later resolves against an identity the act stands up or
+  settles.** Narrowed 2026-09-08: section 2.8 says the value comes from the
+  session's claimed name, so what stays open is what the act makes that name
+  mean rather than where it comes from. Section 3.2's member holds the name
+  the authoring surface had, and whether that later resolves against an
+  identity the act stands up or
   stays a name is that act's ruling and not this document's. **The member
   stands under either answer**, which is why the schema is not blocked on
   the election and why the election is not blocked by the schema.
