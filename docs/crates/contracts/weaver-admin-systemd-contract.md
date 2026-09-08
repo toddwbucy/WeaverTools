@@ -129,10 +129,14 @@ statement rather than as a change.
 **The vector widens nothing this boundary did not already
 carry.** The socket's path derives from the agent name the unit's name and its
 runtime directory already carry, the two organ binary paths are the operator's
-installed values, the classify binary is a sibling of one of them rather than a value
-of its own, and the loop file is a path in the operator's validated declaration. So a
-manager reading the vector learns the same agent name twice and paths the operator
-wrote or placed. Section 7's prohibition holds unchanged: no part of the
+installed values, **the classify binary is a sibling of the worker binary** rather
+than a value of its own, and the loop file is a path in the operator's validated
+declaration. **The worker binary is the derivation's anchor and is not itself on the
+vector**, being the value the unit starts rather than a value the vector carries, so
+naming it here names a path the operator wrote and this boundary already knew. So a
+manager reading the vector learns the same agent name twice, paths the operator wrote,
+one path derived from a path the operator wrote, and one path the operator's own
+declaration named. Section 7's prohibition holds unchanged: no part of the
 agent's declaration is here, and a manager that logged the whole vector would still
 learn nothing about a turn.
 
