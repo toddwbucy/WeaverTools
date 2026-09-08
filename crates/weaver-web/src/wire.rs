@@ -370,7 +370,7 @@ impl Link {
     }
 
     /// The run inventory from the agent's sink file, this module's
-    /// `trace_runs` service over the link Spec section 8 charters.
+    /// `trace_runs` service over the link that Spec section 8 charters.
     pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
         let a = agent.to_owned();
         match self
@@ -383,7 +383,7 @@ impl Link {
     }
 
     /// One run's events from the sink file, capped with the truncation
-    /// stated, this module's `trace_run` service over the link Spec
+    /// stated, this module's `trace_run` service over the link that Spec
     /// section 8 charters.
     pub async fn trace_run(
         &self,

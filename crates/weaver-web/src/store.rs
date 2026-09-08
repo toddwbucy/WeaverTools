@@ -211,9 +211,16 @@ impl Store {
     }
 
     /// v1 role assignment: the config's admin list is authoritative for
-    /// human participants at startup. The role stands on the session, per
-    /// Spec section 2.8 and the charter's section 6: before the identity
-    /// act a role is a property of the session and not of a person.
+    /// human participants at startup.
+    ///
+    /// **This writes a role model the documents have moved past, onto a
+    /// table the schema no longer creates.** It sets `participants.role`,
+    /// where Spec section 2.8 puts the role on the session, because before
+    /// the identity act a role is a property of the session and not of a
+    /// person. And `participants` went with the conversation half at issue
+    /// #454, so this statement has no table to reach on a box running the
+    /// current schema. The code moves when the session surface is written,
+    /// per the register.
     pub async fn reconcile_roles(&self, admins: Vec<String>) -> anyhow::Result<()> {
         self.send(|reply| WriteCmd::ReconcileRoles { admins, reply })
             .await
