@@ -197,8 +197,10 @@ def wait_for_close(trace_path, run_id, timeout):
 # ---------------------------------------------------------------- reading one
 
 def first_divergence(tokens_a, tokens_b):
-    """The first position where two token paths differ, or None where one is
-    a prefix of the other and they agree everywhere both hold."""
+    """The first position where two token paths differ, or None only where
+    the two are identical. A run that stopped early diverges at its own end:
+    where one path is a prefix of the other, the divergence is the shorter
+    length, because a shorter essay is a different essay."""
     n = min(len(tokens_a), len(tokens_b))
     for i in range(n):
         if tokens_a[i] != tokens_b[i]:
@@ -251,20 +253,32 @@ def sha256_text(text):
 # ---------------------------------------------------------------- reading two
 
 def truncated_kl(ranked_p, ranked_q):
-    """KL(p || q) over the candidates both rankings hold, with the retained
-    mass of each side reported beside it so a reader knows what fraction of
-    each distribution the metric saw. Candidates one side holds and the other
-    does not are excluded rather than given a floor, and their mass is
-    reported as the excluded share."""
+    """KL(p || q) between the two distributions conditioned on the candidates
+    both rankings hold, each side renormalized over that shared support, so
+    the value is a divergence and never negative. Two truncations meet here
+    and are named apart: the field election truncated the vocabulary to a
+    depth, whose mass is `ranked_mass_*`, and this metric truncates again to
+    the shared support, whose mass is `shared_mass_*`, which is what the
+    metric saw. Candidates one side holds and the other does not are excluded
+    rather than given a floor, and their mass is `excluded_mass_*`. Where the
+    shared support is empty the KL is None rather than zero."""
     p = {c["token"]: c["probability"] for c in ranked_p}
     q = {c["token"]: c["probability"] for c in ranked_q}
     shared = [t for t in p if t in q and p[t] > 0 and q[t] > 0]
-    kl = sum(p[t] * math.log(p[t] / q[t]) for t in shared)
+    shared_p = sum(p[t] for t in shared)
+    shared_q = sum(q[t] for t in shared)
+    if not shared:
+        kl = None
+    else:
+        kl = sum((p[t] / shared_p) * math.log((p[t] / shared_p) / (q[t] / shared_q)) for t in shared)
+        kl = max(kl, 0.0) / math.log(2)  # the floor absorbs rounding below zero
     return {
-        "kl_bits": kl / math.log(2),
+        "kl_bits": kl,
         "shared_candidates": len(shared),
-        "retained_mass_p": sum(p.values()),
-        "retained_mass_q": sum(q.values()),
+        "shared_mass_p": shared_p,
+        "shared_mass_q": shared_q,
+        "ranked_mass_p": sum(p.values()),
+        "ranked_mass_q": sum(q.values()),
         "excluded_mass_p": sum(p[t] for t in p if t not in q),
         "excluded_mass_q": sum(q[t] for t in q if t not in p),
     }
@@ -273,7 +287,9 @@ def truncated_kl(ranked_p, ranked_q):
 def reading_two(free, refed):
     """The free run against its re-fed replay, position by position under
     identical context: the entropies to the bit, and the ranked field by a
-    truncated KL with its coverage stated."""
+    truncated KL with its coverage stated. **The entropies are compared with
+    `==` on purpose**: the claim is bit identity of two computations under
+    one context, and a tolerance would retire that claim silently."""
     ea, eb = free["entropies"], refed["entropies"]
     n = min(len(ea), len(eb))
     exact = sum(1 for i in range(n) if ea[i] == eb[i])
@@ -296,10 +312,12 @@ def reading_two(free, refed):
         "entropy_mean_abs_diff": mean(diffs),
         "entropy_max_abs_diff": max(diffs) if diffs else None,
         "field_positions_compared": len(kls),
-        "field_kl_bits_mean": mean([k["kl_bits"] for _, k in kls]),
-        "field_kl_bits_max": max((k["kl_bits"] for _, k in kls), default=None),
-        "field_first_nonzero_kl": next((pos for pos, k in kls if k["kl_bits"] > 0), None),
-        "field_retained_mass_mean": mean([k["retained_mass_p"] for _, k in kls]),
+        "field_kl_bits_mean": mean([k["kl_bits"] for _, k in kls if k["kl_bits"] is not None]),
+        "field_kl_bits_max": max((k["kl_bits"] for _, k in kls if k["kl_bits"] is not None), default=None),
+        "field_first_nonzero_kl": next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None),
+        "field_positions_no_shared_support": sum(1 for _, k in kls if k["kl_bits"] is None),
+        "field_shared_mass_mean": mean([k["shared_mass_p"] for _, k in kls]),
+        "field_ranked_mass_mean": mean([k["ranked_mass_p"] for _, k in kls]),
         "tokens_equal": free["output_tokens"] == refed["output_tokens"],
     }
 

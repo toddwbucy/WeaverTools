@@ -12,9 +12,27 @@ def test_divergence_and_agreement():
 
 def test_truncated_kl_identical_is_zero_and_reports_coverage():
     r=[{"token":1,"probability":0.6},{"token":2,"probability":0.3}]
-    k=truncated_kl(r, r); assert k["kl_bits"]==0 and k["shared_candidates"]==2 and abs(k["retained_mass_p"]-0.9)<1e-9
+    k=truncated_kl(r, r); assert k["kl_bits"]==0 and k["shared_candidates"]==2 and abs(k["ranked_mass_p"]-0.9)<1e-9 and abs(k["shared_mass_p"]-0.9)<1e-9
     q=[{"token":1,"probability":0.3},{"token":3,"probability":0.6}]
-    k=truncated_kl(r, q); assert k["kl_bits"]>0 and k["shared_candidates"]==1 and abs(k["excluded_mass_p"]-0.3)<1e-9
+    k=truncated_kl(r, q); assert k["kl_bits"]==0 and k["shared_candidates"]==1 and abs(k["excluded_mass_p"]-0.3)<1e-9
+    # one shared candidate carries all the conditional mass on both sides, so the KL over the shared support is zero
+
+def test_truncated_kl_is_never_negative_and_names_what_it_saw():
+    # the review's case: an unrenormalized partial sum lands at -0.42 bits here
+    p=[{"token":1,"probability":0.50},{"token":2,"probability":0.30}]
+    q=[{"token":1,"probability":0.90},{"token":9,"probability":0.05}]
+    k=truncated_kl(p, q)
+    assert k["kl_bits"]>=0, k
+    assert abs(k["shared_mass_p"]-0.5)<1e-9 and abs(k["shared_mass_q"]-0.9)<1e-9, k
+    assert abs(k["ranked_mass_p"]-0.8)<1e-9 and abs(k["excluded_mass_p"]-0.3)<1e-9, k
+    p2=[{"token":1,"probability":0.5},{"token":2,"probability":0.3}]
+    q2=[{"token":1,"probability":0.3},{"token":2,"probability":0.5}]
+    assert truncated_kl(p2, q2)["kl_bits"]>0
+    assert truncated_kl(p2, [{"token":9,"probability":1.0}])["kl_bits"] is None
+
+def test_a_shorter_run_diverges_at_its_end():
+    assert first_divergence([1,2],[1,2,3]) == 2
+    assert first_divergence([1,2,3],[1,2,3]) is None
 
 def test_readings_shape():
     a={"output_tokens":[1,2,3],"emission":"abc","entropies":[0.5,0.5,0.5],"field":{0:{"ranked":[{"token":1,"probability":1.0}],"realized":0}}}

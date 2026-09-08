@@ -44,4 +44,6 @@ first quarter of the cap, 208 distinct words in 6,057, which #511 named in
 advance as an instrument check rather than a result. The 8B completes the essay
 under both seeds tried, 6,835 and 6,373 tokens, without repetition, in about
 five minutes on the Ada. Two seeds part at token 23. One run re-fed under its
-own arm reproduces all 6,835 positions to the bit, certified.
+own arm reproduces all 6,835 positions to the bit, certified, the ranked field
+carrying 99.9 percent of the mass at depth 200 and the comparison seeing all of
+it.
