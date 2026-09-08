@@ -1,4 +1,4 @@
-//! The link (Spec section 16): NDJSON frames over one TCP connection
+//! The link (Spec section 8): NDJSON frames over one TCP connection
 //! the connector dials. Seven services - turn, verb, trace, status,
 //! declaration, trace_runs, trace_run - ask and answer correlated by
 //! id where the shape is ask-answer, the trace streaming unasked. Link
@@ -50,8 +50,9 @@ pub enum ToConnector {
     },
 }
 
-/// One run as the sink file carries it: the confirm view's inventory
-/// row (Spec section 16, service 6).
+/// One run as the sink file carries it: the inventory row of the
+/// `trace_runs` service. Spec section 8 charters the link and names no
+/// service, so this module is where its services are named.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunSummary {
     pub run: String,
@@ -61,7 +62,7 @@ pub struct RunSummary {
 }
 
 /// The gate adapter's error, carried over the link with its typing
-/// intact (Spec section 16: section 6's variants verbatim in kind).
+/// intact (Spec section 8: section 7.1's variants verbatim in kind).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WireGateError {
     pub kind: String,
@@ -90,7 +91,7 @@ impl From<&GateError> for WireGateError {
 #[serde(tag = "svc", rename_all = "snake_case")]
 pub enum ToServer {
     /// First frame on every connection: the box's agent roster by
-    /// name. Paths stay on the box (Spec section 16).
+    /// name. Paths stay on the box (Spec section 8).
     Hello {
         agents: Vec<String>,
     },
@@ -121,7 +122,7 @@ pub enum ToServer {
         id: u64,
         events: Vec<serde_json::Value>,
         /// True when the cap cut the answer short - stated, never
-        /// silent (Spec section 16).
+        /// silent (Spec section 8).
         truncated: bool,
     },
     Trace {
@@ -152,8 +153,8 @@ impl std::fmt::Display for TurnError {
 /// How long the server waits on the small asks (status, declaration)
 /// before reporting the link unresponsive. Turns and verbs carry no
 /// server-side deadline: the gate serializes turns and a queued turn
-/// legitimately waits (Spec section 6), and the verb's 300 s ceiling
-/// is the connector's (Spec section 11).
+/// legitimately waits (Spec section 7.1), and the verb's 300 s ceiling
+/// is the connector's (Spec section 7.2).
 const SMALL_ASK_TIMEOUT_SECS: u64 = 10;
 
 /// Events the link surfaces to the composition root.
@@ -278,7 +279,7 @@ impl Link {
     }
 
     /// One turn across the link: the agent's own connector dials the
-    /// gate per turn (Spec section 6) and answers with the close or
+    /// gate per turn (Spec section 7.1) and answers with the close or
     /// the typed error.
     pub async fn turn(&self, agent: &str, text: &str) -> Result<GateClose, TurnError> {
         let (a, text) = (agent.to_owned(), text.to_owned());
@@ -292,7 +293,7 @@ impl Link {
         }
     }
 
-    /// One verb invocation across the link (Spec section 11).
+    /// One verb invocation across the link (Spec section 7.2).
     pub async fn verb(&self, agent: &str, verb: &str) -> anyhow::Result<VerbOutcome> {
         let (a, verb) = (agent.to_owned(), verb.to_owned());
         match self
@@ -368,8 +369,8 @@ impl Link {
         }
     }
 
-    /// The run inventory from the agent's sink file (Spec section 16,
-    /// service 6) - the confirm view's authoritative read.
+    /// The run inventory from the agent's sink file, this module's
+    /// `trace_runs` service over the link that Spec section 8 charters.
     pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
         let a = agent.to_owned();
         match self
@@ -382,7 +383,8 @@ impl Link {
     }
 
     /// One run's events from the sink file, capped with the truncation
-    /// stated (Spec section 16, service 7).
+    /// stated, this module's `trace_run` service over the link that Spec
+    /// section 8 charters.
     pub async fn trace_run(
         &self,
         agent: &str,
@@ -519,7 +521,7 @@ async fn serve_connection(
                 break;
             }
         };
-        // The first frame must be the hello (Spec section 16); only a
+        // The first frame must be the hello (Spec section 8); only a
         // greeted connection gets the write path.
         if !said_hello {
             match frame {
@@ -805,7 +807,7 @@ async fn connector_connection(
 
     // The connection is gone: everything serving it dies with it. An
     // in-flight turn's gate connection drops, and the record holds the
-    // close (Spec section 6).
+    // close (Spec section 7.1).
     for t in &tasks {
         t.abort();
     }

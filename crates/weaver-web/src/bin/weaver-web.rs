@@ -1,5 +1,5 @@
 //! The server: HTTP for browsers, the store, and the link listener
-//! the connector dials (PRD section 3). Holds everything that is not
+//! the connector dials (PRD section 5). Holds everything that is not
 //! box-bound and reaches the box only through the link.
 
 use clap::Parser;
@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
 
     // The link event pump: each box's hello reconciles the registry
     // and starts queues and views for its agents (roster-by-hello,
-    // Spec section 16), trace frames feed the rings, and a box's
+    // Spec section 8), trace frames feed the rings, and a box's
     // link loss marks exactly its own agents' views.
     {
         let (store, queues, traces) = (store.clone(), queues.clone(), traces.clone());

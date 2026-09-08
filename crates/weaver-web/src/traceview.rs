@@ -1,4 +1,5 @@
-//! The trace view, split across the link (Spec section 12): the
+//! The trace view (Spec section 6), split across the link (Spec
+//! section 8): the
 //! connector tails each agent's NDJSON file and streams every event
 //! and mark over the link, the server holds the bounded rings and the
 //! per-agent broadcast the views render from. Rotation, truncation,
@@ -94,7 +95,7 @@ impl TraceViews {
     }
 
     /// Insert a server-authored discontinuity mark into one agent's
-    /// view - the link's own honesty (Spec section 16).
+    /// view - the link's own honesty (Spec section 8).
     pub fn mark(&self, agent: &str, reason: &str) {
         self.ensure(agent);
         let Some(view) = self.view(agent) else { return };

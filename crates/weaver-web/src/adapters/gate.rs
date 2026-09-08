@@ -1,5 +1,5 @@
 //! The weaver agent adapter: dial the gate socket, send one request
-//! line, read one close line. Dial-per-turn, per Spec section 6.
+//! line, read one close line. Dial-per-turn, per Spec section 7.1.
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -20,7 +20,7 @@ pub enum GateError {
     /// Socket absent or connection refused: the agent is not loaded.
     Unloaded,
     /// The serialized request exceeded the line bound - weaver-web's
-    /// own defect, never sent (Spec section 6).
+    /// own defect, never sent (Spec section 7.1).
     LineTooLong(usize),
     /// Socket-level failure mid-turn: delivery lost, not the turn
     /// (the record holds the close).
@@ -80,8 +80,17 @@ impl GateAdapter {
         }
     }
 
-    /// The load-state observable: the socket path's existence,
-    /// labeled as an inference in the UI (PRD 4.2).
+    /// The load-state observable: the socket path's existence, read for
+    /// the Agents surface of PRD section 3.6.
+    ///
+    /// **This read is the inference the charter retired.** The charter is
+    /// `weaver-web-PRD`, whose own first line names it so, and its section
+    /// 8 records the observation exchange landed 2026-09-04 at issue #440:
+    /// load state is answered by the harness's own word rather than
+    /// inferred from a socket's existence, and the archived charter's
+    /// sentence naming this an inference is retired by that act. The
+    /// replacement is `observe`. This code has not followed and moves when
+    /// the lifecycle surface is rewritten, per the register.
     pub fn socket_exists(&self) -> bool {
         self.socket.exists()
     }

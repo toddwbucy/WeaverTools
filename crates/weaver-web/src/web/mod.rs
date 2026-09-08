@@ -1,8 +1,10 @@
-//! The HTTP surface (Spec section 13). Two sub-surfaces mirror the
+//! The HTTP surface (Spec section 6). Two sub-surfaces mirror the
 //! framework's two external boundaries and the two roles the PRD
 //! names: `user` is the gate surface (channels, messages), `admin` is
 //! the operator surface (lifecycle verbs, trace views), gated on the
-//! participant's role. The browser is a display engine (PRD 3).
+//! participant's role. The browser is a display engine, a constraint the
+//! retired charter carried at its section 3 and the rewrite states
+//! nowhere, per the register.
 
 pub mod admin;
 pub mod user;
@@ -99,7 +101,7 @@ pub async fn session_participant(
 
 /// The agents the surfaces name: the link's latest roster, which
 /// survives a link drop so a known agent stays named rather than
-/// vanishing (Spec section 16).
+/// vanishing (Spec section 8).
 pub async fn nav_agents(state: &AppState) -> Vec<String> {
     state.link.roster().await
 }

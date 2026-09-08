@@ -69,7 +69,7 @@ struct LifecyclePage {
 
 /// The load-state rows: the connector's `status` answer over the
 /// link, still the socket-existence inference the UI labels
-/// (PRD 4.2). A down or unresponsive link renders as unreachable
+/// (PRD section 3.6). A down or unresponsive link renders as unreachable
 /// rather than unloaded - the absence of the observable is not the
 /// observable's absence.
 async fn agent_rows(state: &AppState) -> Vec<AgentRow> {
@@ -171,7 +171,7 @@ async fn agent_config(
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
     // The declaration lives on the agents' box; the connector reads
-    // it (Spec section 16) and a read failure arrives as its own text.
+    // it (Spec section 8) and a read failure arrives as its own text.
     let (path, content) = state.link.declaration(&agent).await.unwrap_or_else(|| {
         (
             String::new(),
@@ -193,7 +193,9 @@ async fn agent_config(
 
 /// The view filters: fields the operator elected to hide, and a search
 /// needle. Both are view concerns, applied server-side per the
-/// display-engine constraint (PRD 3). Discontinuity marks bypass both:
+/// display-engine constraint, which the retired charter stated at its
+/// section 3 and no standing document states, per the register.
+/// Discontinuity marks bypass both:
 /// a gap in the record is never filterable out of sight.
 fn trace_filters(
     params: &HashMap<String, String>,
