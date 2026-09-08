@@ -20,10 +20,12 @@ the clear, which is free to state before a token exists and expensive after,
 per issue #336. **Before the identity act a role is a property of the session
 and not of a person**, because no person is proved, which is what the
 charter's section 6 means by structural without access control. **Section
-3.1 names the trace as the ingest's source**, the analysis emission being a
-tee off the canonical stream per `weaver-trace-Spec` section 11 and not an
-independent production, so this store reads as the derivative it is rather
-than as a second record of the same events. Section 3's writers go from three
+3.1 names the trace as the ingest's source and names the reader**, the
+emission being `weaver-analysis` parsing a finished record after the fact
+over the analysis seam and not an independent production, so this store reads
+as the derivative it is rather than as a second record of the same events.
+The harness's tee feeds the state member and is set aside by name, two
+candidate producers being worse than none. Section 3's writers go from three
 to four. Per issue #508.
 
 **Revised:** 2026-09-07, fourth of this date, the omitted member and the
@@ -665,8 +667,8 @@ Each row carries:
 
 **The digest rule is stated before there is a token to migrate.** The prior
 schema stored the bearer in the clear and the fix would have wanted a
-migration and an invalidation path for everything already issued, per issue
-#336. That table retired with the conversation half at PR #499, so this
+migration and an invalidation path for everything already issued, per
+issue #336. That table retired with the conversation half at PR #499, so this
 document states the shape while stating it is free, on the same reasoning
 section 3.2's author member was landed under: the cheap moment is before the
 first row exists.
@@ -705,34 +707,39 @@ either. No writer touches another's tables, and **no surface writes through
 analysis emission leaves over its own socket, a process on this side reads
 it and lands it in the store, and **the decoder never waits on the store.**
 
-**And the source of that emission is the trace, which this document assumed
-until 2026-09-08 and now states.** What reaches this crate is a derivative
-of the canonical event stream, taken by the tee of `weaver-trace-Spec`
-section 11, the mechanism being `weaver-trace`'s because what is tee'd is
-the trace's own rendering and the harness applies it as the one party that
-writes, per `weaver-state-PRD`'s account of the same surface. The events
-this crate consumes are named against `weaver-trace-PRD` section 3.1 by
-`weaver-analysis-web-contract`, which is the seam, and **the contract named
-the origin while this document did not**.
+**And the source of that emission is the trace, read after the fact, which
+this document assumed until 2026-09-08 and now states.** The harness writes
+the trace. `weaver-analysis` reads the finished record, "parses a finished
+record outside the agent as an operator principal" and "drains a file or a
+stream" in `weaver-analysis-web-contract`'s own words, and emits derived
+readings over the analysis seam this crate consumes. **Nothing on that path
+reaches the agent**, which the contract states of both parties, and the kinds
+the readings are named against are `weaver-trace-PRD` section 3.1's.
 
-**And the path is chartered rather than exercised.** The tee is typed, its
-election reaches the operator's declaration as `state-election` and is fixed
-at load, and no deposit in the record was produced through it end to end.
-**This crate's ingest is the first integrated exercise of the tee**, which is
-a fact about the schedule and not a defect, and it is stated here so the act
-that builds the ingest knows it is integrating rather than consuming
-something proven. A first consumer that assumes a tested producer writes its
-failures into the wrong crate.
+**The harness's tee is a different surface and is not this one.** It feeds
+the state member under the declaration's `state-election`, its parties being
+the harness and `weaver-state`, and it has fed a member live. It is named
+here only to be set aside, because a document that says "the trace" without
+saying which reader would leave two candidate producers standing.
 
 **Stating it is not a formality, because the store is a derivative and reads
 as a source.** The trace is the program's primary artifact and every row in
-section 2's recorded half descends from it. A reader meeting this section
-without that sentence could take the store for a second record of the same
+section 2's recorded half descends from it through that reader. A reader
+meeting this section without that sentence could take the store for a second
+record of the same
 events, and two records of one fact is the shape the corpus refuses
 everywhere else. **This crate holds a projection of the trace and never a
 rival to it**, which is also why section 2.6 stores a query rather than its
 result: a stored result would be a second truth about positions the trace
 already fixed.
+
+**And this crate's ingest of that seam has not run.** The emission is
+chartered and its shape is contracted, and no deposit in the record was
+produced by consuming it into a store. **The act that builds the ingest is
+integrating rather than consuming something proven, and the producer it
+integrates against is `weaver-analysis`**, which is worth naming because a
+first consumer that goes looking for faults in the wrong crate spends the
+difference. That is a fact about the schedule and not a defect.
 
 - Writes are **bulk per turn or per window**, never per token.
 - Writes are **idempotent on the run, turn and position key**, so a replayed
