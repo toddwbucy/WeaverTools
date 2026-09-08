@@ -726,9 +726,8 @@ saying which reader would leave two candidate producers standing.
 as a source.** The trace is the program's primary artifact and every row in
 section 2's recorded half descends from it through that reader. A reader
 meeting this section without that sentence could take the store for a second
-record of the same
-events, and two records of one fact is the shape the corpus refuses
-everywhere else. **This crate holds a projection of the trace and never a
+record of the same events, and two records of one fact is the shape the
+corpus refuses everywhere else. **This crate holds a projection of the trace and never a
 rival to it**, which is also why section 2.6 stores a query rather than its
 result: a stored result would be a second truth about positions the trace
 already fixed.
