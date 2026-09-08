@@ -10,6 +10,52 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-08, second of this date, the crate joins the assertion
+chain. This document carried **no graph block of any kind** where every other
+Spec in the corpus carries between eight and eighty-eight, so `weaver-web`
+had a crate node in its charter and not one assertion under it, and its
+section 9 was a markdown table where the graph expects records. **That is
+why no file in the crate carries a conformance header**: a header names the
+assertion identifiers a unit conforms to, and there were none to name. The
+register recorded the header gap at PR #500 and this is its cause rather
+than a second finding.
+
+Twenty-one assertion records now stand, **each under the prose that argues
+it and none under another record**, rather than gathered in
+section 9, which is what every other
+Spec does and what makes a queried identifier arrive with a section worth
+reading. The tags follow the instruments section 9 already named, fourteen
+perturbation, three compile-pin, three review and one compile-fail.
+
+**One record was reworded for the same reason a row was removed.** Section 9
+read that a forced run is marked in the record, which asserts what another
+crate's record carries, and **no agent-side document defines that mark
+today**: it has no home in `weaver-spu-Spec`, the decode contract,
+`weaver-trace` or the harness, which is the act issue #442 owes. Section 2.2
+now argues the reader's half instead, which this crate does own: an absent
+mark is unknown and never unforced, absence refusing rather than defaulting.
+
+**One row left section 9 rather than becoming an assertion.** The undeclared
+boundary refusing a load is `weaver-admin`'s claim, argued in that crate's
+section 4.3 and open at issue #438, and this document's own section 2.3 says
+this crate honors that gate rather than re-deciding it. An enforcement
+section listing a property its crate does not enforce puts one claim under
+two owners.
+
+**An identifier that overstates its claim binds code to a rule the Spec does
+not make**, which three of the twenty-one did before the review of PR #514.
+The identifier is what a conformance header cites, so it carries the claim's
+scope and not a shortened version of it: the record identity's exception for
+a renamed split, the author member's no-default half, and the fact that only
+a diagnostic record can be uncertified are all in the identifiers now. This
+document's own section 2.3 had said so of the first, that the conformance row
+watches the rule with its exception rather than the rule alone.
+
+**No `grounds` edges are drawn.** Grounding an assertion in an axiom is a
+judgment per claim, and twenty-one guesses would be worse than none, which
+the Document Format allows: an assertion with no `grounds` edge is not a
+defect and G3 does not fail on one. Per issue #454.
+
 **Revised:** 2026-09-08, the session stands and the ingest names its source.
 Two things this document assumed are stated. **Section 2.8 gives the session
 a row**, admitted on section 2.6's ground that a rule stated elsewhere needs
@@ -344,6 +390,16 @@ half needs no such member and carries none.
 **The address is the run, the turn, and the position**, and the composite of
 the three is the primary key.
 
+```graph
+node: web-position-is-addressed-by-run-turn-position
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-web
+to: web-position-is-addressed-by-run-turn-position
+```
+
 **This corrects the two-part key this document first carried.** The record's
 own spelling is what settles it: turn keys repeat across a serving record's
 runs, so an address without the run answers one line per run, which is why
@@ -410,6 +466,26 @@ version, and the binaries and engine libraries by the driver's sha256. This
 row carries the same fact so a reading drawn from the store needs no
 deposit beside it to be read.
 
+**The forced member is read and never inferred.** Whether a token was forced
+is the record's to say, and **no agent-side document says it yet**: the
+forcing has no home in `weaver-spu-Spec`, the decode contract, `weaver-trace`
+or the harness, which is the documents act issue #442 still owes. **So this
+crate asserts the reader's half and not the writer's.** A run whose record
+does not carry the mark is ingested as a run whose forcing is unknown, never
+as an unforced one, absence refusing rather than defaulting, which is section
+6's rule applied at the ingest. When #442 lands the writer's half, the claim
+that the mark is written belongs to whichever document defines it.
+
+```graph
+node: web-absent-forced-mark-does-not-default
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-absent-forced-mark-does-not-default
+```
+
 **The row holds more than the tuple, and the difference is lineage.** The
 parent run reference and the branch position say where a run came from
 rather than what it ran under, per the charter's section 4, so **two rows
@@ -456,6 +532,16 @@ and **this document calls it the weights identity** to keep it apart from
 the record identity beside it, which is the SPU's hash and is what section
 2.2's tuple holds. The weights identity is fine enough to separate two
 quantizations because their files differ.
+
+```graph
+node: web-incomplete-shard-set-joins-to-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-incomplete-shard-set-joins-to-nothing
+```
 
 **The provenance chain is recorded and is not an identity.** A conversion
 or a quantization records its source artifact with the converter and the
@@ -515,9 +601,29 @@ picking**, per section 10, which is where the exception is held open. The
 conformance row of section 9 watches the rule with its exception rather than
 the rule alone.
 
+```graph
+node: web-record-identity-names-one-row-a-split-excepted
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-record-identity-names-one-row-a-split-excepted
+```
+
 **A run whose record identity no row carries joins to nothing and registers
 nothing**, a record being a fact and not an import, until an import on that
 box registers the files.
+
+```graph
+node: web-sentinel-joins-to-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-sentinel-joins-to-nothing
+```
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
@@ -536,6 +642,16 @@ on and is refused there under that box's own rules. Presence here is an
 index for an operator choosing where to place a run, never the thing
 deciding whether the run may proceed: a gate built on a stale observation
 refuses a box that holds the artifact and admits one that lost it.
+
+```graph
+node: web-presence-never-gates-a-load
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-web
+to: web-presence-never-gates-a-load
+```
 
 **Nothing here fetches.** An entry says an artifact was seen, not that it
 can be obtained. Whether a missing one is fetchable is the provenance's
@@ -587,9 +703,29 @@ five states of section 5.1. Each row carries:
 - **the row's version**, per section 3.2, frozen with the rest at
   registration
 
+```graph
+node: web-registered-question-is-immutable
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-web
+to: web-registered-question-is-immutable
+```
+
 **Registration freezes the row and not the table.** A registered experiment
 is immutable per section 9's pin, and the rows around it go on being
 edited, which is why the state is a member rather than a table each.
+
+```graph
+node: web-registered-experiment-is-immutable
+kind: assertion
+tag: compile-pin
+
+edge: asserts
+from: weaver-web
+to: web-registered-experiment-is-immutable
+```
 
 **An experiment that never ran keeps its row.** That is pre-registration
 falling out of the interface rather than being imposed on it, per the
@@ -628,6 +764,16 @@ this row exists to prevent.**
 quotable.** Section 4's condition is that a second person can rerun it, and
 a reader that cannot say what it read cannot be rerun by anyone.
 
+```graph
+node: web-recorded-query-names-every-run
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-recorded-query-names-every-run
+```
+
 ### 2.7 The indexes
 
 ```text
@@ -639,6 +785,16 @@ The secondary index exists so the largest spikes in a run are reachable
 without pulling the run down. **Nothing is computed at read time.** A value
 that must be derived is derived once at ingest and stored, because a value
 computed in the interface is a value nobody else can reproduce.
+
+```graph
+node: web-nothing-is-computed-at-read-time
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-web
+to: web-nothing-is-computed-at-read-time
+```
 
 ### 2.8 The session
 
@@ -653,6 +809,16 @@ and no source, which is the state this document was in until 2026-09-08.
 operator who claims a name, and what is stored is the claim. Nothing here
 proves anyone is anyone, per the charter's section 6, and nothing here is
 access control.
+
+```graph
+node: web-session-carries-a-claim-and-never-a-proof
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-web
+to: web-session-carries-a-claim-and-never-a-proof
+```
 
 Each row carries:
 
@@ -672,6 +838,16 @@ issue #336. That table retired with the conversation half at PR #499, so this
 document states the shape while stating it is free, on the same reasoning
 section 3.2's author member was landed under: the cheap moment is before the
 first row exists.
+
+```graph
+node: web-bearer-is-stored-as-a-digest
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-bearer-is-stored-as-a-digest
+```
 
 **Before the identity act a role is a property of the session and not of a
 person**, because no person is proved and a role has nothing else to attach
@@ -747,6 +923,16 @@ difference. That is a fact about the schedule and not a defect.
   surface can read, so a partially ingested run is visibly partial rather
   than quietly short.
 
+```graph
+node: web-ingest-is-idempotent-on-the-key
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-ingest-is-idempotent-on-the-key
+```
+
 **The position is derived here and nowhere later.** The stream is addressed
 by the ordinal within a generation and section 2.1's key is the position,
 the resident length at the draw. Where `R` is the generation's resident
@@ -762,6 +948,16 @@ plus the turn's input delta, is exact from the second generation and wrong
 on the first by the session prefix, which the first turn's delta does not
 carry. **This crate takes the first rule and states the second's failure so
 no later act rediscovers it.**
+
+```graph
+node: web-position-is-stored-at-ingest
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-position-is-stored-at-ingest
+```
 
 **A generation whose closing count the record does not carry has no
 position, and its points do not land, though its summary entry does.** The
@@ -786,6 +982,16 @@ writes an artifact row on import. Each writes its own table of section 2 and
 no other, and none of them may write a position or a run, which is what
 keeps a recorded fact a recorded fact.
 
+```graph
+node: web-no-surface-writes-the-recorded-half
+kind: assertion
+tag: compile-fail
+
+edge: asserts
+from: weaver-web
+to: web-no-surface-writes-the-recorded-half
+```
+
 - **Every authored row carries a version, and it is the store's own
   counter rather than anything the author supplies.** Sections 2.3, 2.4 and
   2.5 each carry it. It has nothing to do with the declaration's corpus
@@ -805,6 +1011,16 @@ keeps a recorded fact a recorded fact.
   **The identity act of the charter's section 6 changes what fills it and
   not whether it exists**, the act attaching authentication to the roles that
   already stand rather than rearchitecting around them.
+
+```graph
+node: web-authored-row-names-its-author-or-names-none
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-authored-row-names-its-author-or-names-none
+```
 - **The column carries no default, so every write passes the member and a
   null is passed rather than fallen into.** A nullable column with a null
   default cannot tell an author nobody could name from an author nobody
@@ -813,6 +1029,16 @@ keeps a recorded fact a recorded fact.
   which is the same refusal shape as the stale version below. **No sentinel
   is added**: a second unknown value would be the absent-not-empty failure
   moved from the view into the store.
+
+```graph
+node: web-author-member-is-passed-and-the-column-has-no-default
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-author-member-is-passed-and-the-column-has-no-default
+```
 - **It is stated now because it cannot be added later**, which is the
   charter's section 4 and is restated here rather than argued. A row's
   author is knowable while the row is being written and unknowable
@@ -838,6 +1064,16 @@ keeps a recorded fact a recorded fact.
   merging. The recorded half's idempotence answers a replay and there is no
   replay here, and a last-write-wins rule would lose the case this one is
   for, two engineers on one declaration.
+
+```graph
+node: web-stale-version-edit-refuses
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-stale-version-edit-refuses
+```
 - **Registration freezes the row at the version it holds and advances
   nothing.** It is a state change rather than a write of its own: the row
   moves from draft to registered and becomes immutable per section 9's pin,
@@ -848,6 +1084,16 @@ keeps a recorded fact a recorded fact.
   names weights already on a box, its identity computed by the rule of
   section 2.3 rather than accepted from the operator, and whether this crate
   may ever fetch is open at the charter's section 9.
+
+```graph
+node: web-import-computes-the-identity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-import-computes-the-identity
+```
 
 **Nothing here reaches an agent.** The authoring path writes this crate's
 own store, and a declaration becomes something a box will load only where
@@ -985,10 +1231,30 @@ surface that plots an absent surprisal as zero is lying about the election,
 so where the election did not stand the surface says so rather than drawing
 a floor.
 
+```graph
+node: web-absent-surprisal-renders-as-absent
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-absent-surprisal-renders-as-absent
+```
+
 **A reading is produced only where the record's own bracket permits it.** A
 serving record carries no gate. A diagnostic record carries one, and a
 reading from an uncertified replay is a picture of an unknown run. This
 crate honors that gate rather than re-deciding it.
+
+```graph
+node: web-uncertified-diagnostic-record-is-not-drawn
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-uncertified-diagnostic-record-is-not-drawn
+```
 
 ## 7. The seams
 
@@ -1080,11 +1346,10 @@ cell record like any other.
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
-| a forced run is marked in the record | perturbation: strip the mark, the read refuses |
+| an absent forced mark is unknown and never unforced | perturbation: default an absent mark to unforced, an unmarked run ingests as a sampled one |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
 | the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
 | an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
-| an undeclared boundary refuses the load | perturbation, at the admit path |
 | no surface writes a position or a run | compile-fail: a doctest constructing a recorded-table writer from an authoring path does not compile |
 | an authored edit against a stale version refuses | perturbation: drop the version check, the second edit silently wins |
 | an authored row names its author or names none | perturbation: default the null to the operator, a row nobody can attribute reads as attributed and is uncorrectable |
@@ -1098,6 +1363,18 @@ cell record like any other.
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
+
+**One row left this table on 2026-09-08 rather than becoming an assertion.**
+It read that an undeclared boundary refuses the load, with a perturbation at
+the admit path. **This crate does not hold that admit path.** The claim is
+`weaver-admin`'s, whose Spec refuses a declaration whose reachable organ
+carries no boundary and whose section 4.3 argues it, open at issue #438.
+Section 2.3 of this document already says the shape: a load is refused on
+the box it runs on under that box's own rules, and this crate honors the
+gate rather than re-deciding it. **An enforcement section that lists a
+property its crate does not enforce puts one claim under two owners**, which
+is the duplication G5 exists to refuse, so the row goes rather than becoming
+a `web-` assertion beside `weaver-admin`'s.
 
 ## 10. Open elections
 
