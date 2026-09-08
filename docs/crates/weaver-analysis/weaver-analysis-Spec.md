@@ -4,6 +4,11 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-07, two captures compare only under one loop and one member.
+Section 5's comparison reads the `load` event's composer and member standing from
+each record before any value, refuses where they differ naming which, and refuses a
+record naming neither, per the charter's section 3 as revised this date for
+issue #381. The clause takes a perturbation record and section 6's count carries it.
 **Revised:** 2026-09-06, second of this date, the election names what the harness's
 open reads. Section 3's election gains the four message kinds with `role` and
 `content`, because a session standing from a record rebuilds its conversation from
@@ -748,6 +753,30 @@ from: weaver-analysis
 to: analysis-captures-compare-exactly
 ```
 
+**The comparison reads each record's `load` event before it reads a value**, as
+of 2026-09-07 per the charter's section 3: the composer, by binary and by file and
+digest where the loop is a file, and whether the state member stood, both as
+`weaver-trace-Spec` section 3 spells them on the payload. Two records naming
+different composers, or one standing the member and one not, refuse as incomparable
+with the differing fact named, and a record whose `load` names neither refuses as
+one whose loop cannot be known. The refusal stands ahead of the token-path check,
+because a prompt assembled by another loop diverges at the first token and the
+token-path refusal would report that as two runs rather than as two loops. **The
+instrument is perturbation**: drop the composer check and two records naming
+different loops compare, drop the member check and a record standing the member
+compares with one that did not, drop the mute rule and a record naming neither
+compares as though it named the same.
+
+```graph
+node: analysis-compare-refuses-across-loops-and-members
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-compare-refuses-across-loops-and-members
+```
+
 **The reading is taken as the stream drains, and the drain is the class's
 rather than the lens's.** `diagnostic-replay-loop` names the diagnostic
 loop a class with an interchangeable reader, so what this crate builds is
@@ -982,16 +1011,17 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-four sit there and none sits here, retaken from the records on
-2026-09-05, the count having read fourteen while acts since 2026-09-01 added six
-without moving it, and the two acts of 2026-09-05 adding the last two.
+section 6. Twenty-five sit there and none sits here, retaken from the records on
+2026-09-07, the count having read fourteen while acts since 2026-09-01 added six
+without moving it, the two acts of 2026-09-05 adding two, and the act of 2026-09-07
+for issue #381 adding the last.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-three claims grounding in no
+The other four axioms reach none of these claims. **Twenty-four claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

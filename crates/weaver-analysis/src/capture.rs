@@ -1,4 +1,5 @@
 //! conforms: analysis-captures-compare-exactly
+//! conforms: analysis-compare-refuses-across-loops-and-members
 //!
 //! A capture's columns and their comparison, per `weaver-analysis-Spec`
 //! section 5. A capture is a certified diagnostic record kept whole, so
@@ -21,11 +22,76 @@ use crate::record::{Event, value_at};
 /// a record holds several brackets and positions repeat across them.
 pub type Key = (Option<String>, u64);
 
-/// A capture's columns and the token each position drew.
+/// What a record's `load` event says about who composed the run and
+/// whether the state member stood, per `weaver-trace-Spec` section 3 as of
+/// 2026-09-03: the two facts that decide whether two records are two
+/// captures of one run, per `weaver-analysis-PRD` section 3.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Provenance {
+    pub binary: String,
+    pub file: Option<String>,
+    pub sha256: Option<String>,
+    pub state_member: bool,
+}
+
+impl Provenance {
+    /// The composer as a reader names it: the binary, and the file with its
+    /// digest where the loop is a file.
+    pub fn composer(&self) -> String {
+        match (&self.file, &self.sha256) {
+            (Some(file), Some(digest)) => {
+                format!(
+                    "{} reading {file} ({})",
+                    self.binary,
+                    &digest[..digest.len().min(12)]
+                )
+            }
+            (Some(file), None) => format!("{} reading {file}", self.binary),
+            _ => self.binary.clone(),
+        }
+    }
+
+    /// The provenance a `load` event's `composer` names, or none where the
+    /// shape is not the one `weaver-trace-Spec` section 3 spells: a binary
+    /// that names nothing, or a file without its digest or a digest without
+    /// its file, is a loop that cannot be known and reads as no loop named.
+    pub fn of(composer: &serde_json::Value, state_member: bool) -> Option<Provenance> {
+        let binary = composer.get("binary").and_then(|b| b.as_str())?;
+        if binary.is_empty() {
+            return None;
+        }
+        let file = composer
+            .get("file")
+            .and_then(|f| f.as_str())
+            .map(str::to_string);
+        let sha256 = composer
+            .get("sha256")
+            .and_then(|d| d.as_str())
+            .map(str::to_string);
+        if file.is_some() != sha256.is_some() {
+            return None;
+        }
+        Some(Provenance {
+            binary: binary.to_string(),
+            file,
+            sha256,
+            state_member,
+        })
+    }
+
+    fn same_composer(&self, other: &Provenance) -> bool {
+        self.binary == other.binary && self.file == other.file && self.sha256 == other.sha256
+    }
+}
+
+/// A capture's columns, the token each position drew, and what its record
+/// says about the loop and the member, absent where the record predates
+/// the `load` event naming them.
 #[derive(Debug, Default)]
 pub struct Capture {
     pub columns: BTreeMap<Key, Vec<Vec<f32>>>,
     pub drawn: BTreeMap<Key, u32>,
+    pub provenance: Option<Provenance>,
 }
 
 impl Capture {
@@ -36,6 +102,7 @@ impl Capture {
         Capture {
             columns: self.columns.clone(),
             drawn: self.drawn.clone(),
+            provenance: self.provenance.clone(),
         }
     }
 
@@ -50,6 +117,21 @@ impl Capture {
         for event in events {
             let turn = event.envelope.turn.clone();
             match event.envelope.kind.as_str() {
+                // **The load names the loop and the member**, per
+                // `weaver-trace-Spec` section 3 as of 2026-09-03, and a
+                // record naming neither is one whose loop cannot be known.
+                "load" => {
+                    let Some(payload) = event.payload.as_deref() else {
+                        continue;
+                    };
+                    let composer = value_at(payload, "composer")
+                        .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw.get()).ok());
+                    let state_member = value_at(payload, "state_member")
+                        .and_then(|raw| raw.get().parse::<bool>().ok());
+                    if let (Some(composer), Some(state_member)) = (composer, state_member) {
+                        capture.provenance = Provenance::of(&composer, state_member);
+                    }
+                }
                 "residual.column" => {
                     let Some(payload) = event.payload.as_deref() else {
                         continue;
@@ -123,6 +205,41 @@ pub enum Comparison {
 /// or widths refuse rather than comparing what happens to align, and an
 /// empty set refuses rather than verdicting over no evidence.
 pub fn compare(left: &Capture, right: &Capture) -> Comparison {
+    // **The load is read before any value**, per `weaver-analysis-Spec`
+    // section 5 as of 2026-09-07 and issue #381: a prompt assembled by
+    // another loop diverges at the first token, and the token-path refusal
+    // below would report that as two runs rather than as two loops.
+    let (a, b) = match (&left.provenance, &right.provenance) {
+        (Some(a), Some(b)) => (a, b),
+        (None, _) => {
+            return Comparison::Incomparable {
+                detail: "the left record's load names no loop and no member: a record older than the fact cannot be compared".to_string(),
+            };
+        }
+        (_, None) => {
+            return Comparison::Incomparable {
+                detail: "the right record's load names no loop and no member: a record older than the fact cannot be compared".to_string(),
+            };
+        }
+    };
+    if !a.same_composer(b) {
+        return Comparison::Incomparable {
+            detail: format!(
+                "the loops differ: {} composed the left record and {} the right, so the prompts are two loops' and no disagreement below is the engine's",
+                a.composer(),
+                b.composer()
+            ),
+        };
+    }
+    if a.state_member != b.state_member {
+        return Comparison::Incomparable {
+            detail: format!(
+                "the state member stood for the {} record and not the {}, so one session's past reached a prompt the other's did not",
+                if a.state_member { "left" } else { "right" },
+                if a.state_member { "right" } else { "left" }
+            ),
+        };
+    }
     if left.columns.is_empty() || right.columns.is_empty() {
         return Comparison::Incomparable {
             detail: "a record holds no residual column".to_string(),
@@ -408,5 +525,65 @@ impl crate::stream::Reader for Positions {
             }
         }
         Step::Continue
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::record::parse_record;
+
+    fn load(composer: &str, member: &str) -> String {
+        format!(
+            "{{\"session\":\"s\",\"run\":\"r\",\"sequence\":\"0\",\"kind\":\"load\",\"payload\":{{\"composer\":{composer},\"state_member\":{member}}}}}\n"
+        )
+    }
+
+    /// **The provenance is the load's composer in the Spec's shape and
+    /// nothing looser**, per `weaver-trace-Spec` section 3: a compiled loop
+    /// is a binary alone, a file loop is a file with its digest, and an
+    /// empty binary or an unpaired file or digest is a loop that cannot be
+    /// known, read as no loop named so the comparison refuses it.
+    ///
+    /// Perturbation: accept a file without its digest and the fourth case
+    /// carries a provenance. Watched under exactly that change.
+    #[test]
+    fn the_provenance_takes_the_specs_shape_and_nothing_looser() {
+        let compiled = Capture::of(&parse_record(&load(r#"{"binary":"worker"}"#, "false")));
+        assert_eq!(
+            compiled.provenance,
+            Some(Provenance {
+                binary: "worker".into(),
+                file: None,
+                sha256: None,
+                state_member: false
+            })
+        );
+        let file = Capture::of(&parse_record(&load(
+            r#"{"binary":"pyworker","file":"/l/a.py","sha256":"ab"}"#,
+            "true",
+        )));
+        assert_eq!(file.provenance.as_ref().map(|p| p.state_member), Some(true));
+        assert_eq!(
+            file.provenance.as_ref().unwrap().composer(),
+            "pyworker reading /l/a.py (ab)"
+        );
+        for loose in [
+            r#"{"binary":""}"#,
+            r#"{"binary":"pyworker","file":"/l/a.py"}"#,
+            r#"{"binary":"pyworker","sha256":"ab"}"#,
+            r#"{}"#,
+        ] {
+            let capture = Capture::of(&parse_record(&load(loose, "false")));
+            assert!(
+                capture.provenance.is_none(),
+                "{loose} names no loop that can be known"
+            );
+        }
+        let unnamed = Capture::of(&parse_record(&load(r#"{"binary":"worker"}"#, "null")));
+        assert!(
+            unnamed.provenance.is_none(),
+            "a member standing that is not stated"
+        );
     }
 }
