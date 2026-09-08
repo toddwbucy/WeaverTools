@@ -2,7 +2,9 @@
 //! framework's two external boundaries and the two roles the PRD
 //! names: `user` is the gate surface (channels, messages), `admin` is
 //! the operator surface (lifecycle verbs, trace views), gated on the
-//! participant's role. The browser is a display engine (PRD 3).
+//! participant's role. The browser is a display engine, a constraint the
+//! retired charter carried at its section 3 and the rewrite states
+//! nowhere, per the register.
 
 pub mod admin;
 pub mod user;

@@ -50,8 +50,9 @@ pub enum ToConnector {
     },
 }
 
-/// One run as the sink file carries it: the confirm view's inventory
-/// row (Spec section 8, service 6).
+/// One run as the sink file carries it: the inventory row of the
+/// `trace_runs` service (Spec section 8, which enumerates the link's
+/// services by name rather than by number).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunSummary {
     pub run: String,
@@ -61,7 +62,7 @@ pub struct RunSummary {
 }
 
 /// The gate adapter's error, carried over the link with its typing
-/// intact (Spec section 8: section 6's variants verbatim in kind).
+/// intact (Spec section 8: section 7.1's variants verbatim in kind).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WireGateError {
     pub kind: String,
@@ -368,8 +369,8 @@ impl Link {
         }
     }
 
-    /// The run inventory from the agent's sink file (Spec section 8,
-    /// service 6) - the confirm view's authoritative read.
+    /// The run inventory from the agent's sink file, the `trace_runs`
+    /// service of Spec section 8.
     pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
         let a = agent.to_owned();
         match self
@@ -382,7 +383,7 @@ impl Link {
     }
 
     /// One run's events from the sink file, capped with the truncation
-    /// stated (Spec section 8, service 7).
+    /// stated, the `trace_run` service of Spec section 8.
     pub async fn trace_run(
         &self,
         agent: &str,

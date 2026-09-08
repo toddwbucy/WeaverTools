@@ -1,5 +1,5 @@
 //! The server: HTTP for browsers, the store, and the link listener
-//! the connector dials (PRD section 3). Holds everything that is not
+//! the connector dials (PRD section 5). Holds everything that is not
 //! box-bound and reaches the box only through the link.
 
 use clap::Parser;

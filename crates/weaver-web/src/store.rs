@@ -211,9 +211,9 @@ impl Store {
     }
 
     /// v1 role assignment: the config's admin list is authoritative for
-    /// human participants at startup. The role model is the charter's
-    /// section 6 and where it lands in this crate's Spec is that act's,
-    /// per the register at `docs/project/inventory-weaver-web-code.md`.
+    /// human participants at startup. The role stands on the session, per
+    /// Spec section 2.8 and the charter's section 6: before the identity
+    /// act a role is a property of the session and not of a person.
     pub async fn reconcile_roles(&self, admins: Vec<String>) -> anyhow::Result<()> {
         self.send(|reply| WriteCmd::ReconcileRoles { admins, reply })
             .await

@@ -80,8 +80,11 @@ impl GateAdapter {
         }
     }
 
-    /// The load-state observable: the socket path's existence,
-    /// labeled as an inference in the UI (PRD 4.2).
+    /// The load-state observable: the socket path's existence, the
+    /// Agents surface of PRD section 3.6, whose verbs section 7 carries.
+    /// **That it is labeled as an inference in the UI is stated in no
+    /// standing document**, the retired charter's section 4.2 having
+    /// carried it, per the register.
     pub fn socket_exists(&self) -> bool {
         self.socket.exists()
     }

@@ -36,7 +36,7 @@ pub struct ServerConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConnectorConfig {
     /// The server's link address, the one line that changes when the
-    /// presentation stack moves to another box (PRD section 3).
+    /// presentation stack moves to another box (PRD section 5).
     #[serde(default = "default_server")]
     pub server: String,
     /// Directory of agent declarations, served read-only to the admin
