@@ -80,11 +80,16 @@ impl GateAdapter {
         }
     }
 
-    /// The load-state observable: the socket path's existence, the
-    /// Agents surface of PRD section 3.6, whose verbs section 7 carries.
-    /// **That it is labeled as an inference in the UI is stated in no
-    /// standing document**, the retired charter's section 4.2 having
-    /// carried it, per the register.
+    /// The load-state observable: the socket path's existence, read for
+    /// the Agents surface of PRD section 3.6.
+    ///
+    /// **This read is the inference the charter retired.** PRD section 8
+    /// records the observation exchange landed 2026-09-04 at issue #440:
+    /// load state is answered by the harness's own word rather than
+    /// inferred from a socket's existence, and the archived charter's
+    /// sentence naming this an inference is retired by that act. The
+    /// replacement is `observe`. This code has not followed and moves when
+    /// the lifecycle surface is rewritten, per the register.
     pub fn socket_exists(&self) -> bool {
         self.socket.exists()
     }

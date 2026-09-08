@@ -51,8 +51,8 @@ pub enum ToConnector {
 }
 
 /// One run as the sink file carries it: the inventory row of the
-/// `trace_runs` service (Spec section 8, which enumerates the link's
-/// services by name rather than by number).
+/// `trace_runs` service. Spec section 8 charters the link and names no
+/// service, so this module is where its services are named.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunSummary {
     pub run: String,
@@ -369,8 +369,8 @@ impl Link {
         }
     }
 
-    /// The run inventory from the agent's sink file, the `trace_runs`
-    /// service of Spec section 8.
+    /// The run inventory from the agent's sink file, this module's
+    /// `trace_runs` service over the link Spec section 8 charters.
     pub async fn trace_runs(&self, agent: &str) -> Option<Vec<RunSummary>> {
         let a = agent.to_owned();
         match self
@@ -383,7 +383,8 @@ impl Link {
     }
 
     /// One run's events from the sink file, capped with the truncation
-    /// stated, the `trace_run` service of Spec section 8.
+    /// stated, this module's `trace_run` service over the link Spec
+    /// section 8 charters.
     pub async fn trace_run(
         &self,
         agent: &str,
