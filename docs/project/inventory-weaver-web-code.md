@@ -17,6 +17,17 @@ The figure read 4,531 until 2026-09-07 and was off by one.
 **Two of those acts have now landed.** The crate stands at **4,002 lines**
 and one migration, and the register below marks what moved.
 
+**Revised:** 2026-09-08, the citation act lands and this register's own figures are
+corrected. PR #510 repointed twenty-seven of the crate's comment citations, redirected
+one and left nine with their retiring modules, and PR #509 gave the role a home at Spec
+section 2.8 which the redirected one now names. **The count this register carried was
+wrong**: thirty-five against a measured forty-five, and thirteen resolving against
+fifteen, both from a grep that matched one digit and dropped `section 10`. The reviews of
+that act also found two sites where the code stands where a merged document has moved,
+`gate.rs`'s retired inference and `store.rs`'s role model, which are recorded below as
+corpus facts rather than filed, the comments at the lines being where a person meets
+them. Per issue #454.
+
 **Revised:** 2026-09-07, second of this date, the first two acts land and the register
 marks what moved. `repro.rs` is out at PR #498 with the surface that depended on it, 595
 lines against the 369 this register counted, because "clean to remove" was about its
@@ -26,7 +37,8 @@ the five conversation tables are gone and the Spec's seven are in one migration,
 with `web/admin.rs` and `web/mod.rs` remaining, and **they now wait on one thing rather
 than two**, the schema having been the first of their two conditions. The reading also
 found two corpus facts this register had not: the crate's comments cite a charter that no
-longer exists, thirty-five times, and **no file in it carries a conformance header**.
+longer exists, and **no file in it carries a conformance header**. The count in that
+sentence read thirty-five and is corrected below to forty-five.
 
 **Revised:** 2026-09-07, three of the five are decidable and the ruling count moves with
 them. Read module by module against the charter: `repro.rs` retires because it is
@@ -444,21 +456,65 @@ of its own rather than a line here.
 - **Nothing anywhere records that the implementation predates its charter.**
   A reader of the rewritten documents would take the crate for empty, and a
   reader of the crate would take the charter for unwritten.
-- **The crate's comments cite a charter that no longer exists, thirty-five
-  times**, found 2026-09-07 by the review of PR #498, which met one of them
-  in the deleted confirm section reading `PRD 4.4, Spec section 17`. **The
-  twenty-two that dangle are the safe ones.** They name Spec sections 11
-  through 17, which the rewritten Spec does not have, so a reader following
-  one finds nothing and knows it. **The thirteen that resolve are the
-  defect**: each names a section the rewritten Spec does have and means the
-  retired document's, so a reader lands on a real section about a different
-  subject. `config.rs` cites section 3 for TOML configuration where section
-  3 is the write path, `router.rs` cites section 9 for the invocation router
-  where section 9 is what is enforced, `store.rs` cites section 5 for the
+- **The crate's comments cited documents the tree no longer holds,
+  forty-five times. Answered at PR #510 on 2026-09-08**, found 2026-09-07 by the review
+  of PR #498, which met one of them in the deleted confirm section reading
+  `PRD 4.4, Spec section 17`.
+
+  **The documents are recoverable and that is the point of the defect rather
+  than a mitigation of it.** `weaver-web-PRD` states the standing rule, "Git
+  is the archive and the tree is not", and this register's own reading at
+  its section on the seam says every one of these citations resolves against
+  the Spec at `13b8a6a`. A reader who knows to look finds them. **A reader
+  who does not, and there is no reason they would, meets a section number
+  that resolves in the tree they have open.**
+
+  **This register's own figures were wrong and are corrected here.** It
+  recorded thirty-five citations, twenty-two dangling and thirteen
+  resolving. Measured by occurrence rather than by line, the Spec citations
+  alone were **thirty-seven**, twenty-two dangling at sections 11 through 17
+  and **fifteen** resolving, with eight charter citations beside them. The
+  undercount came from a grep matching a single digit, which silently drops
+  `section 10`, and the same grep is why the register said thirteen where the
+  act measured fifteen.
+
+  **The twenty-two that dangled were the safe ones.** They named Spec
+  sections the rewritten document does not have, so a reader following one
+  found nothing and knew it. **The fifteen that resolved were the defect**:
+  each named a section the rewritten Spec does have and meant the retired
+  document's, so a reader landed on a real section about a different
+  subject. `config.rs` cited section 3 for TOML configuration where section 3
+  is the write path, `router.rs` cited section 9 for the invocation router
+  where section 9 is what is enforced, and `store.rs` cited section 5 for the
   single writer where section 5 is staged experiments. **A dangling citation
   announces itself and a resolving one does not**, which is why the smaller
-  number is the worse one. Ten of the twenty-two are in `wire.rs`, which
-  this register carries, so this outlives the retirements.
+  number was the worse one. Ten of the twenty-two stood in `wire.rs`, which
+  this register carries, so the defect outlived every retirement and had to
+  be answered rather than waited out.
+
+  **The disposition: twenty-seven repointed, one redirected, nine left.**
+  The nine are in the six files this register retires and go with their
+  modules, so a sweep reporting zero would be reporting on files that are
+  leaving. `store.rs`'s role citation was redirected rather than repointed,
+  its subject being what the section 6 act separates, and it now names Spec
+  section 2.8, which PR #509 landed. Of the eight charter citations, three
+  went to section 5 and two to section 3.6, one retires with `queue.rs`, and
+  **two named a claim the rewrite dropped rather than moved**, the
+  display-engine constraint, which no standing document carries and which
+  those two comments now say plainly rather than citing a section for.
+- **Two sites carry code a merged act moved past, and both now say so in
+  place.** Found by the reviews of PR #510 rather than by this reading.
+  `adapters/gate.rs`'s `socket_exists` infers load state from a socket
+  path's existence, which the charter's section 8 retired on 2026-09-04 at
+  issue #440 in favour of the harness answering with `observe`. And
+  `store.rs`'s `reconcile_roles` writes `participants.role`, where Spec
+  section 2.8 puts the role on the session, onto a table the schema no
+  longer creates. **Neither is a citation defect and neither is fixed by
+  fixing one**: they are the code standing where a document has moved, and
+  the comments name the act that moved it so the surface's rewrite meets the
+  fact rather than rediscovering it. **These are not filed as issues**, on
+  the ground that a comment at the line is where a person is standing when it
+  matters and an issue restating it is not.
 - **No file in the crate carries a conformance header**, zero of eighteen,
   against seven of seven in `weaver-trace` and four of four in
   `weaver-types`. The header is the middle term of the `code -> assertion ->
