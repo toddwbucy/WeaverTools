@@ -142,6 +142,22 @@ def read_privileged(path):
         return subprocess.run(["sudo", "-n", "cat", path], capture_output=True, text=True).stdout
 
 
+def tail_privileged(path, n=1 << 16):
+    """The last `n` bytes of a sink file, read as the principal where the
+    plain read is denied. A wait for a closing event needs the tail and not
+    the whole record, which at depth 200 over several thousand positions is
+    tens of megabytes."""
+    try:
+        with open(path, "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            size = fh.tell()
+            fh.seek(max(0, size - n))
+            return fh.read().decode("utf-8", "replace")
+    except PermissionError:
+        return subprocess.run(["sudo", "-n", "tail", "-c", str(n), path],
+                              capture_output=True, text=True).stdout
+
+
 def events_of_run(trace_path, run_id):
     out = []
     with open(trace_path) as fh:
@@ -184,12 +200,12 @@ def extract_run(events):
 def wait_for_close(trace_path, run_id, timeout):
     """Until the run's turn closes in the record, or the bound."""
     end = time.time() + timeout
+    marker = f'"run":"{run_id}"'
     while time.time() < end:
         if os.path.exists(trace_path):
-            with open(trace_path) as fh:
-                for line in fh:
-                    if f'"run":"{run_id}"' in line and '"kind":"turn.closed"' in line:
-                        return True
+            for line in tail_privileged(trace_path).splitlines():
+                if marker in line and '"kind":"turn.closed"' in line:
+                    return True
         time.sleep(1.0)
     return False
 
@@ -446,6 +462,7 @@ def run_refeed(cfg, source_dir, as_arm):
            "target_artifact": target["artifact"], "target_devices": target["devices"], "trace": diag_sink}
     started = time.time()
     preload = None
+    loader = None
     try:
         base.admin(cfg, "unload")
         # The load parks on the door until the preload seals, so it is
@@ -458,7 +475,6 @@ def run_refeed(cfg, source_dir, as_arm):
             time.sleep(0.5)
         if not os.path.exists(door):
             rec["verdict"] = "the preload door never stood"
-            loader.kill()
             return
         # The door is the member's, mode 0700 to the principal that stood it,
         # so the driver dials it as that principal.
@@ -472,10 +488,17 @@ def run_refeed(cfg, source_dir, as_arm):
         # record's `replay.closed` and not for the source's run. The sink is
         # the admin principal's, so it is read as that principal.
         end = time.time() + cfg.get("turn_timeout_s", 3600)
-        while time.time() < end:
-            if os.path.exists(diag_sink) and '"kind":"replay.closed"' in read_privileged(diag_sink):
-                break
-            time.sleep(2.0)
+        closed = False
+        while time.time() < end and not closed:
+            if os.path.exists(diag_sink) and '"kind":"replay.closed"' in tail_privileged(diag_sink):
+                closed = True
+            else:
+                time.sleep(2.0)
+        if not closed:
+            # A replay that never closed is an apparatus fault and never a
+            # reading: nothing below is computed over it.
+            rec["verdict"] = "the replay never closed in the record"
+            return
         read = subprocess.run(["sudo", "-n", cfg["analysis_bin"], "read", diag_sink], capture_output=True, text=True)
         rec["read"] = (read.stdout.strip().splitlines() or [""])[-1][:600]
         rec["read_stderr"] = read.stderr.strip()[:300]
@@ -491,6 +514,14 @@ def run_refeed(cfg, source_dir, as_arm):
     except Exception as exc:
         rec["verdict"] = f"error: {type(exc).__name__}: {exc}"
     finally:
+        # The background load is ended and reaped on every path, so no
+        # parked or running load outlives the verb it belongs to.
+        if loader is not None and loader.poll() is None:
+            loader.kill()
+            try:
+                loader.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                pass
         base.admin(cfg, "unload")
         if original is not None:
             with open(decl_path, "w") as fh:
