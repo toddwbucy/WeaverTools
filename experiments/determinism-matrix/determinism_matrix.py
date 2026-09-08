@@ -202,8 +202,14 @@ def run_session(cfg, probe, depth, iteration, declared_seed=None):
         # can only ask if the value it declared is the value it recorded.
         recorded = {base.pointer(t["payload"]["model.request"], "/sampling/seed")
                     for t in source_turns}
-        rec["recorded_seed"] = recorded.pop() if len(recorded) == 1 else sorted(
-            recorded, key=str)
+        if len(recorded) != 1:
+            # One run, one declared seed: turns recorded under different
+            # seeds are the apparatus, schedule or no schedule.
+            rec["recorded_seed"] = sorted(recorded, key=str)
+            rec["verdict"] = (f"the source turns were recorded under"
+                              f" {len(recorded)} seeds: {rec['recorded_seed']}")
+            return rec
+        rec["recorded_seed"] = recorded.pop()
         if declared_seed is not None and rec["recorded_seed"] != declared_seed:
             rec["verdict"] = (f"the declared seed did not reach the record:"
                               f" declared {declared_seed},"
@@ -349,9 +355,6 @@ def main():
         except ValueError as e:
             print(str(e), file=sys.stderr)
             sys.exit(2)
-    if args.artifact:
-        with open(cfg["declaration"], "w") as fh:
-            fh.write(standing)
 
     deadline = time.time() + args.hours * 3600.0
     # Opened before the first load so the journal read at the summary
@@ -386,11 +389,16 @@ def main():
     if schedule:
         log(f"declared seed schedule: {schedule}")
     try:
-        # **Inside the cleanup scope**, because the declaration has already
-        # been swapped by this point where `--artifact` was given: `ldd`
-        # missing raises, hashing 142 MiB can be interrupted, and either
-        # one outside the `try` would leave the operator's declaration
-        # holding this run's artifact.
+        # **The swap itself is inside the cleanup scope**: opening the file
+        # for writing truncates it before the write, so a write that fails
+        # outside the `try` would leave the operator's declaration empty
+        # with nothing to restore it. Everything after it is here for the
+        # same reason: `ldd` missing raises, hashing 142 MiB can be
+        # interrupted, and either one outside the `try` would leave the
+        # declaration holding this run's artifact.
+        if args.artifact:
+            with open(cfg["declaration"], "w") as fh:
+                fh.write(standing)
         opening_spu = base._resolve_spu(cfg)
         libraries = base.engine_libraries(cfg, opening_spu)
         binaries = base.weaver_binaries(cfg, opening_spu)
