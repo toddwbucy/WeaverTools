@@ -456,10 +456,18 @@ of its own rather than a line here.
 - **Nothing anywhere records that the implementation predates its charter.**
   A reader of the rewritten documents would take the crate for empty, and a
   reader of the crate would take the charter for unwritten.
-- **The crate's comments cited documents that no longer exist, forty-five
-  times. Answered at PR #510 on 2026-09-08**, found 2026-09-07 by the review
+- **The crate's comments cited documents the tree no longer holds,
+  forty-five times. Answered at PR #510 on 2026-09-08**, found 2026-09-07 by the review
   of PR #498, which met one of them in the deleted confirm section reading
   `PRD 4.4, Spec section 17`.
+
+  **The documents are recoverable and that is the point of the defect rather
+  than a mitigation of it.** `weaver-web-PRD` states the standing rule, "Git
+  is the archive and the tree is not", and this register's own reading at
+  its section on the seam says every one of these citations resolves against
+  the Spec at `13b8a6a`. A reader who knows to look finds them. **A reader
+  who does not, and there is no reason they would, meets a section number
+  that resolves in the tree they have open.**
 
   **This register's own figures were wrong and are corrected here.** It
   recorded thirty-five citations, twenty-two dangling and thirteen
