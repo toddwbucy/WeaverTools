@@ -504,8 +504,18 @@ def run_refeed(cfg, source_dir, as_arm):
         rec["read_stderr"] = read.stderr.strip()[:300]
         # The re-fed record's own measurements, by the replay's run.
         events = [json.loads(l) for l in read_privileged(diag_sink).splitlines() if l.strip()]
-        runs = [e["run"] for e in events if e.get("kind") == "replay.closed"]
-        rec["replay_run"] = runs[-1] if runs else None
+        closes = [e for e in events if e.get("kind") == "replay.closed"]
+        rec["replay_run"] = closes[-1]["run"] if closes else None
+        # **The replay's own outcome is the verdict where it is not certified.**
+        # A refused or abandoned replay writes its close with the reason, and
+        # the harness names an identity it refused as its own event, so a
+        # reading computed over that sink would be a reading of nothing.
+        outcome = ((closes[-1].get("payload") or {}).get("outcome") or {}).get("kind") if closes else None
+        rec["replay_outcome"] = outcome
+        rec["replay_refusals"] = [e["kind"] for e in events if e.get("kind", "").endswith("_refused")]
+        if outcome != "certified":
+            rec["verdict"] = f"replay {outcome}: {', '.join(rec['replay_refusals']) or 'no reason event'}"
+            return
         ex = extract_run([e for e in events if e.get("run") == rec["replay_run"]]) if runs else extract_run(events)
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
