@@ -1,4 +1,4 @@
-//! The verb invocation (Spec section 11): sudo weaver-admin, one JSON
+//! The verb invocation (Spec section 7.2): sudo weaver-admin, one JSON
 //! object on stdout, rendered verbatim; failure never swallowed.
 
 use serde::{Deserialize, Serialize};
@@ -27,7 +27,7 @@ pub struct VerbOutcome {
 }
 
 /// Where the box installed the admin binary and its config - box
-/// facts, from the connector's config (Spec section 3). `admin_env`
+/// facts, from the connector's config (Spec section 8). `admin_env`
 /// false means `admin_bin` is the root-owned wrapper that fixes the
 /// config itself, so no environment crosses sudo at all.
 pub async fn run_verb(

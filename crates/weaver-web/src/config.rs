@@ -1,4 +1,4 @@
-//! TOML configuration, one file per process (Spec section 3). Box
+//! TOML configuration, one file per process (Spec section 8). Box
 //! facts live in the box's config: the agent roster with its socket
 //! and sink paths is the connector's declaration, announced to the
 //! server in the link's hello, never entered twice.
@@ -12,7 +12,7 @@ pub struct ServerConfig {
     pub listen: String,
     /// Where the server listens for the connector's dial. Loopback by
     /// default, so any exposure is the operator's explicit widening
-    /// (Spec section 16).
+    /// (Spec section 8).
     #[serde(default = "default_link_listen")]
     pub link_listen: String,
     pub database: String,

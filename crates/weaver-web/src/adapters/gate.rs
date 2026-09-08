@@ -1,5 +1,5 @@
 //! The weaver agent adapter: dial the gate socket, send one request
-//! line, read one close line. Dial-per-turn, per Spec section 6.
+//! line, read one close line. Dial-per-turn, per Spec section 7.1.
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -20,7 +20,7 @@ pub enum GateError {
     /// Socket absent or connection refused: the agent is not loaded.
     Unloaded,
     /// The serialized request exceeded the line bound - weaver-web's
-    /// own defect, never sent (Spec section 6).
+    /// own defect, never sent (Spec section 7.1).
     LineTooLong(usize),
     /// Socket-level failure mid-turn: delivery lost, not the turn
     /// (the record holds the close).

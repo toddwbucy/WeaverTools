@@ -171,7 +171,7 @@ async fn agent_config(
         return Ok((StatusCode::NOT_FOUND, "no such agent").into_response());
     }
     // The declaration lives on the agents' box; the connector reads
-    // it (Spec section 16) and a read failure arrives as its own text.
+    // it (Spec section 8) and a read failure arrives as its own text.
     let (path, content) = state.link.declaration(&agent).await.unwrap_or_else(|| {
         (
             String::new(),

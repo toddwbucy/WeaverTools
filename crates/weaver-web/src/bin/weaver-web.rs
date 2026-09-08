@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
 
     // The link event pump: each box's hello reconciles the registry
     // and starts queues and views for its agents (roster-by-hello,
-    // Spec section 16), trace frames feed the rings, and a box's
+    // Spec section 8), trace frames feed the rings, and a box's
     // link loss marks exactly its own agents' views.
     {
         let (store, queues, traces) = (store.clone(), queues.clone(), traces.clone());
