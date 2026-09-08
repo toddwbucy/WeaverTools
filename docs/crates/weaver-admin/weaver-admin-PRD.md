@@ -142,6 +142,17 @@ carries its change:** this charter's step 5 and section 11 register,
 9, and 11. `weaver-harness-Spec` does not move, its section 2 already holding the
 organ binaries as a deployment fact the composition root is supplied, which is the
 clause this act reads rather than edits.
+**Revised:** 2026-09-07, an arm only some declarations elect is provisioned
+without being installed. Load step 5 said the ask carries the operator's
+installed values and said nothing about a binary that only a declaring agent
+needs, so `weaver-spu-classify` reached no vector and a declaration electing
+the classify arm refused its load on every deployed box. The step now states
+the shape: the binary is found beside the worker's rather than placed by
+name, an installation owes a path for what every agent needs and nothing for
+what one agent might, and **where the arm is elected and the binary never
+arrived the organ refuses and this crate does not**. `weaver-admin-Spec`
+sections 6, 9 and 11 carry it. Per issue #497.
+
 **Revised:** 2026-08-14, the run identifies itself. Per the operator: the identity half
 of section 10's enter cell closes and the continuity half stays open. They
 were filed as one design and separate cleanly, because whether a later run may
@@ -576,6 +587,15 @@ order is the substance.
    it discovers, the same standing `weaver-harness-PRD` section 2 gives to which
    binary an agent's unit starts. The ask carries them because it is the only path
    from the operator's installed values into a process that does not yet exist.
+   **An arm only some declarations elect is provisioned the same way and
+   installed differently**, as of 2026-09-07: its binary is found beside the
+   worker's rather than placed by name, so an installation owes a path for
+   what every agent needs and owes nothing for what one agent might, and the
+   ask carries the derived path where the file stands. **Where a declaration
+   elects an arm the installation never provided, the organ refuses the load
+   and this crate does not**, per the custody division of section 2. The
+   classify arm is the first of that shape and the Spec's sections 6 and 9
+   hold it.
    What crosses stays a deployment fact and widens nothing: the socket's name
    derives from the agent name the unit's own name already carries, the binary
    paths are the operator's installed values rather than anything the invocation

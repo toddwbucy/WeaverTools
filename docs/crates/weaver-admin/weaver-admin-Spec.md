@@ -31,6 +31,21 @@ Section 4 fixes the refusal's shape ahead of the organ that will need it,
 refuses any such binding as an unknown field, per charter section 4.3 as ruled this date
 and issue #438.
 
+**Revised:** 2026-09-07, admin provisions the classify arm's binary, and it
+is derived rather than placed. Sections 6 and 9 said nothing about the arm,
+`weaver-spu-classify` reaching no vector and this crate holding no word for
+it, so a declaration electing classify refused its load on every deployed box
+and refused it for a reason the operator could not see from the declaration,
+which was valid. Section 6's vector gains `--classify-binary` where the
+binary stands. Section 9 rules it a sibling of the worker binary on the
+2026-09-04 state precedent rather than a fourth installed value, **so the
+operator's list does not grow**: a binary every agent needs is placed, and a
+binary only a declaring agent needs is found beside one that was. Section 9
+also says where the refusal lives, which is the organ at admit and not this
+crate, per the custody rule of issue #456. Section 11's account of what the
+vector carries is corrected, it having said the vector stops at the two organ
+binaries while the loop file has ridden it since 2026-08-20. Per issue #497.
+
 **Revised:** 2026-09-04, third of this date, the observation exchange lands. Section 3's
 `show` and `list` answer through `weaver-admin-harness-contract` section 3's fourth
 exchange, the harness's own word with the load's facts beside it, residency read only
@@ -1363,6 +1378,21 @@ installed values and the validated declaration, and reads nothing else. An
 earlier form of this clause counted three values and named the name the one
 variable, written before any declaration member rode the vector.
 
+**The classify arm's binary rides the vector too, where it stands, as
+`--classify-binary`.** It is the third organ path the vector carries and the
+first that section 9 does not hold among the operator's installed values,
+because it is derived rather than placed: admin joins `weaver-spu-classify`
+to the directory of the worker binary the operator did place, exactly as the
+state member's binary is found, per section 9. **Where the file is absent
+the flag is absent**, and no load is refused here on that account. A
+declaration electing the arm on a box that has no binary is refused by the
+harness at admit, `ConfigInvalid` naming `classify`, per
+`weaver-spu-PRD` section 15.3, and **that refusal is not repeated here**:
+admin provisions what it holds and the organ judges what it can stand, per
+the custody rule of issue #456. Admin passing a flag for a file that is
+there, and staying silent about a file that is not, is the whole of its
+part.
+
 **The state member is started here too, and it is not a unit.** The custodian
 runs as a direct child of this crate rather than through the init system, per
 `weaver-admin-PRD` section 2: the worker is asked of the manager because the
@@ -1919,6 +1949,33 @@ organ binaries supplied to the composition root as a deployment fact and names
 them not an operator election, and the agent's declaration is exactly the
 operator's elections.
 
+**Two organ binaries are placed and one is derived, and the difference is
+the ruling rather than an inconsistency.** The SPU's and the gate's paths
+are on the list above because every agent needs them, so an installation
+that lacks either has no agents at all and should say so at its own
+configuration rather than at a load. **The state member's binary is found
+beside the worker's instead**, on the ruling of 2026-09-04, because the
+member stands only where a declaration elects it, and **the classify arm's
+binary follows that ruling for the same reason** as of 2026-09-07: admin
+joins `weaver-spu-classify` to the directory holding the worker binary the
+operator placed. **So this list does not grow and stays at the values every
+installation owes.**
+
+**That is a derivation and not a search**, which is the property this section
+protects. One placed value fixes one directory, and a sibling of a placed
+binary is as much the operator's placement as the binary itself. Nothing is
+looked for on a path this crate composes from anything but the operator's own
+file, and a second copy elsewhere on the box is never reached.
+
+**Where a declared arm finds no binary the load is refused, and not here.**
+Admin puts the flag on section 6's vector where the file stands and omits it
+where it does not. The harness refuses a declaration electing an arm whose
+binary never arrived, `ConfigInvalid` naming the member, which is the organ
+judging what it can stand where admin has judged what it holds. **Two
+refusals for one fact would be the duplication G5 refuses**, and the one
+that survives is the organ's, because only the organ knows whether the
+declaration elected the arm.
+
 **The worker's composition root receives what it needs and reads none of this
 file.** An earlier wording of this section had that root reading these values
 alongside admin, which no longer describes anything: the values reach it as the
@@ -2269,7 +2326,8 @@ Each names what settles it, and none is this Spec's to settle alone.
   - **`AgentState` and `AgentSummary` field lists.** The floor names the types in
   `lifecycle-answer` and their fields are satellites there, consumed here as drawn. -
   **The two values the argument vector does not carry.** Section 6's vector carries the
-  socket path and the two organ binaries and stops there, and the worker's remaining two
+  socket path, the two placed organ binaries, the loop file where a declaration names
+  one, and the derived classify binary where one stands, and the worker's remaining two
   inputs are named here rather than routed, because routing either now would carry a
   value nothing reads. The assembled prompt's identity is one: the agent's declaration
   holds an identity the SPU makes resident as the session's prefix, the assembled prompt
