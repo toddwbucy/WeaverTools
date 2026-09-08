@@ -61,7 +61,9 @@ import confirm_cells as base
 # one. The rotation offsets by sweep so that no probe is wedded to one seed:
 # the matrix has as many prompts as the schedule has seeds, and a rotation
 # by cell alone would hand each prompt the same seed in every sweep.
-SEED_LINE = re.compile(r"^(\s*seed:\s*)\S+", re.M)
+# Horizontal whitespace only: `\s` would carry the match across a newline
+# and rewrite the next line's value under a `seed:` that names nothing.
+SEED_LINE = re.compile(r"^([ \t]*seed:[ \t]*)\S+", re.M)
 
 
 def parse_seed_schedule(text):
@@ -157,7 +159,7 @@ def run_session(cfg, probe, depth, iteration, declared_seed=None):
     rec = {"probe": key, "character": character, "depth": depth,
            "iteration": iteration, "verdict": None, "turns": [],
            "declared_seed": declared_seed, "recorded_seed": None,
-           "source_run": None, "replay_run": None}
+           "replay_recorded_seed": None, "source_run": None, "replay_run": None}
 
     # The probe sits last, so its ordinal is the depth and everything
     # before it is the state the depth exists to build.
@@ -247,6 +249,19 @@ def run_session(cfg, probe, depth, iteration, declared_seed=None):
                 f" found {len(replay_all)} - the record is incomplete"
             )
             return rec
+        # **The replay's seed is read back like the source's.** Both halves
+        # load from one declaration, so a replay recorded under another seed
+        # is the apparatus and not the model, and the sampling-knobs check
+        # below would otherwise report it as DIVERGED.
+        replay_seeds = {base.pointer(t["payload"]["model.request"], "/sampling/seed")
+                        for t in replay_all}
+        rec["replay_recorded_seed"] = (replay_seeds.pop() if len(replay_seeds) == 1
+                                       else sorted(replay_seeds, key=str))
+        if rec["replay_recorded_seed"] != rec["recorded_seed"]:
+            rec["verdict"] = (f"the replay was recorded under another seed:"
+                              f" source {rec['recorded_seed']},"
+                              f" replay {rec['replay_recorded_seed']}")
+            return rec
         replay_by = {t["turn"]: t for t in replay_all}
 
         # A replay carrying surplus turns is interleaved traffic and is
@@ -298,7 +313,15 @@ def main():
                          " line is rewritten before each session, rotating"
                          " through the list, and restored on exit")
     args = ap.parse_args()
-    schedule = parse_seed_schedule(args.seed_schedule) if args.seed_schedule else None
+    # `is not None` rather than truthiness: an explicitly empty schedule is
+    # refused by the parser, an omitted one is no schedule.
+    schedule = None
+    if args.seed_schedule is not None:
+        try:
+            schedule = parse_seed_schedule(args.seed_schedule)
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            sys.exit(2)
 
     with open(args.config) as f:
         cfg = json.load(f)
@@ -317,16 +340,18 @@ def main():
             print("no artifact line in the declaration", file=sys.stderr)
             sys.exit(2)
         standing = swapped
-        with open(cfg["declaration"], "w") as fh:
-            fh.write(swapped)
     if schedule:
-        # Refused before any load: a declaration without exactly one seed
-        # line is not one this override can vary.
+        # Refused before any load and before anything is written: a
+        # declaration without exactly one seed line is not one this override
+        # can vary, and the refusal leaves the operator's file untouched.
         try:
             with_declared_seed(standing, schedule[0])
         except ValueError as e:
             print(str(e), file=sys.stderr)
             sys.exit(2)
+    if args.artifact:
+        with open(cfg["declaration"], "w") as fh:
+            fh.write(standing)
 
     deadline = time.time() + args.hours * 3600.0
     # Opened before the first load so the journal read at the summary

@@ -35,6 +35,18 @@ def test_a_declaration_without_exactly_one_seed_line_refuses():
         raise AssertionError("refused neither zero nor two seed lines")
 
 
+def test_a_seed_with_no_value_on_its_line_is_not_rewritten():
+    # `seed:` followed by a newline names nothing, and the rewrite must not
+    # reach across the line break to the next key's value.
+    text = "sampling:\n  seed:\n  temperature: 0.7\n"
+    try:
+        with_declared_seed(text, 1)
+    except ValueError:
+        assert "temperature: 0.7" in text
+        return
+    raise AssertionError("a seed line with no value was matched")
+
+
 def test_the_schedule_parses_and_refuses_repeats():
     assert parse_seed_schedule("1, 2,3") == [1, 2, 3]
     for bad in ("", "1,1"):
