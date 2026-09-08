@@ -42,6 +42,15 @@ this crate honors that gate rather than re-deciding it. An enforcement
 section listing a property its crate does not enforce puts one claim under
 two owners.
 
+**An identifier that overstates its claim binds code to a rule the Spec does
+not make**, which three of the twenty-one did before the review of PR #514.
+The identifier is what a conformance header cites, so it carries the claim's
+scope and not a shortened version of it: the record identity's exception for
+a renamed split, the author member's no-default half, and the fact that only
+a diagnostic record can be uncertified are all in the identifiers now. This
+document's own section 2.3 had said so of the first, that the conformance row
+watches the rule with its exception rather than the rule alone.
+
 **No `grounds` edges are drawn.** Grounding an assertion in an axiom is a
 judgment per claim, and twenty-one guesses would be worse than none, which
 the Document Format allows: an assertion with no `grounds` edge is not a
@@ -593,13 +602,13 @@ conformance row of section 9 watches the rule with its exception rather than
 the rule alone.
 
 ```graph
-node: web-record-identity-names-one-catalog-row
+node: web-record-identity-names-one-row-a-split-excepted
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-web
-to: web-record-identity-names-one-catalog-row
+to: web-record-identity-names-one-row-a-split-excepted
 ```
 
 **A run whose record identity no row carries joins to nothing and registers
@@ -1022,13 +1031,13 @@ to: web-authored-row-names-its-author-or-names-none
   moved from the view into the store.
 
 ```graph
-node: web-authoring-write-passes-the-author-member
+node: web-author-member-is-passed-and-the-column-has-no-default
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-web
-to: web-authoring-write-passes-the-author-member
+to: web-author-member-is-passed-and-the-column-has-no-default
 ```
 - **It is stated now because it cannot be added later**, which is the
   charter's section 4 and is restated here rather than argued. A row's
@@ -1238,13 +1247,13 @@ reading from an uncertified replay is a picture of an unknown run. This
 crate honors that gate rather than re-deciding it.
 
 ```graph
-node: web-uncertified-record-is-not-drawn
+node: web-uncertified-diagnostic-record-is-not-drawn
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-web
-to: web-uncertified-record-is-not-drawn
+to: web-uncertified-diagnostic-record-is-not-drawn
 ```
 
 ## 7. The seams
