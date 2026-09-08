@@ -30,6 +30,20 @@ def test_truncated_kl_is_never_negative_and_names_what_it_saw():
     assert truncated_kl(p2, q2)["kl_bits"]>0
     assert truncated_kl(p2, [{"token":9,"probability":1.0}])["kl_bits"] is None
 
+def test_thin_support_is_counted_beside_the_kl():
+    # one shared candidate out of two: the conditional KL is zero by construction
+    # and the reading says the support was thin and single
+    a={"output_tokens":[1],"emission":"a","entropies":[0.5],"field":{0:{"ranked":[{"token":1,"probability":0.5},{"token":2,"probability":0.3}],"realized":0}}}
+    b={"output_tokens":[1],"emission":"a","entropies":[0.5],"field":{0:{"ranked":[{"token":1,"probability":0.9},{"token":9,"probability":0.05}],"realized":0}}}
+    two=reading_two(a,b)
+    assert two["field_kl_bits_max"]==0 and two["field_positions_single_shared_candidate"]==1
+    assert two["field_positions_thin_support"]==0  # shared 0.5 of ranked 0.8 is not below half
+    b["field"][0]["ranked"]=[{"token":1,"probability":0.1},{"token":9,"probability":0.8}]
+    a["field"][0]["ranked"]=[{"token":1,"probability":0.1},{"token":2,"probability":0.8}]
+    two=reading_two(a,b)
+    assert two["field_positions_thin_support"]==1, two
+
+
 def test_a_shorter_run_diverges_at_its_end():
     assert first_divergence([1,2],[1,2,3]) == 2
     assert first_divergence([1,2,3],[1,2,3]) is None

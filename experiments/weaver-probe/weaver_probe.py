@@ -284,6 +284,15 @@ def truncated_kl(ranked_p, ranked_q):
     }
 
 
+# A position whose shared support carries less than this fraction of the
+# ranked mass is counted as thin: a KL conditioned on one or two candidates
+# out of two hundred is a divergence over almost none of the distribution,
+# and reads as zero by construction where the support is one. The reading
+# says how many such positions it holds so a reader taking the maximum alone
+# knows how much of itself the metric could see.
+THIN_SUPPORT_FRACTION = 0.5
+
+
 def reading_two(free, refed):
     """The free run against its re-fed replay, position by position under
     identical context: the entropies to the bit, and the ranked field by a
@@ -316,6 +325,11 @@ def reading_two(free, refed):
         "field_kl_bits_max": max((k["kl_bits"] for _, k in kls if k["kl_bits"] is not None), default=None),
         "field_first_nonzero_kl": next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None),
         "field_positions_no_shared_support": sum(1 for _, k in kls if k["kl_bits"] is None),
+        "field_positions_thin_support": sum(
+            1 for _, k in kls
+            if k["ranked_mass_p"] > 0 and k["shared_mass_p"] / k["ranked_mass_p"] < THIN_SUPPORT_FRACTION),
+        "field_thin_support_fraction": THIN_SUPPORT_FRACTION,
+        "field_positions_single_shared_candidate": sum(1 for _, k in kls if k["shared_candidates"] == 1),
         "field_shared_mass_mean": mean([k["shared_mass_p"] for _, k in kls]),
         "field_ranked_mass_mean": mean([k["ranked_mass_p"] for _, k in kls]),
         "tokens_equal": free["output_tokens"] == refed["output_tokens"],

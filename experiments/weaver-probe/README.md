@@ -17,6 +17,9 @@ field held. Two readings follow and are never folded into one number.
   compared under identical context. The arithmetic. Entropies to the bit, and
   the ranked field by a truncated KL that reports the mass it saw.
 
+The driver imports `confirm_cells` from the sibling `../cross-precision-repro`,
+so the tests and the verbs run from a checkout that holds both directories.
+
 ```shell
 python3 weaver_probe.py run    --config ARM.json
 python3 weaver_probe.py refeed --config ARM.json --source DEPOSIT/runs/NAME [--as-arm OTHER.json]
