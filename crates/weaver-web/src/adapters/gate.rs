@@ -83,8 +83,9 @@ impl GateAdapter {
     /// The load-state observable: the socket path's existence, read for
     /// the Agents surface of PRD section 3.6.
     ///
-    /// **This read is the inference the charter retired.** PRD section 8
-    /// records the observation exchange landed 2026-09-04 at issue #440:
+    /// **This read is the inference the charter retired.** The charter is
+    /// `weaver-web-PRD`, whose own first line names it so, and its section
+    /// 8 records the observation exchange landed 2026-09-04 at issue #440:
     /// load state is answered by the harness's own word rather than
     /// inferred from a socket's existence, and the archived charter's
     /// sentence naming this an inference is retired by that act. The
