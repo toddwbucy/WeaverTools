@@ -39,8 +39,10 @@ overnight run ends cleanly rather than mid-cell.
 """
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import statistics
 import sys
 import time
@@ -51,6 +53,42 @@ sys.path.insert(
                  "..", "cross-precision-repro"),
 )
 import confirm_cells as base
+
+# **The declared seed as a per-session condition**, for Run 1 of issue #485:
+# the seed is a line in the declaration, every session loads fresh, and both
+# halves of a session read the same declaration, so rewriting that line
+# before a session varies the seed across sessions while holding it within
+# one. The rotation offsets by sweep so that no probe is wedded to one seed:
+# the matrix has as many prompts as the schedule has seeds, and a rotation
+# by cell alone would hand each prompt the same seed in every sweep.
+SEED_LINE = re.compile(r"^(\s*seed:\s*)\S+", re.M)
+
+
+def parse_seed_schedule(text):
+    """The schedule as given: comma-separated integers, at least one, no
+    repeats, because a repeated seed is a session counted twice under one
+    condition and read as two."""
+    seeds = [int(part.strip()) for part in text.split(",") if part.strip()]
+    if not seeds:
+        raise ValueError("the seed schedule is empty")
+    if len(set(seeds)) != len(seeds):
+        raise ValueError("the seed schedule repeats a value")
+    return seeds
+
+
+def with_declared_seed(declaration, seed):
+    """The declaration text with its one `seed:` line rewritten. Exactly one
+    line, or the declaration is not the shape this override understands."""
+    swapped, n = SEED_LINE.subn(lambda m: f"{m.group(1)}{seed}", declaration, count=2)
+    if n != 1:
+        raise ValueError(f"the declaration carries {n} seed lines, not one")
+    return swapped
+
+
+def seed_for(schedule, iteration, cell_index):
+    """Which seed a cell takes: rotated by cell and offset by sweep, so
+    over as many sweeps as there are seeds every cell meets every seed."""
+    return schedule[(cell_index + iteration - 1) % len(schedule)]
 
 # **The prompt set spans the draw's confidence, which is the axis that
 # matters.** Each carries the character it was chosen for, so a reader
@@ -105,15 +143,21 @@ def entropies_of(turn):
     }
 
 
-def run_session(cfg, probe, depth, iteration):
+def run_session(cfg, probe, depth, iteration, declared_seed=None):
     """One matrix cell: serve, unload, reload, reissue, compare.
 
     The agent is left unloaded whichever path this takes, so a cell that
-    fails does not hold the device against the next one.
+    fails does not hold the device against the next one. Where a seed
+    schedule stands, `declared_seed` is what the declaration was rewritten
+    to before this cell, and the record's own `sampling.seed` is read back
+    beside it: a session whose record does not carry the seed it was
+    declared under is an apparatus fault and never a result.
     """
     key, character, text = probe
     rec = {"probe": key, "character": character, "depth": depth,
-           "iteration": iteration, "verdict": None, "turns": []}
+           "iteration": iteration, "verdict": None, "turns": [],
+           "declared_seed": declared_seed, "recorded_seed": None,
+           "source_run": None, "replay_run": None}
 
     # The probe sits last, so its ordinal is the depth and everything
     # before it is the state the depth exists to build.
@@ -144,9 +188,24 @@ def run_session(cfg, probe, depth, iteration):
             rec["verdict"] = "the source turns did not share one run"
             return rec
         source_run = source_runs.pop()
+        rec["source_run"] = source_run
         source_turns, _ = base.await_turns(cfg["trace"], depth, source_run)
         if len(source_turns) != depth:
             rec["verdict"] = f"expected {depth} source turns, found {len(source_turns)}"
+            return rec
+        # **The seed the record carries is read back, never assumed.** The
+        # declared seed rides every `model.request` as `sampling.seed`, per
+        # the trace's shape, and the falsifier of Run 1 is about whether
+        # that value reaches the sampler, which is a question the deposit
+        # can only ask if the value it declared is the value it recorded.
+        recorded = {base.pointer(t["payload"]["model.request"], "/sampling/seed")
+                    for t in source_turns}
+        rec["recorded_seed"] = recorded.pop() if len(recorded) == 1 else sorted(
+            recorded, key=str)
+        if declared_seed is not None and rec["recorded_seed"] != declared_seed:
+            rec["verdict"] = (f"the declared seed did not reach the record:"
+                              f" declared {declared_seed},"
+                              f" recorded {rec['recorded_seed']}")
             return rec
 
         base.admin(cfg, "unload")
@@ -170,6 +229,7 @@ def run_session(cfg, probe, depth, iteration):
             rec["verdict"] = "reissues did not land in one fresh run"
             return rec
         replay_run = runs_seen.pop()
+        rec["replay_run"] = replay_run
 
         replay_all, _ = base.await_turns(
             cfg["trace"], len(source_turns), replay_run)
@@ -201,6 +261,11 @@ def run_session(cfg, probe, depth, iteration):
             checks = base.compare_turn(st, rt)
             matched = all(c["match"] for c in checks)
             all_match = all_match and matched
+            # The emission's digest rides beside the verdict so a reading
+            # across sessions, which is what a varied seed is read by, needs
+            # no second walk of the trace: two sessions of one probe under
+            # two seeds diverged or did not by their digests alone.
+            emission = base.pointer(st["payload"]["model.output"], "/emission")
             rec["turns"].append({
                 "turn": st["turn"],
                 "is_probe": st["text"] == text,
@@ -209,6 +274,8 @@ def run_session(cfg, probe, depth, iteration):
                 "entropy": entropies_of(st),
                 "source_ms": base.whole_ms(st),
                 "replay_ms": base.whole_ms(rt),
+                "emission_sha256": hashlib.sha256(
+                    json.dumps(emission, sort_keys=True).encode()).hexdigest(),
             })
         rec["verdict"] = "REPRODUCED" if all_match else "DIVERGED"
         return rec
@@ -226,7 +293,12 @@ def main():
     ap.add_argument("--hours", type=float, default=7.0)
     ap.add_argument("--artifact", default=None,
                     help="override the declaration's artifact for every cell")
+    ap.add_argument("--seed-schedule", default=None,
+                    help="comma-separated declared seeds; the declaration's seed"
+                         " line is rewritten before each session, rotating"
+                         " through the list, and restored on exit")
     args = ap.parse_args()
+    schedule = parse_seed_schedule(args.seed_schedule) if args.seed_schedule else None
 
     with open(args.config) as f:
         cfg = json.load(f)
@@ -234,15 +306,27 @@ def main():
 
     with open(cfg["declaration"]) as f:
         original = f.read()
+    # `standing` is the declaration this run works from: the operator's own,
+    # or the artifact-swapped one, and the seed rewrite per session starts
+    # from it so the two overrides compose rather than overwrite each other.
+    standing = original
     if args.artifact:
-        import re
         swapped, n = re.subn(r"(artifact:\s*).*", r"\g<1>" + args.artifact,
                              original, count=1)
         if n != 1:
             print("no artifact line in the declaration", file=sys.stderr)
             sys.exit(2)
+        standing = swapped
         with open(cfg["declaration"], "w") as fh:
             fh.write(swapped)
+    if schedule:
+        # Refused before any load: a declaration without exactly one seed
+        # line is not one this override can vary.
+        try:
+            with_declared_seed(standing, schedule[0])
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            sys.exit(2)
 
     deadline = time.time() + args.hours * 3600.0
     # Opened before the first load so the journal read at the summary
@@ -274,6 +358,8 @@ def main():
 
     log(f"matrix start, deadline in {args.hours}h, "
         f"{len(PROMPTS)} prompts x {len(DEPTHS)} depths")
+    if schedule:
+        log(f"declared seed schedule: {schedule}")
     try:
         # **Inside the cleanup scope**, because the declaration has already
         # been swapped by this point where `--artifact` was given: `ldd`
@@ -293,20 +379,28 @@ def main():
         # covers the matrix rather than the front of it.
         while time.time() < deadline:
             iteration += 1
+            cell_index = 0
             for depth in DEPTHS:
                 for probe in PROMPTS:
                     if time.time() >= deadline:
                         break
+                    declared_seed = None
+                    if schedule:
+                        declared_seed = seed_for(schedule, iteration, cell_index)
+                        with open(cfg["declaration"], "w") as fh:
+                            fh.write(with_declared_seed(standing, declared_seed))
+                    cell_index += 1
                     started = time.time()
-                    rec = run_session(cfg, probe, depth, iteration)
+                    rec = run_session(cfg, probe, depth, iteration, declared_seed)
                     rec["seconds"] = round(time.time() - started, 1)
                     results.append(rec)
                     ent = ""
                     for t in rec["turns"]:
                         if t.get("is_probe") and t.get("entropy"):
                             ent = f" H_mean={t['entropy']['mean']}"
+                    seed_note = f" seed={declared_seed}" if schedule else ""
                     log(f"i{iteration} {probe[0]}/d{depth}: "
-                        f"{rec['verdict']} ({rec['seconds']}s){ent}")
+                        f"{rec['verdict']} ({rec['seconds']}s){ent}{seed_note}")
                     with open(os.path.join(args.outdir, "matrix.jsonl"), "a") as fh:
                         fh.write(json.dumps(rec) + "\n")
     except KeyboardInterrupt:
@@ -315,7 +409,7 @@ def main():
         # Restored only where this run swapped it: rewriting unconditionally
         # would turn an unrelated edit made during the run into a silent
         # revert of the operator's own declaration.
-        if args.artifact:
+        if args.artifact or schedule:
             with open(cfg["declaration"], "w") as fh:
                 fh.write(original)
         base.admin(cfg, "unload")
@@ -330,6 +424,14 @@ def main():
         b = by_character.setdefault(r["character"], {"n": 0, "ok": 0})
         b["n"] += 1
         b["ok"] += 1 if r["verdict"] == "REPRODUCED" else 0
+    # By seed where a schedule stood: the within-session verdict per
+    # condition, so a seed that fails to reproduce is visible on its own.
+    by_seed = {}
+    if schedule:
+        for r in results:
+            b = by_seed.setdefault(str(r["declared_seed"]), {"n": 0, "ok": 0})
+            b["n"] += 1
+            b["ok"] += 1 if r["verdict"] == "REPRODUCED" else 0
 
     # **The box facts ride the summary rather than a sidecar**, per issue
     # #370's third ask. The olympus deposit of 2026-08-27 carried its
@@ -424,6 +526,8 @@ def main():
         "diverged": len(diverged),
         "errors": len(errors),
         "by_character": by_character,
+        "declared_seed_schedule": schedule,
+        "by_seed": by_seed,
         "diverged_detail": diverged[:20],
         "error_detail": [{"probe": r["probe"], "depth": r["depth"],
                           "verdict": r["verdict"]} for r in errors[:20]],

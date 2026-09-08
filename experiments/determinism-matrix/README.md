@@ -22,7 +22,16 @@ python3 determinism_matrix.py --config ../cross-precision-repro/thinkpad.json \
 Wall-clock bounded: it finishes the session in hand and stops, so an
 overnight run ends cleanly rather than mid-cell. `--artifact` overrides the
 declaration's artifact for every cell, and the declaration is restored on
-exit whichever path the run takes. The agent is left unloaded, so a cell
+exit whichever path the run takes. `--seed-schedule 1,2,3` varies the
+declared seed across sessions, per Run 1 of issue #485: the declaration's
+one `seed:` line is rewritten before each session, so both halves of a
+session read the same seed and successive sessions read different ones,
+rotating through the list and offset by sweep so every cell meets every
+seed. Each record carries the seed it was declared under and the seed its
+`model.request` recorded, and a session where the two differ is an
+apparatus fault rather than a verdict. The probe turn's emission digest
+rides beside every verdict so a reading across seeds needs no second walk
+of the trace. The agent is left unloaded, so a cell
 that fails never holds the device.
 
 Sweeps rather than repeats: every combination is seen once before any is
