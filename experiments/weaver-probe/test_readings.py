@@ -1,7 +1,7 @@
 """The probe's pure readings, per issue #511."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two, extract_run, measured_events
+from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two, extract_run, measured_events, divergence_ordinal
 
 def test_divergence_and_agreement():
     assert first_divergence([1,2,3],[1,2,3]) is None
@@ -99,3 +99,14 @@ def test_a_run_of_only_its_close_is_not_measured():
         assert got==[close, measured]
         assert extract_run(got)["output_tokens"]==[2]
 
+
+def test_the_divergence_ordinal_is_the_position_less_the_fields_floor():
+    # The position is the resident length at the draw, the field's key, per
+    # weaver-diagnostic-Spec section 3.3 on the ruling of 2026-09-09.
+    ex={"input_tokens":127,"output_tokens":[5,6],"field":{154:{},155:{}}}
+    assert divergence_ordinal({"kind":"token_path","position":176}, ex)==22
+    assert divergence_ordinal({"kind":"token_path","position":"176"}, ex)==22
+    assert divergence_ordinal({"kind":"token_path","position":150}, ex)==-4
+    assert divergence_ordinal({"kind":"readout","position":176,"layer":3}, ex) is None
+    assert divergence_ordinal(None, ex) is None
+    assert divergence_ordinal({"kind":"token_path","position":176}, {"field":{}}) is None

@@ -227,6 +227,18 @@ def wait_for_close(trace_path, run_id, timeout):
 
 # ---------------------------------------------------------------- reading one
 
+def divergence_ordinal(div, ex):
+    """The replay's token-path divergence as an output ordinal: its position,
+    the resident length at the draw per weaver-diagnostic-Spec section 3.3,
+    less the field's floor, which is the first draw's position. Negative
+    where the divergence fell in the appended input. None where the
+    divergence is not a token path or the re-fed run carries no field to
+    take the floor from."""
+    if not div or div.get("kind") != "token_path" or not ex.get("field"):
+        return None
+    return int(div["position"]) - min(int(p) for p in ex["field"])
+
+
 def first_divergence(tokens_a, tokens_b):
     """The first position where two token paths differ, or None only where
     the two are identical. A run that stopped early diverges at its own end:
@@ -557,17 +569,14 @@ def run_refeed(cfg, source_dir, as_arm):
             rec["verdict"] = "the replay's run carries no measurement in the record"
             return
         ex = extract_run(replay_events)
-        # **The divergence position is a third coordinate.** The harness
-        # indexes it into the input-plus-output token path, so the first
-        # emitted token is at the input count, where the entropies run by
-        # output ordinal from zero and the field by resident position from
-        # its own floor, the identity prefix plus the input per
-        # weaver-spu-Spec. The ordinal is given beside it so the three compare.
-        div = rec["replay_divergence"] or {}
-        if div.get("kind") == "token_path" and ex["input_tokens"] is not None:
-            rec["replay_divergence_ordinal"] = int(div["position"]) - ex["input_tokens"]
-        else:
-            rec["replay_divergence_ordinal"] = None
+        # **The divergence position is the resident length at the draw**, the
+        # field's own key, per weaver-diagnostic-Spec section 3.3 on the ruling
+        # of 2026-09-09 at issue #519. The ordinal beside it is the position
+        # less the field's floor, so the three coordinates compare. Deposits
+        # written before that ruling carry the draw's index in the turn's
+        # identifiers instead, 127 below the field's key on the 2026-09-08
+        # essays, and read as the pre-ruling coordinate.
+        rec["replay_divergence_ordinal"] = divergence_ordinal(rec["replay_divergence"], ex)
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
             json.dump({**rec, "refed": ex}, fh)

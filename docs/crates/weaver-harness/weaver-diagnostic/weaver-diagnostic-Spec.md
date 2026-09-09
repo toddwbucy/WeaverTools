@@ -4,6 +4,16 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-09, the divergence position is the resident length at the draw.
+Section 3.3's `Divergence` carried a `position` in both variants and said nothing of
+what it counted from, and the pass indexed the turn's input-plus-output identifiers,
+a coordinate neither the measurement's ordinal nor `model.field`'s key. On the
+operator's ruling of this date at issue #519, both positions are the resident length
+at the draw, the coordinate `model.field` uses, so a divergence and the field row it
+fell in share a key and a reader holding only the close event converts nothing. The
+pass derives it from its own re-fed answer's closing count. One perturbation record,
+and section 7's counts move by one. Records written before this date carry the
+earlier coordinate and are read as such where cited.
 **Revised:** 2026-08-31, second of this date, the covered append. On the
 operator's ruling: a recorded tool round replays as an ordinary append and
 its prefill final is covered, replacing a sentence that claimed no tool-round
@@ -345,6 +355,35 @@ exactly as manufacturing a close would collapse the fourth. Each carries the fir
 divergent position, per the loop's section 3 step 2, and the token path's carries
 both identifiers so a reader can say how the two differ without rerunning anything.
 
+**`position` is the resident length at the draw in both variants**, the coordinate
+`model.field` keys on per `weaver-spu-Spec` section 6, on the operator's ruling of
+2026-09-09 at issue #519. A record carries three position coordinates: the
+measurement's vectors run by output ordinal from zero, the field by the resident
+length at the draw, and a divergence given in either is placeable against one of
+them and not the other. The resident length is the one that survives the turn's
+decomposition, indifferent to whose token it was or which append put it there, so a
+divergence and the field row it fell in share a key and a reader holding only the
+close event needs no conversion it cannot perform. A token-path divergence in the
+appended input names the resident length that token occupies, below the first draw
+by the input's length, so a tokenization divergence and a draw divergence land on one
+scale. **The pass derives it from its own re-fed answer and not from the holdings**:
+the closing count less the drawn tokens less the terminator is the first draw's
+position, per `weaver-spu-Spec` section 4's closing-count clause, and the null replay
+therefore still rests on the recorded identifiers alone. Records written before this
+ruling carry the position as the turn's identifier index, which on the essays of
+2026-09-08 sits 127 below the field's key for the same token, and are read as the
+pre-ruling coordinate where they are cited.
+
+```graph
+node: diagnostic-divergence-position-is-the-resident-length
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-diagnostic
+to: diagnostic-divergence-position-is-the-resident-length
+```
+
 **No outcome is authored for a pass that died.** The contract's section 5 forbids
 manufacturing one, and the reason is the fourth outcome: a closing event written at
 a death would collapse unended into abandoned and tell a reader a pass ended when it
@@ -584,6 +623,11 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
   consumes no sequence, watched to fail when the refusal is moved after the write.
+- The divergence position is the resident length at the draw: a re-fed answer whose
+  first draw differs from the recorded path closes naming the position the closing
+  count places that draw at, watched to fail when the pass names the draw's index in
+  the turn's identifiers instead, which sits below by the input's length and the
+  prefix.
 
 **Enforced by review, one claim.** That the readout rides the measurement where a
 serving record puts it is a claim about where a shape sits rather than a behavior a
@@ -596,13 +640,13 @@ sibling crate's participation and is not this document's to elect.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
-section 6. Fourteen sit there and none sits here.
+section 6. Fifteen sit there and none sits here.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no
 socket crate: a seam that crosses no process line has no socket to hold, and a
 mechanism that acquired one would be claiming a boundary it does not have. The other
-four axioms reach none of these claims. **Thirteen claims grounding in no invariant
+four axioms reach none of these claims. **Fourteen claims grounding in no invariant
 is the expected result and not a gap**, per Document Format section 4: most of this
 document is representation, and representation is what the invariants are not
 about.

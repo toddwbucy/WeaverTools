@@ -5,6 +5,11 @@ loop, filed under the harness's `Loops/` container per the Document Format's con
 entry. It argues no edges of its own: the seams it walks are declared in the crate
 charters, and a graph block here would duplicate a record that already has a home.
 
+**Revised:** 2026-09-09, the first divergent position has a coordinate. Section 3's
+step 2 names it as `weaver-diagnostic-Spec` section 3.3 states it on the operator's
+ruling of this date at issue #519, the resident length at the draw, so a divergence
+and the field row it fell in share a key and a reader holding only the close event
+converts nothing.
 **Revised:** 2026-09-01, second of this date, the vector bar is measured.
 Section 3's step 3 compares the reader's vectors exact within one device
 model, per `weaver-diagnostic-PRD` section 4 as amended on the
@@ -186,7 +191,9 @@ The charter's section 4 procedure, as this loop performs it:
    replaying under a guess or refusing a run it could have made.
 2. **The null replay.** No reader elected. The recorded path re-feeds, the
    recomputed token identifiers match the recorded ones exactly, integers,
-   or the certification fails naming the first divergent position.
+   or the certification fails naming the first divergent position, in the
+   coordinate `weaver-diagnostic-Spec` section 3.3 states, the resident length
+   at the draw, so the divergence and the field row it fell in share a key.
 3. **Again, with the reader, as its own load.** The readout election rides
    the declaration and is read at the load, per `weaver-agents-PRD` section
    8, so the reader pass is a second load of the same declaration with the

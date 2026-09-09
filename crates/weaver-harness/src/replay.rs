@@ -327,10 +327,14 @@ enum Comparison {
 
 /// One generation's certification: the re-fed answer against the recorded
 /// members. The token comparison is exact, integers, and the first
-/// divergent position names both identifiers. **Positions count through
-/// the generation's forward**: the appended input first, then the draws,
-/// so a tokenization divergence and a draw divergence land on one scale
-/// and a reader can place either against the measurement's own vectors.
+/// divergent position names both identifiers. **A position is the resident
+/// length at the draw**, the coordinate `model.field` keys on, per
+/// `weaver-diagnostic-Spec` section 3.3 on the ruling of 2026-09-09: the
+/// re-fed answer's closing count less the drawn tokens less the terminator
+/// is the first draw's position, and the appended input sits below it by
+/// its own length, so a tokenization divergence and a draw divergence land
+/// on the one scale the field row shares, and a reader holding only the
+/// close event converts nothing.
 fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Comparison {
     let measurement: serde_json::Value = match serde_json::from_str(refed.measurement.get()) {
         Ok(value) => value,
@@ -378,6 +382,24 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
             source.sampling
         ));
     }
+    // The floor of the tape this generation drew on, from the answer's
+    // own closing count: the terminator landed after the last draw, so the
+    // first draw sits the draws and one below the count, and the appended
+    // input sits its own length below that.
+    let Some(first_draw) = refed.resident.checked_sub(refed_output.len() as u64 + 1) else {
+        return Comparison::IdentityBroken(format!(
+            "the re-fed closing count {} cannot hold its {} draws and the terminator",
+            refed.resident,
+            refed_output.len()
+        ));
+    };
+    let Some(input_floor) = first_draw.checked_sub(refed_input.len() as u64) else {
+        return Comparison::IdentityBroken(format!(
+            "the re-fed closing count {} cannot hold its {} appended input tokens",
+            refed.resident,
+            refed_input.len()
+        ));
+    };
     // Tokenization identity: the rendered form re-tokenized must be the
     // recorded appended input, per the loop document's re-feed clause,
     // exercised rather than assumed.
@@ -389,7 +411,7 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     {
         if recorded != recomputed {
             return Comparison::Diverged(Divergence::TokenPath {
-                position: position as u64,
+                position: input_floor + position as u64,
                 recorded: TokenId(*recorded),
                 recomputed: TokenId(*recomputed),
             });
@@ -397,7 +419,7 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     }
     if source.input_tokens.len() != refed_input.len() {
         return Comparison::Diverged(Divergence::TokenPath {
-            position: source.input_tokens.len().min(refed_input.len()) as u64,
+            position: input_floor + source.input_tokens.len().min(refed_input.len()) as u64,
             recorded: TokenId(
                 source
                     .input_tokens
@@ -415,7 +437,6 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     }
     // **The null comparison itself**: the recomputed draws in the output
     // slots against the recorded path, exactly, integers.
-    let base = source.input_tokens.len() as u64;
     for (ordinal, (recorded, recomputed)) in source
         .output_tokens
         .iter()
@@ -424,7 +445,7 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     {
         if recorded != recomputed {
             return Comparison::Diverged(Divergence::TokenPath {
-                position: base + ordinal as u64,
+                position: first_draw + ordinal as u64,
                 recorded: TokenId(*recorded),
                 recomputed: TokenId(*recomputed),
             });
@@ -432,7 +453,7 @@ fn compare(source: &SourceGeneration, refed: &weaver_types::Generation) -> Compa
     }
     if source.output_tokens.len() != refed_output.len() {
         return Comparison::Diverged(Divergence::TokenPath {
-            position: base + source.output_tokens.len().min(refed_output.len()) as u64,
+            position: first_draw + source.output_tokens.len().min(refed_output.len()) as u64,
             recorded: TokenId(
                 source
                     .output_tokens
@@ -785,5 +806,88 @@ mod tests {
             ],
             "the certified pass authors the mirrored bracket whole"
         );
+    }
+
+    /// A drive whose scripted peer answers one re-feed with the given
+    /// measurement members and closing count, and the close it lands.
+    fn diverging_close(script: fn(std::os::fd::OwnedFd)) -> serde_json::Value {
+        let (outcome, lines) = run_drive(Some(sealed_answer()), script);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands").clone();
+        assert_eq!(close["kind"], "replay.closed");
+        assert_eq!(
+            close["payload"]["outcome"]["kind"], "diverged",
+            "the differing path diverges: {close}"
+        );
+        close
+    }
+
+    fn answers(far: std::os::fd::OwnedFd, refed: &str) {
+        let mut buf = vec![0u8; 65536];
+        let _ = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
+        send(far.as_raw_fd(), refed.as_bytes(), MsgFlags::empty()).expect("answers");
+    }
+
+    fn draw_differs(far: std::os::fd::OwnedFd) {
+        answers(far, DRAW_DIFFERS);
+    }
+
+    fn input_differs(far: std::os::fd::OwnedFd) {
+        answers(far, INPUT_DIFFERS);
+    }
+
+    /// The sealed answer's path, [1, 2] appended and [3] drawn, recomputed
+    /// as 4 at the one draw and closing at resident 6, the terminator
+    /// included: the draw sits at 6 - 1 - 1 = 4.
+    const DRAW_DIFFERS: &str = concat!(
+        r#"{"kind":"re_fed","body":{"emission":"yo","finish":"completed","#,
+        r#""content":[{"type":"text","text":"yo"}],"#,
+        r#""request":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}},"#,
+        r#""measurement":{"input_tokens":[1,2],"output_tokens":[4],"#,
+        r#""model":"art","weights_hash":"h"},"#,
+        r#""resident":6,"capacity":64}}"#
+    );
+
+    /// The same path with the appended input re-tokenized as [1, 9]: the
+    /// second appended token sits at 4 - 2 + 1 = 3.
+    const INPUT_DIFFERS: &str = concat!(
+        r#"{"kind":"re_fed","body":{"emission":"hi","finish":"completed","#,
+        r#""content":[{"type":"text","text":"hi"}],"#,
+        r#""request":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}},"#,
+        r#""measurement":{"input_tokens":[1,9],"output_tokens":[3],"#,
+        r#""model":"art","weights_hash":"h"},"#,
+        r#""resident":6,"capacity":64}}"#
+    );
+
+    /// conforms: diagnostic-divergence-position-is-the-resident-length
+    #[test]
+    fn a_draw_divergence_names_the_resident_length_at_the_draw() {
+        let close = diverging_close(draw_differs);
+        let divergence = &close["payload"]["outcome"]["divergence"];
+        assert_eq!(divergence["kind"], "token_path");
+        // Perturbation: index the turn's identifiers instead and this reads
+        // 2, the pre-ruling coordinate, one input's length below the key
+        // the field row carries.
+        assert_eq!(
+            divergence["position"], 4,
+            "the draw's resident length and not its index: {close}"
+        );
+        assert_eq!(divergence["recorded"], 3);
+        assert_eq!(divergence["recomputed"], 4);
+    }
+
+    /// conforms: diagnostic-divergence-position-is-the-resident-length
+    #[test]
+    fn an_input_divergence_names_the_tokens_resident_length() {
+        let close = diverging_close(input_differs);
+        let divergence = &close["payload"]["outcome"]["divergence"];
+        assert_eq!(divergence["kind"], "token_path");
+        // Perturbation: index the appended input from zero and this reads 1.
+        assert_eq!(
+            divergence["position"], 3,
+            "the appended token's resident length and not its index: {close}"
+        );
+        assert_eq!(divergence["recorded"], 2);
+        assert_eq!(divergence["recomputed"], 9);
     }
 }
