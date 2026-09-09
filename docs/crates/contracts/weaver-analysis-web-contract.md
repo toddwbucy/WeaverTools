@@ -201,9 +201,10 @@ as a family. The digest is sha256 over the bytes of the run's own lines as
 the emitter drained them, each line with its terminating newline, in the
 order they were read, spelled as lowercase hex, so a reader holding the
 record can recompute it and a row can be checked against the record it
-descends from. **The run's own lines are every line whose envelope names
-the run and no other**, so a session-level event with no run belongs to no
-run's digest and two emitters over one file agree. **A run's generations
+descends from. **Every line names a run, and a line belongs to the digest
+of the run it names**, the envelope's `run` being a required member per
+`weaver-trace-Spec` section 1, so two emitters over one file agree. **A
+run's generations
 agree on both, and a run whose generations disagree is a defect the reader
 names.** **The digest is present only for a whole run, and a run is whole
 when its `unload` landed and the drain began at or before its `load`.** A
