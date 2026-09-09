@@ -15,7 +15,11 @@ field held. Two readings follow and are never folded into one number.
 - **Reading two, the re-fed run.** One run's token path fed back through
   another arrangement under the diagnostic binding, per-position distributions
   compared under identical context. The arithmetic. Entropies to the bit, and
-  the ranked field by a truncated KL that reports the mass it saw.
+  the ranked field by a truncated KL that reports the mass it saw. The two
+  series sit in different coordinates, the entropies by output ordinal and
+  the field by resident position starting after the prompt, so the reading
+  names the coordinate in each key and states the field's first position,
+  the floor below which no KL can register.
 
 The driver imports `confirm_cells` from the sibling `../cross-precision-repro`,
 so the tests and the verbs run from a checkout that holds both directories.

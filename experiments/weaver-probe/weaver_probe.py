@@ -176,7 +176,7 @@ def extract_run(events):
     entropies and surprisals, and the ranked field at each position."""
     rec = {"emission": None, "output_tokens": [], "entropies": [], "surprisals": None,
            "field": {}, "finish": None, "declared_seed": None, "generation_seed": None,
-           "timings": None, "weights_hash": None, "model": None}
+           "timings": None, "weights_hash": None, "model": None, "input_tokens": None}
     for e in events:
         k, p = e.get("kind"), e.get("payload") or {}
         if k == "model.request":
@@ -187,6 +187,9 @@ def extract_run(events):
             rec["finish"] = p.get("finish")
         elif k == "model.measurement":
             rec["output_tokens"] = p.get("output_tokens", [])
+            # The count and not the tokens: it is the origin the replay's
+            # divergence position is read against, per run_refeed.
+            rec["input_tokens"] = len(p["input_tokens"]) if p.get("input_tokens") is not None else None
             rec["entropies"] = p.get("entropies", [])
             rec["surprisals"] = p.get("surprisals")
             rec["timings"] = p.get("timings")
@@ -195,6 +198,18 @@ def extract_run(events):
         elif k == "model.field":
             rec["field"][int(p["position"])] = {"ranked": p["ranked"], "realized": p["realized"]}
     return rec
+
+
+def measured_events(events, run_id):
+    """The events of one run, or None where the run carries no measurement.
+    The close event carries the run id too, so a run of only its close is
+    not empty, and a reading over it would print zero positions as a reading.
+    The measurement is what a reading is computed from, so its absence is
+    the fault named."""
+    mine = [e for e in events if e.get("run") == run_id]
+    if not any(e.get("kind") == "model.measurement" for e in mine):
+        return None
+    return mine
 
 
 def wait_for_close(trace_path, run_id, timeout):
@@ -314,7 +329,14 @@ def reading_two(free, refed):
     identical context: the entropies to the bit, and the ranked field by a
     truncated KL with its coverage stated. **The entropies are compared with
     `==` on purpose**: the claim is bit identity of two computations under
-    one context, and a tolerance would retire that claim silently."""
+    one context, and a tolerance would retire that claim silently.
+
+    **Two coordinates, each named in its key.** The entropy series is indexed
+    by output ordinal, zero at the first emitted token. The ranked field is
+    keyed by the record's resident position, which starts after the prompt,
+    so the field's first key is the floor below which nothing can register,
+    and the reading states that floor and gives the field's first nonzero KL
+    in both coordinates rather than leaving a reader to subtract."""
     ea, eb = free["entropies"], refed["entropies"]
     n = min(len(ea), len(eb))
     exact = sum(1 for i in range(n) if ea[i] == eb[i])
@@ -330,16 +352,20 @@ def reading_two(free, refed):
         if fb is None:
             continue
         kls.append((pos, truncated_kl(fa["ranked"], fb["ranked"])))
+    field_floor = min((pos for pos, _ in kls), default=None)
+    first_kl = next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None)
     return {
         "positions_compared": n,
         "entropy_positions_exact": exact,
-        "entropy_first_difference": first,
+        "entropy_first_difference_ordinal": first,
         "entropy_mean_abs_diff": mean(diffs),
         "entropy_max_abs_diff": max(diffs) if diffs else None,
         "field_positions_compared": len(kls),
         "field_kl_bits_mean": mean([k["kl_bits"] for _, k in kls if k["kl_bits"] is not None]),
         "field_kl_bits_max": max((k["kl_bits"] for _, k in kls if k["kl_bits"] is not None), default=None),
-        "field_first_nonzero_kl": next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None),
+        "field_first_position": field_floor,
+        "field_first_nonzero_kl_position": first_kl,
+        "field_first_nonzero_kl_ordinal": None if first_kl is None else first_kl - field_floor,
         "field_positions_no_shared_support": sum(1 for _, k in kls if k["kl_bits"] is None),
         "field_positions_thin_support": sum(
             1 for _, k in kls
@@ -510,13 +536,38 @@ def run_refeed(cfg, source_dir, as_arm):
         # A refused or abandoned replay writes its close with the reason, and
         # the harness names an identity it refused as its own event, so a
         # reading computed over that sink would be a reading of nothing.
-        outcome = ((closes[-1].get("payload") or {}).get("outcome") or {}).get("kind") if closes else None
+        close_outcome = (closes[-1].get("payload") or {}).get("outcome") or {} if closes else {}
+        outcome = close_outcome.get("kind")
         rec["replay_outcome"] = outcome
+        rec["replay_divergence"] = close_outcome.get("divergence")
         rec["replay_refusals"] = [e["kind"] for e in events if e.get("kind", "").endswith("_refused")]
-        if outcome != "certified":
+        # **A replay that ran to its end is a reading whatever its outcome.**
+        # Certified means the recomputed path is the recorded one; diverged
+        # means the arrangement's argmax left the recorded path at a named
+        # position, which under another arrangement is the finding itself,
+        # and the per-position measurements stand on every position either
+        # way. Only a replay that was refused or abandoned computes nothing.
+        if outcome not in ("certified", "diverged"):
             rec["verdict"] = f"replay {outcome}: {', '.join(rec['replay_refusals']) or 'no reason event'}"
             return
-        ex = extract_run([e for e in events if e.get("run") == rec["replay_run"]]) if runs else extract_run(events)
+        replay_events = measured_events(events, rec["replay_run"])
+        if replay_events is None:
+            # A close whose run carries no measurement is an apparatus fault,
+            # and a reading over it would print zeros as a reading.
+            rec["verdict"] = "the replay's run carries no measurement in the record"
+            return
+        ex = extract_run(replay_events)
+        # **The divergence position is a third coordinate.** The harness
+        # indexes it into the input-plus-output token path, so the first
+        # emitted token is at the input count, where the entropies run by
+        # output ordinal from zero and the field by resident position from
+        # its own floor, the identity prefix plus the input per
+        # weaver-spu-Spec. The ordinal is given beside it so the three compare.
+        div = rec["replay_divergence"] or {}
+        if div.get("kind") == "token_path" and ex["input_tokens"] is not None:
+            rec["replay_divergence_ordinal"] = int(div["position"]) - ex["input_tokens"]
+        else:
+            rec["replay_divergence_ordinal"] = None
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
             json.dump({**rec, "refed": ex}, fh)
