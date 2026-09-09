@@ -20,10 +20,17 @@ registration, **because many rows sharing a parent would let an engineer
 register three arms, read how they land, and add a fourth**, which is the
 fitting-after-the-fact section 5.1's freeze exists to refuse. Section 2.5
 gains the member and its values, section 2.2 the emission's signature derived
-at ingest, and **section 4 gains a fourth read, which is this document
-returning rather than a surface proceeding** under that section's own rule.
-Section 2.7's absolute is qualified to what section 4 already glossed it as:
-what it forbids is a derivation nobody can find. Per issue #517.
+at ingest and **standing outside tuple equality beside lineage**, since a
+signature is what a run produced and not a condition it ran under, and
+**section 4 gains a fourth read, which is this document returning rather than
+a surface proceeding** under that section's own rule. The read is three index
+hits and the similarity over them is the recorded open query, which is what
+keeps that section's first line true. Section 5.3 says the checks hold per
+value and refuses a sweep naming the parent's own. Section 2.7's absolute is
+qualified to what section 4 already glossed it as: what it forbids is a
+derivation nobody can find. Section 10 gains the two elections this act
+opened, **the signature's representation and whether `device` resolves the
+card from the architecture**. Per issue #517.
 
 **Revised:** 2026-09-08, second of this date, the crate joins the assertion
 chain. This document carried **no graph block of any kind** where every other
@@ -467,11 +474,11 @@ Everything identifying the conditions lives in the run's own row:
   position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
 - the declared boundary set
-- **the emission's signature**, a set of shingles over the emitted text
-  derived once at ingest, which is what makes a sweep's comparison an index
-  operation rather than a computation, per section 5.4
 - the parent run reference and branch position, where the run is a branch,
   **which are lineage and stand outside tuple equality**
+- **the emission's signature**, a set of shingles over the emitted text
+  derived once at ingest, **which is a property of the result and stands
+  outside tuple equality with lineage**, per section 5.4
 - whether a token was forced, and which
 
 **The engine is in the compound, so the row holds it.** The tuple is a model
@@ -504,11 +511,19 @@ from: weaver-web
 to: web-absent-forced-mark-does-not-default
 ```
 
-**The row holds more than the tuple, and the difference is lineage.** The
-parent run reference and the branch position say where a run came from
-rather than what it ran under, per the charter's section 4, so **two rows
-differing only in them hold the same tuple** and remain comparable. Nothing
-else in this list is outside the compound. Were lineage inside it, a branch
+**The row holds more than the tuple, and the difference is lineage and the
+signature.** The parent run reference and the branch position say where a run
+came from rather than what it ran under, per the charter's section 4, so
+**two rows differing only in them hold the same tuple** and remain
+comparable. **The signature is outside it for the opposite reason and
+the same effect**: lineage is not a condition because it says where the run
+came
+from, and the signature is not a condition because it says what the run
+produced. Two runs under one tuple whose emissions differ hold different
+signatures and **the same tuple**, which is the whole of what a sweep and the
+device arm both measure, and a branch holds its parent's tuple where the diff
+moved nothing. Nothing else in this list is outside the compound. Were
+lineage inside it, a branch
 could never be reproduced against its parent, which is the comparison the
 staging surface exists to make.
 
@@ -750,14 +765,9 @@ to: web-registered-question-is-immutable
 is immutable per section 9's pin, and the rows around it go on being
 edited, which is why the state is a member rather than a table each.
 
-**A sweep's value set freezes with the rest of the row, and that is the
-whole of why a sweep is one row.** Section 5.4 states the ruling and its
-ground: a sweep held as many rows sharing a parent would let an engineer
-register three arms, read how they land, and add a fourth, which is the
-fitting-after-the-fact that section 5.1's freeze exists to refuse. One row
-whose value set is frozen at registration cannot do that, and an arm the
-sweep declared and never ran keeps its place in the set the way a registered
-experiment that never ran keeps its row.
+**A sweep's value set freezes with the rest of the row.** Section 5.4 states
+the ruling and argues it from the freeze above, and this section carries the
+consequence rather than the argument.
 
 ```graph
 node: web-registered-experiment-is-immutable
@@ -840,13 +850,13 @@ section holding the value. **Section 2.6 stores no result**, so nothing
 computed under the exception becomes a second truth about a run.
 
 ```graph
-node: web-nothing-is-computed-at-read-time
+node: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
 kind: assertion
 tag: review
 
 edge: asserts
 from: weaver-web
-to: web-nothing-is-computed-at-read-time
+to: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
 ```
 
 ### 2.8 The session
@@ -1165,9 +1175,24 @@ Four queries, and the schema of section 2 exists to make each an index hit.
 2. **A contiguous range of positions** carrying the emitted token, surprisal
    and entropy. This is the timeline and the transcript.
 3. **The run's tuple.** This is the label on every reading taken from it.
-4. **The runs one staged experiment produced, compared.** This is the
-   sweep's reading of section 5.4: the arms of one experiment against the
-   parent that is their control, by the member the sweep moved.
+4. **The runs one staged experiment produced, with what separates them.**
+   The arms of one sweep and the parent that is their control, per section
+   5.4, each with its tuple, its signature and the first position at which
+   its token path leaves the parent's. **All three are index hits**: the
+   arms by their parent reference, the signature stored at ingest per
+   section 2.2, and the first parting position by the key of section 2.1.
+   **A similarity between two signatures is not part of this read.** It is
+   the open query of the condition below, computed over what this read
+   returns and recorded in section 2.6, which is what keeps the first line
+   of this section true.
+
+**For a per-generation sweep the parting position is the reading and the
+signature is not needed.** Same weights and same window mean the arms are
+comparable byte for byte, so where the paths part is an index operation and
+says everything the arm was authored to ask. **The signature earns its place
+on a load-time sweep**, where section 5.2 has the comparison structural
+rather than byte-exact and a parting position says only that two different
+models wrote different essays.
 
 **The fourth read is this document returning rather than a surface
 proceeding.** The three above stood alone until 2026-09-08, when the rule
@@ -1242,6 +1267,20 @@ the forced token is present in the capture at that position
 every artifact the diff names resolves
 ```
 
+**Each check holds per value of a sweep's set**, per section 5.4, because a
+load-time sweep over the artifact or the context capacity resolves a
+different value at each arm and a check read once would pass on the first and
+say nothing about the rest.
+
+**A sweep naming the parent's own value is refused here, naming the value.**
+Section 5.4 has the parent as the control, so such an arm declares a run the
+store already holds. **The refusal is the honest answer of the three**:
+admitting it writes a second row for one run, and dropping it silently leaves
+the frozen set differing from what the author registered, which spends the
+freeze that section 5.1 buys pre-registration with. An author who meant the
+control meant the parent, and the interface says so before the row is frozen
+rather than after.
+
 **A runner cannot ask.** A refusal discovered at three in the morning costs
 a batch window, and the same refusal at authoring costs nothing.
 
@@ -1287,7 +1326,8 @@ the seed drawn per generation from the declared seed, the turn's reference
 and the ordinal, so a branch that changes nothing draws what its parent drew.
 A sweep therefore needs no arm at the parent's own value: **the parent is the
 control**, and a sweep that lists the parent's value among its own is
-declaring a run the store already holds.
+declaring a run the store already holds. **Section 5.3 refuses it at
+authoring** and says why the refusal is the honest answer of the three.
 
 ## 6. The surfaces
 
@@ -1534,6 +1574,25 @@ a `web-` assertion beside `weaver-admin`'s.
   settles it**, and both facts stand. It is restored rather than answered,
   the edition act of this date having found `Cargo.toml` still pointing at
   the section it used to live in.
+- **The signature's representation**, opened 2026-09-08 with the signature
+  itself at section 2.2. The shingle's unit and width, whether the shingles
+  run over the whole emission or over the body after the model's reasoning
+  block, and what similarity is taken over two of them. **This one is
+  load-bearing for the schema rather than for a reading**: the signature is
+  derived at ingest, so a later answer re-derives every stored row, and it is
+  the one open cell here whose cost grows with the store. The choice is not
+  academic. The exemplar essays of 2026-09-08 carry a reasoning block holding
+  a fifth of their assertions, and the 0.5B validation pair carries none at
+  all, so a signature over the whole emission and one over the body answer
+  differently about the same two runs.
+- **Whether `device` resolves the card from the architecture**, opened
+  2026-09-08 by the same act. Section 2.2 holds `device` as one member, and
+  the ablation of that date separates the two: two A6000s produce
+  byte-identical essays under one seed, and an A6000 against an Ada shares
+  three headings of eight. **A sweep over a member the schema cannot resolve
+  reports a divergence it cannot attribute**, so section 5.4's reading is
+  only as fine as this answer. Whether the member splits or carries an
+  architecture beside the card is the ruling.
 - **Whether this crate scores a correctness verdict**, which the charter's
   section 9 holds open. The reproduction verdict is not open and is not a
   score: it is the projected comparison of two rows this crate holds, on
