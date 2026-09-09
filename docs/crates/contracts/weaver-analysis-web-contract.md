@@ -155,10 +155,11 @@ the reader never asks the emitter for anything: what it wants more of, it
 gets by reading a different record or by an act on the emitter's own
 charter.
 
-**It asks the emitter for one thing it does not do today**, named in section
-3 and nowhere else in this document: two counts per generation on the
-summary stream. Every other clause states what the signals reader already
-emits as of `main` at `20b9cdf`, per `weaver-analysis-Spec` section 5.
+**It asks the emitter for what it does not do today**, named in section 3 and nowhere
+else in this document, each on the summary stream and each added on the date its header
+entry names: the two counts per generation, the weights hash, the record's session and
+digest, and the seated prefix's length. Every other clause states what the signals
+reader already emits as of `main` at `20b9cdf`, per `weaver-analysis-Spec` section 5.
 
 ## 2. The traffic
 

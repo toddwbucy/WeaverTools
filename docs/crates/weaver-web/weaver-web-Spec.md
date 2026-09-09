@@ -1383,22 +1383,26 @@ resident length at the end of the turn the load's lineage stops at, per
 the ruling's own case and the matrix's, is a fresh load whose parent the store alone
 remembers, and its branch position is the resident length of the parent's identity
 prefix, the position its first turn's input begins at, which is the first at which the
-arm's tape can differ from its parent's by the run's own doing. A stated zero is refused
-because it would say the arm departs before a prefix it shares, and the figure crosses
-the analysis seam per section 2.2 as of issue #527's act, so section 5.3 reads it from
-the parent's row. **The mechanism carries the cut and not the continuation**: a
-restoring load stands the session at the turn the lineage names, and the re-issue of the
-parent's turns to a fresh arm is the queue runner's, which issue #442 holds open. The
-charter's section 3.5 **fork** forces a token at a position inside a turn and continues
-from it, so its branch position is that position and the forced token is the member
-section 2.5 holds for it. **No contract yet carries a cut inside a turn**, which section
-10 holds open, so the fork waits on that contract. **The charter's sentence that section
-5.4 grounds on, "fork the same position many times under fresh seeds", covers both
-features at their own grain**: the sweep forks the run at its branch position and the
-fork forks a position inside a turn, so 5.4 stands on it as a sweep does. Section 3.1
-derives the parting position for the sweep's arms, which the mechanism makes, and leaves
-it absent on a fork until the fork has one, per section 6's rule. The row's members are
-not narrowed for the wait.
+arm's tape can differ from its parent's by the run's own doing. The figure is read from
+the parent's row, where section 2.2 holds it as of issue #527's act, and never stated in
+its place: a branch position written as zero where the row holds a larger figure would
+say the arm departs before a prefix it shares, so section 5.3 refuses a stated figure
+that is not the row's and refuses an absent row figure as a branch position the arm
+cannot yet take. A parent whose seated prefix's length is zero, having no prefix, yields
+a branch position of zero read from the row, which is the row's figure and stands. **The
+mechanism carries the cut and not the continuation**: a restoring load stands the
+session at the turn the lineage names, and the re-issue of the parent's turns to a fresh
+arm is the queue runner's, which issue #442 holds open. The charter's section 3.5
+**fork** forces a token at a position inside a turn and continues from it, so its branch
+position is that position and the forced token is the member section 2.5 holds for it.
+**No contract yet carries a cut inside a turn**, which section 10 holds open, so the
+fork waits on that contract. **The charter's sentence that section 5.4 grounds on, "fork
+the same position many times under fresh seeds", covers both features at their own
+grain**: the sweep forks the run at its branch position and the fork forks a position
+inside a turn, so 5.4 stands on it as a sweep does. Section 3.1 derives the parting
+position for the sweep's arms, which the mechanism makes, and leaves it absent on a fork
+until the fork has one, per section 6's rule. The row's members are not narrowed for the
+wait.
 
 ### 5.1 The five states
 
