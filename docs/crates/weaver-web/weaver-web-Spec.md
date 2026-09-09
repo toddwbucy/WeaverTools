@@ -10,16 +10,14 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
-**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled.
-Section 10's election closes on the operator's ruling of this date: the word
-carried three senses rather than the charter's two, and the count settles it,
-a cell staying a named open question at a hundred and fifty-three uses across
-thirty-one documents, a matrix coordinate becoming an entry, and a
-declaration plus a task plus a run becoming a trial. This document's four
-sites are the reference trials of sections 2.3 and 8 and the trial record of
-section 8. Per issue #434's queue.
+**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled. Section 10's
+election closes on the operator's ruling of this date: the word carried three senses
+rather than the charter's two, and the count settles it, a cell staying a named open
+question at a hundred and fifty-three uses across thirty-one documents, a matrix
+coordinate becoming an entry, and a declaration plus a task plus a run becoming a trial.
+This document's four sites are the reference trials of sections 2.3 and 8 and the trial
+record of section 8. Per issue #434's queue.
 **Revised:** 2026-09-09, third of this date, the seated prefix's length crosses the
-
 seam. Section 2.2 gains it on the run's row, the resident length before the run's
 first turn's input, outside tuple equality as an address on the tape and not a
 condition, and section 3.1 lands it from the emitter, which derives it from the
@@ -1802,15 +1800,21 @@ a `web-` assertion beside `weaver-admin`'s.
   it. Where one does, **the scorer is named on the verdict and never in the
   run's tuple**, so a second scorer adds a verdict rather than changing what
   the run was.
-- **The word "cell", closed 2026-09-09.** It carried three senses rather
-  than the two the charter's section 9 named, and the count settled it on
-  the operator's ruling of that date: a **cell** is a named open question,
-  which is what this section's own heading calls its items and what a
-  hundred and fifty-three uses across thirty-one documents mean; a matrix
-  coordinate is an **entry**; a declaration plus a task plus a run is a
-  **trial**, which the charter's section 3.3 now says. Four sites moved in
-  this document, the reference trials of sections 2.3 and 8, and none moved
-  outside this crate.
+- **The word "cell", closed 2026-09-09.** It carried three senses rather than the two
+  the charter's section 9 named, and the count settled it on the operator's ruling of
+  that date. A **cell** is a named open question, which is what this section's own
+  heading calls its items and what a hundred and fifty uses across thirty documents,
+  counting whole-word cell and cells over the markdown of `docs` and `process` outside
+  the frozen archive and outside the four files this act sweeps mean. A matrix
+  coordinate is an **entry**. A declaration plus a task plus a run is a **trial**, which
+  the charter's section 3.3 now says. Four sites moved in this document, the reference
+  trials of sections 2.3 and 8 and section 8's trial record, and the one document
+  outside this crate that moved is `docs/technical/weaver-agents/reproducibility.md`,
+  whose six uses are the matrix coordinate. The matrix-coordinate sense also stands in
+  code and in deposits, the driver `experiments/cross-precision-repro/confirm_cells.py`
+  by name and a `cells` key the configs and every deposit written against them carry.
+  **Those are weighed and left**: a filename and a stored key are not prose, and
+  renaming them would strand the deposits that already spell it.
 - **The fork's cut inside a turn.** The restoring load's lineage names the
   turn the holdings stop at and nothing finer, and the charter's section 3.5
   fork needs a position within one and a token forced there. It is owed at

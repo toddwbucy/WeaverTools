@@ -91,18 +91,18 @@ than the declaration's, and the record's `model.request` and
 `model.output` events carry one timestamp, so the record cannot yet
 separate prefill from decode - a first-token stamp is the missing fact.
 
-## The cross-precision cells
+## The cross-precision entries
 
 Run later the same day, scripted rather than hand-driven, because the
 manual reissue was the one weakness the first result named. The harness
 lives at `experiments/cross-precision-repro/` and drives the whole
 protocol: serve a short and a longer turn, unload fully, reload, read
 the request texts back from the record's own events, reissue byte-exact
-at the gate socket, compare, deposit. Two cells on this box, the same
+at the gate socket, compare, deposit. Two entries on this box, the same
 declaration apart from the artifact path, the same declared seed and
 turn texts, single device, no sharding:
 
-| cell | artifact | long turn | verdict |
+| entry | artifact | long turn | verdict |
 |---|---|---|---|
 | q8_0 | official GGUF, sha `ca59ca7f...` | 404 tokens | REPRODUCED, all checks, both turns |
 | bf16 | local conversion, sha `cba13b11...` | 795 tokens | REPRODUCED, all checks, both turns |
@@ -110,10 +110,10 @@ turn texts, single device, no sharding:
 The bf16 artifact is a conversion from the official safetensors by the
 runtime's own vendored converter at the pinned rev, no public bf16
 existing. Seven hundred ninety-five tokens bit-exact at bf16 is the
-long-generation cell the first result lacked: drift had room and did
+long-generation entry the first result lacked: drift had room and did
 not come.
 
-One observation across the cells, outside reproducibility's own
+One observation across the entries, outside reproducibility's own
 question and recorded as the first brick under the quantization
 transfer question the Jacobian lens page holds open: with prompt and
 derived seed identical across precisions, the short turn's emissions
@@ -121,7 +121,7 @@ were identical while the long turn's opened identically and then
 diverged into different trajectories, each internally reproducible.
 Precision changed where the path went, not whether the path repeats.
 
-The cross-architecture cells stand open: the same script, the same
+The cross-architecture entries stand open: the same script, the same
 artifacts by hash, on the Ada and on a single Ampere device, are the
 olympus seat's arm, tracked on the repository issue that carries the
 pre-registered expectations.

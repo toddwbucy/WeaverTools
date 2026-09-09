@@ -6,18 +6,16 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
-**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled and
-this document's noun moves. Section 9 read the word as two senses and there
-were three, the third being the corpus's own and the largest: a named open
-question, which section 9's own heading uses. On the operator's ruling of
-this date the count settles it, a cell stays a named open question
-everywhere, a matrix coordinate is an entry, and **this document's
-declaration plus a task plus a run is a trial**. Fifteen sites move here and
-none moves in any other crate, the other thirty-one documents using the
-sense that keeps the word. `weaver-web-Spec` section 10's election closes
-with it. Per issue #434's queue.
+**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled and this
+document's noun moves. Section 9 read the word as two senses and there were three, the
+third being the corpus's own and the largest: a named open question, which section 9's
+own heading uses. On the operator's ruling of this date the count settles it, a cell
+stays a named open question everywhere, a matrix coordinate is an entry, and **this
+document's declaration plus a task plus a run is a trial**. Fifteen sites move here,
+four in the Spec and six in `docs/technical/weaver-agents/reproducibility.md`, and none
+in any other crate's documents, which use the sense that keeps the word.
+`weaver-web-Spec` section 10's election closes with it. Per issue #434's queue.
 **Revised:** 2026-09-09, third of this date, the whole-run arm's prerequisite
-
 lands. Section 3.5 said the parent's identity prefix's length crossed no seam
 and limited the runnable arm to one restored at a turn until it did. It
 crosses `weaver-analysis-web-contract` section 2.2 as of issue #527's act
@@ -881,17 +879,22 @@ this crate designs around the gap until it closes.
   two are separate columns and the correctness one stays unfilled until a
   scorer is named**, because a column that mixes them would let a
   reproduction verdict be read as a verdict on the answer.
-- **The word "cell", closed 2026-09-09.** This bullet read it as two senses,
-  a matrix coordinate and a declaration plus a task plus a run, and there
-  were three: the corpus's own **cell**, a named open question, which this
-  section's own heading uses and which stands at a hundred and fifty-three
-  uses across thirty-one documents in every crate. On the operator's ruling
-  of that date the count settles it. **A cell is a named open question**,
-  unchanged everywhere. **A matrix coordinate is an entry**, per the sketch
-  at `docs/project/sketch-ablation-matrix.md`. **A declaration plus a task
-  plus a run is a trial**, which this document now says, the word being
-  free in the corpus and sitting beside the experiment that authors it and
-  the run that executes it.
+- **The word "cell", closed 2026-09-09.** This bullet read it as two senses, a matrix
+  coordinate and a declaration plus a task plus a run, and there were three. The third
+  is the corpus's own **cell**, a named open question, which this section's own heading
+  uses and which stands at a hundred and fifty uses across thirty documents, counting
+  whole-word cell and cells over the markdown of `docs` and `process` outside the frozen
+  archive and outside the four files this act sweeps, in every crate. On the operator's
+  ruling of that date the count settles it. **A cell is a named open question**,
+  unchanged everywhere. **A matrix coordinate is an entry**, per the sketch at
+  `docs/project/sketch-ablation-matrix.md`. **A declaration plus a task plus a run is a
+  trial**, which this document now says, the word being free in the corpus and sitting
+  beside the experiment that authors it and the run that executes it. The
+  matrix-coordinate sense also stands in code and in deposits, the driver
+  `experiments/cross-precision-repro/confirm_cells.py` by name and a `cells` key the
+  configs and every deposit written against them carry. **Those are weighed and left**:
+  a filename and a stored key are not prose, and renaming them would strand the deposits
+  that already spell it.
 - **The field election's depth**, which sets how many alternatives a
   position keeps. The records on hand carry forty and fifty. It is the
   operator's ruling and the number one wishes had been kept is discovered
