@@ -6,6 +6,16 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-09, second of this date, two features author from Stage and a branch is a
+load in both. Section 3.5 described one click and one row and two features
+stood on them: an ablation, which moves one member of the tuple and runs the
+arm whole from the load, and a fork, which forces a token at a position
+inside a turn and continues from it. The operator ruled 2026-09-09 that a
+branch occurs at load time, each arm a separate run under its moved value
+and the model reloaded for the next, which the mechanism carries today, and
+that the fork's cut inside a turn is owed at a contract no document yet
+holds. **The ablation ships first and the fork after it**, and the row is
+not narrowed for the wait. Issue #524 is the register.
 **Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
 the difference between the row and the tuple is lineage, and the Spec's acts
 of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
@@ -393,6 +403,19 @@ That is not a new rule. The load boundary is the only change boundary, a
 branch is a change, and therefore a branch is a load. An interface that
 branched directly would be mutating a loaded agent, which section 2
 refuses.
+
+**Two features author from this surface, and a branch is a load in both.**
+An **ablation** moves one member of the tuple and runs the arm whole from
+the load, so its branch position is a turn boundary, and the mechanism
+carries it today: a restoring load's lineage names the parent, the run the
+cut falls in, and the turn the holdings stop at. A **fork**, the click on an
+alternative above, forces a token at a position inside a turn and continues
+from it, so its branch position is that position. **No contract yet carries
+a cut inside a turn**, and the fork waits on one, per the operator's ruling
+of 2026-09-09 that a branch occurs at load time, each arm a separate run
+under its moved value and the model reloaded for the next. The ablation
+ships first and the fork after it. The row's members are not narrowed for
+the wait: the forced token and its position stay, and serve the fork alone.
 
 **A forced token is not a sampled one**, and a trajectory reached by forcing
 is never quotable as something the model produced on its own. The forcing is
