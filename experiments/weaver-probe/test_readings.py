@@ -1,7 +1,7 @@
 """The probe's pure readings, per issue #511."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two, extract_run
+from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two, extract_run, measured_events
 
 def test_divergence_and_agreement():
     assert first_divergence([1,2,3],[1,2,3]) is None
@@ -51,8 +51,14 @@ def test_a_shorter_run_diverges_at_its_end():
 def test_readings_shape():
     a={"output_tokens":[1,2,3],"emission":"abc","entropies":[0.5,0.5,0.5],"field":{0:{"ranked":[{"token":1,"probability":1.0}],"realized":0}}}
     b={"output_tokens":[1,2,4],"emission":"abd","entropies":[0.5,0.5,0.7],"field":{0:{"ranked":[{"token":1,"probability":1.0}],"realized":0}}}
-    one=reading_one(a,b); assert one["first_token_divergence"]==2 and one["first_char_divergence"]==2 and not one["identical"]
-    two=reading_two(a,b); assert two["entropy_positions_exact"]==2 and two["entropy_first_difference_ordinal"]==2 and two["field_kl_bits_max"]==0
+    one=reading_one(a,b)
+    assert one["first_token_divergence"]==2
+    assert one["first_char_divergence"]==2
+    assert not one["identical"]
+    two=reading_two(a,b)
+    assert two["entropy_positions_exact"]==2
+    assert two["entropy_first_difference_ordinal"]==2
+    assert two["field_kl_bits_max"]==0
 
 if __name__=="__main__":
     for n,f in sorted(globals().items()):
@@ -80,4 +86,16 @@ def test_extract_run_keeps_the_input_count_the_divergence_is_read_against():
     ex=extract_run(events)
     assert ex["input_tokens"]==127 and ex["output_tokens"]==[5,6] and list(ex["field"])==[154]
     assert extract_run([])["input_tokens"] is None
+
+
+def test_a_run_of_only_its_close_is_not_measured():
+    # The close carries the run id, so filtering by run alone is never empty.
+    for kind in ("certified", "diverged"):
+        close={"kind":"replay.closed","run":"r1","payload":{"outcome":{"kind":kind}}}
+        assert measured_events([close], "r1") is None
+        assert measured_events([close, {"kind":"model.field","run":"r1","payload":{}}], "r1") is None
+        measured={"kind":"model.measurement","run":"r1","payload":{"input_tokens":[1],"output_tokens":[2],"entropies":[0.1]}}
+        got=measured_events([close, measured, {"kind":"model.measurement","run":"other","payload":{}}], "r1")
+        assert got==[close, measured]
+        assert extract_run(got)["output_tokens"]==[2]
 

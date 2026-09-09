@@ -200,6 +200,18 @@ def extract_run(events):
     return rec
 
 
+def measured_events(events, run_id):
+    """The events of one run, or None where the run carries no measurement.
+    The close event carries the run id too, so a run of only its close is
+    not empty, and a reading over it would print zero positions as a reading.
+    The measurement is what a reading is computed from, so its absence is
+    the fault named."""
+    mine = [e for e in events if e.get("run") == run_id]
+    if not any(e.get("kind") == "model.measurement" for e in mine):
+        return None
+    return mine
+
+
 def wait_for_close(trace_path, run_id, timeout):
     """Until the run's turn closes in the record, or the bound."""
     end = time.time() + timeout
@@ -538,11 +550,11 @@ def run_refeed(cfg, source_dir, as_arm):
         if outcome not in ("certified", "diverged"):
             rec["verdict"] = f"replay {outcome}: {', '.join(rec['replay_refusals']) or 'no reason event'}"
             return
-        replay_events = [e for e in events if e.get("run") == rec["replay_run"]]
-        if not replay_events:
-            # A close whose run has no events in the record is an apparatus
-            # fault, and a reading over nothing would print zeros as a reading.
-            rec["verdict"] = "the replay's run has no events in the record"
+        replay_events = measured_events(events, rec["replay_run"])
+        if replay_events is None:
+            # A close whose run carries no measurement is an apparatus fault,
+            # and a reading over it would print zeros as a reading.
+            rec["verdict"] = "the replay's run carries no measurement in the record"
             return
         ex = extract_run(replay_events)
         # **The divergence position is a third coordinate.** The harness
