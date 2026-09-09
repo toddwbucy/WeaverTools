@@ -11,19 +11,17 @@ The prior text is replaced whole rather than amended, and git is its
 archive.
 
 **Revised:** 2026-09-09, second of this date, a branch is a load, and the row serves two
-features. Section 5 states the operator's ruling of that date on issue #524:
-section 5.4's sweep moves one member of the tuple and runs each arm whole
-from the load, so an arm's branch position is a turn boundary the restoring
-load's lineage already names, and the charter's section 3.5 fork forces a
-token at a position inside a turn, whose cut no contract yet carries.
-Section 5.3 says the forced-token check is the fork's alone, and section 10
-holds the fork's cut open. **Section 3.1's parting position is derived for
-the sweep's arms, which the mechanism makes, and is absent on a fork until
-the fork has one.** Nothing is narrowed: the forced token and its position
-stay on the rows and serve the fork. Per the review of PR #526, section 5
-says what a whole-run arm's branch position is, the parent's identity
-prefix's resident length, and that the mechanism carries the cut while the
-runner of issue #442 owes the continuation.
+features. Section 5 states the operator's ruling of that date on issue #524: section
+5.4's sweep moves one member of the tuple and runs each arm whole from the load, so an
+arm's branch position is a turn boundary the restoring load's lineage already names, and
+the charter's section 3.5 fork forces a token at a position inside a turn, whose cut no
+contract yet carries. Section 5.3 says the forced-token check is the fork's alone, and
+section 10 holds the fork's cut open. **Section 3.1's parting position is derived for
+the sweep's arms, which the mechanism makes, and is absent on a fork until the fork has
+one.** Nothing is narrowed: the forced token and its position stay on the rows and serve
+the fork. Per the review of PR #526, section 5 says what a whole-run arm's branch
+position is, the parent's identity prefix's resident length, and that the mechanism
+carries the cut while the runner of issue #442 owes the continuation.
 **Revised:** 2026-09-09, the run row names the record it came from. Section
 2.2 gains the record's session, the identity the trace's runs share per
 `weaver-trace-PRD` section 2.1 and **not section 2.8's session, which is a

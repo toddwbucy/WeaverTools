@@ -6,19 +6,17 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
-**Revised:** 2026-09-09, second of this date, two features author from Stage and a branch is a
-load in both. Section 3.5 described one click and one row and two features
-stood on them: an ablation, which moves one member of the tuple and runs the
-arm whole from the load, and a fork, which forces a token at a position
-inside a turn and continues from it. The operator ruled 2026-09-09 that a
-branch occurs at load time, each arm a separate run under its moved value
-and the model reloaded for the next, which the mechanism carries today, and
-that the fork's cut inside a turn is owed at a contract no document yet
-holds. **The ablation ships first and the fork after it**, and the row is
-not narrowed for the wait. The whole-run arm's branch position is the
-parent's identity prefix's length, owed at the analysis seam per the Spec's
-section 10 and landing before the first such arm is staged. Issue #524 is
-the register.
+**Revised:** 2026-09-09, second of this date, two features author from Stage and a
+branch is a load in both. Section 3.5 described one click and one row and two features
+stood on them: an ablation, which moves one member of the tuple and runs the arm whole
+from the load, and a fork, which forces a token at a position inside a turn and
+continues from it. The operator ruled 2026-09-09 that a branch occurs at load time, each
+arm a separate run under its moved value and the model reloaded for the next, which the
+mechanism carries today, and that the fork's cut inside a turn is owed at a contract no
+document yet holds. **The ablation ships first and the fork after it**, and the row is
+not narrowed for the wait. The whole-run arm's branch position is the parent's identity
+prefix's length, owed at the analysis seam per the Spec's section 10 and landing before
+the first such arm is staged. Issue #524 is the register.
 **Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
 the difference between the row and the tuple is lineage, and the Spec's acts
 of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
