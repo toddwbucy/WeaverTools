@@ -5,6 +5,16 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+**Revised:** 2026-09-09, second of this date, the summary carries the seated
+prefix's length. Section 2.2 gains, once per run, the resident length before the
+run's first turn's input, which the emitter derives from the run's first generation
+by subtracting that generation's drawn tokens, the terminator, and its input
+identifiers from its closing count, per `weaver-spu-Spec` section 6's definition of
+the input as the turn's delta with the prefix outside it. It is present only where
+the drain began at or before the run's `load`, since a later start would name a
+later turn's floor as the prefix. Section 3 asks it of the emitter and the
+vocabulary clause names it. Per issue #527, for `weaver-web-Spec` section 5's
+whole-run arm, whose branch position it is.
 **Revised:** 2026-09-09, the summary names the record it was read from. Section
 2.2 gains the record's session and the record's digest per generation, once per run
 in the reader's row on the weights hash's own rule, and section 3 asks both of the
@@ -119,14 +129,19 @@ section 2.6.
 replay bracket, which is the licence a diagnostic reading needs and a
 serving reading does not.
 
-**Defined here.** One noun, since 2026-09-09: **the record's digest** of
+**Defined here.** Two nouns, since 2026-09-09. **The record's digest** of
 section 2.2, sha256 over a run's own lines as the emitter drained them, and
-what makes a run whole for it. No other document holds it, the trace
+what makes a run whole for it: no other document holds it, the trace
 charter's section 4.3 saying in as many words that the record carries no
-checksum, so this contract is its authority and `weaver-analysis-Spec`
-section 5 and `weaver-web-Spec` section 2.2 cite it here. Every other term
-above has one authority already, and this contract states what crosses of
-them and defines none.
+checksum. **The seated prefix's length** of section 2.2, the resident
+length before the run's first turn's input as the emitter derives it from
+the first generation: the SPU records the figure at open per its section
+4.2 and no event carries it, per the trace charter's section 3.1, so the
+derivation that recovers it is this contract's. This contract is the
+authority for both, and `weaver-analysis-Spec` section 5 and
+`weaver-web-Spec` section 2.2 cite it here. Every other term above has one
+authority already, and this contract states what crosses of them and
+defines none.
 
 ## 1. What this contract governs
 
@@ -140,10 +155,11 @@ the reader never asks the emitter for anything: what it wants more of, it
 gets by reading a different record or by an act on the emitter's own
 charter.
 
-**It asks the emitter for one thing it does not do today**, named in section
-3 and nowhere else in this document: two counts per generation on the
-summary stream. Every other clause states what the signals reader already
-emits as of `main` at `20b9cdf`, per `weaver-analysis-Spec` section 5.
+**It asks the emitter for what it does not do today**, named in section 3 and nowhere
+else in this document, each on the summary stream and each added on the date its header
+entry names: the two counts per generation, the weights hash, the record's session and
+digest, and the seated prefix's length. Every other clause states what the signals
+reader already emits as of `main` at `20b9cdf`, per `weaver-analysis-Spec` section 5.
 
 ## 2. The traffic
 
@@ -218,6 +234,24 @@ mismatch never reads a digest of a truncated record as a digest of the
 whole. The session is absent where the record predates the envelope's
 session member and never otherwise.
 
+**The seated prefix's length crosses the same way: on every generation's entry, and once
+per run in the reader's row.** It is the resident length before the run's first turn's
+input, the position that turn's input begins at, which `weaver-spu-Spec` section 4.2 has
+the open record and no event carries as a member, per `weaver-trace-PRD` section 3.1.
+**The emitter derives it from the run's first generation and from nothing later**: the
+closing count less the drawn tokens, less the terminator, less the count of that
+generation's input identifiers, the input being the turn's delta with the prefix outside
+it per `weaver-spu-Spec` section 6, so what remains is the prefix and only the prefix.
+**It is present only where the drain began at or before the run's `load`**, because a
+drain that opened later would take some later turn's floor for the prefix and name a
+wrong position with a right-looking number, and it is absent where the first generation
+carries no closing count or no measurement, each member absent on its own terms. A
+restoring run's prefix includes what the load restored, per `weaver-harness-Spec`
+section 8, and the figure says so by being larger, which is what a whole-run arm's
+branch position needs it to say. Every entry repeats it as every entry repeats the
+weights hash, so a run's generations agree on it as they do on the session, and a run
+whose entries disagree is the defect the reader names.
+
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store
 keyed by position converts from and it is owed whether or not a perplexity
@@ -255,20 +289,19 @@ draw, which is what `weaver-web-Spec` section 2.1 keys on and what the field
 read addresses. **A consumer that treats them as one word addresses the
 wrong token.**
 
-**The emitter therefore carries, per generation, the resident count as the
-generation closed and the count of output tokens**, beside the perplexity on
-the summary stream, **and the record's session and digest per section 2.2**,
-the emitter being the party that drained the bytes and the only one that
-can name them. **The output count is the length of that generation's
-`model.measurement` `output_tokens` sequence**, the drawn tokens with the
-terminator outside them per `weaver-spu-Spec` section 6, and not a separate
-scalar the record carries. **A generation whose measurement holds no
-readable `output_tokens` produces no summary entry and no points at all**,
-so `O` is never absent from an entry that exists and a consumer never meets
-a half-formed one. Both are facts the record already holds, on
-`model.output` and `model.measurement`, so the emitter reports them and
-derives nothing, which is the property `weaver-analysis-Spec` section 5
-argues for.
+**The emitter therefore carries, per generation, the resident count as the generation
+closed and the count of output tokens**, beside the perplexity on the summary stream,
+**and the record's session and digest per section 2.2**, the emitter being the party
+that drained the bytes and the only one that can name them, **and the seated prefix's
+length per the same section**, derived from the first generation once per run. **The
+output count is the length of that generation's `model.measurement` `output_tokens`
+sequence**, the drawn tokens with the terminator outside them per `weaver-spu-Spec`
+section 6, and not a separate scalar the record carries. **A generation whose
+measurement holds no readable `output_tokens` produces no summary entry and no points at
+all**, so `O` is never absent from an entry that exists and a consumer never meets a
+half-formed one. Both are facts the record already holds, on `model.output` and
+`model.measurement`, so the emitter reports them and derives nothing, which is the
+property `weaver-analysis-Spec` section 5 argues for.
 
 **The two counts landed at PR #462 and #463 on 2026-09-05**, with the
 definitions the members wanted, and the emitter carries them today.

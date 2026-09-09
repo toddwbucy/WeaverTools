@@ -84,6 +84,11 @@ pub struct RunTuple {
     /// the emitter could not vouch for them.
     pub record_session: Option<String>,
     pub record_digest: Option<String>,
+    /// The seated prefix's length, the resident length before the run's
+    /// first turn's input, per section 2.2. Derived by the emitter from the
+    /// run's first generation and never here. `None` where the emitter sent
+    /// none, which section 5 reads as a branch position an arm cannot take.
+    pub prefix_length: Option<i32>,
     /// The emission's signature, outside the compound. Its representation is
     /// section 10's open election.
     pub signature: Option<serde_json::Value>,
@@ -153,7 +158,8 @@ impl Store {
              compute_precision, engine, batching, field_depth, task_source, \
              task_identity, boundary_set, forced_position, forced_token, \
              parent_run_id, branch_position, parting_position, \
-             record_session, record_digest, signature, ingested_at \
+             record_session, record_digest, prefix_length, \
+             signature, ingested_at \
              FROM run WHERE run_id = $1",
         )
         .bind(&run.0)
@@ -189,7 +195,8 @@ impl Store {
              r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
              r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
              r.parting_position, \
-             r.record_session, r.record_digest, r.signature, r.ingested_at \
+             r.record_session, r.record_digest, r.prefix_length, \
+             r.signature, r.ingested_at \
              FROM staged_experiment_run ser JOIN run r ON r.run_id = ser.run_id \
              WHERE ser.experiment_id = $1",
         )
@@ -295,6 +302,7 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
         parting_position: r.get("parting_position"),
         record_session: r.get("record_session"),
         record_digest: r.get("record_digest"),
+        prefix_length: r.get("prefix_length"),
         signature: r.get("signature"),
         ingested_at: r.get("ingested_at"),
     }
@@ -486,10 +494,31 @@ mod tests {
         assert_eq!(t.record_session.as_deref(), Some("sess-1"));
         assert_eq!(t.record_digest.as_deref(), Some(digest.as_str()));
 
+        // The seated prefix's length reads back as landed, and the schema
+        // refuses a negative one by name.
+        sqlx::query("UPDATE run SET prefix_length = 154 WHERE run_id = 'r-named'")
+            .execute(&s.pool)
+            .await
+            .unwrap();
+        let t = s.tuple(&RunId("r-named".into())).await.unwrap().unwrap();
+        assert_eq!(t.prefix_length, Some(154));
+        let negative = sqlx::query("UPDATE run SET prefix_length = -1 WHERE run_id = 'r-named'")
+            .execute(&s.pool)
+            .await
+            .expect_err("the schema refuses a negative prefix length");
+        assert!(
+            negative
+                .to_string()
+                .contains("run_prefix_length_is_a_length"),
+            "refused by the wrong rule: {negative}"
+        );
+
         // Absent rather than defaulted where the emitter sent none.
         seed_run(&s, "r-unnamed", None, None).await;
         let t = s.tuple(&RunId("r-unnamed".into())).await.unwrap().unwrap();
-        assert!(t.record_session.is_none() && t.record_digest.is_none());
+        assert!(
+            t.record_session.is_none() && t.record_digest.is_none() && t.prefix_length.is_none()
+        );
 
         // The schema refuses a digest that is not sha256 hex.
         let refused = sqlx::query(

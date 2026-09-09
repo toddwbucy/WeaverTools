@@ -4,6 +4,12 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-09, second of this date, the summary carries the seated prefix's
+length. Section 5 derives it from the run's first generation, the closing count less
+the drawn tokens, the terminator and the input identifiers, present only where the
+drain began at or before the run's `load`, and reports it once per run. One
+perturbation record, and section 6's counts move by one. Per
+`weaver-analysis-web-contract` section 2.2 as revised this date and issue #527.
 **Revised:** 2026-09-09, the summary names the record it was read from. Section 5's
 summary gains, per generation, the record's session from the envelope and the
 record's digest, sha256 over the run's own lines as this crate drained them, each
@@ -940,6 +946,30 @@ run's first line saw a suffix, and a digest of a suffix would read as a digest o
 whole. **Absent says this crate could not vouch for the bytes, and never that it
 vouched for the bytes it happened to see.**
 
+**The summary carries the seated prefix's length on every generation's entry, the reader
+holding it once per run**, as of 2026-09-09 per `weaver-analysis-web-contract` section
+2.2 and issue #527: the resident length before the run's first turn's input, which this
+crate derives from the run's first generation and from nothing later, the closing count
+less the drawn tokens, less the terminator, less the count of that generation's input
+identifiers, the input being the turn's delta with the prefix outside it per
+`weaver-spu-Spec` section 6. **It is present only where the drain began at or before the
+run's `load`**, since a drain that opened later would take a later turn's floor for the
+prefix, and it is absent where the first generation carries no closing count or no
+measurement. This crate derives it because no event carries it and the SPU's own record
+of it, per its section 4.2, does not leave the SPU, and a reader with only the summary
+could not form it, the first draw's position being the earliest the two counts alone
+reach.
+
+```graph
+node: analysis-summary-reports-the-prefix-length
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-prefix-length
+```
+
 ```graph
 node: analysis-summary-reports-the-record-session
 kind: assertion
@@ -1053,6 +1083,12 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   to fail when a digest over the lines that happened to be present is sent in its
   place, and watched to fail when two emitters over one file disagree, which is the
   delimiter or the newline rule being broken.
+- The summary carries the seated prefix's length only from a whole-from-the-start
+  drain: a run whose first generation the drain saw crosses with the length derived
+  from that generation, watched to fail when it is derived from a later generation
+  or sent from a drain that opened after the run's `load`, and watched to fail when
+  the input identifiers are not subtracted, which names the first draw and not the
+  prefix.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
@@ -1065,17 +1101,18 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-seven sit there and none sits here, retaken from the records on
+section 6. Twenty-eight sit there and none sits here, retaken from the records on
 2026-09-07, the count having read fourteen while acts since 2026-09-01 added six
 without moving it, the two acts of 2026-09-05 adding two, the act of 2026-09-07
-for issue #381 adding one, and the act of 2026-09-09 for issue #521 adding two.
+for issue #381 adding one, the act of 2026-09-09 for issue #521 adding two, and the
+second act of that date for issue #527 adding one.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-six claims grounding in no
+The other four axioms reach none of these claims. **Twenty-seven claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

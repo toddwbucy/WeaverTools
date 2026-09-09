@@ -6,6 +6,13 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-09, third of this date, the whole-run arm's prerequisite
+lands. Section 3.5 said the parent's identity prefix's length crossed no seam
+and limited the runnable arm to one restored at a turn until it did. It
+crosses `weaver-analysis-web-contract` section 2.2 as of issue #527's act
+and lands on the run's row per the Spec's section 2.2, so the limit lifts
+and the sentence cites its register. Section 4 counts the row's non-tuple
+members as five, the prefix's length joining, per the review of PR #529.
 **Revised:** 2026-09-09, second of this date, two features author from Stage and a
 branch is a load in both. Section 3.5 described one click and one row and two features
 stood on them: an ablation, which moves one member of the tuple and runs the arm whole
@@ -16,7 +23,8 @@ mechanism carries today, and that the fork's cut inside a turn is owed at a cont
 document yet holds. **The ablation ships first and the fork after it**, and the row is
 not narrowed for the wait. The whole-run arm's branch position is the parent's identity
 prefix's length, owed at the analysis seam per the Spec's section 10 and landing before
-the first such arm is staged. Issue #524 is the register.
+the first such arm is staged, which the third entry of this date records as done.
+Issue #524 is the register.
 **Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
 the difference between the row and the tuple is lineage, and the Spec's acts
 of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
@@ -413,11 +421,10 @@ turn the holdings stop at, and the re-issue of the parent's turns to a fresh
 arm is the queue runner's, which issue #442 holds open. An arm run whole
 from the beginning is a fresh load whose parent the store remembers, and the
 Spec's section 5 says what its branch position is: the parent's identity
-prefix's length, **which nothing crossing the analysis seam carries today**.
-The Spec's section 10 names that contract act as owed, and it lands before
-the first whole-run arm is staged, since section 5.3 validates a branch
-position the store could not otherwise hold. Until it lands the ablation's
-runnable arm is one restored at a turn. A **fork**, the click on
+prefix's length, **which crosses the analysis seam per
+`weaver-analysis-web-contract` section 2.2 as of issue #527's act** and
+lands on the run's row, so the Spec's section 5.3 validates it from the
+parent's row. Issue #527 is that prerequisite's register. A **fork**, the click on
 an alternative above, forces a token at a position inside a turn and
 continues from it, so its branch position is that position. **No contract yet carries
 a cut inside a turn**, and the fork waits on one, per the operator's ruling
@@ -636,14 +643,14 @@ report that as a divergence. Forcing is in for the same reason under the
 rule of section 3.5: a forced token is not a sampled one, so two rows
 differing in it are not two readings of one condition.
 
-**The row holds more than the tuple, and the difference is four members
-none of which is a condition.** The parent run reference and the branch
-position, which are lineage, say where a run came from rather than what it
-ran under. The emission's signature says what the run produced. The record's
-session and digest say which record the row descends from. All four are the
-row's and not the compound's, so two rows are comparable across them, which
-is what makes a branch measurable against its parent at all, and the Spec's
-section 2.2 carries each with its ground.
+**The row holds more than the tuple, and the difference is five members none of which is
+a condition.** The parent run reference and the branch position, which are lineage, say
+where a run came from rather than what it ran under. The emission's signature says what
+the run produced. The record's session and digest say which record the row descends
+from. The seated prefix's length says where on the tape the run's own doing begins, per
+the Spec's section 5. All five are the row's and not the compound's, so two rows are
+comparable across them, which is what makes a branch measurable against its parent at
+all, and the Spec's section 2.2 carries each with its ground.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is
