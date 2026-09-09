@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-09, third of this date, the seated prefix's length crosses the
+seam. Section 2.2 gains it on the run's row, the resident length before the run's
+first turn's input, outside tuple equality as an address on the tape and not a
+condition, and section 3.1 lands it from the emitter, which derives it from the
+run's first generation per `weaver-analysis-web-contract` section 2.2, this crate
+deriving nothing. Section 5's whole-run arm has its branch position readable, the
+runnable arm is no longer limited to one restored at a turn, and section 10's
+election of the second act of this date closes. One perturbation record and its
+section 9 row. Per issue #527.
 **Revised:** 2026-09-09, second of this date, a branch is a load, and the row serves two
 features. Section 5 states the operator's ruling of that date on issue #524: section
 5.4's sweep moves one member of the tuple and runs each arm whole from the load, so an
@@ -73,7 +82,7 @@ assertion identifiers a unit conforms to, and there were none to name. The
 register recorded the header gap at PR #500 and this is its cause rather
 than a second finding.
 
-Twenty-three assertion records now stand, **each under the prose that argues
+Twenty-four assertion records now stand, **each under the prose that argues
 it and none under another record**, rather than gathered in
 section 9, which is what every other
 Spec does and what makes a queried identifier arrive with a section worth
@@ -524,6 +533,11 @@ Everything identifying the conditions lives in the run's own row:
   which stands outside tuple equality with the signature since it says
   which bytes the row descends from, and is absent where the emitter did
   not drain the run whole
+- **the seated prefix's length**, the resident length before the run's
+  first turn's input, per `weaver-analysis-web-contract` section 2.2, which
+  stands outside tuple equality as an address on the run's tape and not a
+  condition, the prefix's content being the declaration's, and which is
+  what section 5 makes a whole-run arm's branch position
 - whether a token was forced, and which
 
 **The row names the record it came from, twice, because the store is a
@@ -1125,6 +1139,26 @@ from: weaver-web
 to: web-record-members-agree-across-a-run
 ```
 
+**The seated prefix's length lands here and is derived by the emitter, not
+here.** The emitter forms it from the run's first generation per
+`weaver-analysis-web-contract` section 2.2, and this crate could not: the
+summary's two counts reach the first draw's position and no earlier one,
+which the rule above measured on 2026-09-05. It lands once per run, absent
+rather than defaulted where the emitter sent none, per section 6's rule,
+and **absent is what a whole-run arm reads as a branch position it cannot
+yet take**, section 5.3 refusing the arm at authoring rather than the
+ingest inventing a floor.
+
+```graph
+node: web-prefix-length-is-landed-and-never-derived
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-prefix-length-is-landed-and-never-derived
+```
+
 **A generation whose closing count the record does not carry has no
 position, and its points do not land, though its summary entry does.** The
 count is absent rather than derived where no `model.output` reported one, so
@@ -1353,23 +1387,23 @@ the ruling's own case and the matrix's, is a fresh load whose parent the store a
 remembers, and its branch position is the resident length of the parent's identity
 prefix, the position its first turn's input begins at, which is the first at which the
 arm's tape can differ from its parent's by the run's own doing. A stated zero is refused
-because it would say the arm departs before a prefix it shares, and section 10 names the
-prefix's length as owed at the analysis seam, since nothing that crosses it today
-carries it. **The mechanism carries the cut and not the continuation**: a restoring load
-stands the session at the turn the lineage names, and the re-issue of the parent's turns
-to a fresh arm is the queue runner's, which issue #442 holds open. The charter's section
-3.5 **fork** forces a token at a position inside a turn and continues from it, so its
-branch position is that position and the forced token is the member section 2.5 holds
-for it. **No contract yet carries a cut inside a turn**, which section 10 holds open, so
-the fork waits on that contract. **A whole-run sweep arm waits on the prefix length's
-contract**, section 10's other open bullet and issue #527, and until it lands the
-runnable arm is one restored at a turn, as the charter's section 3.5 says. **The
-charter's sentence that section 5.4 grounds on, "fork the same position many times under
-fresh seeds", covers both features at their own grain**: the sweep forks the run at its
-branch position and the fork forks a position inside a turn, so 5.4 stands on it as a
-sweep does. Section 3.1 derives the parting position for the sweep's arms, which the
-mechanism makes, and leaves it absent on a fork until the fork has one, per section 6's
-rule. The row's members are not narrowed for the wait.
+because it would say the arm departs before a prefix it shares, and the figure crosses
+the analysis seam per section 2.2 as of issue #527's act, so section 5.3 reads it from
+the parent's row. **The mechanism carries the cut and not the continuation**: a
+restoring load stands the session at the turn the lineage names, and the re-issue of the
+parent's turns to a fresh arm is the queue runner's, which issue #442 holds open. The
+charter's section 3.5 **fork** forces a token at a position inside a turn and continues
+from it, so its branch position is that position and the forced token is the member
+section 2.5 holds for it. **No contract yet carries a cut inside a turn**, which section
+10 holds open, so the fork waits on that contract. **A whole-run sweep arm waits on the
+prefix length's contract**, section 10's other open bullet and issue #527, and until it
+lands the runnable arm is one restored at a turn, as the charter's section 3.5 says.
+**The charter's sentence that section 5.4 grounds on, "fork the same position many times
+under fresh seeds", covers both features at their own grain**: the sweep forks the run
+at its branch position and the fork forks a position inside a turn, so 5.4 stands on it
+as a sweep does. Section 3.1 derives the parting position for the sweep's arms, which
+the mechanism makes, and leaves it absent on a fork until the fork has one, per section
+6's rule. The row's members are not narrowed for the wait.
 
 ### 5.1 The five states
 
@@ -1664,6 +1698,7 @@ cell record like any other.
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 | the record's session and digest are absent where unsent | perturbation: fill an absent digest from the landed rows, a row from a record cut short vouches for bytes nobody drained |
 | the record's session and digest agree across a run | perturbation: land a run whose generations name two sessions, the row holds two truths about which record it came from |
+| the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
@@ -1768,15 +1803,13 @@ a `web-` assertion beside `weaver-admin`'s.
   2026-09-09 that a branch occurs at load time, and nothing here is blocked
   on it: section 5.4's arm branches at a turn boundary the mechanism
   carries, and section 5 says which feature each row member serves.
-- **The identity prefix's length, owed at the analysis seam.** Section 5 has
-  a whole-run arm's branch position be the resident length of the parent's
-  identity prefix, and nothing that crosses `weaver-analysis-web-contract`
-  carries it: the summary holds the closing count and the output count,
-  from which section 3.1 derives the first draw's position and no earlier
-  one, and section 3.1 measured that the first turn's delta does not carry
-  the prefix. The record holds it, `weaver-spu-Spec` section 4.4's recorded
-  length of the identity prefix, so the emitter can carry it once per run
-  on the weights hash's rule and the run row can hold it. That is a contract
-  act with both parties, the shape issue #521 walked, and until it lands a
-  staged whole-run arm has a branch position the schema requires beside its
-  parent and no row to read it from. Found by the review of PR #526.
+- **The identity prefix's length, closed 2026-09-09 by the third act of that
+  date.** Section 5 has a whole-run arm's branch position be the resident
+  length of the parent's identity prefix, and nothing that crossed
+  `weaver-analysis-web-contract` carried it: the summary held the closing
+  count and the output count, from which section 3.1 derives the first
+  draw's position and no earlier one. The SPU records the figure at open,
+  per its section 4.2, and no event carries it, so the emitter derives it
+  from the run's first generation and the contract's section 2.2 now
+  carries it once per run, section 2.2 above holding it on the row. Per
+  issue #527, found by the review of PR #526.
