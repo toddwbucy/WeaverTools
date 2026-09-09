@@ -6,7 +6,18 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled and
+this document's noun moves. Section 9 read the word as two senses and there
+were three, the third being the corpus's own and the largest: a named open
+question, which section 9's own heading uses. On the operator's ruling of
+this date the count settles it, a cell stays a named open question
+everywhere, a matrix coordinate is an entry, and **this document's
+declaration plus a task plus a run is a trial**. Fifteen sites move here and
+none moves in any other crate, the other thirty-one documents using the
+sense that keeps the word. `weaver-web-Spec` section 10's election closes
+with it. Per issue #434's queue.
 **Revised:** 2026-09-09, third of this date, the whole-run arm's prerequisite
+
 lands. Section 3.5 said the parent's identity prefix's length crossed no seam
 and limited the runnable arm to one restored at a turn until it did. It
 crosses `weaver-analysis-web-contract` section 2.2 as of issue #527's act
@@ -241,7 +252,7 @@ The person in front of it is an engineer deploying a local model as an
 agent, who needs to know before shipping what the arrangement can tolerate,
 and who has been working on intuition because **nothing accumulates**.
 Readings exist and are taken every day. What has not existed is a reading
-that comes back as a cell carrying its declared tuple, which a second person
+that comes back as a trial carrying its declared tuple, which a second person
 reruns and gets again.
 
 **The positioning rule reaches the interface.** The tool measures. It does
@@ -270,7 +281,7 @@ shown, from the tool's own labels, to be wrong.
   displays it. It does not grade it.
 - **Not a logprob viewer.** Per-token logprobs are drawn by a dozen tools,
   and an engineer meeting section 3.4 will name one they already use. The
-  difference is not the picture. It is that a reading here is a cell with
+  difference is not the picture. It is that a reading here is a trial with
   its declared tuple, addressed by run, turn and position, and rerunnable by
   someone who was not there. Claiming the picture as the novelty would be
   the overclaim section 1 forbids, pointed at ourselves.
@@ -347,15 +358,15 @@ conversation surface from a record surface: an engineer cannot troubleshoot
 a prompt when the thing they typed and the numbers it produced sit on
 different pages.
 
-Every exchange is a cell, so behavior and cost arrive together here as they
-do everywhere. An exchange that interests the operator is saved as a cell
+Every exchange is a trial, so behavior and cost arrive together here as they
+do everywhere. An exchange that interests the operator is saved as a trial
 and becomes repeatable, which is the promotion this crate turns on.
 
 <!-- figure: Chat | Live -->
 
 ### 3.3 Measure, ends with behavior and cost, together
 
-The scripted surface. **A cell is a declared configuration, a task, and a
+The scripted surface. **A trial is a declared configuration, a task, and a
 run**, and what it returns is a pair: what the agent did, and what it cost
 to do it. Both axes appear on every result and every comparison. A loop that
 reaches the right action four times slower has moved the trade rather than
@@ -367,12 +378,12 @@ benchmark suite and an item within it, a corpus walk, or a session promoted
 from Live. The task joins the run's tuple, because two runs of "the same
 task" are not the same task unless it matches.
 
-The comparison this crate exists to make cheap is one cell against another
+The comparison this crate exists to make cheap is one trial against another
 differing in one declared variable, and the difference is legible at a
-glance: this cell is that cell with the device moved, or the transport
+glance: this trial is that trial with the device moved, or the transport
 moved, or the seed moved.
 
-<!-- figure: Cell | Measure -->
+<!-- figure: Trial | Measure -->
 
 ### 3.4 Open a trace, ends with a located position
 
@@ -485,7 +496,7 @@ converter at a pin. Which box holds it, since this crate runs on one
 machine and the agents on another. And its relations, the lens
 artifacts fitted to these weights, the readings taken through a lens fitted
 to other weights where the operator elected that reuse, and the reference
-cells taken against them.
+trials taken against them.
 
 **Models is the one surface on this side that authors, and its motion is
 import.** The others list what other surfaces produced. Import registers an
@@ -611,7 +622,7 @@ attribution has answered the question rather than deferred it. What an
 attribution is worth before the identity act of section 6 is that act's to
 change, and the member does not wait on it.
 
-The front end holds the cell registry, on its own store. The grain is the
+The front end holds the trial registry, on its own store. The grain is the
 grain the interface clicks at: **one row per position per run, addressed by
 the run, the turn, and the position**. All three are needed because turn
 keys repeat across a serving record's runs, and because a position is the
@@ -677,11 +688,11 @@ crate offers a ladder of presets**, whose shape section 9 holds open.
 hand**, and placement is one axis of that mechanic rather than the whole of
 it. The other axis is **qualification: establishing what a reference is
 worth on weights nobody has measured** - a quantization, a fine-tune, a
-merge, a different conversion. The cell is the same shape in each case: the
+merge, a different conversion. The trial is the same shape in each case: the
 family's reference task, the artifact moved, the control compared.
 
 **Post-training is a first-class use of that axis** and needs no machinery
-of its own. What a fine-tune changed becomes a cell with its tuple that a
+of its own. What a fine-tune changed becomes a trial with its tuple that a
 reviewer reruns, rather than a claim about a training run.
 
 **Whether the lens is reused or refitted is the operator's election, and
@@ -720,7 +731,7 @@ would invite the comparison the refit makes invalid.
 **This axis is why an unmeasured reading is offered rather than withheld.**
 It is not this crate's burden to have measured every artifact in advance,
 it is this crate's job to make measuring one cheap. Where a reading has no
-control on the artifact in hand, the surface says so and offers the cell
+control on the artifact in hand, the surface says so and offers the trial
 that takes one, because a caveat leaves the operator holding a doubt and a
 preset hands them the answer.
 
@@ -743,7 +754,7 @@ over a public address is a legitimate declaration and this crate holds no
 opinion about it, because refusing it would mean the instrument cannot
 measure the arrangement most people ship. **The mechanic is the requirement
 to declare**, and it is a completeness requirement on the record rather than
-a security feature: whatever is declared becomes part of the cell's
+a security feature: whatever is declared becomes part of the trial's
 identity, so a reading can never be quoted without saying what was holding
 the boundary when it was taken.
 
@@ -752,7 +763,7 @@ in the read or write path requires the viewer, the store, or the queue to
 sit on the machine that runs the agents. The reader is a store client and
 the runner is a queue consumer, so the front end and its store run on one
 machine while the agents run on another, and that crossing appears in the
-cell record.
+trial record.
 
 ## 6. Identity and roles
 
@@ -870,10 +881,17 @@ this crate designs around the gap until it closes.
   two are separate columns and the correctness one stays unfilled until a
   scorer is named**, because a column that mixes them would let a
   reproduction verdict be read as a verdict on the answer.
-- **The word "cell" carries two senses** and the corpus must settle one. A
-  matrix coordinate, which is what the cross-precision configs and the
-  confirm driver mean by it today, and a declaration plus a task plus a run,
-  which is what this document means. G5 reads two authorities for one word.
+- **The word "cell", closed 2026-09-09.** This bullet read it as two senses,
+  a matrix coordinate and a declaration plus a task plus a run, and there
+  were three: the corpus's own **cell**, a named open question, which this
+  section's own heading uses and which stands at a hundred and fifty-three
+  uses across thirty-one documents in every crate. On the operator's ruling
+  of that date the count settles it. **A cell is a named open question**,
+  unchanged everywhere. **A matrix coordinate is an entry**, per the sketch
+  at `docs/project/sketch-ablation-matrix.md`. **A declaration plus a task
+  plus a run is a trial**, which this document now says, the word being
+  free in the corpus and sitting beside the experiment that authors it and
+  the run that executes it.
 - **The field election's depth**, which sets how many alternatives a
   position keeps. The records on hand carry forty and fifty. It is the
   operator's ruling and the number one wishes had been kept is discovered
