@@ -1,13 +1,23 @@
-//! The store: Postgres pool, migrations, and the single writer task.
+//! The conversation half's writer, retiring with the modules that call it.
 //!
-//! Every mutation flows through the writer (Spec section 3). Appended
-//! channel events are broadcast in-process for SSE fan-out.
+//! This is what `store.rs` held before the store took its section 1 shape:
+//! the single writer task and its commands against `participants`,
+//! `channels`, `members`, `channel_events` and `sessions`. **The schema no
+//! longer creates any of those tables**, per PR #499, so every statement
+//! here fails at runtime on a box running the current migrations. It stands
+//! so that `registry.rs`, `channel.rs`, `queue.rs`, `router.rs` and
+//! `web/user.rs` still build, and it goes when they go, per the register at
+//! `docs/project/inventory-weaver-web-code.md`.
+//!
+//! Nothing here is cited by a conformance header and nothing here should
+//! be: it conforms to the charter that was replaced.
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::PgPool;
-use sqlx::postgres::PgPoolOptions;
 use tokio::sync::{broadcast, mpsc, oneshot};
+
+use super::Store;
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct ChannelEvent {
@@ -47,7 +57,7 @@ impl NewEvent {
     }
 }
 
-enum WriteCmd {
+pub(super) enum WriteCmd {
     Append {
         event: NewEvent,
         reply: oneshot::Sender<Result<ChannelEvent, sqlx::Error>>,
@@ -99,32 +109,7 @@ impl std::fmt::Display for KindConflict {
 
 impl std::error::Error for KindConflict {}
 
-#[derive(Clone)]
-pub struct Store {
-    pub pool: PgPool,
-    write_tx: mpsc::Sender<WriteCmd>,
-    events_tx: broadcast::Sender<ChannelEvent>,
-}
-
 impl Store {
-    pub async fn connect(database_url: &str) -> anyhow::Result<Self> {
-        let pool = PgPoolOptions::new()
-            .max_connections(8)
-            .connect(database_url)
-            .await?;
-        sqlx::migrate!("./migrations").run(&pool).await?;
-
-        let (write_tx, write_rx) = mpsc::channel(256);
-        let (events_tx, _) = broadcast::channel(1024);
-        tokio::spawn(writer_task(pool.clone(), write_rx, events_tx.clone()));
-
-        Ok(Self {
-            pool,
-            write_tx,
-            events_tx,
-        })
-    }
-
     pub fn subscribe(&self) -> broadcast::Receiver<ChannelEvent> {
         self.events_tx.subscribe()
     }
@@ -227,7 +212,7 @@ impl Store {
     }
 }
 
-async fn writer_task(
+pub(super) async fn writer_task(
     pool: PgPool,
     mut rx: mpsc::Receiver<WriteCmd>,
     events_tx: broadcast::Sender<ChannelEvent>,
