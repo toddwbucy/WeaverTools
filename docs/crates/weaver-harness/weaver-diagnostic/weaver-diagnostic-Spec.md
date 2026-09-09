@@ -356,21 +356,24 @@ divergent position, per the loop's section 3 step 2, and the token path's carrie
 both identifiers so a reader can say how the two differ without rerunning anything.
 
 **`position` is the resident length at the draw in both variants**, the coordinate
-`model.field` keys on per `weaver-spu-Spec` section 6, on the operator's ruling of
-2026-09-09 at issue #519. A record carries three position coordinates: the
-measurement's vectors run by output ordinal from zero, the field by the resident
-length at the draw, and a divergence given in either is placeable against one of
-them and not the other. The resident length is the one that survives the turn's
-decomposition, indifferent to whose token it was or which append put it there, so a
-divergence and the field row it fell in share a key and a reader holding only the
+`model.field` keys on per `weaver-spu-Spec` section 4.2, on the operator's ruling of
+2026-09-09 at issue #519. A record carries three position coordinates and this ruling
+retires one of them: the measurement's vectors run by output ordinal from zero, the
+field by the resident length at the draw, and a divergence gave the draw's index in the
+turn's identifiers, which is neither. The resident length is the one that survives the
+turn's decomposition, indifferent to whose token it was or which append put it there, so
+a divergence and the field row it fell in share a key and a reader holding only the
 close event needs no conversion it cannot perform. A token-path divergence in the
-appended input names the resident length that token occupies, below the first draw
-by the input's length, so a tokenization divergence and a draw divergence land on one
-scale. **The pass derives it from its own re-fed answer and not from the holdings**:
-the closing count less the drawn tokens less the terminator is the first draw's
-position, per `weaver-spu-Spec` section 4's closing-count clause, and the null replay
-therefore still rests on the recorded identifiers alone. Records written before this
-ruling carry the position as the turn's identifier index, which on the essays of
+appended input names the resident length that token occupies, below the first draw by
+the input's length, so a tokenization divergence and a draw divergence land on one
+scale. **The pass derives it from its own re-fed answer and not from the holdings**: the
+closing count less the drawn tokens less the terminator is the first draw's position,
+per that section's closing-count clause, and the null replay therefore still rests on
+the recorded identifiers alone. **The pin below reaches the token path alone**: no pass
+constructs a `Readout` divergence today, the reader pass of `diagnostic-replay-loop`
+section 3 step 3 being unbuilt, so the ruling stands over that variant as a statement
+its first producer honors rather than one an instrument holds. Records written before
+this ruling carry the position as the turn's identifier index, which on the essays of
 2026-09-08 sits 127 below the field's key for the same token, and are read as the
 pre-ruling coordinate where they are cited.
 
