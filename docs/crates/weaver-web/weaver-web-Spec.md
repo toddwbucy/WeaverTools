@@ -580,22 +580,19 @@ from: weaver-web
 to: web-absent-forced-mark-does-not-default
 ```
 
-**The row holds more than the tuple, and the difference is lineage and the
-signature.** The parent run reference and the branch position say where a run
-came from rather than what it ran under, per the charter's section 4, so
-**two rows differing only in them hold the same tuple** and remain
-comparable. **The signature is outside it for the opposite reason and
-the same effect**: lineage is not a condition because it says where the run
-came
-from, and the signature is not a condition because it says what the run
-produced. Two runs under one tuple whose emissions differ hold different
-signatures and **the same tuple**, which is the whole of what a sweep and the
-device arm both measure, and a branch holds its parent's tuple where the diff
-moved nothing. The record's session and its digest are outside it on the
-same ground, per their own bullets, and nothing else in this list is. Were
-lineage inside it, a branch
-could never be reproduced against its parent, which is the comparison the
-staging surface exists to make.
+**The row holds more than the tuple, and the difference is lineage and the signature.**
+The parent run reference and the branch position say where a run came from rather than
+what it ran under, per the charter's section 4, so **two rows differing only in them
+hold the same tuple** and remain comparable. **The signature is outside it for the
+opposite reason and the same effect**: lineage is not a condition because it says where
+the run came from, and the signature is not a condition because it says what the run
+produced. Two runs under one tuple whose emissions differ hold different signatures and
+**the same tuple**, which is the whole of what a sweep and the device arm both measure,
+and a branch holds its parent's tuple where the diff moved nothing. The record's
+session, its digest and the seated prefix's length are outside it on their own bullets'
+grounds, and nothing else in this list is. Were lineage inside it, a branch could never
+be reproduced against its parent, which is the comparison the staging surface exists to
+make.
 
 **The signature is derived and the similarity is not.** A signature is a
 property of one run and is derived once at ingest, which section 2.7
@@ -1395,15 +1392,13 @@ parent's turns to a fresh arm is the queue runner's, which issue #442 holds open
 charter's section 3.5 **fork** forces a token at a position inside a turn and continues
 from it, so its branch position is that position and the forced token is the member
 section 2.5 holds for it. **No contract yet carries a cut inside a turn**, which section
-10 holds open, so the fork waits on that contract. **A whole-run sweep arm waits on the
-prefix length's contract**, section 10's other open bullet and issue #527, and until it
-lands the runnable arm is one restored at a turn, as the charter's section 3.5 says.
-**The charter's sentence that section 5.4 grounds on, "fork the same position many times
-under fresh seeds", covers both features at their own grain**: the sweep forks the run
-at its branch position and the fork forks a position inside a turn, so 5.4 stands on it
-as a sweep does. Section 3.1 derives the parting position for the sweep's arms, which
-the mechanism makes, and leaves it absent on a fork until the fork has one, per section
-6's rule. The row's members are not narrowed for the wait.
+10 holds open, so the fork waits on that contract. **The charter's sentence that section
+5.4 grounds on, "fork the same position many times under fresh seeds", covers both
+features at their own grain**: the sweep forks the run at its branch position and the
+fork forks a position inside a turn, so 5.4 stands on it as a sweep does. Section 3.1
+derives the parting position for the sweep's arms, which the mechanism makes, and leaves
+it absent on a fork until the fork has one, per section 6's rule. The row's members are
+not narrowed for the wait.
 
 ### 5.1 The five states
 

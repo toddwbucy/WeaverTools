@@ -946,18 +946,19 @@ run's first line saw a suffix, and a digest of a suffix would read as a digest o
 whole. **Absent says this crate could not vouch for the bytes, and never that it
 vouched for the bytes it happened to see.**
 
-**The summary carries the seated prefix's length, once per run**, as of 2026-09-09
-per `weaver-analysis-web-contract` section 2.2 and issue #527: the resident length
-before the run's first turn's input, which this crate derives from the run's first
-generation and from nothing later, the closing count less the drawn tokens, less the
-terminator, less the count of that generation's input identifiers, the input being
-the turn's delta with the prefix outside it per `weaver-spu-Spec` section 6. **It is
-present only where the drain began at or before the run's `load`**, since a drain
-that opened later would take a later turn's floor for the prefix, and it is absent
-where the first generation carries no closing count or no measurement. This crate
-derives it because no event carries it and the SPU's own record of it, per its
-section 4.2, does not leave the SPU, and a reader with only the summary could not
-form it, the first draw's position being the earliest the two counts alone reach.
+**The summary carries the seated prefix's length on every generation's entry, the reader
+holding it once per run**, as of 2026-09-09 per `weaver-analysis-web-contract` section
+2.2 and issue #527: the resident length before the run's first turn's input, which this
+crate derives from the run's first generation and from nothing later, the closing count
+less the drawn tokens, less the terminator, less the count of that generation's input
+identifiers, the input being the turn's delta with the prefix outside it per
+`weaver-spu-Spec` section 6. **It is present only where the drain began at or before the
+run's `load`**, since a drain that opened later would take a later turn's floor for the
+prefix, and it is absent where the first generation carries no closing count or no
+measurement. This crate derives it because no event carries it and the SPU's own record
+of it, per its section 4.2, does not leave the SPU, and a reader with only the summary
+could not form it, the first draw's position being the earliest the two counts alone
+reach.
 
 ```graph
 node: analysis-summary-reports-the-prefix-length

@@ -233,23 +233,23 @@ mismatch never reads a digest of a truncated record as a digest of the
 whole. The session is absent where the record predates the envelope's
 session member and never otherwise.
 
-**The seated prefix's length crosses the same way, once per run.** It is the
-resident length before the run's first turn's input, the position that
-turn's input begins at, which `weaver-spu-Spec` section 4.2 has the open
-record and no event carries as a member, per `weaver-trace-PRD` section 3.1.
-**The emitter derives it from the run's first generation and from nothing
-later**: the closing count less the drawn tokens, less the terminator, less
-the count of that generation's input identifiers, the input being the
-turn's delta with the prefix outside it per `weaver-spu-Spec` section 6, so
-what remains is the prefix and only the prefix. **It is present only where
-the drain began at or before the run's `load`**, because a drain that
-opened later would take some later turn's floor for the prefix and name a
-wrong position with a right-looking number, and it is absent where the
-first generation carries no closing count or no measurement, each member
-absent on its own terms. A restoring run's prefix includes what the load
-restored, per `weaver-harness-Spec` section 8, and the figure says so by
-being larger, which is what a whole-run arm's branch position needs it to
-say. A run's generations agree on it as they do on the session.
+**The seated prefix's length crosses the same way: on every generation's entry, and once
+per run in the reader's row.** It is the resident length before the run's first turn's
+input, the position that turn's input begins at, which `weaver-spu-Spec` section 4.2 has
+the open record and no event carries as a member, per `weaver-trace-PRD` section 3.1.
+**The emitter derives it from the run's first generation and from nothing later**: the
+closing count less the drawn tokens, less the terminator, less the count of that
+generation's input identifiers, the input being the turn's delta with the prefix outside
+it per `weaver-spu-Spec` section 6, so what remains is the prefix and only the prefix.
+**It is present only where the drain began at or before the run's `load`**, because a
+drain that opened later would take some later turn's floor for the prefix and name a
+wrong position with a right-looking number, and it is absent where the first generation
+carries no closing count or no measurement, each member absent on its own terms. A
+restoring run's prefix includes what the load restored, per `weaver-harness-Spec`
+section 8, and the figure says so by being larger, which is what a whole-run arm's
+branch position needs it to say. Every entry repeats it as every entry repeats the
+weights hash, so a run's generations agree on it as they do on the session, and a run
+whose entries disagree is the defect the reader names.
 
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store

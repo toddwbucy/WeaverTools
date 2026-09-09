@@ -11,7 +11,8 @@ lands. Section 3.5 said the parent's identity prefix's length crossed no seam
 and limited the runnable arm to one restored at a turn until it did. It
 crosses `weaver-analysis-web-contract` section 2.2 as of issue #527's act
 and lands on the run's row per the Spec's section 2.2, so the limit lifts
-and the sentence cites its register.
+and the sentence cites its register. Section 4 counts the row's non-tuple
+members as five, the prefix's length joining, per the review of PR #529.
 **Revised:** 2026-09-09, second of this date, two features author from Stage and a
 branch is a load in both. Section 3.5 described one click and one row and two features
 stood on them: an ablation, which moves one member of the tuple and runs the arm whole
@@ -642,14 +643,14 @@ report that as a divergence. Forcing is in for the same reason under the
 rule of section 3.5: a forced token is not a sampled one, so two rows
 differing in it are not two readings of one condition.
 
-**The row holds more than the tuple, and the difference is four members
-none of which is a condition.** The parent run reference and the branch
-position, which are lineage, say where a run came from rather than what it
-ran under. The emission's signature says what the run produced. The record's
-session and digest say which record the row descends from. All four are the
-row's and not the compound's, so two rows are comparable across them, which
-is what makes a branch measurable against its parent at all, and the Spec's
-section 2.2 carries each with its ground.
+**The row holds more than the tuple, and the difference is five members none of which is
+a condition.** The parent run reference and the branch position, which are lineage, say
+where a run came from rather than what it ran under. The emission's signature says what
+the run produced. The record's session and digest say which record the row descends
+from. The seated prefix's length says where on the tape the run's own doing begins, per
+the Spec's section 5. All five are the row's and not the compound's, so two rows are
+comparable across them, which is what makes a branch measurable against its parent at
+all, and the Spec's section 2.2 carries each with its ground.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is
