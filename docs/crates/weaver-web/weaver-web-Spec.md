@@ -1357,10 +1357,12 @@ remembers, and its branch position is the resident length of the parent's
 identity prefix, the position its first turn's input begins at, which is
 the first at which the arm's tape can differ from its parent's by the run's
 own doing. A stated zero is refused because it would say the arm departs
-before a prefix it shares. **The mechanism carries the cut and not the
-continuation**: a restoring load stands the session at the turn the lineage
-names, and the re-issue of the parent's turns to a fresh arm is the queue
-runner's, which issue #442 holds open. The charter's section 3.5 **fork**
+before a prefix it shares, and section 10 names the prefix's length as owed
+at the analysis seam, since nothing that crosses it today carries it. **The
+mechanism carries the cut and not the continuation**: a restoring load
+stands the session at the turn the lineage names, and the re-issue of the
+parent's turns to a fresh arm is the queue runner's, which issue #442 holds
+open. The charter's section 3.5 **fork**
 forces a token at a position inside a turn and continues from it, so its
 branch position is that position and the forced token is the member section
 2.5 holds for it. **No contract yet carries a cut inside a turn**, which
@@ -1770,3 +1772,15 @@ a `web-` assertion beside `weaver-admin`'s.
   2026-09-09 that a branch occurs at load time, and nothing here is blocked
   on it: section 5.4's arm branches at a turn boundary the mechanism
   carries, and section 5 says which feature each row member serves.
+- **The identity prefix's length, owed at the analysis seam.** Section 5 has
+  a whole-run arm's branch position be the resident length of the parent's
+  identity prefix, and nothing that crosses `weaver-analysis-web-contract`
+  carries it: the summary holds the closing count and the output count,
+  from which section 3.1 derives the first draw's position and no earlier
+  one, and section 3.1 measured that the first turn's delta does not carry
+  the prefix. The record holds it, `weaver-spu-Spec` section 4.4's recorded
+  length of the identity prefix, so the emitter can carry it once per run
+  on the weights hash's rule and the run row can hold it. That is a contract
+  act with both parties, the shape issue #521 walked, and until it lands a
+  staged whole-run arm has a branch position the schema requires beside its
+  parent and no row to read it from. Found by the review of PR #526.
