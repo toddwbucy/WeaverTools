@@ -4,6 +4,15 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-09, the summary names the record it was read from. Section 5's
+summary gains, per generation, the record's session from the envelope and the
+record's digest, sha256 over the run's own lines as this crate drained them, each
+with its newline in drain order, computed as the bytes pass and retained no more
+than they are. **A run is whole when its `unload` landed and the drain began at or
+before its `load`**, and the digest is absent otherwise, a run that died having no
+`unload` for anyone to vouch past. Two perturbation records, and section 6's counts
+move by two. Per `weaver-analysis-web-contract` section 2.2 as revised this date
+and issue #521.
 **Revised:** 2026-09-07, two captures compare only under one loop and one member.
 Section 5's comparison reads the `load` event's composer and member standing from
 each record before any value, refuses where they differ naming which, and refuses a
@@ -913,6 +922,42 @@ rendered null**, on the record's own absent-not-empty rule, so a reader tells a
 member this verb did not send from one it sent, and the sentinel is sent. A record
 holding no measured generation refuses, typed as the others are.
 
+**The summary names the record it was read from, twice**, as of 2026-09-09 per
+`weaver-analysis-web-contract` section 2.2 and issue #521, per generation on the
+wire and once per run in the reader's row on the weights hash's own rule. **The
+record's session** is the envelope's `session`, spelled as the record spelled it,
+absent only where a record predates the member. **The record's digest** is sha256
+over the run's own lines, every line whose envelope names the run and no other, each
+with its terminating newline, in the order this crate drained them, spelled as
+lowercase hex. It is computed as the bytes pass and retained no longer than they are,
+which is the drain's own rule above applied to a hash: the report carries the digest
+and never the lines. **A run is whole when its `unload` landed and the drain began
+at or before its `load`**, and the digest is absent otherwise. A run that died has no
+`unload`, per `weaver-trace-PRD` section 4.3, and a reader that drained every line
+that exists has still not drained the run, because the queue's forfeited tail is
+part of what the run was and nobody can vouch past it. A drain that opened after the
+run's first line saw a suffix, and a digest of a suffix would read as a digest of the
+whole. **Absent says this crate could not vouch for the bytes, and never that it
+vouched for the bytes it happened to see.**
+
+```graph
+node: analysis-summary-reports-the-record-session
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-session
+
+node: analysis-summary-reports-the-record-digest
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-digest
+```
+
 ```graph
 node: analysis-summary-reports-residency
 kind: assertion
@@ -1000,6 +1045,15 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   yields points carrying an entropy and no surprisal, watched to fail when the
   reader fills an absent vector with zero.
 
+- The summary names the record's session: a record whose envelope carries one
+  crosses it per generation, watched to fail when the member is dropped or filled
+  from the invocation rather than the envelope.
+- The summary names the record's digest only for a whole run: a run lacking its
+  `unload`, or drained from after its `load`, crosses with the digest absent, watched
+  to fail when a digest over the lines that happened to be present is sent in its
+  place, and watched to fail when two emitters over one file disagree, which is the
+  delimiter or the newline rule being broken.
+
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
 per section 4: what a suite can confirm is that this crate mints no identity and
@@ -1011,17 +1065,17 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-five sit there and none sits here, retaken from the records on
+section 6. Twenty-seven sit there and none sits here, retaken from the records on
 2026-09-07, the count having read fourteen while acts since 2026-09-01 added six
-without moving it, the two acts of 2026-09-05 adding two, and the act of 2026-09-07
-for issue #381 adding the last.
+without moving it, the two acts of 2026-09-05 adding two, the act of 2026-09-07
+for issue #381 adding one, and the act of 2026-09-09 for issue #521 adding two.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-four claims grounding in no
+The other four axioms reach none of these claims. **Twenty-six claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

@@ -152,7 +152,8 @@ impl Store {
             "SELECT run_id, record_identity, seed::text AS seed, sampler, device, \
              compute_precision, engine, batching, field_depth, task_source, \
              task_identity, boundary_set, forced_position, forced_token, \
-             parent_run_id, branch_position, parting_position, record_session, record_digest, signature, ingested_at \
+             parent_run_id, branch_position, parting_position, \
+             record_session, record_digest, signature, ingested_at \
              FROM run WHERE run_id = $1",
         )
         .bind(&run.0)
@@ -187,7 +188,8 @@ impl Store {
              r.sampler, r.device, r.compute_precision, r.engine, r.batching, \
              r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
              r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
-             r.parting_position, r.record_session, r.record_digest, r.signature, r.ingested_at \
+             r.parting_position, \
+             r.record_session, r.record_digest, r.signature, r.ingested_at \
              FROM staged_experiment_run ser JOIN run r ON r.run_id = ser.run_id \
              WHERE ser.experiment_id = $1",
         )
@@ -497,7 +499,11 @@ mod tests {
         )
         .execute(&s.pool)
         .await;
-        assert!(refused.is_err());
+        let err = refused.expect_err("the schema refuses a digest that is not sha256 hex");
+        assert!(
+            err.to_string().contains("run_record_digest_is_sha256_hex"),
+            "refused by the wrong rule: {err}"
+        );
     }
 
     #[tokio::test]

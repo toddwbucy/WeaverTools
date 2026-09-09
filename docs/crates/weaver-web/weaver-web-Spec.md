@@ -21,8 +21,9 @@ lineage and the signature, since neither is a condition the run ran under.
 having the ingest consume `weaver-analysis`'s emission and never the record,
 so `weaver-analysis-web-contract` section 2.2 carries them and section 3.1
 lands them, absent rather than defaulted where the emitter could not vouch
-for them. Section 2.7 gains the session's index. Per issue #521, on the
-operator's ruling of 2026-09-09, the digest arriving from the sketch at
+for them, under two perturbation records with their section 9 rows. Section
+2.7 gains the session's index. Per issue #521, on the operator's ruling of
+2026-09-09, the digest arriving from the sketch at
 `docs/project/sketch-ablation-matrix.md` section 2.
 **Revised:** 2026-09-08, third of this date, a staged experiment can hold a
 sweep. The charter's section 3.5 has an operator fork one position many times
@@ -60,7 +61,7 @@ assertion identifiers a unit conforms to, and there were none to name. The
 register recorded the header gap at PR #500 and this is its cause rather
 than a second finding.
 
-Twenty-one assertion records now stand, **each under the prose that argues
+Twenty-three assertion records now stand, **each under the prose that argues
 it and none under another record**, rather than gathered in
 section 9, which is what every other
 Spec does and what makes a queried identifier arrive with a section worth
@@ -564,7 +565,8 @@ from, and the signature is not a condition because it says what the run
 produced. Two runs under one tuple whose emissions differ hold different
 signatures and **the same tuple**, which is the whole of what a sweep and the
 device arm both measure, and a branch holds its parent's tuple where the diff
-moved nothing. Nothing else in this list is outside the compound. Were
+moved nothing. The record's session and its digest are outside it on the
+same ground, per their own bullets, and nothing else in this list is. Were
 lineage inside it, a branch
 could never be reproduced against its parent, which is the comparison the
 staging surface exists to make.
@@ -1093,6 +1095,24 @@ rows would be a digest of the projection and would vouch for nothing. Both
 are absent rather than defaulted where the emitter sent none, per section
 6's rule, so a row landed from a record cut short says so.
 
+```graph
+node: web-record-members-are-absent-where-unsent
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-record-members-are-absent-where-unsent
+
+node: web-record-members-agree-across-a-run
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-record-members-agree-across-a-run
+```
+
 **A generation whose closing count the record does not carry has no
 position, and its points do not land, though its summary entry does.** The
 count is absent rather than derived where no `model.output` reported one, so
@@ -1597,6 +1617,8 @@ cell record like any other.
 | the bearer is stored as a digest and never in the clear | perturbation, at the schema: store the bearer and look up on it, a read of the session table is a set of live sessions |
 | a session carries a claimed name and never a proof | review, over the open path: nothing between the posted name and the row tests it, which is the posture section 6 defers and not a defect |
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
+| the record's session and digest are absent where unsent | perturbation: fill an absent digest from the landed rows, a row from a record cut short vouches for bytes nobody drained |
+| the record's session and digest agree across a run | perturbation: land a run whose generations name two sessions, the row holds two truths about which record it came from |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
