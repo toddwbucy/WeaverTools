@@ -510,13 +510,21 @@ def run_refeed(cfg, source_dir, as_arm):
         # A refused or abandoned replay writes its close with the reason, and
         # the harness names an identity it refused as its own event, so a
         # reading computed over that sink would be a reading of nothing.
-        outcome = ((closes[-1].get("payload") or {}).get("outcome") or {}).get("kind") if closes else None
+        payload = (closes[-1].get("payload") or {}).get("outcome") or {} if closes else {}
+        outcome = payload.get("kind")
         rec["replay_outcome"] = outcome
+        rec["replay_divergence"] = payload.get("divergence")
         rec["replay_refusals"] = [e["kind"] for e in events if e.get("kind", "").endswith("_refused")]
-        if outcome != "certified":
+        # **A replay that ran to its end is a reading whatever its outcome.**
+        # Certified means the recomputed path is the recorded one; diverged
+        # means the arrangement's argmax left the recorded path at a named
+        # position, which under another arrangement is the finding itself,
+        # and the per-position measurements stand on every position either
+        # way. Only a replay that was refused or abandoned computes nothing.
+        if outcome not in ("certified", "diverged"):
             rec["verdict"] = f"replay {outcome}: {', '.join(rec['replay_refusals']) or 'no reason event'}"
             return
-        ex = extract_run([e for e in events if e.get("run") == rec["replay_run"]]) if runs else extract_run(events)
+        ex = extract_run([e for e in events if e.get("run") == rec["replay_run"]])
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
             json.dump({**rec, "refed": ex}, fh)
