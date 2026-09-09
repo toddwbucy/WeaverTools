@@ -10,6 +10,21 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-09, the run row names the record it came from. Section
+2.2 gains the record's session, the identity the trace's runs share per
+`weaver-trace-PRD` section 2.1 and **not section 2.8's session, which is a
+person's**, and the record's digest, sha256 over the run's own lines, so a
+row can be read as one of a session's family and checked against the
+operator's record byte for byte. Both stand outside tuple equality beside
+lineage and the signature, since neither is a condition the run ran under.
+**Both arrive over the analysis seam and not from the trace**, section 3.1
+having the ingest consume `weaver-analysis`'s emission and never the record,
+so `weaver-analysis-web-contract` section 2.2 carries them and section 3.1
+lands them, absent rather than defaulted where the emitter could not vouch
+for them, under two perturbation records with their section 9 rows. Section
+2.7 gains the session's index. Per issue #521, on the operator's ruling of
+2026-09-09, the digest arriving from the sketch at
+`docs/project/sketch-ablation-matrix.md` section 2.
 **Revised:** 2026-09-08, third of this date, a staged experiment can hold a
 sweep. The charter's section 3.5 has an operator fork one position many times
 under fresh seeds and section 5.2 names the members a diff moves and what a
@@ -46,7 +61,7 @@ assertion identifiers a unit conforms to, and there were none to name. The
 register recorded the header gap at PR #500 and this is its cause rather
 than a second finding.
 
-Twenty-one assertion records now stand, **each under the prose that argues
+Twenty-three assertion records now stand, **each under the prose that argues
 it and none under another record**, rather than gathered in
 section 9, which is what every other
 Spec does and what makes a queried identifier arrive with a section worth
@@ -487,7 +502,27 @@ Everything identifying the conditions lives in the run's own row:
 - **the emission's signature**, a set of shingles over the emitted text
   derived once at ingest, **which is a property of the result and stands
   outside tuple equality with lineage**, per section 5.4
+- **the record's session**, the identity the trace's runs share per
+  `weaver-trace-PRD` section 2.1, which is not section 2.8's session, that
+  one being a person's, and which stands outside tuple equality with
+  lineage since it says which conversation the run belongs to and not what
+  it ran under
+- **the record's digest**, sha256 over the run's own lines of the record as
+  the emitter drained them, per `weaver-analysis-web-contract` section 2.2,
+  which stands outside tuple equality with the signature since it says
+  which bytes the row descends from, and is absent where the emitter did
+  not drain the run whole
 - whether a token was forced, and which
+
+**The row names the record it came from, twice, because the store is a
+projection and never the record.** Section 3.1 says so of every row in this
+half. The session says which family of runs the row belongs to, so a
+session's runs are one read rather than a walk up parent references, and
+the digest says which bytes, so a reader holding the operator's record can
+recompute it and a row that does not match is a row to refuse rather than
+to trust. Neither is derived here: both are read from the emitter that
+drained the record, which is the only party on this seam that saw the
+bytes.
 
 **The engine is in the compound, so the row holds it.** The tuple is a model
 on a device under a kernel at a precision, and a divergence between two rows
@@ -530,7 +565,8 @@ from, and the signature is not a condition because it says what the run
 produced. Two runs under one tuple whose emissions differ hold different
 signatures and **the same tuple**, which is the whole of what a sweep and the
 device arm both measure, and a branch holds its parent's tuple where the diff
-moved nothing. Nothing else in this list is outside the compound. Were
+moved nothing. The record's session and its digest are outside it on the
+same ground, per their own bullets, and nothing else in this list is. Were
 lineage inside it, a branch
 could never be reproduced against its parent, which is the comparison the
 staging surface exists to make.
@@ -839,13 +875,16 @@ to: web-recorded-query-names-every-run
 ```text
 primary       (run, turn, position)
 secondary     (run, surprisal)
+family        run (record_session)
 ```
 
 The secondary index exists so the largest spikes in a run are reachable
-without pulling the run down. **Nothing is computed at read time except
-where the query is recorded.** A value that must be derived is derived once
-at ingest and stored, because a value computed in the interface is a value
-nobody else can reproduce.
+without pulling the run down. The family index exists so a session's runs
+are one read rather than a walk up parent references, per section 2.2, the
+session being the identity the trace's runs share. **Nothing is computed at
+read time except where the query is recorded.** A value that must be
+derived is derived once at ingest and stored, because a value computed in
+the interface is a value nobody else can reproduce.
 
 **The exception is section 4's and it is not new**, only made live by the
 fourth read of 2026-09-08. Section 4 admits an open query on the condition
@@ -1044,6 +1083,35 @@ reader.
 6's rule, because a branch that changed nothing draws what its parent drew
 and an arm that reproduced its parent is a different fact from one that
 parted at position zero.
+
+**The record's session and digest land here and are not derived here.** The
+emitter carries both per generation and this ingest stores them once per
+run, per `weaver-analysis-web-contract` section 2.2, refusing a run whose
+generations disagree on either as the defect the contract names. **The
+digest is the emitter's to compute because the emitter drained the bytes
+and this crate never sees them**, which is section 3.1's own first
+paragraph applied to a hash: a digest this crate computed over its own
+rows would be a digest of the projection and would vouch for nothing. Both
+are absent rather than defaulted where the emitter sent none, per section
+6's rule, so a row landed from a record cut short says so.
+
+```graph
+node: web-record-members-are-absent-where-unsent
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-record-members-are-absent-where-unsent
+
+node: web-record-members-agree-across-a-run
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-record-members-agree-across-a-run
+```
 
 **A generation whose closing count the record does not carry has no
 position, and its points do not land, though its summary entry does.** The
@@ -1549,6 +1617,8 @@ cell record like any other.
 | the bearer is stored as a digest and never in the clear | perturbation, at the schema: store the bearer and look up on it, a read of the session table is a set of live sessions |
 | a session carries a claimed name and never a proof | review, over the open path: nothing between the posted name and the row tests it, which is the posture section 6 defers and not a defect |
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
+| the record's session and digest are absent where unsent | perturbation: fill an absent digest from the landed rows, a row from a record cut short vouches for bytes nobody drained |
+| the record's session and digest agree across a run | perturbation: land a run whose generations name two sessions, the row holds two truths about which record it came from |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.

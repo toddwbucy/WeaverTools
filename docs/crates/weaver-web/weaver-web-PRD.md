@@ -6,6 +6,12 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
+the difference between the row and the tuple is lineage, and the Spec's acts
+of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
+session and digest beside it, none a condition the run ran under. This
+charter is the authority for what stands outside the compound and now names
+all four. Found by the review of PR #525.
 **Revised:** 2026-09-07, second of this date, section 6 names the act it
 defers to. The section said identity, authentication and transport
 encryption are deferred with a named trigger and then named none, and `IAM`
@@ -598,11 +604,14 @@ report that as a divergence. Forcing is in for the same reason under the
 rule of section 3.5: a forced token is not a sampled one, so two rows
 differing in it are not two readings of one condition.
 
-**The row holds more than the tuple, and the difference is lineage.** The
-parent run reference and the branch position say where a run came from
-rather than what it ran under. They are the row's and not the compound's, so
-two rows are comparable across them, which is what makes a branch
-measurable against its parent at all.
+**The row holds more than the tuple, and the difference is four members
+none of which is a condition.** The parent run reference and the branch
+position, which are lineage, say where a run came from rather than what it
+ran under. The emission's signature says what the run produced. The record's
+session and digest say which record the row descends from. All four are the
+row's and not the compound's, so two rows are comparable across them, which
+is what makes a branch measurable against its parent at all, and the Spec's
+section 2.2 carries each with its ground.
 
 The write path is a consumer rather than a step in the loop, and **the
 decoder never waits on a database**. The read path is what the schema is

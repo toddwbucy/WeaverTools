@@ -285,8 +285,9 @@ registers five tuple fields with a sixth run added in its comments, and the hub 
 the act sources that reading or drops it. The trace-kind claim of section 6 stands
 against `weaver-trace-Spec`'s kind list, which names nothing for presented material.
 
-**The digest on the run row** is decided in section 2 and held by no document. It
-joins issue #521 as that act's second member, beside the session identity.
+**The digest on the run row** is decided in section 2 and landed by issue #521's act
+at `weaver-web-Spec` section 2.2, beside the session identity, on the operator's
+ruling of 2026-09-09.
 
 **"Parent: Sketch Convention"** in the header names a document that is not in the
 tree. The two standing sketches cite none.

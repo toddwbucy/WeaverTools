@@ -5,6 +5,16 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+**Revised:** 2026-09-09, the summary names the record it was read from. Section
+2.2 gains the record's session and the record's digest per generation, once per run
+in the reader's row on the weights hash's own rule, and section 3 asks both of the
+emitter, so the reader's run row can say which record it descends from and be
+checked against it byte for byte. The emitter is the party that drains the bytes,
+so the digest is the emitter's to compute and the reader never sees the record.
+**The digest is the first noun this contract defines**, having no other authority,
+and the vocabulary clause says so, the session being drawn from the trace charter.
+`weaver-analysis-Spec` section 5 moves in the same act, as the parties' rule
+requires. Per issue #521, on the operator's ruling of 2026-09-09.
 **Revised:** 2026-09-06, the summary carries the record's identity, and the owed
 sentences are current. Section 2.2 gains the weights hash per generation as the
 record spelled it, section 3 asks it of the emitter beside the two counts, and the
@@ -82,6 +92,10 @@ generation's perplexity, and where their elections stand the surprisals.
 The **`model.output`** event and its resident count and capacity as the
 generation closed. **`model.field`** and its ranked candidates, which this
 seam does not carry and which section 6 names as the other reader's.
+**From `weaver-trace-PRD` section 2.1 and `weaver-trace-Spec` section 1**,
+the **session**, the identity the runs share, carried on every line's
+envelope, and the **run** and its ending at `unload` or at process death per
+that charter's section 4.3.
 
 **Defined since 2026-09-05.** That section tables the measurement's members,
 and the two section 3 reads were defined at issue #461: the token
@@ -105,8 +119,14 @@ section 2.6.
 replay bracket, which is the licence a diagnostic reading needs and a
 serving reading does not.
 
-**Defined here.** Nothing. This contract states what crosses and defines no
-noun of its own, every term above having one authority already.
+**Defined here.** One noun, since 2026-09-09: **the record's digest** of
+section 2.2, sha256 over a run's own lines as the emitter drained them, and
+what makes a run whole for it. No other document holds it, the trace
+charter's section 4.3 saying in as many words that the record carries no
+checksum, so this contract is its authority and `weaver-analysis-Spec`
+section 5 and `weaver-web-Spec` section 2.2 cite it here. Every other term
+above has one authority already, and this contract states what crosses of
+them and defines none.
 
 ## 1. What this contract governs
 
@@ -171,6 +191,33 @@ measurement carrying no member, which crosses absent, and a reader that
 folded the two together could not tell a failed identity from an older
 record.
 
+**The record's session and the record's digest cross the same way: per
+generation on the wire and once per run in the reader's row.** The session is
+the envelope's `session` every line of the record carries, per
+`weaver-trace-Spec` section 1, spelled as the record spelled it, and it is
+the identity the run's session shares with the runs before and after it,
+which `weaver-web-Spec` section 2.2 stores so a session's runs are readable
+as a family. The digest is sha256 over the bytes of the run's own lines as
+the emitter drained them, each line with its terminating newline, in the
+order they were read, spelled as lowercase hex, so a reader holding the
+record can recompute it and a row can be checked against the record it
+descends from. **Every line names a run, and a line belongs to the digest
+of the run it names**, the envelope's `run` being a required member per
+`weaver-trace-Spec` section 1, so two emitters over one file agree. **A
+run's generations
+agree on both, and a run whose generations disagree is a defect the reader
+names.** **The digest is present only for a whole run, and a run is whole
+when its `unload` landed and the drain began at or before its `load`.** A
+run that ended at process death has no `unload`, per `weaver-trace-PRD`
+section 4.3, its queue's tail forfeited, and an emitter that drained every
+line that exists has still not drained the run, and a drain that opened
+after the run's first line saw a suffix. In both the digest is absent, so an
+absent digest says the emitter could not vouch for the bytes rather than
+vouching for the bytes it happened to see, and the reader's refusal on a
+mismatch never reads a digest of a truncated record as a digest of the
+whole. The session is absent where the record predates the envelope's
+session member and never otherwise.
+
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store
 keyed by position converts from and it is owed whether or not a perplexity
@@ -210,7 +257,9 @@ wrong token.**
 
 **The emitter therefore carries, per generation, the resident count as the
 generation closed and the count of output tokens**, beside the perplexity on
-the summary stream. **The output count is the length of that generation's
+the summary stream, **and the record's session and digest per section 2.2**,
+the emitter being the party that drained the bytes and the only one that
+can name them. **The output count is the length of that generation's
 `model.measurement` `output_tokens` sequence**, the drawn tokens with the
 terminator outside them per `weaver-spu-Spec` section 6, and not a separate
 scalar the record carries. **A generation whose measurement holds no
