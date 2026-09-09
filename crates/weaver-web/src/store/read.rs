@@ -78,6 +78,12 @@ pub struct RunTuple {
     /// path left its parent's, derived at ingest. `None` where the paths
     /// never parted or where there is no parent.
     pub parting_position: Option<i32>,
+    /// The record the row came from, twice, per section 2.2: the identity
+    /// the trace's runs share, and sha256 over the run's own lines as the
+    /// emitter drained them. Both outside the compound, both `None` where
+    /// the emitter could not vouch for them.
+    pub record_session: Option<String>,
+    pub record_digest: Option<String>,
     /// The emission's signature, outside the compound. Its representation is
     /// section 10's open election.
     pub signature: Option<serde_json::Value>,
@@ -146,7 +152,7 @@ impl Store {
             "SELECT run_id, record_identity, seed::text AS seed, sampler, device, \
              compute_precision, engine, batching, field_depth, task_source, \
              task_identity, boundary_set, forced_position, forced_token, \
-             parent_run_id, branch_position, parting_position, signature, ingested_at \
+             parent_run_id, branch_position, parting_position, record_session, record_digest, signature, ingested_at \
              FROM run WHERE run_id = $1",
         )
         .bind(&run.0)
@@ -181,7 +187,7 @@ impl Store {
              r.sampler, r.device, r.compute_precision, r.engine, r.batching, \
              r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
              r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
-             r.parting_position, r.signature, r.ingested_at \
+             r.parting_position, r.record_session, r.record_digest, r.signature, r.ingested_at \
              FROM staged_experiment_run ser JOIN run r ON r.run_id = ser.run_id \
              WHERE ser.experiment_id = $1",
         )
@@ -285,6 +291,8 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
         parent_run: r.get::<Option<String>, _>("parent_run_id").map(RunId),
         branch_position: r.get("branch_position"),
         parting_position: r.get("parting_position"),
+        record_session: r.get("record_session"),
+        record_digest: r.get("record_digest"),
         signature: r.get("signature"),
         ingested_at: r.get("ingested_at"),
     }
@@ -456,6 +464,40 @@ mod tests {
         let mut draft = sweep.experiment.row().clone();
         draft.state = ExperimentState::Draft;
         assert!(Registered::new(draft).is_err());
+    }
+
+    #[tokio::test]
+    async fn read_three_names_the_record_the_row_came_from() {
+        let Some(s) = store().await else { return };
+        let digest = "a".repeat(64);
+        sqlx::query(
+            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
+             batching, boundary_set, record_session, record_digest) \
+             VALUES ('r-named', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'sess-1', $1) \
+             ON CONFLICT (run_id) DO NOTHING",
+        )
+        .bind(&digest)
+        .execute(&s.pool)
+        .await
+        .unwrap();
+        let t = s.tuple(&RunId("r-named".into())).await.unwrap().unwrap();
+        assert_eq!(t.record_session.as_deref(), Some("sess-1"));
+        assert_eq!(t.record_digest.as_deref(), Some(digest.as_str()));
+
+        // Absent rather than defaulted where the emitter sent none.
+        seed_run(&s, "r-unnamed", None, None).await;
+        let t = s.tuple(&RunId("r-unnamed".into())).await.unwrap().unwrap();
+        assert!(t.record_session.is_none() && t.record_digest.is_none());
+
+        // The schema refuses a digest that is not sha256 hex.
+        let refused = sqlx::query(
+            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
+             batching, boundary_set, record_digest) \
+             VALUES ('r-bad-digest', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'not-hex')",
+        )
+        .execute(&s.pool)
+        .await;
+        assert!(refused.is_err());
     }
 
     #[tokio::test]
