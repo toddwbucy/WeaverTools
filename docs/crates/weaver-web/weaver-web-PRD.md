@@ -15,7 +15,10 @@ branch occurs at load time, each arm a separate run under its moved value
 and the model reloaded for the next, which the mechanism carries today, and
 that the fork's cut inside a turn is owed at a contract no document yet
 holds. **The ablation ships first and the fork after it**, and the row is
-not narrowed for the wait. Issue #524 is the register.
+not narrowed for the wait. The whole-run arm's branch position is the
+parent's identity prefix's length, owed at the analysis seam per the Spec's
+section 10 and landing before the first such arm is staged. Issue #524 is
+the register.
 **Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
 the difference between the row and the tuple is lineage, and the Spec's acts
 of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
@@ -411,7 +414,12 @@ restoring load's lineage names the parent, the run the cut falls in, and the
 turn the holdings stop at, and the re-issue of the parent's turns to a fresh
 arm is the queue runner's, which issue #442 holds open. An arm run whole
 from the beginning is a fresh load whose parent the store remembers, and the
-Spec's section 5 says what its branch position is. A **fork**, the click on
+Spec's section 5 says what its branch position is: the parent's identity
+prefix's length, **which nothing crossing the analysis seam carries today**.
+The Spec's section 10 names that contract act as owed, and it lands before
+the first whole-run arm is staged, since section 5.3 validates a branch
+position the store could not otherwise hold. Until it lands the ablation's
+runnable arm is one restored at a turn. A **fork**, the click on
 an alternative above, forces a token at a position inside a turn and
 continues from it, so its branch position is that position. **No contract yet carries
 a cut inside a turn**, and the fork waits on one, per the operator's ruling
