@@ -52,8 +52,24 @@ def test_readings_shape():
     a={"output_tokens":[1,2,3],"emission":"abc","entropies":[0.5,0.5,0.5],"field":{0:{"ranked":[{"token":1,"probability":1.0}],"realized":0}}}
     b={"output_tokens":[1,2,4],"emission":"abd","entropies":[0.5,0.5,0.7],"field":{0:{"ranked":[{"token":1,"probability":1.0}],"realized":0}}}
     one=reading_one(a,b); assert one["first_token_divergence"]==2 and one["first_char_divergence"]==2 and not one["identical"]
-    two=reading_two(a,b); assert two["entropy_positions_exact"]==2 and two["entropy_first_difference"]==2 and two["field_kl_bits_max"]==0
+    two=reading_two(a,b); assert two["entropy_positions_exact"]==2 and two["entropy_first_difference_ordinal"]==2 and two["field_kl_bits_max"]==0
 
 if __name__=="__main__":
     for n,f in sorted(globals().items()):
         if n.startswith("test_"): f(); print("ok", n)
+
+
+def test_the_field_reports_its_floor_and_both_coordinates():
+    # The field is keyed by resident position and starts after the prompt,
+    # here at 154, while the entropies are indexed by output ordinal.
+    same=[{"token":1,"probability":0.9},{"token":2,"probability":0.1}]
+    moved=[{"token":1,"probability":0.6},{"token":2,"probability":0.4}]
+    a={"entropies":[0.5,0.5,0.5],"output_tokens":[1,1,1],"field":{"154":{"ranked":same},"155":{"ranked":same},"156":{"ranked":same}}}
+    b={"entropies":[0.5,0.5,0.7],"output_tokens":[1,1,1],"field":{"154":{"ranked":same},"155":{"ranked":same},"156":{"ranked":moved}}}
+    two=reading_two(a,b)
+    assert two["field_first_position"]==154
+    assert two["field_first_nonzero_kl_position"]==156 and two["field_first_nonzero_kl_ordinal"]==2
+    assert two["entropy_first_difference_ordinal"]==2
+    empty=reading_two({"entropies":[],"output_tokens":[],"field":{}},{"entropies":[],"output_tokens":[],"field":{}})
+    assert empty["field_first_position"] is None and empty["field_first_nonzero_kl_ordinal"] is None
+

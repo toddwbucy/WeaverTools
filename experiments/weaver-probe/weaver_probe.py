@@ -314,7 +314,14 @@ def reading_two(free, refed):
     identical context: the entropies to the bit, and the ranked field by a
     truncated KL with its coverage stated. **The entropies are compared with
     `==` on purpose**: the claim is bit identity of two computations under
-    one context, and a tolerance would retire that claim silently."""
+    one context, and a tolerance would retire that claim silently.
+
+    **Two coordinates, each named in its key.** The entropy series is indexed
+    by output ordinal, zero at the first emitted token. The ranked field is
+    keyed by the record's resident position, which starts after the prompt,
+    so the field's first key is the floor below which nothing can register,
+    and the reading states that floor and gives the field's first nonzero KL
+    in both coordinates rather than leaving a reader to subtract."""
     ea, eb = free["entropies"], refed["entropies"]
     n = min(len(ea), len(eb))
     exact = sum(1 for i in range(n) if ea[i] == eb[i])
@@ -330,16 +337,20 @@ def reading_two(free, refed):
         if fb is None:
             continue
         kls.append((pos, truncated_kl(fa["ranked"], fb["ranked"])))
+    field_floor = min((pos for pos, _ in kls), default=None)
+    first_kl = next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None)
     return {
         "positions_compared": n,
         "entropy_positions_exact": exact,
-        "entropy_first_difference": first,
+        "entropy_first_difference_ordinal": first,
         "entropy_mean_abs_diff": mean(diffs),
         "entropy_max_abs_diff": max(diffs) if diffs else None,
         "field_positions_compared": len(kls),
         "field_kl_bits_mean": mean([k["kl_bits"] for _, k in kls if k["kl_bits"] is not None]),
         "field_kl_bits_max": max((k["kl_bits"] for _, k in kls if k["kl_bits"] is not None), default=None),
-        "field_first_nonzero_kl": next((pos for pos, k in kls if k["kl_bits"] is None or k["kl_bits"] > 0), None),
+        "field_first_position": field_floor,
+        "field_first_nonzero_kl_position": first_kl,
+        "field_first_nonzero_kl_ordinal": None if first_kl is None else first_kl - field_floor,
         "field_positions_no_shared_support": sum(1 for _, k in kls if k["kl_bits"] is None),
         "field_positions_thin_support": sum(
             1 for _, k in kls
@@ -510,10 +521,10 @@ def run_refeed(cfg, source_dir, as_arm):
         # A refused or abandoned replay writes its close with the reason, and
         # the harness names an identity it refused as its own event, so a
         # reading computed over that sink would be a reading of nothing.
-        payload = (closes[-1].get("payload") or {}).get("outcome") or {} if closes else {}
-        outcome = payload.get("kind")
+        close_outcome = (closes[-1].get("payload") or {}).get("outcome") or {} if closes else {}
+        outcome = close_outcome.get("kind")
         rec["replay_outcome"] = outcome
-        rec["replay_divergence"] = payload.get("divergence")
+        rec["replay_divergence"] = close_outcome.get("divergence")
         rec["replay_refusals"] = [e["kind"] for e in events if e.get("kind", "").endswith("_refused")]
         # **A replay that ran to its end is a reading whatever its outcome.**
         # Certified means the recomputed path is the recorded one; diverged
@@ -524,7 +535,13 @@ def run_refeed(cfg, source_dir, as_arm):
         if outcome not in ("certified", "diverged"):
             rec["verdict"] = f"replay {outcome}: {', '.join(rec['replay_refusals']) or 'no reason event'}"
             return
-        ex = extract_run([e for e in events if e.get("run") == rec["replay_run"]])
+        replay_events = [e for e in events if e.get("run") == rec["replay_run"]]
+        if not replay_events:
+            # A close whose run has no events in the record is an apparatus
+            # fault, and a reading over nothing would print zeros as a reading.
+            rec["verdict"] = "the replay's run has no events in the record"
+            return
+        ex = extract_run(replay_events)
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
             json.dump({**rec, "refed": ex}, fh)
