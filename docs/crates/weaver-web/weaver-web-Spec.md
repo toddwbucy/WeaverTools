@@ -26,7 +26,11 @@ signature is what a run produced and not a condition it ran under, and
 a surface proceeding** under that section's own rule. The read is three index
 hits and the similarity over them is the recorded open query, which is what
 keeps that section's first line true. Section 5.3 says the checks hold per
-value and refuses a sweep naming the parent's own. Section 2.7's absolute is
+value and refuses a sweep naming the parent's own. **The read's unit is the
+value and not the run**, so an arm that never ran returns itself and the
+absence section 5.4 records is legible, and **the parting position is
+derived at ingest** rather than at the read, a comparison of two token paths
+being a walk whatever it is called. Section 2.7's absolute is
 qualified to what section 4 already glossed it as: what it forbids is a
 derivation nobody can find. Section 10 gains the two elections this act
 opened, **the signature's representation and whether `device` resolves the
@@ -476,6 +480,10 @@ Everything identifying the conditions lives in the run's own row:
 - the declared boundary set
 - the parent run reference and branch position, where the run is a branch,
   **which are lineage and stand outside tuple equality**
+- **the parting position** where the run is a branch, the first at which its
+  token path left its parent's, derived at ingest per section 3.1 and
+  absent where the paths never part, which is also lineage and also outside
+  the compound
 - **the emission's signature**, a set of shingles over the emitted text
   derived once at ingest, **which is a property of the result and stands
   outside tuple equality with lineage**, per section 5.4
@@ -1022,6 +1030,21 @@ from: weaver-web
 to: web-position-is-stored-at-ingest
 ```
 
+**The parting position is derived here too, and only for a branch.** A run
+carrying a parent reference has its parent already in the store, so the
+ingest walks the two token paths once and stores the first position they
+differ at, or stores nothing where they never part. **Deriving it here is
+what makes section 4's fourth read a read.** A comparison of two token paths
+is a walk whatever else it is called, and a walk at the read is the thing
+section 2.7 refuses: doing it once at the ingest costs one pass over a run
+that is being written anyway, and doing it at every read costs one pass per
+reader.
+
+**It is absent rather than zero where the paths never part**, per section
+6's rule, because a branch that changed nothing draws what its parent drew
+and an arm that reproduced its parent is a different fact from one that
+parted at position zero.
+
 **A generation whose closing count the record does not carry has no
 position, and its points do not land, though its summary entry does.** The
 count is absent rather than derived where no `model.output` reported one, so
@@ -1175,21 +1198,29 @@ Four queries, and the schema of section 2 exists to make each an index hit.
 2. **A contiguous range of positions** carrying the emitted token, surprisal
    and entropy. This is the timeline and the transcript.
 3. **The run's tuple.** This is the label on every reading taken from it.
-4. **The runs one staged experiment produced, with what separates them.**
-   The arms of one sweep and the parent that is their control, per section
-   5.4, each with its tuple, its signature and the first position at which
-   its token path leaves the parent's. **All three are index hits**: the
-   arms by their parent reference, the signature stored at ingest per
-   section 2.2, and the first parting position by the key of section 2.1.
-   **A similarity between two signatures is not part of this read.** It is
-   the open query of the condition below, computed over what this read
-   returns and recorded in section 2.6, which is what keeps the first line
-   of this section true.
+4. **One staged experiment's value set, each value with its run where one
+   exists.** The unit of this read is the **value and not the run**, because
+   section 5.4 has an arm that never ran keep its place in the set, and a
+   read whose unit were the run would return six rows for eight values and
+   erase the absence the frozen set exists to record. A value with no run
+   returns itself and nothing else, which is the answer.
+
+   Where a run exists it carries its tuple, its signature per section 2.2,
+   and **its parting position, the first at which its token path left its
+   parent's, derived once at ingest per section 3.1 and stored beside the
+   branch position**. All three are then index hits: the arms by their
+   parent reference, and the other two by their own columns.
+
+   **Neither the similarity nor the parting position is computed here.** A
+   similarity is the open query of the condition below, computed over what
+   this read returns and recorded in section 2.6. **The parting position is
+   not computed at all**, being stored, which is what a comparison of two
+   token paths must be for this to be a read rather than a walk.
 
 **For a per-generation sweep the parting position is the reading and the
 signature is not needed.** Same weights and same window mean the arms are
-comparable byte for byte, so where the paths part is an index operation and
-says everything the arm was authored to ask. **The signature earns its place
+comparable byte for byte, so the parting position section 3.1 stored says
+everything the arm was authored to ask. **The signature earns its place
 on a load-time sweep**, where section 5.2 has the comparison structural
 rather than byte-exact and a parting position says only that two different
 models wrote different essays.
