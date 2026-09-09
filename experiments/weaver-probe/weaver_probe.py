@@ -549,7 +549,8 @@ def run_refeed(cfg, source_dir, as_arm):
         # indexes it into the input-plus-output token path, so the first
         # emitted token is at the input count, where the entropies run by
         # output ordinal from zero and the field by resident position from
-        # its own floor. The ordinal is given beside it so the three compare.
+        # its own floor, the identity prefix plus the input per
+        # weaver-spu-Spec. The ordinal is given beside it so the three compare.
         div = rec["replay_divergence"] or {}
         if div.get("kind") == "token_path" and ex["input_tokens"] is not None:
             rec["replay_divergence_ordinal"] = int(div["position"]) - ex["input_tokens"]
