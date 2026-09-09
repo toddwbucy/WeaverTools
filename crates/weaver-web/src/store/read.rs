@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
 use super::Store;
-use super::experiment::{Arm, ExperimentState, StagedExperiment, Sweep};
+use super::experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 use super::key::{PositionKey, RunId, TurnId};
 
 /// Read one: one position's alternatives, per section 2.1. This is
@@ -163,8 +163,8 @@ impl Store {
             return Ok(None);
         };
         let (Some(member), Some(values)) = (
-            experiment.swept_member.clone(),
-            experiment.swept_values.clone(),
+            experiment.row().swept_member.clone(),
+            experiment.row().swept_values.clone(),
         ) else {
             return Ok(Some(Sweep {
                 experiment,
@@ -218,10 +218,10 @@ impl Store {
         }))
     }
 
-    /// The experiment's own row, by id. Not one of the four reads on its
-    /// own: read four calls it, and the Experiments list of the charter's
-    /// section 3.6 reads through the same column set.
-    pub async fn experiment(&self, experiment_id: i64) -> anyhow::Result<Option<StagedExperiment>> {
+    /// The experiment's own row, by id, wrapped where it is frozen. Not one
+    /// of the four reads on its own: read four calls it, and the Experiments
+    /// list of the charter's section 3.6 reads through the same column set.
+    pub async fn experiment(&self, experiment_id: i64) -> anyhow::Result<Option<Experiment>> {
         let row = sqlx::query(
             "SELECT experiment_id, state, state_changed_at, parent_run_id, branch_position, \
              forced_token, parent_declaration_id, diff_at_load, diff_at_turn, question, \
@@ -241,7 +241,7 @@ impl Store {
                 Some(_) => anyhow::bail!("staged_experiment {experiment_id} holds swept_values that is not an array"),
                 None => None,
             };
-            Ok(StagedExperiment {
+            let row = StagedExperiment {
                 experiment_id: r.get("experiment_id"),
                 state,
                 state_changed_at: r.get("state_changed_at"),
@@ -256,6 +256,10 @@ impl Store {
                 swept_values,
                 author: r.get("author"),
                 version: r.get("version"),
+            };
+            Ok(match Registered::new(row) {
+                Ok(registered) => Experiment::Registered(registered),
+                Err(draft) => Experiment::Draft(*draft),
             })
         })
         .transpose()
@@ -446,9 +450,10 @@ mod tests {
         );
         assert_eq!(sweep.arms[1].run.as_ref().unwrap().parting_position, None);
 
-        // The pin: a registered row wraps, and a draft is refused.
-        assert!(Registered::new(sweep.experiment.clone()).is_ok());
-        let mut draft = sweep.experiment.clone();
+        // The pin: a registered row leaves the store wrapped, and the
+        // constructor refuses a draft.
+        assert!(matches!(sweep.experiment, Experiment::Registered(_)));
+        let mut draft = sweep.experiment.row().clone();
         draft.state = ExperimentState::Draft;
         assert!(Registered::new(draft).is_err());
     }
@@ -465,7 +470,8 @@ mod tests {
         .unwrap();
         let sweep = s.sweep(id).await.unwrap().unwrap();
         assert!(sweep.arms.is_empty());
-        assert_eq!(sweep.experiment.state, ExperimentState::Draft);
+        assert!(matches!(sweep.experiment, Experiment::Draft(_)));
+        assert_eq!(sweep.experiment.row().state, ExperimentState::Draft);
         assert!(s.sweep(i64::MAX).await.unwrap().is_none());
     }
 }

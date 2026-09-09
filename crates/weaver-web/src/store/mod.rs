@@ -18,7 +18,7 @@ pub mod key;
 pub mod read;
 
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
-pub use experiment::{Arm, ExperimentState, Registered, StagedExperiment, Sweep};
+pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{PositionKey, RunId, TurnId};
 pub use read::{Alternatives, PositionPoint, RunTuple};
 

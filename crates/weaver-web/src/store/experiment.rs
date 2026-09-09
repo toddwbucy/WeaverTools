@@ -22,6 +22,12 @@
 //!
 //! **A draft is not `Registered`** and reaches a caller as the bare row,
 //! because editing one is what drafts are for, per section 5.1.
+//!
+//! **The reads are the door.** `Store::experiment` and `Store::sweep` return
+//! `Experiment`, whose `Registered` arm is the only way a frozen row leaves
+//! the store, so the pin holds every row a read hands out and not only the
+//! rows a caller chose to wrap. `Registered::new` is the one constructor and
+//! the read calls it, a draft becoming the `Draft` arm through its refusal.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -119,6 +125,29 @@ impl Deref for Registered {
     }
 }
 
+/// A row as a read returns it: bare where it is a draft, wrapped where it
+/// is frozen. There is no third arm and no accessor that hands a frozen row
+/// back bare.
+#[derive(Debug, Clone, Serialize)]
+pub enum Experiment {
+    Draft(StagedExperiment),
+    Registered(Registered),
+}
+
+impl Experiment {
+    /// The row, readable in either arm.
+    pub fn row(&self) -> &StagedExperiment {
+        match self {
+            Self::Draft(row) => row,
+            Self::Registered(registered) => registered,
+        }
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        matches!(self, Self::Registered(_))
+    }
+}
+
 /// One value of a sweep with its run where one exists, per section 4's
 /// fourth read. **The unit is the value and not the run**: a value with no
 /// run is an arm that never ran and keeps its place in the set, which is
@@ -135,7 +164,7 @@ pub struct Arm {
 /// its run.
 #[derive(Debug, Clone, Serialize)]
 pub struct Sweep {
-    pub experiment: StagedExperiment,
+    pub experiment: Experiment,
     pub member: String,
     pub arms: Vec<Arm>,
 }
