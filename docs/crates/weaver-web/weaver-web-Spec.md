@@ -1361,13 +1361,15 @@ to a fresh arm is the queue runner's, which issue #442 holds open. The charter's
 3.5 **fork** forces a token at a position inside a turn and continues from it, so its
 branch position is that position and the forced token is the member section 2.5 holds
 for it. **No contract yet carries a cut inside a turn**, which section 10 holds open, so
-the fork waits and the sweep does not. **The charter's sentence that section 5.4 grounds
-on, "fork the same position many times under fresh seeds", covers both features at their
-own grain**: the sweep forks the run at its branch position and the fork forks a
-position inside a turn, so 5.4 stands on it as a sweep does. Section 3.1 derives the
-parting position for the sweep's arms, which the mechanism makes, and leaves it absent
-on a fork until the fork has one, per section 6's rule. The row's members are not
-narrowed for the wait.
+the fork waits on that contract. **A whole-run sweep arm waits on the prefix length's
+contract**, section 10's other open bullet and issue #527, and until it lands the
+runnable arm is one restored at a turn, as the charter's section 3.5 says. **The
+charter's sentence that section 5.4 grounds on, "fork the same position many times under
+fresh seeds", covers both features at their own grain**: the sweep forks the run at its
+branch position and the fork forks a position inside a turn, so 5.4 stands on it as a
+sweep does. Section 3.1 derives the parting position for the sweep's arms, which the
+mechanism makes, and leaves it absent on a fork until the fork has one, per section 6's
+rule. The row's members are not narrowed for the wait.
 
 ### 5.1 The five states
 
