@@ -176,7 +176,7 @@ def extract_run(events):
     entropies and surprisals, and the ranked field at each position."""
     rec = {"emission": None, "output_tokens": [], "entropies": [], "surprisals": None,
            "field": {}, "finish": None, "declared_seed": None, "generation_seed": None,
-           "timings": None, "weights_hash": None, "model": None}
+           "timings": None, "weights_hash": None, "model": None, "input_tokens": None}
     for e in events:
         k, p = e.get("kind"), e.get("payload") or {}
         if k == "model.request":
@@ -187,6 +187,9 @@ def extract_run(events):
             rec["finish"] = p.get("finish")
         elif k == "model.measurement":
             rec["output_tokens"] = p.get("output_tokens", [])
+            # The count and not the tokens: it is the origin the replay's
+            # divergence position is read against, per run_refeed.
+            rec["input_tokens"] = len(p["input_tokens"]) if p.get("input_tokens") is not None else None
             rec["entropies"] = p.get("entropies", [])
             rec["surprisals"] = p.get("surprisals")
             rec["timings"] = p.get("timings")
@@ -542,6 +545,16 @@ def run_refeed(cfg, source_dir, as_arm):
             rec["verdict"] = "the replay's run has no events in the record"
             return
         ex = extract_run(replay_events)
+        # **The divergence position is a third coordinate.** The harness
+        # indexes it into the input-plus-output token path, so the first
+        # emitted token is at the input count, where the entropies run by
+        # output ordinal from zero and the field by resident position from
+        # its own floor. The ordinal is given beside it so the three compare.
+        div = rec["replay_divergence"] or {}
+        if div.get("kind") == "token_path" and ex["input_tokens"] is not None:
+            rec["replay_divergence_ordinal"] = int(div["position"]) - ex["input_tokens"]
+        else:
+            rec["replay_divergence_ordinal"] = None
         rec["reading_two"] = reading_two(src, ex)
         with open(os.path.join(out_dir, "refeed.json"), "w") as fh:
             json.dump({**rec, "refed": ex}, fh)

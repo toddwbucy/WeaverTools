@@ -1,7 +1,7 @@
 """The probe's pure readings, per issue #511."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two
+from weaver_probe import first_divergence, aligned_agreement_after, truncated_kl, reading_one, reading_two, extract_run
 
 def test_divergence_and_agreement():
     assert first_divergence([1,2,3],[1,2,3]) is None
@@ -72,4 +72,12 @@ def test_the_field_reports_its_floor_and_both_coordinates():
     assert two["entropy_first_difference_ordinal"]==2
     empty=reading_two({"entropies":[],"output_tokens":[],"field":{}},{"entropies":[],"output_tokens":[],"field":{}})
     assert empty["field_first_position"] is None and empty["field_first_nonzero_kl_ordinal"] is None
+
+
+def test_extract_run_keeps_the_input_count_the_divergence_is_read_against():
+    events=[{"kind":"model.measurement","payload":{"input_tokens":[1]*127,"output_tokens":[5,6],"entropies":[0.1,0.2]}},
+            {"kind":"model.field","payload":{"position":154,"ranked":[],"realized":0}}]
+    ex=extract_run(events)
+    assert ex["input_tokens"]==127 and ex["output_tokens"]==[5,6] and list(ex["field"])==[154]
+    assert extract_run([])["input_tokens"] is None
 
