@@ -406,11 +406,14 @@ refuses.
 
 **Two features author from this surface, and a branch is a load in both.**
 An **ablation** moves one member of the tuple and runs the arm whole from
-the load, so its branch position is a turn boundary, and the mechanism
-carries it today: a restoring load's lineage names the parent, the run the
-cut falls in, and the turn the holdings stop at. A **fork**, the click on an
-alternative above, forces a token at a position inside a turn and continues
-from it, so its branch position is that position. **No contract yet carries
+the load. The mechanism carries the cut and not the continuation: a
+restoring load's lineage names the parent, the run the cut falls in, and the
+turn the holdings stop at, and the re-issue of the parent's turns to a fresh
+arm is the queue runner's, which issue #442 holds open. An arm run whole
+from the beginning is a fresh load whose parent the store remembers, and the
+Spec's section 5 says what its branch position is. A **fork**, the click on
+an alternative above, forces a token at a position inside a turn and
+continues from it, so its branch position is that position. **No contract yet carries
 a cut inside a turn**, and the fork waits on one, per the operator's ruling
 of 2026-09-09 that a branch occurs at load time, each arm a separate run
 under its moved value and the model reloaded for the next. The ablation

@@ -20,7 +20,10 @@ Section 5.3 says the forced-token check is the fork's alone, and section 10
 holds the fork's cut open. **Section 3.1's parting position is derived for
 the sweep's arms, which the mechanism makes, and is absent on a fork until
 the fork has one.** Nothing is narrowed: the forced token and its position
-stay on the rows and serve the fork.
+stay on the rows and serve the fork. Per the review of PR #526, section 5
+says what a whole-run arm's branch position is, the parent's identity
+prefix's resident length, and that the mechanism carries the cut while the
+runner of issue #442 owes the continuation.
 **Revised:** 2026-09-09, the run row names the record it came from. Section
 2.2 gains the record's session, the identity the trace's runs share per
 `weaver-trace-PRD` section 2.1 and **not section 2.8's session, which is a
@@ -1344,17 +1347,31 @@ position, so the comparison needs no reconstruction.
 
 **Two features share this row, and a branch is a load in both**, per the
 operator's ruling of 2026-09-09 on issue #524. Section 5.4's **sweep** moves
-one member of the tuple and runs each arm whole from the load, so an arm's
-branch position is a turn boundary, the resident length at the end of the
-turn the restoring load's lineage stops at, and the mechanism carries it
-today. The charter's section 3.5 **fork** forces a token at a position
-inside a turn and continues from it, so its branch position is that position
-and the forced token is the member section 2.5 holds for it. **No contract
-yet carries a cut inside a turn**, which section 10 holds open, so the fork
-waits and the sweep does not. Section 3.1 derives the parting position for
+one member of the tuple and runs each arm whole from the load. **An arm's
+branch position is stated in the parent's coordinate and is one of two
+things.** An arm restored at a turn carries the resident length at the end
+of the turn the load's lineage stops at, per `weaver-types-Spec` section 4's
+`through`. An arm run whole from the beginning, which is the ruling's own
+case and the matrix's, is a fresh load whose parent the store alone
+remembers, and its branch position is the resident length of the parent's
+identity prefix, the position its first turn's input begins at, which is
+the first at which the arm's tape can differ from its parent's by the run's
+own doing. A stated zero is refused because it would say the arm departs
+before a prefix it shares. **The mechanism carries the cut and not the
+continuation**: a restoring load stands the session at the turn the lineage
+names, and the re-issue of the parent's turns to a fresh arm is the queue
+runner's, which issue #442 holds open. The charter's section 3.5 **fork**
+forces a token at a position inside a turn and continues from it, so its
+branch position is that position and the forced token is the member section
+2.5 holds for it. **No contract yet carries a cut inside a turn**, which
+section 10 holds open, so the fork waits and the sweep does not. **The
+charter's sentence section 5.4 grounds on, fork the same position many times
+under fresh seeds, covers both at their own grain**: the sweep forks the run
+at its branch position and the fork forks a position inside a turn, so 5.4
+stands on it as a sweep does. Section 3.1 derives the parting position for
 the sweep's arms, which the mechanism makes, and leaves it absent on a fork
-until the fork has one, per section 6's rule. The ablation ships first and
-the fork after it, and the row's members are not narrowed for the wait.
+until the fork has one, per section 6's rule. The row's members are not
+narrowed for the wait.
 
 ### 5.1 The five states
 

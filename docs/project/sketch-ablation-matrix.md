@@ -251,7 +251,10 @@ disposition and a value, and the mockup shows no position. For a whole-run ablat
 the answer is presumably the run's first position, and the act should say so, because
 it is the one member the matrix cannot derive from the tuple. A reproduction run is
 the same question one level down: the schema has it carry a branch position and the
-sketch does not say which.
+sketch does not say which. Answered at `weaver-web-Spec`
+section 5 by the act of PR #526: a whole-run arm's branch position is the resident
+length of the parent's identity prefix, in the parent's coordinate, and a
+reproduction run's is the same.
 
 **The column states map onto section 5.1's five.** The mockup reads editing, not
 scheduled, queued, ran and fail, where the Spec has draft, registered, queued, running
