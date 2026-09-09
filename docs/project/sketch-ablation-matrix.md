@@ -1,6 +1,6 @@
 # Sketch: Ablation Matrix Surface
 
-**Status:** sketch. Decides nothing. Feeds PRD authoring.
+**Status:** SKETCH. Decides nothing. Feeds PRD authoring.
 
 **Version:** v0.1, 2026-09-09. Parent: Sketch Convention. Written from a walk on the
 same date against the tree at PR #518. Feeds `weaver-web-PRD` sections 3.5, 3.6 and 4,
@@ -113,10 +113,20 @@ authoring and registration freezes them with the rest of the row**, per the Spec
 section 5.4, so a freed field is the column's swept member, its value set is the
 sweep's, and the record carries what each arm ran under. A column frees at most one
 field, because a sweep is one member and its values, and the other cells the operator
-moved are the column's diff. Setting two or three cells in one column is the ordinary
-hypothesis: temperature to 0.7, seed freed, and everything else held. The hypothesis
-is the diff between that column and the parent's. No prose field carries it, because
-two tuples and a delta state it mechanically and checkably.
+moved are the column's diff. **The draw excludes the parent's own value**, because the
+Spec's section 5.3 refuses a sweep naming it and 5.4 has the parent as the control, so
+a draw that lands it draws again. Setting two or three cells in one column is the
+ordinary hypothesis: temperature to 0.7, seed freed, and everything else held. The
+hypothesis is the diff between that column and the parent's. No prose field on the
+plan carries it, because two tuples and a delta state it mechanically and checkably.
+
+**The staged experiment each column becomes still carries the question of the Spec's
+section 2.5**, which the schema holds not null. At scheduling the matrix fills it with
+a rendering of the column's diff, the operator may replace that text before
+registration freezes it, and the plan holds no copy. So the question stays where 2.5
+puts it and nothing else in the store holds it, and a column's hypothesis is stated
+twice in two kinds: mechanically as the diff, and in prose as the question the diff
+was rendered into.
 
 The operator schedules the batch. Every column becomes a staged experiment. Every
 cell in a scheduled column that was neither moved nor freed reads held at the
@@ -210,3 +220,69 @@ the mockup to someone who has used Stage and ask where they expect to find it.
 dedup does not matter, and this sketch treats the digest as sufficient. The measurement
 that reopens it is a run size at which the operator's record outgrows the disk the
 sink writes to.
+
+## 7. Carried to the PRD act
+
+What the review of PR #522 found and this sketch does not settle, listed here so the
+act that authors the PRD inherits it from the tree. Each is a fact about where the
+sketch and the merged Spec disagree, or where the sketch draws a thing no document
+holds.
+
+**The score has no home.** The matrix reads a verdict and a ratio from the run row,
+and the run row holds no verdict: the Spec's revision of 2026-09-05 has the scorer
+leave the run's tuple for the verdict. The task supplies the predicate and the
+denominator, and the store still has to hold the reading. Section 2.6's recorded
+query is the candidate.
+
+**The Reproduced column is a read-time pairwise derivation.** "3 of 3 byte-equal"
+compares a run against three others. Spec section 2.7 forbids a value computed at
+read unless the query is recorded under 2.6, and section 10's open election has the
+reproduction verdict as the projected comparison of two rows. So the column needs a
+stored reading or a recorded query per row shown. Same family as the score.
+
+**The branch position has no home in the plan.** PRD section 3.5 and Spec section 5.3
+have every staged experiment carry the branch position and validate that the parent
+record holds it. The plan names its parent run and the cells name a field, a
+disposition and a value, and the mockup shows no position. For a whole-run ablation
+the answer is presumably the run's first position, and the act should say so, because
+it is the one member the matrix cannot derive from the tuple. A reproduction run is
+the same question one level down: the schema has it carry a branch position and the
+sketch does not say which.
+
+**The column states map onto section 5.1's five.** The mockup reads editing, not
+scheduled, queued, ran and fail, where the Spec has draft, registered, queued, running
+and returned, with registration as the freeze and queueing a separate act. The
+sketch's Save plan and Schedule batch never name registration, and "not exercised",
+defined as never scheduled, cannot tell a column registered and never queued, the
+pre-registration case PRD 3.6 prizes, from one that stayed a draft. The act maps
+column states onto the five rather than carrying a second set.
+
+**Attribution is parent-relative in the Spec and compound in the mockup.** Spec 5.2
+makes divergence below the branch position attributable to the one value moved.
+Column B moves precision and temperature and frees the seed, so the comparison that
+isolates precision is B against A, which the matrix does not draw, and section 6's
+one-at-a-time default is not what the mockup's A, B and E do. The act says whether
+the diff row is parent-relative only or a column may name another column as its
+baseline.
+
+**The word cell.** Spec section 10 holds open "the word cell, which carries a second
+sense elsewhere in the corpus and must be settled once rather than twice." This sketch
+uses it in section 5 for a matrix entry and in section 6's title for an open question.
+The open election is where it is settled, and this sketch is the pressure on it.
+
+**The plan and the refs are authored rows.** Spec 3.2 gives every authored row an
+author and a version. The mockup says who authored the plan and the refs name a
+person, and section 5's prose carries neither member for either object. Both land
+under 3.2.
+
+**Two citations.** "The six-field ledger of 2026-09-07" resolves to issue #485, which
+registers five tuple fields with a sixth run added in its comments, and the hub report
+`weavertools-testing/2026-09-07-determinism-matrix-audit`. Neither says amplifier, so
+the act sources that reading or drops it. The trace-kind claim of section 6 stands
+against `weaver-trace-Spec`'s kind list, which names nothing for presented material.
+
+**The digest on the run row** is decided in section 2 and held by no document. It
+joins issue #521 as that act's second member, beside the session identity.
+
+**"Parent: Sketch Convention"** in the header names a document that is not in the
+tree. The two standing sketches cite none.
