@@ -174,8 +174,8 @@ button.subtle { background: transparent; color: var(--dim); }
     <tr>
       <th class="field">Field</th>
       <th class="col parent"><a href="#">parent 7c3e91</a><div class="status"><span class="pill ok">ran</span></div><div class="score"><b>pass</b> 12 of 12 opt<br>n 1, byte-equal</div></th>
-      <th class="col"><a href="#">A &middot; run 91d4f2</a><div class="status"><span class="pill ok">ran</span></div><div class="score"><b>pass 8 of 8</b><br>worst 1.25x opt<br>n 8 seeds</div></th>
-      <th class="col"><a href="#">B &middot; run 0c8e17</a><div class="status"><span class="pill danger">2 fail</span></div><div class="score"><b>pass 6 of 8</b><br>worst 2.1x opt<br>n 8 seeds</div></th>
+      <th class="col"><a href="#">A &middot; staged 41 &middot; 8 runs</a><div class="status"><span class="pill ok">ran</span></div><div class="score"><b>pass 8 of 8</b><br>worst 1.25x opt<br>n 8 seeds</div></th>
+      <th class="col"><a href="#">B &middot; staged 42 &middot; 8 runs</a><div class="status"><span class="pill danger">2 fail</span></div><div class="score"><b>pass 6 of 8</b><br>worst 2.1x opt<br>n 8 seeds</div></th>
       <th class="col"><a href="#">C &middot; staged 44</a><div class="status"><span class="pill warn">queued</span></div><div class="score">runs at 02:00<br>n 8 seeds</div></th>
       <th class="col"><span class="mono" style="color:var(--faint)">D</span><div class="status"><span class="pill quiet">not scheduled</span></div><div class="score">&nbsp;</div></th>
       <th class="col"><span class="mono" style="color:var(--faint)">E</span><div class="status"><span class="pill quiet">editing</span></div><div class="score">&nbsp;</div></th>
@@ -226,7 +226,7 @@ button.subtle { background: transparent; color: var(--dim); }
   </tbody>
 </table>
 </div>
-<p class="after">A column is one staged experiment against the parent, and its hypothesis is the row labeled Moved from parent, which is a diff and not a field anyone typed. The header of a ran column is a link to that run's own surfaces, so the matrix never reads below the run row. A column with a freed seed is a sweep on that one member, its values drawn at authoring and frozen at registration, so it is a distribution, and its score reports the count and the worst ratio rather than a mean, because the envelope is stated over the tail.</p>
+<p class="after">A column is one staged experiment against the parent, and its hypothesis is the row labeled Moved from parent, which is a diff and not a field anyone typed. The header of a ran column is a link to the staged experiment's sweep, the fourth read, where each arm's run is reached by its value, so the matrix never reads below the run row and never presents one arm as the column. A column with a freed seed is a sweep on that one member, its values drawn at authoring and frozen at registration, so it is a distribution, and its score reports the count and the worst ratio rather than a mean, because the envelope is stated over the tail.</p>
 
 </main>
 </body>

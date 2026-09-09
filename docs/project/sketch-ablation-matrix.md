@@ -153,8 +153,12 @@ not become a run and may never.
 **Two new authored objects, and the first is the plan with its cells.** A plan names
 its parent run. A cell names its plan, a column, a tuple field, a disposition, and a
 value where the disposition needs one. A column, once scheduled, points at the staged
-experiment it became and, once that has run, at the run row. The pointer is nullable
-and that null is the record of a column that was not scheduled.
+experiment it became, and reaches its runs through that row and never directly: the
+staged experiment carries the runs it produced per the Spec's section 2.5, one per
+value where the column freed a field, and section 4's fourth read returns them each
+with its value, an arm that never ran keeping its place. A column is therefore never
+one run row, and a column that freed nothing is a sweep of one value. The pointer is
+nullable and that null is the record of a column that was not scheduled.
 
 **A cell has four states and is never blank.** Held at a value. Freed, its value set
 drawn at authoring and frozen at registration per section 4, with each arm's value
@@ -166,7 +170,7 @@ distinguishable from one that failed to run.
 **Declared and achieved are two facts landing at two times.** The cell carries what
 was intended. The run row carries what ran, per the PRD's section 4, and where the two
 disagree the run row is right and the cell is a plan that did not survive contact.
-The matrix renders the cell until a run exists and the run row after.
+The matrix renders the cell until a run exists and the arms' run rows after.
 
 **Refs are the second object, and they pin what the envelope cites.** A small table of
 named references from a person to a run row. An exemplar tag is one. A citation from a
