@@ -10,6 +10,21 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-08, third of this date, a staged experiment can hold a
+sweep. The charter's section 3.5 has an operator fork one position many times
+under fresh seeds and section 5.2 names the members a diff moves and what a
+divergence is attributable to, while section 2.5's row held **one** diff, so
+the document described a sweep and gave it nowhere to stand. Section 5.4
+rules it one row holding one member and its values, frozen together at
+registration, **because many rows sharing a parent would let an engineer
+register three arms, read how they land, and add a fourth**, which is the
+fitting-after-the-fact section 5.1's freeze exists to refuse. Section 2.5
+gains the member and its values, section 2.2 the emission's signature derived
+at ingest, and **section 4 gains a fourth read, which is this document
+returning rather than a surface proceeding** under that section's own rule.
+Section 2.7's absolute is qualified to what section 4 already glossed it as:
+what it forbids is a derivation nobody can find. Per issue #517.
+
 **Revised:** 2026-09-08, second of this date, the crate joins the assertion
 chain. This document carried **no graph block of any kind** where every other
 Spec in the corpus carries between eight and eighty-eight, so `weaver-web`
@@ -309,7 +324,7 @@ silence settle it.
 
 ```text
 src/
-  store/        the registry: schema, migrations, the three reads
+  store/        the registry: schema, migrations, the four reads
   ingest/       section 3.1, a consumer of the analysis stream
   authoring/    section 3.2, the writes a surface makes to its own table
   queue/        staged experiments and their states
@@ -452,6 +467,9 @@ Everything identifying the conditions lives in the run's own row:
   position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
 - the declared boundary set
+- **the emission's signature**, a set of shingles over the emitted text
+  derived once at ingest, which is what makes a sweep's comparison an index
+  operation rather than a computation, per section 5.4
 - the parent run reference and branch position, where the run is a branch,
   **which are lineage and stand outside tuple equality**
 - whether a token was forced, and which
@@ -493,6 +511,19 @@ differing only in them hold the same tuple** and remain comparable. Nothing
 else in this list is outside the compound. Were lineage inside it, a branch
 could never be reproduced against its parent, which is the comparison the
 staging surface exists to make.
+
+**The signature is derived and the similarity is not.** A signature is a
+property of one run and is derived once at ingest, which section 2.7
+requires. **A similarity is a property of two runs and of which one a reader
+chose as the baseline**, so it can be derived neither at the read, which
+section 2.7 forbids, nor at the ingest, which would need every pair before
+the second run exists. Storing the signature moves the cost: the comparison
+becomes a set operation over two stored values rather than a walk over two
+emissions, and section 4's fourth read records it where section 2.6 records
+any other, which is what section 4 already says keeps section 2.7's rule
+rather than spending it. **What section 2.7 forbids is a derivation nobody
+can find**, and a similarity computed from two stored signatures and recorded
+beside its query is findable by anyone holding the runs.
 
 **A reading without its tuple is a reading of an unnamed compound.** The
 task is in this list for the same reason the artifact is: two runs of the
@@ -695,6 +726,8 @@ five states of section 5.1. Each row carries:
 - the parent run reference and the branch position
 - the forced alternative token where one is forced
 - the parent declaration and its diff, split by when the diff takes effect
+- **the swept member and its values where the diff is a sweep**, one member
+  of the tuple and the set of values it takes, per section 5.4
 - **the question the engineer meant to ask**, which nothing upstream knows
   and nothing else in this store holds
 - the runs it produced, where it ran
@@ -716,6 +749,15 @@ to: web-registered-question-is-immutable
 **Registration freezes the row and not the table.** A registered experiment
 is immutable per section 9's pin, and the rows around it go on being
 edited, which is why the state is a member rather than a table each.
+
+**A sweep's value set freezes with the rest of the row, and that is the
+whole of why a sweep is one row.** Section 5.4 states the ruling and its
+ground: a sweep held as many rows sharing a parent would let an engineer
+register three arms, read how they land, and add a fourth, which is the
+fitting-after-the-fact that section 5.1's freeze exists to refuse. One row
+whose value set is frozen at registration cannot do that, and an arm the
+sweep declared and never ran keeps its place in the set the way a registered
+experiment that never ran keeps its row.
 
 ```graph
 node: web-registered-experiment-is-immutable
@@ -782,9 +824,20 @@ secondary     (run, surprisal)
 ```
 
 The secondary index exists so the largest spikes in a run are reachable
-without pulling the run down. **Nothing is computed at read time.** A value
-that must be derived is derived once at ingest and stored, because a value
-computed in the interface is a value nobody else can reproduce.
+without pulling the run down. **Nothing is computed at read time except
+where the query is recorded.** A value that must be derived is derived once
+at ingest and stored, because a value computed in the interface is a value
+nobody else can reproduce.
+
+**The exception is section 4's and it is not new**, only made live by the
+fourth read of 2026-09-08. Section 4 admits an open query on the condition
+that the query is recorded beside its result, and says in its own words that
+**what this section forbids is a derivation nobody can find**. A sweep's
+similarity is that case exactly: it is a property of two runs and of which
+one a reader chose, so it can be derived neither here nor at the ingest, and
+what makes it reproducible is section 2.6 holding the query rather than this
+section holding the value. **Section 2.6 stores no result**, so nothing
+computed under the exception becomes a second truth about a run.
 
 ```graph
 node: web-nothing-is-computed-at-read-time
@@ -1104,7 +1157,7 @@ last `validate` answer a reading rather than a promise.
 
 ## 4. The read path
 
-Three queries, and the schema of section 2 exists to make each an index hit.
+Four queries, and the schema of section 2 exists to make each an index hit.
 
 1. **One position's alternatives**, by run, turn and position. This is the
    click, and it is `weaver-analysis field` served from the store rather
@@ -1112,8 +1165,18 @@ Three queries, and the schema of section 2 exists to make each an index hit.
 2. **A contiguous range of positions** carrying the emitted token, surprisal
    and entropy. This is the timeline and the transcript.
 3. **The run's tuple.** This is the label on every reading taken from it.
+4. **The runs one staged experiment produced, compared.** This is the
+   sweep's reading of section 5.4: the arms of one experiment against the
+   parent that is their control, by the member the sweep moved.
 
-A surface that needs a fourth query is a surface this document has not
+**The fourth read is this document returning rather than a surface
+proceeding.** The three above stood alone until 2026-09-08, when the rule
+below was met rather than bypassed: the tuple ablation and the essay
+exemplars were assembled by hand from deposits because no query answered
+them, and a sweep that cannot be read is a sweep nobody would author. The
+rule stands unchanged for the fifth.
+
+A surface that needs a fifth query is a surface this document has not
 described, and it returns here before it is built.
 
 **An open query surface is admissible on one condition: the query is
@@ -1182,6 +1245,50 @@ every artifact the diff names resolves
 **A runner cannot ask.** A refusal discovered at three in the morning costs
 a batch window, and the same refusal at authoring costs nothing.
 
+### 5.4 A sweep is one member and its values, in one row
+
+**The charter describes a sweep and this document gave it one diff.** Section
+3.5 of the charter has an operator fork the same position many times under
+fresh seeds so the result is the distribution one repeatable line was drawn
+from, and section 5.2 above names the members a per-generation diff moves and
+states what a divergence below the branch position is attributable to. What
+was missing is a row that can hold **one member and the set of values it
+takes**.
+
+**A sweep is one row.** It names the member, it names the values, and
+registration freezes both with the rest of the row per section 5.1.
+
+**The alternative is what rules it out.** A sweep held as many rows sharing a
+parent is the same experiment with a different property: an engineer can
+register three arms, read how they land, and add a fourth. **That is fitting
+after the fact**, and section 5.1's freeze exists to refuse exactly it,
+saying that what was registered and never run stays in the record so
+pre-registration is a property of the interface rather than a discipline
+imposed on it. A discipline can be forgotten. **One row whose value set is
+frozen cannot be added to**, so the interface holds the property rather than
+the person holding it.
+
+**An arm that never ran keeps its place in the set**, which is section 5.1's
+rule about a registered experiment applied one level down, and it is what
+makes a sweep's absences legible: a set of eight values with six runs against
+it says two arms did not run, where six rows say nothing about the two that
+were never written.
+
+**The two kinds of diff sweep differently and section 5.2 already says why.**
+A per-generation sweep holds the weights and the window, so the recorded
+prefix re-feeds to the state the parent had and every arm is comparable to
+the parent byte for byte. A load-time sweep re-feeds under different weights
+or a different window, so the comparison is structural rather than
+byte-exact, and the interface states that consequence where the sweep is
+authored rather than where its results are read.
+
+**The control arm is free and is not an arm.** The charter's section 3.5 has
+the seed drawn per generation from the declared seed, the turn's reference
+and the ordinal, so a branch that changes nothing draws what its parent drew.
+A sweep therefore needs no arm at the parent's own value: **the parent is the
+control**, and a sweep that lists the parent's value among its own is
+declaring a run the store already holds.
+
 ## 6. The surfaces
 
 One module each, the Experiment view and Models included: each is a surface
@@ -1190,7 +1297,7 @@ destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** -
 Open a trace, Record, Experiments, and the returned half of Stage. That is
-what makes section 4's three reads sufficient for them.
+what makes section 4's four reads sufficient for them.
 
 **Three surfaces author, and each writes one table.** Compose writes a
 declaration, Stage writes a staged experiment, and Models writes an
@@ -1341,7 +1448,7 @@ cell record like any other.
 |---|---|
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
-| nothing is computed at read time | review, over the three reads |
+| nothing is computed at read time except where the query is recorded | review, over the four reads |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
