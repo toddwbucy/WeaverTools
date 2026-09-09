@@ -1206,10 +1206,12 @@ Four queries, and the schema of section 2 exists to make each an index hit.
    returns itself and nothing else, which is the answer.
 
    Where a run exists it carries its tuple, its signature per section 2.2,
-   and **its parting position, the first at which its token path left its
-   parent's, derived once at ingest per section 3.1 and stored beside the
-   branch position**. All three are then index hits: the arms by their
-   parent reference, and the other two by their own columns.
+   and **its parting position where it has one**, the first at which its
+   token path left its parent's, derived once at ingest per section 3.1 and
+   stored beside the branch position. **An arm whose path never parted
+   carries none**, which the read returns as the absence it is. All three
+   are index hits: the arms by their parent reference, and the other two by
+   their own columns.
 
    **Neither the similarity nor the parting position is computed here.** A
    similarity is the open query of the condition below, computed over what
@@ -1220,7 +1222,16 @@ Four queries, and the schema of section 2 exists to make each an index hit.
 **For a per-generation sweep the parting position is the reading and the
 signature is not needed.** Same weights and same window mean the arms are
 comparable byte for byte, so the parting position section 3.1 stored says
-everything the arm was authored to ask. **The signature earns its place
+everything the arm was authored to ask.
+
+**An arm with no parting position is the strongest reading the set can
+return, not a missing one.** It means the arm moved a value and reproduced
+its parent anyway, which for a per-generation sweep is the finding rather
+than the absence of one, and the charter's own control arm is why: a branch
+that changes nothing draws what its parent drew, so an arm that changed
+something and still drew it says the value it moved reached nothing. Read as
+a gap it would look like an arm that failed to run, which section 4's value
+unit already keeps apart. **The signature earns its place
 on a load-time sweep**, where section 5.2 has the comparison structural
 rather than byte-exact and a parting position says only that two different
 models wrote different essays.
