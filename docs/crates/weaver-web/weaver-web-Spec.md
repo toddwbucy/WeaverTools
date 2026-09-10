@@ -573,11 +573,22 @@ Everything identifying the conditions lives in the run's own row:
 **The verdict is the task's and this crate scores nothing.** The task supplies the
 predicate and the denominator, per the charter's section 9 and issue #523, and a verdict
 is a fact about a run that happened rather than a reading taken over it, which is why it
-lands on this row and not in section 2.6. **It arrives on a trace event the task authors
-at the run's close**, so the record carries its own score and the ingest of section 3.1
-reads it from what it already lands. That kind is `weaver-trace`'s to add and does not
-exist yet, so the member reads absent on every row until it does, per section 6's rule
-and exactly as the seated prefix's length did before its seam carried it. **A scorer
+lands on this row and not in section 2.6. **It reaches the record on a trace event the
+task authors at the run's close**, so a record carries its own score. **It does not
+reach this store yet, and this crate asserts the reader's half and not the writer's**,
+as it does for the forced mark of the paragraph above. Two halves are owed and neither
+exists: the kind is `weaver-trace`'s to add, per issue #523, and the seam is
+`weaver-analysis-web-contract`'s, section 3.1 having the ingest consume the emitter's
+emission and never the record. **The seam's rule is already written for exactly this
+shape**, the record's session, the record's digest and the seated prefix's length each
+crossing per generation on the wire and once per run in the reader's row, and a verdict
+is a per-run fact that fits it. Issue #532's contract act carries it, named there rather
+than assumed here.
+
+So the member reads absent on every row until both halves land, per section 6's rule and
+exactly as the seated prefix's length read absent before its seam carried it. **Absent
+says no task scored the run or no path yet carried what it said**, and never that the
+run failed its predicate. **A scorer
 that is not the task's is a second verdict beside this one and never a change to it**,
 per section 10.
 
@@ -1493,8 +1504,15 @@ exemplars were assembled by hand from deposits because no query answered
 them, and a sweep that cannot be read is a sweep nobody would author. The
 rule stands unchanged for the fifth.
 
-A surface that needs a fifth query is a surface this document has not
-described, and it returns here before it is built.
+A surface that needs a fifth query is a surface this document has not described, and it
+returns here before it is built.
+
+**One is owed and named rather than discovered.** Section 2.9's plan is rendered by the
+matrix with its columns and their entries, and none of the four returns it. The read is
+owed at the act that gives the plan its schema, which is where the row it reads comes to
+exist, and section 6 says so where it counts these four as sufficient. **Naming it here
+is this rule met rather than deferred**: the surface returns to this section before it
+is built, and this is the return.
 
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
@@ -1675,9 +1693,11 @@ One module each, the Experiment view and Models included: each is a surface
 with its own destination rather than a mode of a list beside it. Their
 destinations are the charter's section 3 and are not restated.
 
-**A surface that renders what is kept reads the store and nothing else** -
-Open a trace, Record, Experiments, and the returned half of Stage. That is
-what makes section 4's four reads sufficient for them.
+**A surface that renders what is kept reads the store and nothing else** - Open a trace,
+Record, Experiments, and the returned half of Stage. Section 4's four reads are
+sufficient for all of them **but the plan**, which section 2.9 gives Stage to compose
+and render and which no read returns, the fifth read being owed at the act that gives
+the plan its schema, per section 4's own rule about a surface that needs one.
 
 **Three surfaces author, and one of them writes more than one table.** Compose writes a
 declaration and Models writes an artifact row on import, each one table. Stage writes
