@@ -95,13 +95,22 @@ impl ResidentModel {
                 ),
             });
         }
+        // **The family is judged before any device is opened.** A family this
+        // peer does not serve is not a condition of the card, so a busy or
+        // absent device must not answer for it: opening first would return
+        // `LoadFailed` and cross as `DeviceCannotAdmit`, which is the report
+        // issue #507 was filed against, for an artifact whose real fault the
+        // free read already knew.
+        let dir = sidecar_dir(admission.path())?;
+        let config_path = dir.join("config.json");
+        let declared = read_declaration(&config_path)?;
+        judge_family(&declared).map_err(AdmitRefusal::Family)?;
+
         let device =
             Device::new_cuda(ordinals[0] as usize).map_err(|error| AdmitRefusal::LoadFailed {
                 detail: format!("cuda device {}: {error}", ordinals[0]),
             })?;
 
-        let dir = sidecar_dir(admission.path())?;
-        let config_path = dir.join("config.json");
         let config = read_config(&config_path)?;
         let eos = read_eos(&config_path)?;
         let tokenizer =
@@ -239,6 +248,10 @@ fn read_eos(path: &Path) -> Result<super::backend::TokenId, AdmitRefusal> {
 /// stage-one clause: the registry's qwen2 entry.
 pub const SERVED_ARCHITECTURE: &str = "qwen2";
 
+/// This peer's name in a refusal, so the account says which of the two was
+/// asked rather than reporting the binary as carrying nothing.
+pub const NATIVE_BACKEND: &str = "native";
+
 /// The architecture an artifact's `config.json` declares, spelled as the file
 /// spells it.
 ///
@@ -255,16 +268,34 @@ fn declared_architecture(config: &serde_json::Value) -> Option<&str> {
 
 /// Judge the family before the shapes, per `weaver-spu-Spec` section 4.1.
 ///
-/// **The refusal carries the spelling the file used and never the fold of
-/// it**, which is [`same_key`]'s own rule, so an operator reads back the
-/// family their artifact declared.
+/// **The refusal says this backend does not serve the family and never that
+/// the binary does not carry it**, the registry carrying qwen3 and the rest
+/// and serving them through the GGUF peer. A reader told the family is
+/// unknown goes looking for a registry row that is present.
+///
+/// **It carries the spelling the file used and never the fold of it**, which
+/// is [`same_key`]'s own rule, so an operator reads back the family their
+/// artifact declared.
 fn judge_family(config: &serde_json::Value) -> Result<(), FamilyRefusal> {
     match declared_architecture(config) {
-        Some(declared) if !same_key(declared, SERVED_ARCHITECTURE) => Err(
-            FamilyRefusal::UnknownFamily(FamilyName(declared.to_string())),
-        ),
+        Some(declared) if !same_key(declared, SERVED_ARCHITECTURE) => {
+            Err(FamilyRefusal::BackendDoesNotServe {
+                family: FamilyName(declared.to_string()),
+                backend: NATIVE_BACKEND,
+            })
+        }
         _ => Ok(()),
     }
+}
+
+/// Read the artifact's declaration, the free read the family judgment needs.
+fn read_declaration(path: &Path) -> Result<serde_json::Value, AdmitRefusal> {
+    let text = std::fs::read_to_string(path).map_err(|error| AdmitRefusal::LoadFailed {
+        detail: format!("{}: {error}", path.display()),
+    })?;
+    serde_json::from_str(&text).map_err(|error| AdmitRefusal::LoadFailed {
+        detail: format!("{}: {error}", path.display()),
+    })
 }
 
 /// Read the model's `config.json`, judging the family before the shapes.
@@ -676,8 +707,12 @@ mod tests {
 
         assert_eq!(
             refusal.expect_err("an unserved family refuses"),
-            AdmitRefusal::Family(FamilyRefusal::UnknownFamily(FamilyName("qwen3".into()))),
-            "the family is judged before the shapes and names the file's own spelling"
+            AdmitRefusal::Family(FamilyRefusal::BackendDoesNotServe {
+                family: FamilyName("qwen3".into()),
+                backend: NATIVE_BACKEND,
+            }),
+            "the refusal names the backend and the file's own spelling, and never \
+             claims the registry lacks a family it carries"
         );
     }
 

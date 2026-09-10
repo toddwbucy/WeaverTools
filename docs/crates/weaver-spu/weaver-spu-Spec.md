@@ -1262,24 +1262,34 @@ from: weaver-spu
 to: spu-backend-from-artifact
 ```
 
-**A family the native path does not serve refuses as a family and never as a load.**
-That path serves one architecture this stage, the registry's qwen2 entry, and the
-artifact it is handed declares its own. **The declared architecture is read before the
-shapes are**, so an artifact naming another family refuses on the family it named, and
-the refusal carries that spelling rather than the fold of it, per section 5's rule that
-a miss names the string the header carried. Parsing first answers a family question with
-whichever field the other family happens to spell differently, which is a true statement
-about a file and the wrong cause: a stock Qwen3 export declares `sliding_window` as null
-where qwen2's struct requires a number, so the reader is sent to a config line that is
-correct. **The floor's word for it is the artifact and not the device**, the refusal
-crossing as the unreadable artifact every unresolved selection crosses as, because a
-family this binary does not carry is not a condition of the card. A config declaring no
-architecture, or naming one in anything but a string, is judged by nothing here and
-refuses on the field it lacks or the type it got wrong, since a family it never named is
-not a family it got wrong. **A served family whose shapes are wrong refuses as a load
-and the refusal names where in the file it is**, which is the half of the account the
-reader of a correct line was missing, so the shapes are read from the artifact's own
-text rather than from a value parsed out of it.
+**A family the native path does not serve refuses as that, before any device is
+opened.** That path serves one architecture this stage, the registry's qwen2 entry, and
+the artifact it is handed declares its own. **The declared architecture is read before
+the shapes are and before the device is**, both being free reads, so an artifact naming
+another family refuses on the family it named whatever the card is doing. **The refusal
+says this backend does not serve the family and never that the binary does not carry
+it**: the registry carries qwen3 and the rest and the GGUF peer serves them, so a reader
+told the family is unknown goes looking for a registry row that is present. It names the
+peer that was asked beside the family, and carries the spelling the file used rather
+than the fold of it, per section 5's rule that a miss names the string the header
+carried. Parsing first answers a family question with whichever field the other family
+happens to spell differently, which is a true statement about a file and the wrong
+cause: a stock Qwen3 export declares `sliding_window` as null where qwen2's struct
+requires a number, so the reader is sent to a config line that is correct. **Opening the
+device first answers it with the card**, which crosses as a device that could not admit
+and is the report issue #507 was filed against. **The floor's word for it is the
+artifact and not the device**, the refusal crossing as the unreadable artifact every
+unresolved selection crosses as, because a family one peer does not serve is not a
+condition of the card. A config declaring no architecture, or naming one in anything but
+a string, is judged by nothing here and refuses on the field it lacks or the type it got
+wrong, since a family it never named is not a family it got wrong. **A served family
+whose shapes are wrong refuses as a load and the refusal names where in the file it
+is**, which is the half of the account the reader of a correct line was missing, so the
+shapes are read from the artifact's own text rather than from a value parsed out of it.
+**The ordering against the device has no watch here and the record does not claim one**:
+reddening it wants a card that is busy or absent, which no test in this crate can
+arrange, so what the perturbation buys is the refusal's identity and its precedence over
+the shapes.
 
 ```graph
 node: spu-native-refuses-an-unserved-family-as-a-family
