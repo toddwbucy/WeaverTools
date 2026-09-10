@@ -5,6 +5,16 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+**Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
+under. Section 2.2 gains, once per run, the run identity from the envelope, the
+effective sampling the record's `model.request` carries, the field election's depth and
+the lineage the `load` event's elections carry, the device model and the code identity
+the operator's deposit holds, and the task's verdict where the record carries one.
+Section 3 asks them all of the emitter. **Without them the reader can write no run row
+at all**, seven of its eight required members having no path across this seam, which
+issue #532 found while the ingest was being written. The emitter reads a deposit the
+invocation names for what the record does not hold, on the operator's ruling of this
+date. Per issue #532.
 **Revised:** 2026-09-09, second of this date, the summary carries the seated
 prefix's length. Section 2.2 gains, once per run, the resident length before the
 run's first turn's input, which the emitter derives from the run's first generation
@@ -102,10 +112,15 @@ generation's perplexity, and where their elections stand the surprisals.
 The **`model.output`** event and its resident count and capacity as the
 generation closed. **`model.field`** and its ranked candidates, which this
 seam does not carry and which section 6 names as the other reader's.
-**From `weaver-trace-PRD` section 2.1 and `weaver-trace-Spec` section 1**,
-the **session**, the identity the runs share, carried on every line's
-envelope, and the **run** and its ending at `unload` or at process death per
-that charter's section 4.3.
+**From `weaver-trace-PRD` section 2.1 and `weaver-trace-Spec` section 1**, the
+**session**, the identity the runs share, carried on every line's envelope, and the
+**run** and its ending at `unload` or at process death per that charter's section 4.3.
+
+**From `weaver-trace-Spec` section 3.** The **`load`** event and the members of its
+elections this seam carries: the **field** election's depth, the **lineage** with its
+parent, its run and its `through`, which is a turn, and the **stack**, the organ
+binaries admin started keyed by name with their sha256. The **`model.request`** event
+and its **effective sampling**, which the reader's row splits into a seed and a sampler.
 
 **Defined since 2026-09-05.** That section tables the measurement's members,
 and the two section 3 reads were defined at issue #461: the token
@@ -114,6 +129,13 @@ identifiers by `weaver-spu-Spec` section 6 and the resident count by
 includes the terminator. This contract's first draft rested on the members'
 names and asserted an arithmetic the records refuted, which is why the
 definitions were asked before the ask was restated.
+
+**From `weaver-analysis-PRD` section 3.** The **deposit**, what the operator keeps
+beside a record, and the two members of it this seam reads: the **device model**, which
+that section's licence clause already bounds a report's claims by, and the **code
+identity**, its repository commit by hash, toolchain and driver by pinned version, and
+engine libraries by sha256. **This group did not exist until 2026-09-09** and the
+members crossed nothing before it.
 
 **From `weaver-analysis-Spec`.** The **drain** of section 5, one for the
 class with readers above it, and the **signals reader** that rides it.
@@ -129,19 +151,19 @@ section 2.6.
 replay bracket, which is the licence a diagnostic reading needs and a
 serving reading does not.
 
-**Defined here.** Two nouns, since 2026-09-09. **The record's digest** of
-section 2.2, sha256 over a run's own lines as the emitter drained them, and
-what makes a run whole for it: no other document holds it, the trace
-charter's section 4.3 saying in as many words that the record carries no
-checksum. **The seated prefix's length** of section 2.2, the resident
-length before the run's first turn's input as the emitter derives it from
-the first generation: the SPU records the figure at open per its section
-4.2 and no event carries it, per the trace charter's section 3.1, so the
-derivation that recovers it is this contract's. This contract is the
-authority for both, and `weaver-analysis-Spec` section 5 and
-`weaver-web-Spec` section 2.2 cite it here. Every other term above has one
-authority already, and this contract states what crosses of them and
-defines none.
+**Defined here.** Three nouns, since 2026-09-09. **The record's digest** of section 2.2,
+sha256 over a run's own lines as the emitter drained them, and what makes a run whole
+for it: no other document holds it, the trace charter's section 4.3 saying in as many
+words that the record carries no checksum. **The seated prefix's length** of section
+2.2, the resident length before the run's first turn's input as the emitter derives it
+from the first generation: the SPU records the figure at open per its section 4.2 and no
+event carries it, per the trace charter's section 3.1, so the derivation that recovers
+it is this contract's. **The task's verdict** of section 2.2, the predicate the task
+answered and the ratio over its denominator, whose kind `weaver-trace` has yet to add
+per issue #523 and whose shape is fixed here so that act lands it rather than electing
+it. This contract is the authority for all three, and `weaver-analysis-Spec` section 5
+and `weaver-web-Spec` section 2.2 cite them here. Every other term above has one
+authority already, and this contract states what crosses of them and defines none.
 
 ## 1. What this contract governs
 
@@ -252,6 +274,86 @@ branch position needs it to say. Every entry repeats it as every entry repeats t
 weights hash, so a run's generations agree on it as they do on the session, and a run
 whose entries disagree is the defect the reader names.
 
+**The run identity crosses, and it is the one member every row the reader writes is
+keyed by.** It is the envelope's `run`, which every line of the record carries per
+`weaver-trace-Spec` section 1 and which the emitter already reads to refuse a second
+run's close. Until 2026-09-09 the emitter held it and rendered it nowhere, so a reader
+keyed every row by a run the wire never named.
+
+**An absent run identity is an emitter older than 2026-09-09 and never a run without
+one**, per section 7's rule for an added member. Every record carries the member on
+every line, so the emitter cannot fail to find it, and a reader meeting an emission
+without it is meeting the emitter that did not send it. **Such an emission is not
+ingestible and the reader says so naming the emitter**, because the run identity keys
+every row it would write and there is nothing to key them by. **An absent effective
+sampling is the same case at a lower cost**: the reader writes no run row for that run,
+the sampler being a condition the row is not a row without.
+
+**What the run ran under crosses beside it, per generation on the wire and once per run
+in the reader's row**, which is the weights hash's own rule at the head of this section
+and the rule the record's session, its digest and the seated prefix's length already
+cross under. Every entry repeats every member it has, and **a run whose entries disagree
+is the defect the reader names** rather than a run with two conditions, exactly as for
+the four before them. **The rule reaches what a run can agree on and no more**, and two
+of these cannot.
+
+**The effective sampling agrees on its declared members and never on the derived seed.**
+`weaver-spu-Spec` section 8.5 has each generation draw from a seed derived from the
+declared one, the turn's reference and the ordinal, and `model.request` records that
+derived value per generation, so **every run of more than one generation disagrees on
+the sampling block by construction**. The reader compares the declared members and takes
+the derived seed for what it is, a per-generation fact riding a per-run member.
+
+**The task's verdict is authored at the run's close and agrees with nothing.** Every
+generation but the last has none to repeat, so the agreement rule would name a defect on
+exactly the runs the member exists for. **It crosses on the entry for the generation the
+close names**, once, and a second entry carrying one is the defect instead. Each member
+is absent on its own terms and never defaulted:
+
+- **the effective sampling**, as `model.request` carries it per `weaver-trace-Spec`
+  section 3, spelled as the record spelled it, from which the reader takes both the
+  sampler and the seed it names
+- **the field election's depth**, the `load` event's `field` election, absent where the
+  election did not stand
+- **the lineage**, the `load` event's parent session, the run the cut falls in and
+  `through`, the turn the holdings stop at, present only where the session stood from a
+  record. **`through` is a turn and never a position**, per `weaver-trace-Spec` section
+  3, so a reader that wrote it where a branch position is expected would name a place in
+  the parent's tape that the number does not mean
+- **the device model**, which the operator's deposit names per `weaver-analysis-PRD`
+  section 3 and which the licence clause already bounds this emitter's claims by
+- **the code identity**, which has two sources and the reader's row joins them into what
+it calls the engine at build grain. **The record holds the organ binaries**, the `load`
+event's `stack` keyed by binary name with its sha256, which `weaver-trace-Spec` section
+3 put there so a record is sufficient for its own conditions without a deposit beside
+it. **The deposit holds the rest**, the repository commit by hash, the toolchain and the
+driver by pinned version, and the engine libraries by sha256, per `weaver-analysis-PRD`
+section 3. **The record is the authority for the organ binaries** where both name them,
+the `load` event carrying them since 2026-09-06 for this reason, and that charter's own
+list moves with this act
+- **the task's verdict** where the record carries one, the predicate the task answered
+  and the ratio over its denominator, per issue #523
+
+**What the record does not hold is read from a deposit the caller names**, on the
+operator's ruling of 2026-09-09. The device model is the deposit's whole, and the code
+identity is the deposit's but for the organ binaries the record carries. **The deposit
+is named by the invocation and never inferred from the record's path**: this emitter's
+sink may be a pipe, per `weaver-analysis-Spec` section 5, and a record arriving on one
+has no filesystem sibling to look beside, so a rule that said beside the record would
+name nothing on exactly the shape the charter licenses.
+
+**Where the caller names no deposit the device model is absent and the code identity
+carries only what the record held.** A run whose silicon nobody recorded is a real run
+and the store holds it saying so, which is why the reader's columns for both are
+nullable. A default would say the run ran on hardware nobody observed, and a refusal
+would make every record drained without a deposit unreadable, including every record
+written before deposits were kept.
+
+**The task's verdict has no producer yet and this clause binds the future act.** The
+kind that carries it is `weaver-trace`'s to add per issue #523, so the member is absent
+on every record written before that act, and the shape is fixed here so that act lands
+it rather than electing it.
+
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store
 keyed by position converts from and it is owed whether or not a perplexity
@@ -293,15 +395,19 @@ wrong token.**
 closed and the count of output tokens**, beside the perplexity on the summary stream,
 **and the record's session and digest per section 2.2**, the emitter being the party
 that drained the bytes and the only one that can name them, **and the seated prefix's
-length per the same section**, derived from the first generation once per run. **The
-output count is the length of that generation's `model.measurement` `output_tokens`
-sequence**, the drawn tokens with the terminator outside them per `weaver-spu-Spec`
-section 6, and not a separate scalar the record carries. **A generation whose
-measurement holds no readable `output_tokens` produces no summary entry and no points at
-all**, so `O` is never absent from an entry that exists and a consumer never meets a
-half-formed one. Both are facts the record already holds, on `model.output` and
-`model.measurement`, so the emitter reports them and derives nothing, which is the
-property `weaver-analysis-Spec` section 5 argues for.
+length per the same section**, derived from the first generation once per run, **and per
+section 2.2 the run identity, the effective sampling, the field election's depth, the
+lineage, the device model, the code identity and the task's verdict**, the device model
+and the deposit's half of the code identity read from a deposit the invocation names,
+never from one looked for beside the record, and the verdict only where the record
+carries one. **The output count is the length of that generation's `model.measurement`
+`output_tokens` sequence**, the drawn tokens with the terminator outside them per
+`weaver-spu-Spec` section 6, and not a separate scalar the record carries. **A
+generation whose measurement holds no readable `output_tokens` produces no summary entry
+and no points at all**, so `O` is never absent from an entry that exists and a consumer
+never meets a half-formed one. Both are facts the record already holds, on
+`model.output` and `model.measurement`, so the emitter reports them and derives nothing,
+which is the property `weaver-analysis-Spec` section 5 argues for.
 
 **The two counts landed at PR #462 and #463 on 2026-09-05**, with the
 definitions the members wanted, and the emitter carries them today.

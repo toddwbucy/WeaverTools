@@ -4,6 +4,17 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+**Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
+under. Section 5 reports, once per run, the run identity this reader already holds and
+rendered nowhere, the effective sampling, the field election's depth and the lineage
+from the record, and the device model and code identity from the deposit beside it, with
+the task's verdict where the record carries one. **This crate reads a deposit for the
+first time here**, named by the invocation rather than found beside the record, since a
+piped sink has no sibling to look beside, and section 1's layout gains `src/deposit.rs`
+for it. It reads the deposit for the device model and for the part of the code identity
+the record does not carry, the organ binaries being the `load` event's `stack`, per the
+operator's ruling of this date. One perturbation record, and section 6's counts move by
+one. Per `weaver-analysis-web-contract` section 2.2 as revised this date and issue #532.
 **Revised:** 2026-09-09, second of this date, the summary carries the seated prefix's
 length. Section 5 derives it from the run's first generation, the closing count less
 the drawn tokens, the terminator and the input identifiers, present only where the
@@ -178,6 +189,8 @@ finished record from a truncated one could hold this shape and not use it.
     src/field.rs      a position's field, read from the record, section 5
     src/stream.rs     the drain, one road under every reader, section 5
     src/signals.rs    the per-position series, read on the drain, section 5
+    src/deposit.rs    the deposit the invocation names, read for what the
+                      record does not hold, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -960,6 +973,52 @@ of it, per its section 4.2, does not leave the SPU, and a reader with only the s
 could not form it, the first draw's position being the earliest the two counts alone
 reach.
 
+**The summary names the run and what it ran under, once per run**, as of 2026-09-09 per
+`weaver-analysis-web-contract` section 2.2 and issue #532. The run identity is the
+envelope's `run`, which this reader already holds to refuse a second run's close and
+**rendered nowhere until this act**, so a store keyed by run took its key from nothing
+this seam sent. Beside it ride the effective sampling of `model.request`, the field
+election's depth and the lineage of the `load` event, and the task's verdict where the
+record carries one, each spelled as the record spelled it and each absent on its own
+terms.
+
+**What the record does not hold this crate reads from a deposit the caller names.** The
+record holds the organ binaries, the `load` event's `stack`, and the device model and
+the rest of the code identity are the operator's, per the charter's section 3, which
+already has this crate read the device model from a deposit to bound a licence.
+
+**The deposit is named by the invocation and never found beside the record.** Section
+1's layout gains `src/deposit.rs` for reading it, and the signals invocation takes the
+deposit's path beside the record's. **A rule that looked beside the record would name
+nothing on a pipe**, which section 5 above licenses as a sink shape, so the caller names
+it or names none.
+
+**The agreement rule reaches what a run can agree on.** The sampling's declared members
+agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
+section 8.5, so this crate reports the block as the record spells it and never reads a
+run of two generations as a run of two conditions. The task's verdict is authored at the
+close and crosses on that generation's entry alone.
+
+**Where the caller names none, the device model crosses absent and the code identity
+crosses carrying only what the record held.** This crate neither infers a device from a
+driver version nor a library set from a binary it did not see, and it reads the deposit
+for these members alone.
+
+**Nothing here is derived.** The sampling is spliced as the record spelled it, the depth
+and the lineage are the load event's own, and a verdict is the task's. A member this
+crate could compute and did not is the discipline section 2 states, applied to a wider
+set.
+
+```graph
+node: analysis-summary-reports-the-run-and-its-conditions
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-run-and-its-conditions
+```
+
 ```graph
 node: analysis-summary-reports-the-prefix-length
 kind: assertion
@@ -1083,12 +1142,19 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   to fail when a digest over the lines that happened to be present is sent in its
   place, and watched to fail when two emitters over one file disagree, which is the
   delimiter or the newline rule being broken.
-- The summary carries the seated prefix's length only from a whole-from-the-start
-  drain: a run whose first generation the drain saw crosses with the length derived
-  from that generation, watched to fail when it is derived from a later generation
-  or sent from a drain that opened after the run's `load`, and watched to fail when
-  the input identifiers are not subtracted, which names the first draw and not the
-  prefix.
+- The summary names the run it read: an emission carries the envelope's run once,
+  watched to fail when the member is dropped, which is the state before 2026-09-09, and
+  when it is taken from the invocation's path rather than from the envelope.
+- The summary reports what the run ran under without deriving any of it: a record whose
+  caller named no deposit crosses with the device model absent and the code identity
+  carrying only the load event's stack, watched to fail when either is inferred from a
+  driver version or a library this crate did not see, and a sampling crosses spliced,
+  watched to fail when a re-encoding changes what the record spelled.
+- The summary carries the seated prefix's length only from a whole-from-the-start drain:
+a run whose first generation the drain saw crosses with the length derived from that
+generation, watched to fail when it is derived from a later generation or sent from a
+drain that opened after the run's `load`, and watched to fail when the input identifiers
+are not subtracted, which names the first draw and not the prefix.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
@@ -1101,18 +1167,19 @@ claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-eight sit there and none sits here, retaken from the records on
+section 6. Twenty-nine sit there and none sits here, retaken from the records on
 2026-09-07, the count having read fourteen while acts since 2026-09-01 added six
 without moving it, the two acts of 2026-09-05 adding two, the act of 2026-09-07
 for issue #381 adding one, the act of 2026-09-09 for issue #521 adding two, and the
-second act of that date for issue #527 adding one.
+second act of that date for issue #527 adding one, and the third for issue #532
+adding one.
 
 **Which invariant each claim serves.** One carries a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
 crate: its whole vocabulary crosses a socket as drawn names rather than as shared
 types, which is that invariant read from outside the agent, where a linked
 dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-seven claims grounding in no
+The other four axioms reach none of these claims. **Twenty-eight claims grounding in no
 invariant is the expected result and not a gap**, per Document Format section 4:
 most of this document is representation.
 

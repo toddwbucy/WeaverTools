@@ -34,7 +34,10 @@ sentence, every party in the same act.
 **Revised:** 2026-08-31, second of this date, code identity joins the bound.
 The licence names code identity beside the device model, each identifier at
 its own precision - the commit by hash, the toolchain and driver by pinned
-version, the binaries and engine libraries by the driver's sha256 - the same
+version, and the engine libraries by the driver's sha256 - **the organ binaries are the
+record's since 2026-09-06**, the `load` event carrying them in its stack so a record is
+sufficient for its own conditions, and a deposit that also names them is not the
+authority for them, per `weaver-analysis-web-contract` section 2.2 - the same
 status and the same reader, the record events owed.
 
 **Revised:** 2026-08-31, the discard's licence. Section 3 gains the operator's

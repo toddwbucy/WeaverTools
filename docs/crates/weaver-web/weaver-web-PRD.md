@@ -673,9 +673,13 @@ projected readout, so a future refitted lens can read an old run.
 difference, the weights hash the SPU computed at admit per
 `weaver-spu-Spec` section 3 and the analysis seam carries per generation,
 **the engine's identity at a grain fine enough to catch a library
-revision**, seed, the full sampler configuration, device, precision, the
-batching election, **the field election's depth**, the task, the declared
-boundary set, and **whether a token was forced and which**. The engine is in
+revision**, seed, the full sampler configuration, device, **the field election's
+depth**, the task, the declared boundary set, and **whether a token was forced and
+which**. **Precision and the batching election left it on 2026-09-09**, per the
+operator's rulings at issue #532: neither had a producer anywhere in the corpus, the
+record identity above is already at a grain fine enough to catch a quantization
+difference, and a batching election records a choice the architecture refuses. The
+Spec's section 2.3 carries precision as the artifact's label. The engine is in
 the compound the tuple names, and a divergence between two runs differing in
 both silicon and library revision names neither cause unless both are held.
 

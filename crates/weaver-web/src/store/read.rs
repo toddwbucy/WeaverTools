@@ -61,10 +61,11 @@ pub struct RunTuple {
     /// the schema holds it as `NUMERIC(20,0)`.
     pub seed: Option<String>,
     pub sampler: serde_json::Value,
-    pub device: String,
-    pub compute_precision: String,
-    pub engine: serde_json::Value,
-    pub batching: serde_json::Value,
+    /// The device model and the engine, each from a deposit the caller
+    /// named, per section 2.2. `None` where the caller named none, which a
+    /// piped record and every record older than deposits both are.
+    pub device: Option<String>,
+    pub engine: Option<serde_json::Value>,
     pub field_depth: Option<i32>,
     pub task_source: Option<String>,
     pub task_identity: Option<String>,
@@ -153,18 +154,13 @@ impl Store {
 
     /// **Read three.** The run's row.
     pub async fn tuple(&self, run: &RunId) -> anyhow::Result<Option<RunTuple>> {
-        let row = sqlx::query(
-            "SELECT run_id, record_identity, seed::text AS seed, sampler, device, \
-             compute_precision, engine, batching, field_depth, task_source, \
-             task_identity, boundary_set, forced_position, forced_token, \
-             parent_run_id, branch_position, parting_position, \
-             record_session, record_digest, prefix_length, \
-             signature, ingested_at \
-             FROM run WHERE run_id = $1",
-        )
-        .bind(&run.0)
-        .fetch_optional(&self.pool)
-        .await?;
+        // The `run_tuple` view of migration 0006 names the column set, so
+        // this read and read four's below are static and cannot drift from
+        // each other or from `run_tuple_from_row`.
+        let row = sqlx::query("SELECT * FROM run_tuple WHERE run_id = $1")
+            .bind(&run.0)
+            .fetch_optional(&self.pool)
+            .await?;
         Ok(row.map(run_tuple_from_row))
     }
 
@@ -190,14 +186,8 @@ impl Store {
         // produced under. One query, the association being explicit in the
         // schema rather than recovered by matching tuples against the set.
         let produced = sqlx::query(
-            "SELECT ser.swept_value, r.run_id, r.record_identity, r.seed::text AS seed, \
-             r.sampler, r.device, r.compute_precision, r.engine, r.batching, \
-             r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
-             r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
-             r.parting_position, \
-             r.record_session, r.record_digest, r.prefix_length, \
-             r.signature, r.ingested_at \
-             FROM staged_experiment_run ser JOIN run r ON r.run_id = ser.run_id \
+            "SELECT ser.swept_value, r.* \
+             FROM staged_experiment_run ser JOIN run_tuple r ON r.run_id = ser.run_id \
              WHERE ser.experiment_id = $1",
         )
         .bind(experiment_id)
@@ -288,9 +278,7 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
         seed: r.get("seed"),
         sampler: r.get("sampler"),
         device: r.get("device"),
-        compute_precision: r.get("compute_precision"),
         engine: r.get("engine"),
-        batching: r.get("batching"),
         field_depth: r.get("field_depth"),
         task_source: r.get("task_source"),
         task_identity: r.get("task_identity"),
@@ -331,9 +319,9 @@ mod tests {
 
     async fn seed_run(s: &Store, run_id: &str, parent: Option<&str>, parting: Option<i32>) {
         sqlx::query(
-            "INSERT INTO run (run_id, record_identity, seed, sampler, device, compute_precision, \
-             engine, batching, boundary_set, parent_run_id, branch_position, parting_position, signature) \
-             VALUES ($1, 'REC', 14458752852352082704, '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', $2, $3, $4, $5) \
+            "INSERT INTO run (run_id, record_identity, seed, sampler, device, \
+             engine, boundary_set, parent_run_id, branch_position, parting_position, signature) \
+             VALUES ($1, 'REC', 14458752852352082704, '{}', 'cuda:0', '{}', '[]', $2, $3, $4, $5) \
              ON CONFLICT (run_id) DO NOTHING",
         )
         .bind(run_id)
@@ -481,9 +469,9 @@ mod tests {
         let Some(s) = store().await else { return };
         let digest = "a".repeat(64);
         sqlx::query(
-            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
-             batching, boundary_set, record_session, record_digest) \
-             VALUES ('r-named', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'sess-1', $1) \
+            "INSERT INTO run (run_id, record_identity, sampler, device, engine, \
+             boundary_set, record_session, record_digest) \
+             VALUES ('r-named', 'REC', '{}', 'cuda:0', '{}', '[]', 'sess-1', $1) \
              ON CONFLICT (run_id) DO NOTHING",
         )
         .bind(&digest)
@@ -519,12 +507,42 @@ mod tests {
         assert!(
             t.record_session.is_none() && t.record_digest.is_none() && t.prefix_length.is_none()
         );
+        // A run whose caller named no deposit, per section 2.2: the device
+        // model, the engine and the verdict all read absent, and the row
+        // stands, which is a run this store holds rather than refuses.
+        // **The device is absent and the engine is not**: the record's own
+        // `load` event carries the organ binaries in its `stack`, so the
+        // engine holds the record's half and says the deposit's is absent,
+        // which is section 2.2's "absent for neither half where one is
+        // missing".
+        sqlx::query(
+            "INSERT INTO run (run_id, record_identity, sampler, boundary_set, engine) \
+             VALUES ('r-no-deposit', 'REC', '{}', '[]', \
+             '{\"organ_binaries\": {\"weaver-spu\": \"ab\"}}') \
+             ON CONFLICT (run_id) DO NOTHING",
+        )
+        .execute(&s.pool)
+        .await
+        .unwrap();
+        let t = s
+            .tuple(&RunId("r-no-deposit".into()))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(t.device.is_none(), "no deposit named, so no device model");
+        let engine = t
+            .engine
+            .expect("the record's own stack survives with no deposit");
+        assert!(
+            engine.get("organ_binaries").is_some() && engine.get("libraries").is_none(),
+            "the record's half is held and the deposit's is absent: {engine}"
+        );
 
         // The schema refuses a digest that is not sha256 hex.
         let refused = sqlx::query(
-            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
-             batching, boundary_set, record_digest) \
-             VALUES ('r-bad-digest', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'not-hex')",
+            "INSERT INTO run (run_id, record_identity, sampler, device, engine, \
+             boundary_set, record_digest) \
+             VALUES ('r-bad-digest', 'REC', '{}', 'cuda:0', '{}', '[]', 'not-hex')",
         )
         .execute(&s.pool)
         .await;
