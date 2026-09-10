@@ -39,6 +39,7 @@ use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::qwen2::{Config, ModelForCausalLM};
 
 use super::backend::{Backend, DecodeFault, TokenId};
+use crate::family::{FamilyName, FamilyRefusal, same_key};
 use crate::residency::{Admission, AdmitRefusal};
 use crate::sampling::EffectiveKnobs;
 
@@ -234,7 +235,45 @@ fn read_eos(path: &Path) -> Result<super::backend::TokenId, AdmitRefusal> {
         })
 }
 
-/// Read the model's `config.json` into the fork's own shape.
+/// The architecture this path's forward is written against, per the module's
+/// stage-one clause: the registry's qwen2 entry.
+pub const SERVED_ARCHITECTURE: &str = "qwen2";
+
+/// The architecture an artifact's `config.json` declares, spelled as the file
+/// spells it.
+///
+/// `model_type` is the field a stock export carries. **A config declaring
+/// none is judged by nothing here**: the shapes parse as before, so an
+/// artifact that claims no family is refused by the field it lacks rather
+/// than by a family it never named.
+fn declared_architecture(config: &serde_json::Value) -> Option<&str> {
+    config.get("model_type")?.as_str()
+}
+
+/// Judge the family before the shapes, per `weaver-spu-Spec` section 4.1.
+///
+/// **The refusal carries the spelling the file used and never the fold of
+/// it**, which is [`same_key`]'s own rule, so an operator reads back the
+/// family their artifact declared.
+fn judge_family(config: &serde_json::Value) -> Result<(), FamilyRefusal> {
+    match declared_architecture(config) {
+        Some(declared) if !same_key(declared, SERVED_ARCHITECTURE) => Err(
+            FamilyRefusal::UnknownFamily(FamilyName(declared.to_string())),
+        ),
+        _ => Ok(()),
+    }
+}
+
+/// Read the model's `config.json`, judging the family before the shapes.
+///
+/// **A family this path does not serve refuses as a family and never as a
+/// load**, per `weaver-spu-Spec` section 4.1. The architecture the file
+/// declares is read first and only a served one is parsed into the forward's
+/// own struct, because parsing first answers a family question with whichever
+/// field the other family happens to spell differently: a stock Qwen3 export
+/// carries `"sliding_window": null` where qwen2's struct requires a number,
+/// and issue #507 met that as a parse error naming a config line that is
+/// correct.
 ///
 /// Monomorphic on purpose: the crate carries `serde_json` and not `serde`
 /// itself, per the Spec's dependency list, so a generic bound would need a
@@ -244,7 +283,12 @@ fn read_config(path: &Path) -> Result<Config, AdmitRefusal> {
     let text = std::fs::read_to_string(path).map_err(|error| AdmitRefusal::LoadFailed {
         detail: format!("{}: {error}", path.display()),
     })?;
-    serde_json::from_str(&text).map_err(|error| AdmitRefusal::LoadFailed {
+    let declared: serde_json::Value =
+        serde_json::from_str(&text).map_err(|error| AdmitRefusal::LoadFailed {
+            detail: format!("{}: {error}", path.display()),
+        })?;
+    judge_family(&declared).map_err(AdmitRefusal::Family)?;
+    serde_json::from_value(declared).map_err(|error| AdmitRefusal::LoadFailed {
         detail: format!("{}: {error}", path.display()),
     })
 }
@@ -590,5 +634,58 @@ impl Backend for NativeEngine {
         self.resident.clear();
         self.logits = None;
         self.closed = true;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **A family this path does not serve refuses as a family**, naming the
+    /// spelling the artifact used, and the shapes are never reached.
+    ///
+    /// The config is a stock Qwen3 export's two deciding fields: the family it
+    /// declares, and the `sliding_window` null that qwen2's struct refuses. So
+    /// the order is what this watch reads and not the judgment alone.
+    ///
+    /// Perturbation: judge after the parse instead and this fails, the refusal
+    /// arriving as `LoadFailed` naming a config line that is correct, which is
+    /// the state issue #507 met.
+    ///
+    /// conforms: spu-native-refuses-an-unserved-family-as-a-family
+    #[test]
+    fn an_unserved_family_refuses_as_a_family_before_the_shapes() {
+        let dir = std::env::temp_dir().join(format!("weaver-spu-family-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the fixture directory stands");
+        let path = dir.join("config.json");
+        std::fs::write(&path, br#"{"model_type": "qwen3", "sliding_window": null}"#)
+            .expect("the fixture config is written");
+
+        let refusal = read_config(&path).expect_err("an unserved family refuses");
+        assert_eq!(
+            refusal,
+            AdmitRefusal::Family(FamilyRefusal::UnknownFamily(FamilyName("qwen3".into()))),
+            "the family is judged before the shapes and names the file's own spelling"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The served family passes, folded rather than matched byte for byte,
+    /// and a config naming no family is left to the shapes.
+    ///
+    /// conforms: spu-native-refuses-an-unserved-family-as-a-family
+    #[test]
+    fn the_served_family_passes_and_an_unnamed_one_is_left_to_the_shapes() {
+        for spelling in ["qwen2", "Qwen2", "qwen-2"] {
+            let config = serde_json::json!({"model_type": spelling});
+            assert_eq!(
+                judge_family(&config),
+                Ok(()),
+                "{spelling} is the served key"
+            );
+        }
+        let unnamed = serde_json::json!({"hidden_size": 1});
+        assert_eq!(judge_family(&unnamed), Ok(()));
     }
 }

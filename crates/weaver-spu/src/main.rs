@@ -1346,6 +1346,15 @@ fn admit_refusal_line(refusal: &weaver_spu::residency::AdmitRefusal) -> Option<S
         AdmitRefusal::LoadFailed { detail } => {
             Some(serde_json::json!({"refusal": "load_failed", "detail": detail}).to_string())
         }
+        // **The family the artifact declared, named**, per issue #507: the
+        // floor's word for it is `ArtifactUnreadable`, which says nothing
+        // about which family, and an operator who is told only that reads it
+        // as a corrupt file. The other family refusals predate this arm and
+        // none of them has a producer this act built, so widening it to them
+        // is orthogonal work with its own branch.
+        AdmitRefusal::Family(family::FamilyRefusal::UnknownFamily(name)) => {
+            Some(serde_json::json!({"refusal": "unknown_family", "family": name.0}).to_string())
+        }
         _ => None,
     }
 }

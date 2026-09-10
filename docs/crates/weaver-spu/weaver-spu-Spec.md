@@ -3,6 +3,16 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-10, the native path judges the family before the shapes.
+Section 4.1 says that a family that path does not serve refuses as a family and
+never as a load: the architecture the artifact declares is read first, the refusal
+carries the spelling the file used, and it crosses as the unreadable artifact
+rather than as a device that could not admit. Parsing first answered a family
+question with whichever field the other family spells differently, which is how a
+stock Qwen3 export refused on a null `sliding_window` and sent a reader to a config
+line that is correct. One perturbation record and its section 10 bullet, the total
+moving to eighty-nine. Per issue #507.
+
 **Revised:** 2026-09-06, the weights hash's manifest is stated. Section 3's hash
 clause says what the canonical manifest is, a file's bytes with a split's shards in
 order and names excluded, or a directory's regular files walked in sorted order each
@@ -1250,6 +1260,32 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-backend-from-artifact
+```
+
+**A family the native path does not serve refuses as a family and never as a
+load.** That path serves one architecture this stage, the registry's qwen2 entry,
+and the artifact it is handed declares its own. **The declared architecture is read
+before the shapes are**, so an artifact naming another family refuses on the family
+it named, and the refusal carries that spelling rather than the fold of it, per
+section 5's rule that a miss names the string the header carried. Parsing first
+answers a family question with whichever field the other family happens to spell
+differently, which is a true statement about a file and the wrong cause: a stock
+Qwen3 export declares `sliding_window` as null where qwen2's struct requires a
+number, so the reader is sent to a config line that is correct. **The floor's word
+for it is the artifact and not the device**, the refusal crossing as the unreadable
+artifact every unresolved selection crosses as, because a family this binary does
+not carry is not a condition of the card. A config declaring no architecture is
+judged by nothing here and refuses on the field it lacks, since a family it never
+named is not a family it got wrong.
+
+```graph
+node: spu-native-refuses-an-unserved-family-as-a-family
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-spu
+to: spu-native-refuses-an-unserved-family-as-a-family
 ```
 
 ### 4.2 The session
@@ -3133,6 +3169,12 @@ than a code fact.
 
 **Requiring a perturbation-verified test.**
 
+- The native path judges the family before the shapes: a config declaring an
+  architecture it does not serve refuses naming that architecture, and one
+  declaring none reaches the shapes as before. Watched by judging after the parse
+  instead, where a stock Qwen3 export refuses on a null `sliding_window` and names
+  a config line that is correct, which is the state issue #507 met.
+
 - A `System` message renders on every family that serves a conversation, and
   folds into the user turn that follows it where the template names no system
   turn. **These are two claims with two watches, and an earlier form of this
@@ -3300,7 +3342,7 @@ count exists for the first walk above, a writable handle to the agent's own reco
 sitting inside the agent's model server, and the discipline it checks is the
 harness's at the fork rather than the loop's at a seam.
 
-**Seventy claims grounding in no invariant is the expected result and not a gap**,
+**Seventy-one claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
@@ -3320,7 +3362,7 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. Four are the exception and
 sit at the end of this section, being the claims argued only here: the fork
 seam's doctest, the path-taking loader's two pinned shapes, that same claim's
-general prohibition, and the kernels' comparisons. Eighty-eight records in
+general prohibition, and the kernels' comparisons. Eighty-nine records in
 all, the custody act of 2026-09-05 adding the artifact refusal's account and
 the definitions act of the same date the closing count's review record,
 the elections taking nodes because gate H1 would otherwise leave the largest
