@@ -152,7 +152,12 @@ pub enum ReplayOutcome {
 /// integers and matches exactly or does not, and the reader's vectors compare
 /// within the GPU float tolerance the apex names. Each carries the first
 /// divergent position, the token path's carrying both identifiers so a reader
-/// can say how the two differ without rerunning anything.
+/// can say how the two differ without rerunning anything. **`position` is
+/// the resident length at the draw in both**, the coordinate `model.field`
+/// keys on, per section 3.3 on the ruling of 2026-09-09, so a divergence and
+/// the field row it fell in share a key; the harness derives it from the
+/// re-fed answer's closing count, and a divergence in the appended input
+/// names the resident length that token occupies.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Divergence {
