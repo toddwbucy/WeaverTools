@@ -982,6 +982,16 @@ pub enum FamilyRefusal {
     /// position. Belt and braces, per Spec section 5: order decides nothing at
     /// either.
     MarkersAmbiguous(FamilyName),
+    /// **The registry carries this family and the named backend does not serve
+    /// it.** Distinct from [`FamilyRefusal::UnknownFamily`], which says the
+    /// binary carries no such family at all: a reader told that about a family
+    /// the registry does serve goes looking for a row that is present. The
+    /// backend travels with the name because which of the two peers was asked
+    /// is the whole of the fact.
+    BackendDoesNotServe {
+        family: FamilyName,
+        backend: &'static str,
+    },
     /// The family is carried, but it does not shard across the requested width.
     WidthNotDeclared {
         family: FamilyName,
@@ -1007,7 +1017,11 @@ impl From<FamilyRefusal> for LifecycleRefusal {
             | FamilyRefusal::TemplateAbsent(_)
             | FamilyRefusal::TemplateUnrecognised(_)
             | FamilyRefusal::MarkersMatchNoEntry(_)
-            | FamilyRefusal::MarkersAmbiguous(_) => LifecycleRefusal::ArtifactUnreadable,
+            | FamilyRefusal::MarkersAmbiguous(_)
+            // A family one peer serves and the other does not is a fact about
+            // the artifact and the backend it was handed to, and no more a
+            // device condition than the rest.
+            | FamilyRefusal::BackendDoesNotServe { .. } => LifecycleRefusal::ArtifactUnreadable,
             FamilyRefusal::WidthNotDeclared { .. } => LifecycleRefusal::DeviceCannotAdmit,
         }
     }
