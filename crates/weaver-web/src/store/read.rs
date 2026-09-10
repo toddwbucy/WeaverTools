@@ -62,9 +62,7 @@ pub struct RunTuple {
     pub seed: Option<String>,
     pub sampler: serde_json::Value,
     pub device: String,
-    pub compute_precision: String,
     pub engine: serde_json::Value,
-    pub batching: serde_json::Value,
     pub field_depth: Option<i32>,
     pub task_source: Option<String>,
     pub task_identity: Option<String>,
@@ -155,7 +153,7 @@ impl Store {
     pub async fn tuple(&self, run: &RunId) -> anyhow::Result<Option<RunTuple>> {
         let row = sqlx::query(
             "SELECT run_id, record_identity, seed::text AS seed, sampler, device, \
-             compute_precision, engine, batching, field_depth, task_source, \
+             engine, field_depth, task_source, \
              task_identity, boundary_set, forced_position, forced_token, \
              parent_run_id, branch_position, parting_position, \
              record_session, record_digest, prefix_length, \
@@ -191,7 +189,7 @@ impl Store {
         // schema rather than recovered by matching tuples against the set.
         let produced = sqlx::query(
             "SELECT ser.swept_value, r.run_id, r.record_identity, r.seed::text AS seed, \
-             r.sampler, r.device, r.compute_precision, r.engine, r.batching, \
+             r.sampler, r.device, r.engine, \
              r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
              r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
              r.parting_position, \
@@ -288,9 +286,7 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
         seed: r.get("seed"),
         sampler: r.get("sampler"),
         device: r.get("device"),
-        compute_precision: r.get("compute_precision"),
         engine: r.get("engine"),
-        batching: r.get("batching"),
         field_depth: r.get("field_depth"),
         task_source: r.get("task_source"),
         task_identity: r.get("task_identity"),
@@ -331,9 +327,9 @@ mod tests {
 
     async fn seed_run(s: &Store, run_id: &str, parent: Option<&str>, parting: Option<i32>) {
         sqlx::query(
-            "INSERT INTO run (run_id, record_identity, seed, sampler, device, compute_precision, \
-             engine, batching, boundary_set, parent_run_id, branch_position, parting_position, signature) \
-             VALUES ($1, 'REC', 14458752852352082704, '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', $2, $3, $4, $5) \
+            "INSERT INTO run (run_id, record_identity, seed, sampler, device, \
+             engine, boundary_set, parent_run_id, branch_position, parting_position, signature) \
+             VALUES ($1, 'REC', 14458752852352082704, '{}', 'cuda:0', '{}', '{}', $2, $3, $4, $5) \
              ON CONFLICT (run_id) DO NOTHING",
         )
         .bind(run_id)
@@ -481,9 +477,9 @@ mod tests {
         let Some(s) = store().await else { return };
         let digest = "a".repeat(64);
         sqlx::query(
-            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
-             batching, boundary_set, record_session, record_digest) \
-             VALUES ('r-named', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'sess-1', $1) \
+            "INSERT INTO run (run_id, record_identity, sampler, device, engine, \
+             boundary_set, record_session, record_digest) \
+             VALUES ('r-named', 'REC', '{}', 'cuda:0', '{}', '{}', 'sess-1', $1) \
              ON CONFLICT (run_id) DO NOTHING",
         )
         .bind(&digest)
@@ -522,9 +518,9 @@ mod tests {
 
         // The schema refuses a digest that is not sha256 hex.
         let refused = sqlx::query(
-            "INSERT INTO run (run_id, record_identity, sampler, device, compute_precision, engine, \
-             batching, boundary_set, record_digest) \
-             VALUES ('r-bad-digest', 'REC', '{}', 'cuda:0', 'bf16', '{}', '{}', '{}', 'not-hex')",
+            "INSERT INTO run (run_id, record_identity, sampler, device, engine, \
+             boundary_set, record_digest) \
+             VALUES ('r-bad-digest', 'REC', '{}', 'cuda:0', '{}', '{}', 'not-hex')",
         )
         .execute(&s.pool)
         .await;

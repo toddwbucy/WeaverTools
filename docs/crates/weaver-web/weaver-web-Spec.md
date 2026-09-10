@@ -10,6 +10,21 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-09, sixth of this date, the run row gets its producers and loses
+two members that had none. Issue #532 found while the ingest was being written that
+seven of the run row's eight required members crossed no seam, the run identity among
+them, so no run row could be written at all. Section 2.2 now takes the seed and the
+sampler from the effective sampling, the device from the deposit's device model, and the
+engine from its code identity, each crossing `weaver-analysis-web-contract` section 2.2
+as revised this date, with the field election's depth, the lineage and the task's
+verdict beside them. **The batching election is gone**, recording a choice the
+architecture refuses. **Precision is gone to section 2.3 as the artifact's label**,
+having no producer anywhere and the record identity already catching a quantization
+difference. **The declared boundary set stays and is empty**, every organ being reached
+by kernel peer identity per `weaver-admin-PRD` section 4.3, which is complete rather
+than short and which issue #438 will end when it charters a reachable organ. Section 3.1
+lands them. Migration 0005 drops the two columns and gives the artifact its label. Per
+the operator's rulings of this date at issue #532.
 **Revised:** 2026-09-09, fifth of this date, the plan and the refs get their rows.
 Section 2.9 gives the plan its row and its entries, one parent run and a set of columns
 with a disposition for every member of the tuple, and section 2.10 gives a person a
@@ -531,15 +546,24 @@ Everything identifying the conditions lives in the run's own row:
   analysis seam carries per `weaver-analysis-web-contract` section 2.2 and
   never from the declaration, a declaration naming a path and being editable
   after the run
-- seed, and the full sampler configuration
-- device, and precision
+- seed, and the full sampler configuration, both taken from the effective sampling the
+  record's `model.request` carries, per `weaver-analysis-web-contract` section 2.2
+- **the device**, the device model the operator's deposit names, per that contract's
+  same section. **Precision is not here and was until 2026-09-09**, having no producer
+  anywhere in the corpus, and section 2.3 carries it as the artifact's label because the
+  record identity above already catches a quantization difference
 - **the engine's identity at build grain**: the libraries the decode ran
   through, each by name and digest, with the build that produced them
-- the batching election
 - **the field election's depth**, because it sets the length of every
   position's alternative list and the charter's section 4 compares them
 - the task, by source and identity
-- the declared boundary set
+- **the declared boundary set**, which is empty on every run this document can be
+written against and complete rather than short. Every organ in the base is reached by
+kernel peer identity over a Unix socket, per `weaver-admin-PRD` section 4.3, so no organ
+owes a boundary and a declaration naming a loopback or off-host organ is refused by the
+floor's parse. **The set stops being empty at the first act that charters a reachable
+organ**, which carries the declaration member from birth and which the load event then
+records, per issue #438
 - the parent run reference and branch position, where the run is a branch,
   **which are lineage and stand outside tuple equality**
 - **the parting position** where the run is a branch, the first at which its
@@ -620,6 +644,17 @@ recompute it and a row that does not match is a row to refuse rather than
 to trust. Neither is derived here: both are read from the emitter that
 drained the record, which is the only party on this seam that saw the
 bytes.
+
+**Three members of this row had no producer and two of them have left it.** The batching
+election is gone: every use of the word in the corpus outside this document is
+continuous batching as a serving technique the architecture refuses, `weaver-spu-Spec`
+having one forward per prompt and never a batch, so **a member recording a choice the
+program does not offer is a member nobody can fill**. Precision is gone to section 2.3
+as a label on the artifact, the record identity above already being at a grain fine
+enough to catch a quantization difference, so the tuple loses no distinction by losing
+the word. The boundary set stays and is empty for the reason its own bullet gives. All
+three were found by issue #532 while the ingest was being written, and the operator
+ruled them on 2026-09-09.
 
 **The engine is in the compound, so the row holds it.** The tuple is a model
 on a device under a kernel at a precision, and a divergence between two rows
@@ -739,7 +774,14 @@ deriving it.
 Each row carries:
 
 - **the weights identity**, this table's key, derived as above
-- **the record's identities**, the weights hashes `weaver-spu-Spec` section
+- **the precision label**, the word an operator reads to tell one row from another,
+  authored by Models at import because that surface is the one that knows and no organ
+  reports a dtype. **It is a label and never an identity**: section 2.2's record
+  identity is at a grain fine enough to catch a quantization difference, so two
+  artifacts are told apart by their hashes and this member is what a person calls the
+  difference. It is nullable, an import that did not say carrying none.
+- **the record's identities**, the
+  weights hashes `weaver-spu-Spec` section
   3 states, one computed at each import over the files that import
   registers and each unique across rows, a renamed split GGUF excepted per
   section 10: the member is a set because the same weights imported again
@@ -1294,6 +1336,16 @@ reader.
 6's rule, because a branch that changed nothing draws what its parent drew
 and an arm that reproduced its parent is a different fact from one that
 parted at position zero.
+
+**The run row's members land from the emission and none is derived here.** The run
+identity keys every row this ingest writes and crosses on the summary per
+`weaver-analysis-web-contract` section 2.2, with the effective sampling the row splits
+into its seed and its sampler, the field election's depth, the lineage that becomes the
+parent reference and the branch position, the device model, the code identity the row
+calls the engine, and the task's verdict where one crossed. **The boundary set is
+written empty**, per section 2.2, which is a fact about every run this ingest can meet
+rather than a default standing in for one. **Precision is written nowhere**, being
+section 2.3's label on the artifact the record identity resolves.
 
 **The record's session and digest land here and are not derived here.** The
 emitter carries both per generation and this ingest stores them once per

@@ -5,6 +5,16 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+**Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
+under. Section 2.2 gains, once per run, the run identity from the envelope, the
+effective sampling the record's `model.request` carries, the field election's depth and
+the lineage the `load` event's elections carry, the device model and the code identity
+the operator's deposit holds, and the task's verdict where the record carries one.
+Section 3 asks them all of the emitter. **Without them the reader can write no run row
+at all**, seven of its eight required members having no path across this seam, which
+issue #532 found while the ingest was being written. The emitter reads the deposit
+beside the record for the two the record does not hold, on the operator's ruling of this
+date. Per issue #532.
 **Revised:** 2026-09-09, second of this date, the summary carries the seated
 prefix's length. Section 2.2 gains, once per run, the resident length before the
 run's first turn's input, which the emitter derives from the run's first generation
@@ -252,6 +262,43 @@ branch position needs it to say. Every entry repeats it as every entry repeats t
 weights hash, so a run's generations agree on it as they do on the session, and a run
 whose entries disagree is the defect the reader names.
 
+**The run identity crosses, and it is the one member every row the reader writes is
+keyed by.** It is the envelope's `run`, which every line of the record carries per
+`weaver-trace-Spec` section 1 and which the emitter already reads to refuse a second
+run's close. Until 2026-09-09 the emitter held it and rendered it nowhere, so a reader
+keyed every row by a run the wire never named.
+
+**What the run ran under crosses beside it, once per run**, on the weights hash's own
+rule. Each member is absent on its own terms and never defaulted:
+
+- **the effective sampling**, as `model.request` carries it per `weaver-trace-Spec`
+  section 3, spelled as the record spelled it, from which the reader takes both the
+  sampler and the seed it names
+- **the field election's depth**, the `load` event's `field` election, absent where the
+  election did not stand
+- **the lineage**, the `load` event's parent session, the run the cut falls in and the
+  turn the holdings stop at, present only where the session stood from a record
+- **the device model**, which the operator's deposit names per `weaver-analysis-PRD`
+  section 3 and which the licence clause already bounds this emitter's claims by
+- **the code identity**, the same clause's repository commit by hash, toolchain and
+  driver by pinned version, and engine libraries and organ binaries by sha256, which is
+  what the reader's row calls the engine at build grain
+- **the task's verdict** where the record carries one, the predicate the task answered
+  and the ratio over its denominator, per issue #523
+
+**The two the record does not hold are read from the deposit beside it**, on the
+operator's ruling of 2026-09-09. The device model and the code identity are the
+deposit's, which is why the licence clause of `weaver-analysis-PRD` section 3 already
+reads them there, and this emitter is the only party on this seam that holds the record
+and the deposit together. **Where no deposit stands beside the record both are absent**,
+and a reader that met a run with neither would be reading a run whose silicon and
+libraries nobody recorded, which the absence says and a default would hide.
+
+**The task's verdict has no producer yet and this clause binds the future act.** The
+kind that carries it is `weaver-trace`'s to add per issue #523, so the member is absent
+on every record written before that act, and the shape is fixed here so that act lands
+it rather than electing it.
+
 **The entry does not depend on the perplexity.** A generation whose record
 carries none still carries its counts, because the residency is what a store
 keyed by position converts from and it is owed whether or not a perplexity
@@ -293,15 +340,18 @@ wrong token.**
 closed and the count of output tokens**, beside the perplexity on the summary stream,
 **and the record's session and digest per section 2.2**, the emitter being the party
 that drained the bytes and the only one that can name them, **and the seated prefix's
-length per the same section**, derived from the first generation once per run. **The
-output count is the length of that generation's `model.measurement` `output_tokens`
-sequence**, the drawn tokens with the terminator outside them per `weaver-spu-Spec`
-section 6, and not a separate scalar the record carries. **A generation whose
-measurement holds no readable `output_tokens` produces no summary entry and no points at
-all**, so `O` is never absent from an entry that exists and a consumer never meets a
-half-formed one. Both are facts the record already holds, on `model.output` and
-`model.measurement`, so the emitter reports them and derives nothing, which is the
-property `weaver-analysis-Spec` section 5 argues for.
+length per the same section**, derived from the first generation once per run, **and per
+section 2.2 the run identity, the effective sampling, the field election's depth, the
+lineage, the device model, the code identity and the task's verdict**, the last two of
+those read from the deposit beside the record and the verdict only where the record
+carries one. **The output count is the length of that generation's `model.measurement`
+`output_tokens` sequence**, the drawn tokens with the terminator outside them per
+`weaver-spu-Spec` section 6, and not a separate scalar the record carries. **A
+generation whose measurement holds no readable `output_tokens` produces no summary entry
+and no points at all**, so `O` is never absent from an entry that exists and a consumer
+never meets a half-formed one. Both are facts the record already holds, on
+`model.output` and `model.measurement`, so the emitter reports them and derives nothing,
+which is the property `weaver-analysis-Spec` section 5 argues for.
 
 **The two counts landed at PR #462 and #463 on 2026-09-05**, with the
 definitions the members wanted, and the emitter carries them today.
