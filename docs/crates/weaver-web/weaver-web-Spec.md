@@ -588,7 +588,16 @@ than assumed here.
 So the member reads absent on every row until both halves land, per section 6's rule and
 exactly as the seated prefix's length read absent before its seam carried it. **Absent
 says no task scored the run or no path yet carried what it said**, and never that the
-run failed its predicate. **A scorer
+run failed its predicate. A verdict the task recorded as failed is present and says so,
+which is the whole distinction this member exists to keep.
+
+**It lands with the run row and takes that row's rules, not rules of its own.** The
+verdict crosses once per run beside the record's session, its digest and the seated
+prefix's length, so it is written when section 3.1 writes the row, a replayed ingest
+writes what it wrote before, and **a run whose generations disagree on it is the defect
+the reader names** exactly as they are for the three beside it. There is no second write
+path for a verdict and none is owed: a member that arrived on its own would need an
+ordering against the row it belongs to, and this one has none to need. **A scorer
 that is not the task's is a second verdict beside this one and never a change to it**,
 per section 10.
 
@@ -950,6 +959,13 @@ naming both runs, and a matrix column reading it names the parent and the arm. S
 it on a run would be the second truth this section refuses, and would go stale the
 moment either run was re-ingested.
 
+**A recorded query serving a reproduction verdict names exactly two runs**, which is
+narrower than the rule above and is this reading's own. Section 10 has the verdict as
+the comparison of two rows, so a query naming one has nothing to compare and a query
+naming three has not said which comparison it made, and neither produces the one verdict
+the reading claims. **The cardinality is the verdict's and not this section's**: a
+sweep's similarity is recorded here too and names as many runs as the sweep had arms.
+
 **A query that cannot name every run it addressed is not recorded and not
 quotable.** Section 4's condition is that a second person can rerun it, and
 a reader that cannot say what it read cannot be rerun by anyone.
@@ -1102,8 +1118,23 @@ the status is section 5.1's, per the paragraph this act adds there.
 
 **A column reaches its runs through its staged experiment and never directly**, per
 section 2.5, which carries the runs it produced, one per value where the column freed a
-member. So a column is never one run row, and a column that freed nothing is a sweep of
-one value.
+member. So a column is never one run row.
+
+**A column frees at most one member and holds the rest, and a column that frees none is
+not a sweep.** Section 5.4 has a sweep name one member and its value set, so one freed
+member is the ceiling and the staged experiment a column registers carries it as the
+swept member. **A column that frees none registers a staged experiment with no swept
+member and produces one run**, which is the ordinary point experiment and not a sweep of
+one value, a phrase this section carried until the review of PR #534 and which read a
+sweep onto a row that has none. **How many members a column holds away from the parent
+is not bounded here**: one is section 6's generated default and the matrix's interaction
+columns move two or more on purpose, and section 5.2 says what a compound column's
+divergence is attributable to.
+
+**A column that moves no member at all is refused at authoring**, per section 5.3's
+refusal of a sweep naming the parent's own value, read one level up: such a column
+declares the run the parent already is, and section 5.4 has the parent as the control
+rather than as an arm.
 
 **Declared and achieved are two facts landing at two times.** The entry carries what was
 intended and keeps carrying it. The run row carries what ran, and where the two disagree
@@ -1135,11 +1166,20 @@ Each ref carries:
 - **the author**, per section 3.2, and **the row's version**
 - when it was made
 
-**A run reachable from no ref is scaffolding**, which is what a sweep of the store may
+**A run reachable from no root is scaffolding**, which is what a sweep of the store may
 discard, and the question of what to keep reduces to reachability rather than to
 judgment exercised twice. An exemplar tag is a ref. A citation from a published bound is
 a ref. **Nothing in this document deletes a run**, and this row exists so that a later
 act which does can tell what it is deleting.
+
+**A ref is not the only root, and reading it as the only one would discard work in
+flight.** A plan names a parent run and a staged experiment names one too, and neither
+is a ref, so a sweep rooted on refs alone would collect the parent of a plan an operator
+is composing or of a column already queued, and the queue would drain against a run that
+had gone. **The roots are three**: a ref, the parent run of any plan, and the parent run
+of any staged experiment that has not returned, per section 5.1's five. A plan the
+operator discards stops being a root by being discarded, which is the same reachability
+answering both questions.
 
 **A ref names a run and never a plan or a column.** A bound cites what ran, and a column
 that was registered and never queued has nothing to pin, which section 5.1's
@@ -1590,6 +1630,16 @@ hands them to a runner. An interface that registered and queued in one gesture w
 spend the pre-registration this section buys, because a column an operator registered
 and then thought better of queueing is exactly the case the paragraph above exists to
 keep.
+
+**Registering one column is one transaction and registering it twice writes nothing the
+second time.** The staged experiment is written and the column's reference to it is set
+together or neither is, so a registration that fails part way leaves a column
+unregistered rather than leaving a frozen experiment no column points at. **The column's
+reference is what holds the claim at most once**: it is unique and it is set only where
+it was null, so two registrations racing on one column leave one staged experiment and
+the loser finds the column already registered. Without that, one column would carry two
+frozen experiments and the matrix would read two arms where the operator authored one,
+which is what section 9's row for this claim perturbs.
 
 ### 5.2 The diff is split by when it takes effect
 

@@ -627,13 +627,15 @@ registry that cannot hold a failure is a marketing surface.
 
 ## 4. The record this crate holds
 
-**It holds two things and they are not the same kind of thing.** What the
-instrument recorded is a fact about a run that happened, and a second write
-of it is a replay. What the engineer authored is a thing someone is still
-making, and a second write of it is an edit. **The recorded half is
-described below. The authored half is the declarations, the staged experiments, the
-artifact catalog, and the plans and refs of section 3.5**, which sections 3.1, 3.5 and
-3.6 each produce and which the Spec's section 2 gives their rows.
+**It holds two things and they are not the same kind of thing.** What the instrument
+recorded is a fact about a run that happened, and a second write of it is a replay. What
+the engineer authored is a thing someone is still making, and a second write of it is an
+edit. **The recorded half is described below. The authored half is what three surfaces
+write, each named with what it writes**: Compose the declarations, per section 3.1.
+Stage the staged experiments and, since the ablation, the plans with their entries and
+the refs, per section 3.5. Models the artifact catalog, per section 3.6. The Spec's
+section 2 gives them their rows and its section 3.1 keeps the ingest away from all of
+them, a position and a run being the ingest's alone.
 
 **Naming the second half is not a widening of scope.** Three surfaces have
 listed those objects since this charter was rewritten, and a surface that
