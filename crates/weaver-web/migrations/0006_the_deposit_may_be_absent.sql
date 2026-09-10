@@ -36,6 +36,19 @@ ALTER TABLE run ADD CONSTRAINT run_branch_needs_a_parent
 -- Spec 3.1 makes "written empty" normative for the declared boundary set,
 -- and a column with no type check took an object in one test and an array
 -- in another. 0002 established this pattern for the sweep's values.
+--
+-- **The rows that stand are written first, because a check validates them.**
+-- Postgres validates every existing row when a CHECK is added, so this
+-- constraint refuses to be created on any database holding a row whose
+-- boundary set is not an array, which is every database that ran this
+-- crate's tests before this act. **The empty array is the fact and not a
+-- default**, per Spec section 2.2: every organ in the base is reached by
+-- kernel peer identity over a Unix socket, so no run that exists ran with a
+-- boundary owed by anything, and a row spelling that as an object spelled
+-- the same emptiness in the wrong shape.
+UPDATE run SET boundary_set = '[]'::jsonb
+  WHERE jsonb_typeof(boundary_set) <> 'array';
+
 ALTER TABLE run ADD CONSTRAINT run_boundary_set_is_an_array
   CHECK (jsonb_typeof(boundary_set) = 'array');
 
