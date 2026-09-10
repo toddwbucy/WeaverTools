@@ -10,6 +10,20 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-09, fifth of this date, the plan and the refs get their rows.
+Section 2.9 gives the plan its row and its entries, one parent run and a set of columns
+with a disposition for every member of the tuple, and section 2.10 gives a person a
+named reference to a run so that what a bound cites outlives the scaffolding that
+produced it. Both are authored rows carrying an author and a version, so section 3.2's
+two bullets and its opening enumeration move with them, Stage now authoring four tables
+where the sentence said one, and section 8's surface count says so too. Section 2.2
+gains the task's verdict, declared now and absent until the trace kind of issue #523
+exists. Section 2.6 holds the reproduction verdict as a recorded query, which is the
+shape a comparison of two rows already had, and section 10's correctness election closes
+on it. Section 5.1 says a column's status is its staged experiment's state and that
+registering a plan and queueing it are two acts. Two perturbation records and their
+section 9 rows, the count moving to twenty-six. Per the sketch at
+`docs/project/sketch-ablation-matrix.md` and the queue at issue #434.
 **Revised:** 2026-09-09, fourth of this date, the word "cell" is settled. Section 10's
 election closes on the operator's ruling of this date: the word carried three senses
 rather than the charter's two, and the count settles it, a cell staying a named open
@@ -91,7 +105,7 @@ assertion identifiers a unit conforms to, and there were none to name. The
 register recorded the header gap at PR #500 and this is its cause rather
 than a second finding.
 
-Twenty-four assertion records now stand, **each under the prose that argues
+Twenty-six assertion records now stand, **each under the prose that argues
 it and none under another record**, rather than gathered in
 section 9, which is what every other
 Spec does and what makes a queried identifier arrive with a section worth
@@ -430,20 +444,23 @@ process fact, and the scope this property protects is the second.
 
 The grain is the grain the interface clicks at.
 
-**The store has two halves and they are written by different paths.** What
-the instrument recorded is sections 2.1 and 2.2, the position and the run,
-landed by the ingest of section 3.1 and never by a surface. What the
-engineer authored is sections 2.3 through 2.5, the artifact, the
-declaration and the staged experiment, landed by the authoring path of
-section 3.2 and never by the ingest. Section 2.6's recorded query is the
-read's own trace and belongs to neither, written by the read that serves it
-and by nothing else. **Section 2.7 is not a table**: it is how the rows
-above are reached, and it carries the rule that a derived value is derived
-once at ingest rather than at any read. **Section 2.8's session belongs to
-neither half either and sits last**, after the indexes, because it is the
-only row here that is about the operator rather than about the instrument or
-the work. It is admitted on the same ground section 2.6 was: a rule stated
-elsewhere needs somewhere to land.
+**The store has two halves and they are written by different paths.** What the
+instrument recorded is sections 2.1 and 2.2, the position and the run, landed by the
+ingest of section 3.1 and never by a surface. What the engineer authored is sections 2.3
+through 2.5, the artifact, the declaration and the staged experiment, landed by the
+authoring path of section 3.2 and never by the ingest. Section 2.6's recorded query is
+the read's own trace and belongs to neither, written by the read that serves it and by
+nothing else. **Section 2.7 is not a table**: it is how the rows above are reached, and
+it carries the rule that a derived value is derived once at ingest rather than at any
+read. **Section 2.8's session belongs to neither half either**, and it sits after the
+indexes because it is the only row here that is about the operator rather than about the
+instrument or the work. It is admitted on the same ground section 2.6 was: a rule stated
+elsewhere needs somewhere to land. **Sections 2.9 and 2.10 are authored rows sitting
+outside their half**, the plan and the refs, appended after the session rather than
+placed among 2.3 through 2.5 because renumbering would break every citation of sections
+2.6 through 2.8 in this document and outside it. **The grouping is stated here rather
+than carried by the numbering**, which is the cost of a document whose sections are
+cited by number.
 
 **The halves differ in what a rewrite means.** A recorded row is a fact
 about a run that happened, so a second write of it is a replay and must be
@@ -542,12 +559,37 @@ Everything identifying the conditions lives in the run's own row:
   which stands outside tuple equality with the signature since it says
   which bytes the row descends from, and is absent where the emitter did
   not drain the run whole
+- **the task's verdict**, the predicate the task answered and the ratio over the task's
+  denominator where the task supplies one, per issue #523's ruling of 2026-09-09, which
+  stands outside tuple equality beside the signature since it says how the run was
+  scored and not what it ran under, and which is absent where no task scored the run
 - **the seated prefix's length**, the resident length before the run's
   first turn's input, per `weaver-analysis-web-contract` section 2.2, which
   stands outside tuple equality as an address on the run's tape and not a
   condition, the prefix's content being the declaration's, and which is
   what section 5 makes a whole-run arm's branch position
 - whether a token was forced, and which
+
+**The verdict is the task's and this crate scores nothing.** The task supplies the
+predicate and the denominator, per the charter's section 9 and issue #523, and a verdict
+is a fact about a run that happened rather than a reading taken over it, which is why it
+lands on this row and not in section 2.6. **It arrives on a trace event the task authors
+at the run's close**, so the record carries its own score and the ingest of section 3.1
+reads it from what it already lands. That kind is `weaver-trace`'s to add and does not
+exist yet, so the member reads absent on every row until it does, per section 6's rule
+and exactly as the seated prefix's length did before its seam carried it. **A scorer
+that is not the task's is a second verdict beside this one and never a change to it**,
+per section 10.
+
+```graph
+node: web-verdict-is-landed-and-never-scored-here
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-verdict-is-landed-and-never-scored-here
+```
 
 **The row names the record it came from, twice, because the store is a
 projection and never the record.** Section 3.1 says so of every row in this
@@ -888,6 +930,15 @@ them, which is what makes the election legible after the fact. **A reading
 whose lens was fitted to other weights and does not say so is the one thing
 this row exists to prevent.**
 
+**The reproduction verdict is one of these rows and not a column on a run.** Section 10
+has it as the projected comparison of two rows this crate holds, on the fields the
+charter's section 4 names, so it is a property of two runs and of which two a reader
+chose, which is the shape section 2.7's exception exists for and the shape a sweep's
+similarity already has. **A surface that renders it renders a recorded query's rerun**,
+naming both runs, and a matrix column reading it names the parent and the arm. Storing
+it on a run would be the second truth this section refuses, and would go stale the
+moment either run was re-ingested.
+
 **A query that cannot name every run it addressed is not recorded and not
 quotable.** Section 4's condition is that a second person can rerun it, and
 a reader that cannot say what it read cannot be rerun by anyone.
@@ -1005,6 +1056,83 @@ ordering rule answers two engineers editing one declaration, and nobody edits
 a session: it is opened once, closed once, and read in between. **Nor is it a
 recorded row**, carrying no run and no position, which is why it stands here
 after the indexes rather than in either half.
+
+### 2.9 The plan
+
+**A run row says what a run did and a staged experiment says what was registered, and
+the matrix of `docs/project/sketch-ablation-matrix.md` needs a row for what an operator
+is still composing.** One parent run, a set of columns, and a disposition for every
+member of the tuple in every column. **A column that is never registered leaves no
+staged experiment**, and without this row it would leave nothing at all, which is the
+ablation's own throwaway problem read one level up: a plan an operator trimmed is a fact
+about what was considered.
+
+Each plan carries:
+
+- the parent run it ablates, which every column branches from
+- **the author**, per section 3.2, and **the row's version**, being an authored row like
+  the three above it
+- its columns, each of which becomes at most one staged experiment and holds a nullable
+  reference to the one it became
+
+Each entry of a plan carries:
+
+- its plan and its column, which are its address together with the field
+- the member of the tuple it names
+- **its disposition**, which is held or freed and is the entry's own, per the sketch's
+  section 5
+- the value where it is held, and the value set where it is freed, which registration
+  freezes as section 5.4's sweep
+
+**An entry carries a disposition and a column carries a status, and the two are
+different facts about different objects.** An entry that carried both could not say what
+a freed entry in a queued column is, which is both at once. The disposition is above and
+the status is section 5.1's, per the paragraph this act adds there.
+
+**A column reaches its runs through its staged experiment and never directly**, per
+section 2.5, which carries the runs it produced, one per value where the column freed a
+member. So a column is never one run row, and a column that freed nothing is a sweep of
+one value.
+
+**Declared and achieved are two facts landing at two times.** The entry carries what was
+intended and keeps carrying it. The run row carries what ran, and where the two disagree
+**the run row is right and the entry is a plan that did not survive contact**, which is
+a reading worth having rather than a row to correct.
+
+```graph
+node: web-a-column-registers-at-most-once
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-a-column-registers-at-most-once
+```
+
+### 2.10 The refs
+
+**A named reference from a person to a run, and the one thing this document takes from a
+commit graph.** The ablation's runs are scaffolding by default: a batch that establishes
+a bound produces arms whose value was to be measured once, and the schema should make
+discarding them cheap rather than guard against it. **What must survive is what the
+bound cites**, and a ref is how a run says so.
+
+Each ref carries:
+
+- its name, which is the operator's word for why this run is kept
+- the run it pins
+- **the author**, per section 3.2, and **the row's version**
+- when it was made
+
+**A run reachable from no ref is scaffolding**, which is what a sweep of the store may
+discard, and the question of what to keep reduces to reachability rather than to
+judgment exercised twice. An exemplar tag is a ref. A citation from a published bound is
+a ref. **Nothing in this document deletes a run**, and this row exists so that a later
+act which does can tell what it is deleting.
+
+**A ref names a run and never a plan or a column.** A bound cites what ran, and a column
+that was registered and never queued has nothing to pin, which section 5.1's
+registration already records without a ref's help.
 
 ## 3. The write path
 
@@ -1182,11 +1310,14 @@ reproduces, and one computed in a view is one nobody can.
 
 ### 3.2 The authoring path
 
-**A surface that authors writes the row it authors and nothing else.**
-Compose writes a declaration, Stage writes a staged experiment, and Models
-writes an artifact row on import. Each writes its own table of section 2 and
-no other, and none of them may write a position or a run, which is what
-keeps a recorded fact a recorded fact.
+**A surface that authors writes the rows it authors and nothing else.** Compose writes a
+declaration. Models writes an artifact row on import. Stage writes a staged experiment,
+and since the plan of section 2.9 it writes that row with its entries and the refs of
+section 2.10, all four being what one surface composes and registers. **Each writes only
+tables of the authored half**, and **none of them may write a position or a run**, which
+is the whole of what keeps a recorded fact a recorded fact and is what the pin below
+holds. The sentence read that each writes one table until 2026-09-09, which was true
+while Stage authored one.
 
 ```graph
 node: web-no-surface-writes-the-recorded-half
@@ -1198,14 +1329,13 @@ from: weaver-web
 to: web-no-surface-writes-the-recorded-half
 ```
 
-- **Every authored row carries a version, and it is the store's own
-  counter rather than anything the author supplies.** Sections 2.3, 2.4 and
-  2.5 each carry it. It has nothing to do with the declaration's corpus
-  commit, which pins the floor's field shape and answers staleness against
-  `weaver-types-Spec`: **one says whether the shape is current, the other
-  says whether this row has moved since you read it.**
-- **Every authored row names its author, and the member is nullable.**
-  Sections 2.3, 2.4 and 2.5 each carry it. **Null means the store could not
+- **Every authored row carries a version, and it is the store's own counter rather than
+anything the author supplies.** Sections 2.3, 2.4, 2.5, 2.9 and 2.10 each carry it. It
+has nothing to do with the declaration's corpus commit, which pins the floor's field
+shape and answers staleness against `weaver-types-Spec`: **one says whether the shape is
+current, the other says whether this row has moved since you read it.**
+- **Every authored row names its author, and the member is nullable.** Sections 2.3,
+  2.4, 2.5, 2.9 and 2.10 each carry it. **Null means the store could not
   name an author when the row was written, and it never means the
   operator**, because a default that guesses writes a fact nobody can
   correct later and an unknown that says so can be filled by anyone who
@@ -1430,6 +1560,19 @@ ever runs, and queueing is a separate act. **What was registered and never
 run stays in the record**, which is what makes pre-registration a property
 of the interface rather than a discipline imposed on it.
 
+**A plan's column has no state of its own and takes these five.** Section 2.9's column
+holds a nullable reference to the staged experiment it became, and **the column's status
+is that row's state**, which is why this document names no sixth vocabulary for the
+matrix to render. A column whose reference is null has not been registered, which the
+null itself records.
+
+**So the matrix's two acts are this section's two acts and not one.** Registering a plan
+freezes each column as a staged experiment and puts the claim on the record. Queueing
+hands them to a runner. An interface that registered and queued in one gesture would
+spend the pre-registration this section buys, because a column an operator registered
+and then thought better of queueing is exactly the case the paragraph above exists to
+keep.
+
 ### 5.2 The diff is split by when it takes effect
 
 Both kinds reach the agent through a reload, since the load boundary is the
@@ -1536,11 +1679,12 @@ destinations are the charter's section 3 and are not restated.
 Open a trace, Record, Experiments, and the returned half of Stage. That is
 what makes section 4's four reads sufficient for them.
 
-**Three surfaces author, and each writes one table.** Compose writes a
-declaration, Stage writes a staged experiment, and Models writes an
-artifact row on import, each through section 3.2 and each into the table
-section 2 gives it. **Models is the only one of the three that is not on
-the path**, which is why the group of section 3.6 is named for how it is
+**Three surfaces author, and one of them writes more than one table.** Compose writes a
+declaration and Models writes an artifact row on import, each one table. Stage writes
+the staged experiment, the plan with its entries, and the refs, per section 3.2, because
+a plan and the experiments it registers are one composition. Each writes through section
+3.2 and into the tables section 2 gives it. **Models is the only one of the three that
+is not on the path**, which is why the group of section 3.6 is named for how it is
 reached rather than for what it does.
 
 **A surface that authors or exchanges also holds a seam.** Compose writes
@@ -1707,6 +1851,8 @@ trial record like any other.
 | the record's session and digest are absent where unsent | perturbation: fill an absent digest from the landed rows, a row from a record cut short vouches for bytes nobody drained |
 | the record's session and digest agree across a run | perturbation: land a run whose generations name two sessions, the row holds two truths about which record it came from |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
+| a plan's column registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one column and the matrix reads two arms where the operator authored one |
+| the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
@@ -1793,15 +1939,14 @@ a `web-` assertion beside `weaver-admin`'s.
   reports a divergence it cannot attribute**, so section 5.4's reading is
   only as fine as this answer. Whether the member splits or carries an
   architecture beside the card is the ruling.
-- **Whether this crate scores a correctness verdict**, which the charter's
-  section 9 holds open. The reproduction verdict is not open and is not a
-  score: it is the projected comparison of two rows this crate holds, on
-  the fields the charter's section 4 names, and section 2.2 carries the
-  tuple that decides whether equality is claimed or a divergence is
-  reported. What stays open is whether a correctness column exists beside
-  it. Where one does, **the scorer is named on the verdict and never in the
-  run's tuple**, so a second scorer adds a verdict rather than changing what
-  the run was.
+- **Whether this crate scores a correctness verdict, closed 2026-09-09.** It does not,
+  and it holds one: per issue #523's ruling the task scores its own run and the verdict
+  rides a trace event the task authors at close, so section 2.2 carries the member and
+  section 3.1 lands it, this crate computing nothing. The reproduction verdict was never
+  this question and is not a score: it is the projected comparison of two rows, which
+  section 2.6 now holds as a recorded query. **A scorer that is not the task's is named
+  on its own verdict and never in the run's tuple**, so a second scorer adds a reading
+  rather than changing what the run was.
 - **The word "cell", closed 2026-09-09.** It carried three senses rather than the two
   the charter's section 9 named, and the count settled it on the operator's ruling of
   that date. A **cell** is a named open question, which is what this section's own
