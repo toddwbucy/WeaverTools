@@ -2,7 +2,7 @@
 
 **Status:** SKETCH. Decides nothing. Feeds PRD authoring.
 
-**Version:** v0.1, 2026-09-09. Parent: Sketch Convention. Written from a walk on the
+**Version:** v0.1, 2026-09-09. Written from a walk on the
 same date against the tree at PR #518. Feeds `weaver-web-PRD` sections 3.5, 3.6 and 4,
 and the Spec's section 2 where the authored rows live.
 
@@ -211,11 +211,15 @@ that names count and lengths and arrival order rather than size alone. The measu
 that settles the shape question is whether size alone reproduces the divergence or
 whether composition is needed. Parked until the other fields are done.
 
-**Full factorial or one-at-a-time as the generated default.** One-at-a-time answers
-most of what an operator asks and fits a screen. The measurement that would move the
-default is an interaction effect the one-at-a-time plan cannot see, and the six-field
-ledger of 2026-09-07 names precision as an amplifier of the others, so the first
-interaction to look for is precision against any one other field.
+**Full factorial or one-at-a-time as the generated default.** One-at-a-time answers most
+of what an operator asks and fits a screen. The measurement that would move the default
+is an interaction effect the one-at-a-time plan cannot see. **Which interaction to look
+for first is not sourced here and was stated as though it were**: this paragraph read a
+six-field ledger of 2026-09-07 as naming precision an amplifier of the others, and
+neither issue #485, which registers the fields, nor the hub report of that date says any
+such thing. The claim is dropped rather than repaired, and what stands in its place is
+that the first interaction to look for is whichever the one-at-a-time pass shows the
+largest single effect for, which the pass itself will say.
 
 **A quality instrument.** The candidate is not perplexity, which measures how expected
 a text is and ranks fluent mediocrity well. Surprisal and perplexity are one quantity
@@ -237,10 +241,22 @@ sink writes to.
 
 ## 7. Carried to the PRD act
 
-What the review of PR #522 found and this sketch does not settle, listed here so the
-act that authors the PRD inherits it from the tree. Each is a fact about where the
-sketch and the merged Spec disagree, or where the sketch draws a thing no document
-holds.
+What the review of PR #522 found and this sketch does not settle, listed here so the act
+that authors the PRD inherits it from the tree. Each is a fact about where the sketch
+and the merged Spec disagree, or where the sketch draws a thing no document holds.
+
+**That act has landed and this list is now a record of what it inherited rather than a
+list of what is owed.** The score has a home on the run's row and rides a trace event
+the task authors, per issue #523. The reproduction verdict is a recorded query under the
+Spec's section 2.6, which is the shape a comparison of two rows already had. The branch
+position was answered at the Spec's section 5 by PR #526. The column states are the
+staged experiment's five, per the Spec's section 5.1, and registering a plan and
+queueing it are two acts. Attribution is parent-relative, per the operator's ruling. The
+plan and the refs are authored rows carrying an author and a version, at the Spec's
+sections 2.9 and 2.10. The amplifier reading is dropped as unsourced and this sketch's
+section 6 says so. The header's parent line is gone, the document it named not being in
+the tree. **What the list still carries and no act has closed is nothing**, which is why
+it stops being read forward here.
 
 **The score has no home.** The matrix reads a verdict and a ratio from the run row,
 and the run row holds no verdict: the Spec's revision of 2026-09-05 has the scorer

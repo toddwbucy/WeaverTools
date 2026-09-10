@@ -6,6 +6,16 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-09, fifth of this date, the plan and the refs are authored objects.
+Section 3.5 gains what an ablation composes before any column is registered, a parent
+and a set of columns with a disposition for every member of the tuple, and says that
+registering a plan and queueing it are the two acts section 3.6's pre-registration needs
+them to be. It states the operator's ruling of this date that a column's diff is
+parent-relative and never against another column, with the graph the alternative would
+make. It names the refs, so what a bound cites outlives the scaffolding that produced
+it. Section 4's authored half names both. The Spec's sections 2.9 and 2.10 give them
+rows. Per the sketch at `docs/project/sketch-ablation-matrix.md` and the queue at
+issue #434.
 **Revised:** 2026-09-09, fourth of this date, the word "cell" is settled and this
 document's noun moves. Section 9 read the word as two senses and there were three, the
 third being the corpus's own and the largest: a named open question, which section 9's
@@ -455,24 +465,46 @@ drawn per generation from the declared seed, the turn's reference and the
 ordinal, **a branch that changes nothing draws what its parent drew**, and
 the control arm is free.
 
+**Many experiments against one parent are authored here too, and the object that holds
+them before any is registered is the plan.** An ablation moves one member of the tuple
+per column and asks which members the outcome depended on, so what the operator composes
+is a parent, a set of columns and a disposition for every member of every column, and
+the Spec's section 2.9 gives it a row. **A plan is not a batch.** Registering it freezes
+each column as a staged experiment and puts the claim on the record, queueing hands them
+to a runner, and section 3.6's pre-registration is exactly what would be spent by an
+interface that did both in one gesture.
+
+**A column's diff is stated against the parent and never against another column.** Two
+columns that each moved two members are two readings against one baseline, and a reader
+who wants the one member between them reads them against each other, which is an act of
+reading rather than a member of the plan. The alternative was weighed: a column naming
+another as its baseline makes the plan a graph, makes registration freeze a reference as
+well as a value, and orphans dependents when a column is dropped. **The plan stays a
+tree.**
+
+**What a bound cites outlives what produced it.** A batch that establishes a failure
+envelope produces arms whose value was to be measured once, and the runs are
+scaffolding. The Spec's section 2.10 gives a person a named reference to a run, so what
+the envelope cites is reachable and the rest is discardable, which makes the discard a
+question about reachability rather than a judgment exercised twice.
+
 <!-- figure: Branch | Stage -->
 
 ### 3.6 The five on the list side
 
-Global and filtered. **No surface writes what the instrument recorded.** A
-position and a run land by the ingest alone, per the Spec's section 3.1.
-Three surfaces do author, each writing the one table section 4 names as its
-own: Compose a declaration, Stage a staged experiment, and Models an
-artifact. These lists read the store and filter it, which is why a chip can
-be a query rather than a location. **Four of the five are lists and the
-fifth is not.** Agents, Models, Experiments and Record are list
-destinations. The Experiment view is the detail surface one of them opens
-into, and it is a surface rather than a mode of the list above it: its own
-destination, its own state, and its own module under the Spec's rule of one
-module each. **The group is named for how it is reached** - by a chip-query
-rather than along the path - and not for the shape of what it holds, so no
-implementer reads the detail view as a fifth list. Five on the path and five
-here are the ten this section opens with.
+Global and filtered. **No surface writes what the instrument recorded.** A position and
+a run land by the ingest alone, per the Spec's section 3.1. Three surfaces do author,
+writing the tables section 4 names as theirs: Compose a declaration, Models an artifact,
+and Stage the staged experiment together with the plan and the refs of section 3.5.
+These lists read the store and filter it, which is why a chip can be a query rather than
+a location. **Four of the five are lists and the fifth is not.** Agents, Models,
+Experiments and Record are list destinations. The Experiment view is the detail surface
+one of them opens into, and it is a surface rather than a mode of the list above it: its
+own destination, its own state, and its own module under the Spec's rule of one module
+each. **The group is named for how it is reached** - by a chip-query rather than along
+the path - and not for the shape of what it holds, so no implementer reads the detail
+view as a fifth list. Five on the path and five here are the ten this section opens
+with.
 
 **One navigational grammar: a chip is a query rather than a location.**
 Clearing it widens the list where the operator stands, and nothing
@@ -595,13 +627,15 @@ registry that cannot hold a failure is a marketing surface.
 
 ## 4. The record this crate holds
 
-**It holds two things and they are not the same kind of thing.** What the
-instrument recorded is a fact about a run that happened, and a second write
-of it is a replay. What the engineer authored is a thing someone is still
-making, and a second write of it is an edit. **The recorded half is
-described below. The authored half is the declarations, the staged
-experiments, and the artifact catalog**, which sections 3.1, 3.5 and 3.6
-each produce and which the Spec's section 2 gives their rows.
+**It holds two things and they are not the same kind of thing.** What the instrument
+recorded is a fact about a run that happened, and a second write of it is a replay. What
+the engineer authored is a thing someone is still making, and a second write of it is an
+edit. **The recorded half is described below. The authored half is what three surfaces
+write, each named with what it writes**: Compose the declarations, per section 3.1.
+Stage the staged experiments and, since the ablation, the plans with their entries and
+the refs, per section 3.5. Models the artifact catalog, per section 3.6. The Spec's
+section 2 gives them their rows and its section 3.1 keeps the ingest away from all of
+them, a position and a run being the ingest's alone.
 
 **Naming the second half is not a widening of scope.** Three surfaces have
 listed those objects since this charter was rewritten, and a surface that
