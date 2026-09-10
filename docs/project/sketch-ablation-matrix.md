@@ -20,9 +20,9 @@ it reads this prose: as what was considered.
 To take one run whose outcome is known and ablate the conditions it ran under, so that
 the operator can say which members of the tuple the outcome depends on and by how much.
 The instrument the crate already has, a run as a trial carrying its declared tuple, is
-the unit. What is missing is the surface that generates the trials from a parent, holds
-them as a plan before any has run, schedules them as a batch, and reads them back side
-by side once they have.
+the unit. What is missing is the surface that generates the columns from a parent, holds
+them as a plan before any has run, schedules them as a batch, and reads back the trials
+they became once they have run.
 
 The larger purpose it serves is stated once so that the smaller decisions below can be
 checked against it. An agent deployed for a task should carry a bounded failure
@@ -160,17 +160,24 @@ value, an arm that never ran keeping its place. A column is therefore never one 
 and a column that freed nothing is a sweep of one value. The pointer is nullable and
 that null is the record of a column that was not scheduled.
 
-**An entry has four states and is never blank.** Held at a value. Freed, its value set
+**An entry carries a disposition, the column carries a status, and neither is ever
+blank.** They are different facts about different objects, and an entry holding both
+could not say what a freed entry in a scheduled column is, which is both at once. **The
+disposition is the entry's** and is one of two. Held at a value. Or freed, its value set
 drawn at authoring and frozen at registration per section 4, with each arm's value
-filled in from the run row once one exists. Queued, meaning the column is scheduled
-and the run has not completed. Not exercised, meaning the column was never scheduled.
-Not exercised is a state a reader can see, so a column the operator declined is
-distinguishable from one that failed to run.
+filled in from the run row once one exists. **The status is the column's** and is one of
+three. Not scheduled, which the null pointer above already records and which a reader
+can see, so a column the operator declined is distinguishable from one that failed to
+run. Queued, the column scheduled and no run returned. Returned, its arms readable
+through the staged experiment. Every entry in a scheduled column is queued with it and
+keeps the disposition the operator gave it.
 
 **Declared and achieved are two facts landing at two times.** The entry carries what was
-intended. The run row carries what ran, per the PRD's section 4, and where the two
-disagree the run row is right and the entry is a plan that did not survive contact. The
-matrix renders the entry until a run exists and the arms' run rows after.
+intended and keeps carrying it. The run row carries what ran, per the PRD's section 4,
+and where the two disagree the run row is right and the entry is a plan that did not
+survive contact. The matrix renders the entry's disposition until its column returns and
+the arms' run rows beside it after, the entry never being overwritten by what it
+produced.
 
 **Refs are the second object, and they pin what the envelope cites.** A small table of
 named references from a person to a run row. An exemplar tag is one. A citation from a
@@ -276,10 +283,12 @@ baseline.
 sense, and it carried three: this sketch used it for a matrix coordinate in section 5
 and for an open question in section 6's title, and the charter meant a declaration plus
 a task plus a run. The count settled it on the operator's ruling of that date, a hundred
-and fifty-three uses across thirty-one documents meaning the open question. **A cell is
-a named open question**, which section 6's title keeps. **A matrix coordinate is an
-entry**, which section 5 now says. **A declaration plus a task plus a run is a trial**,
-which section 1 now says and the charter's section 3.3 carries.
+and fifty uses across thirty documents, counting whole-word cell and cells over the
+markdown of `docs` and `process` outside the frozen archive and outside the files this
+ruling sweeps meaning the open question. **A cell is a named open question**, which
+section 6's title keeps. **A matrix coordinate is an entry**, which section 5 now says.
+**A declaration plus a task plus a run is a trial**, which section 1 now says and the
+charter's section 3.3 carries.
 
 **The plan and the refs are authored rows.** Spec 3.2 gives every authored row an
 author and a version. The mockup says who authored the plan and the refs name a

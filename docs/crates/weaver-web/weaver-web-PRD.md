@@ -356,9 +356,10 @@ conversation surface from a record surface: an engineer cannot troubleshoot
 a prompt when the thing they typed and the numbers it produced sit on
 different pages.
 
-Every exchange is a trial, so behavior and cost arrive together here as they
-do everywhere. An exchange that interests the operator is saved as a trial
-and becomes repeatable, which is the promotion this crate turns on.
+Behavior and cost arrive together here as they do everywhere. **An exchange is not yet a
+trial**, its task being ad hoc until the operator saves it: the save is what gives it
+one, a session promoted from Live being the fourth of section 3.3's task sources, and an
+exchange saved that way becomes repeatable, which is the promotion this crate turns on.
 
 <!-- figure: Chat | Live -->
 

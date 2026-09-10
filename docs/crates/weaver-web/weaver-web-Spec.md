@@ -13,10 +13,12 @@ archive.
 **Revised:** 2026-09-09, fourth of this date, the word "cell" is settled. Section 10's
 election closes on the operator's ruling of this date: the word carried three senses
 rather than the charter's two, and the count settles it, a cell staying a named open
-question at a hundred and fifty-three uses across thirty-one documents, a matrix
-coordinate becoming an entry, and a declaration plus a task plus a run becoming a trial.
-This document's four sites are the reference trials of sections 2.3 and 8 and the trial
-record of section 8. Per issue #434's queue.
+question at a hundred and fifty uses across thirty documents, counting whole-word cell
+and cells over the markdown of `docs` and `process` outside the frozen archive and
+outside the files this ruling sweeps, a matrix coordinate becoming an entry, and a
+declaration plus a task plus a run becoming a trial. This document's four sites are the
+reference trials of sections 2.3 and 8 and the trial record of section 8. Per
+issue #434's queue.
 **Revised:** 2026-09-09, third of this date, the seated prefix's length crosses the
 seam. Section 2.2 gains it on the run's row, the resident length before the run's
 first turn's input, outside tuple equality as an address on the tape and not a
