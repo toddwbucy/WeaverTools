@@ -242,10 +242,13 @@ pub const SERVED_ARCHITECTURE: &str = "qwen2";
 /// The architecture an artifact's `config.json` declares, spelled as the file
 /// spells it.
 ///
-/// `model_type` is the field a stock export carries. **A config declaring
-/// none is judged by nothing here**: the shapes parse as before, so an
-/// artifact that claims no family is refused by the field it lacks rather
-/// than by a family it never named.
+/// `model_type` is the field a stock export carries. **A config carrying no
+/// `model_type`, or one that is not a string, declares no family this path
+/// can read**, and is judged by nothing here: the shapes parse as before, so
+/// such an artifact is refused by the field it lacks or the type it got
+/// wrong rather than by a family it never named. A number where a family
+/// name belongs is a malformed declaration and not an unserved family, and
+/// the shape error names the field and its line.
 fn declared_architecture(config: &serde_json::Value) -> Option<&str> {
     config.get("model_type")?.as_str()
 }
@@ -288,7 +291,14 @@ fn read_config(path: &Path) -> Result<Config, AdmitRefusal> {
             detail: format!("{}: {error}", path.display()),
         })?;
     judge_family(&declared).map_err(AdmitRefusal::Family)?;
-    serde_json::from_value(declared).map_err(|error| AdmitRefusal::LoadFailed {
+    // **The shapes parse from the text and never from the value**, because
+    // `serde_json` carries a line and column on an error from the first and
+    // none from the second. A served family whose config has a bad shape is
+    // exactly the case a line number is for, and the remedy for #507 sending
+    // a reader to a correct line must not be that no line is named at all.
+    // Measured: `at line 1 column 21` against the bare message. The second
+    // parse of a small file at load is what it costs.
+    serde_json::from_str(&text).map_err(|error| AdmitRefusal::LoadFailed {
         detail: format!("{}: {error}", path.display()),
     })
 }
@@ -655,20 +665,59 @@ mod tests {
     /// conforms: spu-native-refuses-an-unserved-family-as-a-family
     #[test]
     fn an_unserved_family_refuses_as_a_family_before_the_shapes() {
-        let dir = std::env::temp_dir().join(format!("weaver-spu-family-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).expect("the fixture directory stands");
-        let path = dir.join("config.json");
-        std::fs::write(&path, br#"{"model_type": "qwen3", "sliding_window": null}"#)
-            .expect("the fixture config is written");
+        let dir = fixture(
+            "unserved-family",
+            br#"{"model_type": "qwen3", "sliding_window": null}"#,
+        );
+        let refusal = read_config(&dir.join("config.json"));
+        // **Cleaned before the assert**, so the run this test is meant to be
+        // put through red leaves nothing behind each time it is.
+        let _ = std::fs::remove_dir_all(&dir);
 
-        let refusal = read_config(&path).expect_err("an unserved family refuses");
         assert_eq!(
-            refusal,
+            refusal.expect_err("an unserved family refuses"),
             AdmitRefusal::Family(FamilyRefusal::UnknownFamily(FamilyName("qwen3".into()))),
             "the family is judged before the shapes and names the file's own spelling"
         );
+    }
 
+    /// **A served family whose shapes are wrong keeps its line and column**,
+    /// which is the half of the message #507's reader needed and did not get
+    /// pointed at.
+    ///
+    /// Perturbation: parse the shapes from the value rather than the text and
+    /// this fails, the position going with it.
+    ///
+    /// conforms: spu-native-refuses-an-unserved-family-as-a-family
+    #[test]
+    fn a_served_familys_shape_error_names_where_it_is() {
+        let dir = fixture(
+            "served-shape",
+            br#"{"model_type": "qwen2", "hidden_size": "wide"}"#,
+        );
+        let refusal = read_config(&dir.join("config.json"));
         let _ = std::fs::remove_dir_all(&dir);
+
+        let AdmitRefusal::LoadFailed { detail } =
+            refusal.expect_err("a bad shape under a served family refuses as a load")
+        else {
+            panic!("a served family's shape error is a load failure");
+        };
+        assert!(
+            detail.contains("line") && detail.contains("column"),
+            "the shape error names where it is: {detail}"
+        );
+    }
+
+    /// A fixture directory of this module's own, named for its test so two
+    /// of them in one binary cannot collide.
+    fn fixture(name: &str, config: &[u8]) -> std::path::PathBuf {
+        let dir =
+            std::env::temp_dir().join(format!("weaver-spu-family-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("the fixture directory stands");
+        std::fs::write(dir.join("config.json"), config).expect("the fixture config is written");
+        dir
     }
 
     /// The served family passes, folded rather than matched byte for byte,
