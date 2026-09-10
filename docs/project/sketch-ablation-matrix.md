@@ -186,11 +186,14 @@ sweep may discard, and the throwaway problem of section 1 reduces to reachabilit
 which is the one thing worth taking from git's model.
 
 **Joins are free at this scale and token-grain rows are not.** The people this store
-serves are a team of developers, not the public, and the join from column to run row on
-a nullable key is the join Postgres is best at. What can get slow regardless of user
-count is anything that grows with tokens. The matrix reads the run row's summary and
-never the position registry. Every column header is a link, and the interior lives on
-the far side of that click, on the surfaces that already exist for it.
+serves are a team of developers, not the public, and the two joins a column costs, to
+the staged experiment it became on the nullable key above and from that row to the runs
+it produced per the Spec's section 2.5, are the joins Postgres is best at. **A column
+never joins a run row directly**, per the model above, so the null that records an
+unscheduled column is read once rather than at every arm. What can get slow regardless
+of user count is anything that grows with tokens. The matrix reads the run row's summary
+and never the position registry. Every column header is a link, and the interior lives
+on the far side of that click, on the surfaces that already exist for it.
 
 **The tuple denormalized on the run row is what makes this cheap.** The PRD's section 4
 already puts everything identifying the conditions on the run's own row. The matrix
