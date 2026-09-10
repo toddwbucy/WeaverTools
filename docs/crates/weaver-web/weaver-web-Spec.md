@@ -23,12 +23,16 @@ having no producer anywhere and the record identity already catching a quantizat
 difference. **The declared boundary set stays and is empty**, every organ being reached
 by kernel peer identity per `weaver-admin-PRD` section 4.3, which is complete rather
 than short and which issue #438 will end when it charters a reachable organ. Section 3.1
-lands them. Migration 0005 drops the two columns, gives the artifact its label, makes
-the device and the engine absent-capable since a caller may name no deposit, adds the
-verdict's column, and drops the run's sentinel check, which refused the empty identity
-section 2.3 says crosses and joins to nothing. The review of PR #535 found seven of
-these, the device and engine constraint among them. Per the operator's rulings of this
-date at issue #532.
+lands them. Migration 0005 drops the two columns and gives the artifact its label, and
+**0006 is its own version rather than an amendment to it**, since sqlx checks an applied
+migration's stored checksum at connect and editing one refuses the next connect of every
+box that ran it. 0006 makes the device and the engine absent-capable, drops the run's
+sentinel check which refused the empty identity section 2.3 says crosses, replaces the
+branch position's whole-or-neither check with the parent rule section 3.1 needs to
+ingest a branched run at all, gives the boundary set a type check, and names the run's
+column set in a view so both reads are static. Section 5.2's load-time list loses
+precision with the tuple. The reviews of PR #535 found nineteen facts across two passes,
+two of them operational. Per the operator's rulings of this date at issue #532.
 **Revised:** 2026-09-09, fifth of this date, the plan and the refs get their rows.
 Section 2.9 gives the plan its row and its entries, one parent run and a set of columns
 with a disposition for every member of the tuple, and section 2.10 gives a person a
@@ -617,15 +621,21 @@ is a fact about a run that happened rather than a reading taken over it, which i
 lands on this row and not in section 2.6. **It reaches the record on a trace event the
 task authors at the run's close**, so a record carries its own score. **The seam that
 carries it exists as of 2026-09-09** and `weaver-analysis-web-contract` section 2.2
-states its shape, crossing per generation on the wire and once per run in this row on
-the rule the record's session, its digest and the seated prefix's length already cross
-under. **The kind that produces it does not**, being `weaver-trace`'s to add per
-issue #523, so this crate asserts the reader's half and not the writer's, as it does for
-the forced mark of the paragraph above. The shape is fixed on both sides so that act
+states its shape, crossing on the entry for the generation the close names and once per
+run in this row. **The kind that produces it does not**, being `weaver-trace`'s to add
+per issue #523, so this crate asserts the reader's half and not the writer's, as it does
+for the forced mark of the paragraph above. The shape is fixed on both sides so that act
 lands the kind rather than electing it.
 
-So the member reads absent on every row until that kind lands, per section 6's rule and
-exactly as the seated prefix's length read absent before its seam carried it. **Absent
+**The column arrives with the kind and not before**, which is the same rule that took
+the batching election and precision off this row: a member nobody can fill is a reserved
+slot, and the apex refuses one whether it is an interface or a column. So this row's
+member is stated here and the schema gains it in the act that gives it a producer, which
+is when a reader could first meet one.
+
+So a reader asking this row for a verdict before that act finds the member is not there
+to ask for, which is what a member with no producer honestly is, and section 3.1 lands
+it from the day it crosses. **Absent
 says no task scored the run or no path yet carried what it said**, and never that the
 run failed its predicate. A verdict the task recorded as failed is present and says so,
 which is the whole distinction this member exists to keep.
@@ -1356,7 +1366,9 @@ parted at position zero.
 named.** The run identity keys every row this ingest writes and crosses on the summary
 per `weaver-analysis-web-contract` section 2.2, with the field election's depth, the
 device model, the code identity the row calls the engine, and the task's verdict where
-one crossed, each stored as it crossed.
+one crossed, each stored as it crossed. **The verdict has no column until the act that
+lands its kind gives it one**, per section 2.2, so this clause binds that act rather
+than describing a write available today.
 
 **The effective sampling becomes two columns and that is a derivation this section
 permits.** The row's seed is the sampling's `seed` member as the record spells it, which
@@ -1733,12 +1745,15 @@ only change boundary. They differ in **what the result licenses**:
   maximum tokens. Same weights, same window. The recorded prefix re-feeds to
   the state the parent had, so divergence below the branch position is
   attributable to the one value moved.
-- **Load-time** - artifact, precision, devices, context capacity, and the
-  elections. The prefix re-feeds **under different weights or a different
-  window**, so the parent's internal state is not reproduced. The text
-  upstream matches and the state does not, and **the comparison is
-  structural rather than byte-exact.** A load-time move also derives a
-  declaration, which stands in Agents beside its parent.
+- **Load-time** - artifact, devices, context capacity, and the elections. **Precision
+  left this list on 2026-09-09 with the tuple**, per issue #532: an arm that freed it
+  would differ in no column the run's row holds, the record identity being what
+  distinguishes one quantization from another and section 2.3's label being what a
+  person reads. **An arm that moves the quantization moves the artifact**, which this
+  list already names. The prefix re-feeds **under different weights or a different
+  window**, so the parent's internal state is not reproduced. The text upstream matches
+  and the state does not, and **the comparison is structural rather than byte-exact.** A
+  load-time move also derives a declaration, which stands in Agents beside its parent.
 
 The interface states both consequences where the change is made.
 

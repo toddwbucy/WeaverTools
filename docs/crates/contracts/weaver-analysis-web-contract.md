@@ -12,8 +12,8 @@ the lineage the `load` event's elections carry, the device model and the code id
 the operator's deposit holds, and the task's verdict where the record carries one.
 Section 3 asks them all of the emitter. **Without them the reader can write no run row
 at all**, seven of its eight required members having no path across this seam, which
-issue #532 found while the ingest was being written. The emitter reads the deposit
-beside the record for the two the record does not hold, on the operator's ruling of this
+issue #532 found while the ingest was being written. The emitter reads a deposit the
+invocation names for what the record does not hold, on the operator's ruling of this
 date. Per issue #532.
 **Revised:** 2026-09-09, second of this date, the summary carries the seated
 prefix's length. Section 2.2 gains, once per run, the resident length before the
@@ -117,7 +117,7 @@ seam does not carry and which section 6 names as the other reader's.
 **run** and its ending at `unload` or at process death per that charter's section 4.3.
 
 **From `weaver-trace-Spec` section 3.** The **`load`** event and the members of its
-`Elections` this seam carries: the **field** election's depth, the **lineage** with its
+elections this seam carries: the **field** election's depth, the **lineage** with its
 parent, its run and its `through`, which is a turn, and the **stack**, the organ
 binaries admin started keyed by name with their sha256. The **`model.request`** event
 and its **effective sampling**, which the reader's row splits into a seed and a sampler.
@@ -293,9 +293,22 @@ the sampler being a condition the row is not a row without.
 in the reader's row**, which is the weights hash's own rule at the head of this section
 and the rule the record's session, its digest and the seated prefix's length already
 cross under. Every entry repeats every member it has, and **a run whose entries disagree
-on any of them is the defect the reader names** rather than a run with two conditions,
-exactly as for the four before them. Each member is absent on its own terms and never
-defaulted:
+is the defect the reader names** rather than a run with two conditions, exactly as for
+the four before them. **The rule reaches what a run can agree on and no more**, and two
+of these cannot.
+
+**The effective sampling agrees on its declared members and never on the derived seed.**
+`weaver-spu-Spec` section 8.5 has each generation draw from a seed derived from the
+declared one, the turn's reference and the ordinal, and `model.request` records that
+derived value per generation, so **every run of more than one generation disagrees on
+the sampling block by construction**. The reader compares the declared members and takes
+the derived seed for what it is, a per-generation fact riding a per-run member.
+
+**The task's verdict is authored at the run's close and agrees with nothing.** Every
+generation but the last has none to repeat, so the agreement rule would name a defect on
+exactly the runs the member exists for. **It crosses on the entry for the generation the
+close names**, once, and a second entry carrying one is the defect instead. Each member
+is absent on its own terms and never defaulted:
 
 - **the effective sampling**, as `model.request` carries it per `weaver-trace-Spec`
   section 3, spelled as the record spelled it, from which the reader takes both the
@@ -310,12 +323,14 @@ defaulted:
 - **the device model**, which the operator's deposit names per `weaver-analysis-PRD`
   section 3 and which the licence clause already bounds this emitter's claims by
 - **the code identity**, which has two sources and the reader's row joins them into what
-  it calls the engine at build grain. **The record holds the organ binaries**, the
-  `load` event's `stack` keyed by binary name with its sha256, which `weaver-trace-Spec`
-  section 3 put there so a record is sufficient for its own conditions without a deposit
-  beside it. **The deposit holds the rest**, the repository commit by hash, the
-  toolchain and the driver by pinned version, and the engine libraries by sha256, per
-  `weaver-analysis-PRD` section 3
+it calls the engine at build grain. **The record holds the organ binaries**, the `load`
+event's `stack` keyed by binary name with its sha256, which `weaver-trace-Spec` section
+3 put there so a record is sufficient for its own conditions without a deposit beside
+it. **The deposit holds the rest**, the repository commit by hash, the toolchain and the
+driver by pinned version, and the engine libraries by sha256, per `weaver-analysis-PRD`
+section 3. **The record is the authority for the organ binaries** where both name them,
+the `load` event carrying them since 2026-09-06 for this reason, and that charter's own
+list moves with this act
 - **the task's verdict** where the record carries one, the predicate the task answered
   and the ratio over its denominator, per issue #523
 
@@ -382,8 +397,9 @@ closed and the count of output tokens**, beside the perplexity on the summary st
 that drained the bytes and the only one that can name them, **and the seated prefix's
 length per the same section**, derived from the first generation once per run, **and per
 section 2.2 the run identity, the effective sampling, the field election's depth, the
-lineage, the device model, the code identity and the task's verdict**, the last two of
-those read from the deposit beside the record and the verdict only where the record
+lineage, the device model, the code identity and the task's verdict**, the device model
+and the deposit's half of the code identity read from a deposit the invocation names,
+never from one looked for beside the record, and the verdict only where the record
 carries one. **The output count is the length of that generation's `model.measurement`
 `output_tokens` sequence**, the drawn tokens with the terminator outside them per
 `weaver-spu-Spec` section 6, and not a separate scalar the record carries. **A

@@ -189,6 +189,8 @@ finished record from a truncated one could hold this shape and not use it.
     src/field.rs      a position's field, read from the record, section 5
     src/stream.rs     the drain, one road under every reader, section 5
     src/signals.rs    the per-position series, read on the drain, section 5
+    src/deposit.rs    the deposit the invocation names, read for what the
+                      record does not hold, section 5
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -991,6 +993,12 @@ deposit's path beside the record's. **A rule that looked beside the record would
 nothing on a pipe**, which section 5 above licenses as a sink shape, so the caller names
 it or names none.
 
+**The agreement rule reaches what a run can agree on.** The sampling's declared members
+agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
+section 8.5, so this crate reports the block as the record spells it and never reads a
+run of two generations as a run of two conditions. The task's verdict is authored at the
+close and crosses on that generation's entry alone.
+
 **Where the caller names none, the device model crosses absent and the code identity
 crosses carrying only what the record held.** This crate neither infers a device from a
 driver version nor a library set from a binary it did not see, and it reads the deposit
@@ -1143,12 +1151,10 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   driver version or a library this crate did not see, and a sampling crosses spliced,
   watched to fail when a re-encoding changes what the record spelled.
 - The summary carries the seated prefix's length only from a whole-from-the-start drain:
-  a run whose first generation the drain saw crosses with the length derived from that
-  generation, watched to fail when it is derived from a later generation or sent from a
-  drain that opened after the run's `load`, and watched to fail when two emitters over
-  one file disagree, which is the delimiter or the newline rule being broken, and
-  watched to fail when the input identifiers are not subtracted, which names the first
-  draw and not the prefix.
+a run whose first generation the drain saw crosses with the length derived from that
+generation, watched to fail when it is derived from a later generation or sent from a
+drain that opened after the run's `load`, and watched to fail when the input identifiers
+are not subtracted, which names the first draw and not the prefix.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,

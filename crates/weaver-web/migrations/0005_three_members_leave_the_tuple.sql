@@ -18,25 +18,3 @@ ALTER TABLE run DROP COLUMN batching;
 -- artifact, authored by Models at import.
 ALTER TABLE run DROP COLUMN compute_precision;
 ALTER TABLE artifact ADD COLUMN precision_label TEXT;
-
--- The device model and the engine libraries come from a deposit the caller
--- names, per weaver-analysis-web-contract section 2.2, and a caller may name
--- none: the sink may be a pipe, and a record written before deposits were
--- kept has one nowhere. Absent rather than defaulted, per Spec section 6, a
--- run whose silicon nobody recorded being a run this store holds rather than
--- refuses.
-ALTER TABLE run ALTER COLUMN device DROP NOT NULL;
-ALTER TABLE run ALTER COLUMN engine DROP NOT NULL;
-
--- Spec 2.2: the task's verdict, the predicate the task answered and the
--- ratio over its denominator. The seam carries it as of this act and the
--- trace kind that produces it is owed at issue #523, so the column reads
--- absent on every row until that kind lands.
-ALTER TABLE run ADD COLUMN task_verdict JSONB;
-
--- Spec 2.3's own sentinel clause says a hash the SPU could not compute
--- crosses as the empty string and joins to nothing, which is a run recorded
--- as one whose identity failed. The check on this column refused exactly
--- that, making such a run unrecordable rather than recorded, where the
--- catalog's own check is what keeps the sentinel out of the catalog.
-ALTER TABLE run DROP CONSTRAINT run_record_identity_is_not_the_sentinel;
