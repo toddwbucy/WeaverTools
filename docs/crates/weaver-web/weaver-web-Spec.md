@@ -10,6 +10,15 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-09, fourth of this date, the word "cell" is settled. Section 10's
+election closes on the operator's ruling of this date: the word carried three senses
+rather than the charter's two, and the count settles it, a cell staying a named open
+question at a hundred and fifty uses across thirty documents, counting whole-word cell
+and cells over the markdown of `docs` and `process` outside the frozen archive and
+outside the files this ruling sweeps, a matrix coordinate becoming an entry, and a
+declaration plus a task plus a run becoming a trial. This document's four sites are the
+reference trials of sections 2.3 and 8 and the trial record of section 8. Per
+issue #434's queue.
 **Revised:** 2026-09-09, third of this date, the seated prefix's length crosses the
 seam. Section 2.2 gains it on the run's row, the resident length before the run's
 first turn's input, outside tuple equality as an address on the tape and not a
@@ -329,7 +338,7 @@ of PR #453.
 **Revised:** 2026-09-05, third of this date, the Models surface and the
 review of PR #455. Section 2.3 gains the artifact catalog with one derived
 identity rule, the complete set the model's own index names. The join
-resolves to that set or to nothing, so a lens relation and a reference cell
+resolves to that set or to nothing, so a lens relation and a reference trial
 relation each name one unambiguous artifact. Presence carries its reporter
 and its date and gates nothing. The lens row cites `weaver-analysis-PRD`
 section 3 rather than restating it, correcting an earlier draft of this act.
@@ -687,7 +696,7 @@ Each row carries:
 - the lens artifacts fitted to these weights, each versioned as
   `weaver-analysis-PRD` section 3 versions them, by the weights content
   hash
-- the reference cells taken against it
+- the reference trials taken against it
 - **the author**, per section 3.2, which is not presence's reporter: the
   reporter says who saw these weights on a box, the author says who
   imported the row
@@ -740,7 +749,7 @@ to: web-sentinel-joins-to-nothing
 
 **What does hold is the catalog's own shape.** A lookup by this table's key
 resolves to the complete file set or to nothing, so a lens relation and a
-reference cell relation each name one unambiguous artifact and never a
+reference trial relation each name one unambiguous artifact and never a
 shard of one, and an elected lens reuse is legible here with the fitted
 weights and the read weights both resolving by the same rule.
 
@@ -1668,7 +1677,7 @@ separated by changing one address.
 is a store client, the runner is a queue consumer, and the front end with
 its store runs on one machine while the agents run on another. That crossing
 is a declared boundary under the charter's section 5 rule and appears in the
-cell record like any other.
+trial record like any other.
 
 ## 9. What is enforced, and by which instrument
 
@@ -1793,8 +1802,21 @@ a `web-` assertion beside `weaver-admin`'s.
   it. Where one does, **the scorer is named on the verdict and never in the
   run's tuple**, so a second scorer adds a verdict rather than changing what
   the run was.
-- **The word "cell"**, which carries a second sense elsewhere in the corpus
-  and must be settled once rather than twice.
+- **The word "cell", closed 2026-09-09.** It carried three senses rather than the two
+  the charter's section 9 named, and the count settled it on the operator's ruling of
+  that date. A **cell** is a named open question, which is what this section's own
+  heading calls its items and what a hundred and fifty uses across thirty documents,
+  counting whole-word cell and cells over the markdown of `docs` and `process` outside
+  the frozen archive and outside the four files this act sweeps mean. A matrix
+  coordinate is an **entry**. A declaration plus a task plus a run is a **trial**, which
+  the charter's section 3.3 now says. Four sites moved in this document, the reference
+  trials of sections 2.3 and 8 and section 8's trial record, and the one document
+  outside this crate that moved is `docs/technical/weaver-agents/reproducibility.md`,
+  whose six uses are the matrix coordinate. The matrix-coordinate sense also stands in
+  code and in deposits, the driver `experiments/cross-precision-repro/confirm_cells.py`
+  by name and a `cells` key the configs and every deposit written against them carry.
+  **Those are weighed and left**: a filename and a stored key are not prose, and
+  renaming them would strand the deposits that already spell it.
 - **The fork's cut inside a turn.** The restoring load's lineage names the
   turn the holdings stop at and nothing finer, and the charter's section 3.5
   fork needs a position within one and a token forced there. It is owed at

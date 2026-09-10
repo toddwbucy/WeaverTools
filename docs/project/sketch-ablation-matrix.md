@@ -19,10 +19,10 @@ it reads this prose: as what was considered.
 
 To take one run whose outcome is known and ablate the conditions it ran under, so that
 the operator can say which members of the tuple the outcome depends on and by how much.
-The instrument the crate already has, a run as a cell carrying its declared tuple, is
-the unit. What is missing is the surface that generates the cells from a parent, holds
-them as a plan before any has run, schedules them as a batch, and reads them back side
-by side once they have.
+The instrument the crate already has, a run as a trial carrying its declared tuple, is
+the unit. What is missing is the surface that generates the columns from a parent, holds
+them as a plan before any has run, schedules them as a batch, and reads back the trials
+they became once they have run.
 
 The larger purpose it serves is stated once so that the smaller decisions below can be
 checked against it. An agent deployed for a task should carry a bounded failure
@@ -75,7 +75,7 @@ the ordinary case is one the operator already ran to completion and can reproduc
 bit for bit, which is what makes it a baseline.
 
 The **Stage** surface authors the plan. Per the PRD's section 3.5 this crate branches
-nothing: a cell the operator schedules becomes a staged experiment carrying the parent
+nothing: a column the operator schedules becomes a staged experiment carrying the parent
 run reference, the branch position where the arm departs from the parent's prefix, and
 the parent declaration with its diff. The reload that runs it is the branch. The
 matrix is a way of authoring many staged experiments against one parent at once and
@@ -101,21 +101,21 @@ and has rerun it and gotten the same bytes. This is the parent. It is the exempl
 before any ablation and the control arm after.
 
 From Record the operator opens the matrix on that run. The matrix arrives pre-worked.
-The tuple's members are the rows, and the parent is the first column with every cell
+The tuple's members are the rows, and the parent is the first column with every entry
 reading held at its value. The remaining columns are candidate arms generated from
 the closed tuple space, one field moved per column by default, because a full
 factorial over even five fields at three values is two hundred and forty three arms,
 which a cron job does not mind and a screen does.
 
-The operator trims and adjusts. A column can be dropped. A cell can be set to a
+The operator trims and adjusts. A column can be dropped. An entry can be set to a
 different held value, or freed. **Freed means Stage draws the field's values at
 authoring and registration freezes them with the rest of the row**, per the Spec's
 section 5.4, so a freed field is the column's swept member, its value set is the
 sweep's, and the record carries what each arm ran under. A column frees at most one
-field, because a sweep is one member and its values, and the other cells the operator
+field, because a sweep is one member and its values, and the other entries the operator
 moved are the column's diff. **The draw excludes the parent's own value**, because the
 Spec's section 5.3 refuses a sweep naming it and 5.4 has the parent as the control, so
-a draw that lands it draws again. Setting two or three cells in one column is the
+a draw that lands it draws again. Setting two or three entries in one column is the
 ordinary hypothesis: temperature to 0.7, seed freed, and everything else held. The
 hypothesis is the diff between that column and the parent's. No prose field on the
 plan carries it, because two tuples and a delta state it mechanically and checkably.
@@ -129,7 +129,7 @@ twice in two kinds: mechanically as the diff, and in prose as the question the d
 was rendered into.
 
 The operator schedules the batch. Every column becomes a staged experiment. Every
-cell in a scheduled column that was neither moved nor freed reads held at the
+entry in a scheduled column that was neither moved nor freed reads held at the
 parent's value, so a column is always fully specified.
 
 The runner drains. As arms complete, the column's status changes and its score
@@ -147,30 +147,37 @@ operator's judgment picks them. A tag is a ref, section 5, and a tagged arm is p
 
 The hard part is the store, and it is narrower than it looks. Runs and their lineage
 exist. What is new is that the matrix needs the plan as a first-class object, because
-a run row can only say what a run did, and the matrix needs a row for a cell that has
+a run row can only say what a run did, and the matrix needs a row for a column that has
 not become a run and may never.
 
-**Two new authored objects, and the first is the plan with its cells.** A plan names
-its parent run. A cell names its plan, a column, a tuple field, a disposition, and a
+**Two new authored objects, and the first is the plan with its entries.** A plan names
+its parent run. An entry names its plan, a column, a tuple field, a disposition, and a
 value where the disposition needs one. A column, once scheduled, points at the staged
 experiment it became, and reaches its runs through that row and never directly: the
-staged experiment carries the runs it produced per the Spec's section 2.5, one per
-value where the column freed a field, and section 4's fourth read returns them each
-with its value, an arm that never ran keeping its place. A column is therefore never
-one run row, and a column that freed nothing is a sweep of one value. The pointer is
-nullable and that null is the record of a column that was not scheduled.
+staged experiment carries the runs it produced per the Spec's section 2.5, one per value
+where the column freed a field, and section 4's fourth read returns them each with its
+value, an arm that never ran keeping its place. A column is therefore never one run row,
+and a column that freed nothing is a sweep of one value. The pointer is nullable and
+that null is the record of a column that was not scheduled.
 
-**A cell has four states and is never blank.** Held at a value. Freed, its value set
+**An entry carries a disposition, the column carries a status, and neither is ever
+blank.** They are different facts about different objects, and an entry holding both
+could not say what a freed entry in a scheduled column is, which is both at once. **The
+disposition is the entry's** and is one of two. Held at a value. Or freed, its value set
 drawn at authoring and frozen at registration per section 4, with each arm's value
-filled in from the run row once one exists. Queued, meaning the column is scheduled
-and the run has not completed. Not exercised, meaning the column was never scheduled.
-Not exercised is a state a reader can see, so a column the operator declined is
-distinguishable from one that failed to run.
+filled in from the run row once one exists. **The status is the column's** and is one of
+three. Not scheduled, which the null pointer above already records and which a reader
+can see, so a column the operator declined is distinguishable from one that failed to
+run. Queued, the column scheduled and no run returned. Returned, its arms readable
+through the staged experiment. Every entry in a scheduled column is queued with it and
+keeps the disposition the operator gave it.
 
-**Declared and achieved are two facts landing at two times.** The cell carries what
-was intended. The run row carries what ran, per the PRD's section 4, and where the two
-disagree the run row is right and the cell is a plan that did not survive contact.
-The matrix renders the cell until a run exists and the arms' run rows after.
+**Declared and achieved are two facts landing at two times.** The entry carries what was
+intended and keeps carrying it. The run row carries what ran, per the PRD's section 4,
+and where the two disagree the run row is right and the entry is a plan that did not
+survive contact. The matrix renders the entry's disposition until its column returns and
+the arms' run rows beside it after, the entry never being overwritten by what it
+produced.
 
 **Refs are the second object, and they pin what the envelope cites.** A small table of
 named references from a person to a run row. An exemplar tag is one. A citation from a
@@ -179,11 +186,14 @@ sweep may discard, and the throwaway problem of section 1 reduces to reachabilit
 which is the one thing worth taking from git's model.
 
 **Joins are free at this scale and token-grain rows are not.** The people this store
-serves are a team of developers, not the public, and the join from cell to run row on
-a nullable key is the join Postgres is best at. What can get slow regardless of user
-count is anything that grows with tokens. The matrix reads the run row's summary and
-never the position registry. Every column header is a link, and the interior lives on
-the far side of that click, on the surfaces that already exist for it.
+serves are a team of developers, not the public, and the two joins a column costs, to
+the staged experiment it became on the nullable key above and from that row to the runs
+it produced per the Spec's section 2.5, are the joins Postgres is best at. **A column
+never joins a run row directly**, per the model above, so the null that records an
+unscheduled column is read once rather than at every arm. What can get slow regardless
+of user count is anything that grows with tokens. The matrix reads the run row's summary
+and never the position registry. Every column header is a link, and the interior lives
+on the far side of that click, on the surfaces that already exist for it.
 
 **The tuple denormalized on the run row is what makes this cheap.** The PRD's section 4
 already puts everything identifying the conditions on the run's own row. The matrix
@@ -246,7 +256,7 @@ stored reading or a recorded query per row shown. Same family as the score.
 
 **The branch position has no home in the plan.** PRD section 3.5 and Spec section 5.3
 have every staged experiment carry the branch position and validate that the parent
-record holds it. The plan names its parent run and the cells name a field, a
+record holds it. The plan names its parent run and the entries name a field, a
 disposition and a value, and the mockup shows no position. For a whole-run ablation
 the answer is presumably the run's first position, and the act should say so, because
 it is the one member the matrix cannot derive from the tuple. A reproduction run is
@@ -272,10 +282,16 @@ one-at-a-time default is not what the mockup's A, B and E do. The act says wheth
 the diff row is parent-relative only or a column may name another column as its
 baseline.
 
-**The word cell.** Spec section 10 holds open "the word cell, which carries a second
-sense elsewhere in the corpus and must be settled once rather than twice." This sketch
-uses it in section 5 for a matrix entry and in section 6's title for an open question.
-The open election is where it is settled, and this sketch is the pressure on it.
+**The word cell, closed 2026-09-09.** Spec section 10 held it open as carrying a second
+sense, and it carried three: this sketch used it for a matrix coordinate in section 5
+and for an open question in section 6's title, and the charter meant a declaration plus
+a task plus a run. The count settled it on the operator's ruling of that date, a hundred
+and fifty uses across thirty documents, counting whole-word cell and cells over the
+markdown of `docs` and `process` outside the frozen archive and outside the files this
+ruling sweeps meaning the open question. **A cell is a named open question**, which
+section 6's title keeps. **A matrix coordinate is an entry**, which section 5 now says.
+**A declaration plus a task plus a run is a trial**, which section 1 now says and the
+charter's section 3.3 carries.
 
 **The plan and the refs are authored rows.** Spec 3.2 gives every authored row an
 author and a version. The mockup says who authored the plan and the refs name a
