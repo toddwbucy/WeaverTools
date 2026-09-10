@@ -23,8 +23,12 @@ having no producer anywhere and the record identity already catching a quantizat
 difference. **The declared boundary set stays and is empty**, every organ being reached
 by kernel peer identity per `weaver-admin-PRD` section 4.3, which is complete rather
 than short and which issue #438 will end when it charters a reachable organ. Section 3.1
-lands them. Migration 0005 drops the two columns and gives the artifact its label. Per
-the operator's rulings of this date at issue #532.
+lands them. Migration 0005 drops the two columns, gives the artifact its label, makes
+the device and the engine absent-capable since a caller may name no deposit, adds the
+verdict's column, and drops the run's sentinel check, which refused the empty identity
+section 2.3 says crosses and joins to nothing. The review of PR #535 found seven of
+these, the device and engine constraint among them. Per the operator's rulings of this
+date at issue #532.
 **Revised:** 2026-09-09, fifth of this date, the plan and the refs get their rows.
 Section 2.9 gives the plan its row and its entries, one parent run and a set of columns
 with a disposition for every member of the tuple, and section 2.10 gives a person a
@@ -548,22 +552,35 @@ Everything identifying the conditions lives in the run's own row:
   after the run
 - seed, and the full sampler configuration, both taken from the effective sampling the
   record's `model.request` carries, per `weaver-analysis-web-contract` section 2.2
-- **the device**, the device model the operator's deposit names, per that contract's
-  same section. **Precision is not here and was until 2026-09-09**, having no producer
-  anywhere in the corpus, and section 2.3 carries it as the artifact's label because the
-  record identity above already catches a quantization difference
-- **the engine's identity at build grain**: the libraries the decode ran
-  through, each by name and digest, with the build that produced them
+- **the device**, the device model a deposit names, per that contract's same section,
+  **absent where the caller named no deposit** and never defaulted, a run whose silicon
+  nobody recorded being a run this store holds rather than refuses. **Precision is not
+  here and was until 2026-09-09**, having no producer anywhere in the corpus, and
+  section 2.3 carries it as the artifact's label because the record identity above
+  already catches a quantization difference
+- **the engine's identity at build grain**: the libraries the decode ran through, each
+  by name and digest, with the build that produced them. **It has two sources and is
+  absent for neither half where one is missing**: the record's `load` event carries the
+  organ binaries in its `stack`, and a deposit the caller names carries the engine
+  libraries, the commit, the toolchain and the driver, per
+  `weaver-analysis-web-contract` section 2.2. A run ingested with no deposit named
+  carries what the record held and says the rest is absent
 - **the field election's depth**, because it sets the length of every
   position's alternative list and the charter's section 4 compares them
-- the task, by source and identity
+- **the task, by source and identity**, which nothing upstream produces and which this
+  crate asserts the reader's half of, as it does for the forced mark below. The task is
+  a first-class element the charter's section 3.3 gives four sources, and it is composed
+  here rather than recorded: no organ reports it and no seam carries it, so a run
+  ingested from a record alone carries none and says so. **It is filled where a staged
+  experiment produced the run**, that row naming the task the operator composed, which
+  is the one path either member has today
 - **the declared boundary set**, which is empty on every run this document can be
-written against and complete rather than short. Every organ in the base is reached by
-kernel peer identity over a Unix socket, per `weaver-admin-PRD` section 4.3, so no organ
-owes a boundary and a declaration naming a loopback or off-host organ is refused by the
-floor's parse. **The set stops being empty at the first act that charters a reachable
-organ**, which carries the declaration member from birth and which the load event then
-records, per issue #438
+  written against and complete rather than short. Every organ in the base is reached by
+  kernel peer identity over a Unix socket, per `weaver-admin-PRD` section 4.3, so no
+  organ owes a boundary and a declaration naming a loopback or off-host organ is refused
+  by the floor's parse. **The set stops being empty at the first act that charters a
+  reachable organ**, which carries the declaration member from birth and which the load
+  event then records, per issue #438
 - the parent run reference and branch position, where the run is a branch,
   **which are lineage and stand outside tuple equality**
 - **the parting position** where the run is a branch, the first at which its
@@ -598,18 +615,16 @@ records, per issue #438
 predicate and the denominator, per the charter's section 9 and issue #523, and a verdict
 is a fact about a run that happened rather than a reading taken over it, which is why it
 lands on this row and not in section 2.6. **It reaches the record on a trace event the
-task authors at the run's close**, so a record carries its own score. **It does not
-reach this store yet, and this crate asserts the reader's half and not the writer's**,
-as it does for the forced mark of the paragraph above. Two halves are owed and neither
-exists: the kind is `weaver-trace`'s to add, per issue #523, and the seam is
-`weaver-analysis-web-contract`'s, section 3.1 having the ingest consume the emitter's
-emission and never the record. **The seam's rule is already written for exactly this
-shape**, the record's session, the record's digest and the seated prefix's length each
-crossing per generation on the wire and once per run in the reader's row, and a verdict
-is a per-run fact that fits it. Issue #532's contract act carries it, named there rather
-than assumed here.
+task authors at the run's close**, so a record carries its own score. **The seam that
+carries it exists as of 2026-09-09** and `weaver-analysis-web-contract` section 2.2
+states its shape, crossing per generation on the wire and once per run in this row on
+the rule the record's session, its digest and the seated prefix's length already cross
+under. **The kind that produces it does not**, being `weaver-trace`'s to add per
+issue #523, so this crate asserts the reader's half and not the writer's, as it does for
+the forced mark of the paragraph above. The shape is fixed on both sides so that act
+lands the kind rather than electing it.
 
-So the member reads absent on every row until both halves land, per section 6's rule and
+So the member reads absent on every row until that kind lands, per section 6's rule and
 exactly as the seated prefix's length read absent before its seam carried it. **Absent
 says no task scored the run or no path yet carried what it said**, and never that the
 run failed its predicate. A verdict the task recorded as failed is present and says so,
@@ -657,7 +672,7 @@ three were found by issue #532 while the ingest was being written, and the opera
 ruled them on 2026-09-09.
 
 **The engine is in the compound, so the row holds it.** The tuple is a model
-on a device under a kernel at a precision, and a divergence between two rows
+on a device under a kernel, and a divergence between two rows
 differing in both silicon and library revision names neither cause unless
 both are recorded. **The regime that deposits these identifiers is
 `weaver-analysis-PRD` section 3's**, which carries code identity beside the
@@ -1337,15 +1352,31 @@ reader.
 and an arm that reproduced its parent is a different fact from one that
 parted at position zero.
 
-**The run row's members land from the emission and none is derived here.** The run
-identity keys every row this ingest writes and crosses on the summary per
-`weaver-analysis-web-contract` section 2.2, with the effective sampling the row splits
-into its seed and its sampler, the field election's depth, the lineage that becomes the
-parent reference and the branch position, the device model, the code identity the row
-calls the engine, and the task's verdict where one crossed. **The boundary set is
-written empty**, per section 2.2, which is a fact about every run this ingest can meet
-rather than a default standing in for one. **Precision is written nowhere**, being
-section 2.3's label on the artifact the record identity resolves.
+**The run row's members land from the emission, and the two derivations here are
+named.** The run identity keys every row this ingest writes and crosses on the summary
+per `weaver-analysis-web-contract` section 2.2, with the field election's depth, the
+device model, the code identity the row calls the engine, and the task's verdict where
+one crossed, each stored as it crossed.
+
+**The effective sampling becomes two columns and that is a derivation this section
+permits.** The row's seed is the sampling's `seed` member as the record spells it, which
+crosses as text because the record spells it unsigned and the column holds it exact, and
+the row's sampler is the sampling whole, the seed among it, so a reader that wants what
+the sampler was reads one member rather than reassembling it. **A sampling that names no
+seed leaves the seed absent and the sampler present**, a declared seed being a condition
+a run may not have had.
+
+**The lineage becomes the parent reference and nothing else.** Its `through` is a turn,
+per `weaver-trace-Spec` section 3, and the branch position of section 2.2 is a position
+in section 2.1's coordinate, so **the ingest never writes `through` as a branch
+position**: it would name a place in the parent's tape the number does not mean. Section
+5 says what a branch position is and the authoring path writes it, this ingest writing
+the parent reference alone and leaving the branch position to the row that authored the
+branch.
+
+**The boundary set is written empty**, per section 2.2, which is a fact about every run
+this ingest can meet rather than a default standing in for one. **Precision is written
+nowhere**, being section 2.3's label on the artifact the record identity resolves.
 
 **The record's session and digest land here and are not derived here.** The
 emitter carries both per generation and this ingest stores them once per

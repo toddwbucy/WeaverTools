@@ -61,12 +61,18 @@ pub struct RunTuple {
     /// the schema holds it as `NUMERIC(20,0)`.
     pub seed: Option<String>,
     pub sampler: serde_json::Value,
-    pub device: String,
-    pub engine: serde_json::Value,
+    /// The device model and the engine, each from a deposit the caller
+    /// named, per section 2.2. `None` where the caller named none, which a
+    /// piped record and every record older than deposits both are.
+    pub device: Option<String>,
+    pub engine: Option<serde_json::Value>,
     pub field_depth: Option<i32>,
     pub task_source: Option<String>,
     pub task_identity: Option<String>,
     pub boundary_set: serde_json::Value,
+    /// The task's verdict, per section 2.2. `None` until the trace kind of
+    /// issue #523 exists, and thereafter where no task scored the run.
+    pub task_verdict: Option<serde_json::Value>,
     pub forced_position: Option<i32>,
     pub forced_token: Option<String>,
     /// Lineage, outside the compound.
@@ -91,6 +97,50 @@ pub struct RunTuple {
     /// section 10's open election.
     pub signature: Option<serde_json::Value>,
     pub ingested_at: DateTime<Utc>,
+}
+
+/// **The run row's columns, named once.** `tuple` and `sweep` both select
+/// them and `run_tuple_from_row` reads them back by name, so a member added
+/// to one query and not the other would panic at `get` on the first row
+/// rather than fail to compile. Naming them here makes the three agree by
+/// construction: the two queries render this list, and the reader below is
+/// the only place a name is written twice.
+const RUN_COLUMNS: &[&str] = &[
+    "run_id",
+    "record_identity",
+    "seed::text AS seed",
+    "sampler",
+    "device",
+    "engine",
+    "field_depth",
+    "task_source",
+    "task_identity",
+    "boundary_set",
+    "task_verdict",
+    "forced_position",
+    "forced_token",
+    "parent_run_id",
+    "branch_position",
+    "parting_position",
+    "record_session",
+    "record_digest",
+    "prefix_length",
+    "signature",
+    "ingested_at",
+];
+
+/// The same list qualified to a table alias, for the join in read four.
+/// `seed::text AS seed` carries its own alias, so the cast is rewritten
+/// rather than prefixed whole.
+fn run_columns(alias: &str) -> String {
+    RUN_COLUMNS
+        .iter()
+        .map(|c| match c.split_once("::") {
+            Some((name, rest)) => format!("{alias}.{name}::{rest}"),
+            None => format!("{alias}.{c}"),
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 impl Store {
@@ -151,15 +201,13 @@ impl Store {
 
     /// **Read three.** The run's row.
     pub async fn tuple(&self, run: &RunId) -> anyhow::Result<Option<RunTuple>> {
-        let row = sqlx::query(
-            "SELECT run_id, record_identity, seed::text AS seed, sampler, device, \
-             engine, field_depth, task_source, \
-             task_identity, boundary_set, forced_position, forced_token, \
-             parent_run_id, branch_position, parting_position, \
-             record_session, record_digest, prefix_length, \
-             signature, ingested_at \
-             FROM run WHERE run_id = $1",
-        )
+        // `AssertSqlSafe` because the string is built from `RUN_COLUMNS`,
+        // which is a const list of literals with nothing of a caller's in
+        // it. The guard is right to ask and this is the answer.
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {} FROM run WHERE run_id = $1",
+            RUN_COLUMNS.join(", ")
+        )))
         .bind(&run.0)
         .fetch_optional(&self.pool)
         .await?;
@@ -187,17 +235,12 @@ impl Store {
         // The runs this experiment produced, each with the value it was
         // produced under. One query, the association being explicit in the
         // schema rather than recovered by matching tuples against the set.
-        let produced = sqlx::query(
-            "SELECT ser.swept_value, r.run_id, r.record_identity, r.seed::text AS seed, \
-             r.sampler, r.device, r.engine, \
-             r.field_depth, r.task_source, r.task_identity, r.boundary_set, \
-             r.forced_position, r.forced_token, r.parent_run_id, r.branch_position, \
-             r.parting_position, \
-             r.record_session, r.record_digest, r.prefix_length, \
-             r.signature, r.ingested_at \
+        let produced = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT ser.swept_value, {} \
              FROM staged_experiment_run ser JOIN run r ON r.run_id = ser.run_id \
              WHERE ser.experiment_id = $1",
-        )
+            run_columns("r")
+        )))
         .bind(experiment_id)
         .fetch_all(&self.pool)
         .await?;
@@ -287,6 +330,7 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
         sampler: r.get("sampler"),
         device: r.get("device"),
         engine: r.get("engine"),
+        task_verdict: r.get("task_verdict"),
         field_depth: r.get("field_depth"),
         task_source: r.get("task_source"),
         task_identity: r.get("task_identity"),
@@ -515,6 +559,23 @@ mod tests {
         assert!(
             t.record_session.is_none() && t.record_digest.is_none() && t.prefix_length.is_none()
         );
+        // A run whose caller named no deposit, per section 2.2: the device
+        // model, the engine and the verdict all read absent, and the row
+        // stands, which is a run this store holds rather than refuses. The
+        // required members are the five that have producers.
+        sqlx::query(
+            "INSERT INTO run (run_id, record_identity, sampler, boundary_set) \
+             VALUES ('r-no-deposit', 'REC', '{}', '[]')",
+        )
+        .execute(&s.pool)
+        .await
+        .unwrap();
+        let t = s
+            .tuple(&RunId("r-no-deposit".into()))
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(t.device.is_none() && t.engine.is_none() && t.task_verdict.is_none());
 
         // The schema refuses a digest that is not sha256 hex.
         let refused = sqlx::query(

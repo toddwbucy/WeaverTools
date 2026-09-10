@@ -9,7 +9,10 @@ under. Section 5 reports, once per run, the run identity this reader already hol
 rendered nowhere, the effective sampling, the field election's depth and the lineage
 from the record, and the device model and code identity from the deposit beside it, with
 the task's verdict where the record carries one. **This crate reads a deposit for the
-first time here**, and reads it for two members the record does not hold, per the
+first time here**, named by the invocation rather than found beside the record, since a
+piped sink has no sibling to look beside, and section 1's layout gains `src/deposit.rs`
+for it. It reads the deposit for the device model and for the part of the code identity
+the record does not carry, the organ binaries being the `load` event's `stack`, per the
 operator's ruling of this date. One perturbation record, and section 6's counts move by
 one. Per `weaver-analysis-web-contract` section 2.2 as revised this date and issue #532.
 **Revised:** 2026-09-09, second of this date, the summary carries the seated prefix's
@@ -977,12 +980,21 @@ election's depth and the lineage of the `load` event, and the task's verdict whe
 record carries one, each spelled as the record spelled it and each absent on its own
 terms.
 
-**Two of them are not in the record and this crate reads a deposit for them.** The
-device model and the code identity are the operator's, per the charter's section 3,
-which already has this crate read the device model from the deposit to bound a licence,
-so the reach is one this crate has and not a new one. **Where no deposit stands beside
-the record both cross absent**, and this crate neither infers a device from a driver
-version nor a library set from a binary it did not see.
+**What the record does not hold this crate reads from a deposit the caller names.** The
+record holds the organ binaries, the `load` event's `stack`, and the device model and
+the rest of the code identity are the operator's, per the charter's section 3, which
+already has this crate read the device model from a deposit to bound a licence.
+
+**The deposit is named by the invocation and never found beside the record.** Section
+1's layout gains `src/deposit.rs` for reading it, and the signals invocation takes the
+deposit's path beside the record's. **A rule that looked beside the record would name
+nothing on a pipe**, which section 5 above licenses as a sink shape, so the caller names
+it or names none.
+
+**Where the caller names none, the device model crosses absent and the code identity
+crosses carrying only what the record held.** This crate neither infers a device from a
+driver version nor a library set from a binary it did not see, and it reads the deposit
+for these members alone.
 
 **Nothing here is derived.** The sampling is spliced as the record spelled it, the depth
 and the lineage are the load event's own, and a verdict is the task's. A member this
@@ -1123,18 +1135,20 @@ graph under gate H2, this crate declaring one `seam` tagged `socket` and no
   place, and watched to fail when two emitters over one file disagree, which is the
   delimiter or the newline rule being broken.
 - The summary names the run it read: an emission carries the envelope's run once,
-watched to fail when the member is dropped, which is the state before 2026-09-09, and
-when it is taken from the invocation's path rather than from the envelope. - The summary
-reports what the run ran under without deriving any of it: a record beside no deposit
-crosses with the device model and the code identity absent, watched to fail when either
-is inferred from a driver version or a binary this crate did not see, and a sampling
-crosses spliced, watched to fail when a re-encoding changes what the record spelled. -
-The summary carries the seated prefix's length only from a whole-from-the-start
-  drain: a run whose first generation the drain saw crosses with the length derived
-  from that generation, watched to fail when it is derived from a later generation
-  or sent from a drain that opened after the run's `load`, and watched to fail when
-  the input identifiers are not subtracted, which names the first draw and not the
-  prefix.
+  watched to fail when the member is dropped, which is the state before 2026-09-09, and
+  when it is taken from the invocation's path rather than from the envelope.
+- The summary reports what the run ran under without deriving any of it: a record whose
+  caller named no deposit crosses with the device model absent and the code identity
+  carrying only the load event's stack, watched to fail when either is inferred from a
+  driver version or a library this crate did not see, and a sampling crosses spliced,
+  watched to fail when a re-encoding changes what the record spelled.
+- The summary carries the seated prefix's length only from a whole-from-the-start drain:
+  a run whose first generation the drain saw crosses with the length derived from that
+  generation, watched to fail when it is derived from a later generation or sent from a
+  drain that opened after the run's `load`, and watched to fail when two emitters over
+  one file disagree, which is the delimiter or the newline rule being broken, and
+  watched to fail when the input identifiers are not subtracted, which names the first
+  draw and not the prefix.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
