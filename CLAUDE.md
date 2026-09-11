@@ -124,8 +124,8 @@ not bought, never that none exists** - the inverse overclaim forecloses tests th
 may later want.
 
 **Gates G1-G7 run on every act** (mechanical, level discipline, graph facts, vocabulary,
-duplication authority, extraction completeness, rulings landed). H1-H6 are phase three
-candidates and are not in force.
+duplication authority, extraction completeness, rulings landed). H1-H6 are phase three's, in force per
+Working Process section 6, H6 having joined them 2026-09-11.
 
 **A ruling is a claim about the whole corpus.** A review finding names one sighting of its
 violation, so an act that lands a ruling ends with a corpus-wide sweep for every wording
@@ -268,7 +268,7 @@ when the graph lands - the graph indexes them, it does not replace them:
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
    operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
    workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
-   before that crate's act merges. It is the cheapest of the five and the only
+   before that crate's act merges. It is the cheapest of the six and the only
    one a person has to type, which is how it went unrun.
 
    **Stated per crate because the workspace did not pass when the gate
@@ -333,20 +333,20 @@ when the graph lands - the graph indexes them, it does not replace them:
    clippy and fmt are run - **before the first review and again after the
    rework**, since a fix is an act and can regress what it is fixing.
 
-   **It counts the five things the other five devices structurally cannot
-   see.** Each of those verifies an artifact against itself: a test against
+   **It counts what the other five devices structurally cannot see.** Each of those verifies an artifact against itself: a test against
    its code, a lint against its crate, a compile pin against its types.
    **None of them compares a claim in a document against a fact in code.**
 
    ```text
-   dangling_citations           a conforms: identifier naming no node
-   uncited_perturbations        a claim whose tag says an instrument exists
-   untagged_assertions          a node no tag-based query can reach
-   unknown_tags                 a tag outside the Document Format's five
-   duplicate_node_ids           one identifier declared in two places
-   malformed_node_ids           a node: line this gate cannot read
-   enforcement_table_mismatch   a document's assertions against its own table
-   sources_without_a_header     phase three's rule, per source file
+   dangling_citations                      a citation naming no node
+   uncited_perturbations                   a tag claiming an instrument
+   untagged_assertions                     a node no tag query can reach
+   unknown_tags                            a tag outside the format's five
+   duplicate_node_ids                      one identifier, two declarations
+   malformed_node_ids                      a line this gate cannot read
+   enforcement_table_mismatch              a document against its own table
+   documents_without_an_enforcement_table  the table a row is owed in
+   sources_without_a_header                phase three's rule, per unit
    ```
 
    **The rule is that no defect is new, not that every number is zero.** The
@@ -359,7 +359,10 @@ when the graph lands - the graph indexes them, it does not replace them:
    `test_census.py` a fixture holding one of each defect.
 
    **A new `tag: perturbation` node is cited by code in the same act, or its
-   enforcement-table row is marked owed.** The gate counts the ones that are
+   enforcement-table row is marked owed.** Twelve of the thirteen documents
+   declaring assertions carry no such table, which the census counts rather
+   than assumes, so for most of the corpus the rule reads as "cited in the
+   same act" until that document grows one. The gate counts the ones that are
    neither. Issue #558 is the backlog and records why: nineteen of the first
    thirty-three were born in documents-only commits, the Spec authoring an
    assertion that phase three would code later, with nothing holding the
