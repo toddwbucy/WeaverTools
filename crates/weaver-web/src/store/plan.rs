@@ -22,6 +22,8 @@
 
 use std::collections::HashMap;
 
+use uuid::Uuid;
+
 use serde::Serialize;
 use sqlx::Row as _;
 
@@ -57,7 +59,11 @@ pub struct Plan {
 /// second kind of thing.
 #[derive(Debug, Clone, Serialize)]
 pub struct Arm {
-    pub key: String,
+    /// **The arm's identity, which its name is not.** The name is the
+    /// operator's label and changes when they relabel it; this does not.
+    pub arm: Uuid,
+    /// The operator's word for this arm, unique within its plan.
+    pub name: String,
     /// **The registration is one fact and not two nullable members.** A
     /// arm that became a staged experiment has that row's identity and
     /// that row's state together, and a arm that did not has neither, so
@@ -127,12 +133,13 @@ pub enum Disposition {
 const SELECT_PLAN: &str =
     "SELECT plan_id, parent_run_id, author, version FROM plan WHERE plan_id = $1";
 
-const SELECT_ARMS: &str = "SELECT c.arm_key, c.experiment_id, e.state \
-     FROM plan_arm c LEFT JOIN staged_experiment e ON e.experiment_id = c.experiment_id \
-     WHERE c.plan_id = $1 ORDER BY c.arm_key COLLATE \"C\"";
+const SELECT_ARMS: &str = "SELECT a.arm_id, a.name, a.experiment_id, e.state \
+     FROM plan_arm a LEFT JOIN staged_experiment e ON e.experiment_id = a.experiment_id \
+     WHERE a.plan_id = $1 ORDER BY a.name COLLATE \"C\"";
 
-const SELECT_ENTRIES: &str = "SELECT arm_key, member, disposition, held_value, freed_values \
-     FROM plan_entry WHERE plan_id = $1 ORDER BY arm_key COLLATE \"C\", member";
+const SELECT_ENTRIES: &str = "SELECT e.arm_id, e.member, e.disposition, e.held_value, \
+     e.freed_values FROM plan_entry e JOIN plan_arm a ON a.arm_id = e.arm_id \
+     WHERE a.plan_id = $1 ORDER BY a.name COLLATE \"C\", e.member";
 
 impl Store {
     /// Read one plan whole, per section 4's sixth read.
@@ -187,25 +194,22 @@ impl Store {
                     ),
                 };
                 Ok(Arm {
-                    key: r.get("arm_key"),
+                    arm: r.get("arm_id"),
+                    name: r.get("name"),
                     registration,
                     entries: Vec::new(),
                 })
             })
             .collect::<anyhow::Result<_>>()?;
 
-        let at: HashMap<String, usize> = arms
-            .iter()
-            .enumerate()
-            .map(|(i, c)| (c.key.clone(), i))
-            .collect();
+        let at: HashMap<Uuid, usize> = arms.iter().enumerate().map(|(i, a)| (a.arm, i)).collect();
 
         for r in sqlx::query(SELECT_ENTRIES)
             .bind(plan)
             .fetch_all(&mut *tx)
             .await?
         {
-            let key: String = r.get("arm_key");
+            let arm: Uuid = r.get("arm_id");
             let disposition: String = r.get("disposition");
             // The schema's own check holds that a held entry carries a value
             // and a freed one carries a set, so an arm that found neither
@@ -217,12 +221,12 @@ impl Store {
                     value: r
                         .try_get::<Option<serde_json::Value>, _>("held_value")?
                         .filter(|v| !v.is_null())
-                        .ok_or_else(|| anyhow::anyhow!("a held entry with no value: {key}"))?,
+                        .ok_or_else(|| anyhow::anyhow!("a held entry with no value: {arm}"))?,
                 },
                 "freed" => {
                     let values = r
                         .try_get::<Option<serde_json::Value>, _>("freed_values")?
-                        .ok_or_else(|| anyhow::anyhow!("a freed entry with no set: {key}"))?;
+                        .ok_or_else(|| anyhow::anyhow!("a freed entry with no set: {arm}"))?;
                     Disposition::Freed {
                         values: match values {
                             serde_json::Value::Array(v) if !v.is_empty() => v,
@@ -236,8 +240,8 @@ impl Store {
             // silence.** Inside one transaction it cannot happen, which is
             // the point: if it ever does, the transaction is not holding and
             // a plan would come back quietly missing entries.
-            let Some(&i) = at.get(&key) else {
-                anyhow::bail!("an entry names arm {key}, which this plan's read did not return");
+            let Some(&i) = at.get(&arm) else {
+                anyhow::bail!("an entry names arm {arm}, which this plan's read did not return");
             };
             arms[i].entries.push(Entry {
                 member: r.get("member"),
@@ -318,22 +322,30 @@ mod tests {
         .fetch_one(&s.pool)
         .await
         .unwrap();
-        sqlx::query(
-            "INSERT INTO plan_arm (plan_id, arm_key, experiment_id) \
-             VALUES ($1, 'arm-a', $2), ($1, 'arm-b', NULL)",
+        let arm_a: Uuid = sqlx::query_scalar(
+            "INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'arm-a', $2) \
+             RETURNING arm_id",
         )
         .bind(plan)
         .bind(experiment)
-        .execute(&s.pool)
+        .fetch_one(&s.pool)
+        .await
+        .unwrap();
+        let arm_b: Uuid = sqlx::query_scalar(
+            "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-b') RETURNING arm_id",
+        )
+        .bind(plan)
+        .fetch_one(&s.pool)
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, held_value, freed_values) \
-             VALUES ($1, 'arm-a', 'sampler', 'freed', NULL, '[{\"top_p\": 0.9}, {\"top_p\": 0.95}]'), \
-                    ($1, 'arm-a', 'device', 'held', '\"cuda:0\"', NULL), \
-                    ($1, 'arm-b', 'device', 'held', '\"cuda:1\"', NULL)",
+            "INSERT INTO plan_entry (arm_id, member, disposition, held_value, freed_values) \
+             VALUES ($1, 'sampler', 'freed', NULL, '[{\"top_p\": 0.9}, {\"top_p\": 0.95}]'), \
+                    ($1, 'device', 'held', '\"cuda:0\"', NULL), \
+                    ($2, 'device', 'held', '\"cuda:1\"', NULL)",
         )
-        .bind(plan)
+        .bind(arm_a)
+        .bind(arm_b)
         .execute(&s.pool)
         .await
         .unwrap();
@@ -344,7 +356,7 @@ mod tests {
         assert_eq!(read.arms.len(), 2, "both arms, registered or not");
 
         let a = &read.arms[0];
-        assert_eq!(a.key, "arm-a");
+        assert_eq!(a.name, "arm-a");
         let registered = a.registration.as_ref().expect("arm-a is registered");
         assert_eq!(registered.experiment, experiment);
         // Perturbation: read the status from the arm's own row and there
@@ -359,7 +371,7 @@ mod tests {
         assert_eq!(a.entries.len(), 2, "both members this arm names");
 
         let b = &read.arms[1];
-        assert_eq!(b.key, "arm-b");
+        assert_eq!(b.name, "arm-b");
         // **A null reference records that the arm was never registered**,
         // which is why no sixth word is named for it - and the identity and
         // the status go absent together because they are one member.
@@ -422,7 +434,7 @@ mod tests {
         let Some(s) = store().await else { return };
         let tag = tag("snap");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm-a')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-a')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -441,7 +453,7 @@ mod tests {
         assert_eq!(before, 1, "one arm when the snapshot was taken");
 
         // Another connection entirely, committing between the statements.
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm-b')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-b')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -525,19 +537,21 @@ mod tests {
         let Some(s) = store().await else { return };
         let tag = tag("free");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm')")
-            .bind(plan)
-            .execute(&s.pool)
-            .await
-            .unwrap();
+        let arm: Uuid = sqlx::query_scalar(
+            "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm') RETURNING arm_id",
+        )
+        .bind(plan)
+        .fetch_one(&s.pool)
+        .await
+        .unwrap();
         let free = |member: &'static str| {
             let pool = s.pool.clone();
             async move {
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, freed_values) \
-                     VALUES ($1, 'arm', $2, 'freed', '[1, 2]')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, freed_values) \
+                     VALUES ($1, $2, 'freed', '[1, 2]')",
                 )
-                .bind(plan)
+                .bind(arm)
                 .bind(member)
                 .execute(&pool)
                 .await
@@ -559,11 +573,11 @@ mod tests {
         // A arm holding the rest is the ordinary case and is not touched
         // by the bound: the index is partial on the freed disposition.
         sqlx::query(
-            "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, held_value) \
-             VALUES ($1, 'arm', 'device', 'held', '\"cuda:0\"'), \
-                    ($1, 'arm', 'engine', 'held', '{}')",
+            "INSERT INTO plan_entry (arm_id, member, disposition, held_value) \
+             VALUES ($1, 'device', 'held', '\"cuda:0\"'), \
+                    ($1, 'engine', 'held', '{}')",
         )
-        .bind(plan)
+        .bind(arm)
         .execute(&s.pool)
         .await
         .expect("held members are unbounded");
@@ -593,20 +607,19 @@ mod tests {
         .fetch_one(&s.pool)
         .await
         .unwrap();
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key, experiment_id) VALUES ($1, 'a', $2)")
+        sqlx::query("INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'a', $2)")
             .bind(plan)
             .bind(experiment)
             .execute(&s.pool)
             .await
             .expect("the first arm claims it");
-        let second = sqlx::query(
-            "INSERT INTO plan_arm (plan_id, arm_key, experiment_id) VALUES ($1, 'b', $2)",
-        )
-        .bind(plan)
-        .bind(experiment)
-        .execute(&s.pool)
-        .await
-        .expect_err("the second is refused");
+        let second =
+            sqlx::query("INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'b', $2)")
+                .bind(plan)
+                .bind(experiment)
+                .execute(&s.pool)
+                .await
+                .expect_err("the second is refused");
         assert!(
             second.to_string().contains("plan_arm_experiment_id_key"),
             "refused by the wrong rule: {second}"
@@ -614,7 +627,7 @@ mod tests {
 
         // Two unregistered arms are the ordinary case: the uniqueness is
         // over the reference and nulls do not collide.
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'c'), ($1, 'd')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'c'), ($1, 'd')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -635,11 +648,13 @@ mod tests {
         let Some(s) = store().await else { return };
         let tag = tag("state");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm')")
-            .bind(plan)
-            .execute(&s.pool)
-            .await
-            .unwrap();
+        let arm: Uuid = sqlx::query_scalar(
+            "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm') RETURNING arm_id",
+        )
+        .bind(plan)
+        .fetch_one(&s.pool)
+        .await
+        .unwrap();
         // **Five statements and not one built from a string.** sqlx
         // refuses a dynamic query for the reason this crate agrees with,
         // and a watch that reached for `AssertSqlSafe` to say five things
@@ -653,40 +668,40 @@ mod tests {
                 "held-with-no-value",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition) \
-                     VALUES ($1, 'arm', $2, 'held')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition) \
+                     VALUES ($1, $2, 'held')",
                 ),
             ),
             (
                 "freed-with-no-set",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition) \
-                     VALUES ($1, 'arm', $2, 'freed')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition) \
+                     VALUES ($1, $2, 'freed')",
                 ),
             ),
             (
                 "held-carrying-a-set",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
-                     held_value, freed_values) VALUES ($1, 'arm', $2, 'held', '1', '[1]')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, held_value, \
+                     freed_values) VALUES ($1, $2, 'held', '1', '[1]')",
                 ),
             ),
             (
                 "freed-whose-set-is-not-an-array",
                 "plan_entry_freed_values_is_an_array",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
-                     freed_values) VALUES ($1, 'arm', $2, 'freed', '1')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, freed_values) \
+                     VALUES ($1, $2, 'freed', '1')",
                 ),
             ),
             (
                 "a-disposition-of-its-own",
                 "plan_entry_disposition_is_held_or_freed",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
-                     held_value) VALUES ($1, 'arm', $2, 'moved', '1')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, held_value) \
+                     VALUES ($1, $2, 'moved', '1')",
                 ),
             ),
             // **JSON null is not SQL NULL**, and a check written as IS NOT
@@ -695,8 +710,8 @@ mod tests {
                 "held-whose-value-is-json-null",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
-                     held_value) VALUES ($1, 'arm', $2, 'held', 'null')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, held_value) \
+                     VALUES ($1, $2, 'held', 'null')",
                 ),
             ),
             // A sweep is one member **and its value set**, so a freed member
@@ -705,13 +720,13 @@ mod tests {
                 "freed-over-no-values",
                 "plan_entry_freed_values_is_an_array",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
-                     freed_values) VALUES ($1, 'arm', $2, 'freed', '[]')",
+                    "INSERT INTO plan_entry (arm_id, member, disposition, freed_values) \
+                     VALUES ($1, $2, 'freed', '[]')",
                 ),
             ),
         ] {
             let outcome = refused
-                .bind(plan)
+                .bind(arm)
                 .bind(member)
                 .execute(&s.pool)
                 .await

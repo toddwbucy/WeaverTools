@@ -34,12 +34,24 @@ CREATE TABLE plan (
 -- would carry two frozen experiments and the matrix would read two arms
 -- where the operator authored one.
 CREATE TABLE plan_arm (
+  -- **An arm is an identity and a name, and they are not the same member.**
+  -- The name is the operator's word for the arm and the matrix's label, and
+  -- section 2.9 has the operator trim and adjust a generated plan, so a
+  -- rename is an ordinary act rather than an exceptional one. Were the name
+  -- the key, a rename would cascade through every entry the arm holds and
+  -- through anything else that had referred to it. It is one update here.
+  arm_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   plan_id        BIGINT NOT NULL REFERENCES plan(plan_id) ON DELETE CASCADE,
-  arm_key        TEXT NOT NULL,
+  name           TEXT NOT NULL,
+
   experiment_id  BIGINT UNIQUE REFERENCES staged_experiment(experiment_id),
 
-  PRIMARY KEY (plan_id, arm_key)
+  -- Two arms of one plan do not share a label. The matrix draws the name,
+  -- and two arms drawn alike are two the operator cannot tell apart.
+  CONSTRAINT plan_arm_name_is_the_operator_s_own UNIQUE (plan_id, name)
 );
+
+CREATE INDEX plan_arm_by_plan ON plan_arm (plan_id);
 
 -- Spec 2.9: an entry names a member of the tuple, carries its disposition,
 -- and carries the value where it is held or the value set where it is
@@ -49,17 +61,14 @@ CREATE TABLE plan_arm (
 -- entry that carried both could not say what a freed entry in a queued arm
 -- is, which is both at once.
 CREATE TABLE plan_entry (
-  plan_id      BIGINT NOT NULL,
-  arm_key      TEXT NOT NULL,
+  arm_id       UUID NOT NULL REFERENCES plan_arm(arm_id) ON DELETE CASCADE,
   member       TEXT NOT NULL,
 
   disposition  TEXT NOT NULL,
   held_value   JSONB,
   freed_values JSONB,
 
-  PRIMARY KEY (plan_id, arm_key, member),
-  FOREIGN KEY (plan_id, arm_key)
-    REFERENCES plan_arm(plan_id, arm_key) ON DELETE CASCADE,
+  PRIMARY KEY (arm_id, member),
 
   CONSTRAINT plan_entry_disposition_is_held_or_freed
     CHECK (disposition IN ('held', 'freed')),
@@ -95,7 +104,7 @@ CREATE TABLE plan_entry (
 -- is the ordinary point experiment rather than a sweep, so the bound is one
 -- and not exactly one.
 CREATE UNIQUE INDEX plan_arm_frees_at_most_one_member
-  ON plan_entry (plan_id, arm_key) WHERE disposition = 'freed';
+  ON plan_entry (arm_id) WHERE disposition = 'freed';
 
 -- Spec 2.10: a named reference from a person to a run, and the one thing
 -- this document takes from a commit graph. A run reachable from no root is

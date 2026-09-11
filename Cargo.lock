@@ -3064,6 +3064,7 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -3130,6 +3131,7 @@ dependencies = [
  "sqlx-core",
  "thiserror 2.0.19",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -3165,6 +3167,7 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.19",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -3191,6 +3194,7 @@ dependencies = [
  "thiserror 2.0.19",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -3787,6 +3791,7 @@ checksum = "f053576934f05a761a402421fbbe3d425d9366f75f978806a037b3ca481abecc"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
+ "serde_core",
  "wasm-bindgen",
 ]
 
