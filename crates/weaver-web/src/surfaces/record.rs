@@ -20,10 +20,12 @@
 use askama::Template;
 use axum::Router;
 use axum::extract::{Query, State};
+use axum::http::HeaderMap;
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::get;
 use serde::Deserialize;
 
+use super::gate;
 use crate::store::{Chip, Cursor, RunId, RunTuple, Store};
 
 /// How many runs a page holds. **A list is walked rather than quoted**, per
@@ -64,13 +66,26 @@ impl Ask {
         }
     }
 
-    fn cursor(&self) -> Option<Cursor> {
-        let at = self.after_at.as_deref()?;
-        let run = self.after_run.as_deref()?;
-        Some(Cursor {
-            ingested_at: at.parse().ok()?,
-            run: RunId(run.to_string()),
-        })
+    /// The cursor the ask carries, or a refusal.
+    ///
+    /// **A cursor that does not resolve refuses rather than resetting.** A
+    /// silent fall back to the first page renders the newest runs under a
+    /// URL that says otherwise, and a reader cannot tell a reset from an
+    /// end, which is how a broken walk presents as a working one.
+    fn cursor(&self) -> Result<Option<Cursor>, Refusal> {
+        match (self.after_at.as_deref(), self.after_run.as_deref()) {
+            (None, None) => Ok(None),
+            (Some(at), Some(run)) => match at.parse() {
+                Ok(ingested_at) => Ok(Some(Cursor {
+                    ingested_at,
+                    run: RunId(run.to_string()),
+                })),
+                Err(_) => Err(Refusal("the cursor's time does not read as a timestamp")),
+            },
+            _ => Err(Refusal(
+                "a cursor is a time and a run together, and one came alone",
+            )),
+        }
     }
 }
 
@@ -80,11 +95,24 @@ impl Ask {
 /// absent-not-empty rule at the view.
 pub struct Row {
     pub run: String,
+    /// What a reader sees for the record identity. **The sentinel is a fact
+    /// and is named**, per Spec section 2.3: an empty identity is a hash the
+    /// SPU could not compute.
     pub record_identity: String,
+    /// The value a chip on this row would carry, which is the identity as
+    /// the record spells it. **It is not the display string**: a chip
+    /// carrying the words a surface chose would match no row at all.
+    pub record_identity_key: Option<String>,
     pub device: String,
+    /// The engine's libraries by name, as the tuple carries them. **A column
+    /// headed `engine` that rendered a constant would say neither what the
+    /// member is nor that it is absent**, which is the whole of what a
+    /// tuple is for.
     pub engine: String,
     pub seed: String,
-    pub session: String,
+    /// The record's session, kept as an option so the view decides absence
+    /// from the member rather than from a word it compares against.
+    pub session: Option<String>,
     pub parent: Option<String>,
     pub branch_position: Option<i32>,
     pub parting_position: Option<i32>,
@@ -102,30 +130,59 @@ fn absent_or(value: Option<&str>) -> String {
         .unwrap_or_else(|| ABSENT.to_string())
 }
 
+/// The engine's libraries, drawn by name. **The member is a JSON object and
+/// a table cell is a line**, so the names are joined and the digests are
+/// left to the run's own surface, which is a rendering choice rather than a
+/// member discarded: a reader sees which libraries a run went through and
+/// two runs through different ones read differently.
+fn engine_libraries(engine: Option<&serde_json::Value>) -> String {
+    let Some(engine) = engine else {
+        return ABSENT.to_string();
+    };
+    let names: Vec<&str> = engine
+        .as_object()
+        .map(|o| o.keys().map(String::as_str).collect())
+        .unwrap_or_default();
+    if names.is_empty() {
+        // A member the record carried and this surface cannot name is not
+        // an absent member, so it says which it is.
+        "recorded, unnamed".to_string()
+    } else {
+        names.join(", ")
+    }
+}
+
 impl From<RunTuple> for Row {
     fn from(t: RunTuple) -> Self {
+        let sentinel = t.record_identity.is_empty();
         Row {
             run: t.run.0,
-            record_identity: if t.record_identity.is_empty() {
+            record_identity: if sentinel {
                 // Spec 2.3: the sentinel is the empty string and means a
                 // hash the SPU could not compute. It is a fact of the
                 // record rather than a missing member, so it is named.
                 "the hash failed".to_string()
             } else {
-                t.record_identity
+                t.record_identity.clone()
             },
+            // A chip on the sentinel would ask for runs whose identity is
+            // the empty string, which is a real question, but the link is
+            // suppressed rather than carrying a word no row holds.
+            record_identity_key: (!sentinel).then_some(t.record_identity),
             device: absent_or(t.device.as_deref()),
-            engine: t
-                .engine
-                .as_ref()
-                .map(|_| "recorded".to_string())
-                .unwrap_or_else(|| ABSENT.to_string()),
+            engine: engine_libraries(t.engine.as_ref()),
             seed: absent_or(t.seed.as_deref()),
-            session: absent_or(t.record_session.as_deref()),
+            session: t.record_session,
             parent: t.parent_run.map(|p| p.0),
             branch_position: t.branch_position,
             parting_position: t.parting_position,
-            ingested_at: t.ingested_at.to_rfc3339(),
+            // **Not `to_rfc3339`**: that spells the offset `+00:00`, and a
+            // query string decodes `+` as a space, so the cursor this
+            // surface hands out would never parse when it came back. `Z` is
+            // the same instant and survives the round trip.
+            ingested_at: t
+                .ingested_at
+                .to_rfc3339_opts(chrono::SecondsFormat::Micros, true),
         }
     }
 }
@@ -134,6 +191,9 @@ impl From<RunTuple> for Row {
 #[template(path = "record.html")]
 struct RecordPage {
     here: &'static str,
+    /// The name the session claimed, shown so a reader knows which claim
+    /// this page was drawn under. **It is not a proof of anything.**
+    who: String,
     rows: Vec<Row>,
     /// The chip in force, as a word a reader can see and a link can clear.
     chip_kind: Option<String>,
@@ -144,47 +204,89 @@ struct RecordPage {
     next_run: Option<String>,
 }
 
-async fn record(State(store): State<Store>, Query(ask): Query<Ask>) -> Result<Response, Failure> {
+/// **The answer is a page, a refusal, or a fault**, and the three are
+/// different things: a refusal says the ask was malformed and a fault says
+/// this surface could not serve a well-formed one.
+async fn record(
+    State(store): State<Store>,
+    headers: HeaderMap,
+    Query(ask): Query<Ask>,
+) -> Result<Response, Response> {
+    // **The gate is the surface's own argument**, per `surfaces/mod.rs`: a
+    // surface reads the store and nothing else, and a surface holding a
+    // seam takes it rather than widening the state. A router carrying the
+    // store alone would leave nowhere for this to stand, which is how every
+    // run's tuple came to be served to anyone who reached the listener.
+    //
+    // **The claim is a claim**, per Spec section 2.8, so what this refuses
+    // is a request that named nobody. Until the identity act of the
+    // charter's section 6 lands, per issue #336, that is the shape standing
+    // and not access control.
+    let who = gate::claim(&store, &headers)
+        .await
+        .map_err(|e| Failure::from(e).into_response())?;
+    let Some(who) = who else {
+        return Err(NoSession.into_response());
+    };
     let chip = ask.chip();
+    let cursor = ask.cursor().map_err(IntoResponse::into_response)?;
     let page = store
-        .runs(chip.as_ref(), PAGE, ask.cursor().as_ref())
-        .await?;
+        .runs(chip.as_ref(), PAGE, cursor.as_ref())
+        .await
+        .map_err(|e| Failure::from(e).into_response())?;
     let next = page.next;
     let html = RecordPage {
         here: "record",
+        who: who.name,
         rows: page.runs.into_iter().map(Row::from).collect(),
         chip_kind: ask.chip.clone().filter(|_| chip.is_some()),
         chip_of: ask.of.clone().filter(|_| chip.is_some()),
-        next_at: next.as_ref().map(|c| c.ingested_at.to_rfc3339()),
+        next_at: next.as_ref().map(|c| {
+            c.ingested_at
+                .to_rfc3339_opts(chrono::SecondsFormat::Micros, true)
+        }),
         next_run: next.map(|c| c.run.0),
     }
     .render()
-    .map_err(|e| Failure(e.into()))?;
+    .map_err(|e| Failure::from(e).into_response())?;
     Ok(Html(html).into_response())
 }
 
-/// A refusal this surface met. **The chain goes to the log and the response
-/// stays generic**, so a query's text, a path, or an upstream's detail never
-/// reaches a browser, which is the posture `web/mod.rs` already holds for
-/// the half that retires.
-pub struct Failure(anyhow::Error);
+/// A request that named nobody. **The answer says what is missing rather
+/// than what is forbidden**, because nothing here is access control: a
+/// session is opened by claiming a name, and this request claimed none.
+pub struct NoSession;
 
-impl<E: Into<anyhow::Error>> From<E> for Failure {
-    fn from(error: E) -> Self {
-        Failure(error.into())
-    }
-}
-
-impl IntoResponse for Failure {
+impl IntoResponse for NoSession {
     fn into_response(self) -> Response {
-        tracing::error!(error = ?self.0, "record surface refused");
         (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            "the record could not be read",
+            axum::http::StatusCode::UNAUTHORIZED,
+            "this surface is read under a session. Open one and ask again.",
         )
             .into_response()
     }
 }
+
+/// What this surface refuses, and why, in words a reader can act on. **A
+/// refusal is not a fault**: the ask was malformed, so the answer names
+/// what was wrong with it rather than logging a chain nobody sees.
+pub struct Refusal(&'static str);
+
+impl IntoResponse for Refusal {
+    fn into_response(self) -> Response {
+        (axum::http::StatusCode::BAD_REQUEST, self.0).into_response()
+    }
+}
+
+/// A fault this surface met, as opposed to an ask it refused. **The chain
+/// goes to the log and the response stays generic**, so a query's text, a
+/// path, or an upstream's detail never reaches a browser.
+///
+/// **It is the crate's one error type and not a second copy of it.** The
+/// posture is `crate::fault::Fault`'s, which outlives both the conversation
+/// half and this one, so a change to the logging or the body text reaches
+/// every surface rather than one of two copies.
+pub type Failure = crate::fault::Fault;
 
 #[cfg(test)]
 mod tests {
@@ -193,75 +295,159 @@ mod tests {
     use axum::http::{Request, StatusCode};
     use tower::ServiceExt;
 
-    /// The surface answers on its route with the runs the store holds, and
-    /// **says absent where the record carried nothing** rather than drawing
-    /// a blank, which is Spec section 6's rule at the view.
+    /// Open a session and hand back the bearer a browser would hold.
+    async fn a_session(store: &Store, name: &str, role: &str) -> String {
+        let bearer = format!("bearer-{name}-{role}");
+        sqlx::query(
+            "INSERT INTO session (bearer_digest, claimed_name, role) VALUES ($1, $2, $3) \
+             ON CONFLICT (bearer_digest) DO NOTHING",
+        )
+        .bind(gate::digest(&bearer))
+        .bind(name)
+        .bind(role)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        bearer
+    }
+
+    async fn ask(store: &Store, uri: &str, bearer: Option<&str>) -> (StatusCode, String) {
+        let mut request = Request::builder().uri(uri);
+        if let Some(bearer) = bearer {
+            request = request.header("cookie", format!("weaver_session={bearer}"));
+        }
+        let response = routes()
+            .with_state(store.clone())
+            .oneshot(request.body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        let status = response.status();
+        let body = axum::body::to_bytes(response.into_body(), 1 << 20)
+            .await
+            .unwrap();
+        (status, String::from_utf8(body.to_vec()).unwrap())
+    }
+
+    /// **A request that names nobody is not served**, per Spec section 2.8
+    /// read at the gate, and one that names a claim is.
     ///
-    /// This asks the router rather than the handler, so the route, the
-    /// query's shape, the read and the template are all under the watch.
-    ///
-    /// conforms: web-a-chip-filters-only-on-an-indexed-column
+    /// conforms: web-session-carries-a-claim-and-never-a-proof
     #[tokio::test]
-    async fn record_renders_the_runs_and_names_what_is_absent() {
+    async fn record_is_read_under_a_session_and_never_without_one() {
         let Some(store) = crate::store::read::tests::store().await else {
             return;
         };
+        let (status, body) = ask(&store, "/record", None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED, "no session, no page");
+        assert!(!body.contains("<table"), "and no run's tuple in the body");
+
+        let bearer = a_session(&store, "todd", "user").await;
+        let (status, body) = ask(&store, "/record", Some(&bearer)).await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(body.contains("todd"), "the claim the page was drawn under");
+    }
+
+    /// The surface draws a run's tuple, **names an absent member rather
+    /// than drawing a blank**, and narrows on a chip.
+    ///
+    /// The absence is asserted on a row this watch can isolate: the run is
+    /// reached under a chip that admits only it, so a regression in one
+    /// member's handling cannot be carried by another row on the page.
+    ///
+    /// **It cites no assertion.** The claim this file's header conforms to
+    /// is tagged `review` at `weaver-web-Spec` section 9, because the half
+    /// of it that matters - *indexed* - is a property of the statement and
+    /// the schema rather than of a response, and no assertion is made here
+    /// that would fail if a chip filtered on an unindexed column. What this
+    /// watch does pin, absent-not-empty at the view under section 6, has no
+    /// record of its own; that is a documents act rather than a citation to
+    /// borrow.
+    #[tokio::test]
+    async fn record_draws_the_tuple_and_names_what_is_absent() {
+        let Some(store) = crate::store::read::tests::store().await else {
+            return;
+        };
+        let bearer = a_session(&store, "todd", "user").await;
         sqlx::query(
             "INSERT INTO run (run_id, record_identity, sampler, boundary_set, \
-             record_session, device) \
-             VALUES ('surf-a', 'SURF-REC', '{}', '[]', 'sess-surf', 'rtx-a6000') \
-             ON CONFLICT (run_id) DO NOTHING",
+             record_session, device, engine) \
+             VALUES ('surf-a', 'SURF-REC', '{}', '[]', 'sess-surf', 'rtx-a6000', \
+             '{\"cutlass\": \"3.5\"}') ON CONFLICT (run_id) DO NOTHING",
         )
         .execute(&store.pool)
         .await
         .unwrap();
 
-        let response = routes()
-            .with_state(store.clone())
-            .oneshot(
-                Request::builder()
-                    .uri("/record")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
-        let body = axum::body::to_bytes(response.into_body(), 1 << 20)
-            .await
-            .unwrap();
-        let html = String::from_utf8(body.to_vec()).unwrap();
-
-        assert!(html.contains("surf-a"), "the run is drawn: {html:.400}");
-        assert!(html.contains("rtx-a6000"), "its device is drawn");
-        // The seed was never recorded for this run, so the surface says so.
-        assert!(html.contains("absent"), "an absent member is named");
-        assert!(
-            html.contains("every run the store holds"),
-            "the widest list says it is the widest, so what is not seen is visible"
+        // The chip admits this row and no other, so every assertion below
+        // is about this run.
+        let (status, html) = ask(&store, "/record?chip=session&of=sess-surf", Some(&bearer)).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            html.matches("<tr>").count(),
+            2,
+            "one header row and one run"
         );
+        assert!(html.contains("surf-a"), "the run is drawn");
+        assert!(html.contains("rtx-a6000"), "its device is drawn");
+        assert!(
+            html.contains("cutlass"),
+            "the engine names its libraries rather than a constant: {html:.600}"
+        );
+        // This run's seed was never recorded, and it is the only run on the
+        // page, so the word can only have come from its cell.
+        assert!(html.contains("absent"), "an absent member is named");
 
-        // A chip narrows, and one that admits nothing says so rather than
-        // erroring or falling back to the widest list.
-        let empty = routes()
-            .with_state(store)
-            .oneshot(
-                Request::builder()
-                    .uri("/record?chip=session&of=sess-nobody")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(empty.status(), StatusCode::OK);
-        let body = axum::body::to_bytes(empty.into_body(), 1 << 20)
-            .await
-            .unwrap();
-        let html = String::from_utf8(body.to_vec()).unwrap();
+        let (_, html) = ask(&store, "/record?chip=session&of=sess-nobody", Some(&bearer)).await;
         assert!(!html.contains("surf-a"), "the chip narrowed the list");
         assert!(
             html.contains("No run answers this"),
             "and says nothing answers"
         );
+    }
+
+    /// **A cursor that does not resolve refuses rather than resetting**, so
+    /// a broken walk cannot present as a working page.
+    #[tokio::test]
+    async fn a_half_cursor_refuses_and_a_whole_one_survives_the_round_trip() {
+        let Some(store) = crate::store::read::tests::store().await else {
+            return;
+        };
+        let bearer = a_session(&store, "todd", "user").await;
+
+        let (status, _) = ask(
+            &store,
+            "/record?after_at=2026-09-11T00:00:00Z",
+            Some(&bearer),
+        )
+        .await;
+        assert_eq!(
+            status,
+            StatusCode::BAD_REQUEST,
+            "a time with no run refuses"
+        );
+        let (status, _) = ask(
+            &store,
+            "/record?after_at=nonsense&after_run=x",
+            Some(&bearer),
+        )
+        .await;
+        assert_eq!(
+            status,
+            StatusCode::BAD_REQUEST,
+            "a time that does not read refuses"
+        );
+
+        // The cursor this surface hands out has to survive being handed
+        // back. `to_rfc3339` spells the offset `+00:00`, and a query string
+        // decodes `+` as a space, so the round trip is the watch.
+        let now: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
+        let spelled = now.to_rfc3339_opts(chrono::SecondsFormat::Micros, true);
+        assert!(
+            !spelled.contains('+'),
+            "the cursor carries no plus: {spelled}"
+        );
+        let uri = format!("/record?after_at={spelled}&after_run=any");
+        let (status, _) = ask(&store, &uri, Some(&bearer)).await;
+        assert_eq!(status, StatusCode::OK, "and reads back as a cursor: {uri}");
     }
 }

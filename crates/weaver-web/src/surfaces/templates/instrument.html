@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}weaver-web{% endblock %}</title>
-  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="stylesheet" href="/assets/surfaces/instrument.css">
 </head>
 <body>
   <nav class="masthead">
     <span class="brand">weaver-web</span>
     <a href="/record"{% if here == "record" %} class="here"{% endif %}>Record</a>
-    <span class="who">the instrument</span>
+    <span class="who">{{ who }}</span>
   </nav>
   <main class="{% block mainclass %}{% endblock %}">
   {% block body %}{% endblock %}

@@ -7,6 +7,7 @@
 pub mod adapters;
 pub mod channel;
 pub mod config;
+pub mod fault;
 pub mod lifecycle;
 pub mod queue;
 pub mod registry;

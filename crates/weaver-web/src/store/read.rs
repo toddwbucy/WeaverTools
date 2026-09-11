@@ -1,6 +1,6 @@
 //! conforms: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
 //!
-//! Four of the five reads of `weaver-web-Spec` section 4, each an index hit over
+//! The five reads of `weaver-web-Spec` section 4, each an index hit over
 //! the schema of section 2, and none of them deriving a value: what a read
 //! returns was stored at ingest or authored, per section 2.7, and a reader
 //! that wants a derived value asks the recorded query of section 2.6.
@@ -95,6 +95,32 @@ pub struct RunTuple {
     pub signature: Option<serde_json::Value>,
     pub ingested_at: DateTime<Utc>,
 }
+
+/// The fifth read's statements, one per shape it can take.
+///
+/// **A filter is a column comparison and never a test on a null
+/// parameter.** One statement with `$1 IS NULL OR col = $1` reads well and
+/// plans badly: Postgres caches a generic plan after a few executions, and
+/// under it the parameter is unknown when the plan is built, so the index
+/// section 2.7 carries cannot be matched and every chip becomes a
+/// sequential scan. The ordering and the limit are the same in all eight,
+/// and the cursor is always the row-value pair, which is what the composite
+/// index answers.
+const SELECT_ALL: &str = "SELECT * FROM run_tuple ORDER BY ingested_at DESC, run_id DESC LIMIT $1";
+const SELECT_ALL_AFTER: &str = "SELECT * FROM run_tuple WHERE (ingested_at, run_id) < ($1, $2) \
+     ORDER BY ingested_at DESC, run_id DESC LIMIT $3";
+const SELECT_BY_IDENTITY: &str = "SELECT * FROM run_tuple WHERE record_identity = $1 \
+     ORDER BY ingested_at DESC, run_id DESC LIMIT $2";
+const SELECT_BY_IDENTITY_AFTER: &str = "SELECT * FROM run_tuple WHERE record_identity = $1 \
+     AND (ingested_at, run_id) < ($2, $3) ORDER BY ingested_at DESC, run_id DESC LIMIT $4";
+const SELECT_BY_SESSION: &str = "SELECT * FROM run_tuple WHERE record_session = $1 \
+     ORDER BY ingested_at DESC, run_id DESC LIMIT $2";
+const SELECT_BY_SESSION_AFTER: &str = "SELECT * FROM run_tuple WHERE record_session = $1 \
+     AND (ingested_at, run_id) < ($2, $3) ORDER BY ingested_at DESC, run_id DESC LIMIT $4";
+const SELECT_BY_PARENT: &str = "SELECT * FROM run_tuple WHERE parent_run_id = $1 \
+     ORDER BY ingested_at DESC, run_id DESC LIMIT $2";
+const SELECT_BY_PARENT_AFTER: &str = "SELECT * FROM run_tuple WHERE parent_run_id = $1 \
+     AND (ingested_at, run_id) < ($2, $3) ORDER BY ingested_at DESC, run_id DESC LIMIT $4";
 
 /// A chip, per `weaver-web-Spec` section 4's fifth read: a filter the
 /// document indexes, and **a filter it does not index is not a chip this
@@ -226,31 +252,34 @@ impl Store {
         // The row-value comparison is what makes the cursor exact and what
         // the composite index of section 2.7 answers: a page resumes below
         // the pair it was handed and never below the timestamp alone.
-        let (identity, session, parent) = match chip {
-            Some(Chip::RecordIdentity(v)) => (Some(v.as_str()), None, None),
-            Some(Chip::Session(v)) => (None, Some(v.as_str()), None),
-            Some(Chip::Branches(run)) => (None, None, Some(run.0.as_str())),
-            None => (None, None, None),
-        };
         let asked = limit.saturating_add(1) as i64;
-        let rows = sqlx::query(
-            "SELECT * FROM run_tuple \
-             WHERE ($1::text IS NULL OR record_identity = $1) \
-               AND ($2::text IS NULL OR record_session = $2) \
-               AND ($3::text IS NULL OR parent_run_id = $3) \
-               AND ($4::timestamptz IS NULL \
-                    OR (ingested_at, run_id) < ($4, $5)) \
-             ORDER BY ingested_at DESC, run_id DESC \
-             LIMIT $6",
-        )
-        .bind(identity)
-        .bind(session)
-        .bind(parent)
-        .bind(after.map(|c| c.ingested_at))
-        .bind(after.map(|c| c.run.0.as_str()))
-        .bind(asked)
-        .fetch_all(&self.pool)
-        .await?;
+        // **One static statement per shape, and never a null test standing
+        // in for a column.** A predicate of the form `$1 IS NULL OR col =
+        // $1` cannot be matched to an index once Postgres caches a generic
+        // plan, because the parameter is unknown when that plan is built, so
+        // every chip would fall to the sequential scan this read's own
+        // assertion says it avoids. Eight statements is the price of the
+        // claim being true.
+        let sql = match (chip, after.is_some()) {
+            (None, false) => SELECT_ALL,
+            (None, true) => SELECT_ALL_AFTER,
+            (Some(Chip::RecordIdentity(_)), false) => SELECT_BY_IDENTITY,
+            (Some(Chip::RecordIdentity(_)), true) => SELECT_BY_IDENTITY_AFTER,
+            (Some(Chip::Session(_)), false) => SELECT_BY_SESSION,
+            (Some(Chip::Session(_)), true) => SELECT_BY_SESSION_AFTER,
+            (Some(Chip::Branches(_)), false) => SELECT_BY_PARENT,
+            (Some(Chip::Branches(_)), true) => SELECT_BY_PARENT_AFTER,
+        };
+        let mut query = sqlx::query(sql);
+        match chip {
+            Some(Chip::RecordIdentity(v)) | Some(Chip::Session(v)) => query = query.bind(v),
+            Some(Chip::Branches(run)) => query = query.bind(&run.0),
+            None => {}
+        }
+        if let Some(cursor) = after {
+            query = query.bind(cursor.ingested_at).bind(&cursor.run.0);
+        }
+        let rows = query.bind(asked).fetch_all(&self.pool).await?;
 
         let mut runs: Vec<RunTuple> = rows.into_iter().map(run_tuple_from_row).collect();
         let further = runs.len() as i64 == asked;
@@ -671,16 +700,30 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn read_five_pages_a_tie_whole_and_records_nothing() {
         let Some(s) = store().await else { return };
+        // **One transaction, so the five share one clock.** `ingested_at`
+        // defaults to `now()`, which is the transaction's timestamp and not
+        // the statement's, so five separate `execute` calls would take five
+        // distinct values and the tie this watch exists to pin would not
+        // exist. Measured on 2026-09-11: five statements, five timestamps.
+        let mut tx = s.pool.begin().await.unwrap();
         for id in ["t-a", "t-b", "t-c", "t-d", "t-e"] {
             sqlx::query(
                 "INSERT INTO run (run_id, record_identity, sampler, boundary_set, record_session) \
                  VALUES ($1, 'TIE', '{}', '[]', 'sess-tie') ON CONFLICT (run_id) DO NOTHING",
             )
             .bind(id)
-            .execute(&s.pool)
+            .execute(&mut *tx)
             .await
             .unwrap();
         }
+        tx.commit().await.unwrap();
+        let clocks: i64 = sqlx::query_scalar(
+            "SELECT COUNT(DISTINCT ingested_at) FROM run WHERE record_session = 'sess-tie'",
+        )
+        .fetch_one(&s.pool)
+        .await
+        .unwrap();
+        assert_eq!(clocks, 1, "the tie is real, or this watch pins nothing");
         let chip = Chip::Session("sess-tie".into());
         let mut seen: Vec<String> = Vec::new();
         let mut cursor = None;
