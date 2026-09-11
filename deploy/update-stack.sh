@@ -63,9 +63,16 @@ BIN_DIR=$(dirname "$WORKER_BINARY")
 # comparison against it silently found no file, skipped every binary, and
 # reported the box current while three-week-old binaries stood installed.
 # A path that can be wrong without saying so is worse than no comparison.
+# **The answer is judged on whether cargo answered, not on whether the
+# directory is there yet.** A clean rebuild has no release directory at this
+# point, so testing for one sent a box that sets `CARGO_TARGET_DIR` back to
+# `target/release` and reopened the defect above through a second door. Where
+# cargo names no target directory at all there is nothing to fall back to
+# that would not be a guess, so the run refuses instead.
 BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
-  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')/release
-[ -d "$BUILT" ] || BUILT="target/release"
+  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')
+[ -n "$BUILT" ] || die "cargo metadata names no target directory, so where the build lands is unknown"
+BUILT="$BUILT/release"
 
 # ---------------------------------------------------------------- 1. box facts
 say "box"
@@ -120,7 +127,13 @@ printf '  %s -> %s\n' "$BEFORE" "$AFTER"
 # uncommitted edit, a hand-changed source or a lock cargo repaired on its way
 # past, installs under this commit's name and the closing line says the box
 # is current at something it is not.
-git diff-index --quiet HEAD -- \
+# **An untracked file is an uncommitted edit too.** `git diff-index` compares
+# the commit against what git already tracks and never sees a new file, so a
+# source dropped in beside the others passed this gate. The porcelain status
+# reports it, leaves ignored files alone, and refreshes the index on its way
+# past, which also retires the stat-dirty false refusal the old form could
+# give after a checkout.
+[ -z "$(git status --porcelain=v1 --untracked-files=all)" ] \
   || die "the tree is dirty, so $AFTER would name a build it did not produce; commit or stash first"
 # -------------------------------------------------------------------- 3. test
 say "test"
