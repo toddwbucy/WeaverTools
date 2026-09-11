@@ -93,19 +93,25 @@ pub enum Disposition {
 /// collation does not - `col-10` sorts before `col-2` and punctuation is
 /// ignored, so two boxes with different collations render one plan two ways.
 /// The `COLLATE "C"` is what makes the order a fact rather than a setting.
-/// **Whether the plan should record an authoring order is section 2.9's
-/// question**, filed rather than answered here, because a column an operator
-/// placed third is plausibly a thing the matrix owes them and inventing the
-/// member to carry it is not this act's to do.
+/// **There is no authoring order to hold**, ruled at issue #549: the sketch
+/// generates a plan's columns from the closed tuple space rather than having
+/// an operator place them, so the order is the generator's and the
+/// renderer's, and the matrix sorts by what a column moves rather than by
+/// this key. What this read owes is that every box return the same order,
+/// which is what the collation buys and nothing more.
 ///
-/// **Three statements in one transaction, each an index hit**: the plan by
-/// its key, the columns by the plan's, and the entries by the plan's. The
-/// transaction is what makes it one read - three statements on a pool at
-/// read committed are three snapshots, and a column committed between the
-/// second and the third would return entries belonging to a column this read
-/// never saw. It is stated as three rather than one join because the join
-/// returns the plan's row once per entry and the caller rebuilds this shape
-/// anyway.
+/// **Three statements under one snapshot, each an index hit**: the plan by
+/// its key, the columns by the plan's, and the entries by the plan's.
+///
+/// **The snapshot and not the transaction is what makes it one read.** At
+/// read committed - this server's default - every statement takes a fresh
+/// snapshot, so wrapping the three in a transaction leaves them three reads
+/// and a column committed between the second and the third is visible to one
+/// statement and not the other. The isolation is raised to repeatable read,
+/// which takes the snapshot at the first statement and holds it.
+///
+/// It is stated as three rather than one join because the join returns the
+/// plan's row once per entry and the caller rebuilds this shape anyway.
 const SELECT_PLAN: &str =
     "SELECT plan_id, parent_run_id, author, version FROM plan WHERE plan_id = $1";
 
@@ -120,6 +126,15 @@ impl Store {
     /// Read one plan whole, per section 4's sixth read.
     pub async fn plan(&self, plan: i64) -> anyhow::Result<Option<Plan>> {
         let mut tx = self.pool.begin().await?;
+        // **A transaction is not a snapshot at read committed**, which is
+        // this server's default: there, every statement takes a new one, so
+        // three statements in one transaction are still three snapshots and
+        // a column committed between the second and the third is visible to
+        // one and not the other. Repeatable read takes the snapshot once, at
+        // the first statement, and the three become one read.
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
 
         let Some(row) = sqlx::query(SELECT_PLAN)
             .bind(plan)
@@ -377,6 +392,68 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(after, recorded, "a plan is read rather than quoted");
+    }
+
+    /// **The three statements are one snapshot**, so a column committed
+    /// while the read is in flight is invisible to all three rather than to
+    /// some of them.
+    ///
+    /// This replays the read's own statements at its own isolation with a
+    /// concurrent writer committing in between, which is the interleaving
+    /// `plan()` cannot be made to take on command. **Perturbation: drop the
+    /// `SET TRANSACTION ISOLATION LEVEL` and this fails** - at read
+    /// committed the second statement sees the writer's row and the first
+    /// did not, which is the torn read the transaction alone does not
+    /// prevent.
+    #[tokio::test]
+    async fn the_plan_is_read_under_one_snapshot() {
+        let Some(s) = store().await else { return };
+        let tag = tag("snap");
+        let plan = a_plan(&s, &tag).await;
+        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm-a')")
+            .bind(plan)
+            .execute(&s.pool)
+            .await
+            .unwrap();
+
+        let mut tx = s.pool.begin().await.unwrap();
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        let before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+            .bind(plan)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+        assert_eq!(before, 1, "one column when the snapshot was taken");
+
+        // Another connection entirely, committing between the statements.
+        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm-b')")
+            .bind(plan)
+            .execute(&s.pool)
+            .await
+            .expect("the writer commits");
+
+        let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+            .bind(plan)
+            .fetch_one(&mut *tx)
+            .await
+            .unwrap();
+        assert_eq!(
+            after, before,
+            "the snapshot holds: the read sees the plan as it was, not half of two"
+        );
+        tx.rollback().await.unwrap();
+
+        // And the writer's column is really there, so the watch is about
+        // the snapshot rather than about a write that never landed.
+        let now: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+            .bind(plan)
+            .fetch_one(&s.pool)
+            .await
+            .unwrap();
+        assert_eq!(now, 2, "outside the snapshot both columns stand");
     }
 
     /// **A ref names a run and keeps it**, per section 2.10, and this is the

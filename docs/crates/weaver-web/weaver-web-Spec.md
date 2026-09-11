@@ -1775,11 +1775,21 @@ from: weaver-web
 to: web-the-run-list-is-paged-and-records-nothing
 ```
 
-6. **One plan whole**, by its identity: the parent run every column branches from, the
-   columns in the order they were authored, and for each column the members it names
-   with the disposition it gives each. This is the matrix of
-   `docs/project/sketch-ablation-matrix.md` reading what an operator is still composing,
-   and it is the read section 2.9's row exists to be the subject of.
+6. **One plan whole**, by its identity: the parent run every column branches from, its
+   columns, and for each column the members it names with the disposition it gives each.
+   This is the matrix of `docs/project/sketch-ablation-matrix.md` reading what an
+   operator is still composing, and it is the read section 2.9's row exists to be the
+   subject of.
+
+   **The columns come back in a stated order and not an authored one.** Section 2.9
+   gives a plan its columns and records no order, because the sketch generates them from
+   the closed tuple space rather than having an operator place them - so there is no
+   authoring order to return and the store holds none. What this read owes instead is
+   the *same* order on every box, which a collation does not give: an ICU collation
+   sorts `col-10` before `col-2` and ignores punctuation, so two boxes would render one
+   plan two ways. The order is the column's key in byte order, which is a total order,
+   and **the matrix sorts by what a column moves rather than by this**. Ruled at issue
+   #549, 2026-09-11.
 
    **A column's status is not a member and is not computed.** Section 5.1 has the column
    take the five states of the staged experiment it became, so the status is that row's
