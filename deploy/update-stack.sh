@@ -94,17 +94,32 @@ else
 fi
 AFTER=$(git rev-parse --short HEAD)
 printf '  %s -> %s\n' "$BEFORE" "$AFTER"
+# **A commit names what is installed only if the tree matches it.** Any
+# uncommitted edit, a hand-changed source or a lock cargo repaired on its way
+# past, installs under this commit's name and the closing line says the box
+# is current at something it is not.
+git diff-index --quiet HEAD -- \
+  || die "the tree is dirty, so $AFTER would name a build it did not produce; commit or stash first"
+
+# **Where cargo builds is asked rather than assumed.** This box sets
+# `CARGO_TARGET_DIR`, so `target/release` does not exist here, and every
+# comparison against it silently found no file, skipped every binary, and
+# reported the box current while three-week-old binaries stood installed.
+# A path that can be wrong without saying so is worse than no comparison.
+BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
+  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')/release
+[ -d "$BUILT" ] || BUILT="target/release"
 
 # ------------------------------------------------------------------- 3. build
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --workspace \
+  cargo build --release --locked --workspace \
     --features weaver-spu/cuda,weaver-harness/pyworker
 printf '  ok\n'
 
 # -------------------------------------------------------------------- 4. test
 say "test"
-cargo test --release -p weaver-trace -p weaver-harness -p weaver-analysis \
+cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analysis \
   --features weaver-harness/pyworker 2>&1 | grep -E '^test result' | \
   awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
 
@@ -112,9 +127,9 @@ cargo test --release -p weaver-trace -p weaver-harness -p weaver-analysis \
 say "plan"
 CHANGED=()
 for b in $(ls "$BIN_DIR"); do
-  [ -f "target/release/$b" ] || continue
+  [ -f "$BUILT/$b" ] || continue
   d=$(sha256sum "$BIN_DIR/$b" | cut -d' ' -f1)
-  n=$(sha256sum "target/release/$b" | cut -d' ' -f1)
+  n=$(sha256sum "$BUILT/$b" | cut -d' ' -f1)
   if [ "$d" = "$n" ]; then
     printf '  %-22s unchanged\n' "$b"
   else
@@ -244,7 +259,7 @@ if [ ${#CHANGED[@]} -gt 0 ]; then
   INSTALL_DONE=1
   for b in "${CHANGED[@]}"; do
     sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
-    sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
+    sudo install -o root -g root -m 0755 "$BUILT/$b" "$BIN_DIR/$b"
     printf '  installed %s\n' "$b"
   done
   printf '  previous binaries kept at %s\n' "$BACKUP"
