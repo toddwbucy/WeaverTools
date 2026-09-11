@@ -10,16 +10,26 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
-**Revised:** 2026-09-11, the read path has five and Record is why. Section 4 gains
-**every run's tuple, filtered**, the one read whose unit is the set rather than a member
-of it, an index hit on the columns section 2.7 already carries and adding none. **The
-four could not serve Record and no arrangement of them would**: read three takes a run's
-identity as its argument, so a surface that holds every run had no query at all, and
-this document counted the four sufficient for it until today. The seat that came to
-build Record found it and returned here first, which is that section's own rule working
-rather than being bypassed. Section 6's sufficiency sentence moves with it, the count
-words in section 1 and section 9 move with them, and the plan's read stays owed at the
-act that gives the plan its schema. Per the queue at issue #434.
+**Revised:** 2026-09-11, the read path has five, Record is why, and the indexes it leans
+on exist. Section 4 gains **every run's tuple, filtered**, the one read whose unit is
+the set rather than a member of it. **The four could not serve Record and no arrangement
+of them would**: read three takes a run's identity as its argument and read four takes
+an experiment's, so a surface holding every run had no query at all. The seat that came
+to build Record found it and returned here first, which is that section's own rule
+working. **The rule's ordinal moves with the count**, a rule naming an ordinal that has
+arrived binding nothing.
+
+The first form of this act claimed the read's filters were index hits on what section
+2.7 carried, and two of the four were not: a foreign key constrains and does not index,
+and the ingest's order had no index at all. Section 2.7 now lists every index on the
+run, the artifact index it had omitted since the first migration among them, and
+**migration 0007 adds the two the read needs**, the page's key carrying the run's
+identity beside the clock because `ingested_at` defaults to the transaction's and is no
+total order. Section 6's sentence was wrong twice and says so: about Record, which the
+fifth read answers, and about **Experiments, which is a list with no query either** and
+is named as owed beside the plan's. Two perturbation and review records land with their
+section 9 rows and the count moves to twenty-eight. Found by the review of PR #540. Per
+the queue at issue #434.
 **Revised:** 2026-09-09, sixth of this date, the run row gets its producers and loses
 two members that had none. Issue #532 found while the ingest was being written that
 seven of the run row's eight required members crossed no seam, the run identity among
@@ -138,7 +148,7 @@ assertion identifiers a unit conforms to, and there were none to name. The
 register recorded the header gap at PR #500 and this is its cause rather
 than a second finding.
 
-Twenty-six assertion records now stand, **each under the prose that argues
+Twenty-eight assertion records now stand, **each under the prose that argues
 it and none under another record**, rather than gathered in
 section 9, which is what every other
 Spec does and what makes a queried identifier arrive with a section worth
@@ -427,7 +437,7 @@ silence settle it.
 
 ```text
 src/
-    store/        the registry: schema, migrations, the five reads
+  store/        the registry: schema, migrations, the reads of section 4
   ingest/       section 3.1, a consumer of the analysis stream
   authoring/    section 3.2, the writes a surface makes to its own table
   queue/        staged experiments and their states
@@ -1062,13 +1072,25 @@ to: web-recorded-query-names-every-run
 ```text
 primary       (run, turn, position)
 secondary     (run, surprisal)
+artifact      run (record_identity)
 family        run (record_session)
+lineage       run (parent_run_id)
+ingest order  run (ingested_at DESC, run_id DESC)
 ```
 
-The secondary index exists so the largest spikes in a run are reachable
-without pulling the run down. The family index exists so a session's runs
-are one read rather than a walk up parent references, per section 2.2, the
-session being the identity the trace's runs share. **Nothing is computed at
+The secondary index exists so the largest spikes in a run are reachable without pulling
+the run down. The family index exists so a session's runs are one read rather than a
+walk up parent references, per section 2.2, the session being the identity the trace's
+runs share.
+
+**The last four carry section 4's fifth read and this list named one of them until
+2026-09-11.** The artifact index has stood since the first migration and was missing
+here. The lineage index is new: a foreign key constrains and does not index, so a
+branch's siblings were a sequential scan under a clause that called them an index hit.
+The ingest order is new and **carries the run's identity beside the clock because the
+clock is not a total order**: `ingested_at` defaults to the transaction's, so every run
+of one ingest shares a value and a page keyed on it alone drops the rest of a tie. Found
+by the review of PR #540. **Nothing is computed at
 read time except where the query is recorded.** A value that must be
 derived is derived once at ingest and stored, because a value computed in
 the interface is a value nobody else can reproduce.
@@ -1642,49 +1664,93 @@ on a load-time sweep**, where section 5.2 has the comparison structural
 rather than byte-exact and a parting position says only that two different
 models wrote different essays.
 
-5. **Every run's tuple, filtered.** This is Record, and it is the one read whose unit is
-the set rather than a member of it. The charter's section 3.6 has that surface hold
-every run, branch and deposit with the tuple that produced it, and a chip narrows the
-set rather than naming a place, so what the surface asks for is the rows a filter admits
-and never a run it already knows. **The three above answer a reader who has a run and
-this one answers a reader who does not**, which is why the four could not serve Record
-and why no arrangement of them would: read three takes the identity as its argument.
+5. **Every run's tuple, filtered.** This is Record, and it is the one read whose unit
+   is the set rather than a member of it. The charter's section 3.6 has that surface
+   hold every run and branch with the tuple that produced it, and a chip narrows the set
+   rather than naming a place, so what the surface asks for is the rows a filter admits
+   and never a run it already knows. **The four above answer a reader who has a run or
+   an experiment, and this one answers a reader who has neither**, which is why none of
+   them could serve Record and why no arrangement of them would: read three takes a
+   run's identity as its argument and read four takes an experiment's.
 
-**It is an index hit on the columns section 2.7 already carries** and adds none: the
-record identity for an artifact's runs, the record's session for a session's family, the
-parent reference for a branch's siblings, and the ingest's own ordering for the newest
-first. **A filter this document does not index is not a chip this crate offers**, which
-keeps section 2.7's rule where the surface would otherwise spend it.
+   **The filters are four and section 2.7 indexes each.** The record identity for the
+   runs admitted under one, the record's session for a session's family, the parent
+   reference for a branch's siblings, and the ingest's order for the newest first. **Two
+   of those indexes did not exist until this act** and section 2.7 named only one of the
+   two that did, which is the state a claim of an index hit would have been false
+   against. **A filter this document does not index is not a chip this crate offers**,
+   which keeps section 2.7's rule where the surface would otherwise spend it.
 
-**The page is a bound and not a reading.** A list is walked rather than quoted, so this
-read takes a limit and a cursor and records nothing, and section 2.6's condition does
-not reach it: what that section makes quotable is a derivation over runs, and a list of
-rows the store already holds derives nothing. **A reader who wants to quote what a list
-showed quotes the runs it named**, each by the identity this read returned.
+   **An artifact's runs are a join and not this filter.** Section 2.3 has an artifact
+   carry every record identity its weights have been admitted under, so a chip naming an
+   artifact resolves that row's identities first and filters on the set of them. **The
+   filter here is one record identity**, and a surface that folded the two would show
+   one identity's runs where the operator asked for an artifact's and read the rest as
+   absent, which is what the act of 2026-09-06 separated the two identities to prevent.
 
-**The fourth read is this document returning rather than a surface
-proceeding.** The three above stood alone until 2026-09-08, when the rule
-below was met rather than bypassed: the tuple ablation and the essay
-exemplars were assembled by hand from deposits because no query answered
-them, and a sweep that cannot be read is a sweep nobody would author. The
-rule stands unchanged for the fifth.
+   **The page is a bound and not a reading.** A list is walked rather than quoted, so
+   this read takes a limit and a cursor and records nothing. **The cursor is the
+   ingest's order and the run's identity together**, because `ingested_at` defaults to
+   the transaction's clock and a whole ingest shares one value: a cursor on the
+   timestamp alone drops the rest of a tie larger than the page, and the identity breaks
+   the tie into a total order the index carries.
 
-A surface that needs a fifth query is a surface this document has not described, and it
-returns here before it is built.
+   **Section 2.6's condition reaches a derivation and not a list.** A chip is a query in
+   the charter's sense of naming what is not being seen, and section 2.6 makes quotable
+   a reading a second person reruns, which is a value derived over runs rather than the
+   rows themselves. **This read derives nothing**: every column it returns is one
+   section 2.2 already holds. So it records no row, and **a reader who wants to quote
+   what a list showed quotes the runs it named**, each by the identity this read
+   returned. The condition below is stated for the surface that derives.
 
-**The fifth read is that rule working, and it was found the way the rule intends.** This
-document counted four reads sufficient for Record until 2026-09-11, and the seat that
-came to build Record found the store could not list. Read three takes a run's identity
-as its argument, so a surface that holds every run had no query at all, and no
-arrangement of the four supplies one. **The surface returned here before it was built**
-and the read landed first.
+```graph
+node: web-a-chip-filters-only-on-an-indexed-column
+kind: assertion
+tag: review
 
-**One more is owed and named rather than discovered.** Section 2.9's plan is rendered by
-the matrix with its columns and their entries, and none of these five returns it. The
-read is owed at the act that gives the plan its schema, which is where the row it reads
-comes to exist, and section 6 says so where it counts these as sufficient. **Naming it
-here is this rule met rather than deferred**: that surface returns to this section
-before it is built, and this is the return.
+edge: asserts
+from: weaver-web
+to: web-a-chip-filters-only-on-an-indexed-column
+
+node: web-the-run-list-is-paged-and-records-nothing
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-the-run-list-is-paged-and-records-nothing
+```
+
+**The fourth read is this document returning rather than a surface proceeding.** The
+three before it stood alone until 2026-09-08, when the rule below was met rather than
+bypassed: the tuple ablation and the essay exemplars were assembled by hand from
+deposits because no query answered them, and a sweep that cannot be read is a sweep
+nobody would author.
+
+**The fifth is that rule working twice.** This document counted four reads sufficient
+for Record until 2026-09-11, and the seat that came to build Record found the store
+could not list. The surface returned here before it was built and the read landed first,
+which is the whole of what the rule below asks.
+
+A surface that needs a sixth query is a surface this document has not described, and it
+returns here before it is built. **The ordinal moves with the count**, this sentence
+having read fifth until the fifth landed, where a rule naming an ordinal that has
+arrived binds nothing.
+
+**Two are owed and named rather than discovered.** Section 2.9's plan is rendered by the
+matrix with its columns and their entries, and none of these five returns it, so that
+read is owed at the act that gives the plan its schema. **The Experiments list is the
+same shape**: read four takes an experiment's identity, so the surface that holds every
+experiment has no query either, and its read is owed at the act that builds it. **Naming
+them here is this rule met rather than deferred**, and section 6 counts these five
+against the surfaces they serve rather than against all of them.
+
+**A deposit is not a row here and Record holds one through its run.** The charter's
+section 3.6 says every run, branch and deposit, and section 2.2 has a deposit reach this
+store as the device and the engine a run's row carries, per
+`weaver-analysis-web-contract` section 2.2. **So a deposit is shown where its run is
+shown**, and a deposit beside no ingested run is outside this store entirely, which is a
+fact about the ingest's reach rather than a read this section owes.
 
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
@@ -1879,12 +1945,13 @@ with its own destination rather than a mode of a list beside it. Their
 destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** - Open a trace,
-Record, Experiments, and the returned half of Stage. **Section 4's five reads serve all
-of them but the plan**, which section 2.9 gives Stage to compose and render and which no
-read returns, its read being owed at the act that gives the plan its schema, per section
-4's own rule about a surface that needs one. **This sentence counted four until
-2026-09-11 and was wrong about Record**, which is a list and had no query: the fifth
-read is section 4's answer and this sentence moved with it.
+Record, Experiments, and the returned half of Stage. **Section 4's five reads serve Open
+a trace, Record and the returned half of Stage, and not Experiments.** That surface is a
+list and read four takes an experiment's identity, so it has no query either, and its
+read is owed at the act that builds it as the plan's is owed at the act that schemas the
+plan. **This sentence counted four reads and named every surface served until
+2026-09-11**, and it was wrong twice: about Record, which the fifth read answers, and
+about Experiments, which is named as owed rather than served.
 
 **Three surfaces author, and one of them writes more than one table.** Compose writes a
 declaration and Models writes an artifact row on import, each one table. Stage writes
@@ -2036,7 +2103,7 @@ trial record like any other.
 |---|---|
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
-| nothing is computed at read time except where the query is recorded | review, over the five reads |
+| nothing is computed at read time except where the query is recorded | review, over the four reads the crate serves, the fifth joining it with Record |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
@@ -2057,6 +2124,8 @@ trial record like any other.
 | the sentinel joins to nothing | perturbation: register the empty string as an identity, a run whose hash failed joins to an artifact it never named |
 | the record's session and digest are absent where unsent | perturbation: fill an absent digest from the landed rows, a row from a record cut short vouches for bytes nobody drained |
 | the record's session and digest agree across a run | perturbation: land a run whose generations name two sessions, the row holds two truths about which record it came from |
+| a chip filters only on a column section 2.7 indexes | review, over Record's filters: a chip on an unindexed column is a sequential scan the surface offers as though it were cheap |
+| the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
 | a plan's column registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one column and the matrix reads two arms where the operator authored one |
 | the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
