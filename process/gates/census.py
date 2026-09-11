@@ -1,45 +1,61 @@
 #!/usr/bin/env python3
-"""The census: five counts the other gates cannot see.
+"""The census: what the other enforcement devices structurally cannot see.
 
-Clippy, fmt and the test suite each verify an artifact against itself. None
-of them compares a claim in a document against a fact in code, which is the
-drift that went three weeks unnoticed in `weaver-trace-Spec` and that issue
-#558 records twenty-eight instances of.
+Clippy, fmt, the tests and the compile pins each verify an artifact against
+itself. **None compares a claim in a document against a fact in code**, which
+is the drift that stood three weeks in `weaver-trace-Spec` and that issue #558
+records thirty-three instances of.
 
-**The rule is that no number goes up, not that every number is zero.** A gate
+**The rule is that no defect is new, not that every number is zero.** A gate
 nobody can pass is a gate everyone learns to ignore, which the enforcement
-section already says of clippy. The baseline beside this file is the reading
-taken when the gate landed; `--update` moves it, and moving it upward is a
-thing an act says out loud in its commit message.
+section already says of clippy, so the backlog is a baseline rather than a
+failure. The comparison is by identity and not by count: swapping one defect
+for another of the same kind leaves the count still and is caught anyway.
 
-Run from the repository root:
-
-    python3 process/gates/census.py            # compare against the baseline
+    python3 process/gates/census.py            # against the baseline
     python3 process/gates/census.py --update   # take a new reading
+    python3 process/gates/test_census.py       # the fixture, per defect
+
+**Four bugs of this script's own are recorded here**, because each printed a
+confident wrong number and a gate that does that is worse than no gate:
+
+- A graph block declares several nodes, one stanza each. Reading the first
+  `node:` per block called seventy sound citations dangling.
+- A section 9 is the enforcement table in `weaver-web-Spec` and the failure
+  vocabulary in `weaver-spu-Spec`. The table is found by its own header.
+- `\\w` does not match a hyphen, so `compile-pin` and `compile-fail` - two of
+  the Document Format's five tags - read as untagged, and fifty four of them
+  were published in `CLAUDE.md` as a defect count.
+- Declining to read a crate's `tests/` stopped collecting the citations there
+  and moved fifteen perturbations into the uncited column. **Citing and owing
+  a header are different questions** and one walk answered both.
 """
 
 import json
 import os
 import re
 import sys
-from collections import Counter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BASELINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "census-baseline.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+BASELINE = os.path.join(HERE, "census-baseline.json")
+
+# `WeaverTools-Document-Format` fixes this vocabulary. A tag outside it is a
+# finding rather than a silent miss.
+TAGS = {"compile-pin", "compile-fail", "perturbation", "manifest", "review"}
 
 GRAPH = re.compile(r"```graph(.*?)```", re.S)
-NODE = re.compile(r"^node: ([a-z0-9-]+)$", re.M)
-KIND = re.compile(r"^kind: (\w+)$", re.M)
-TAG = re.compile(r"^tag: (\w+)$", re.M)
-CITE = re.compile(r"conforms: ([a-z0-9-]+)")
+NODE_LINE = re.compile(r"^node: (.*)$", re.M)
+NODE_OK = re.compile(r"^[a-z0-9-]+$")
+KIND = re.compile(r"^kind: ([\w-]+)$", re.M)
+TAG = re.compile(r"^tag: ([\w-]+)$", re.M)
+HEADER_CITE = re.compile(r"^//! conforms: ([a-z0-9-]+)\s*$", re.M)
+ANY_CITE = re.compile(r"conforms: ([a-z0-9-]+)")
 
-
-def walk(top, suffix):
-    for base, dirs, files in os.walk(os.path.join(ROOT, top)):
-        dirs[:] = [d for d in dirs if d not in ("target", ".git")]
-        for f in files:
-            if f.endswith(suffix):
-                yield os.path.join(base, f)
+# A build script conforms to nothing. `archive/` is not a workspace member and
+# is never compiled. Counting either gives the metric a floor nobody can
+# reach, which is the shape that teaches people to stop reading a number.
+NO_HEADER_OWED = ("build.rs",)
 
 
 def read(path):
@@ -47,51 +63,42 @@ def read(path):
         return fh.read()
 
 
-def assertions():
-    """Every `kind: assertion` node in docs, with its tag and its document.
+def members():
+    block = re.search(r"members\s*=\s*\[(.*?)\]", read(os.path.join(ROOT, "Cargo.toml")), re.S)
+    return [m.strip().strip('"') for m in block.group(1).split(",") if m.strip()]
 
-    **A graph block declares several nodes**, one stanza each, separated by a
-    blank line - so a reader of the block that takes its first `node:` reads
-    one of them and misses the rest. The first form of this script did that
-    and reported seventy citations dangling that resolve perfectly well.
+
+def docs():
+    for base, dirs, files in os.walk(os.path.join(ROOT, "docs")):
+        dirs[:] = [d for d in dirs if d != ".git"]
+        for f in sorted(files):
+            if f.endswith(".md"):
+                yield os.path.join(base, f)
+
+
+def sources():
+    """Every `.rs` a workspace member owns, and whether it owes a header.
+
+    **A test directory cites and does not owe.** An integration test is an
+    instrument, so its citations count; phase three's rule that every source
+    file carries a header is about the crate's own `src/`.
     """
-    out = {}
-    for path in walk("docs", ".md"):
-        for block in GRAPH.findall(read(path)):
-            for stanza in re.split(r"\n\s*\n", block):
-                node, kind = NODE.search(stanza), KIND.search(stanza)
-                if not node or not kind or kind.group(1) != "assertion":
+    for member in members():
+        for base, dirs, files in os.walk(os.path.join(ROOT, member)):
+            dirs[:] = [d for d in dirs if d not in ("target", "archive")]
+            for f in sorted(files):
+                if not f.endswith(".rs"):
                     continue
-                tag = TAG.search(stanza)
-                out[node.group(1)] = (path, tag.group(1) if tag else None)
-    return out
-
-
-def citations():
-    """Every `conforms:` identifier in code, and the files carrying none."""
-    cited, bare = Counter(), []
-    for path in walk("crates", ".rs"):
-        text = read(path)
-        ids = CITE.findall(text)
-        if ids:
-            cited.update(set(ids))
-        else:
-            bare.append(os.path.relpath(path, ROOT))
-    return cited, bare
+                path = os.path.join(base, f)
+                owes = f"{os.sep}src{os.sep}" in path and f not in NO_HEADER_OWED
+                yield path, owes
 
 
 def enforcement_table(path):
-    """Rows of a document's enforcement table, header excluded.
-
-    `None` where the document has no such table, which is most of them.
-    **The table is found by its own header and not by a section number**: a
-    section 9 is the enforcement table in `weaver-web-Spec` and the failure
-    vocabulary in `weaver-spu-Spec`, so a check keyed on the number reports
-    four documents in disagreement with themselves and means nothing by it.
-    """
+    """Rows of a document's enforcement table, header excluded, or `None`."""
     lines = read(path).splitlines()
     for i, line in enumerate(lines):
-        if re.match(r"^\|\s*claim\s*\|\s*instrument\s*\|", line):
+        if re.match(r"^\|\s*claim\s*\|\s*instrument\s*\|", line, re.I):
             rows = 0
             for row in lines[i + 2:]:
                 if not row.startswith("|"):
@@ -102,71 +109,106 @@ def enforcement_table(path):
 
 
 def take():
-    nodes = assertions()
-    cited, bare = citations()
+    """One reading. Every value is a sorted list of the offenders themselves,
+    so the comparison is by identity rather than by count."""
+    nodes, duplicates, malformed, odd = {}, [], [], []
 
-    dangling = sorted(i for i in cited if i not in nodes)
-    untagged = sorted(n for n, (_, t) in nodes.items() if t is None)
-    uncited_perturbations = sorted(
-        n for n, (_, t) in nodes.items() if t == "perturbation" and n not in cited
-    )
+    for path in docs():
+        rel = os.path.relpath(path, ROOT)
+        for block in GRAPH.findall(read(path)):
+            for stanza in re.split(r"\n\s*\n", block):
+                line = NODE_LINE.search(stanza)
+                if not line:
+                    continue
+                name = line.group(1).strip()
+                if not NODE_OK.match(name):
+                    malformed.append(f"{rel}: {name}")
+                    continue
+                kind = KIND.search(stanza)
+                if not kind or kind.group(1) != "assertion":
+                    continue
+                tag = TAG.search(stanza)
+                tag = tag.group(1) if tag else None
+                if tag is not None and tag not in TAGS:
+                    odd.append(f"{name} ({tag})")
+                if name in nodes:
+                    duplicates.append(f"{name}: {nodes[name][0]} and {rel}")
+                nodes[name] = (rel, tag)
 
-    # An enforcement table names one instrument per assertion its document
-    # makes, so the two counts move together or one of them was not updated.
-    mismatched = []
-    per_doc = Counter(doc for doc, _ in nodes.values())
-    for path, count in sorted(per_doc.items()):
-        if not path.endswith("-Spec.md"):
+    cited, headerless = set(), []
+    for path, owes in sources():
+        text = read(path)
+        cited |= set(ANY_CITE.findall(text))
+        if owes and not HEADER_CITE.search(text):
+            headerless.append(os.path.relpath(path, ROOT))
+
+    # **The count of tables examined is reported**, so a zero here cannot be
+    # read as corpus-wide assurance: most documents carry no such table.
+    mismatch, examined = [], 0
+    for rel in sorted({r for r, _ in nodes.values()}):
+        rows = enforcement_table(os.path.join(ROOT, rel))
+        if rows is None:
             continue
-        rows = enforcement_table(path)
-        if rows is not None and rows != count:
-            mismatched.append(f"{os.path.relpath(path, ROOT)} ({count} nodes, {rows} rows)")
+        examined += 1
+        count = sum(1 for r, _ in nodes.values() if r == rel)
+        if rows != count:
+            mismatch.append(f"{rel} ({count} nodes, {rows} rows)")
 
     return {
-        "dangling_citations": dangling,
-        "untagged_assertions": untagged,
-        "uncited_perturbations": uncited_perturbations,
-        "enforcement_table_mismatch": mismatched,
-        "sources_without_a_citation": sorted(bare),
-    }
+        "dangling_citations": sorted(i for i in cited if i not in nodes),
+        "untagged_assertions": sorted(n for n, (_, t) in nodes.items() if t is None),
+        "unknown_tags": sorted(odd),
+        "uncited_perturbations": sorted(
+            n for n, (_, t) in nodes.items() if t == "perturbation" and n not in cited
+        ),
+        "duplicate_node_ids": sorted(duplicates),
+        "malformed_node_ids": sorted(malformed),
+        "enforcement_table_mismatch": sorted(mismatch),
+        "sources_without_a_header": sorted(headerless),
+    }, examined
 
 
 def main():
-    reading = take()
-    counts = {k: len(v) for k, v in reading.items()}
+    reading, examined = take()
 
     if "--update" in sys.argv:
         with open(BASELINE, "w", encoding="utf-8") as fh:
             json.dump(reading, fh, indent=2, sort_keys=True)
             fh.write("\n")
-        print("baseline written:", json.dumps(counts))
+        print("baseline written:", json.dumps({k: len(v) for k, v in reading.items()}))
         return 0
 
     if not os.path.exists(BASELINE):
-        print("no baseline; run with --update to take the first reading", file=sys.stderr)
+        print("no baseline; run --update for the first reading", file=sys.stderr)
         return 2
 
     with open(BASELINE, encoding="utf-8") as fh:
-        was = {k: len(v) for k, v in json.load(fh).items()}
+        before = json.load(fh)
 
-    worse = False
-    for key in sorted(counts):
-        before, now = was.get(key, 0), counts[key]
-        mark = "  "
-        if now > before:
-            mark, worse = "UP", True
-        elif now < before:
-            mark = "down"
-        print(f"{mark:>4}  {key:<28} {now:>4}   (baseline {before})")
-        if now > before:
-            new = [x for x in reading[key] if x not in set(json.load(open(BASELINE))[key])]
-            for item in new[:10]:
-                print(f"        + {item}")
+    appeared_anywhere = False
+    for key in sorted(reading):
+        was = set(before.get(key, []))
+        now = reading[key]
+        appeared = [x for x in now if x not in was]
+        mark = "NEW" if appeared else ("down" if len(now) < len(was) else "")
+        print(f"{mark:>4}  {key:<28} {len(now):>4}   (baseline {len(was)})")
+        shown = appeared[:10]
+        for item in shown:
+            print(f"        + {item}")
+        if len(appeared) > len(shown):
+            print(f"        + and {len(appeared) - len(shown)} more")
+        if appeared:
+            appeared_anywhere = True
 
-    if worse:
-        print("\nA number went up. Cite it, mark its section 9 row owed, or say", file=sys.stderr)
-        print("in the act why the baseline moves, then run with --update.", file=sys.stderr)
-    return 1 if worse else 0
+    print(f"\n      enforcement tables examined  {examined}")
+
+    if appeared_anywhere:
+        print(
+            "\nSomething is new. Cite it, mark its enforcement row owed, or say in\n"
+            "the act why the baseline moves, then run with --update.",
+            file=sys.stderr,
+        )
+    return 1 if appeared_anywhere else 0
 
 
 if __name__ == "__main__":

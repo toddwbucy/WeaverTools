@@ -99,7 +99,7 @@ the file rather than trusting a version remembered from a summary.
    section 5 - the set ratifies as the complete document set for the toolless
    inference deliverable, the tool workflow's later arrival a planned re-entry.
    Checklist item 7 (quarry deletion) outlives ratification and waits on G6.
-3. **Phase three, coding.** Open, gates H1-H5 in force per Working Process
+3. **Phase three, coding.** Open, gates H1-H6 in force per Working Process
    section 6. The floor (`weaver-traits`, `weaver-types`) and the recorder
    (`weaver-trace`) are the first acts, and every source file carries a
    `//! conforms: <crate>-<slug>` header per Document Format v0.14, and code
@@ -124,7 +124,7 @@ not bought, never that none exists** - the inverse overclaim forecloses tests th
 may later want.
 
 **Gates G1-G7 run on every act** (mechanical, level discipline, graph facts, vocabulary,
-duplication authority, extraction completeness, rulings landed). H1-H5 are phase three
+duplication authority, extraction completeness, rulings landed). H1-H6 are phase three
 candidates and are not in force.
 
 **A ruling is a claim about the whole corpus.** A review finding names one sighting of its
@@ -253,7 +253,7 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**During authoring, enforcement rests on five devices and no graph.** These do not retire
+**During authoring, enforcement rests on six devices and no graph.** These do not retire
 when the graph lands - the graph indexes them, it does not replace them:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
@@ -341,17 +341,22 @@ when the graph lands - the graph indexes them, it does not replace them:
    ```text
    dangling_citations           a conforms: identifier naming no node
    uncited_perturbations        a claim whose tag says an instrument exists
-   untagged_assertions          a node no tag-based query can ever reach
+   untagged_assertions          a node no tag-based query can reach
+   unknown_tags                 a tag outside the Document Format's five
+   duplicate_node_ids           one identifier declared in two places
+   malformed_node_ids           a node: line this gate cannot read
    enforcement_table_mismatch   a document's assertions against its own table
-   sources_without_a_citation   phase three's rule, per source file
+   sources_without_a_header     phase three's rule, per source file
    ```
 
-   **The rule is that no number goes up, not that every number is zero.**
-   `process/gates/census-baseline.json` is the reading when the gate landed:
-   0, 33, 54, 0, 49. A gate nobody can pass is a gate everyone learns to
-   ignore, which item 5 already says of clippy and which is why the backlog is
-   a baseline rather than a failure. `--update` moves it, and **moving a number
-   up is a sentence in the act's commit message**, not a quiet re-reading.
+   **The rule is that no defect is new, not that every number is zero.** The
+   comparison is by identity: swapping one defect for another of the same kind
+   leaves the count still and is caught anyway. A gate nobody can pass is a
+   gate everyone learns to ignore, which item 5 already says of clippy, so the
+   backlog is a baseline rather than a failure. `--update` moves it, and
+   **moving it is a sentence in the act's commit message**, not a quiet
+   re-reading. `process/gates/census-baseline.json` carries the reading and
+   `test_census.py` a fixture holding one of each defect.
 
    **A new `tag: perturbation` node is cited by code in the same act, or its
    enforcement-table row is marked owed.** The gate counts the ones that are
@@ -360,12 +365,17 @@ when the graph lands - the graph indexes them, it does not replace them:
    assertion that phase three would code later, with nothing holding the
    receipt.
 
-   **It found two bugs in itself before it found anything else**, which is
-   worth knowing before trusting a number it prints. A graph block declares
-   several nodes and the first form read one, reporting seventy sound
-   citations as dangling. And a section 9 is the enforcement table in
-   `weaver-web-Spec` and the failure vocabulary in `weaver-spu-Spec`, so the
-   table is found by its own header and never by a section number.
+   **It was wrong four times before it had a test**, which is worth knowing
+   before trusting any number it prints, and the script records each. A graph
+   block declares several nodes and the first form read one, calling seventy
+   sound citations dangling. A section 9 is the enforcement table in
+   `weaver-web-Spec` and the failure vocabulary in `weaver-spu-Spec`. `\w`
+   does not match a hyphen, so `compile-pin` and `compile-fail` read as
+   untagged and **fifty four of them were published in this file as a defect
+   count**. And declining to read a crate's `tests/` stopped collecting the
+   citations there, moving fifteen perturbations into the uncited column -
+   **citing and owing a header are different questions** and one walk answered
+   both. There are no untagged assertions in this corpus.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
@@ -426,14 +436,30 @@ where a result printed to the session is paid for once and then paid for again
 in every later turn that carries it. Write to the scratchpad, report the count,
 read back only the rows that matter.
 
+**Cargo writes its diagnostics to stderr, so a pipe without `2>&1` discards
+what it claims to filter** and prints a clean nothing whether the command
+succeeded or failed. The enforcement section above spends a paragraph on this
+exact failure and calls the zero it prints the most expensive line in that
+section. The first form of this block dropped the redirect from three of its
+own examples.
+
 ```text
-cargo test -p <crate>     | grep -E '^test result|FAILED'
-cargo build               | grep -E '^error' -A4
-cargo clippy ... -- -D warnings | grep -cE '^crates/.*: error:'
+cargo test -p <crate> 2>&1 | grep -E '^test result|FAILED'
+cargo build 2>&1          | grep -E '^error' -A4
+cargo clippy -p <crate> --all-targets --message-format=short -- -D warnings 2>&1 \
+                          | grep -cE '^crates/.*: error:'
 git diff                  --stat first; the full diff only for the hunk in hand
 a listing                 aggregated - uniq -c, awk totals - never row by row
 a file already read       sed -n 'X,Yp', never cat
 ```
+
+**A count from a pipe is still not the command's verdict**: a crate that fails
+to compile emits no `test result` line at all, so the grep prints nothing and
+nothing reads like success. Check the exit status where the answer matters.
+
+**Never `git checkout --` a file to undo an experiment.** It restores the
+index, and an uncommitted rewrite in that file is gone. Copy the file aside
+and copy it back; this session destroyed one that way on 2026-09-11.
 
 **Grep the narrowest thing that answers the question.** `grep -c` where a
 count settles it. A path rather than a tree. One section of a Spec rather than

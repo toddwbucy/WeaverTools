@@ -10,7 +10,7 @@ moves.
 This document is the boot prompt for every fresh session on this project, in either
 seat. Read it first. Section 7 says where the work currently sits on the map.
 
-Phase three is ratified, 2026-08-04, gates H1 through H5 in force per section 6.
+Phase three is ratified, 2026-08-04, gates H1 through H6 in force per section 6.
 Code merges against them and against nothing invented at review time.
 
 ## 1. Standing rules
@@ -398,6 +398,7 @@ rather than deferring it.
 ## 6. Phase three, coding
 
 Ratified by the operator, 2026-08-04, all five gates and the three cells below.
+**H6 joined them on 2026-09-11**, the first gate added since.
 The entry gate held until that date: no crate code was written until this section
 ratified and phase two closed, because a gate invented while looking at a diff is a
 gate shaped by that diff. Both conditions are met, phase two's close reading as
@@ -428,6 +429,26 @@ local redefinition of the same shape.
 **H5, advisory pass.** The architecture seat reviews the diff against the PRD, the
 contract, the spec, and the graph, and returns advice in the standard shape. The
 implementation seat holds the merge call and answers the advice in its decision.
+
+**H6, the census.** `python3 process/gates/census.py`, run wherever clippy and fmt
+are run: before the first review pass and again after the rework, a fix being an
+act that can regress what it is fixing. **It counts what the other gates
+structurally cannot see**, each of them verifying an artifact against itself while
+none compares a claim in a document to a fact in code. **The rule is that no defect
+is new, not that every number is zero**, the checked-in baseline being the backlog
+and a deliberate increase a sentence in the act that takes it. **A new
+`tag: perturbation` node is cited by code in the same act, or its enforcement-table
+row is marked owed**; issue #558 is the backlog of the ones that are neither.
+Landed on the operator's ruling of 2026-09-11, after drift in `weaver-trace-Spec`
+stood three weeks and was found by accident.
+
+**The seat reviews twice, and the second pass reviews the rework.** Answering a
+review is itself an act: on 2026-09-11 it introduced a real defect in three pull
+requests of four, each found by the pass that came after the fixes rather than the
+one that found the originals. A second pass is not optional where the first
+produced substantive work. **Passing means no finding that changes behaviour or
+corrects a claim is unanswered**, a declined finding being answered with its reason
+on the pull request.
 
 The three cells, settled with the ratification. H2 runs as a review query against
 the graph for now, a build script being a later mechanization of the same check.
