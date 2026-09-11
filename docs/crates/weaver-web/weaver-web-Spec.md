@@ -573,20 +573,33 @@ citation of sections 2.6 through 2.8 in this document and outside it. **The grou
 stated here rather than carried by the numbering**, which is the cost of a document
 whose sections are cited by number.
 
-**An identity says which half its row came from.** A row this crate authored carries a
-key it generated, spelled as two letters naming the kind and sixteen hex: `pl-` a plan,
-`ar-` an arm, `rf-` a ref. A row this crate received keeps the identity the record
-spelled - section 2.2's run, and section 2.3's record identity, which is a digest
-computed at import. **So the shape of a key answers the question this section's first
-paragraph asks**, and answers it in the one place a reader always has, which is the
-value itself.
+**An authored row's identity says what it addresses.** A key this store generates is
+spelled as two letters naming the kind and sixteen hex: `pl-` a plan, `ar-` an arm,
+`rf-` a ref. **A row this crate received keeps the identity the record spelled** -
+section 2.2's run, whose identity is the record's and never this store's to respell.
+So a key's shape says whether its row was authored here or landed here, and says it in
+the one place a reader always has, which is the value itself.
 
-**The prefix is what a bare integer could not do.** Every authored key here was a
-sequence before 2026-09-11, so `3` was a valid plan, arm, experiment and declaration at
-once and nothing caught one handed where another was owed - not the compiler, not the
-schema, and not a link. The kind is in the value now and the schema holds it to shape,
-so a key of the wrong kind is refused at the boundary rather than resolving to a row
-that exists and is not the one meant.
+**Section 2.3 is the case that shows the rule has two axes and not one.** The artifact
+is an authored row, landed by the import of section 3.2, so the rule above reaches it -
+and the *record identity* it carries is a digest the SPU computed, which is a member
+rather than a key and is not this convention's business. **A row's half and a member's
+provenance are different questions** and the answer to one is not the answer to the
+other.
+
+**The prefix is what a bare sequence could not do.** Every authored key here was one
+before 2026-09-11, so the integer `3` was a valid plan, arm, artifact, experiment and
+declaration at once and nothing caught one handed where another was owed - not the
+compiler, not the schema, and not a link. The kind is in the value now: the schema holds
+it through a domain per kind, and the crate's key types hold it at the boundary a caller
+meets, so a key of the wrong kind is refused before a read answers `None` and a reader
+takes that for a row that is not there.
+
+**What the shape holds and what it does not.** It holds the kind. **It does not hold
+that this store generated the key**: a text key with a default is one a writer may
+supply, where the sequence it replaced could be overridden only explicitly. That is a
+real loss against what was there before, and it is stated rather than papered over,
+since the kind in the value is what the change buys and provenance is not.
 
 **The name is not the key**, for the rows that carry both. Section 2.9's arm has a name
 the operator gives and relabels, and a key that changes when a label changes is a key
@@ -594,11 +607,11 @@ that cascades through every row referring to it. **It is stated here because it 
 be retrofitted cheaply**: a key's shape is the one decision every reference to a row
 depends on, which is the same reasoning section 3.2's author member was landed under.
 
-**Two authored tables do not carry it yet.** Sections 2.4 and 2.5, the declaration and
-the staged experiment, were built before this convention and keep their sequences, so
-the rule above describes three of the five authored rows and not all of them. **A
-convention with an undeclared exception is worse than none**, so the exception is
-declared and the act that closes it is owed.
+**Three authored tables do not carry it yet.** Sections 2.3, 2.4 and 2.5 - the artifact,
+the declaration and the staged experiment - were built before this convention and keep
+their sequences, so the rule above describes three of the six authored rows and not all
+of them. **A convention with an undeclared exception is worse than none**, so the
+exception is declared and the act that closes it is owed.
 
 **The halves differ in what a rewrite means.** A recorded row is a fact
 about a run that happened, so a second write of it is a replay and must be
@@ -1315,9 +1328,9 @@ Each plan carries:
 
 Each entry of a plan carries:
 
-- **its arm**, which with the member below is its address - the arm's identity and not
-  the plan's and the arm's name together, since a name the operator relabels would
-  carry a rename into every entry beneath it
+- **its arm's identity**, which with the member below is its address, and not the plan's
+  identity paired with the arm's name, since a name the operator relabels would carry a
+  rename into every entry beneath it
 - the member of the tuple it names
 - **its disposition**, which is held or freed and is the entry's own, per the sketch's
   section 5
@@ -2415,7 +2428,7 @@ trial record like any other.
 | a chip filters only on a column section 2.7 indexes | review, over Record's filters: a chip on an unindexed column is a sequential scan the surface offers as though it were cheap |
 | the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
-| an authored identity says what it addresses, and a received one is left as the record spelled it | perturbation, at the schema: drop a shape check and a plan takes an arm's identity, which a sequence could not have refused at all |
+| an authored identity says what it addresses, and a received one is left as the record spelled it | compile-pin on the key types, and perturbation at the schema: drop a kind's domain and a plan takes an arm's identity, which a sequence could not have refused at all |
 | an arm registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one arm and the matrix reads two arms where the operator authored one |
 | a batch runs what it queues in the order it was queued in | perturbation, **owed**: drain by identity or by the state's clock, arms queued in one gesture share a timestamp and the operator's order is lost. **No instrument stands**: section 2.11 has no table and no writer yet, and the act that builds queueing builds both |
 | an arm frees at most one member | perturbation, at the schema: drop the partial index, one arm frees two and registers a sweep whose row carries one member and one value set |

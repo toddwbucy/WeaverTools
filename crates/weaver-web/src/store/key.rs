@@ -18,7 +18,58 @@
 
 use serde::{Deserialize, Serialize};
 
+/// A plan's identity, spelled `pl-` and sixteen hex per section 2.
+///
+/// An arm's identity does not resolve to a plan's, and the compiler says so
+/// rather than the database:
+///
+/// ```compile_fail
+/// use weaver_web::store::{ArmId, Store};
+/// # async fn f(store: Store, arm: ArmId) {
+/// store.plan(&arm).await.unwrap();
+/// # }
+/// ```
+///
+/// The same call with a `PlanId` compiles, which is the pin's other half:
+///
+/// ```no_run
+/// use weaver_web::store::{PlanId, Store};
+/// # async fn f(store: Store, plan: PlanId) {
+/// store.plan(&plan).await.unwrap();
+/// # }
+/// ```
+///
+/// **The kind is in the type and not only in the bytes.** The identities of
+/// section 2's authored rows are all text, so a bare `String` lets an arm's
+/// identity be handed where a plan's is owed: the schema refuses it, but not
+/// until a round trip, and a read so addressed answers `None`, which every
+/// caller reads as "no such plan" rather than as "wrong kind of key". The
+/// newtype is what makes section 2's claim - that a key of the wrong kind is
+/// refused at the boundary - true of the boundary a caller actually meets.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct PlanId(pub String);
+
+impl std::fmt::Display for PlanId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// An arm's identity, spelled `ar-` and sixteen hex per section 2.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ArmId(pub String);
+
+impl std::fmt::Display for ArmId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// A run's identity as the record spells it.
+///
+/// **It carries no prefix and that is the convention rather than an
+/// exception to it**, per section 2: a run is a row this crate received, so
+/// its identity is the record's spelling and never one this store invented.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct RunId(pub String);
 
