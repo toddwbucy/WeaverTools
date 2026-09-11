@@ -16,43 +16,50 @@ CREATE TABLE plan (
   version        BIGINT NOT NULL DEFAULT 1
 );
 
--- Spec 2.9: a column becomes at most one staged experiment and holds a
--- nullable reference to the one it became. Spec 5.1: the column has no
--- state of its own - its status is that row's state, and a null reference
--- records that it has not been registered.
+-- Spec 2.9: an arm becomes at most one staged experiment and holds a
+-- nullable reference to the one it became. Spec 5.1: the arm has no state
+-- of its own - its status is that row's state, and a null reference records
+-- that it has not been registered.
+--
+-- **The row is named for the thing and not for where it is drawn.** The
+-- document calls it a column because the matrix of the sketch draws it as
+-- one, and the same sketch draws the tuple's six members as rows - an axis
+-- that cannot grow beside one that is generated and unbounded. Turn that
+-- table and a schema naming the column would be describing a layout it does
+-- not hold. `arm` is the word the Spec already uses for the thing itself.
 --
 -- **The reference is unique**, which is what holds the claim at most once:
 -- two registrations racing on one column leave one staged experiment and
 -- the loser finds the column already registered. Without it one column
 -- would carry two frozen experiments and the matrix would read two arms
 -- where the operator authored one.
-CREATE TABLE plan_column (
+CREATE TABLE plan_arm (
   plan_id        BIGINT NOT NULL REFERENCES plan(plan_id) ON DELETE CASCADE,
-  column_key     TEXT NOT NULL,
+  arm_key        TEXT NOT NULL,
   experiment_id  BIGINT UNIQUE REFERENCES staged_experiment(experiment_id),
 
-  PRIMARY KEY (plan_id, column_key)
+  PRIMARY KEY (plan_id, arm_key)
 );
 
 -- Spec 2.9: an entry names a member of the tuple, carries its disposition,
 -- and carries the value where it is held or the value set where it is
 -- freed.
 --
--- **The disposition is the entry's own and the status is the column's.** An
--- entry that carried both could not say what a freed entry in a queued
--- column is, which is both at once.
+-- **The disposition is the entry's own and the status is the arm's.** An
+-- entry that carried both could not say what a freed entry in a queued arm
+-- is, which is both at once.
 CREATE TABLE plan_entry (
   plan_id      BIGINT NOT NULL,
-  column_key   TEXT NOT NULL,
+  arm_key      TEXT NOT NULL,
   member       TEXT NOT NULL,
 
   disposition  TEXT NOT NULL,
   held_value   JSONB,
   freed_values JSONB,
 
-  PRIMARY KEY (plan_id, column_key, member),
-  FOREIGN KEY (plan_id, column_key)
-    REFERENCES plan_column(plan_id, column_key) ON DELETE CASCADE,
+  PRIMARY KEY (plan_id, arm_key, member),
+  FOREIGN KEY (plan_id, arm_key)
+    REFERENCES plan_arm(plan_id, arm_key) ON DELETE CASCADE,
 
   CONSTRAINT plan_entry_disposition_is_held_or_freed
     CHECK (disposition IN ('held', 'freed')),
@@ -83,12 +90,12 @@ CREATE TABLE plan_entry (
            OR (jsonb_typeof(freed_values) = 'array' AND freed_values <> '[]'::jsonb))
 );
 
--- Spec 2.9: a column frees at most one member and holds the rest, section
--- 5.4 having a sweep name one member and its value set. A column that frees
--- none is the ordinary point experiment rather than a sweep, so the bound
--- is one and not exactly one.
-CREATE UNIQUE INDEX plan_column_frees_at_most_one_member
-  ON plan_entry (plan_id, column_key) WHERE disposition = 'freed';
+-- Spec 2.9: an arm frees at most one member and holds the rest, section 5.4
+-- having a sweep name one member and its value set. An arm that frees none
+-- is the ordinary point experiment rather than a sweep, so the bound is one
+-- and not exactly one.
+CREATE UNIQUE INDEX plan_arm_frees_at_most_one_member
+  ON plan_entry (plan_id, arm_key) WHERE disposition = 'freed';
 
 -- Spec 2.10: a named reference from a person to a run, and the one thing
 -- this document takes from a commit graph. A run reachable from no root is

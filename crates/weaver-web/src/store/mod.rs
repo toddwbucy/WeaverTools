@@ -26,7 +26,14 @@ pub mod read;
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{PositionKey, RunId, TurnId};
-pub use plan::{Column, Disposition, Entry, Plan};
+// **`plan::Arm` is not re-exported and `experiment::Arm` is.** The word
+// carries two units in this corpus: a plan's arm is a candidate experiment,
+// one per column of the matrix, and a sweep's arm is one value of that
+// experiment's frozen set, one per run it produced. Section 2.9 has the
+// first reach its runs through the second. Exporting both bare would put
+// two units under one name at the crate's front door, so the plan's stays
+// module-qualified and reads `plan::Arm` where it is used.
+pub use plan::{Disposition, Entry, Plan, Registration};
 pub use read::{Alternatives, Chip, Cursor, PositionPoint, RunPage, RunTuple};
 
 use sqlx::PgPool;

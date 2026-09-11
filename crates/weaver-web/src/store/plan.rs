@@ -3,22 +3,22 @@
 //! **The sixth read of `weaver-web-Spec` section 4: one plan whole.**
 //!
 //! Section 4 named this read owed rather than discovered - "section 2.9's
-//! plan is rendered by the matrix with its columns and their entries, and
+//! plan is rendered by the matrix with its arms and their entries, and
 //! none of these five returns it, so that read is owed at the act that
 //! gives the plan its schema." This is that act, and the read lands with
 //! the schema rather than after the surface that wants it, which is the
 //! rule section 4 states about itself working a third time.
 //!
-//! **It derives nothing.** A column's status is not computed here: section
-//! 5.1 has the column take the five states of the staged experiment it
+//! **It derives nothing.** A arm's status is not computed here: section
+//! 5.1 has the arm take the five states of the staged experiment it
 //! became, so the status is that row's `state` read across the reference,
-//! and a column whose reference is null has not been registered - which the
+//! and a arm whose reference is null has not been registered - which the
 //! null itself records rather than a sixth word this document would have to
 //! name.
 //!
-//! **A column is not a run.** Section 2.9 has a column reach its runs
+//! **A arm is not a run.** Section 2.9 has a arm reach its runs
 //! through its staged experiment and never directly, so nothing here joins
-//! a column to `run`.
+//! a arm to `run`.
 
 use std::collections::HashMap;
 
@@ -27,45 +27,51 @@ use sqlx::Row as _;
 
 use super::{ExperimentState, Store};
 
-/// What an operator is still composing: one parent run, and the columns
+/// What an operator is still composing: one parent run, and the arms
 /// each of which becomes at most one staged experiment.
 #[derive(Debug, Clone, Serialize)]
 pub struct Plan {
     pub plan: i64,
-    /// The run every column branches from, per section 2.9.
+    /// The run every arm branches from, per section 2.9.
     pub parent_run: String,
     /// Per section 3.2, and null where the store could not name one. **It
     /// never means the operator.**
     pub author: Option<String>,
     pub version: i64,
-    pub columns: Vec<Column>,
+    pub arms: Vec<Arm>,
 }
 
-/// One column of a plan, with the disposition of every member it names.
+/// One arm of a plan, with the disposition of every member it names: a
+/// candidate experiment, drawn as one column of the matrix.
+///
+/// **This is not `experiment::Arm`**, which is one value of a frozen sweep
+/// with the run it produced. Section 2.9 has this one reach its runs through
+/// its staged experiment and never directly, so a plan's arm is a set of
+/// sweep arms and never one of them.
 #[derive(Debug, Clone, Serialize)]
-pub struct Column {
+pub struct Arm {
     pub key: String,
     /// **The registration is one fact and not two nullable members.** A
-    /// column that became a staged experiment has that row's identity and
-    /// that row's state together, and a column that did not has neither, so
+    /// arm that became a staged experiment has that row's identity and
+    /// that row's state together, and a arm that did not has neither, so
     /// an experiment without a status and a status without an experiment are
     /// states section 5.1 does not admit and this type cannot hold. It is
-    /// the argument `Disposition` below makes, applied to the column.
+    /// the argument `Disposition` below makes, applied to the arm.
     pub registration: Option<Registration>,
     pub entries: Vec<Entry>,
 }
 
-/// What a column became, where it has been registered.
+/// What a arm became, where it has been registered.
 #[derive(Debug, Clone, Serialize)]
 pub struct Registration {
     pub experiment: i64,
-    /// **The column's status is the staged experiment's state**, per section
+    /// **The arm's status is the staged experiment's state**, per section
     /// 5.1, which is why this document names no sixth vocabulary for the
     /// matrix to render.
     pub status: ExperimentState,
 }
 
-/// One member of the tuple, as this column disposes of it.
+/// One member of the tuple, as this arm disposes of it.
 #[derive(Debug, Clone, Serialize)]
 pub struct Entry {
     pub member: String,
@@ -83,11 +89,11 @@ pub enum Disposition {
     Freed { values: Vec<serde_json::Value> },
 }
 
-/// The plan, its columns, and each column's entries. `None` where no plan
+/// The plan, its arms, and each arm's entries. `None` where no plan
 /// carries this identity.
 ///
-/// **The columns come back by key in byte order, which is not the order they
-/// were authored.** Section 2.9 gives a plan its columns and says nothing
+/// **The arms come back by key in byte order, which is not the order they
+/// were authored.** Section 2.9 gives a plan its arms and says nothing
 /// about their order, so the store records none and this read cannot return
 /// one; what it can do is return the same order on every box, which an ICU
 /// collation does not - `col-10` sorts before `col-2` and punctuation is
@@ -100,12 +106,12 @@ pub enum Disposition {
 /// collation buys and nothing more.
 ///
 /// **Three statements under one snapshot, each an index hit**: the plan by
-/// its key, the columns by the plan's, and the entries by the plan's.
+/// its key, the arms by the plan's, and the entries by the plan's.
 ///
 /// **The snapshot and not the transaction is what makes it one read.** At
 /// read committed - this server's default - every statement takes a fresh
 /// snapshot, so wrapping the three in a transaction leaves them three reads
-/// and a column committed between the second and the third is visible to one
+/// and a arm committed between the second and the third is visible to one
 /// statement and not the other. The isolation is raised to repeatable read,
 /// which takes the snapshot at the first statement and holds it.
 ///
@@ -114,12 +120,12 @@ pub enum Disposition {
 const SELECT_PLAN: &str =
     "SELECT plan_id, parent_run_id, author, version FROM plan WHERE plan_id = $1";
 
-const SELECT_COLUMNS: &str = "SELECT c.column_key, c.experiment_id, e.state \
-     FROM plan_column c LEFT JOIN staged_experiment e ON e.experiment_id = c.experiment_id \
-     WHERE c.plan_id = $1 ORDER BY c.column_key COLLATE \"C\"";
+const SELECT_ARMS: &str = "SELECT c.arm_key, c.experiment_id, e.state \
+     FROM plan_arm c LEFT JOIN staged_experiment e ON e.experiment_id = c.experiment_id \
+     WHERE c.plan_id = $1 ORDER BY c.arm_key COLLATE \"C\"";
 
-const SELECT_ENTRIES: &str = "SELECT column_key, member, disposition, held_value, freed_values \
-     FROM plan_entry WHERE plan_id = $1 ORDER BY column_key COLLATE \"C\", member";
+const SELECT_ENTRIES: &str = "SELECT arm_key, member, disposition, held_value, freed_values \
+     FROM plan_entry WHERE plan_id = $1 ORDER BY arm_key COLLATE \"C\", member";
 
 impl Store {
     /// Read one plan whole, per section 4's sixth read.
@@ -128,7 +134,7 @@ impl Store {
         // **A transaction is not a snapshot at read committed**, which is
         // this server's default: there, every statement takes a new one, so
         // three statements in one transaction are still three snapshots and
-        // a column committed between the second and the third is visible to
+        // a arm committed between the second and the third is visible to
         // one and not the other. Repeatable read takes the snapshot once, at
         // the first statement, and the three become one read.
         sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
@@ -143,14 +149,14 @@ impl Store {
             return Ok(None);
         };
 
-        let mut columns: Vec<Column> = sqlx::query(SELECT_COLUMNS)
+        let mut arms: Vec<Arm> = sqlx::query(SELECT_ARMS)
             .bind(plan)
             .fetch_all(&mut *tx)
             .await?
             .into_iter()
             .map(|r| {
                 // The two arrive together or not at all: the join is on the
-                // column's reference, so a state with no experiment is not a
+                // arm's reference, so a state with no experiment is not a
                 // row this query can produce.
                 let status: Option<String> = r.get("state");
                 let registration = match (r.get::<Option<i64>, _>("experiment_id"), status) {
@@ -169,19 +175,19 @@ impl Store {
                     }),
                     (None, None) => None,
                     (experiment, state) => anyhow::bail!(
-                        "a column is registered or it is not: experiment {experiment:?} with \
+                        "a arm is registered or it is not: experiment {experiment:?} with \
                          state {state:?}"
                     ),
                 };
-                Ok(Column {
-                    key: r.get("column_key"),
+                Ok(Arm {
+                    key: r.get("arm_key"),
                     registration,
                     entries: Vec::new(),
                 })
             })
             .collect::<anyhow::Result<_>>()?;
 
-        let at: HashMap<String, usize> = columns
+        let at: HashMap<String, usize> = arms
             .iter()
             .enumerate()
             .map(|(i, c)| (c.key.clone(), i))
@@ -192,7 +198,7 @@ impl Store {
             .fetch_all(&mut *tx)
             .await?
         {
-            let key: String = r.get("column_key");
+            let key: String = r.get("arm_key");
             let disposition: String = r.get("disposition");
             // The schema's own check holds that a held entry carries a value
             // and a freed one carries a set, so an arm that found neither
@@ -219,14 +225,14 @@ impl Store {
                 }
                 other => anyhow::bail!("a disposition the schema does not admit: {other}"),
             };
-            // **An entry whose column is absent is an error and not a
+            // **An entry whose arm is absent is an error and not a
             // silence.** Inside one transaction it cannot happen, which is
             // the point: if it ever does, the transaction is not holding and
             // a plan would come back quietly missing entries.
             let Some(&i) = at.get(&key) else {
-                anyhow::bail!("an entry names column {key}, which this plan's read did not return");
+                anyhow::bail!("an entry names arm {key}, which this plan's read did not return");
             };
-            columns[i].entries.push(Entry {
+            arms[i].entries.push(Entry {
                 member: r.get("member"),
                 disposition,
             });
@@ -237,7 +243,7 @@ impl Store {
             parent_run: row.get("parent_run_id"),
             author: row.get("author"),
             version: row.get("version"),
-            columns,
+            arms,
         }))
     }
 }
@@ -249,7 +255,7 @@ mod tests {
 
     /// Seed a plan whose parent is a run of this invocation's own, and hand
     /// back the plan's key. **The rows are this run's alone**: the watches
-    /// below count columns and entries, so anything else carrying the same
+    /// below count arms and entries, so anything else carrying the same
     /// plan would be counted as though this read returned it.
     async fn a_plan(s: &Store, tag: &str) -> i64 {
         sqlx::query(
@@ -280,8 +286,8 @@ mod tests {
         )
     }
 
-    /// The sixth read returns a plan with its columns and their entries, and
-    /// **a column's status is the staged experiment's state or is absent**,
+    /// The sixth read returns a plan with its arms and their entries, and
+    /// **a arm's status is the staged experiment's state or is absent**,
     /// per section 5.1.
     ///
     /// conforms: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
@@ -295,7 +301,7 @@ mod tests {
             .await
             .unwrap();
 
-        // One column registered, one not. The registered one is what makes
+        // One arm registered, one not. The registered one is what makes
         // the status a read across the reference rather than a member.
         let experiment: i64 = sqlx::query_scalar(
             "INSERT INTO staged_experiment (state, question, parent_run_id) \
@@ -306,7 +312,7 @@ mod tests {
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO plan_column (plan_id, column_key, experiment_id) \
+            "INSERT INTO plan_arm (plan_id, arm_key, experiment_id) \
              VALUES ($1, 'arm-a', $2), ($1, 'arm-b', NULL)",
         )
         .bind(plan)
@@ -315,7 +321,7 @@ mod tests {
         .await
         .unwrap();
         sqlx::query(
-            "INSERT INTO plan_entry (plan_id, column_key, member, disposition, held_value, freed_values) \
+            "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, held_value, freed_values) \
              VALUES ($1, 'arm-a', 'sampler', 'freed', NULL, '[{\"top_p\": 0.9}, {\"top_p\": 0.95}]'), \
                     ($1, 'arm-a', 'device', 'held', '\"cuda:0\"', NULL), \
                     ($1, 'arm-b', 'device', 'held', '\"cuda:1\"', NULL)",
@@ -326,33 +332,33 @@ mod tests {
         .unwrap();
 
         let read = s.plan(plan).await.unwrap().expect("the plan is returned");
-        assert_eq!(read.parent_run, tag, "the run every column branches from");
+        assert_eq!(read.parent_run, tag, "the run every arm branches from");
         assert_eq!(read.author.as_deref(), Some("todd"));
-        assert_eq!(read.columns.len(), 2, "both columns, registered or not");
+        assert_eq!(read.arms.len(), 2, "both arms, registered or not");
 
-        let a = &read.columns[0];
+        let a = &read.arms[0];
         assert_eq!(a.key, "arm-a");
         let registered = a.registration.as_ref().expect("arm-a is registered");
         assert_eq!(registered.experiment, experiment);
-        // Perturbation: read the status from the column's own row and there
-        // is nothing to read, the column having no state of its own. Drop
-        // the join and the registration is absent while the column is
+        // Perturbation: read the status from the arm's own row and there
+        // is nothing to read, the arm having no state of its own. Drop
+        // the join and the registration is absent while the arm is
         // registered.
         assert_eq!(
             registered.status,
             ExperimentState::Registered,
-            "the column's status is the experiment's state"
+            "the arm's status is the experiment's state"
         );
-        assert_eq!(a.entries.len(), 2, "both members this column names");
+        assert_eq!(a.entries.len(), 2, "both members this arm names");
 
-        let b = &read.columns[1];
+        let b = &read.arms[1];
         assert_eq!(b.key, "arm-b");
-        // **A null reference records that the column was never registered**,
+        // **A null reference records that the arm was never registered**,
         // which is why no sixth word is named for it - and the identity and
         // the status go absent together because they are one member.
         assert!(
             b.registration.is_none(),
-            "an unregistered column carries no registration"
+            "an unregistered arm carries no registration"
         );
 
         // The value travels with the disposition rather than beside it.
@@ -393,7 +399,7 @@ mod tests {
         assert_eq!(after, recorded, "a plan is read rather than quoted");
     }
 
-    /// **The three statements are one snapshot**, so a column committed
+    /// **The three statements are one snapshot**, so a arm committed
     /// while the read is in flight is invisible to all three rather than to
     /// some of them.
     ///
@@ -409,7 +415,7 @@ mod tests {
         let Some(s) = store().await else { return };
         let tag = tag("snap");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm-a')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm-a')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -420,21 +426,21 @@ mod tests {
             .execute(&mut *tx)
             .await
             .unwrap();
-        let before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+        let before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
             .bind(plan)
             .fetch_one(&mut *tx)
             .await
             .unwrap();
-        assert_eq!(before, 1, "one column when the snapshot was taken");
+        assert_eq!(before, 1, "one arm when the snapshot was taken");
 
         // Another connection entirely, committing between the statements.
-        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm-b')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm-b')")
             .bind(plan)
             .execute(&s.pool)
             .await
             .expect("the writer commits");
 
-        let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+        let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
             .bind(plan)
             .fetch_one(&mut *tx)
             .await
@@ -445,14 +451,14 @@ mod tests {
         );
         tx.rollback().await.unwrap();
 
-        // And the writer's column is really there, so the watch is about
+        // And the writer's arm is really there, so the watch is about
         // the snapshot rather than about a write that never landed.
-        let now: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_column WHERE plan_id = $1")
+        let now: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
             .bind(plan)
             .fetch_one(&s.pool)
             .await
             .unwrap();
-        assert_eq!(now, 2, "outside the snapshot both columns stand");
+        assert_eq!(now, 2, "outside the snapshot both arms stand");
     }
 
     /// **A ref names a run and keeps it**, per section 2.10, and this is the
@@ -499,20 +505,20 @@ mod tests {
         );
     }
 
-    /// **A column frees at most one member**, per section 2.9, section 5.4
+    /// **A arm frees at most one member**, per section 2.9, section 5.4
     /// having a sweep name one member and its value set.
     ///
-    /// Perturbation: drop `plan_column_frees_at_most_one_member` and a
-    /// column frees two, which is a sweep of a set the sweep's own row
+    /// Perturbation: drop `plan_arm_frees_at_most_one_member` and a
+    /// arm frees two, which is a sweep of a set the sweep's own row
     /// cannot carry.
     ///
-    /// conforms: web-a-column-frees-at-most-one-member
+    /// conforms: web-a-arm-frees-at-most-one-member
     #[tokio::test]
     async fn a_column_frees_at_most_one_member() {
         let Some(s) = store().await else { return };
         let tag = tag("free");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -521,7 +527,7 @@ mod tests {
             let pool = s.pool.clone();
             async move {
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, freed_values) \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, freed_values) \
                      VALUES ($1, 'arm', $2, 'freed', '[1, 2]')",
                 )
                 .bind(plan)
@@ -539,14 +545,14 @@ mod tests {
         assert!(
             second
                 .to_string()
-                .contains("plan_column_frees_at_most_one_member"),
+                .contains("plan_arm_frees_at_most_one_member"),
             "refused by the wrong rule: {second}"
         );
 
-        // A column holding the rest is the ordinary case and is not touched
+        // A arm holding the rest is the ordinary case and is not touched
         // by the bound: the index is partial on the freed disposition.
         sqlx::query(
-            "INSERT INTO plan_entry (plan_id, column_key, member, disposition, held_value) \
+            "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, held_value) \
              VALUES ($1, 'arm', 'device', 'held', '\"cuda:0\"'), \
                     ($1, 'arm', 'engine', 'held', '{}')",
         )
@@ -556,11 +562,11 @@ mod tests {
         .expect("held members are unbounded");
     }
 
-    /// **A column registers at most once**, per section 2.9, the reference
-    /// being what holds the claim: two columns cannot reach one staged
+    /// **A arm registers at most once**, per section 2.9, the reference
+    /// being what holds the claim: two arms cannot reach one staged
     /// experiment.
     ///
-    /// This is the schema's half of `web-a-column-registers-at-most-once`.
+    /// This is the schema's half of `web-a-arm-registers-at-most-once`.
     /// **The whole of that assertion is the registration write**, which
     /// section 5.1 has set the reference only where it was null and in the
     /// same transaction as the staged experiment, and which lands with
@@ -580,16 +586,14 @@ mod tests {
         .fetch_one(&s.pool)
         .await
         .unwrap();
-        sqlx::query(
-            "INSERT INTO plan_column (plan_id, column_key, experiment_id) VALUES ($1, 'a', $2)",
-        )
-        .bind(plan)
-        .bind(experiment)
-        .execute(&s.pool)
-        .await
-        .expect("the first column claims it");
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key, experiment_id) VALUES ($1, 'a', $2)")
+            .bind(plan)
+            .bind(experiment)
+            .execute(&s.pool)
+            .await
+            .expect("the first arm claims it");
         let second = sqlx::query(
-            "INSERT INTO plan_column (plan_id, column_key, experiment_id) VALUES ($1, 'b', $2)",
+            "INSERT INTO plan_arm (plan_id, arm_key, experiment_id) VALUES ($1, 'b', $2)",
         )
         .bind(plan)
         .bind(experiment)
@@ -597,17 +601,17 @@ mod tests {
         .await
         .expect_err("the second is refused");
         assert!(
-            second.to_string().contains("plan_column_experiment_id_key"),
+            second.to_string().contains("plan_arm_experiment_id_key"),
             "refused by the wrong rule: {second}"
         );
 
-        // Two unregistered columns are the ordinary case: the uniqueness is
+        // Two unregistered arms are the ordinary case: the uniqueness is
         // over the reference and nulls do not collide.
-        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'c'), ($1, 'd')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'c'), ($1, 'd')")
             .bind(plan)
             .execute(&s.pool)
             .await
-            .expect("unregistered columns do not collide");
+            .expect("unregistered arms do not collide");
     }
 
     /// **An entry states the value its disposition names**, per section 2.9,
@@ -624,7 +628,7 @@ mod tests {
         let Some(s) = store().await else { return };
         let tag = tag("state");
         let plan = a_plan(&s, &tag).await;
-        sqlx::query("INSERT INTO plan_column (plan_id, column_key) VALUES ($1, 'arm')")
+        sqlx::query("INSERT INTO plan_arm (plan_id, arm_key) VALUES ($1, 'arm')")
             .bind(plan)
             .execute(&s.pool)
             .await
@@ -636,13 +640,13 @@ mod tests {
         // Each case names the rule that must refuse it. Three different
         // constraints back these five, so an assertion that only asked for
         // an error could not tell the value check from the disposition
-        // check, nor either from a column name typed wrong.
+        // check, nor either from a arm name typed wrong.
         for (member, rule, refused) in [
             (
                 "held-with-no-value",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition) \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition) \
                      VALUES ($1, 'arm', $2, 'held')",
                 ),
             ),
@@ -650,7 +654,7 @@ mod tests {
                 "freed-with-no-set",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition) \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition) \
                      VALUES ($1, 'arm', $2, 'freed')",
                 ),
             ),
@@ -658,7 +662,7 @@ mod tests {
                 "held-carrying-a-set",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
                      held_value, freed_values) VALUES ($1, 'arm', $2, 'held', '1', '[1]')",
                 ),
             ),
@@ -666,7 +670,7 @@ mod tests {
                 "freed-whose-set-is-not-an-array",
                 "plan_entry_freed_values_is_an_array",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
                      freed_values) VALUES ($1, 'arm', $2, 'freed', '1')",
                 ),
             ),
@@ -674,7 +678,7 @@ mod tests {
                 "a-disposition-of-its-own",
                 "plan_entry_disposition_is_held_or_freed",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
                      held_value) VALUES ($1, 'arm', $2, 'moved', '1')",
                 ),
             ),
@@ -684,17 +688,17 @@ mod tests {
                 "held-whose-value-is-json-null",
                 "plan_entry_states_the_value_its_disposition_names",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
                      held_value) VALUES ($1, 'arm', $2, 'held', 'null')",
                 ),
             ),
             // A sweep is one member **and its value set**, so a freed member
-            // over no values would register a column with no arms.
+            // over no values would register a arm with no arms.
             (
                 "freed-over-no-values",
                 "plan_entry_freed_values_is_an_array",
                 sqlx::query(
-                    "INSERT INTO plan_entry (plan_id, column_key, member, disposition, \
+                    "INSERT INTO plan_entry (plan_id, arm_key, member, disposition, \
                      freed_values) VALUES ($1, 'arm', $2, 'freed', '[]')",
                 ),
             ),
