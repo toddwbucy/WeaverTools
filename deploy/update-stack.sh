@@ -110,18 +110,25 @@ BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
   | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')/release
 [ -d "$BUILT" ] || BUILT="target/release"
 
-# ------------------------------------------------------------------- 3. build
+# -------------------------------------------------------------------- 3. test
+say "test"
+# **The test runs before the build, so it cannot overwrite what the build
+# produced.** It takes a narrower feature set by necessity, `weaver-spu` not
+# being among its selected packages, and a narrower set resolves features
+# differently and recompiles the harness. Run after the build it rewrote both
+# worker binaries, so what the plan compared and the install copied was not
+# what the recorded build command made. Measured: both came back carrying
+# this step's timestamp and a digest other than the build's.
+cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analysis \
+  --features weaver-harness/pyworker 2>&1 | grep -E '^test result' | \
+  awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
+
+# ------------------------------------------------------------------- 4. build
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
   cargo build --release --locked --workspace \
     --features weaver-spu/cuda,weaver-harness/pyworker
 printf '  ok\n'
-
-# -------------------------------------------------------------------- 4. test
-say "test"
-cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analysis \
-  --features weaver-harness/pyworker 2>&1 | grep -E '^test result' | \
-  awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
 
 # --------------------------------------------------------------------- 5. plan
 say "plan"
