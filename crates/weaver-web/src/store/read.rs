@@ -96,6 +96,43 @@ pub struct RunTuple {
     pub ingested_at: DateTime<Utc>,
 }
 
+/// A chip, per `weaver-web-Spec` section 4's fifth read: a filter the
+/// document indexes, and **a filter it does not index is not a chip this
+/// crate offers**. Each variant names a column section 2.7 carries an index
+/// for, which is what keeps the surface's promise of a cheap list honest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Chip {
+    /// One record identity, per section 2.7's artifact index. **This is not
+    /// an artifact**: section 2.3 has an artifact carry every identity its
+    /// weights were admitted under, so a surface asking for an artifact's
+    /// runs resolves that row's identities first and asks once per identity.
+    RecordIdentity(String),
+    /// A session's family, per section 2.7's family index.
+    Session(String),
+    /// A parent's branches, per section 2.7's lineage index.
+    Branches(RunId),
+}
+
+/// The page's key: **the ingest's order and the run's identity together**,
+/// per section 4. `ingested_at` defaults to the transaction's clock, so a
+/// whole ingest shares one value and a cursor on the timestamp alone would
+/// drop the rest of a tie larger than the page. The identity breaks the tie
+/// into the total order section 2.7's index carries.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cursor {
+    pub ingested_at: DateTime<Utc>,
+    pub run: RunId,
+}
+
+/// One page of read five. `next` is `None` where the page reached the end
+/// of what the filter admits, and is the key to resume from otherwise.
+#[derive(Debug, Clone, Serialize)]
+pub struct RunPage {
+    pub runs: Vec<RunTuple>,
+    #[serde(skip)]
+    pub next: Option<Cursor>,
+}
+
 impl Store {
     /// **Read one.** One position's alternatives, addressed by the whole key.
     pub async fn alternatives_at(&self, key: &PositionKey) -> anyhow::Result<Option<Alternatives>> {
@@ -162,6 +199,73 @@ impl Store {
             .fetch_optional(&self.pool)
             .await?;
         Ok(row.map(run_tuple_from_row))
+    }
+
+    /// **Read five.** Every run's tuple, filtered and paged. The one read
+    /// whose unit is the set rather than a member of it, per
+    /// `weaver-web-Spec` section 4, and the only one that answers a reader
+    /// who has neither a run nor an experiment.
+    ///
+    /// **It derives nothing and records nothing.** Every column it returns
+    /// is one section 2.2 already holds, so section 2.6's condition does not
+    /// reach it: what that section makes quotable is a value derived over
+    /// runs, and a list of rows the store already holds derives none.
+    ///
+    /// The page asks for one row more than the caller wanted. **The extra
+    /// row is discarded and the cursor is the last row kept**, because the
+    /// next page resumes strictly below its cursor: keying on the extra row
+    /// would skip exactly that row, which is the off-by-one this read's own
+    /// watch caught before it shipped. `next` is `Some` exactly when a
+    /// further row exists rather than whenever the page came back full.
+    pub async fn runs(
+        &self,
+        chip: Option<&Chip>,
+        limit: u32,
+        after: Option<&Cursor>,
+    ) -> anyhow::Result<RunPage> {
+        // The row-value comparison is what makes the cursor exact and what
+        // the composite index of section 2.7 answers: a page resumes below
+        // the pair it was handed and never below the timestamp alone.
+        let (identity, session, parent) = match chip {
+            Some(Chip::RecordIdentity(v)) => (Some(v.as_str()), None, None),
+            Some(Chip::Session(v)) => (None, Some(v.as_str()), None),
+            Some(Chip::Branches(run)) => (None, None, Some(run.0.as_str())),
+            None => (None, None, None),
+        };
+        let asked = limit.saturating_add(1) as i64;
+        let rows = sqlx::query(
+            "SELECT * FROM run_tuple \
+             WHERE ($1::text IS NULL OR record_identity = $1) \
+               AND ($2::text IS NULL OR record_session = $2) \
+               AND ($3::text IS NULL OR parent_run_id = $3) \
+               AND ($4::timestamptz IS NULL \
+                    OR (ingested_at, run_id) < ($4, $5)) \
+             ORDER BY ingested_at DESC, run_id DESC \
+             LIMIT $6",
+        )
+        .bind(identity)
+        .bind(session)
+        .bind(parent)
+        .bind(after.map(|c| c.ingested_at))
+        .bind(after.map(|c| c.run.0.as_str()))
+        .bind(asked)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut runs: Vec<RunTuple> = rows.into_iter().map(run_tuple_from_row).collect();
+        let further = runs.len() as i64 == asked;
+        if further {
+            // The extra row proved a further page exists and is not part of
+            // this one. It is dropped rather than kept as the key: the next
+            // page resumes strictly below its cursor, so keying on this row
+            // would skip it.
+            runs.pop();
+        }
+        let next = further.then(|| runs.last()).flatten().map(|last| Cursor {
+            ingested_at: last.ingested_at,
+            run: last.run.clone(),
+        });
+        Ok(RunPage { runs, next })
     }
 
     /// **Read four.** One experiment's value set, each value with its run
@@ -300,7 +404,7 @@ fn run_tuple_from_row(r: sqlx::postgres::PgRow) -> RunTuple {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     //! These run against a live PostgreSQL named by `DATABASE_URL`, because
     //! a read over a schema is tested against the schema or not at all.
     //! Without the variable they pass by not running and say so, so a box
@@ -310,7 +414,7 @@ mod tests {
     use crate::store::Registered;
     use serde_json::json;
 
-    async fn store() -> Option<Store> {
+    pub(crate) async fn store() -> Option<Store> {
         let Ok(url) = std::env::var("DATABASE_URL") else {
             eprintln!(
                 "skipped: DATABASE_URL is not set, and a read over a schema is tested against one"
@@ -553,6 +657,117 @@ mod tests {
         assert!(
             err.to_string().contains("run_record_digest_is_sha256_hex"),
             "refused by the wrong rule: {err}"
+        );
+    }
+
+    /// **Read five is bounded, ordered, and filtered on what is indexed.**
+    ///
+    /// The tie is the point: every run here is seeded in one transaction, so
+    /// `ingested_at` defaults to one clock value for all of them, which is
+    /// the case section 4 says a cursor on the timestamp alone would break.
+    /// A page of two over a tie of five walks all five and repeats none.
+    ///
+    /// conforms: web-the-run-list-is-paged-and-records-nothing
+    #[tokio::test]
+    async fn read_five_pages_a_tie_whole_and_records_nothing() {
+        let Some(s) = store().await else { return };
+        for id in ["t-a", "t-b", "t-c", "t-d", "t-e"] {
+            sqlx::query(
+                "INSERT INTO run (run_id, record_identity, sampler, boundary_set, record_session) \
+                 VALUES ($1, 'TIE', '{}', '[]', 'sess-tie') ON CONFLICT (run_id) DO NOTHING",
+            )
+            .bind(id)
+            .execute(&s.pool)
+            .await
+            .unwrap();
+        }
+        let chip = Chip::Session("sess-tie".into());
+        let mut seen: Vec<String> = Vec::new();
+        let mut cursor = None;
+        for _ in 0..6 {
+            let page = s.runs(Some(&chip), 2, cursor.as_ref()).await.unwrap();
+            assert!(page.runs.len() <= 2, "the limit bounds the page");
+            seen.extend(page.runs.iter().map(|r| r.run.0.clone()));
+            match page.next {
+                Some(next) => cursor = Some(next),
+                None => break,
+            }
+        }
+        // Perturbation: page on `ingested_at` alone and this walk returns
+        // two of the five and then stops, the tie being larger than the
+        // page. The identity in the cursor is what carries it through.
+        assert_eq!(seen.len(), 5, "every row of the tie is walked: {seen:?}");
+        let mut sorted = seen.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), 5, "and none is repeated: {seen:?}");
+
+        // The read records nothing. Perturbation: write a section 2.6 row
+        // per page and this count is five rather than zero, section 2.6
+        // filling with a list nobody reruns.
+        let queries: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM recorded_query")
+            .fetch_one(&s.pool)
+            .await
+            .unwrap();
+        assert_eq!(queries, 0, "a list is walked rather than quoted");
+    }
+
+    /// Each chip filters on the column section 2.7 indexes for it, and a
+    /// read with no chip admits every run.
+    ///
+    /// conforms: web-a-chip-filters-only-on-an-indexed-column
+    #[tokio::test]
+    async fn read_five_filters_on_each_indexed_column() {
+        let Some(s) = store().await else { return };
+        seed_run(&s, "f-parent", None, None).await;
+        seed_run(&s, "f-child", Some("f-parent"), Some(9)).await;
+        sqlx::query(
+            "UPDATE run SET record_identity = 'F-REC', record_session = 'sess-f' \
+             WHERE run_id IN ('f-parent', 'f-child')",
+        )
+        .execute(&s.pool)
+        .await
+        .unwrap();
+
+        let by_parent = s
+            .runs(Some(&Chip::Branches(RunId("f-parent".into()))), 10, None)
+            .await
+            .unwrap();
+        assert_eq!(
+            by_parent
+                .runs
+                .iter()
+                .map(|r| r.run.0.as_str())
+                .collect::<Vec<_>>(),
+            ["f-child"],
+            "the lineage chip returns a parent's branches and not the parent"
+        );
+
+        let by_session = s
+            .runs(Some(&Chip::Session("sess-f".into())), 10, None)
+            .await
+            .unwrap();
+        assert_eq!(by_session.runs.len(), 2, "the family chip returns both");
+
+        let by_identity = s
+            .runs(Some(&Chip::RecordIdentity("F-REC".into())), 10, None)
+            .await
+            .unwrap();
+        assert_eq!(by_identity.runs.len(), 2, "the artifact chip returns both");
+
+        let none = s
+            .runs(Some(&Chip::Session("sess-absent".into())), 10, None)
+            .await
+            .unwrap();
+        assert!(
+            none.runs.is_empty() && none.next.is_none(),
+            "a chip that admits nothing"
+        );
+
+        let unfiltered = s.runs(None, 100, None).await.unwrap();
+        assert!(
+            unfiltered.runs.len() >= 2,
+            "no chip admits every run the store holds"
         );
     }
 

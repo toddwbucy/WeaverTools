@@ -62,3 +62,9 @@ futures = "0.3"
 anyhow = "1"
 uuid = { version = "1", features = ["v4"] }
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+
+[dev-dependencies]
+# `oneshot` drives the router in a test without binding a port, which is
+# what lets the Record surface's watch ask the real route for real HTML
+# rather than calling the handler and trusting the wiring.
+tower = { version = "0.5", features = ["util"] }

@@ -1,0 +1,67 @@
+{% extends "instrument.html" %}
+{% block title %}record - weaver-web{% endblock %}
+{% block mainclass %}listing{% endblock %}
+{% block body %}
+<header class="listing-head">
+  <h1>Record</h1>
+  <p class="destination">Every run and branch, with the tuple that produced it.</p>
+  {% match chip_kind %}
+  {% when Some with (kind) %}
+  <p class="chip-row">
+    <span class="pill">{{ kind }}: {{ chip_of.as_deref().unwrap_or("") }}</span>
+    <a class="pill quiet" href="/record">clear</a>
+    <span class="chip-note">A chip is a query. Clearing it widens this list.</span>
+  </p>
+  {% when None %}
+  <p class="chip-row"><span class="chip-note">No chip. This is every run the store holds.</span></p>
+  {% endmatch %}
+</header>
+
+{% if rows.is_empty() %}
+<p class="empty">No run answers this. The store holds a run when the ingest of section 3.1 lands one.</p>
+{% else %}
+<div class="wrap">
+<table class="record">
+  <thead>
+    <tr>
+      <th>run</th><th>record identity</th><th>device</th><th>engine</th>
+      <th>seed</th><th>session</th><th>lineage</th><th>ingested</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td class="mono">{{ r.run }}</td>
+      <td class="mono"><a href="/record?chip=artifact&of={{ r.record_identity }}">{{ r.record_identity }}</a></td>
+      <td>{{ r.device }}</td>
+      <td>{{ r.engine }}</td>
+      <td class="mono">{{ r.seed }}</td>
+      <td class="mono">
+        {% if r.session == "absent" %}absent{% else %}<a href="/record?chip=session&of={{ r.session }}">{{ r.session }}</a>{% endif %}
+      </td>
+      <td>
+        {% match r.parent %}
+        {% when Some with (p) %}
+        <a href="/record?chip=branches&of={{ p }}">branch of {{ p }}</a>
+        {% match r.branch_position %}{% when Some with (b) %} at {{ b }}{% when None %}{% endmatch %}
+        {% match r.parting_position %}{% when Some with (v) %}, parted {{ v }}{% when None %}, never parted{% endmatch %}
+        {% when None %}
+        <a href="/record?chip=branches&of={{ r.run }}">no parent</a>
+        {% endmatch %}
+      </td>
+      <td class="mono">{{ r.ingested_at }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% match next_at %}
+{% when Some with (at) %}
+<p class="more">
+  <a href="/record?{% match chip_kind %}{% when Some with (k) %}chip={{ k }}&of={{ chip_of.as_deref().unwrap_or("") }}&{% when None %}{% endmatch %}after_at={{ at }}&after_run={{ next_run.as_deref().unwrap_or("") }}">more</a>
+</p>
+{% when None %}
+{% endmatch %}
+{% endblock %}

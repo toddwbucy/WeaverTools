@@ -12,6 +12,7 @@ pub mod queue;
 pub mod registry;
 pub mod router;
 pub mod store;
+pub mod surfaces;
 pub mod traceview;
 pub mod web;
 pub mod wire;

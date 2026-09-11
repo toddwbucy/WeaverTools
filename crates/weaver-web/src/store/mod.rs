@@ -1,9 +1,9 @@
 //! The store: the Postgres pool, the migrations, and the reads of
 //! `weaver-web-Spec` section 4 over the tables of its section 2.
 //!
-//! **Four of that section's five are served here.** The fifth, every run's
-//! tuple filtered, is Record's and lands with that surface, and the plan's
-//! is owed at the act that gives the plan its schema.
+//! **All five of that section's reads are served here** as of 2026-09-11,
+//! the fifth having landed with Record. The plan's read is owed at the act
+//! that gives the plan its schema.
 //!
 //! This module is the first in the crate written to the standing Spec
 //! rather than to the charter it replaced, which is why it is the first
@@ -24,7 +24,7 @@ pub mod read;
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{PositionKey, RunId, TurnId};
-pub use read::{Alternatives, PositionPoint, RunTuple};
+pub use read::{Alternatives, Chip, Cursor, PositionPoint, RunPage, RunTuple};
 
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
