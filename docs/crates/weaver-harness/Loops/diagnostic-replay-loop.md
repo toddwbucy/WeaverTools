@@ -10,33 +10,39 @@ step 2 names it as `weaver-diagnostic-Spec` section 3.3 states it on the operato
 ruling of this date at issue #519, the resident length at the draw, so a divergence
 and the field row it fell in share a key and a reader holding only the close event
 converts nothing.
+
 **Revised:** 2026-09-01, second of this date, the vector bar is measured.
 Section 3's step 3 compares the reader's vectors exact within one device
 model, per `weaver-diagnostic-PRD` section 4 as amended on the
 differencing measurement of this date.
+
 **Revised:** 2026-09-01, first of this date, the driver derives the declaration. Section
 2's step 2 carries `weaver-analysis-PRD` section 3's rule as amended on issue #394: the
 declaration step one loads is derived from the record by the driver, the analyst
 declaring only the replay's own three facts, so the driver's act brackets the load
 rather than following it.
+
 **Revised:** 2026-08-27, second of this date, the driver's Spec is authoritative
 for the election. Section 2's step 2 sketched what the driver elects and now says
 so, naming `weaver-analysis-Spec` section 3 as the authority per G5 and gaining
 `load`, without which step one below cannot read the tee's election and no claim
 about the state can stand. Section 5's owed list closes with the driver's Spec
 landing. Per epic 293 row 12.
+
 **Revised:** 2026-08-27, first of this date, the record this loop authors has a
 shape. Section 5's owed
 list moves: `weaver-diagnostic-Spec` landed and carries the kind set this loop's
 steps author, so the acts named in sections 3 and 4 have a record to land in. The
 loop's own steps are unchanged, and what remained owed of the three, the driver's
 Spec, landed the same date. Per epic 293 rows 12 and 13.
+
 **Revised:** 2026-08-26, the criterion's grounding moves to the charters. Step
 one's state clause cited `weaver-trace-Spec` section 3, a certification
 criterion grounded on a representation Spec, which G2 refuses. The criterion
 landed in `weaver-agents-PRD` section 8 and `weaver-diagnostic-PRD` section 4
 in this act, and the step cites them. Nothing of the step's substance moves.
 Per issue 352.
+
 **Revised:** 2026-08-25, the input identity gains the tee's election. Section 3's
 step one takes it as a requirement, claim-relative like the rest: it is the rule
 that decided what the original agent's state held, so a replay preloaded under a
@@ -45,6 +51,7 @@ member existed fails a claim about the state while its token path still stands.
 The step also names where the loop reads the rule, the record's `load` event and
 never the holdings, the holdings being what that rule produced.
 Per issue 347 and `weaver-trace-Spec` section 3.
+
 **Revised:** 2026-08-24, the record is a different record. Third state on the day
 it was filed, and the middle one was wrong. v0.1 had the run's record holding what
 diverged. v0.2 removed the record on the reading that a diagnostic binding authors

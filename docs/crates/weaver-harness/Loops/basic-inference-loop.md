@@ -5,6 +5,7 @@ loop, filed under the harness's `Loops/` container per the Document Format's
 container entry. It argues no edges of its own: the seams it walks are declared in
 the crate charters per Document Format section 4, and a graph block here would
 duplicate a record that already has a home.
+
 **Revised:** 2026-08-24, the loop names its binding. Section 2's lifecycle walk
 is scoped to a serving binding, per `weaver-agents-PRD` section 6 as amended
 this date. The walk itself is unchanged, because a serving load is what it

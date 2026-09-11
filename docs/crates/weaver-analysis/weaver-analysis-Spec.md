@@ -4,6 +4,7 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+
 **Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
 under. Section 5 reports, once per run, the run identity this reader already holds and
 rendered nowhere, the effective sampling, the field election's depth and the lineage
@@ -15,12 +16,14 @@ for it. It reads the deposit for the device model and for the part of the code i
 the record does not carry, the organ binaries being the `load` event's `stack`, per the
 operator's ruling of this date. One perturbation record, and section 6's counts move by
 one. Per `weaver-analysis-web-contract` section 2.2 as revised this date and issue #532.
+
 **Revised:** 2026-09-09, second of this date, the summary carries the seated prefix's
 length. Section 5 derives it from the run's first generation, the closing count less
 the drawn tokens, the terminator and the input identifiers, present only where the
 drain began at or before the run's `load`, and reports it once per run. One
 perturbation record, and section 6's counts move by one. Per
 `weaver-analysis-web-contract` section 2.2 as revised this date and issue #527.
+
 **Revised:** 2026-09-09, the summary names the record it was read from. Section 5's
 summary gains, per generation, the record's session from the envelope and the
 record's digest, sha256 over the run's own lines as this crate drained them, each
@@ -30,11 +33,13 @@ before its `load`**, and the digest is absent otherwise, a run that died having 
 `unload` for anyone to vouch past. Two perturbation records, and section 6's counts
 move by two. Per `weaver-analysis-web-contract` section 2.2 as revised this date
 and issue #521.
+
 **Revised:** 2026-09-07, two captures compare only under one loop and one member.
 Section 5's comparison reads the `load` event's composer and member standing from
 each record before any value, refuses where they differ naming which, and refuses a
 record naming neither, per the charter's section 3 as revised this date for
 issue #381. The clause takes a perturbation record and section 6's count carries it.
+
 **Revised:** 2026-09-06, second of this date, the election names what the harness's
 open reads. Section 3's election gains the four message kinds with `role` and
 `content`, because a session standing from a record rebuilds its conversation from
@@ -43,6 +48,7 @@ the preloaded holdings through the `identity` and `recall` asks, per
 naming only what the replay loop reads would land a session whose open had nothing to
 rebuild from. Section 4's cut and rename take a perturbation record. Section 6's
 counts move by one. Found by the code act of issue #432.
+
 **Revised:** 2026-09-06, the summary carries the record's identity, and the contract
 is cited. Section 5's summary gains, per generation, the weights hash the measurement
 carries as the record spelled it, sentinel included, so the run row of
@@ -51,6 +57,7 @@ record. Section 0 names `weaver-analysis-web-contract` among what this document 
 written against, the citation the contract's section 8 recorded as owed since
 2026-09-05, per issue #451's second half. Section 6's counts move by one, per
 issue #465.
+
 **Revised:** 2026-09-05, second of this date, the summary carries the residency. Section
 5's summary gains, per generation, the resident count as it closed and the count of
 output tokens beside the perplexity, both read from the record and neither derived,
@@ -58,6 +65,7 @@ so a store keyed by position converts once at ingest from facts the emitter repo
 Section 7's election of this date closes on that answer, the operator having pointed
 the seat at issue #461, and its record moves to section 5 as a perturbation. Section
 6's counts move by it.
+
 **Revised:** 2026-09-05, the signals reader is authorized. Section 5 gains the clause
 for the class's second reader, standing in code since #408 on 2026-09-02 with no
 sentence here: the per-position series paired from every generation's measurement on
@@ -67,6 +75,7 @@ has a gate, with the `signals` verb's usage. Section 1's layout gains `stream.rs
 and `signals.rs`. Section 6's counts are retaken from the records. Section 7 names
 what the series must carry for a store keyed by position as open, the record's
 residency the source and the input count ruled out by measurement. Per issue #451.
+
 **Revised:** 2026-09-04, fourth of this date, a position's field is read from the
 record. Section 5 gains the `field` verb: the one `model.field` event at an asked turn
 and position, drained from a serving or diagnostic record, file or pipe, spliced as the

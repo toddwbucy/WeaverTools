@@ -13,6 +13,7 @@ charters currently say. The set-wide form was a requirement of its moment, when
 nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
+
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
 section 3 describes one serving turn, gate to gate. The operator's ruling of
@@ -29,6 +30,7 @@ decided what the agent's working state held. The substance stood settled in
 G2 refuses: a certification criterion is the charter's to state, so it lands
 here, `weaver-diagnostic-PRD` section 4 restates it beside the list it joins,
 and the loop cites the charters rather than the Spec. Per issue 352.
+
 **Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
 inside. The third entry below is reversed rather than amended and stands so
 the reversal is visible. The operator's ruling of this date placed
@@ -41,6 +43,7 @@ kind swapping the authoring mechanism, so a diagnostic binding writes a record
 rather than none and declares a sink like any other. Section 0's roster goes
 to ten with `weaver-diagnostic` entering by the inside rule, `weaver-analysis`
 staying out by the same rule, and the preload seam naming its new dialer.
+
 **Revised:** 2026-08-24, fourth of this date, the record states its
 compatibility. Section 3 promised a version every consumer keys on and nothing
 in the record carried one, which read as a mechanism where there was none. The
@@ -48,6 +51,7 @@ sentence now says what carrying means: nothing carries it today and nothing
 should while section 9's additive rule holds, the authority being
 `weaver-trace-PRD` section 6, and the act that first breaks the schema is the
 act at this level that adds the marker.
+
 **Revised:** 2026-08-24, third of this date, the diagnostic binding writes no
 record. Section 6 scoped the kinds by Gate alone, under which a diagnostic
 binding still declared a sink and still authored a run's events, which would
@@ -58,6 +62,7 @@ the sink and authors into it, a diagnostic binding declares none and authors
 nothing, and what the replay produces instead is the diagnostic-trace, which is
 `weaver-diagnostic`'s. The parties merge in the same act, the sink handle being
 a term of `weaver-admin-harness-contract`.
+
 **Revised:** 2026-08-24, second of this date, the diagnostic consumer charters.
 Section 0's boundary sentence read that outside crates reach an agent only
 across the two external contracts of 2026-08-01, which the preload seam of
@@ -99,6 +104,7 @@ renders the content of the events it causes, the harness authors the event,
 the trace writes the line, and the floor carries only what the harness itself
 consumes. The fault path is named as the standing exception, owed to the act
 that settles `FaultReport`'s election in `weaver-types-Spec` section 6.
+
 **Revised:** 2026-08-07, the port ruling settles what the egress ruling left
 undefined. That act discriminated tools by whether they reach the world, which was
 doing undefined work, and the test is now whether a tool binds a listening port:
@@ -123,6 +129,7 @@ ruling retires, and the requirements survive the premise while the wording does 
 `weaver-tools-vision` has a tool's answer re-entering through the world-opened socket,
 which is now the wrong door. **Three remain and the ruling is not implementable until
 they land**, and this entry is the record that says so.
+
 **Revised:** 2026-08-17, the ratified loop boundary reaches this document, per
 issue #115. The gate's row in the chain called it the outer membrane, and
 under the two-level model ratified 2026-08-11,
@@ -133,6 +140,7 @@ is forced rather than editorial: enforcement by construction requires a tool res
 constructible from exactly one source,
 and a path that must stay open cannot be closed by the type system, so the
 one-level vocabulary cannot carry the boundary the enforcement closes.
+
 **Revised:** 2026-08-07, the tool egress ruling. The gate carries a second socket,
 opened by the agent rather than by the world, and a tool call crosses it. Step 1's
 clause that outbound tool connections do not pass through Gate is reversed, step 7's

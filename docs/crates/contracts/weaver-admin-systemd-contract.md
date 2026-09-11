@@ -9,6 +9,7 @@ per verb holds nothing across time, so the party that keeps an agent alive acros
 logout is the init system, and what the program relies on from it was stated nowhere.
 
 **Date filed:** 2026-08-05
+
 **Revised:** 2026-09-07, the vector's account catches up with the vector.
 Section 2 named the socket path and the two organ binaries and stopped, which
 had been incomplete since 2026-08-20, when the agent's loop file began riding
@@ -25,6 +26,7 @@ Measured this date against a live manager. The condition is unreadable in the
 start ask's status and plain in the state ask, so admin reads it there and
 answers `PriorUnitUnreaped`. Reaping stays the operator's act, a program that
 reset the unit before starting discarding the evidence of the previous failure.
+
 **Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
 operator's ruling in `weaver-admin-PRD` load step 5: the start ask of section 2 gains
 the worker's argument vector, section 5 names it among what admin supplies and

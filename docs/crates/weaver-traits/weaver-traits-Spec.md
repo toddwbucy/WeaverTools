@@ -4,6 +4,7 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+
 **Revised:** 2026-08-19, the system role lands. `Role` gains `System`, the
 growing set carrying it per this Spec's own non-exhaustive election, and
 the licensed combinations gain one line: a `System` message carries `Text`
@@ -14,6 +15,7 @@ the harness-trace contract moving in the same act. The count-named
 assertion `traits-role-set-three` retires for
 `traits-role-kind-one-to-one`, the durable property named instead of the
 count, the code's citation moving with it in this act.
+
 **Revised:** 2026-08-18, the tool boundary ruling retires section 5's interim
 reading. The gate holds one tool, the shell, its own verb dispatched with no
 table, so no current party dispatches `tool-trait` and the harness-gate
@@ -21,12 +23,14 @@ contract's draw of it retires with the table. The trait stays chartered for
 the constituency section 5's own foot always named, the elected outward
 corner - the registered service the egress seam awaits - and the shape and
 its three assertions stand for that day.
+
 **Revised:** 2026-08-17, the tool workflow opens: section 5's block lifts per
 the charter's own revision, the trait is chartered against the gate's
 executor and the harness's dispatch, and section 3's deferred field lists
 land - `ToolCall` carrying the name and arguments the family parse recovers,
 `ToolResultBlock` carrying the content a family renders. The
 no-safety-classification negative stands whole.
+
 **Revised:** 2026-08-10. The shared tagging test gains its fourth arm, identical
 here and in `weaver-types-Spec` section 4.3 so the two floor Specs cannot
 drift: an enum with a variant wrapping a struct that carries a spliced member

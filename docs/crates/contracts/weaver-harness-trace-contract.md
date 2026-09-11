@@ -5,6 +5,7 @@
 separately.
 
 **Date filed:** 2026-07-29
+
 **Revised:** 2026-08-22, pressure leaves the failure enumeration. Section 5
 holds four cases where it held five: commit pressure is a condition of the
 recorder rather than an outcome of a submission, the event having reached
@@ -14,24 +15,29 @@ conformance clause is unchanged in what it asks and says which surface
 answers it. A sink that stops being writable stays a failure. **The crate
 carries the retired variant until the act that removes it**, which follows
 this one, per gate H1's direction.
+
 **Revised:** 2026-08-19, third of this date, the classify kinds join the
 set. `classify.request` and `classify.output` per the charter's same-act
 rule: the harness authors instances of `weaver-trace`'s typed payload
 shapes at the label seam's exchange, and the turn member is optional
 because a classify between turns belongs to no turn.
+
 **Revised:** 2026-08-19, second of this date, the flush reaches the record.
 The kind set gains `flush` per the charter's same-act rule, authored by
 the harness when its loop's flush confirms, the payload this crate's own
 `FlushCounts`.
+
 **Revised:** 2026-08-19, the system role lands. The vocabulary's message
 list gains `message.system`, per the kind-set rule this contract restates
 at section 7: the set closed at fifteen with `weaver-trace-PRD`'s same-act
 edit, and the payload is opaque to the recorder like its three siblings.
+
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date. The submit clause narrows with
 `weaver-trace-PRD` section 3.2: the harness submits the turn's delta as
 rendered rather than the prompt as the model received it, the full effective
 context being the accumulation the record determines.
+
 **Revised:** 2026-08-14, the run identifies itself. The consumer assembles session-wide
 order from admin's run reference and the sequence, renamed from the ordinal.
 **Document ID:** `weaver-harness-trace-contract`

@@ -18,12 +18,14 @@ harness declare the `link` seam this crate is named by and never declares. Secti
 gains the four vocabulary names that contract draws, defined here because a charter
 is the source of a crate's definitions, and its cells close. Per the audit of
 2026-08-26 and epic 293 row 13.
+
 **Revised:** 2026-08-26, the state claim's criterion joins section 4's list.
 The input-identity clause now carries the tee's election beside the five it
 checks, per `weaver-agents-PRD` section 8, which is where the criterion
 landed in this act: the apex states it, this charter restates it beside the
 list the loop walks, and `diagnostic-replay-loop` section 3 cites the
 charters rather than the representation Spec it grounded on. Per issue 352.
+
 **Revised:** 2026-08-24, ninth of this date, the fifth review's findings land,
 and one of them was a claim about the world rather than a stale pointer. **The
 residual readout is not a diagnostic-only member.** Apex section 8 makes it a
@@ -39,6 +41,7 @@ structure a diagnostic run preloads as part of the deferred surface election.
 Section 2's precedent for the loop's entry is withdrawn in the loop document,
 which now rests on the gap section 9 records. The apex, the admin contract, the
 harness papers, the sketch, and `CLAUDE.md` follow.
+
 **Revised:** 2026-08-24, eighth of this date, the fourth review's findings land.
 Section 2 carried two sentences from the crate's one day outside: it said this
 crate reads records and writes analysis artifacts, which describes the consumer
@@ -52,6 +55,7 @@ where it stands in section 3. The loop's citation for the deferred entry moves
 from 6.1, which charters the decode surface, to 6.2, and the loop names a gap
 6.2 opens on it: the seat is granted on work arriving owed an answer, which a
 Gateless binding never sees.
+
 **Revised:** 2026-08-24, seventh of this date, the third review's findings
 land. `weaver-analysis-PRD` loses two assumptions it inherited from the version
 that held both roles: section 1 grounded one-crate-at-both-ends on a
@@ -62,6 +66,7 @@ was. `weaver-harness-PRD` says its G3 sentence holds by the diagnostic edge
 being undeclared rather than by the relation being absent, and the loop names
 its own entry as the run's opening rather than a turn's, the mechanism staying
 the deferred loop entry rather than a lifecycle event invented for it.
+
 **Revised:** 2026-08-24, sixth of this date, the second review's findings land.
 The `Parent:` header named the suite while the parent edge named the harness,
 which is the act's headline contradicted in its own header, and the header
@@ -77,6 +82,7 @@ said the papers were owed above a body saying they landed, and reshapes a
 clause that read as excluding every serving-record member from the
 diagnostic-trace. The sketch's owed list and Working Process section 7's roster
 count follow the act into `process/`.
+
 **Revised:** 2026-08-24, fifth of this date, the review's findings land. Five
 of eight fell in this document, in the sections the composing-inside act did
 not rewrite and did not reconcile against the ones it did. Section 3's preload
@@ -92,6 +98,7 @@ gain the third member and name `weaver-harness-diagnostic-contract` as owed,
 the edge landing with it rather than dangling a `via`. The vision and the apex
 gain the corrections a line-based sweep could not see, the stale phrases
 having wrapped across lines.
+
 **Revised:** 2026-08-24, fourth of this date, this crate composes inside. The
 operator's ruling of this date moved it from outside the agent boundary to the
 harness's third member, the mechanism the harness authors a diagnostic-trace
@@ -104,6 +111,7 @@ performance, the capture artifact, the instrument suite, and the licence
 boundary. The seam contract is renamed with its party. The three entries below
 describe a crate outside the boundary and stand unamended so the move is
 visible in the history rather than erased from it.
+
 **Revised:** 2026-08-24, third of this date, the input-format cell closes. It
 asked whether a version marker lands or the compatibility is stated some other
 way, and `weaver-trace-PRD` section 6 answers the second in the same act: the
@@ -116,6 +124,7 @@ that omits a member added after it was written without rejecting it and without
 deriving the member from the ones beside it, which is where this crate pays for
 the rule because the measurement's layer counts are younger than the traces it
 will be pointed at.
+
 **Revised:** 2026-08-24, second of this date, the diagnostic binding writes no
 record and this crate names the other product. Section 6 records that
 `weaver-trace` has nothing to do in a replay at either end, not read because a
@@ -138,12 +147,14 @@ The owed list gains the diagnostic-trace's form and exit, both to the driver's
 Spec, and gains the trace-as-an-input-format cell, which is `weaver-trace`'s
 act and sits ahead of the driver. The entry below gains the ordinal the
 convention asks for, which it was filed without.
+
 **Revised:** 2026-08-24, first of this date, the seam papers land. Section 6's seam
 paragraph records the landing and corrects its own account of the declaring side: the
 seam edge is declared here, from the initiating side, per the pattern the harness-state
 seam set, and not by state as the paragraph first said. The owed list narrows to the
 driver, its Spec, and the null replay. The serving-binding refusal is restated in the
 papers' terms, the door's absence rather than a refusal at a seam that does not stand.
+
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-diagnostic-PRD`
 **Parent:** `weaver-harness-PRD`

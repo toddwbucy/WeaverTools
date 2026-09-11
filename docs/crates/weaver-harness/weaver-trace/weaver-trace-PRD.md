@@ -21,10 +21,12 @@ reads. Per issue #461.
 **Revised:** 2026-09-04, fourth of this date, the load names its declaration.
 Section 3.1's `load` event gains the declaration's digest as the enter carried it.
 Per issue #435.
+
 **Revised:** 2026-09-04, third of this date, the load names its lineage and its
 stack. Section 3.1's `load` event gains the parent session, run, and cut where the
 session stands from a record, and the digests of the organ binaries that ran it on
 every load. Per issue #432.
+
 **Revised:** 2026-09-04, second of this date, the seated prefix crosses the tee
 whole. Section 11 states the one exception to the key-based election: the
 turnless `message.system` at the run's opening distills with its payload under
@@ -37,10 +39,12 @@ event gains the engine the member stands on and, under the service engine,
 its database and role, and the `unload` event gains the grant surface read
 back at the leave as unchanged, varied, or unreadable. Per `weaver-state-PRD`
 section 4 as revised this date and issue #411.
+
 **Revised:** 2026-09-03, the record names its loop and its member. Section
 3.1's `load` event gains which loop composed the run and whether the state
 member stood, two facts that decide what a record is a record of and were
 recorded nowhere, per issues #381 and #382 as re-measured on this date.
+
 **Revised:** 2026-08-26, the table catches up to its banners. The kind set
 grew to twenty-one on 2026-08-22 and section 3.1's table still ended at
 `model.field` with the count word at nineteen - the rulings reached the
@@ -65,6 +69,7 @@ in 3.1 since it was filed, so the correction moves a citation and no argument.
 Section 3.1's absence argument is scoped to records older than the member, this
 act being what ends it: from here the rule is written whole on every load and a
 deployment declaring none carries the default explicitly. Per issue 347.
+
 **Revised:** 2026-08-24, second of this date, the record states its
 compatibility. Section 6 gains the guarantee that makes the record readable across
 vintages and the argument for why it carries no version, landing apex section 3's
@@ -82,6 +87,7 @@ claim, per G5. Raised by `weaver-diagnostic-PRD` section 6's input-format cell, 
 closes in the same act and moved to `weaver-analysis-PRD` section 4 later the same date,
 with the reading. The entry below gains the ordinal the convention asks for, which it
 was filed without.
+
 **Revised:** 2026-08-24, first of this date, the residual reductions arrive with their
 shape.
 The measurement's enumeration named the reductions and not the two counts
@@ -97,6 +103,7 @@ operator's ruling that a refusal is clerked in one kind for every seam. The
 exchange is recorded whole as section 15.5 demands and the half that was
 refused changes kind. The free-form string this retires was the one example
 of the shape the class rejects.
+
 **Revised:** 2026-08-22, the refusal is clerked. Section 3.1's kind set
 gains `refusal`, twenty-first, one kind for every seam, carrying the
 organ's own typed case opaque as `fault` does and shaped by the floor so a
@@ -104,18 +111,21 @@ consumer dispatches rather than parses. The stopped close gains a third
 reason, a refused turn having matched neither of the two and closed under a
 reason that could only misreport it. The close and the event are the same
 division `fault` already runs on.
+
 **Revised:** 2026-08-22, the elision reaches the record. Section 3.1's
 kind set gains `elision`, twentieth, carrying the resident counts either
 side as `flush` does, per `weaver-spu-PRD` section 13.13. The state
 shrinks and the record grows: nothing is removed from a trace by this or
 any operation, and a consumer reconstructing a context replays the edits
 rather than accumulating contributions naively.
+
 **Revised:** 2026-08-21, third of this date, the surprisal's election
 lands. The ruling section 5 carried as owed on this date is landed by the
 act that adds the election, `weaver-spu-PRD` section 13.12, and section
 3.1's `load` gains the third election beside the readout's and the field's.
 The per-generation perplexity stays in the navigation tier, so a cold
 record is still rankable where the vector is not carried.
+
 **Revised:** 2026-08-21, the field enters the record and the load
 declares its posture. Section 3.1's kind set gains `model.field`,
 nineteenth, on `weaver-spu-PRD` section 13.11's election: one decode
@@ -125,6 +135,7 @@ volume is what buys both exceptions. Section 3.1's `load` event gains the
 diagnostic elections of its load, each named individually and never
 bundled under a profile, so a record holding no field is distinguishable
 from one whose election stood and produced nothing.
+
 **Revised:** 2026-08-21, second of this date, the record sorts by
 arrangement. Per the operator's rulings on issue #258. Section 5 sorts what
 the record holds into three tiers, the first being apex section 8's own
@@ -140,7 +151,9 @@ resolved per-turn ceiling and the stop condition in force, without which a
 arrangement, training being out of scope by apex section 9. The surprisal's
 demotion to an election is ruled and owed, landing with the act that adds
 the election.
+
 **Date filed:** 2026-07-29
+
 **Revised:** 2026-08-20, the record holds the context position. Section
 3.1's `model.output` gains the session's resident count and capacity as
 the generation closed, the pair the flush's counts and the overflow
@@ -153,6 +166,7 @@ two readings per generation that no accumulation confirms without
 repeating the tokenization. The shape lands in `weaver-trace-Spec`
 section 3 and the authoring sentence in `weaver-harness-Spec` section 6,
 both in this act.
+
 **Revised:** 2026-08-19, third of this date, the classify kinds enter the
 record. Section 3.1 gains `classify.request` and `classify.output`,
 seventeenth and eighteenth, on `weaver-spu-PRD` section 15.5's demand: the
@@ -160,6 +174,7 @@ label seam's every exchange is recorded, the pair brackets nothing, the
 turn member is optional because a classify between turns belongs to no
 turn, and a death mid-exchange authors no fabricated answer. Arrives with
 the trace half of the classifier's owed acts.
+
 **Revised:** 2026-08-19, second of this date, the flush reaches the record.
 The kind set gains `flush`, sixteenth, under this charter's adding-one
 rule and by the standing condition the ruling of 2026-08-12 set for
@@ -169,11 +184,13 @@ elects a flush and the decode context returns to its prefix - and the
 event carries the resident counts before and after, because a context
 that shrank without a record would break the accumulation reading the
 model.request ruling rests on.
+
 **Revised:** 2026-08-19, the finish tells the truth. Section 3.2's
 `model.output` clause names the third way a generation ends: cut at the
 turn's token limit, distinct from completed and from stopped, per
 issue #218's evidence that the cap had reported itself complete. The floor's
 `Finish` and this crate's mirror gain `Length` in the same act.
+
 **Revised:** 2026-08-19, the system role lands. The kind set gains
 `message.system`, fifteenth, under this charter's own rule that adding one
 edits this charter and every contract naming the set: the floor's `Role`
@@ -182,6 +199,7 @@ conversation shapes. The ground is the loop's standing practice made
 honest - the system prompt has ridden user role since PR 207 for want of
 the slot, and the record should say what a message was rather than what
 the floor could spell.
+
 **Revised:** 2026-08-18, the tee is this crate's mechanism. Section 11 lands
 the distillation surface, per the operator's rulings of 2026-08-12 and
 2026-08-18: a selection over the canonical event stream, applied by the
@@ -190,6 +208,7 @@ selects and never computes, the envelope always rides, the election ranges
 over payload keys and is fixed at load, the default election is the envelope
 of every kind, and an event the election does not match is dropped at the
 tee with the trace complete regardless.
+
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date closing issue 124. Section 3.2's model.request
 narrows from the prompt as the model received it to the turn's rendered
@@ -199,6 +218,7 @@ tokenization. Two conditions ride it: a flush becoming reachable adds its
 event to the kind set or reopens the ruling, and replay's identity prefix
 leans on the open identifiability question. The state is a distillation of
 the record, never stored back into it.
+
 **Revised:** 2026-08-14, the run identifies itself. Session-wide order is the pair of
 admin's run reference and the sequence, the reference having replaced an
 ordinal that no per-invocation party could supply.

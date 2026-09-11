@@ -7,6 +7,7 @@ v0.6 stub ruling shapes. It governs the lifecycle half of this seam, the raise a
 the lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+
 **Revised:** 2026-08-27, the closure claim's arithmetic is swept. The
 harness's enumeration is five rather than three, a count this act's own
 closing paragraph carried stale, per issue #369.
@@ -16,6 +17,7 @@ refusal travels as it did and the harness authors the record's `refusal`
 carrying `lifecycle-refusal`, per `weaver-trace-PRD` section 3.1's
 twenty-first kind and the operator's ruling of this date. The organ authors
 nothing and no exchange changes.
+
 **Revised:** 2026-08-18, the tool boundary ruling re-grounds the execution
 exchange. The gate holds one tool, the shell, which is this crate's own
 outbound verb: the agent's effect on the world crosses this membrane, and the
@@ -28,6 +30,7 @@ the one-clock rule this act states. The `tool-trait` draw retires: with one
 held tool and no dyn table this seam's execution speaks through no trait, and
 the trait stays chartered at `weaver-traits-Spec` section 5 for the elected
 outward corner it always constituted.
+
 **Revised:** 2026-08-17, the tool workflow opens and the fifth exchange arrives,
 the one section 2 promised to it: execute a tool, opened by the harness,
 carrying the call the family parse recovered, answered with the result or the
@@ -37,6 +40,7 @@ ratified boundary of 2026-08-11, so the fork lives on the gate's side of the
 loop's membrane and the result crosses back as an answer on this seam.
 Section 7 draws `tool-name` and, with the traits charter's unblocking in the
 same act, `tool-trait`. Owed by issue #116's arc.
+
 **Revised:** 2026-08-07, the second seam is admitted. This document forbade a second
 listener, which the egress ruling of the same date reversed at the apex, and until now
 it governed against that ruling under Document Format section 7. The gate holds the two

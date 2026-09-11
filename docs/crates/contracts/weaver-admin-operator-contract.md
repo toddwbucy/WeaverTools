@@ -8,6 +8,7 @@ which is the seam category `weaver-admin-PRD` section 10 held open, settled by t
 same ruling.
 
 **Date filed:** 2026-08-01
+
 **Revised:** 2026-08-05, narrowed to the trace's exit by the admin recut. The
 operator reaches the program by running the crate with root rather than by dialing a
 service, so the socket this document governed, its peer predicate, and the request

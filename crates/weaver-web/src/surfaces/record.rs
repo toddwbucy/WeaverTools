@@ -141,10 +141,16 @@ pub struct Row {
 /// this surface failed to draw.
 const ABSENT: &str = "absent";
 
+/// **An empty string is an absence too, and the schema does not forbid it.**
+/// `run.device` and `run.seed` are nullable text with no `<> ''` check, so a
+/// member the record sent empty reaches here and would draw a blank cell -
+/// the one rendering section 6 forbids, arriving through the member the rule
+/// was broadened to cover.
 fn absent_or(value: Option<&str>) -> String {
-    value
-        .map(str::to_owned)
-        .unwrap_or_else(|| ABSENT.to_string())
+    match value {
+        Some(v) if !v.trim().is_empty() => v.to_owned(),
+        _ => ABSENT.to_string(),
+    }
 }
 
 /// The engine's libraries, drawn by name. **The member is a JSON object and
@@ -153,7 +159,12 @@ fn absent_or(value: Option<&str>) -> String {
 /// member discarded: a reader sees which libraries a run went through and
 /// two runs through different ones read differently.
 fn engine_libraries(engine: Option<&serde_json::Value>) -> String {
-    let Some(engine) = engine else {
+    // **JSON null is not a member the record carried.** The column is
+    // nullable JSONB and nothing forbids the value `null` in it, which is
+    // the gap between two meanings of the word that migration 0009 spells
+    // out for the plan's entries. Read as carried, it would draw "recorded,
+    // unnamed" for a member nobody sent.
+    let Some(engine) = engine.filter(|e| !e.is_null()) else {
         return ABSENT.to_string();
     };
     let names: Vec<&str> = engine
@@ -379,14 +390,15 @@ mod tests {
     /// reached under a chip that admits only it, so a regression in one
     /// member's handling cannot be carried by another row on the page.
     ///
-    /// **It cites no assertion.** The claim this file's header conforms to
-    /// is tagged `review` at `weaver-web-Spec` section 9, because the half
-    /// of it that matters - *indexed* - is a property of the statement and
-    /// the schema rather than of a response, and no assertion is made here
-    /// that would fail if a chip filtered on an unindexed column. What this
-    /// watch does pin, absent-not-empty at the view under section 6, has no
-    /// record of its own; that is a documents act rather than a citation to
-    /// borrow.
+    /// **It cites the claim it pins and not the file's own header.** The
+    /// header's claim is tagged `review` at `weaver-web-Spec` section 9,
+    /// because the half of it that matters - *indexed* - is a property of
+    /// the statement and the schema rather than of a response, and nothing
+    /// asserted here would fail if a chip filtered on an unindexed column.
+    /// What this watch pins is absent-not-empty at the view, which section 6
+    /// now records rather than only stating.
+    ///
+    /// conforms: web-the-view-names-an-absent-member
     #[tokio::test]
     async fn record_draws_the_tuple_and_names_what_is_absent() {
         let Some(store) = crate::store::read::tests::store().await else {
@@ -435,6 +447,32 @@ mod tests {
         );
         assert!(html.contains(&run), "the run is drawn");
         assert!(html.contains("rtx-a6000"), "its device is drawn");
+        // **The device is the member section 9's row names**, and the watch
+        // pinned only the seed until the review of PR #556: the seed was the
+        // page's one null, so blanking the device changed nothing here.
+        // A second run, alike but for the members it did not carry.
+        sqlx::query(
+            "INSERT INTO run (run_id, record_identity, sampler, boundary_set, record_session) \
+             VALUES ($1, 'SURF-REC', '{}', '[]', $2)",
+        )
+        .bind(format!("{tag}-b"))
+        .bind(&tag)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        let (_, html) = ask(
+            &store,
+            &format!("/record?chip=session&of={tag}"),
+            Some(&bearer),
+        )
+        .await;
+        assert_eq!(
+            html.matches(ABSENT).count(),
+            // The second run carries neither device, engine nor seed, and
+            // the first carries no seed: four absences and not three.
+            4,
+            "every member neither run carried is named: {html:.900}"
+        );
         assert!(
             html.contains("cutlass"),
             "the engine names its libraries rather than a constant: {html:.600}"

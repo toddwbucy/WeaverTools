@@ -26,10 +26,12 @@ reachable organ, per the apex's rule against reserved slots. Per issue #438.
 8's operator interface reports the harness's own word on an agent's state through the
 fourth exchange of `weaver-admin-harness-contract`, the init system consulted only where
 no worker answers. Per issue #435.
+
 **Revised:** 2026-09-04, first of this date, the member stands where the declaration
 says. Section 2's standing clause takes the store election as the fact that decides
 whether the member starts, a missing binary refusing rather than an absent leg passing
 silently, per issue #381 and `weaver-state-PRD` section 4 as revised this date.
+
 **Revised:** 2026-08-26, the standing carries the transport. Per the operator's
 ruling of this date, section 2's standing clause gains what the start now
 makes: the socketpair the first door is, one end to the member with its
@@ -37,7 +39,9 @@ process, the other to the harness inside the enter directive, this crate
 speaking on neither. The pathname wait retires with the pathname it watched,
 the leg established by the enter's first traffic instead, and no seam joins
 section 6's list because carrying a channel's ends is not holding one.
+
 **Date filed:** 2026-07-29
+
 **Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.
 Section 2 said the member's claim is partly this crate's and that a perturbation
 of either side fails against its own, which `weaver-admin-Spec` section 6 denies:
@@ -45,6 +49,7 @@ the member's record holds whether the name was wrongly given or wrongly withheld
 so it fails on neither direction and the vector is entirely this crate's. The
 paragraph now says what it owes rather than what it shares, and its opening
 sentence goes with the symmetry it stated.
+
 **Revised:** 2026-08-25, fourth of this date, the assertion goes where
 assertions go. The act of this date put `admin-preload-name-follows-the-kind` in this
 charter, and the Document Format's own definition has an assertion as a claim a Spec
@@ -52,6 +57,7 @@ makes. The argument stays here, where the obligation is argued, and the record m
 `weaver-admin-Spec` section 6 under the vector clause, which is the clause the claim is
 about, with the instrument it is perturbed by. Found by reading this charter's own graph
 blocks against that definition rather than by a review.
+
 **Revised:** 2026-08-25, third of this date, the second review's findings land.
 Section 2's wait claimed a bound socket rather than a half-bound one, which a
 pathname cannot show: it observes a name and the worker's dial at step 6 is what
@@ -60,6 +66,7 @@ number, section 5's rollback discriminating by step and no step turning on the
 member. And nothing here reaps it, this crate being one invocation per verb, so
 the member is reparented and reaped by the init system, which is what lets it
 outlive the invocation at all.
+
 **Revised:** 2026-08-25, second of this date, the review's findings land. Section
 5 said a load failing at steps 1 through 4 leaves nothing to reap because no
 process exists, which this act's own section 2 made false: the member may exist
@@ -68,6 +75,7 @@ by absence, the member retiring itself on an accept the worker never makes.
 Section 2 gains the assertion for the half of
 `state-preload-door-stands-only-diagnostic` that lives here, because the member
 binds no name it is not given and this crate is what gives one.
+
 **Revised:** 2026-08-25, first of this date, the member's standing is admitted. Section
 2 has never
 said this crate starts the state member, and the code has done it since the
@@ -78,6 +86,7 @@ no other party holds any of them - and states what it does not create: no seam,
 this crate speaking to the member never. Which doors the member stands follows
 the kind, so it follows this crate, per `weaver-agents-PRD` section 6 as ruled
 2026-08-24.
+
 **Revised:** 2026-08-24, the kind crosses the enter. Per `weaver-agents-PRD`
 section 6 as amended this date, the enter directive of section 4.1 carries the
 kind of the binding, resolved to serving where the declaration is silent, and
@@ -92,6 +101,7 @@ cross-reference: `tool-trait` is no longer held blocked, the unblocking being
 the traits charter's own on the ratified loop boundary's inverted ground, and
 this crate still draws nothing from it. One sentence moves and no seam of
 this crate changes.
+
 **Revised:** 2026-08-05, the role ruling. Per the operator: `weaver-admin-role` is
 assumed by a human and never by an AI or an automation, a statement of design intent
 and not a guarantee about conduct. `weaver-admin-user` is a static service account
@@ -102,12 +112,14 @@ fleet, and the agent's uid is statically provisioned, a dynamic identity exclude
 two independent reasons. The sandbox's properties are required and its directives stay
 the operator's. Section 10's descriptor-route cell reopens with the sudo measurement
 attached.
+
 **Revised:** 2026-08-06, section 11's landed entries leave and **the register is not
 empty.** The act of 2026-08-05 merged, so the entries it landed leave that section
 per its own leave-when-landed rule, and two entries the act did not land remain
 outstanding there: the `AgentState` gap owed to `weaver-types` and the recut of the
 merged code. Read the section for what is owed rather than this note. No other
 change.
+
 **Revised:** 2026-08-05, second this date, the admin recut and the socket inversion,
 one act of three rulings. Per the operator: there is no `weaver-admin-user` and no
 service account. The role is what the operator, who holds root, assumes at install,
@@ -123,11 +135,13 @@ crate rather than a group member asking a service, and
 boundary that survives. Section 10's descriptor cell closes by dissolution, the
 measurement of this date recorded there. The prior Revised entry's service-account
 reading is superseded in whole.
+
 **Revised:** 2026-08-07, the tool egress ruling narrows one open question. The
 `AF_UNIX` restriction this charter files against a unit no longer meets a
 port-binding tool inside it, that tool being a registered application the agent
 addresses rather than one this program starts, so the cost the question names shrinks
 to the tool that reaches nothing. The question stays open and stays section 10's.
+
 **Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
 operator: admin creates the administrative space a harness works inside and performs
 no act that constitutes an agent, so starting the unit is admin's and loading a model
@@ -142,6 +156,7 @@ carries its change:** this charter's step 5 and section 11 register,
 9, and 11. `weaver-harness-Spec` does not move, its section 2 already holding the
 organ binaries as a deployment fact the composition root is supplied, which is the
 clause this act reads rather than edits.
+
 **Revised:** 2026-09-07, an arm only some declarations elect is provisioned
 without being installed. Load step 5 said the ask carries the operator's
 installed values and said nothing about a binary that only a declaring agent

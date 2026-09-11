@@ -12,11 +12,13 @@ conforms to.
 Section 2's prompt assembly names the recorded conversation through the cut as prefix
 material under a restoring load, seated beside the identity and permanent for the
 residency. Per issue #432.
+
 **Revised:** 2026-09-04, second of this date, the `reads` edge to the declaration
 retires. Section 4's boundary paragraph declared a read this crate does not
 perform, admin reading the file and this crate receiving the enter, the
 descriptor, and the vector, and the edge returns with the tool workflow that
 would perform it. Per issue #311.
+
 **Revised:** 2026-09-04, first of this date, the identity prefix is read from
 state. Section 2's
 prompt assembly names the prefix's source: the store where a member stands, the
@@ -44,11 +46,13 @@ to six, the two record mechanisms being the two links, and the dependency surfac
 reads four crates the corpus links against three the tree compiles, the graph
 moving with this act and the manifest with the act that builds the member. The socket
 table is unchanged, both new members of the count crossing no process line.
+
 **Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
 census recuts one row per the operator's ruling of this date: the state
 channel is a pair admin creates and this crate receives at the enter,
 possession-authenticated like the organ pairs, and no dial at a derived name
 remains. The census still counts four crossing a process line and one link.
+
 **Revised:** 2026-08-24, the third member is named and its contract owed.
 `weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
 through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
@@ -65,11 +69,13 @@ being asked to do anything, which unmakes the seam Document Format section 4
 defines, and a second entry describing that correction is folded in here. The
 accumulate rule keeps a reader from meeting a changed claim without notice,
 and no reader met either draft.
+
 **Revised:** 2026-08-22, the harness names the elision's span. The clause
 placing the flush decision here gains the elision beside it, per
 `weaver-spu-PRD` section 13.13: the same division of cognition from
 execution, this crate naming positions and the SPU judging nothing, and the
 cache still not held. The span is state and the record still loses nothing.
+
 **Revised:** 2026-08-20, the loop is the agent's own. Per the operator,
 on issue #243: the loop is a member of each agent's harness and unique
 to it, so which loop an agent runs is the agent's declared fact. Section
@@ -80,20 +86,25 @@ rather than a configuration field retires where the loop is a file. The
 member lands in `weaver-types-Spec` section 2, the carriage in
 `weaver-admin-Spec` section 6, and the worker's precedence in
 `weaver-harness-Spec` section 1, all in this act.
+
 **Revised:** 2026-08-19, the serve direction takes its shape. Section 4's
 State row gains the ask and the answer riding the same channel as the
 distillate stream, per the contract's change protocol, and the asking loop
 is the context-injection loop, whose calling shape is the seat's state
 port per the Spec's section 6.
+
 **Revised:** 2026-08-18, the state seam is declared. Section 4 gains the
 socket seam to `weaver-state` under `weaver-harness-state-contract`, the
 harness declaring as the asking side, with the member reached over a wire
 rather than linked and the dependency surface unchanged.
+
 **Date filed:** 2026-07-28
+
 **Revised:** 2026-08-12, second of this date, the receipt retires. The report
 the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
 to the record and answers nothing, the trace entry being the acknowledgment,
 per the decode contract's second ruling of the same date.
+
 **Revised:** 2026-08-12, what drives loop 1. Per the operator: the seat is
 granted on work that arrives owed an answer and on nothing else. The decode
 seam's dataflow rule, stated at `weaver-harness-spu-decode-contract` section
@@ -101,6 +112,7 @@ seam's dataflow rule, stated at `weaver-harness-spu-decode-contract` section
 the gate and nowhere else, read from the shipped contracts rather than
 legislated over organs not yet chartered. Section 2 carries the criterion
 and the dispatch, and the Spec's section 6.2 carries the mechanics.
+
 **Revised:** 2026-08-05, second this date, the socket inversion and the admin recut.
 Per the operator: any socket connecting to the harness is an internal connection, so
 this crate binds the coordination socket inside the agent's sandbox and listens,
@@ -109,6 +121,7 @@ root. Admin is a role and a crate the operator runs with root rather than a serv
 account, so the long-lived party in an agent's lifetime is the init system. Section 2
 carries the bind, section 4 carries the seam's authentication case, and the Spec's
 section 2.3 carries the mechanism.
+
 **Revised:** 2026-08-05, loop 0 named as the running agent service. Per the operator:
 loop 0 is not a document set and not a milestone but the object itself, the sealed
 agent that boots under its unit and holds its sockets, which is why it is seated in

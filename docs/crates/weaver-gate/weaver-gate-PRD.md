@@ -6,6 +6,7 @@ lifecycle half of this crate, the hook the enter and leave directives raise and
 lower. The exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+
 **Revised:** 2026-08-27, the closure claim's arithmetic is swept. The
 harness's enumeration is five rather than three, a count this document carried
 stale through the fourth case and now the fifth, per issue #369.
@@ -21,6 +22,7 @@ the result arrives as an exchange answer, which is what lets the harness's
 granted value be constructed at exactly one site. Section 7's uid cell stays
 PENDING and this pass forks at the uid this crate already holds, building
 nothing against the separate-uid arm.
+
 **Revised:** 2026-08-18, the tool boundary ruling narrows the held set to
 one. The tool this crate executes is the shell, `bash`, and the shell is not
 a guest here: it is this crate's own outbound verb. The agent's effect on
@@ -33,6 +35,7 @@ roster is emergent - scripts the agent writes and keeps in its home
 directory, reached through the shell, owned by the uid, and no crate's
 member. This crate therefore holds no tool table: one verb, dispatched
 directly, and a name that is not the shell's refuses by name.
+
 **Revised:** 2026-08-17, the port ruling re-scopes under the ratified loop
 boundary, per issue #115. The ruling answered internal-to-the-agent, the only
 question a one-level model could ask, and it keeps that answer whole. What
@@ -42,18 +45,21 @@ internal tool is **internal to the agent and external to the loop**, both
 answers correct about the shell. A refiling
 rather than a reversal: nothing leaves the agent, and which boundary the tool
 is filed against is what changed. Section 7's cell carries the sentence.
+
 **Revised:** 2026-08-07, the tool egress ruling lands here. Section 2's hook becomes
 two sockets split by which party opens an exchange, section 3's no-second-listener
 clause becomes two seams and no third, section 13.1's relay gains its second leg, and
 section 7's cell narrows to the forked internal tool as of the port ruling of the same
 date. The second socket's contract is the tool workflow's and nothing here shapes it.
 Per apex section 3 as revised in the same act.
+
 **Revised:** 2026-08-15, the gate socket is the program's. Per the operator: where the
 door stands is the program's and only who may pass is the operator's. The socket's
 pathname leaves the declaration, section 2 carrying why the parallel to
 `model-binding` does not reach it, and the harness supplies a name inside the unit's
 runtime directory so the manager's create-and-destroy makes a stale pathname
 unreachable rather than checked for.
+
 **Revised:** 2026-08-15, second this date, the close names its turn. Per the
 operator: a client can name the turn it received, section 1 carrying why the need
 is the client's own rather than an instrument's. Both the turn key and the run

@@ -3,6 +3,7 @@
 **Status:** MERGED. In `main` and the source of truth.
 
 **Date filed:** 2026-08-27
+
 **Revised:** 2026-08-31, the drawn kind set moves to seventeen. Per section
 7's own protocol, merged with the act that adds `residual.column` to
 `weaver-diagnostic-Spec` section 3.2: the vocabulary this contract draws

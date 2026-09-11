@@ -9,6 +9,7 @@ Previously: SERVED 2026-08-04. The build this document commissioned ran the same
 the graph stood up as `WeaverTools_v3`, the checklist was reported item by item, and
 the set was ratified per the operator's ruling recorded at Working Process section 5.
 The document stays as the record of what the build was asked to honor.
+
 **Date filed:** 2026-08-04
 **Base commit:** `main` at the commit that carries this document as read. The handoff
 travels inside the corpus it describes, so the checkout target is wherever this file

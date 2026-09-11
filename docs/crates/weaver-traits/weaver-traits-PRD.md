@@ -9,11 +9,13 @@ than waiting on the set. The set-wide act of 2026-08-04 established the pattern 
 conforms to.
 
 **Date filed:** 2026-07-29
+
 **Revised:** 2026-08-18, the tool boundary ruling narrows section 3.1's
 constituency to the elected outward corner, the shell being the gate's own
 verb and the inward callables being `weaver-internal`'s. The
 no-safety-classification negative stands whole and reaches the new crate by
 its own charter.
+
 **Revised:** 2026-08-17, the tool workflow opens and section 3.1's block
 lifts on its own terms: a seam now crosses tool dispatch, the harness-gate
 contract draws `tool-trait`, and the definition is shaped against its

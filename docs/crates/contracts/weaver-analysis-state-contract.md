@@ -9,9 +9,11 @@ the driver the same operator principal projecting the same three things, with th
 cut and the session rewrite of `weaver-analysis-Spec` section 4 where a branch needs
 them. The parties, the peer's authentication, and the record's replacement at the
 opener are unchanged. Per issue #432.
+
 **Revised:** 2026-09-04, the store and not its file. One phrase, per
 `weaver-state-PRD` section 4 as revised this date: the engine behind the store
 is elected and may hold no file. Nothing crossing this door moves.
+
 **Revised:** 2026-08-26, second of this date, the seam states its mechanics.
 Two facts the code act of this date elected are pinned where the seam's
 parties read them, per the audit of the same date: the seal's spelling is
@@ -19,6 +21,7 @@ the empty JSON object on its own line, a bare line being framing residue
 and not a seal, and the preload door re-stands after any close of its
 channel, which is what carries the dead-driver retry and scopes the
 at-most-one-preload owing to a live driver. Nothing of the traffic moves.
+
 **Revised:** 2026-08-26, first of this date, the name moves behind the wall.
 The operator's ruling of
 this date recuts the wire clause: the first door loses its name, making this
@@ -28,6 +31,7 @@ the agent's identity holds nothing and the driver, an operator principal,
 traverses. The election, the seal, the refusals, and every ask are untouched.
 `weaver-analysis` still learns the name from the operator, no exchange carrying
 a path.
+
 **Revised:** 2026-08-24, second of this date, the sender is `weaver-analysis`.
 The operator's ruling of this date moved `weaver-diagnostic` inside the agent
 as the harness's third member, the mechanism the harness authors a
@@ -39,6 +43,7 @@ initiator first. Nothing of the mechanism moves - the door, the seal, the
 election, and the refusals are as they were, and the far side never knew which
 crate held the near one. The seam edge relocates to `weaver-analysis-PRD` with
 the party, the from side's charter carrying the edge.
+
 **Revised:** 2026-08-24, first of this date, the seal ends the preload. Section 2 gains
 the
 seal, one empty frame after the last distillate, because a close looks the
@@ -46,6 +51,7 @@ same from a finished sender and a dying one and the replay ask of
 `weaver-harness-state-contract` answers at the seal, which must not happen
 over a prefix that looks whole. Section 5's dead-driver clause names the
 prefix unsealed. Landed with the replay loop's act, every party merging.
+
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.

@@ -4,6 +4,22 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
+
+**Revised:** 2026-09-11, four count words catch up to the charter and to this
+document's own later entries. **Nothing about the crate changes and nothing about the
+charter is in question**: `weaver-trace-PRD` section 3.1 lists twenty-one kinds by name
+and the code's `Kind` compiles the same twenty-one, so what was stale was this text.
+Section 3's variant sentence read eighteen kinds where the rest of the document reads
+twenty-one; the mapping's recount read fifteen dispositions where its own banner of a
+later act and the mapping paragraph both read sixteen; the untagged clause counted seven
+`Payload` variants against the fifteen its own enum block lists; and the mapping gave
+`elision` the `FlushCounts` that the banner of 2026-08-26 had already taken off it,
+`ElisionSpan` naming the interior span a flush does not have. **The paragraph at section
+3's mapping says why this happens** - a mapping that is stale reads exactly like a
+mapping that is total - and it happened again to the sentences beside it. Found by
+CodeRabbit on PR #556, outside that act's diff, and confirmed against the charter's list
+rather than against the count alone.
+
 **Revised:** 2026-09-06, the load's payload carries its lineage and its stack. Section
 3's `Elections` gains `lineage`, present where the session stands from a record and
 naming the parent's session, the run the cut falls in, and the turn the holdings stop
@@ -11,10 +27,12 @@ at, and `stack`, the digests of the organ binaries admin started keyed by name, 
 copied from the enter, per `weaver-trace-PRD` section 3.1 as revised 2026-09-04 on
 issue #432, which named them on the event while this document's type did not carry
 them. Found by the code act.
+
 **Revised:** 2026-09-04, third of this date, the load names its declaration. Section
 3's `Elections` gains `declaration`, the digest of the file the load was built from as
 the enter carried it. Per `weaver-trace-PRD` section 3.1 as revised this date, per
 issue #435.
+
 **Revised:** 2026-09-04, second of this date, the seated prefix distills whole.
 Section 11's `distill` carries a turnless `message.system` line under every
 election, one pair per top-level payload member, per charter section 11 as
@@ -27,12 +45,14 @@ the payload-free set, carrying `UnloadClose` where a member stood: the grant
 surface read at the leave against the enter's reading as unchanged, varied, or
 unreadable. The mapping counts sixteen dispositions. Per `weaver-trace-PRD`
 section 3.1 as revised this date and issue #411.
+
 **Revised:** 2026-09-03, the load names its loop and its member. Section 3's
 `Elections` gains `composer`, the loop that assembled the run's prompts by
 binary and, where it is a file, path and digest at the load, and
 `state_member`, whether the member's end arrived on the enter. Each is a
 named member and never a profile, and the claim gains its record,
 `trace-load-names-its-loop-and-its-member`.
+
 **Revised:** 2026-08-26, the tee takes its Spec section. `src/tee.rs` stood as a sixth
 module with no section, no declared type, and no header to carry, the weaver-state
 defect class again, per issue 351. Section 11 now declares `Election`, `ElectedKind`,
@@ -45,6 +65,7 @@ moves with it, section 1's layout gains the module, and section 10's counts move
 forty-four with the two perturbations joining its list. Section 3's no-read rationale
 is corrected rather than kept: the claim held of `Payload` while its reason
 overclaimed, the tee reading canonical lines back as raw text through no payload type.
+
 **Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
 `Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this crate
 writes and an `Option` at the read so a record predating the member parses whole. It is
@@ -57,6 +78,7 @@ names `weaver-types-Spec` section 2 authoritative for the declared shape and
 `weaver-harness-state-contract` for what the term means on the seam, the two types
 differing on purpose because this crate links nothing. Section 10's counts move
 with the assertion the act adds, and gain the perturbation naming its removal.
+
 **Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
 charter section 6's guarantee as an absence, the envelope carrying no version member,
 and represents the both-directions half as `Option` with `skip_serializing_if` on an
@@ -69,11 +91,13 @@ extension, and a rename, a retirement, a member's type changed, or a member's me
 changed is the breaking change. The instrument is review rather than perturbation
 because no run of this crate can fail on it, the damage landing on a reader of an older
 record, which is stated rather than left as a gap in the enforcement table.
+
 **Revised:** 2026-08-22, fourth of this date, the classify outcome loses its
 refusal. `ClassifyOutcome` becomes `ClassifyScored`, a struct rather than an
 enum, its `Refused` variant having moved to the `refusal` kind per the
 charter's clause of this date and a single-variant enum being a reserved
 slot. The counts are unchanged, one disposition retiring as another arrives.
+
 **Revised:** 2026-08-22, third of this date, pressure leaves the failure
 vocabulary. `Failure` loses `CommitPressure`, which `submit` returned after the
 event was already in the working structure and the writer's queue, so a caller
@@ -82,6 +106,7 @@ from the recorder instead, a caller ignoring it being correct by default. What t
 harness does with it is unchanged and was never implemented: it authors a `fault`
 naming `RecorderCommitPressure`, per the fault-carrier ruling this clause already
 carried.
+
 **Revised:** 2026-08-22, second of this date, the refusal takes its kind.
 Section 3's `Kind` gains `Refusal` with its explicit rename and `Payload`
 gains `Refusal`, spliced on the custody rule that carries an organ's
@@ -89,22 +114,26 @@ account opaque, the counts moving to twenty-one kinds and fifteen
 dispositions. `StopReason` gains `Refused`. Two counts that had gone stale
 ride with the recount, the variant sentence reading eighteen and the
 compiler note naming a seventeenth kind.
+
 **Revised:** 2026-08-22, second of this date, the elision records where it
 fell. `Elision` carries `ElisionSpan`, `from` and `to` beside the resident
 counts, rather than the `FlushCounts` the first draft of this act gave it.
 A flush is described by the count it leaves and an interior removal is not,
 so the counts alone could not support the replay charter section 3.2
 promises. The disposition count is unchanged at fourteen.
+
 **Revised:** 2026-08-22, the elision takes its kind. Section 3's `Kind`
 gains `Elision` with its explicit rename, the counts moving to twenty, and
 the kind-to-payload mapping gains `Elision` carrying `FlushCounts`, the
 same two facts under a different kind rather than a second struct with
 identical members.
+
 **Revised:** 2026-08-21, third of this date, the elections become three.
 Section 3's `Elections` gains `surprisal`, a plain boolean serialized even
 when false, per the charter's same-act edit on issue #258: absent, false,
 and true are three states, the first being a record older than the
 election. The field's `Option` is unchanged.
+
 **Revised:** 2026-08-21, second of this date, the prefix becomes a
 recorded contribution and the mapping is recounted. Per the charter's
 same-act edit on issue #258. `message.system` gains a second author, the
@@ -116,38 +145,45 @@ present, the other three message kinds unmoved. Section 3's `Payload` and
 its kind-to-payload paragraph are recounted to nineteen kinds and thirteen
 dispositions: `ModelField`, `Elections`, and `Flush` stood in the crate and
 in neither, added by acts that recounted the kind set and not this mapping.
+
 **Revised:** 2026-08-21, the field enters the record and the load names
 its elections. Section 3's `Kind` gains `ModelField` with its explicit
 rename, the counts moving to nineteen, and the kind-to-payload mapping
 gains `ModelField` with `Candidate` beside it. The `load` event's payload
 becomes `Elections`, each diagnostic election named individually and none
 bundled, per the charter's same-act edit.
+
 **Revised:** 2026-08-20, the record holds the context position. Section
 3's `ModelOutput` gains `resident` and `capacity`, plain integers meeting
 the same shaping test its emission and finish meet, on the charter's
 same-act edit. The election stated beside them is that they land in this
 payload rather than in the measurement's splice, which the harness may not
 open without retiring the splice rule. One perturbation assertion lands.
+
 **Revised:** 2026-08-19, fourth of this date, the classify kinds take
 shape. `Kind` gains `ClassifyRequest` and `ClassifyOutput` with their
 explicit renames, the counts move to eighteen, and the kind-to-payload
 mapping gains two dispositions shaped here on the flush's precedent:
 `ClassifyAsk`, the content sent, and `ClassifyScored`, the labels the
 artifact's head returned, per the charter's same-act edit.
+
 **Revised:** 2026-08-19, third of this date, the flush reaches the record.
 `Kind` gains `Flush` with its explicit rename, the counts move to sixteen
 and the ordinals to seventeenth, and the kind-to-payload mapping gains the
 ninth disposition: `flush` carries `FlushCounts`, the resident tokens
 before and after, per the charter's same-act edit.
+
 **Revised:** 2026-08-19, second of this date, the finish tells the truth.
 `Finish` gains `Length`, mirroring the floor's same-act addition per the
 two-names-one-fact arrangement of section 1: the turn's token limit
 reached, which the record had flattened into `Completed`.
+
 **Revised:** 2026-08-19, the system role lands. `Kind` gains
 `MessageSystem` with its explicit rename, the counts move to fifteen
 throughout, the message kinds become four, and the kind-to-payload mapping
 carries it under `Message` with its siblings, per the charter's same-act
 edit.
+
 **Revised:** 2026-08-17, the trace stamps the engine where the organ is too
 coarse, per issue #103. `Subsystem` gains `spu_decoder` for the three model
 events, whose wiring landed stamping `spu` before the case existed. `Spu`
@@ -156,10 +192,12 @@ organ's. The growth rule re-keys from crates to producing parties at the
 granularity a reader needs, which is the generalization `Tool` already was,
 and `spu_encoder` is named as deliberately absent until an encoder gives it
 an emitter, per apex section 9.
+
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date. Section 4's splice sentence follows
 `weaver-trace-PRD` section 3.2 as narrowed: the turn's delta as rendered,
 not the prompt as the model received it, splicing whole as before.
+
 **Revised:** 2026-08-11, the model events splice. `Payload::ModelRequest` and
 `Payload::ModelMeasurement` become spliced `RawValue`, the organ producing their
 content and the harness carrying it opaque per the custody model, reversing the
@@ -169,6 +207,7 @@ opaque blob. The typed `ModelRequest` and `ModelMeasurement` structs retire from
 the schema, and `trace-measurement-absent-not-zero` retires with them, the
 absent-not-zero property relocating to the SPU's `spu-absent-not-empty-vector`
 where the rendering now happens. The crate becomes 38 assertions.
+
 **Revised:** 2026-08-14, the run identifies itself. `RunOrdinal` becomes
 `RunRef`, so the envelope's triple reads `SessionRef`, `RunRef`, and
 `TurnRef`, and the newtype clause drops its small integers because all three
@@ -593,7 +632,7 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Eighteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Twenty-one kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
 attribute that let a consumer absorb a further kind into a wildcard would defeat
@@ -786,9 +825,13 @@ organ's own account of what it turned away. `session.closed` and `turn.started` 
 `None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
 did, the one kind with two licensed pairings. `load` carries `Elections`. The four
 message kinds carry `Message`. `turn.closed` carries `TurnClosed`. `fault` carries
-`Fault`. `flush` and `elision` each carry `FlushCounts`, the resident token counts
-before and after, both plain integers, two kinds over one shape because the two
-operations report the same two facts. The four model kinds carry their four own shapes,
+`Fault`. `flush` carries `FlushCounts`, the resident token counts
+before and after, both plain integers. **`elision` carries `ElisionSpan` and not
+those counts**: an elision names the interior span it made absent, `from` and `to`
+beside the resident counts either side, and a flush that returned the context to its
+prefix names no span. The two were one shape in the first draft of the act that added
+elision and have not been since, which the banner of 2026-08-26 records and this
+sentence carried anyway. The four model kinds carry their four own shapes,
 one each. The classify pair carries its two own shapes, `ClassifyAsk` and
 `ClassifyScored`. **A refused classify authors no output at all** and reaches the record
 under `refusal`, so a refusal the exchange met is still the record's fact and never a
@@ -952,7 +995,7 @@ the act that adds it.
 
 **The kind-to-payload mapping is unchanged in its counts.** One disposition
 retires and one arrives in the same act, `ClassifyOutcome` for
-`ClassifyScored`, so twenty-one kinds and fifteen dispositions still hold. A
+`ClassifyScored`, so twenty-one kinds and sixteen dispositions still hold. A
 refused classify authors no `classify.output` at all.
 
 **The crate carries `ClassifyOutcome` until the act that migrates it**,
@@ -1120,7 +1163,7 @@ without a serde election of its own. The property the retired
 `trace-measurement-absent-not-zero` asserted is the SPU's now, a relocation the
 custody model forces rather than a property dropped.
 
-**Untagged with seven variants is a serialization device, and the deserializing
+**Untagged with fifteen variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
 order, which is unambiguous while writing and ambiguous while reading once more
 than one variant is struct-shaped. No payload is ever read back through

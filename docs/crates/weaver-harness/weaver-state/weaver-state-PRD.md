@@ -7,6 +7,7 @@ holdings. Section 4 states the restore: the door stands under a restoring load a
 a diagnostic binding and the driver preloads the declared record through it, whole or
 through a turn, the enter's asks parking on the seal, a resume under the same session
 name and a branch under a new one, custody indifferent to which. Per issue #432.
+
 **Revised:** 2026-09-04, second of this date, the identity is the session's first
 holding. Section 4 lands the three rulings of issue #422: the declaration seeds and the
 store governs, a missed read of the identity fails the enter closed, and the seated
@@ -24,6 +25,7 @@ engine, the database, and the role members of the binding and the grant
 surface read back at the close. Section 3 states that a persisting substrate is
 not a crossing. Section 5 gains the third-engine cell and the service
 retirement cell. Per issue #411, items 1 and 2.
+
 **Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
 recuts per the operator's ruling of this date: the harness channel is a
 socketpair admin creates at the member's spawn, one end inherited and one
@@ -33,6 +35,7 @@ named socket and its name moves into this member's own territory. The door's
 judgment clause stops describing an inversion of a judgment that no longer
 exists and states its own: the operator principal admitted, every other peer
 refused.
+
 **Revised:** 2026-08-24, the second door stands. Section 3 gains the preload
 door, per the operator's ruling of this date and the taxonomy promotion:
 `weaver-analysis-state-contract`, standing only under a diagnostic binding,
@@ -50,6 +53,7 @@ election's block in the agent's file is `state-election`, shaped at
 charter's ruled default, and it rides the enter directive per
 `weaver-admin-harness-contract` sections 3 and 5, every party merging in
 the act.
+
 **Revised:** 2026-08-19, the serve surface takes its shape. Section 5's
 serve cell and calling-shape cell close: the first asker arrived as the
 context-injection loop, the ask vocabulary landed in
@@ -57,6 +61,7 @@ context-injection loop, the ask vocabulary landed in
 `weaver-state-Spec` section 4, and the loop's calling shape landed as the
 seat's state port at `weaver-harness-Spec` section 6. Section 1's
 build-order asymmetry is history and reads as such.
+
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`
