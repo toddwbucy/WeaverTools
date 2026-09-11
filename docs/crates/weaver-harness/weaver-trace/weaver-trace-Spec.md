@@ -5,6 +5,21 @@ build order. Code is written against it under the gates of Working Process secti
 
 **Date filed:** 2026-08-01
 
+**Revised:** 2026-09-11, four count words catch up to the charter and to this
+document's own later entries. **Nothing about the crate changes and nothing about the
+charter is in question**: `weaver-trace-PRD` section 3.1 lists twenty-one kinds by name
+and the code's `Kind` compiles the same twenty-one, so what was stale was this text.
+Section 3's variant sentence read eighteen kinds where the rest of the document reads
+twenty-one; the mapping's recount read fifteen dispositions where its own banner of a
+later act and the mapping paragraph both read sixteen; the untagged clause counted seven
+`Payload` variants against the fifteen its own enum block lists; and the mapping gave
+`elision` the `FlushCounts` that the banner of 2026-08-26 had already taken off it,
+`ElisionSpan` naming the interior span a flush does not have. **The paragraph at section
+3's mapping says why this happens** - a mapping that is stale reads exactly like a
+mapping that is total - and it happened again to the sentences beside it. Found by
+CodeRabbit on PR #556, outside that act's diff, and confirmed against the charter's list
+rather than against the count alone.
+
 **Revised:** 2026-09-06, the load's payload carries its lineage and its stack. Section
 3's `Elections` gains `lineage`, present where the session stands from a record and
 naming the parent's session, the run the cut falls in, and the turn the holdings stop
@@ -617,7 +632,7 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Eighteen kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Twenty-one kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
 attribute that let a consumer absorb a further kind into a wildcard would defeat
@@ -810,9 +825,13 @@ organ's own account of what it turned away. `session.closed` and `turn.started` 
 `None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
 did, the one kind with two licensed pairings. `load` carries `Elections`. The four
 message kinds carry `Message`. `turn.closed` carries `TurnClosed`. `fault` carries
-`Fault`. `flush` and `elision` each carry `FlushCounts`, the resident token counts
-before and after, both plain integers, two kinds over one shape because the two
-operations report the same two facts. The four model kinds carry their four own shapes,
+`Fault`. `flush` carries `FlushCounts`, the resident token counts
+before and after, both plain integers. **`elision` carries `ElisionSpan` and not
+those counts**: an elision names the interior span it made absent, `from` and `to`
+beside the resident counts either side, and a flush that returned the context to its
+prefix names no span. The two were one shape in the first draft of the act that added
+elision and have not been since, which the banner of 2026-08-26 records and this
+sentence carried anyway. The four model kinds carry their four own shapes,
 one each. The classify pair carries its two own shapes, `ClassifyAsk` and
 `ClassifyScored`. **A refused classify authors no output at all** and reaches the record
 under `refusal`, so a refusal the exchange met is still the record's fact and never a
@@ -976,7 +995,7 @@ the act that adds it.
 
 **The kind-to-payload mapping is unchanged in its counts.** One disposition
 retires and one arrives in the same act, `ClassifyOutcome` for
-`ClassifyScored`, so twenty-one kinds and fifteen dispositions still hold. A
+`ClassifyScored`, so twenty-one kinds and sixteen dispositions still hold. A
 refused classify authors no `classify.output` at all.
 
 **The crate carries `ClassifyOutcome` until the act that migrates it**,
@@ -1144,7 +1163,7 @@ without a serde election of its own. The property the retired
 `trace-measurement-absent-not-zero` asserted is the SPU's now, a relocation the
 custody model forces rather than a property dropped.
 
-**Untagged with seven variants is a serialization device, and the deserializing
+**Untagged with fifteen variants is a serialization device, and the deserializing
 consumer keys on `kind`.** Serde resolves an untagged enum by trying variants in
 order, which is unambiguous while writing and ambiguous while reading once more
 than one variant is struct-shaped. No payload is ever read back through
