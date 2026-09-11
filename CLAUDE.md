@@ -328,6 +328,45 @@ when the graph lands - the graph indexes them, it does not replace them:
    linted at all and `--workspace` answers a smaller question than twelve
    per-crate runs do.
 
+6. **The census**, on the operator's ruling of 2026-09-11.
+   `python3 process/gates/census.py`, run from the repository root wherever
+   clippy and fmt are run - **before the first review and again after the
+   rework**, since a fix is an act and can regress what it is fixing.
+
+   **It counts the five things the other five devices structurally cannot
+   see.** Each of those verifies an artifact against itself: a test against
+   its code, a lint against its crate, a compile pin against its types.
+   **None of them compares a claim in a document against a fact in code.**
+
+   ```text
+   dangling_citations           a conforms: identifier naming no node
+   uncited_perturbations        a claim whose tag says an instrument exists
+   untagged_assertions          a node no tag-based query can ever reach
+   enforcement_table_mismatch   a document's assertions against its own table
+   sources_without_a_citation   phase three's rule, per source file
+   ```
+
+   **The rule is that no number goes up, not that every number is zero.**
+   `process/gates/census-baseline.json` is the reading when the gate landed:
+   0, 33, 54, 0, 49. A gate nobody can pass is a gate everyone learns to
+   ignore, which item 5 already says of clippy and which is why the backlog is
+   a baseline rather than a failure. `--update` moves it, and **moving a number
+   up is a sentence in the act's commit message**, not a quiet re-reading.
+
+   **A new `tag: perturbation` node is cited by code in the same act, or its
+   enforcement-table row is marked owed.** The gate counts the ones that are
+   neither. Issue #558 is the backlog and records why: nineteen of the first
+   thirty-three were born in documents-only commits, the Spec authoring an
+   assertion that phase three would code later, with nothing holding the
+   receipt.
+
+   **It found two bugs in itself before it found anything else**, which is
+   worth knowing before trusting a number it prints. A graph block declares
+   several nodes and the first form read one, reporting seventy sound
+   citations as dangling. And a section 9 is the enforcement table in
+   `weaver-web-Spec` and the failure vocabulary in `weaver-spu-Spec`, so the
+   table is found by its own header and never by a section number.
+
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
 code defects while accumulating 53 dangling edges of its own. A clean automated gate is
@@ -345,11 +384,66 @@ The coding session answers each finding with a commit. More than four review rou
 with the seat means the diff is not the problem. The pull request is pulled and the
 work re-enters authoring.
 
+**The seat reviews twice, and the second pass reviews the rework.** Answering
+fifteen findings is itself an act, and on 2026-09-11 it introduced a real defect
+in three pull requests out of four: a transaction that was not a snapshot, a
+sweep whose claim was measured against one marker of several, and a newtype that
+held its kind for the compiler and not for the value. **Each was found by the
+pass that came after the fixes**, not by the one that found the original
+defects. So a second pass is not optional where the first produced substantive
+work; where the first returned nothing actionable, a second is ritual.
+
+**Passing means no finding that changes behaviour or corrects a claim is
+unanswered.** A declined finding is answered - with the reason on the pull
+request, since the record carries the finding as it stood either way.
+
+**The reviews are cheap in the resource that is scarce.** A pass runs in a
+sub-agent, so its own hundred-odd thousand tokens never enter the session's
+window and only the findings do. **Do not spend a review pass on what the
+census counts**: a reviewer's attention on "is this perturbation cited" is
+attention not on "does this fix hold", and the first is deterministic.
+
+The order, then: gates including the census, first review, answer every finding,
+gates again, second review, then out of draft.
+
 A pull request leaves draft only when the code review seat passes it. Leaving draft is
 what invokes CodeRabbit, which is the final pass and is expected to confirm rather
 than to find work. Two exchanges with CodeRabbit is the ceiling. A third means the
 draft phase did not finish, so the pull request returns to draft and the seat works it
 again before it comes back out.
+
+## Command output is context, and the session pays for it
+
+**On the operator's ruling of 2026-09-11, after a session spent twenty-two
+percent of a one-million-token window on the output of its own commands.**
+Not on the work, and not on the conversation: on `cat`, on full test runs, on
+`psql` dumps, and on re-reading files already in the window. The corpus is
+large and a session that reads it carelessly runs out of room to think.
+
+**Verbose network and database output goes to a file, then the file is
+queried.** A result held once on disk can be grepped ten times for nothing,
+where a result printed to the session is paid for once and then paid for again
+in every later turn that carries it. Write to the scratchpad, report the count,
+read back only the rows that matter.
+
+```text
+cargo test -p <crate>     | grep -E '^test result|FAILED'
+cargo build               | grep -E '^error' -A4
+cargo clippy ... -- -D warnings | grep -cE '^crates/.*: error:'
+git diff                  --stat first; the full diff only for the hunk in hand
+a listing                 aggregated - uniq -c, awk totals - never row by row
+a file already read       sed -n 'X,Yp', never cat
+```
+
+**Grep the narrowest thing that answers the question.** `grep -c` where a
+count settles it. A path rather than a tree. One section of a Spec rather than
+the Spec, which at two and a half thousand lines is most of a percent of the
+window each time it is opened.
+
+**This is a discipline and not a tooling gap.** A retrieval index over the
+corpus would cut the document half of it, and is wanted for other reasons -
+but the command output above is the session's own doing and no index touches
+it.
 
 ## Conventions carried from the quarry
 
