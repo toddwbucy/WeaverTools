@@ -147,7 +147,15 @@ printf '  %s -> %s\n' "$BEFORE" "$AFTER"
 # reports it, leaves ignored files alone, and refreshes the index on its way
 # past, which also retires the stat-dirty false refusal the old form could
 # give after a checkout.
-[ -z "$(git status --porcelain=v1 --untracked-files=all)" ] \
+# **A gate that cannot read the tree refuses rather than passing.** Inside a
+# test the substitution's own failure is not the test's status, so a git that
+# answered nothing at all, a corrupt index among the reasons, read as an
+# empty status and the gate said clean. Measured: a truncated `.git/index`
+# exits 128 and the old form passed the run through. The answer is taken
+# first, so a git that could not speak is its own refusal.
+TREE_STATUS=$(git status --porcelain=v1 --untracked-files=all) \
+  || die "git could not say whether the tree is clean, so $AFTER cannot be trusted to name the build"
+[ -z "$TREE_STATUS" ] \
   || die "the tree is dirty, so $AFTER would name a build it did not produce; commit or stash first"
 # -------------------------------------------------------------------- 3. test
 say "test"
