@@ -393,29 +393,47 @@ mod tests {
             return;
         };
         let bearer = a_session(&store, "todd", "user").await;
+        // **The row and the session it is chipped by are this run's alone.**
+        // The assertion below counts the rows on the page, so anything else
+        // carrying this session - a row a previous run retained, or one a
+        // concurrent run is writing - is counted as though the surface drew
+        // it. A fresh tag is what makes "one header row and one run" a
+        // statement about this watch rather than about the database.
+        let tag = format!(
+            "surf-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        let run = format!("{tag}-a");
         sqlx::query(
             "INSERT INTO run (run_id, record_identity, sampler, boundary_set, \
              record_session, device, engine) \
-             VALUES ('surf-a', 'SURF-REC', '{}', '[]', 'sess-surf', 'rtx-a6000', \
-             '{\"cutlass\": \"3.5\"}') \
-             ON CONFLICT (run_id) DO UPDATE SET record_identity = EXCLUDED.record_identity, \
-             record_session = EXCLUDED.record_session, device = EXCLUDED.device, \
-             engine = EXCLUDED.engine, seed = NULL",
+             VALUES ($1, 'SURF-REC', '{}', '[]', $2, 'rtx-a6000', \
+             '{\"cutlass\": \"3.5\"}')",
         )
+        .bind(&run)
+        .bind(&tag)
         .execute(&store.pool)
         .await
         .unwrap();
 
         // The chip admits this row and no other, so every assertion below
         // is about this run.
-        let (status, html) = ask(&store, "/record?chip=session&of=sess-surf", Some(&bearer)).await;
+        let (status, html) = ask(
+            &store,
+            &format!("/record?chip=session&of={tag}"),
+            Some(&bearer),
+        )
+        .await;
         assert_eq!(status, StatusCode::OK);
         assert_eq!(
             html.matches("<tr>").count(),
             2,
             "one header row and one run"
         );
-        assert!(html.contains("surf-a"), "the run is drawn");
+        assert!(html.contains(&run), "the run is drawn");
         assert!(html.contains("rtx-a6000"), "its device is drawn");
         assert!(
             html.contains("cutlass"),
@@ -425,8 +443,15 @@ mod tests {
         // page, so the word can only have come from its cell.
         assert!(html.contains("absent"), "an absent member is named");
 
-        let (_, html) = ask(&store, "/record?chip=session&of=sess-nobody", Some(&bearer)).await;
-        assert!(!html.contains("surf-a"), "the chip narrowed the list");
+        // A session no run carries, for the same reason: a fixed name could
+        // be one some other row happens to hold.
+        let (_, html) = ask(
+            &store,
+            &format!("/record?chip=session&of={tag}-nobody"),
+            Some(&bearer),
+        )
+        .await;
+        assert!(!html.contains(&run), "the chip narrowed the list");
         assert!(
             html.contains("No run answers this"),
             "and says nothing answers"
@@ -446,7 +471,7 @@ mod tests {
         let bearer = a_session(&store, "todd", "user").await;
         for uri in [
             "/record?chip=session",
-            "/record?of=sess-surf",
+            "/record?of=a-value-with-no-kind",
             "/record?chip=nonesuch&of=x",
         ] {
             let (status, body) = ask(&store, uri, Some(&bearer)).await;
