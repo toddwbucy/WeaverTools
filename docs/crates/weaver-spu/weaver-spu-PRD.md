@@ -109,6 +109,7 @@ derived from the run's, the turn, and which generation of that turn it is,
 and the sampler holds nothing across generations, its penalty window read
 from the resident tail rather than accumulated. Apex section 8 needs no
 amendment, having claimed only that freezing narrows variance.
+
 **Date filed:** 2026-07-31
 
 **Revised:** 2026-08-19, third of this date, the binary-spelling cell

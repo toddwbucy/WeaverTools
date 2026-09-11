@@ -9,16 +9,16 @@
 //! the schema rather than after the surface that wants it, which is the
 //! rule section 4 states about itself working a third time.
 //!
-//! **It derives nothing.** A arm's status is not computed here: section
+//! **It derives nothing.** An arm's status is not computed here: section
 //! 5.1 has the arm take the five states of the staged experiment it
 //! became, so the status is that row's `state` read across the reference,
-//! and a arm whose reference is null has not been registered - which the
+//! and an arm whose reference is null has not been registered - which the
 //! null itself records rather than a sixth word this document would have to
 //! name.
 //!
-//! **A arm is not a run.** Section 2.9 has a arm reach its runs
+//! **An arm is not a run.** Section 2.9 has an arm reach its runs
 //! through its staged experiment and never directly, so nothing here joins
-//! a arm to `run`.
+//! an arm to `run`.
 
 use std::collections::HashMap;
 
@@ -44,7 +44,8 @@ pub struct Plan {
 }
 
 /// One arm of a plan, with the disposition of every member it names: a
-/// candidate experiment, drawn as one column of the matrix.
+/// candidate experiment, which the matrix of the sketch draws as one
+/// column of its grid.
 ///
 /// **The same arm as `experiment::Arm`, at the resolution the plan holds it
 /// at.** This one is the arm as composed, before registration freezes it;
@@ -66,7 +67,7 @@ pub struct Arm {
     pub name: String,
     /// **The registration is one fact and not two nullable members.** A
     /// arm that became a staged experiment has that row's identity and
-    /// that row's state together, and a arm that did not has neither, so
+    /// that row's state together, and an arm that did not has neither, so
     /// an experiment without a status and a status without an experiment are
     /// states section 5.1 does not admit and this type cannot hold. It is
     /// the argument `Disposition` below makes, applied to the arm.
@@ -74,7 +75,7 @@ pub struct Arm {
     pub entries: Vec<Entry>,
 }
 
-/// What a arm became, where it has been registered.
+/// What an arm became, where it has been registered.
 #[derive(Debug, Clone, Serialize)]
 pub struct Registration {
     pub experiment: i64,
@@ -124,7 +125,7 @@ pub enum Disposition {
 /// **The snapshot and not the transaction is what makes it one read.** At
 /// read committed - this server's default - every statement takes a fresh
 /// snapshot, so wrapping the three in a transaction leaves them three reads
-/// and a arm committed between the second and the third is visible to one
+/// and an arm committed between the second and the third is visible to one
 /// statement and not the other. The isolation is raised to repeatable read,
 /// which takes the snapshot at the first statement and holds it.
 ///
@@ -148,7 +149,7 @@ impl Store {
         // **A transaction is not a snapshot at read committed**, which is
         // this server's default: there, every statement takes a new one, so
         // three statements in one transaction are still three snapshots and
-        // a arm committed between the second and the third is visible to
+        // an arm committed between the second and the third is visible to
         // one and not the other. Repeatable read takes the snapshot once, at
         // the first statement, and the three become one read.
         sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
@@ -189,7 +190,7 @@ impl Store {
                     }),
                     (None, None) => None,
                     (experiment, state) => anyhow::bail!(
-                        "a arm is registered or it is not: experiment {experiment:?} with \
+                        "an arm is registered or it is not: experiment {experiment:?} with \
                          state {state:?}"
                     ),
                 };
@@ -298,12 +299,12 @@ mod tests {
     }
 
     /// The sixth read returns a plan with its arms and their entries, and
-    /// **a arm's status is the staged experiment's state or is absent**,
+    /// **an arm's status is the staged experiment's state or is absent**,
     /// per section 5.1.
     ///
     /// conforms: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
     #[tokio::test]
-    async fn read_six_returns_the_plan_with_its_columns_and_their_entries() {
+    async fn read_six_returns_the_plan_with_its_arms_and_their_entries() {
         let Some(s) = store().await else { return };
         let tag = tag("plan");
         let plan = a_plan(&s, &tag).await;
@@ -418,7 +419,7 @@ mod tests {
         assert_eq!(after, recorded, "a plan is read rather than quoted");
     }
 
-    /// **The three statements are one snapshot**, so a arm committed
+    /// **The three statements are one snapshot**, so an arm committed
     /// while the read is in flight is invisible to all three rather than to
     /// some of them.
     ///
@@ -524,7 +525,7 @@ mod tests {
         );
     }
 
-    /// **A arm frees at most one member**, per section 2.9, section 5.4
+    /// **An arm frees at most one member**, per section 2.9, section 5.4
     /// having a sweep name one member and its value set.
     ///
     /// Perturbation: drop `plan_arm_frees_at_most_one_member` and a
@@ -533,7 +534,7 @@ mod tests {
     ///
     /// conforms: web-an-arm-frees-at-most-one-member
     #[tokio::test]
-    async fn a_column_frees_at_most_one_member() {
+    async fn an_arm_frees_at_most_one_member() {
         let Some(s) = store().await else { return };
         let tag = tag("free");
         let plan = a_plan(&s, &tag).await;
@@ -570,7 +571,7 @@ mod tests {
             "refused by the wrong rule: {second}"
         );
 
-        // A arm holding the rest is the ordinary case and is not touched
+        // An arm holding the rest is the ordinary case and is not touched
         // by the bound: the index is partial on the freed disposition.
         sqlx::query(
             "INSERT INTO plan_entry (arm_id, member, disposition, held_value) \
@@ -583,7 +584,7 @@ mod tests {
         .expect("held members are unbounded");
     }
 
-    /// **A arm registers at most once**, per section 2.9, the reference
+    /// **An arm registers at most once**, per section 2.9, the reference
     /// being what holds the claim: two arms cannot reach one staged
     /// experiment.
     ///
@@ -595,7 +596,7 @@ mod tests {
     /// write to exist before it can be run, so what is watched here is the
     /// constraint the write will lean on and not the write.
     #[tokio::test]
-    async fn two_columns_cannot_claim_one_staged_experiment() {
+    async fn two_arms_cannot_claim_one_staged_experiment() {
         let Some(s) = store().await else { return };
         let tag = tag("claim");
         let plan = a_plan(&s, &tag).await;
@@ -662,7 +663,7 @@ mod tests {
         // Each case names the rule that must refuse it. Three different
         // constraints back these five, so an assertion that only asked for
         // an error could not tell the value check from the disposition
-        // check, nor either from a arm name typed wrong.
+        // check, nor either from an arm name typed wrong.
         for (member, rule, refused) in [
             (
                 "held-with-no-value",
@@ -715,7 +716,7 @@ mod tests {
                 ),
             ),
             // A sweep is one member **and its value set**, so a freed member
-            // over no values would register a arm with no arms.
+            // over no values would register an arm with no arms.
             (
                 "freed-over-no-values",
                 "plan_entry_freed_values_is_an_array",

@@ -147,6 +147,7 @@ the channel's origin: the harness half of the pair admin created at the
 member's spawn, received in the enter directive beside the sink, no name
 derived and no dial made. The seat, the ports, the tee's attach, and the
 dead-peer conversions are untouched.
+
 **Date filed:** 2026-08-02
 
 **Revised:** 2026-08-26, first of this date, a citation follows a renumbering.

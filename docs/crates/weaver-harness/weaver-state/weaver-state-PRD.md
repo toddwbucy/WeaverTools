@@ -61,6 +61,7 @@ context-injection loop, the ask vocabulary landed in
 `weaver-state-Spec` section 4, and the loop's calling shape landed as the
 seat's state port at `weaver-harness-Spec` section 6. Section 1's
 build-order asymmetry is history and reads as such.
+
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`

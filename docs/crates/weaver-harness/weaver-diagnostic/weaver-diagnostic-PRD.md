@@ -154,6 +154,7 @@ seam edge is declared here, from the initiating side, per the pattern the harnes
 seam set, and not by state as the paragraph first said. The owed list narrows to the
 driver, its Spec, and the null replay. The serving-binding refusal is restated in the
 papers' terms, the door's absence rather than a refusal at a seam that does not stand.
+
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-diagnostic-PRD`
 **Parent:** `weaver-harness-PRD`

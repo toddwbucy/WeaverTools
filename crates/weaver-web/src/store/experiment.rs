@@ -157,6 +157,12 @@ pub struct Arm {
     /// The value this arm was produced under. **Absent on a point arm**,
     /// which section 2.9 has register with no swept member and produce one
     /// run - so there is no value rather than an empty one, per section 6.
+    ///
+    /// **It is omitted rather than serialized as null.** A sweep's value may
+    /// itself be JSON null, and a derive that wrote `None` as null would
+    /// make the two equal at the one boundary where a reader meets them,
+    /// which is the whole distinction this member exists to carry.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<serde_json::Value>,
     /// The run, with its tuple, its signature and its parting position where
     /// it has one. `None` is the arm that never ran.
@@ -171,7 +177,9 @@ pub struct Sweep {
     /// The member the sweep moves. **Absent where the experiment is not a
     /// sweep**, rather than an empty string, which would be the
     /// absent-not-empty failure section 6 forbids at the view committed one
-    /// layer lower where the view cannot see it.
+    /// layer lower where the view cannot see it. Omitted rather than
+    /// serialized as null, for the reason `Arm::value` gives.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub member: Option<String>,
     pub arms: Vec<Arm>,
 }

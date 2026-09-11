@@ -51,6 +51,7 @@ same from a finished sender and a dying one and the replay ask of
 `weaver-harness-state-contract` answers at the seal, which must not happen
 over a prefix that looks whole. Section 5's dead-driver clause names the
 prefix unsealed. Landed with the replay loop's act, every party merging.
+
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.

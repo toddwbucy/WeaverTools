@@ -63,7 +63,7 @@ cannot reach quality. It is a claim that quality is not enumerable as a pass or 
 when everything else is held, so it cannot be the thing the envelope is stated over.
 It waits on its own instrument, and section 6 names the candidate.
 
-It is not a ledger of every run. The arms are the arms of one parent, a handful
+It is not a ledger of every run. The columns are the arms of one parent, a handful
 side by side. A view with a thousand runs across the top is a spreadsheet and not an
 instrument.
 
@@ -124,7 +124,7 @@ plan carries it, because two tuples and a delta state it mechanically and checka
 section 2.5**, which the schema holds not null. At scheduling the matrix fills it with
 a rendering of the arm's diff, the operator may replace that text before
 registration freezes it, and the plan holds no copy. So the question stays where 2.5
-puts it and nothing else in the store holds it, and a arm's hypothesis is stated
+puts it and nothing else in the store holds it, and an arm's hypothesis is stated
 twice in two kinds: mechanically as the diff, and in prose as the question the diff
 was rendered into.
 
@@ -157,7 +157,8 @@ experiment it became, and reaches its runs through that row and never directly: 
 staged experiment carries the runs it produced per the Spec's section 2.5, one per value
 where the arm freed a field, and section 4's fourth read returns them each with its
 value, an arm that never ran keeping its place. An arm is therefore never one run row,
-and an arm that freed nothing is a sweep of one value. The pointer is nullable and
+and an arm that freed nothing is the ordinary point experiment rather than a sweep
+of one value. The pointer is nullable and
 that null is the record of an arm that was not scheduled.
 
 **An entry carries a disposition, the arm carries a status, and neither is ever
@@ -264,10 +265,10 @@ leave the run's tuple for the verdict. The task supplies the predicate and the
 denominator, and the store still has to hold the reading. Section 2.6's recorded
 query is the candidate.
 
-**The Reproduced arm is a read-time pairwise derivation.** "3 of 3 byte-equal"
+**The Reproduced column is a read-time pairwise derivation.** "3 of 3 byte-equal"
 compares a run against three others. Spec section 2.7 forbids a value computed at
 read unless the query is recorded under 2.6, and section 10's open election has the
-reproduction verdict as the projected comparison of two rows. So the arm needs a
+reproduction verdict as the projected comparison of two rows. So the column needs a
 stored reading or a recorded query per row shown. Same family as the score.
 
 **The branch position has no home in the plan.** PRD section 3.5 and Spec section 5.3

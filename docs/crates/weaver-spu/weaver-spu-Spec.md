@@ -245,6 +245,7 @@ the resident tail rather than accumulated, which makes the two engines
 agree by construction and retires the flush's coupling to sampling rather
 than repairing it. The request records both seeds. Two perturbation
 assertions land.
+
 **Date filed:** 2026-08-02
 
 **Revised:** 2026-08-21, the probability field is represented. Section

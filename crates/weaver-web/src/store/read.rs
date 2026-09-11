@@ -322,7 +322,7 @@ impl Store {
         let produced = sqlx::query(
             "SELECT ser.swept_value, r.* \
              FROM staged_experiment_run ser JOIN run_tuple r ON r.run_id = ser.run_id \
-             WHERE ser.experiment_id = $1",
+             WHERE ser.experiment_id = $1 ORDER BY r.ingested_at, r.run_id",
         )
         .bind(experiment_id)
         .fetch_all(&self.pool)
@@ -362,16 +362,46 @@ impl Store {
             // **A point arm.** There is no set to walk, so the unit falls
             // back to the run this arm produced, and the value it returns is
             // absent rather than empty.
-            _ => {
-                let arms = by_value
-                    .into_iter()
-                    .map(|(_, run)| Arm {
+            //
+            // **The value is carried and not assumed.** Migration 0002
+            // constrains the experiment's member against its set and says
+            // nothing about the value a produced run carries, so a row that
+            // holds one is a row this read must report rather than overwrite
+            // with the absence it was looking for.
+            //
+            // **An arm that has not run keeps its place**, exactly as a
+            // value in a frozen set does: section 2.9 has a point arm
+            // produce one run, so before it runs there is one arm with
+            // neither a value nor a run, and returning nothing would leave a
+            // registered arm invisible to the read that exists to show it.
+            (None, None) => {
+                let arms: Vec<Arm> = if by_value.is_empty() {
+                    vec![Arm {
                         value: None,
-                        run: Some(run),
-                    })
-                    .collect();
+                        run: None,
+                    }]
+                } else {
+                    by_value
+                        .into_iter()
+                        .map(|(value, run)| Arm {
+                            value,
+                            run: Some(run),
+                        })
+                        .collect()
+                };
                 (None, arms)
             }
+            // **A half-stated sweep is an error and not a point arm.**
+            // Migration 0002's check makes this unreachable from a healthy
+            // database, which is the reason to fail here rather than to
+            // reinterpret: a restored dump or a decode that lost the set
+            // would otherwise render a real sweep as a point arm and drop
+            // both the member and every value it froze.
+            (member, values) => anyhow::bail!(
+                "staged_experiment {experiment_id} states half a sweep: member {member:?}, \
+                 values {}",
+                values.map_or("absent", |_| "present")
+            ),
         };
 
         Ok(Some(Sweep {
@@ -880,8 +910,17 @@ pub(crate) mod tests {
 
         // Before it runs there is nothing to return, which is not the same
         // answer as the one below and is why both are watched.
+        // **Before it runs the arm still keeps its place.** A point arm
+        // produces one run, so an arm with neither a value nor a run is the
+        // honest answer and an empty list would hide a registered arm.
         let sweep = s.sweep(id).await.unwrap().unwrap();
-        assert!(sweep.arms.is_empty(), "a point arm that has not run");
+        assert_eq!(
+            sweep.arms.len(),
+            1,
+            "the arm keeps its place before it runs"
+        );
+        assert!(sweep.arms[0].run.is_none(), "and it has not run");
+        assert!(sweep.arms[0].value.is_none(), "and was produced under none");
         assert!(
             sweep.member.is_none(),
             "the swept member is absent rather than an empty string"
@@ -926,6 +965,23 @@ pub(crate) mod tests {
             arm.value.is_none(),
             "the value is absent rather than empty: {:?}",
             arm.value
+        );
+
+        // **A value the store holds is reported and not overwritten.**
+        // Migration 0002 constrains the experiment's member against its set
+        // and says nothing about a produced run's value, so a row carrying
+        // one is reachable. Perturbation: bind the value to `_` in the point
+        // branch and this reads absent while the store holds a number.
+        sqlx::query("UPDATE staged_experiment_run SET swept_value = '42'::jsonb WHERE run_id = $1")
+            .bind(&run)
+            .execute(&s.pool)
+            .await
+            .unwrap();
+        let sweep = s.sweep(id).await.unwrap().unwrap();
+        assert_eq!(
+            sweep.arms[0].value.as_ref().and_then(|v| v.as_i64()),
+            Some(42),
+            "the value the store holds is the value the read returns"
         );
 
         assert!(s.sweep(i64::MAX).await.unwrap().is_none());

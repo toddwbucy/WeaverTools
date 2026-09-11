@@ -39,6 +39,7 @@ process, the other to the harness inside the enter directive, this crate
 speaking on neither. The pathname wait retires with the pathname it watched,
 the leg established by the enter's first traffic instead, and no seam joins
 section 6's list because carrying a channel's ends is not holding one.
+
 **Date filed:** 2026-07-29
 
 **Revised:** 2026-08-25, fifth of this date, the pair stops claiming symmetry.

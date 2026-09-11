@@ -140,6 +140,7 @@ passes its stated trigger and stands with the reasoning recorded, and
 section 6 closes the serve surface election, the transformation vocabulary
 gaining its first member. Arrives with the context-injection loop's act,
 per the contract's change protocol.
+
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`

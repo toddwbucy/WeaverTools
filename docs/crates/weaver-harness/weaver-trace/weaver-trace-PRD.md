@@ -151,6 +151,7 @@ resolved per-turn ceiling and the stop condition in force, without which a
 arrangement, training being out of scope by apex section 9. The surprisal's
 demotion to an election is ruled and owed, landing with the act that adds
 the election.
+
 **Date filed:** 2026-07-29
 
 **Revised:** 2026-08-20, the record holds the context position. Section

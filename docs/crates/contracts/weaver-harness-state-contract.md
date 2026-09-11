@@ -95,6 +95,7 @@ vocabulary, section 7 records the change this protocol named as landed, and
 section 8 gains the serve conformance. The change arrives with the
 context-injection loop's act, which is the landing the charter's cell
 required, every party merging in it.
+
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-harness-state-contract`
 **Editorial:** Per the Working Rules.

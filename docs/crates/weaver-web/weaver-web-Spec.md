@@ -37,7 +37,10 @@ are generated rather than placed, and not the runner's. The operator's intent ar
 queueing, so the order is recorded there. A batch spans more than one parent, which
 makes it a scheduling unit and never a comparison one.
 
-The count moves to thirty-two. Per the queue at issue #434.
+The count moves to thirty-two, **one of them marked owed**: the batch's order has no
+table and no writer until the act that builds queueing, and a row reading like the
+thirty-one beside it would say the claim is held. Section 3 now names five writers
+rather than four, queueing being the fifth. Per the queue at issue #434.
 
 **Revised:** 2026-09-11, second of this date, the plan and the refs get their schema and
 section 4 gains the sixth read. Section 2.9's plan had a row described and no table, and
@@ -49,7 +52,7 @@ Section 2.7 gains the two indexes section 2.10's reachability needs, its roots b
 three and a root found by a walk being a root a sweep would skip, the third of them
 being the staged experiment's parent and **not the lineage index this section claimed it
 was**. Section 2.9 gains two assertion records and the count moves to thirty: the bound
-on a arm's freed members and the entry's value are properties of a row, so the
+on an arm's freed members and the entry's value are properties of a row, so the
 migration holds them and its watches perturb them. **Its third record is still not
 claimed here**, registering at most once being a property of a transaction that section
 5.1 puts in the write, so this act builds the constraint that write leans on. Migration
@@ -110,7 +113,7 @@ where the sentence said one, and section 8's surface count says so too. Section 
 gains the task's verdict, declared now and absent until the trace kind of issue #523
 exists. Section 2.6 holds the reproduction verdict as a recorded query, which is the
 shape a comparison of two rows already had, and section 10's correctness election closes
-on it. Section 5.1 says a arm's status is its staged experiment's state and that
+on it. Section 5.1 says an arm's status is its staged experiment's state and that
 registering a plan and queueing it are two acts. Two perturbation records and their
 section 9 rows, the count moving to twenty-six. Per the sketch at
 `docs/project/sketch-ablation-matrix.md` and the queue at issue #434.
@@ -550,12 +553,12 @@ it carries the rule that a derived value is derived once at ingest rather than a
 read. **Section 2.8's session belongs to neither half either**, and it sits after the
 indexes because it is the only row here that is about the operator rather than about the
 instrument or the work. It is admitted on the same ground section 2.6 was: a rule stated
-elsewhere needs somewhere to land. **Sections 2.9 and 2.10 are authored rows sitting
-outside their half**, the plan and the refs, appended after the session rather than
-placed among 2.3 through 2.5 because renumbering would break every citation of sections
-2.6 through 2.8 in this document and outside it. **The grouping is stated here rather
-than carried by the numbering**, which is the cost of a document whose sections are
-cited by number.
+elsewhere needs somewhere to land. **Sections 2.9, 2.10 and 2.11 are authored rows
+sitting outside their half**, the plan, the refs and the batch, appended after the
+session rather than placed among 2.3 through 2.5 because renumbering would break every
+citation of sections 2.6 through 2.8 in this document and outside it. **The grouping is
+stated here rather than carried by the numbering**, which is the cost of a document
+whose sections are cited by number.
 
 **The halves differ in what a rewrite means.** A recorded row is a fact
 about a run that happened, so a second write of it is a replay and must be
@@ -1437,16 +1440,20 @@ table, and its assertion above gets its instrument there.
 
 ## 3. The write path
 
-**Four writers, and each owns its tables.** Section 3.1's ingest lands what
-the instrument recorded. Section 3.2's authoring path lands what the
-engineer authored. **The read path writes too**, one row and only one:
-section 4 admits an open query on the condition that the query is recorded,
-so the read that serves it writes section 2.6's row and nothing else. That
-is why 2.6 belongs to neither half. **And the surface writes one row of its
-own**, section 2.8's session, at the open and at the close and never in
-between, which is the fourth and is why that table belongs to neither half
-either. No writer touches another's tables, and **no surface writes through
-3.1**, which is what section 6's rule means and all it means.
+**Five writers, and each owns its tables.** Section 3.1's ingest lands what the
+instrument recorded. Section 3.2's authoring path lands what the engineer authored.
+**The read path writes too**, one row and only one: section 4 admits an open query on
+the condition that the query is recorded, so the read that serves it writes section
+2.6's row and nothing else. That is why 2.6 belongs to neither half. **And the surface
+writes one row of its own**, section 2.8's session, at the open and at the close and
+never in between, which is the fourth and is why that table belongs to neither half
+either. **The fifth is queueing**, which writes section 2.11's batch and its entries and
+touches nothing else: section 5.1 has registering and queueing as two acts, and the
+second of them is the one that records an order, so it is a writer rather than a state
+change on a row another writer owns. **It was four until 2026-09-11**, the batch having
+had no row and queueing having had nothing to write. No writer touches another's tables,
+and **no surface writes through 3.1**, which is what section 6's rule means and all it
+means.
 
 ### 3.1 The ingest
 
@@ -1901,7 +1908,7 @@ to: web-the-run-list-is-paged-and-records-nothing
    **Whether the matrix owes an operator an order of its own is open at issue #549**,
    and the queue's order is a second question that issue names and does not settle.
 
-   **A arm's status is not a member and is not computed.** Section 5.1 has the arm
+   **An arm's status is not a member and is not computed.** Section 5.1 has the arm
    take the five states of the staged experiment it became, so the status is that row's
    state read across the arm's reference, and an arm whose reference is null has
    not been registered - which the null records rather than a sixth word this document
@@ -2356,13 +2363,20 @@ trial record like any other.
 | the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
 | an arm registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one arm and the matrix reads two arms where the operator authored one |
-| a batch runs what it queues in the order it was queued in | perturbation: drain by identity or by the state's clock, arms queued in one gesture share a timestamp and the operator's order is lost |
+| a batch runs what it queues in the order it was queued in | perturbation, **owed**: drain by identity or by the state's clock, arms queued in one gesture share a timestamp and the operator's order is lost. **No instrument stands**: section 2.11 has no table and no writer yet, and the act that builds queueing builds both |
 | an arm frees at most one member | perturbation, at the schema: drop the partial index, one arm frees two and registers a sweep whose row carries one member and one value set |
 | an entry states the value its disposition names | perturbation, at the schema: drop the check, an entry says held and carries nothing, which is the absent-not-empty failure moved from the view into the store |
 | the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
 act that lands it states what removal makes it fail and confirms it does.
+
+**A row marked owed has no instrument and is not counted as enforced.** One
+stands so marked as of 2026-09-11, the batch's order, whose table section 2.11
+describes and no migration builds. The marking is the point: a row reading like
+the thirty-one beside it would tell a reader the claim is held, which is the
+same failure as a watch that passes either way and is why this table says which
+it is.
 
 **One row left this table on 2026-09-08 rather than becoming an assertion.**
 It read that an undeclared boundary refuses the load, with a perturbation at
