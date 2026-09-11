@@ -265,6 +265,13 @@ fn an_elected_readout_changes_no_token_on_the_device() {
             norms.iter().all(|n| n.is_finite() && *n > 0.0),
             "seed {seed}: the figures are the model's rather than an unwritten buffer"
         );
+        // **An elected load that folded nothing is named here**, or the
+        // comparison below indexes an empty run and the panic blames the
+        // harness for what the tap did.
+        assert!(
+            !norms.is_empty(),
+            "seed {seed}: the elected load answered a reduction with no figures in it"
+        );
         assert!(
             norms.iter().any(|n| *n != norms[0]),
             "seed {seed}: a constant run of figures means the wrong column"
