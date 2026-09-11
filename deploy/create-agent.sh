@@ -136,14 +136,21 @@ printf '   nothing of this agent exists yet\n'
 if [ "$MEMBER_IDENTITY" = "root" ]; then
   printf '   root traverses by identity, so no access entry is needed\n'
 else
-  probe=$(mktemp -d "/home/$OPERATOR/.acl-probe-XXXXXX") || die "cannot write under /home/$OPERATOR"
+  # **The probe sits on the filesystem that will hold the territory**, which
+  # is not always the operator's home: `.weaveragents` can be a mount or a
+  # dataset of its own, and access entries are a property of the filesystem
+  # rather than of the tree. Where that parent does not exist yet the home is
+  # the right stand-in, being where the script is about to create it.
+  probe_parent="/home/$OPERATOR/.weaveragents"
+  [ -d "$probe_parent" ] || probe_parent="/home/$OPERATOR"
+  probe=$(mktemp -d "$probe_parent/.acl-probe-XXXXXX") || die "cannot write under $probe_parent"
   if setfacl -m "u:$MEMBER_IDENTITY:x" "$probe" 2>/dev/null; then
     printf '   this filesystem carries access entries, so %s can be given passage\n' "$MEMBER_IDENTITY"
   else
     rmdir "$probe"
-    die "this filesystem refuses access entries, so $MEMBER_IDENTITY cannot traverse to its
-   territory under /home/$OPERATOR. Either map root, or place the territory
-   somewhere the member can reach by ownership alone."
+    die "$probe_parent refuses access entries, so $MEMBER_IDENTITY cannot traverse to
+   its territory there. Either map root, or place the territory somewhere the
+   member can reach by ownership alone."
   fi
   rmdir "$probe"
 fi
