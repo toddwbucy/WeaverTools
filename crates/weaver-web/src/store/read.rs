@@ -1,6 +1,6 @@
 //! conforms: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
 //!
-//! The five reads of `weaver-web-Spec` section 4, each an index hit over
+//! Five of the six reads of `weaver-web-Spec` section 4, each an index hit over
 //! the schema of section 2, and none of them deriving a value: what a read
 //! returns was stored at ingest or authored, per section 2.7, and a reader
 //! that wants a derived value asks the recorded query of section 2.6.

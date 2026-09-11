@@ -1,9 +1,10 @@
 //! The store: the Postgres pool, the migrations, and the reads of
 //! `weaver-web-Spec` section 4 over the tables of its section 2.
 //!
-//! **All five of that section's reads are served here** as of 2026-09-11,
-//! the fifth having landed with Record. The plan's read is owed at the act
-//! that gives the plan its schema.
+//! **All six of that section's reads are served here** as of 2026-09-11.
+//! The fifth landed with Record and the sixth with the plan's schema, which
+//! is where section 4 said that one was owed. The Experiments list's read
+//! is the one still owed, at the act that builds it.
 //!
 //! This module is the first in the crate written to the standing Spec
 //! rather than to the charter it replaced, which is why it is the first
@@ -19,11 +20,20 @@
 pub mod conversation;
 pub mod experiment;
 pub mod key;
+pub mod plan;
 pub mod read;
 
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{PositionKey, RunId, TurnId};
+// **`plan::Arm` is not re-exported and `experiment::Arm` is**, and the path
+// is the point rather than a collision worked around. They are one thing at
+// two resolutions: the arm as the plan composes it, and the arm as the
+// frozen sweep fans it, one row per value with the run it produced. A front
+// door that exported both bare would flatten the resolution out of the
+// name, so the plan's stays qualified and reads `plan::Arm` where it is
+// used.
+pub use plan::{Disposition, Entry, Plan, Registration};
 pub use read::{Alternatives, Chip, Cursor, PositionPoint, RunPage, RunTuple};
 
 use sqlx::PgPool;

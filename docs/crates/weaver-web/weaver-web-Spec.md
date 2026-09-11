@@ -10,6 +10,22 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-11, second of this date, the plan and the refs get their schema and
+section 4 gains the sixth read. Section 2.9's plan had a row described and no table, and
+section 4 named its read **owed at the act that gives the plan its schema**, which is
+this one. So the read lands with the schema rather than with the matrix that wants it -
+the same rule the fifth read met, met from the other direction and at the cheaper time.
+**One read is owed now rather than two**, the Experiments list being the remaining one.
+Section 2.7 gains the two indexes section 2.10's reachability needs, its roots being
+three and a root found by a walk being a root a sweep would skip, the third of them
+being the staged experiment's parent and **not the lineage index this section claimed it
+was**. Section 2.9 gains two assertion records and the count moves to thirty: the bound
+on a column's freed members and the entry's value are properties of a row, so the
+migration holds them and its watches perturb them. **Its third record is still not
+claimed here**, registering at most once being a property of a transaction that section
+5.1 puts in the write, so this act builds the constraint that write leans on. Migration
+0009. Found by the review of PR #547. Per the queue at issue #434.
+
 **Revised:** 2026-09-11, the read path has five, Record is why, and the indexes it leans
 on exist. Section 4 gains **every run's tuple, filtered**, the one read whose unit is
 the set rather than a member of it. **The four could not serve Record and no arrangement
@@ -1076,17 +1092,32 @@ artifact      run (record_identity)
 family        run (record_session)
 lineage       run (parent_run_id)
 ingest order  run (ingested_at DESC, run_id DESC)
+plan roots    plan (parent_run_id)
+ref roots     ref (run_id)
+queued roots  staged_experiment (parent_run_id)
 ```
+
+**The last three carry section 2.10's reachability**, whose roots are a ref, a plan's
+parent run, and the parent run of a staged experiment that has not returned. A root that
+had to be found by a walk is a root a sweep would skip rather than honor.
+
+**The lineage index is not the third of them and this section said it was.** That one is
+on the run's own parent and answers a branch's siblings; the third root is the staged
+experiment's parent, which had no index, a foreign key constraining without indexing.
+**That is the finding of PR #540 made twice** - once against the lineage reference in
+0007, and once here by the review of PR #547, in the same act that cited the first as
+settled.
 
 The secondary index exists so the largest spikes in a run are reachable without pulling
 the run down. The family index exists so a session's runs are one read rather than a
 walk up parent references, per section 2.2, the session being the identity the trace's
 runs share.
 
-**The last four carry section 4's fifth read and this list named one of them until
-2026-09-11.** The artifact index has stood since the first migration and was missing
-here. The lineage index is new: a foreign key constrains and does not index, so a
-branch's siblings were a sequential scan under a clause that called them an index hit.
+**Four of these carry section 4's fifth read - the artifact, the family, the lineage and
+the ingest order - and this list named one of the four until 2026-09-11.** The artifact
+index has stood since the first migration and was missing here. The lineage index is
+new: a foreign key constrains and does not index, so a branch's siblings were a
+sequential scan under a clause that called them an index hit.
 The ingest order is new and **carries the run's identity beside the clock because the
 clock is not a total order**: `ingested_at` defaults to the transaction's, so every run
 of one ingest shares a value and a page keyed on it alone drops the rest of a tie. Found
@@ -1248,7 +1279,30 @@ tag: perturbation
 edge: asserts
 from: weaver-web
 to: web-a-column-registers-at-most-once
+
+node: web-a-column-frees-at-most-one-member
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-a-column-frees-at-most-one-member
+
+node: web-entry-states-the-value-its-disposition-names
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-entry-states-the-value-its-disposition-names
 ```
+
+**Two of these three are the schema's and one is the write's**, which is why they land
+at two acts. The bound on freed members and the entry's value are properties of a row,
+so migration 0009 holds them and its watches perturb them. **Registering at most once is
+a property of a transaction** - section 5.1 has the reference set only where it was null
+and in one commit with the staged experiment - so the constraint 0009 builds is what
+that write leans on and the record is claimed at the act that writes.
 
 ### 2.10 The refs
 
@@ -1618,7 +1672,7 @@ last `validate` answer a reading rather than a promise.
 
 ## 4. The read path
 
-Five queries, and the schema of section 2 exists to make each an index hit.
+Six queries, and the schema of section 2 exists to make each an index hit.
 
 1. **One position's alternatives**, by run, turn and position. This is the
    click, and it is `weaver-analysis field` served from the store rather
@@ -1721,6 +1775,38 @@ from: weaver-web
 to: web-the-run-list-is-paged-and-records-nothing
 ```
 
+6. **One plan whole**, by its identity: the parent run every column branches from, its
+   columns, and for each column the members it names with the disposition it gives each.
+   This is the matrix of `docs/project/sketch-ablation-matrix.md` reading what an
+   operator is still composing, and it is the read section 2.9's row exists to be the
+   subject of.
+
+   **The columns come back in a stated order and not an authored one.** Section 2.9
+   gives a plan its columns and records no order, because the sketch generates them from
+   the closed tuple space rather than having an operator place them - so there is no
+   authoring order to return and the store holds none. What this read owes instead is
+   the *same* order on every box, which a collation does not give: an ICU collation
+   sorts `col-10` before `col-2` and ignores punctuation, so two boxes would render one
+   plan two ways. The order is the column's key in byte order, which is a total order.
+   **Whether the matrix owes an operator an order of its own is open at issue #549**,
+   and the queue's order is a second question that issue names and does not settle.
+
+   **A column's status is not a member and is not computed.** Section 5.1 has the column
+   take the five states of the staged experiment it became, so the status is that row's
+   state read across the column's reference, and a column whose reference is null has
+   not been registered - which the null records rather than a sixth word this document
+   would have to name. **The read joins and does not derive**, which is the difference
+   between reading a fact stored once and inventing a vocabulary for the absence of one.
+
+   **A column is not a run and this read reaches none.** Section 2.9 has a column reach
+   its runs through its staged experiment, so a matrix that wanted the arms of a
+   registered column asks read four with that column's experiment. Folding the two here
+   would return a plan whose unregistered columns looked like experiments that had not
+   run, which is the absence section 4's fourth read already keeps honest.
+
+   **It records nothing**, section 2.6's condition reaching a derivation rather than a
+   plan an operator is editing.
+
 **The fourth read is this document returning rather than a surface proceeding.** The
 three before it stood alone until 2026-09-08, when the rule below was met rather than
 bypassed: the tuple ablation and the essay exemplars were assembled by hand from
@@ -1732,18 +1818,23 @@ for Record until 2026-09-11, and the seat that came to build Record found the st
 could not list. The surface returned here before it was built and the read landed first,
 which is the whole of what the rule below asks.
 
-A surface that needs a sixth query is a surface this document has not described, and it
-returns here before it is built. **The ordinal moves with the count**, this sentence
-having read fifth until the fifth landed, where a rule naming an ordinal that has
-arrived binds nothing.
+**The sixth is the rule working a third time, and from the other direction.** The fifth
+was found missing by a seat that came to build a surface. This one was named owed by
+this section before the schema it reads existed, and it landed in the act that built
+that schema rather than in the act that wants it, which is the cheaper of the two ways
+the rule can be met.
 
-**Two are owed and named rather than discovered.** Section 2.9's plan is rendered by the
-matrix with its columns and their entries, and none of these five returns it, so that
-read is owed at the act that gives the plan its schema. **The Experiments list is the
-same shape**: read four takes an experiment's identity, so the surface that holds every
-experiment has no query either, and its read is owed at the act that builds it. **Naming
-them here is this rule met rather than deferred**, and section 6 counts these five
-against the surfaces they serve rather than against all of them.
+A surface that needs a seventh query is a surface this document has not described, and
+it returns here before it is built. **The ordinal moves with the count**, this sentence
+having read fifth until the fifth landed and sixth until the sixth did, where a rule
+naming an ordinal that has arrived binds nothing.
+
+**One is owed and named rather than discovered.** **The Experiments list**: read four
+takes an experiment's identity, so the surface that holds every experiment has no query,
+and its read is owed at the act that builds it. **Naming it here is this rule met rather
+than deferred**, and section 6 counts these six against the surfaces they serve rather
+than against all of them. **Two were owed until 2026-09-11**, the plan's read being the
+sixth above.
 
 **A deposit is not a row here and Record holds one through its run.** The charter's
 section 3.6 says every run, branch and deposit, and section 2.2 has a deposit reach this
@@ -1945,13 +2036,14 @@ with its own destination rather than a mode of a list beside it. Their
 destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** - Open a trace,
-Record, Experiments, and the returned half of Stage. **Section 4's five reads serve Open
-a trace, Record and the returned half of Stage, and not Experiments.** That surface is a
-list and read four takes an experiment's identity, so it has no query either, and its
-read is owed at the act that builds it as the plan's is owed at the act that schemas the
-plan. **This sentence counted four reads and named every surface served until
-2026-09-11**, and it was wrong twice: about Record, which the fifth read answers, and
-about Experiments, which is named as owed rather than served.
+Record, Experiments, the matrix, and the returned half of Stage. **Section 4's six reads
+serve Open a trace, Record, the matrix and the returned half of Stage, and not
+Experiments.** That surface is a list and read four takes an experiment's identity, so
+it has no query, and its read is owed at the act that builds it. **This sentence counted
+four reads and named every surface served until 2026-09-11**, and it was wrong twice:
+about Record, which the fifth read answers, and about Experiments, which is named as
+owed rather than served. The matrix joined the served on the same day, the sixth read
+landing with the plan's schema.
 
 **Three surfaces author, and one of them writes more than one table.** Compose writes a
 declaration and Models writes an artifact row on import, each one table. Stage writes
@@ -2103,7 +2195,7 @@ trial record like any other.
 |---|---|
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
-| nothing is computed at read time except where the query is recorded | review, over the four reads the crate serves, the fifth joining it with Record |
+| nothing is computed at read time except where the query is recorded | review, over the four reads the crate served, the fifth joining them with Record and the sixth with the plan |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
@@ -2128,6 +2220,8 @@ trial record like any other.
 | the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
 | a plan's column registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one column and the matrix reads two arms where the operator authored one |
+| a column frees at most one member | perturbation, at the schema: drop the partial index, one column frees two and registers a sweep whose row carries one member and one value set |
+| an entry states the value its disposition names | perturbation, at the schema: drop the check, an entry says held and carries nothing, which is the absent-not-empty failure moved from the view into the store |
 | the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the
