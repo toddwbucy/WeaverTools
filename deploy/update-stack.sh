@@ -329,6 +329,17 @@ for agent in $ALLOW_LIST; do
   fi
 done
 
+# **An agent that has never loaded has no sink yet**, so a count taken before
+# the load is a count of a file that is about to exist. The declaration says
+# `create: true` and admin makes it at the load. Read as zero rather than as
+# an error, the comparison below is unchanged for an agent that has run and
+# is stronger for one that has not, because every line it then holds is new.
+# Both sides of the comparison read through here, so a load that failed to
+# make the sink at all measures no growth and is caught rather than excused.
+sink_lines() {
+  if [ -f "$1" ]; then wc -l < "$1"; else printf '0\n'; fi
+}
+
 # -------------------------------------------------------------------- 9. verify
 # A load that is not read back is an install that was not verified. This reads
 # the event out of the agent's own sink, the only place the claim can be
@@ -347,10 +358,10 @@ for AGENT in $ALLOW_LIST; do
   SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$decl" | head -1)
   [ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
   printf '  %s\n' "$AGENT"
-  LINES=$(wc -l < "$SINK")
+  LINES=$(sink_lines "$SINK")
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
-  NEW=$(( $(wc -l < "$SINK") - LINES ))
+  NEW=$(( $(sink_lines "$SINK") - LINES ))
   [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
   if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
     rollback "$AGENT: the load event does not name its composer; the install did not take"
