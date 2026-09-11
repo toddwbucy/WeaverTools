@@ -349,8 +349,17 @@ done
 # is stronger for one that has not, because every line it then holds is new.
 # Both sides of the comparison read through here, so a load that failed to
 # make the sink at all measures no growth and is caught rather than excused.
+# **A sink that is there but is not a file is a different answer from an
+# absent one.** The trace sink elects one of three kinds and the other two
+# name a fifo and a socket, neither of which a line count reads: counted as
+# empty they would refuse a load that in fact wrote, and read with `wc` a
+# fifo would block until something closed it. This answers the caller rather
+# than exiting, because both calls sit inside a command substitution where an
+# exit would leave only the subshell and the install standing.
 sink_lines() {
-  if [ -f "$1" ]; then wc -l < "$1"; else printf '0\n'; fi
+  if [ ! -e "$1" ]; then printf '0\n'; return 0; fi
+  [ -f "$1" ] || return 1
+  wc -l < "$1"
 }
 
 # -------------------------------------------------------------------- 9. verify
@@ -371,10 +380,11 @@ for AGENT in $ALLOW_LIST; do
   SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$decl" | head -1)
   [ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
   printf '  %s\n' "$AGENT"
-  LINES=$(sink_lines "$SINK")
+  LINES=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
-  NEW=$(( $(sink_lines "$SINK") - LINES ))
+  LATER=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
+  NEW=$(( LATER - LINES ))
   [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
   if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
     rollback "$AGENT: the load event does not name its composer; the install did not take"
