@@ -224,8 +224,11 @@ impl Store {
     }
 
     /// The experiment's own row, by id, wrapped where it is frozen. Not one
-    /// of the reads on its own: read four calls it, and the Experiments
-    /// list of the charter's section 3.6 reads through the same column set.
+    /// of the reads on its own: read four calls it. **The Experiments list
+    /// of the charter's section 3.6 is not served here and has no read
+    /// yet**, per `weaver-web-Spec` section 6, that surface being a list
+    /// where this is a lookup by identity. The read it is owed will want
+    /// this column set, which is why the set is named once.
     pub async fn experiment(&self, experiment_id: i64) -> anyhow::Result<Option<Experiment>> {
         let row = sqlx::query(
             "SELECT experiment_id, state, state_changed_at, parent_run_id, branch_position, \
