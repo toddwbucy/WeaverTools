@@ -1787,9 +1787,9 @@ to: web-the-run-list-is-paged-and-records-nothing
    authoring order to return and the store holds none. What this read owes instead is
    the *same* order on every box, which a collation does not give: an ICU collation
    sorts `col-10` before `col-2` and ignores punctuation, so two boxes would render one
-   plan two ways. The order is the column's key in byte order, which is a total order,
-   and **the matrix sorts by what a column moves rather than by this**. Ruled at issue
-   #549, 2026-09-11.
+   plan two ways. The order is the column's key in byte order, which is a total order.
+   **Whether the matrix owes an operator an order of its own is open at issue #549**,
+   and the queue's order is a second question that issue names and does not settle.
 
    **A column's status is not a member and is not computed.** Section 5.1 has the column
    take the five states of the staged experiment it became, so the status is that row's

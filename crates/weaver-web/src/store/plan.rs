@@ -93,12 +93,11 @@ pub enum Disposition {
 /// collation does not - `col-10` sorts before `col-2` and punctuation is
 /// ignored, so two boxes with different collations render one plan two ways.
 /// The `COLLATE "C"` is what makes the order a fact rather than a setting.
-/// **There is no authoring order to hold**, ruled at issue #549: the sketch
-/// generates a plan's columns from the closed tuple space rather than having
-/// an operator place them, so the order is the generator's and the
-/// renderer's, and the matrix sorts by what a column moves rather than by
-/// this key. What this read owes is that every box return the same order,
-/// which is what the collation buys and nothing more.
+/// **The store holds no order to return**, section 2.9 recording none.
+/// Whether it should - and whether the order a batch executes in is the
+/// order the matrix shows - is open at issue #549. What this read owes
+/// either way is that every box return the same order, which is what the
+/// collation buys and nothing more.
 ///
 /// **Three statements under one snapshot, each an index hit**: the plan by
 /// its key, the columns by the plan's, and the entries by the plan's.
