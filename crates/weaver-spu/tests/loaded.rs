@@ -1261,14 +1261,24 @@ mod seam_success {
                 path: recorded_output.clone(),
             },
         );
-        let refed = loop {
-            match recv(&decode) {
-                TokenAnswer::ReFed(generation) => break generation,
-                TokenAnswer::Token { .. } => {
-                    panic!("the drive draws no token of its own to stream")
-                }
-                other => panic!("the re-feed answers in its own type: {other:?}"),
+        // **Under this instruction the re-feed answers in one frame, so the
+        // first answer is the answer.** The drive streams no token of its
+        // own, and the field and column intermediates cross only where their
+        // elections stand, which this instruction sets off. So every arm
+        // leaves on the first pass and a loop here read as though it might
+        // iterate, which is what `never_loop` names. **An act that elects
+        // either intermediate in this block re-opens the question** and wants
+        // a drain with explicit arms, the way the siblings above skip tokens,
+        // rather than this match.
+        let refed = match recv(&decode) {
+            TokenAnswer::ReFed(generation) => generation,
+            TokenAnswer::Token { .. } => {
+                panic!("the drive draws no token of its own to stream")
             }
+            // Field and column frames reach here only if this instruction's
+            // elections change, and the message says so rather than blaming
+            // the answer's type.
+            other => panic!("the re-feed answers in its own type under these elections: {other:?}"),
         };
         let refed_request: serde_json::Value =
             serde_json::from_str(refed.request.get()).expect("the re-fed request splices");

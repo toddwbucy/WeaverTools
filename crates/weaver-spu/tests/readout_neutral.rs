@@ -25,7 +25,7 @@
 //! defect to the device path immediately.
 #![cfg(all(feature = "gguf", feature = "cuda"))]
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
 use weaver_spu::decoder::backend::TokenId;
@@ -164,7 +164,7 @@ fn draw(resident: &weaver_spu::residency::Resident, seed: u64) -> (Vec<TokenId>,
 /// residency admits once and the two halves of this comparison are two
 /// admissions: the election is fixed for a residency at admit, which is the
 /// property that makes it judgeable there.
-fn binding_for(path: &PathBuf) -> (Residency, ModelBinding) {
+fn binding_for(path: &Path) -> (Residency, ModelBinding) {
     (
         Residency::new(),
         ModelBinding {
@@ -212,7 +212,7 @@ fn an_elected_readout_changes_no_token_on_the_device() {
     let without: Vec<Vec<TokenId>> = SEEDS
         .iter()
         .map(|seed| {
-            let (drawn, no_norms) = draw(&resident, *seed);
+            let (drawn, no_norms) = draw(resident, *seed);
             assert!(
                 no_norms.is_none(),
                 "an unelected load answered a reduction, so the election is not what \
@@ -241,7 +241,7 @@ fn an_elected_readout_changes_no_token_on_the_device() {
     let elected: Vec<(Vec<TokenId>, Vec<f32>)> = SEEDS
         .iter()
         .map(|seed| {
-            let (drawn, norms) = draw(&resident, *seed);
+            let (drawn, norms) = draw(resident, *seed);
             (drawn, norms.expect("an elected load answers a reduction"))
         })
         .collect();
@@ -264,6 +264,13 @@ fn an_elected_readout_changes_no_token_on_the_device() {
         assert!(
             norms.iter().all(|n| n.is_finite() && *n > 0.0),
             "seed {seed}: the figures are the model's rather than an unwritten buffer"
+        );
+        // **An elected load that folded nothing is named here**, or the
+        // comparison below indexes an empty run and the panic blames the
+        // harness for what the tap did.
+        assert!(
+            !norms.is_empty(),
+            "seed {seed}: the elected load answered a reduction with no figures in it"
         );
         assert!(
             norms.iter().any(|n| *n != norms[0]),
