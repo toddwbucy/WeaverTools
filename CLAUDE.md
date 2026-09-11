@@ -46,8 +46,8 @@ correctly-custodied trace.** The trace is the primary artifact, not a diagnostic
 reframing is what promotes quarry issues #340/#343/#344/#363 from debt to blockers.
 
 **Proto-stateful, not stateless.** The human's ruling of 2026-08-01 retired "stateless" as
-an overstatement, and `WeaverTools-PRD` section 2 is the authority. The agent holds real
-state *within* a session and none *across* sessions. **Two things hold state across turns
+an overstatement, and `weaver-agents-PRD` section 2 is the authority. The agent holds
+real state *within* a session and none *across* sessions. **Two things hold state across turns
 inside one session, both deliberate and not two things of a kind.** The first is the working
 structure, the run's trace events held in RAM in the canonical form the stream carries,
 volatile by construction. The second is the hot KV cache, an optimization whose owner, flush
