@@ -69,8 +69,22 @@ BIN_DIR=$(dirname "$WORKER_BINARY")
 # `target/release` and reopened the defect above through a second door. Where
 # cargo names no target directory at all there is nothing to fall back to
 # that would not be a guess, so the run refuses instead.
-BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
-  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')
+# **The answer is read out of the JSON rather than matched out of it.** A
+# regular expression does not decode what JSON escapes, so a target directory
+# holding a backslash kept it doubled and one holding a quote truncated at
+# the quote, both giving a non-empty path that is wrong. Measured: a real
+# `/tmp/a"b` came back as `/tmp/a\`. This script already parses the trace
+# with python for the same reason, so the reader is the one it has.
+# **The refusal below has to be reachable.** Under `pipefail` a failing cargo
+# takes the whole assignment down, and with `set -e` the run ended on cargo's
+# own exit code with nothing said. Measured at 101 and silent. The failure is
+# absorbed here so the empty answer reaches the line written to name it.
+BUILT=$( (cargo metadata --format-version 1 --no-deps --offline --locked 2>/dev/null \
+  | python3 -c 'import json, sys
+try:
+    print(json.load(sys.stdin).get("target_directory", ""))
+except ValueError:
+    pass') || true )
 [ -n "$BUILT" ] || die "cargo metadata names no target directory, so where the build lands is unknown"
 BUILT="$BUILT/release"
 
