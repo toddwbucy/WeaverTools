@@ -1,5 +1,9 @@
-//! The store: the Postgres pool, the migrations, and the four reads of
+//! The store: the Postgres pool, the migrations, and the reads of
 //! `weaver-web-Spec` section 4 over the tables of its section 2.
+//!
+//! **Four of that section's five are served here.** The fifth, every run's
+//! tuple filtered, is Record's and lands with that surface, and the plan's
+//! is owed at the act that gives the plan its schema.
 //!
 //! This module is the first in the crate written to the standing Spec
 //! rather than to the charter it replaced, which is why it is the first

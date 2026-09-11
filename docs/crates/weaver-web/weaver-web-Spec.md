@@ -10,6 +10,16 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-11, the read path has five and Record is why. Section 4 gains
+**every run's tuple, filtered**, the one read whose unit is the set rather than a member
+of it, an index hit on the columns section 2.7 already carries and adding none. **The
+four could not serve Record and no arrangement of them would**: read three takes a run's
+identity as its argument, so a surface that holds every run had no query at all, and
+this document counted the four sufficient for it until today. The seat that came to
+build Record found it and returned here first, which is that section's own rule working
+rather than being bypassed. Section 6's sufficiency sentence moves with it, the count
+words in section 1 and section 9 move with them, and the plan's read stays owed at the
+act that gives the plan its schema. Per the queue at issue #434.
 **Revised:** 2026-09-09, sixth of this date, the run row gets its producers and loses
 two members that had none. Issue #532 found while the ingest was being written that
 seven of the run row's eight required members crossed no seam, the run identity among
@@ -417,7 +427,7 @@ silence settle it.
 
 ```text
 src/
-  store/        the registry: schema, migrations, the four reads
+    store/        the registry: schema, migrations, the five reads
   ingest/       section 3.1, a consumer of the analysis stream
   authoring/    section 3.2, the writes a surface makes to its own table
   queue/        staged experiments and their states
@@ -1586,7 +1596,7 @@ last `validate` answer a reading rather than a promise.
 
 ## 4. The read path
 
-Four queries, and the schema of section 2 exists to make each an index hit.
+Five queries, and the schema of section 2 exists to make each an index hit.
 
 1. **One position's alternatives**, by run, turn and position. This is the
    click, and it is `weaver-analysis field` served from the store rather
@@ -1632,6 +1642,26 @@ on a load-time sweep**, where section 5.2 has the comparison structural
 rather than byte-exact and a parting position says only that two different
 models wrote different essays.
 
+5. **Every run's tuple, filtered.** This is Record, and it is the one read whose unit is
+the set rather than a member of it. The charter's section 3.6 has that surface hold
+every run, branch and deposit with the tuple that produced it, and a chip narrows the
+set rather than naming a place, so what the surface asks for is the rows a filter admits
+and never a run it already knows. **The three above answer a reader who has a run and
+this one answers a reader who does not**, which is why the four could not serve Record
+and why no arrangement of them would: read three takes the identity as its argument.
+
+**It is an index hit on the columns section 2.7 already carries** and adds none: the
+record identity for an artifact's runs, the record's session for a session's family, the
+parent reference for a branch's siblings, and the ingest's own ordering for the newest
+first. **A filter this document does not index is not a chip this crate offers**, which
+keeps section 2.7's rule where the surface would otherwise spend it.
+
+**The page is a bound and not a reading.** A list is walked rather than quoted, so this
+read takes a limit and a cursor and records nothing, and section 2.6's condition does
+not reach it: what that section makes quotable is a derivation over runs, and a list of
+rows the store already holds derives nothing. **A reader who wants to quote what a list
+showed quotes the runs it named**, each by the identity this read returned.
+
 **The fourth read is this document returning rather than a surface
 proceeding.** The three above stood alone until 2026-09-08, when the rule
 below was met rather than bypassed: the tuple ablation and the essay
@@ -1642,12 +1672,19 @@ rule stands unchanged for the fifth.
 A surface that needs a fifth query is a surface this document has not described, and it
 returns here before it is built.
 
-**One is owed and named rather than discovered.** Section 2.9's plan is rendered by the
-matrix with its columns and their entries, and none of the four returns it. The read is
-owed at the act that gives the plan its schema, which is where the row it reads comes to
-exist, and section 6 says so where it counts these four as sufficient. **Naming it here
-is this rule met rather than deferred**: the surface returns to this section before it
-is built, and this is the return.
+**The fifth read is that rule working, and it was found the way the rule intends.** This
+document counted four reads sufficient for Record until 2026-09-11, and the seat that
+came to build Record found the store could not list. Read three takes a run's identity
+as its argument, so a surface that holds every run had no query at all, and no
+arrangement of the four supplies one. **The surface returned here before it was built**
+and the read landed first.
+
+**One more is owed and named rather than discovered.** Section 2.9's plan is rendered by
+the matrix with its columns and their entries, and none of these five returns it. The
+read is owed at the act that gives the plan its schema, which is where the row it reads
+comes to exist, and section 6 says so where it counts these as sufficient. **Naming it
+here is this rule met rather than deferred**: that surface returns to this section
+before it is built, and this is the return.
 
 **An open query surface is admissible on one condition: the query is
 recorded beside its result.** A reading is a thing a second person reruns,
@@ -1842,10 +1879,12 @@ with its own destination rather than a mode of a list beside it. Their
 destinations are the charter's section 3 and are not restated.
 
 **A surface that renders what is kept reads the store and nothing else** - Open a trace,
-Record, Experiments, and the returned half of Stage. Section 4's four reads are
-sufficient for all of them **but the plan**, which section 2.9 gives Stage to compose
-and render and which no read returns, the fifth read being owed at the act that gives
-the plan its schema, per section 4's own rule about a surface that needs one.
+Record, Experiments, and the returned half of Stage. **Section 4's five reads serve all
+of them but the plan**, which section 2.9 gives Stage to compose and render and which no
+read returns, its read being owed at the act that gives the plan its schema, per section
+4's own rule about a surface that needs one. **This sentence counted four until
+2026-09-11 and was wrong about Record**, which is a list and had no query: the fifth
+read is section 4's answer and this sentence moved with it.
 
 **Three surfaces author, and one of them writes more than one table.** Compose writes a
 declaration and Models writes an artifact row on import, each one table. Stage writes
@@ -1997,7 +2036,7 @@ trial record like any other.
 |---|---|
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
-| nothing is computed at read time except where the query is recorded | review, over the four reads |
+| nothing is computed at read time except where the query is recorded | review, over the five reads |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |

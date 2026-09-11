@@ -1,6 +1,6 @@
 //! conforms: web-nothing-is-computed-at-read-time-unless-the-query-is-recorded
 //!
-//! The four reads of `weaver-web-Spec` section 4, each an index hit over
+//! Four of the five reads of `weaver-web-Spec` section 4, each an index hit over
 //! the schema of section 2, and none of them deriving a value: what a read
 //! returns was stored at ingest or authored, per section 2.7, and a reader
 //! that wants a derived value asks the recorded query of section 2.6.
@@ -224,7 +224,7 @@ impl Store {
     }
 
     /// The experiment's own row, by id, wrapped where it is frozen. Not one
-    /// of the four reads on its own: read four calls it, and the Experiments
+    /// of the reads on its own: read four calls it, and the Experiments
     /// list of the charter's section 3.6 reads through the same column set.
     pub async fn experiment(&self, experiment_id: i64) -> anyhow::Result<Option<Experiment>> {
         let row = sqlx::query(
