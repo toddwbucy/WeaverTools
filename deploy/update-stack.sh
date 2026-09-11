@@ -46,17 +46,39 @@ sys.exit(1)
 '
 }
 
+# **Every box fact is required, because this script's whole purpose is that
+# two boxes end up the same.** `read_key` answers empty for a key that is not
+# there, so a fact read and not checked is a divergence the run carries
+# silently, and the seats only find it by comparing results later.
 WORKER_BINARY=$(read_key worker-binary)
 AGENT_DIR=$(read_key agent-config-directory)
 ALLOW_LIST=$(read_key allow-list)
 [ -n "$WORKER_BINARY" ] || die "no worker-binary in $ADMIN_CONFIG"
+[ -n "$AGENT_DIR" ]     || die "no agent-config-directory in $ADMIN_CONFIG"
+[ -n "$ALLOW_LIST" ]    || die "no allow-list in $ADMIN_CONFIG"
 BIN_DIR=$(dirname "$WORKER_BINARY")
+
+# **Where cargo builds is asked rather than assumed.** This box sets
+# `CARGO_TARGET_DIR`, so `target/release` does not exist here, and every
+# comparison against it silently found no file, skipped every binary, and
+# reported the box current while three-week-old binaries stood installed.
+# A path that can be wrong without saying so is worse than no comparison.
+BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
+  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')/release
+[ -d "$BUILT" ] || BUILT="target/release"
 
 # ---------------------------------------------------------------- 1. box facts
 say "box"
 printf '  host          %s\n' "$(hostname)"
+printf '  config root   %s\n' "$ADMIN_CONFIG"
 printf '  bin dir       %s\n' "$BIN_DIR"
 printf '  worker-binary %s\n' "$WORKER_BINARY"
+# **The built-from path is a box fact and is printed as one.** It differs
+# between the seats, one of them setting `CARGO_TARGET_DIR`, and it was the
+# difference that let this script report a box current while comparing
+# nothing. A fact that decides the answer belongs where a reader of the
+# output can see it.
+printf '  built from    %s\n' "$BUILT"
 printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null || echo none)"
 
 # The cccl window of #397. Outside it the engine does not compile, and a
@@ -100,16 +122,6 @@ printf '  %s -> %s\n' "$BEFORE" "$AFTER"
 # is current at something it is not.
 git diff-index --quiet HEAD -- \
   || die "the tree is dirty, so $AFTER would name a build it did not produce; commit or stash first"
-
-# **Where cargo builds is asked rather than assumed.** This box sets
-# `CARGO_TARGET_DIR`, so `target/release` does not exist here, and every
-# comparison against it silently found no file, skipped every binary, and
-# reported the box current while three-week-old binaries stood installed.
-# A path that can be wrong without saying so is worse than no comparison.
-BUILT=$(cargo metadata --format-version 1 --no-deps --offline 2>/dev/null \
-  | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')/release
-[ -d "$BUILT" ] || BUILT="target/release"
-
 # -------------------------------------------------------------------- 3. test
 say "test"
 # **The test runs before the build, so it cannot overwrite what the build
