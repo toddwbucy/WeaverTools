@@ -14,7 +14,7 @@
   --fg: #e6e1e9; --dim: #9a8fa5; --faint: #6b6175;
   --accent: #c9527e; --accent-soft: #c9527e2e;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 }
 @media (prefers-color-scheme: light) {
   :root {

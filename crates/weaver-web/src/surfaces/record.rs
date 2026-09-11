@@ -43,9 +43,7 @@ pub fn routes() -> Router<Store> {
 /// page.
 #[derive(Debug, Default, Deserialize)]
 pub struct Ask {
-    /// The chip's kind, one of `artifact`, `session` or `branches`. An
-    /// unknown kind is no chip rather than an error, because a chip is a
-    /// query and a query nobody wrote is the widest list.
+    /// The chip's kind, one of `artifact`, `session` or `branches`.
     chip: Option<String>,
     /// The chip's value.
     of: Option<String>,
@@ -56,13 +54,32 @@ pub struct Ask {
 }
 
 impl Ask {
-    fn chip(&self) -> Option<Chip> {
-        let of = self.of.as_deref()?;
-        match self.chip.as_deref()? {
-            "artifact" => Some(Chip::RecordIdentity(of.to_string())),
-            "session" => Some(Chip::Session(of.to_string())),
-            "branches" => Some(Chip::Branches(RunId(of.to_string()))),
-            _ => None,
+    /// The chip the ask carries, or a refusal.
+    ///
+    /// **A chip that does not resolve refuses rather than widening**, for
+    /// the same reason the cursor below does. A kind with no value, a value
+    /// with no kind, or a kind this surface does not offer would otherwise
+    /// return the widest list under a URL that says it is narrowed - and
+    /// widening is the one failure an operator reading section 3.6's chip
+    /// row cannot see, because the row honestly reports the chip that is in
+    /// force rather than the chip that was asked for.
+    fn chip(&self) -> Result<Option<Chip>, Refusal> {
+        let (kind, of) = match (self.chip.as_deref(), self.of.as_deref()) {
+            (None, None) => return Ok(None),
+            (Some(kind), Some(of)) => (kind, of),
+            _ => {
+                return Err(Refusal(
+                    "a chip is a kind and a value together, and one came alone",
+                ));
+            }
+        };
+        match kind {
+            "artifact" => Ok(Some(Chip::RecordIdentity(of.to_string()))),
+            "session" => Ok(Some(Chip::Session(of.to_string()))),
+            "branches" => Ok(Some(Chip::Branches(RunId(of.to_string())))),
+            _ => Err(Refusal(
+                "this surface chips on a record identity, a session or a parent's branches",
+            )),
         }
     }
 
@@ -228,7 +245,7 @@ async fn record(
     let Some(who) = who else {
         return Err(NoSession.into_response());
     };
-    let chip = ask.chip();
+    let chip = ask.chip().map_err(IntoResponse::into_response)?;
     let cursor = ask.cursor().map_err(IntoResponse::into_response)?;
     let page = store
         .runs(chip.as_ref(), PAGE, cursor.as_ref())
@@ -239,8 +256,10 @@ async fn record(
         here: "record",
         who: who.name,
         rows: page.runs.into_iter().map(Row::from).collect(),
-        chip_kind: ask.chip.clone().filter(|_| chip.is_some()),
-        chip_of: ask.of.clone().filter(|_| chip.is_some()),
+        // Both halves are present or the ask refused above, so these
+        // carry the chip in force rather than the chip that was asked for.
+        chip_kind: ask.chip.clone(),
+        chip_of: ask.of.clone(),
         next_at: next.as_ref().map(|c| {
             c.ingested_at
                 .to_rfc3339_opts(chrono::SecondsFormat::Micros, true)
@@ -296,11 +315,17 @@ mod tests {
     use tower::ServiceExt;
 
     /// Open a session and hand back the bearer a browser would hold.
+    ///
+    /// **The row is brought to this seed rather than left as it was found.**
+    /// A watch below asserts the page names the claim it was drawn under, so
+    /// a session a previous run opened under another name would be the row
+    /// the assertion measured.
     async fn a_session(store: &Store, name: &str, role: &str) -> String {
         let bearer = format!("bearer-{name}-{role}");
         sqlx::query(
             "INSERT INTO session (bearer_digest, claimed_name, role) VALUES ($1, $2, $3) \
-             ON CONFLICT (bearer_digest) DO NOTHING",
+             ON CONFLICT (bearer_digest) DO UPDATE SET claimed_name = EXCLUDED.claimed_name, \
+             role = EXCLUDED.role, closed_at = NULL",
         )
         .bind(gate::digest(&bearer))
         .bind(name)
@@ -372,7 +397,10 @@ mod tests {
             "INSERT INTO run (run_id, record_identity, sampler, boundary_set, \
              record_session, device, engine) \
              VALUES ('surf-a', 'SURF-REC', '{}', '[]', 'sess-surf', 'rtx-a6000', \
-             '{\"cutlass\": \"3.5\"}') ON CONFLICT (run_id) DO NOTHING",
+             '{\"cutlass\": \"3.5\"}') \
+             ON CONFLICT (run_id) DO UPDATE SET record_identity = EXCLUDED.record_identity, \
+             record_session = EXCLUDED.record_session, device = EXCLUDED.device, \
+             engine = EXCLUDED.engine, seed = NULL",
         )
         .execute(&store.pool)
         .await
@@ -403,6 +431,32 @@ mod tests {
             html.contains("No run answers this"),
             "and says nothing answers"
         );
+    }
+
+    /// **A chip that does not resolve refuses rather than widening.**
+    ///
+    /// Perturbation: return `None` for a half pair or an unknown kind and
+    /// each of these three returns 200 with the unfiltered list, which is
+    /// the widest answer served under a URL that asks for a narrow one.
+    #[tokio::test]
+    async fn a_chip_that_does_not_resolve_refuses_rather_than_widening() {
+        let Some(store) = crate::store::read::tests::store().await else {
+            return;
+        };
+        let bearer = a_session(&store, "todd", "user").await;
+        for uri in [
+            "/record?chip=session",
+            "/record?of=sess-surf",
+            "/record?chip=nonesuch&of=x",
+        ] {
+            let (status, body) = ask(&store, uri, Some(&bearer)).await;
+            assert_eq!(status, StatusCode::BAD_REQUEST, "{uri} is refused");
+            assert!(!body.contains("<table"), "{uri} draws no list");
+        }
+        // And the shape it refuses for is the only one it refuses for: the
+        // widest list carries no chip at all and is not an error.
+        let (status, _) = ask(&store, "/record", Some(&bearer)).await;
+        assert_eq!(status, StatusCode::OK, "no chip is the widest list");
     }
 
     /// **A cursor that does not resolve refuses rather than resetting**, so

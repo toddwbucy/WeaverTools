@@ -458,7 +458,9 @@ pub(crate) mod tests {
             "INSERT INTO run (run_id, record_identity, seed, sampler, device, \
              engine, boundary_set, parent_run_id, branch_position, parting_position, signature) \
              VALUES ($1, 'REC', 14458752852352082704, '{}', 'cuda:0', '{}', '[]', $2, $3, $4, $5) \
-             ON CONFLICT (run_id) DO NOTHING",
+             ON CONFLICT (run_id) DO UPDATE SET parent_run_id = EXCLUDED.parent_run_id, \
+             branch_position = EXCLUDED.branch_position, \
+             parting_position = EXCLUDED.parting_position, signature = EXCLUDED.signature",
         )
         .bind(run_id)
         .bind(parent)
@@ -705,26 +707,47 @@ pub(crate) mod tests {
         // the statement's, so five separate `execute` calls would take five
         // distinct values and the tie this watch exists to pin would not
         // exist. Measured on 2026-09-11: five statements, five timestamps.
+        //
+        // **The seed is this run's alone.** A fixed identity plus `ON
+        // CONFLICT DO NOTHING` keeps whatever a previous run left, and what
+        // a previous run left carries its own `ingested_at` - which is the
+        // member under test here, so the watch would measure a row it did
+        // not write. The tag makes the rows, the tie and the chip all
+        // unique to this invocation, and the insert is left to fail loudly
+        // rather than to skip.
+        let tag = format!(
+            "tie-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        let before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM recorded_query")
+            .fetch_one(&s.pool)
+            .await
+            .unwrap();
         let mut tx = s.pool.begin().await.unwrap();
-        for id in ["t-a", "t-b", "t-c", "t-d", "t-e"] {
+        for suffix in ["a", "b", "c", "d", "e"] {
             sqlx::query(
                 "INSERT INTO run (run_id, record_identity, sampler, boundary_set, record_session) \
-                 VALUES ($1, 'TIE', '{}', '[]', 'sess-tie') ON CONFLICT (run_id) DO NOTHING",
+                 VALUES ($1, 'TIE', '{}', '[]', $2)",
             )
-            .bind(id)
+            .bind(format!("{tag}-{suffix}"))
+            .bind(&tag)
             .execute(&mut *tx)
             .await
             .unwrap();
         }
         tx.commit().await.unwrap();
         let clocks: i64 = sqlx::query_scalar(
-            "SELECT COUNT(DISTINCT ingested_at) FROM run WHERE record_session = 'sess-tie'",
+            "SELECT COUNT(DISTINCT ingested_at) FROM run WHERE record_session = $1",
         )
+        .bind(&tag)
         .fetch_one(&s.pool)
         .await
         .unwrap();
         assert_eq!(clocks, 1, "the tie is real, or this watch pins nothing");
-        let chip = Chip::Session("sess-tie".into());
+        let chip = Chip::Session(tag.clone());
         let mut seen: Vec<String> = Vec::new();
         let mut cursor = None;
         for _ in 0..6 {
@@ -746,13 +769,18 @@ pub(crate) mod tests {
         assert_eq!(sorted.len(), 5, "and none is repeated: {seen:?}");
 
         // The read records nothing. Perturbation: write a section 2.6 row
-        // per page and this count is five rather than zero, section 2.6
-        // filling with a list nobody reruns.
-        let queries: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM recorded_query")
+        // per page and this rises by five, section 2.6 filling with a list
+        // nobody reruns.
+        //
+        // **The count is a delta and not a zero.** Section 2.6 is a table
+        // other reads may legitimately write, so a zero here asserts a
+        // property of the database rather than of this read, and the watch
+        // would fail for something that is not the claim.
+        let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM recorded_query")
             .fetch_one(&s.pool)
             .await
             .unwrap();
-        assert_eq!(queries, 0, "a list is walked rather than quoted");
+        assert_eq!(after, before, "a list is walked rather than quoted");
     }
 
     /// Each chip filters on the column section 2.7 indexes for it, and a
