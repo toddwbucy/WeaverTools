@@ -159,7 +159,7 @@ impl Store {
             .await?;
 
         let Some(row) = sqlx::query(SELECT_PLAN)
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_optional(&mut *tx)
             .await?
         else {
@@ -167,7 +167,7 @@ impl Store {
         };
 
         let mut arms: Vec<Arm> = sqlx::query(SELECT_ARMS)
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_all(&mut *tx)
             .await?
             .into_iter()
@@ -197,7 +197,9 @@ impl Store {
                     ),
                 };
                 Ok(Arm {
-                    arm: ArmId(r.get("arm_id")),
+                    arm: r.get::<String, _>("arm_id").parse().map_err(|e| {
+                        anyhow::anyhow!("the store holds an arm identity it cannot spell: {e}")
+                    })?,
                     name: r.get("name"),
                     registration,
                     entries: Vec::new(),
@@ -214,11 +216,13 @@ impl Store {
             .collect();
 
         for r in sqlx::query(SELECT_ENTRIES)
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_all(&mut *tx)
             .await?
         {
-            let arm = ArmId(r.get("arm_id"));
+            let arm: ArmId = r.get::<String, _>("arm_id").parse().map_err(|e| {
+                anyhow::anyhow!("the store holds an arm identity it cannot spell: {e}")
+            })?;
             let disposition: String = r.get("disposition");
             // The schema's own check holds that a held entry carries a value
             // and a freed one carries a set, so an arm that found neither
@@ -259,7 +263,9 @@ impl Store {
         }
 
         Ok(Some(Plan {
-            plan: PlanId(row.get("plan_id")),
+            plan: row.get::<String, _>("plan_id").parse().map_err(|e| {
+                anyhow::anyhow!("the store holds a plan identity it cannot spell: {e}")
+            })?,
             parent_run: row.get("parent_run_id"),
             author: row.get("author"),
             version: row.get("version"),
@@ -286,14 +292,15 @@ mod tests {
         .execute(&s.pool)
         .await
         .unwrap();
-        sqlx::query_scalar(
+        sqlx::query_scalar::<_, String>(
             "INSERT INTO plan (parent_run_id, author) VALUES ($1, $2) RETURNING plan_id",
         )
         .bind(tag)
         .bind("todd")
         .fetch_one(&s.pool)
         .await
-        .map(PlanId)
+        .unwrap()
+        .parse()
         .unwrap()
     }
 
@@ -336,7 +343,7 @@ mod tests {
             "INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'arm-a', $2) \
              RETURNING arm_id",
         )
-        .bind(&plan.0)
+        .bind(plan.as_str())
         .bind(experiment)
         .fetch_one(&s.pool)
         .await
@@ -344,7 +351,7 @@ mod tests {
         let arm_b: String = sqlx::query_scalar(
             "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-b') RETURNING arm_id",
         )
-        .bind(&plan.0)
+        .bind(plan.as_str())
         .fetch_one(&s.pool)
         .await
         .unwrap();
@@ -413,7 +420,7 @@ mod tests {
         }
 
         assert!(
-            s.plan(&PlanId("pl-0000000000000000".into()))
+            s.plan(&"pl-0000000000000000".parse().unwrap())
                 .await
                 .unwrap()
                 .is_none(),
@@ -448,7 +455,7 @@ mod tests {
         let tag = tag("snap");
         let plan = a_plan(&s, &tag).await;
         sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-a')")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .execute(&s.pool)
             .await
             .unwrap();
@@ -459,7 +466,7 @@ mod tests {
             .await
             .unwrap();
         let before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_one(&mut *tx)
             .await
             .unwrap();
@@ -467,13 +474,13 @@ mod tests {
 
         // Another connection entirely, committing between the statements.
         sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm-b')")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .execute(&s.pool)
             .await
             .expect("the writer commits");
 
         let after: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_one(&mut *tx)
             .await
             .unwrap();
@@ -486,7 +493,7 @@ mod tests {
         // And the writer's arm is really there, so the watch is about
         // the snapshot rather than about a write that never landed.
         let now: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plan_arm WHERE plan_id = $1")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .fetch_one(&s.pool)
             .await
             .unwrap();
@@ -507,14 +514,14 @@ mod tests {
         let tag = tag("shape");
         let plan = a_plan(&s, &tag).await;
         assert!(
-            plan.0.starts_with("pl-") && plan.0.len() == 19,
+            plan.as_str().starts_with("pl-") && plan.as_str().len() == 19,
             "the plan's identity is spelled: {plan}"
         );
 
         let arm: String = sqlx::query_scalar(
             "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm') RETURNING arm_id",
         )
-        .bind(&plan.0)
+        .bind(plan.as_str())
         .fetch_one(&s.pool)
         .await
         .unwrap();
@@ -560,12 +567,16 @@ mod tests {
             (
                 "a ref",
                 "INSERT INTO ref (ref_id, name, run_id, author) VALUES ($1, 'x', $2, NULL)",
-                plan.0.clone(),
+                plan.as_str().to_owned(),
             ),
         ] {
             let refused = sqlx::query(sql)
                 .bind(&wrong)
-                .bind(if what == "an arm" { &plan.0 } else { &tag })
+                .bind(if what == "an arm" {
+                    plan.as_str()
+                } else {
+                    tag.as_str()
+                })
                 .execute(&s.pool)
                 .await
                 .expect_err("the wrong kind is refused");
@@ -649,7 +660,7 @@ mod tests {
         let arm: String = sqlx::query_scalar(
             "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm') RETURNING arm_id",
         )
-        .bind(&plan.0)
+        .bind(plan.as_str())
         .fetch_one(&s.pool)
         .await
         .unwrap();
@@ -718,14 +729,14 @@ mod tests {
         .await
         .unwrap();
         sqlx::query("INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'a', $2)")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .bind(experiment)
             .execute(&s.pool)
             .await
             .expect("the first arm claims it");
         let second =
             sqlx::query("INSERT INTO plan_arm (plan_id, name, experiment_id) VALUES ($1, 'b', $2)")
-                .bind(&plan.0)
+                .bind(plan.as_str())
                 .bind(experiment)
                 .execute(&s.pool)
                 .await
@@ -738,7 +749,7 @@ mod tests {
         // Two unregistered arms are the ordinary case: the uniqueness is
         // over the reference and nulls do not collide.
         sqlx::query("INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'c'), ($1, 'd')")
-            .bind(&plan.0)
+            .bind(plan.as_str())
             .execute(&s.pool)
             .await
             .expect("unregistered arms do not collide");
@@ -761,7 +772,7 @@ mod tests {
         let arm: String = sqlx::query_scalar(
             "INSERT INTO plan_arm (plan_id, name) VALUES ($1, 'arm') RETURNING arm_id",
         )
-        .bind(&plan.0)
+        .bind(plan.as_str())
         .fetch_one(&s.pool)
         .await
         .unwrap();
