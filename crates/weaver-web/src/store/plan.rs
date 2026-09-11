@@ -44,10 +44,17 @@ pub struct Plan {
 /// One arm of a plan, with the disposition of every member it names: a
 /// candidate experiment, drawn as one column of the matrix.
 ///
-/// **This is not `experiment::Arm`**, which is one value of a frozen sweep
-/// with the run it produced. Section 2.9 has this one reach its runs through
-/// its staged experiment and never directly, so a plan's arm is a set of
-/// sweep arms and never one of them.
+/// **The same arm as `experiment::Arm`, at the resolution the plan holds it
+/// at.** This one is the arm as composed, before registration freezes it;
+/// that one is the arm as fanned, one row per value of the frozen set with
+/// the run it produced. The module path is the resolution, which is why
+/// neither type is renamed to keep them apart.
+///
+/// **An arm that frees nothing does not fan**, per section 2.9: it registers
+/// a staged experiment with no swept member and produces one run. So the
+/// finer resolution is empty there rather than singular, and the arm is
+/// simply this row. That is what a resolution does at its limit, and not a
+/// second kind of thing.
 #[derive(Debug, Clone, Serialize)]
 pub struct Arm {
     pub key: String,

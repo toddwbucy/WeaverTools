@@ -26,13 +26,13 @@ pub mod read;
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{PositionKey, RunId, TurnId};
-// **`plan::Arm` is not re-exported and `experiment::Arm` is.** The word
-// carries two units in this corpus: a plan's arm is a candidate experiment,
-// one per column of the matrix, and a sweep's arm is one value of that
-// experiment's frozen set, one per run it produced. Section 2.9 has the
-// first reach its runs through the second. Exporting both bare would put
-// two units under one name at the crate's front door, so the plan's stays
-// module-qualified and reads `plan::Arm` where it is used.
+// **`plan::Arm` is not re-exported and `experiment::Arm` is**, and the path
+// is the point rather than a collision worked around. They are one thing at
+// two resolutions: the arm as the plan composes it, and the arm as the
+// frozen sweep fans it, one row per value with the run it produced. A front
+// door that exported both bare would flatten the resolution out of the
+// name, so the plan's stays qualified and reads `plan::Arm` where it is
+// used.
 pub use plan::{Disposition, Entry, Plan, Registration};
 pub use read::{Alternatives, Chip, Cursor, PositionPoint, RunPage, RunTuple};
 
