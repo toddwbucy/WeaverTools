@@ -49,11 +49,7 @@ askama = "0.14"
 # The lock file still lists `sqlx-sqlite`, as it lists any optional
 # dependency that resolves, and reading the lock for what is enabled is the
 # error this comment first made.
-# `uuid` is elected because migration 0009 gives an arm a UUID identity, per
-# the operator of 2026-09-11: the name is the operator's label and a rename is
-# an ordinary act, so the name cannot also be the key. Without the feature the
-# column decodes to nothing this crate can name.
-sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros", "uuid"] }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # The bearer is hashed before it is stored or looked up, per Spec 2.8.
@@ -66,7 +62,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 futures = "0.3"
 anyhow = "1"
-uuid = { version = "1", features = ["v4", "serde"] }
+uuid = { version = "1", features = ["v4"] }
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
 
 [dev-dependencies]
