@@ -128,9 +128,11 @@ puts it and nothing else in the store holds it, and an arm's hypothesis is state
 twice in two kinds: mechanically as the diff, and in prose as the question the diff
 was rendered into.
 
-The operator schedules the batch. Every arm becomes a staged experiment. Every
-entry in a scheduled arm that was neither moved nor freed reads held at the
-parent's value, so an arm is always fully specified.
+The operator registers the plan. Every arm becomes a staged experiment and every
+entry in it that was neither moved nor freed reads held at the parent's value, so an
+arm is always fully specified. **Scheduling is the second act and not this one**, per
+the Spec's section 5.1: the operator chooses which registered arms to queue and the
+order they run in, which section 2.11 records.
 
 The runner drains. As arms complete, the arm's status changes and its score
 appears: the predicate's verdict, and where the task supplies a denominator, turns
@@ -166,12 +168,21 @@ blank.** They are different facts about different objects, and an entry holding 
 could not say what a freed entry in a scheduled arm is, which is both at once. **The
 disposition is the entry's** and is one of two. Held at a value. Or freed, its value set
 drawn at authoring and frozen at registration per section 4, with each arm's value
-filled in from the run row once one exists. **The status is the arm's** and is one of
-three. Not scheduled, which the null pointer above already records and which a reader
-can see, so an arm the operator declined is distinguishable from one that failed to
-run. Queued, the arm scheduled and no run returned. Returned, its arms readable
-through the staged experiment. Every entry in a scheduled arm is queued with it and
-keeps the disposition the operator gave it.
+filled in from the run row once one exists. **The status is the arm's and it is the
+staged experiment's state**, which the Spec's section 5.1 has as five rather than
+three: draft, registered, queued, running, returned. An arm that was never registered
+has no status at all, which the null pointer above records and which a reader can see,
+so an arm the operator declined is distinguishable from one that failed to run. Every
+entry in a scheduled arm is queued with it and keeps the disposition the operator gave
+it.
+
+**This paragraph read three until the review of PR #556**, naming not scheduled,
+queued and returned - and **not scheduled conflated two different facts.** An arm the
+operator never registered and an arm registered and not yet queued are the same
+absence under that reading, which spends exactly the pre-registration the Spec's
+section 5.1 buys: a registered arm is a claim on the record whether or not it ever
+runs, so it has a state and not a null. Registration sets the reference and freezes
+the arm; **queueing is a separate act** and section 2.11 records the order it gives.
 
 **Declared and achieved are two facts landing at two times.** The entry carries what was
 intended and keeps carrying it. The run row carries what ran, per the PRD's section 4,
