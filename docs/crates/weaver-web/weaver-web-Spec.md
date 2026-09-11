@@ -17,11 +17,15 @@ this one. So the read lands with the schema rather than with the matrix that wan
 the same rule the fifth read met, met from the other direction and at the cheaper time.
 **One read is owed now rather than two**, the Experiments list being the remaining one.
 Section 2.7 gains the two indexes section 2.10's reachability needs, its roots being
-three and a root found by a walk being a root a sweep would skip. **The assertion count
-does not move and stays at twenty-eight**: section 2.9's own record is the registration
-write's, which section 5.1 has set the column's reference only where it was null and
-which lands with Stage, so this act builds the constraint that write will lean on and
-watches it, and does not claim the record. Migration 0009. Per the queue at issue #434.
+three and a root found by a walk being a root a sweep would skip, the third of them
+being the staged experiment's parent and **not the lineage index this section claimed it
+was**. Section 2.9 gains two assertion records and the count moves to thirty: the bound
+on a column's freed members and the entry's value are properties of a row, so the
+migration holds them and its watches perturb them. **Its third record is still not
+claimed here**, registering at most once being a property of a transaction that section
+5.1 puts in the write, so this act builds the constraint that write leans on. Migration
+0009. Found by the review of PR #547. Per the queue at issue #434.
+
 **Revised:** 2026-09-11, the read path has five, Record is why, and the indexes it leans
 on exist. Section 4 gains **every run's tuple, filtered**, the one read whose unit is
 the set rather than a member of it. **The four could not serve Record and no arrangement
@@ -1090,12 +1094,19 @@ lineage       run (parent_run_id)
 ingest order  run (ingested_at DESC, run_id DESC)
 plan roots    plan (parent_run_id)
 ref roots     ref (run_id)
+queued roots  staged_experiment (parent_run_id)
 ```
 
-**The last two carry section 2.10's reachability.** The roots of a sweep are three - a
-ref, a plan's parent run, and the parent run of a staged experiment that has not
-returned - and a root that had to be found by a walk is a root a sweep would skip rather
-than honor. The third of the three is the lineage index above.
+**The last three carry section 2.10's reachability**, whose roots are a ref, a plan's
+parent run, and the parent run of a staged experiment that has not returned. A root that
+had to be found by a walk is a root a sweep would skip rather than honor.
+
+**The lineage index is not the third of them and this section said it was.** That one is
+on the run's own parent and answers a branch's siblings; the third root is the staged
+experiment's parent, which had no index, a foreign key constraining without indexing.
+**That is the finding of PR #540 made twice** - once against the lineage reference in
+0007, and once here by the review of PR #547, in the same act that cited the first as
+settled.
 
 The secondary index exists so the largest spikes in a run are reachable without pulling
 the run down. The family index exists so a session's runs are one read rather than a
@@ -1268,7 +1279,30 @@ tag: perturbation
 edge: asserts
 from: weaver-web
 to: web-a-column-registers-at-most-once
+
+node: web-a-column-frees-at-most-one-member
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-a-column-frees-at-most-one-member
+
+node: web-entry-states-the-value-its-disposition-names
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-entry-states-the-value-its-disposition-names
 ```
+
+**Two of these three are the schema's and one is the write's**, which is why they land
+at two acts. The bound on freed members and the entry's value are properties of a row,
+so migration 0009 holds them and its watches perturb them. **Registering at most once is
+a property of a transaction** - section 5.1 has the reference set only where it was null
+and in one commit with the staged experiment - so the constraint 0009 builds is what
+that write leans on and the record is claimed at the act that writes.
 
 ### 2.10 The refs
 
@@ -2151,7 +2185,7 @@ trial record like any other.
 |---|---|
 | a position is addressed by run, turn and position | compile-pin on the key type |
 | ingest is idempotent on that key | perturbation: replay one window twice |
-| nothing is computed at read time except where the query is recorded | review, over the six reads the crate serves, the fifth joining it with Record and the sixth with the plan |
+| nothing is computed at read time except where the query is recorded | review, over the four reads the crate served, the fifth joining them with Record and the sixth with the plan |
 | a recorded query names every run it addressed | perturbation: drop one, the row refuses |
 | an incomplete shard set joins to nothing | perturbation: drop one file the index names, the join returns none |
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
@@ -2176,6 +2210,8 @@ trial record like any other.
 | the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
 | a plan's column registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one column and the matrix reads two arms where the operator authored one |
+| a column frees at most one member | perturbation, at the schema: drop the partial index, one column frees two and registers a sweep whose row carries one member and one value set |
+| an entry states the value its disposition names | perturbation, at the schema: drop the check, an entry says held and carries nothing, which is the absent-not-empty failure moved from the view into the store |
 | the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
 
 **A watch that cannot fail is not a test.** For each perturbation above, the

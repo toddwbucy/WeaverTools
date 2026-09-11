@@ -60,17 +60,27 @@ CREATE TABLE plan_entry (
   -- The disposition and the value are one fact stated once: a held entry
   -- carries the value it holds, a freed entry carries the set it frees, and
   -- neither carries the other's member.
+  -- **JSON null is not SQL NULL.** `held_value IS NOT NULL` admits the JSONB
+  -- value `null`, which is a held entry carrying no value spelled the one
+  -- way this check would not catch, so the absent-not-empty failure would
+  -- reach the store through the gap between two meanings of the word.
   CONSTRAINT plan_entry_states_the_value_its_disposition_names
     CHECK (
       (disposition = 'held'
-        AND held_value IS NOT NULL AND freed_values IS NULL)
+        AND held_value IS NOT NULL AND jsonb_typeof(held_value) <> 'null'
+        AND freed_values IS NULL)
       OR
       (disposition = 'freed'
         AND freed_values IS NOT NULL AND held_value IS NULL)
     ),
 
+  -- An array and not the empty one: section 5.4 has a sweep name one member
+  -- **and its value set**, so a freed member over no values is a column that
+  -- would register a sweep with no arms and produce no runs. 0001 holds the
+  -- same shape for the artifact's digests.
   CONSTRAINT plan_entry_freed_values_is_an_array
-    CHECK (freed_values IS NULL OR jsonb_typeof(freed_values) = 'array')
+    CHECK (freed_values IS NULL
+           OR (jsonb_typeof(freed_values) = 'array' AND freed_values <> '[]'::jsonb))
 );
 
 -- Spec 2.9: a column frees at most one member and holds the rest, section
@@ -98,7 +108,14 @@ CREATE TABLE ref (
 
 -- Spec 2.7. The roots of section 2.10's reachability are three - a ref, a
 -- plan's parent run, and the parent run of a staged experiment that has not
--- returned - and two of the three are read by these. The third is the
--- lineage index 0007 already carries.
+-- returned - and each needs an index or a sweep finds it by a walk.
+--
+-- **The third is not 0007's lineage index.** That one is on `run
+-- (parent_run_id)`, which answers a branch's siblings, and the third root
+-- lives on `staged_experiment (parent_run_id)`, which had no index at all:
+-- a foreign key constrains and does not index, which is the identical
+-- finding the review of PR #540 made against 0007 and which the first form
+-- of this migration repeated while claiming it was fixed.
 CREATE INDEX ref_by_run ON ref (run_id);
 CREATE INDEX plan_by_parent ON plan (parent_run_id);
+CREATE INDEX staged_experiment_by_parent ON staged_experiment (parent_run_id);
