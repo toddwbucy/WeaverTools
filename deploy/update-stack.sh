@@ -46,17 +46,60 @@ sys.exit(1)
 '
 }
 
+# **Every box fact is required, because this script's whole purpose is that
+# two boxes end up the same.** `read_key` answers empty for a key that is not
+# there, so a fact read and not checked is a divergence the run carries
+# silently, and the seats only find it by comparing results later.
 WORKER_BINARY=$(read_key worker-binary)
 AGENT_DIR=$(read_key agent-config-directory)
 ALLOW_LIST=$(read_key allow-list)
 [ -n "$WORKER_BINARY" ] || die "no worker-binary in $ADMIN_CONFIG"
+[ -n "$AGENT_DIR" ]     || die "no agent-config-directory in $ADMIN_CONFIG"
+[ -n "$ALLOW_LIST" ]    || die "no allow-list in $ADMIN_CONFIG"
 BIN_DIR=$(dirname "$WORKER_BINARY")
+
+# **Where cargo builds is asked rather than assumed.** This box sets
+# `CARGO_TARGET_DIR`, so `target/release` does not exist here, and every
+# comparison against it silently found no file, skipped every binary, and
+# reported the box current while three-week-old binaries stood installed.
+# A path that can be wrong without saying so is worse than no comparison.
+# **The answer is judged on whether cargo answered, not on whether the
+# directory is there yet.** A clean rebuild has no release directory at this
+# point, so testing for one sent a box that sets `CARGO_TARGET_DIR` back to
+# `target/release` and reopened the defect above through a second door. Where
+# cargo names no target directory at all there is nothing to fall back to
+# that would not be a guess, so the run refuses instead.
+# **The answer is read out of the JSON rather than matched out of it.** A
+# regular expression does not decode what JSON escapes, so a target directory
+# holding a backslash kept it doubled and one holding a quote truncated at
+# the quote, both giving a non-empty path that is wrong. Measured: a real
+# `/tmp/a"b` came back as `/tmp/a\`. This script already parses the trace
+# with python for the same reason, so the reader is the one it has.
+# **The refusal below has to be reachable.** Under `pipefail` a failing cargo
+# takes the whole assignment down, and with `set -e` the run ended on cargo's
+# own exit code with nothing said. Measured at 101 and silent. The failure is
+# absorbed here so the empty answer reaches the line written to name it.
+BUILT=$( (cargo metadata --format-version 1 --no-deps --offline --locked 2>/dev/null \
+  | python3 -c 'import json, sys
+try:
+    print(json.load(sys.stdin).get("target_directory", ""))
+except ValueError:
+    pass') || true )
+[ -n "$BUILT" ] || die "cargo metadata names no target directory, so where the build lands is unknown"
+BUILT="$BUILT/release"
 
 # ---------------------------------------------------------------- 1. box facts
 say "box"
 printf '  host          %s\n' "$(hostname)"
+printf '  config root   %s\n' "$ADMIN_CONFIG"
 printf '  bin dir       %s\n' "$BIN_DIR"
 printf '  worker-binary %s\n' "$WORKER_BINARY"
+# **The built-from path is a box fact and is printed as one.** It differs
+# between the seats, one of them setting `CARGO_TARGET_DIR`, and it was the
+# difference that let this script report a box current while comparing
+# nothing. A fact that decides the answer belongs where a reader of the
+# output can see it.
+printf '  built from    %s\n' "$BUILT"
 printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null || echo none)"
 
 # The cccl window of #397. Outside it the engine does not compile, and a
@@ -94,27 +137,53 @@ else
 fi
 AFTER=$(git rev-parse --short HEAD)
 printf '  %s -> %s\n' "$BEFORE" "$AFTER"
-
-# ------------------------------------------------------------------- 3. build
-say "build"
-NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --workspace \
-    --features weaver-spu/cuda,weaver-harness/pyworker
-printf '  ok\n'
-
-# -------------------------------------------------------------------- 4. test
+# **A commit names what is installed only if the tree matches it.** Any
+# uncommitted edit, a hand-changed source or a lock cargo repaired on its way
+# past, installs under this commit's name and the closing line says the box
+# is current at something it is not.
+# **An untracked file is an uncommitted edit too.** `git diff-index` compares
+# the commit against what git already tracks and never sees a new file, so a
+# source dropped in beside the others passed this gate. The porcelain status
+# reports it, leaves ignored files alone, and refreshes the index on its way
+# past, which also retires the stat-dirty false refusal the old form could
+# give after a checkout.
+# **A gate that cannot read the tree refuses rather than passing.** Inside a
+# test the substitution's own failure is not the test's status, so a git that
+# answered nothing at all, a corrupt index among the reasons, read as an
+# empty status and the gate said clean. Measured: a truncated `.git/index`
+# exits 128 and the old form passed the run through. The answer is taken
+# first, so a git that could not speak is its own refusal.
+TREE_STATUS=$(git status --porcelain=v1 --untracked-files=all) \
+  || die "git could not say whether the tree is clean, so $AFTER cannot be trusted to name the build"
+[ -z "$TREE_STATUS" ] \
+  || die "the tree is dirty, so $AFTER would name a build it did not produce; commit or stash first"
+# -------------------------------------------------------------------- 3. test
 say "test"
-cargo test --release -p weaver-trace -p weaver-harness -p weaver-analysis \
+# **The test runs before the build, so it cannot overwrite what the build
+# produced.** It takes a narrower feature set by necessity, `weaver-spu` not
+# being among its selected packages, and a narrower set resolves features
+# differently and recompiles the harness. Run after the build it rewrote both
+# worker binaries, so what the plan compared and the install copied was not
+# what the recorded build command made. Measured: both came back carrying
+# this step's timestamp and a digest other than the build's.
+cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analysis \
   --features weaver-harness/pyworker 2>&1 | grep -E '^test result' | \
   awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
+
+# ------------------------------------------------------------------- 4. build
+say "build"
+NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
+  cargo build --release --locked --workspace \
+    --features weaver-spu/cuda,weaver-harness/pyworker
+printf '  ok\n'
 
 # --------------------------------------------------------------------- 5. plan
 say "plan"
 CHANGED=()
 for b in $(ls "$BIN_DIR"); do
-  [ -f "target/release/$b" ] || continue
+  [ -f "$BUILT/$b" ] || continue
   d=$(sha256sum "$BIN_DIR/$b" | cut -d' ' -f1)
-  n=$(sha256sum "target/release/$b" | cut -d' ' -f1)
+  n=$(sha256sum "$BUILT/$b" | cut -d' ' -f1)
   if [ "$d" = "$n" ]; then
     printf '  %-22s unchanged\n' "$b"
   else
@@ -244,7 +313,7 @@ if [ ${#CHANGED[@]} -gt 0 ]; then
   INSTALL_DONE=1
   for b in "${CHANGED[@]}"; do
     sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
-    sudo install -o root -g root -m 0755 "target/release/$b" "$BIN_DIR/$b"
+    sudo install -o root -g root -m 0755 "$BUILT/$b" "$BIN_DIR/$b"
     printf '  installed %s\n' "$b"
   done
   printf '  previous binaries kept at %s\n' "$BACKUP"
@@ -295,6 +364,26 @@ for agent in $ALLOW_LIST; do
   fi
 done
 
+# **An agent that has never loaded has no sink yet**, so a count taken before
+# the load is a count of a file that is about to exist. The declaration says
+# `create: true` and admin makes it at the load. Read as zero rather than as
+# an error, the comparison below is unchanged for an agent that has run and
+# is stronger for one that has not, because every line it then holds is new.
+# Both sides of the comparison read through here, so a load that failed to
+# make the sink at all measures no growth and is caught rather than excused.
+# **A sink that is there but is not a file is a different answer from an
+# absent one.** The trace sink elects one of three kinds and the other two
+# name a fifo and a socket, neither of which a line count reads: counted as
+# empty they would refuse a load that in fact wrote, and read with `wc` a
+# fifo would block until something closed it. This answers the caller rather
+# than exiting, because both calls sit inside a command substitution where an
+# exit would leave only the subshell and the install standing.
+sink_lines() {
+  if [ ! -e "$1" ]; then printf '0\n'; return 0; fi
+  [ -f "$1" ] || return 1
+  wc -l < "$1"
+}
+
 # -------------------------------------------------------------------- 9. verify
 # A load that is not read back is an install that was not verified. This reads
 # the event out of the agent's own sink, the only place the claim can be
@@ -313,10 +402,11 @@ for AGENT in $ALLOW_LIST; do
   SINK=$(sed -n 's/^[[:space:]]*path:[[:space:]]*\(.*\)$/\1/p' "$decl" | head -1)
   [ -n "$SINK" ] || rollback "cannot find the trace sink for $AGENT"
   printf '  %s\n' "$AGENT"
-  LINES=$(wc -l < "$SINK")
+  LINES=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
-  NEW=$(( $(wc -l < "$SINK") - LINES ))
+  LATER=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
+  NEW=$(( LATER - LINES ))
   [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
   if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
     rollback "$AGENT: the load event does not name its composer; the install did not take"
