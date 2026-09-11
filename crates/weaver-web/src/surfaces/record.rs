@@ -379,14 +379,15 @@ mod tests {
     /// reached under a chip that admits only it, so a regression in one
     /// member's handling cannot be carried by another row on the page.
     ///
-    /// **It cites no assertion.** The claim this file's header conforms to
-    /// is tagged `review` at `weaver-web-Spec` section 9, because the half
-    /// of it that matters - *indexed* - is a property of the statement and
-    /// the schema rather than of a response, and no assertion is made here
-    /// that would fail if a chip filtered on an unindexed column. What this
-    /// watch does pin, absent-not-empty at the view under section 6, has no
-    /// record of its own; that is a documents act rather than a citation to
-    /// borrow.
+    /// **It cites the claim it pins and not the file's own header.** The
+    /// header's claim is tagged `review` at `weaver-web-Spec` section 9,
+    /// because the half of it that matters - *indexed* - is a property of
+    /// the statement and the schema rather than of a response, and nothing
+    /// asserted here would fail if a chip filtered on an unindexed column.
+    /// What this watch pins is absent-not-empty at the view, which section 6
+    /// now records rather than only stating.
+    ///
+    /// conforms: web-the-view-names-an-absent-member
     #[tokio::test]
     async fn record_draws_the_tuple_and_names_what_is_absent() {
         let Some(store) = crate::store::read::tests::store().await else {

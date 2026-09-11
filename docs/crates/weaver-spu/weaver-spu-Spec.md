@@ -220,12 +220,14 @@ elected GGUF load is judged on what its family declares. The deployed
 `qwen35moe` still declares no tap, which is named as a separate act. The
 tap's neutrality is a measurement per charter section 13.7's new bar and not
 a reading, the callback changing how the graph computes.
+
 **Revised:** 2026-08-21, second of this date, the surprisal renders on its
 election. The measurement's `surprisals` member renders where the election
 of charter section 13.12 stands and is absent where it does not, on the
 absent-not-empty rule already in this section, and `perplexity` renders
 wherever a distribution was read, absent on the one ground the entropies
 are absent on rather than on its own. The accumulator holds no vector.
+
 **Revised:** 2026-08-21, the generation's bound renders. The request's box
 gains a `stop` object, `max_tokens` with the stop token set and the
 terminator beside it, per charter section 13.6's clause of this date on
@@ -233,6 +235,7 @@ issue #258. It rides the request rather than the measurement on the
 template identity's rule, a bound being an input-side fact, and it renders
 the resolved values rather than the declared. No election changes and the
 partition is untouched.
+
 **Revised:** 2026-08-21, third of this date, the seed's derivation takes
 shape. Section 8.5 lands it: `splitmix64` over the declared seed, the
 turn, and the generation ordinal within that turn, the last because tool
@@ -243,6 +246,7 @@ agree by construction and retires the flush's coupling to sampling rather
 than repairing it. The request records both seeds. Two perturbation
 assertions land.
 **Date filed:** 2026-08-02
+
 **Revised:** 2026-08-21, the probability field is represented. Section
 7.5 lands it at section 6's own site, the logits already being held there
 for the signals, as a partial selection to the declared depth with the
@@ -250,6 +254,7 @@ realized rank beside it. The depth refuses below the sampling cutoff at
 admit, two integers compared before any device work. Two perturbation
 assertions land, the second being the observational watch charter section
 13.11 obliges and the split-run technique rests on.
+
 **Revised:** 2026-08-20, second of this date, the seed becomes the run's own. Section
 8's seed moves from `Frozen` to `OperatorTunable` on the operator's ruling, the rest of
 the sampling surface staying frozen so a gathered distribution reports the task rather
@@ -259,12 +264,14 @@ audit rather than determinism", which one binary drawing one trajectory per task
 delivers neither of. Re-entry moves from per binary to per run, the effective seed
 already riding every request's sampling block. A declaration supplying no seed refuses
 the load, per this section's no-defaulting rule.
+
 **Revised:** 2026-08-20, the close crosses in segments. Per the decode
 contract's amendment on issue #236: this crate's sends segment any frame
 past the envelope under `weaver-types-Spec` section 4.4's spelling, the
 receive obligation of section 2 gains the series' reassembly under the
 total bound, and the send that cannot complete says so before service
 ends, the silent exit being the issue's second defect.
+
 **Revised:** 2026-08-19, third of this date, the classify submodule is
 represented. Section 11 lands with the classifier code act's opening:
 the second bin target `weaver-spu-classify`, settling charter section
@@ -274,17 +281,20 @@ election, the binding as `spu-instruction`'s `classify` subsection, the
 with its head read from the artifact's own declaration, and structural
 statelessness. Open elections renumber to section 12, the one external
 citation moving in the same act.
+
 **Revised:** 2026-08-19, second of this date, the flush names its cut.
 Section 4.4 reaches the ask's kept length instead of the fixed prefix,
 per charter section 13.9 as amended on the operator's ruling, and the
 session retains its resident token sequence so both flush mechanisms
 reach any kept length: truncation by position, re-establishment by
 re-decoding the kept slice.
+
 **Revised:** 2026-08-19, the generation reports the session's fullness.
 Section 6's travel list gains the resident count and the capacity, the
 floor's `Generation` carrying both per `weaver-types-Spec` section 4.4, so
 the loop that manages the context sees pressure before the wall rather
 than in the wall's refusal.
+
 **Revised:** 2026-08-17, fourth of that date, the pin reaches every shard.
 The split collision ruling lands: a name carrying llama.cpp's
 `-NNNNN-of-NNNNN` pattern is one shard of a set, so the pin opens every
@@ -293,11 +303,13 @@ them all, and the loader names the whole set through the fork's new
 `load_from_splits`, the llama-cpp pin moving to `ecce255b` to carry it. A
 missing sibling refuses as unresolvable, a partial set being an absent
 artifact rather than a smaller one.
+
 **Revised:** 2026-08-17, the request owns the template identity, per the
 ruling on #129 and the sampling precedent: an input to a decode belongs with
 what was asked rather than with what was read off it. The what-travels list
 loses the member from its measurement half and keeps it in the request half,
 where it already sat.
+
 **Revised:** 2026-08-17, second of that date, the render is a detector rather
 than an evaluator. The clause landed that morning said a canonical conversation
 is rendered through the artifact's own template, and the dependency does not do
@@ -311,6 +323,7 @@ one the detector does not recognise and an unconditional render would refuse a
 family this binary already serves. And mis-detection is named as the residual
 risk, bounded by the rendering choosing among entries that already agree with
 the artifact about its architecture rather than admitting one on its own.
+
 **Revised:** 2026-08-17, a family is an architecture and a template together.
 `general.architecture` does not determine a chat format and three artifacts
 declaring `llama` on this workshop render three, so the key widens from one
@@ -319,6 +332,7 @@ and unread, and marker sets are what is compared rather than templates whole,
 a template being a program that can differ in what no turn reaches. The pair of
 an architecture and a marker set is unique and the build says so, because two
 entries sharing both would make the table's order the selector.
+
 **Revised:** 2026-08-16, the tunable route reaches the declaration. Every
 knob's `Disposition` promised a value routed from the agent's configuration at
 load and no such route existed, so all six compiled `Frozen` and the election
@@ -328,17 +342,20 @@ engine that builds its sampler at open could not reach it. The session capacity
 joins the mechanism and its argv clause of this date is withdrawn, argv keeping
 the headroom term alone. The per-turn generation ceiling gains its first clause
 in this corpus.
+
 **Revised:** 2026-08-12, the request is the turn's contribution, per the
 operator's ruling of this date closing issue 124. The request content this
 crate renders is the turn's delta as the family library renders it, which
 is what the code builds, the ruling blessing the built reading, and the
 full effective context is the accumulation the record determines.
+
 **Revised:** 2026-08-11, second of that date, the model events splice. The
 close's request member widens from the rendered prompt to the model.request
 content whole, the rendered prompt with its template and effective sampling,
 this crate rendering it because the custody act makes model.request a spliced
 payload the organ produces. The measurement was already this crate's to
 render, and the harness now carries both opaque.
+
 **Revised:** 2026-08-11, the seam streams. The close gains the rendered
 prompt as the family library produced it, beside the measurement rather than
 inside it, one spliced member per record box, the record's request side
@@ -347,6 +364,7 @@ date. The stream itself is the contract's and the answer type's, this
 crate's serve writing each token as it is drawn, and the seam's ordered
 state is unchanged, one generation in flight and the intermediates inside
 its exchange.
+
 **Revised:** 2026-08-10, second of that date, the seam service act. Section 6
 declares the partition's label vocabulary on the operator's ruling of this
 date: the organ originates the service so the organ declares, the names are
@@ -355,15 +373,18 @@ with `identity-prefix` named as arriving when the prefix renders into a
 measurement, and consistency is the binding property, a new span kind
 arriving with the act that renders it. No record moves, the declaration
 riding the partition's existing assertion.
+
 **Revised:** 2026-08-10, the route act. Section 7 reads the election from the
 SPU instruction beside the binding rather than from the binding, per
 `weaver-types-Spec` section 2 and the corrected charter section 13.7. The
 judgment, the refusal at admit, and the section's records are unchanged.
+
 **Revised:** 2026-08-06, the fork pins get a home. The G6 sweep found the two
 revisions recorded in no document of this corpus, delegated by the survey to a
 workspace note under no version control and otherwise present only in the
 archived manifest that checklist item 7 deletes. Section 1.1 now carries both in
 full. No election changes and no record moves.
+
 **Revised:** 2026-08-07, a review tag becomes the instrument it priced. The load
 act ran the release against a real device and watched free memory return before
 the answer, under the named perturbation, so

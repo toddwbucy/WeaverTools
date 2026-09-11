@@ -8,14 +8,17 @@ stands with the preload door and no seal has landed, each answered at the seal i
 arrival order, per `weaver-harness-state-contract` section 2 as revised 2026-09-04 on
 issue #432, which stated the parking and this document's law had not carried it. The
 record `state-replay-answers-at-the-seal` covers the three. Found by the code act.
+
 **Revised:** 2026-09-04, fifth of this date, the door stands under a restoring load.
 Section 4's two-sided claim names the other half's new case: admin's vector carries
 the door's name under a diagnostic binding or a serving load that elects a restore,
 and this crate's half, that the member binds no name it is not given, is unchanged.
 Per issue #432.
+
 **Revised:** 2026-09-04, fourth of this date, the identity answer is the newest
 run's. Section 4's identity query binds to the run of the newest turnless system
 message, per `weaver-harness-state-contract` section 2 as revised the same date.
+
 **Revised:** 2026-09-04, third of this date, the port answers the `identity` ask.
 Section 4 gains the fifth ask of `weaver-harness-state-contract` section 2, the
 turnless `message.system` rows of the session in landing order. Per issue #422.
@@ -26,6 +29,7 @@ of the territory and the preload path alone, and the engine's flags now precede
 both, per `weaver-admin-Spec` section 6 as revised this date. Section 4 gains the
 fourth ask of `weaver-harness-state-contract` section 2, the boundary as the engine
 states it. Per issue #411's code act.
+
 **Revised:** 2026-09-04, first of this date, the store is a port and two engines
 stand. Section 3
 declares `Store` and its two implementations, the embedded engine of the
@@ -35,6 +39,7 @@ per engine, section 2's territory holds the file under one engine and only the
 door's name under the other, and sections 4, 5, and 6 stop speaking of the
 file where they meant the store. Per `weaver-state-PRD` section 4 as revised
 this date and issue #411.
+
 **Revised:** 2026-08-28, the preload name's mode is elected rather than
 inherited. Section 4 states that the bind happens under a umask denying every
 bit outside the owner, so the name lands at `0700` rather than at whatever
@@ -50,6 +55,7 @@ member enforces - the answer ceiling, the inbound frame cap, and the answer
 write deadline - each with what its breach means. The retirement's
 same-transaction claim is made true in code rather than narrowed here, the
 index build joining the delete's transaction in the stacked code act.
+
 **Revised:** 2026-08-26, first of this date, the first door's end arrives
 with the process. Per the
 operator's ruling of this date: section 2 stops judging a credential on the
@@ -60,6 +66,7 @@ admit the operator principal and refuse the rest, which frees the vector of
 the agent's uid, both of that value's uses having died with the ruling. The
 preload name binds under this member's own territory rather than the worker's
 runtime directory.
+
 **Revised:** 2026-08-25, third of this date, the pair stops claiming symmetry.
 Section 4 described the other half as holding the name given only under a
 diagnostic binding, which is one direction, and said a perturbation of either
@@ -67,11 +74,13 @@ side fails against its own. `weaver-admin-Spec` section 6 holds the vector in
 both directions, and this record fails on neither: a member given a name binds
 it and a member given none binds none, which is this record holding whichever
 way the name was wrong. The two records divide the fact unevenly and now say so.
+
 **Revised:** 2026-08-25, second of this date, the record's name outlives its
 claim. `state-preload-door-stands-only-diagnostic` reads as the whole two-sided
 fact and this half asserts the narrower one, that the member binds no name it is
 not given. Named as owed rather than renamed here, a rename reaching every
 citing document and the conformance header code will carry.
+
 **Revised:** 2026-08-25, first of this date, the door's claim names its other
 half. Section 4's
 `state-preload-door-stands-only-diagnostic` is one side of a two-sided claim and
@@ -80,6 +89,7 @@ given only under a diagnostic binding is `weaver-admin`'s, recorded there as
 `admin-preload-name-follows-the-kind` in the act of this date. Both records now
 name the other, so a reader of either meets the pair rather than a claim that
 looks whole.
+
 **Revised:** 2026-08-24, second of this date, the seal parks the replay
 ask. Section 4 gains the seal as a per-standing fact and the `replay` ask's
 mechanics: where the member stands with the preload door the ask answers
@@ -87,6 +97,7 @@ only at a seal, the fact held apart from the transport so a dead driver's
 close answers nothing, and immediate where the door does not stand, the
 query the recall's generalized past the four message kinds. One
 perturbation assertion lands.
+
 **Revised:** 2026-08-24, first of this date, the preload door takes its
 mechanics. Section 4
 gains the second door of `weaver-analysis-state-contract`: one landing
@@ -106,12 +117,14 @@ assumption about the file. Both queries had read the whole table and
 answered across every session a store held. One perturbation assertion
 lands. Section 6's retirement cell narrows to the disk alone, the operator
 having ruled removal a separate act.
+
 **Revised:** 2026-08-19, third of this date, the recall bound keys the
 whole turn identity. Review of the arc's code act found the bound as
 spelled, distinct turn values alone, recalls an older run's events
 wherever a turn label recurs across runs. Section 4 resolves the bound as
 the distinct session, run, and turn triples of the most recent turns by
 id.
+
 **Revised:** 2026-08-19, second of this date, the assertion records land.
 The code act of 2026-08-18 shipped three conformance headers citing
 assertions no document declared, which is the defect the counting clause
@@ -120,6 +133,7 @@ records land here under the sections that argue them, each tagged
 `review`: their tests demonstrate the property's good half and no
 perturbation yet forces the failing half, so a stronger tag would claim
 an instrument that does not exist.
+
 **Revised:** 2026-08-19, the serve half is represented. Section 4 gains the
 ask handling and the shape query, section 3's provisional store shape
 passes its stated trigger and stands with the reasoning recorded, and

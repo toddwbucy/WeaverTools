@@ -154,7 +154,10 @@ impl Experiment {
 /// what makes a sweep's absences legible.
 #[derive(Debug, Clone, Serialize)]
 pub struct Arm {
-    pub value: serde_json::Value,
+    /// The value this arm was produced under. **Absent on a point arm**,
+    /// which section 2.9 has register with no swept member and produce one
+    /// run - so there is no value rather than an empty one, per section 6.
+    pub value: Option<serde_json::Value>,
     /// The run, with its tuple, its signature and its parting position where
     /// it has one. `None` is the arm that never ran.
     pub run: Option<RunTuple>,
@@ -165,6 +168,10 @@ pub struct Arm {
 #[derive(Debug, Clone, Serialize)]
 pub struct Sweep {
     pub experiment: Experiment,
-    pub member: String,
+    /// The member the sweep moves. **Absent where the experiment is not a
+    /// sweep**, rather than an empty string, which would be the
+    /// absent-not-empty failure section 6 forbids at the view committed one
+    /// layer lower where the view cannot see it.
+    pub member: Option<String>,
     pub arms: Vec<Arm>,
 }

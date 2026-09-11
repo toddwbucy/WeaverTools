@@ -4,6 +4,7 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
+
 **Revised:** 2026-09-09, the divergence position is the resident length at the draw.
 Section 3.3's `Divergence` carried a `position` in both variants and said nothing of
 what it counted from, and the pass indexed the turn's input-plus-output identifiers,
@@ -14,6 +15,7 @@ fell in share a key and a reader holding only the close event converts nothing. 
 pass derives it from its own re-fed answer's closing count. One perturbation record,
 and section 7's counts move by one. Records written before this date carry the
 earlier coordinate and are read as such where cited.
+
 **Revised:** 2026-08-31, second of this date, the covered append. On the
 operator's ruling: a recorded tool round replays as an ordinary append and
 its prefill final is covered, replacing a sentence that claimed no tool-round

@@ -4,6 +4,7 @@
 agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
+
 **Revised:** 2026-09-07, the repair-nothing test takes its record. Section 4 said
 no test reaches the existence checks, and one has since the crate landed on
 2026-08-05: a missing home refuses and nothing is built, watched under perturbation.
@@ -12,10 +13,12 @@ The sentence stood beside the test for a month, the test lost its attribute on
 its function, and issue #481 found both. The set stays review's, and the one member a
 test holds gets its own record so the tag names the instrument that holds it. Section
 10's count carries the record.
+
 **Revised:** 2026-09-06, the restore's judgment takes its record. Section 4's restore
 clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
 written the test the clause described without an instrument, and section 10's count
 moves by one.
+
 **Revised:** 2026-09-05, second of this date, the artifact is named here and resolved
 at admission. Section 4's existence checks are restated under charter section 4.3's
 custody rule: what admin provisions it looks at, what another organ owns it asks about
@@ -25,6 +28,7 @@ crate's refusals for the SPU's admit, where the agent's identity is the one that
 decides. Section 3's validate clause names the store's seam as the one the verb
 touches, and section 6's ordering clause loses the artifact from its older facts. Per
 issue #456.
+
 **Revised:** 2026-09-05, a reachable organ's boundary is judged at the inventory.
 Section 4 fixes the refusal's shape ahead of the organ that will need it,
 `ConfigInvalid` naming the organ's `boundary` member, and states that today's parse

@@ -5,6 +5,7 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
+
 **Revised:** 2026-09-07, two captures compare only under one loop and one member.
 Section 3's comparison clause gains the condition `weaver-trace-PRD` section 3.1
 stated on 2026-09-03 for issues #381 and #382 and this document did not carry: two
@@ -12,6 +13,7 @@ records that name different loops, or one standing the state member and one not,
 not two captures of one run, and a record that names neither cannot be compared at
 all. The comparison refuses those before it reads a value, naming which fact differs,
 so a prompt difference is never reported as the engine's divergence.
+
 **Revised:** 2026-09-01, the kept artifacts take their identity. Section 3
 gains the capture-artifact clauses - identity as the closure of the claim,
 custody the sink's existing arrangement, shape the record's own, quota the
@@ -57,6 +59,7 @@ election rides the declaration per apex section 8. Both now say what
 pass before anything downstream and elects the order it consumes outcomes in. The
 Spec had settled against this charter and the charter was open in the same act, so
 landing it here rather than leaving the two documents disagreeing.
+
 **Revised:** 2026-08-27, second of this date, the driver takes its shape.
 `weaver-analysis-Spec` landed, closing section 4's last cell: the parser, the
 election, the projection, the preload's three frames, and the reading's gate.
@@ -65,6 +68,7 @@ outside the agent, where a linked dependency would make a consumer a
 compile-time dependent of the interior. Section 4's other cells stand as they
 were, the instrument suite and the capture artifact being their own acts. Per
 epic 293 row 12.
+
 **Revised:** 2026-08-27, first of this date, the terminal marker this charter
 waited on landed.
 Section 4's cell on how a diagnostic-trace says it ended settles in
@@ -72,6 +76,7 @@ Section 4's cell on how a diagnostic-trace says it ended settles in
 records the shape rather than restating its argument. Section 3's gate is
 therefore honourable, and what this crate still owes is its own Spec. Per epic 293
 row 12.
+
 **Revised:** 2026-08-25, third of this date, the gate names what it rests on.
 Section 3 claimed this crate reads the null replay's outcome from the record and
 gates downstream work on it, and a reader at the end of the bytes available to
@@ -84,6 +89,7 @@ not written here: a terminal event belongs to the diagnostic-trace's vocabulary,
 which `weaver-diagnostic-PRD` section 6 owes to that crate's Spec, and a rule
 written per sink shape would put back the discriminant assumption section 3
 withdrew.
+
 **Revised:** 2026-08-25, second of this date, section 3 states what it sends and
 what governs the sink. The preload paragraph named distillates and a seal and
 left out the election, which `weaver-analysis-state-contract` section 2 makes
@@ -94,6 +100,7 @@ governs it, which overstates an absence into a licence: what is absent is a
 second contract with this crate as a party, and the sink itself is governed as
 it always was, `trace-sink` on the declaration under either kind, admin's
 custody and discriminant, and the operator contract on what crosses out.
+
 **Revised:** 2026-08-25, first of this date, the name is this crate's alone.
 `CLAUDE.md`'s scope
 guardrails listed `weaver-analysis` among the crates ruled out of the

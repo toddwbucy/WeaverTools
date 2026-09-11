@@ -10,6 +10,35 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-11, third of this date, the plan speaks of arms, the view's absence
+is a record, a point arm has a read, and the batch has a row. One act closing five
+issues, because the five were one document. **The plan's unit is an arm and not a
+column**, per #552: the sketch draws it as a column and the store named the row for the
+drawing, so migration 0009 renamed to `plan_arm` at PR #547 and the documents follow
+here. Two assertion identifiers move with the word. **An arm at the plan's resolution
+and an arm at the sweep's are one arm and not two units**, per the operator: the first
+is the arm as composed, the second the arm as fanned, and an arm that frees nothing does
+not fan, so the finer resolution is empty rather than singular.
+
+**Section 6 records absent-not-empty rather than only stating it**, per #544. The rule
+was stated for surprisal alone and applies to every member section 2 admits a null in,
+and the Record surface's watch pinned it while citing a claim tagged `review` that no
+assertion over HTML could fail.
+
+**Section 4's fourth read returns a point arm's run**, per #555. An arm that frees
+nothing produces one run and this read returned nothing for it, leaving that run
+reachable only by a reader who already held its identity, which is the one reader
+section 4 says it does not serve. The value is absent rather than null, a point arm
+having been produced under no value.
+
+**Section 2.11 is new and the batch has a row**, per #549. Registering freezes an arm
+and queueing runs it, and the order it runs in was nobody's: not the plan's, whose arms
+are generated rather than placed, and not the runner's. The operator's intent arrives at
+queueing, so the order is recorded there. A batch spans more than one parent, which
+makes it a scheduling unit and never a comparison one.
+
+The count moves to thirty-two. Per the queue at issue #434.
+
 **Revised:** 2026-09-11, second of this date, the plan and the refs get their schema and
 section 4 gains the sixth read. Section 2.9's plan had a row described and no table, and
 section 4 named its read **owed at the act that gives the plan its schema**, which is
@@ -20,7 +49,7 @@ Section 2.7 gains the two indexes section 2.10's reachability needs, its roots b
 three and a root found by a walk being a root a sweep would skip, the third of them
 being the staged experiment's parent and **not the lineage index this section claimed it
 was**. Section 2.9 gains two assertion records and the count moves to thirty: the bound
-on a column's freed members and the entry's value are properties of a row, so the
+on a arm's freed members and the entry's value are properties of a row, so the
 migration holds them and its watches perturb them. **Its third record is still not
 claimed here**, registering at most once being a property of a transaction that section
 5.1 puts in the write, so this act builds the constraint that write leans on. Migration
@@ -46,6 +75,7 @@ fifth read answers, and about **Experiments, which is a list with no query eithe
 is named as owed beside the plan's. Two perturbation and review records land with their
 section 9 rows and the count moves to twenty-eight. Found by the review of PR #540. Per
 the queue at issue #434.
+
 **Revised:** 2026-09-09, sixth of this date, the run row gets its producers and loses
 two members that had none. Issue #532 found while the ingest was being written that
 seven of the run row's eight required members crossed no seam, the run identity among
@@ -69,8 +99,9 @@ ingest a branched run at all, gives the boundary set a type check, and names the
 column set in a view so both reads are static. Section 5.2's load-time list loses
 precision with the tuple. The reviews of PR #535 found nineteen facts across two passes,
 two of them operational. Per the operator's rulings of this date at issue #532.
+
 **Revised:** 2026-09-09, fifth of this date, the plan and the refs get their rows.
-Section 2.9 gives the plan its row and its entries, one parent run and a set of columns
+Section 2.9 gives the plan its row and its entries, one parent run and a set of arms
 with a disposition for every member of the tuple, and section 2.10 gives a person a
 named reference to a run so that what a bound cites outlives the scaffolding that
 produced it. Both are authored rows carrying an author and a version, so section 3.2's
@@ -79,10 +110,11 @@ where the sentence said one, and section 8's surface count says so too. Section 
 gains the task's verdict, declared now and absent until the trace kind of issue #523
 exists. Section 2.6 holds the reproduction verdict as a recorded query, which is the
 shape a comparison of two rows already had, and section 10's correctness election closes
-on it. Section 5.1 says a column's status is its staged experiment's state and that
+on it. Section 5.1 says a arm's status is its staged experiment's state and that
 registering a plan and queueing it are two acts. Two perturbation records and their
 section 9 rows, the count moving to twenty-six. Per the sketch at
 `docs/project/sketch-ablation-matrix.md` and the queue at issue #434.
+
 **Revised:** 2026-09-09, fourth of this date, the word "cell" is settled. Section 10's
 election closes on the operator's ruling of this date: the word carried three senses
 rather than the charter's two, and the count settles it, a cell staying a named open
@@ -92,6 +124,7 @@ outside the files this ruling sweeps, a matrix coordinate becoming an entry, and
 declaration plus a task plus a run becoming a trial. This document's four sites are the
 reference trials of sections 2.3 and 8 and the trial record of section 8. Per
 issue #434's queue.
+
 **Revised:** 2026-09-09, third of this date, the seated prefix's length crosses the
 seam. Section 2.2 gains it on the run's row, the resident length before the run's
 first turn's input, outside tuple equality as an address on the tape and not a
@@ -101,6 +134,7 @@ deriving nothing. Section 5's whole-run arm has its branch position readable, th
 runnable arm is no longer limited to one restored at a turn, and section 10's
 election of the second act of this date closes. One perturbation record and its
 section 9 row. Per issue #527.
+
 **Revised:** 2026-09-09, second of this date, a branch is a load, and the row serves two
 features. Section 5 states the operator's ruling of that date on issue #524: section
 5.4's sweep moves one member of the tuple and runs each arm whole from the load, so an
@@ -113,6 +147,7 @@ one.** Nothing is narrowed: the forced token and its position stay on the rows a
 the fork. Per the review of PR #526, section 5 says what a whole-run arm's branch
 position is, the parent's identity prefix's resident length, and that the mechanism
 carries the cut while the runner of issue #442 owes the continuation.
+
 **Revised:** 2026-09-09, the run row names the record it came from. Section
 2.2 gains the record's session, the identity the trace's runs share per
 `weaver-trace-PRD` section 2.1 and **not section 2.8's session, which is a
@@ -128,6 +163,7 @@ for them, under two perturbation records with their section 9 rows. Section
 2.7 gains the session's index. Per issue #521, on the operator's ruling of
 2026-09-09, the digest arriving from the sketch at
 `docs/project/sketch-ablation-matrix.md` section 2.
+
 **Revised:** 2026-09-08, third of this date, a staged experiment can hold a
 sweep. The charter's section 3.5 has an operator fork one position many times
 under fresh seeds and section 5.2 names the members a diff moves and what a
@@ -1058,7 +1094,7 @@ has it as the projected comparison of two rows this crate holds, on the fields t
 charter's section 4 names, so it is a property of two runs and of which two a reader
 chose, which is the shape section 2.7's exception exists for and the shape a sweep's
 similarity already has. **A surface that renders it renders a recorded query's rerun**,
-naming both runs, and a matrix column reading it names the parent and the arm. Storing
+naming both runs, and a matrix reading it names the parent and the arm. Storing
 it on a run would be the second truth this section refuses, and would go stale the
 moment either run was re-ingested.
 
@@ -1218,51 +1254,51 @@ after the indexes rather than in either half.
 
 **A run row says what a run did and a staged experiment says what was registered, and
 the matrix of `docs/project/sketch-ablation-matrix.md` needs a row for what an operator
-is still composing.** One parent run, a set of columns, and a disposition for every
-member of the tuple in every column. **A column that is never registered leaves no
+is still composing.** One parent run, a set of arms, and a disposition for every
+member of the tuple in every arm. **An arm that is never registered leaves no
 staged experiment**, and without this row it would leave nothing at all, which is the
 ablation's own throwaway problem read one level up: a plan an operator trimmed is a fact
 about what was considered.
 
 Each plan carries:
 
-- the parent run it ablates, which every column branches from
+- the parent run it ablates, which every arm branches from
 - **the author**, per section 3.2, and **the row's version**, being an authored row like
   the three above it
-- its columns, each of which becomes at most one staged experiment and holds a nullable
+- its arms, each of which becomes at most one staged experiment and holds a nullable
   reference to the one it became
 
 Each entry of a plan carries:
 
-- its plan and its column, which are its address together with the field
+- its plan and its arm, which are its address together with the field
 - the member of the tuple it names
 - **its disposition**, which is held or freed and is the entry's own, per the sketch's
   section 5
 - the value where it is held, and the value set where it is freed, which registration
   freezes as section 5.4's sweep
 
-**An entry carries a disposition and a column carries a status, and the two are
+**An entry carries a disposition and an arm carries a status, and the two are
 different facts about different objects.** An entry that carried both could not say what
-a freed entry in a queued column is, which is both at once. The disposition is above and
+a freed entry in a queued arm is, which is both at once. The disposition is above and
 the status is section 5.1's, per the paragraph this act adds there.
 
-**A column reaches its runs through its staged experiment and never directly**, per
-section 2.5, which carries the runs it produced, one per value where the column freed a
-member. So a column is never one run row.
+**An arm reaches its runs through its staged experiment and never directly**, per
+section 2.5, which carries the runs it produced, one per value where the arm freed a
+member. So an arm is never one run row.
 
-**A column frees at most one member and holds the rest, and a column that frees none is
+**An arm frees at most one member and holds the rest, and an arm that frees none is
 not a sweep.** Section 5.4 has a sweep name one member and its value set, so one freed
-member is the ceiling and the staged experiment a column registers carries it as the
-swept member. **A column that frees none registers a staged experiment with no swept
+member is the ceiling and the staged experiment an arm registers carries it as the
+swept member. **An arm that frees none registers a staged experiment with no swept
 member and produces one run**, which is the ordinary point experiment and not a sweep of
 one value, a phrase this section carried until the review of PR #534 and which read a
-sweep onto a row that has none. **How many members a column holds away from the parent
+sweep onto a row that has none. **How many members an arm holds away from the parent
 is not bounded here**: one is section 6's generated default and the matrix's interaction
-columns move two or more on purpose, and section 5.2 says what a compound column's
+arms move two or more on purpose, and section 5.2 says what a compound arm's
 divergence is attributable to.
 
-**A column that moves no member at all is refused at authoring**, per section 5.3's
-refusal of a sweep naming the parent's own value, read one level up: such a column
+**An arm that moves no member at all is refused at authoring**, per section 5.3's
+refusal of a sweep naming the parent's own value, read one level up: such an arm
 declares the run the parent already is, and section 5.4 has the parent as the control
 rather than as an arm.
 
@@ -1272,21 +1308,21 @@ intended and keeps carrying it. The run row carries what ran, and where the two 
 a reading worth having rather than a row to correct.
 
 ```graph
-node: web-a-column-registers-at-most-once
+node: web-an-arm-registers-at-most-once
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-web
-to: web-a-column-registers-at-most-once
+to: web-an-arm-registers-at-most-once
 
-node: web-a-column-frees-at-most-one-member
+node: web-an-arm-frees-at-most-one-member
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-web
-to: web-a-column-frees-at-most-one-member
+to: web-an-arm-frees-at-most-one-member
 
 node: web-entry-states-the-value-its-disposition-names
 kind: assertion
@@ -1328,15 +1364,76 @@ act which does can tell what it is deleting.
 **A ref is not the only root, and reading it as the only one would discard work in
 flight.** A plan names a parent run and a staged experiment names one too, and neither
 is a ref, so a sweep rooted on refs alone would collect the parent of a plan an operator
-is composing or of a column already queued, and the queue would drain against a run that
+is composing or of an arm already queued, and the queue would drain against a run that
 had gone. **The roots are three**: a ref, the parent run of any plan, and the parent run
 of any staged experiment that has not returned, per section 5.1's five. A plan the
 operator discards stops being a root by being discarded, which is the same reachability
 answering both questions.
 
-**A ref names a run and never a plan or a column.** A bound cites what ran, and a column
+**A ref names a run and never a plan or an arm.** A bound cites what ran, and an arm
 that was registered and never queued has nothing to pin, which section 5.1's
 registration already records without a ref's help.
+
+### 2.11 The batch
+
+**Registering freezes an arm and queueing runs it, and the order it runs in is
+neither the plan's nor the runner's.** Section 5.1 already has those as two acts.
+This row is what the second one writes: an ordered list of staged experiments handed
+to a runner together.
+
+Each batch carries:
+
+- **the author**, per section 3.2, and **the row's version**
+- when it was composed
+
+Each entry of a batch carries:
+
+- its batch and its **position**, which are its address together
+- the staged experiment it queues
+
+**The order is authored and is not a property of the plan.** Section 2.9's arms are
+generated from the closed tuple space rather than placed by an operator, so their
+order carries no intent and a batch that ran them in it would be running them in the
+generator's order. The operator's intent arrives when they choose what to run, which
+is queueing, so that is where the order is recorded. **Ruled 2026-09-11.**
+
+**A batch spans more than one parent run.** A staged experiment carries its own
+parent per section 2.5, so a set of them may come from several plans and several
+agents, and nothing here constrains them to one. That is the whole reason this is a
+row rather than a flag on a plan.
+
+**So a batch is a scheduling unit and not a comparison unit.** Section 5.4 has the
+parent as the control arm for its own matrix, and a batch holding arms of two parents
+holds two controls. A reader who compared across a batch would be reading two
+baselines as one, which is the error this paragraph exists to forbid rather than to
+repair later.
+
+**The position is a member and not a timestamp.** A clock looks sufficient and is
+not: `now()` is the transaction's, so arms queued in one gesture share a value and
+carry no order at all, which is the same tie section 2.7's ingest order was rebuilt
+around after PR #540. A position that a re-queue does not disturb is a number the
+author supplies.
+
+**The word is taken and this row does not take it back.** The sketch's section 6 uses
+"batch composition" for the co-resident sequences a run is drawn alongside, which is a
+member of the tuple and not this. **Nothing here is that**, and a later act that finds
+the collision costly renames this row rather than that field, the tuple's vocabulary
+being the older of the two.
+
+```graph
+node: web-a-batch-orders-what-it-queues
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-a-batch-orders-what-it-queues
+```
+
+**This row has no migration yet.** It is stated here because section 5.1's two acts
+already implied it and nothing wrote it down, and because the interface that queues is
+act 4's and act 5's at issue #434. The act that builds the queueing gesture builds the
+table, and its assertion above gets its instrument there.
 
 ## 3. The write path
 
@@ -1687,6 +1784,19 @@ Six queries, and the schema of section 2 exists to make each an index hit.
    erase the absence the frozen set exists to record. A value with no run
    returns itself and nothing else, which is the answer.
 
+   **An arm that frees nothing returns one arm whose value is absent.**
+   Section 2.9 has such an arm register with no swept member and produce one
+   run, so there is no set for this read's unit to walk. It returned nothing
+   at all until 2026-09-11, which left that run reachable only by a reader
+   who already held its identity - **the one reader this section says it does
+   not serve**, and the sketch calls an arm that moves two or three members
+   and frees none "the ordinary hypothesis", so it is not a case the matrix
+   may decline to draw. The value is **absent and not null**: a point arm was
+   produced under no value, which is a different fact from a sweep whose
+   value is JSON null, and section 6 has the view name the absence rather
+   than draw it. The swept member is absent for the same reason and is not an
+   empty string.
+
    Where a run exists it carries its tuple, its signature per section 2.2,
    and **its parting position where it has one**, the first at which its
    token path left its parent's, derived once at ingest per section 3.1 and
@@ -1775,33 +1885,33 @@ from: weaver-web
 to: web-the-run-list-is-paged-and-records-nothing
 ```
 
-6. **One plan whole**, by its identity: the parent run every column branches from, its
-   columns, and for each column the members it names with the disposition it gives each.
+6. **One plan whole**, by its identity: the parent run every arm branches from, its
+   arms, and for each arm the members it names with the disposition it gives each.
    This is the matrix of `docs/project/sketch-ablation-matrix.md` reading what an
    operator is still composing, and it is the read section 2.9's row exists to be the
    subject of.
 
-   **The columns come back in a stated order and not an authored one.** Section 2.9
-   gives a plan its columns and records no order, because the sketch generates them from
+   **The arms come back in a stated order and not an authored one.** Section 2.9
+   gives a plan its arms and records no order, because the sketch generates them from
    the closed tuple space rather than having an operator place them - so there is no
    authoring order to return and the store holds none. What this read owes instead is
    the *same* order on every box, which a collation does not give: an ICU collation
    sorts `col-10` before `col-2` and ignores punctuation, so two boxes would render one
-   plan two ways. The order is the column's key in byte order, which is a total order.
+   plan two ways. The order is the arm's key in byte order, which is a total order.
    **Whether the matrix owes an operator an order of its own is open at issue #549**,
    and the queue's order is a second question that issue names and does not settle.
 
-   **A column's status is not a member and is not computed.** Section 5.1 has the column
+   **A arm's status is not a member and is not computed.** Section 5.1 has the arm
    take the five states of the staged experiment it became, so the status is that row's
-   state read across the column's reference, and a column whose reference is null has
+   state read across the arm's reference, and an arm whose reference is null has
    not been registered - which the null records rather than a sixth word this document
    would have to name. **The read joins and does not derive**, which is the difference
    between reading a fact stored once and inventing a vocabulary for the absence of one.
 
-   **A column is not a run and this read reaches none.** Section 2.9 has a column reach
+   **An arm is not a run and this read reaches none.** Section 2.9 has an arm reach
    its runs through its staged experiment, so a matrix that wanted the arms of a
-   registered column asks read four with that column's experiment. Folding the two here
-   would return a plan whose unregistered columns looked like experiments that had not
+   registered arm asks read four with that arm's experiment. Folding the two here
+   would return a plan whose unregistered arms looked like experiments that had not
    run, which is the absence section 4's fourth read already keeps honest.
 
    **It records nothing**, section 2.6's condition reaching a derivation rather than a
@@ -1907,26 +2017,26 @@ ever runs, and queueing is a separate act. **What was registered and never
 run stays in the record**, which is what makes pre-registration a property
 of the interface rather than a discipline imposed on it.
 
-**A plan's column has no state of its own and takes these five.** Section 2.9's column
-holds a nullable reference to the staged experiment it became, and **the column's status
+**A plan's arm has no state of its own and takes these five.** Section 2.9's arm
+holds a nullable reference to the staged experiment it became, and **the arm's status
 is that row's state**, which is why this document names no sixth vocabulary for the
-matrix to render. A column whose reference is null has not been registered, which the
+matrix to render. An arm whose reference is null has not been registered, which the
 null itself records.
 
 **So the matrix's two acts are this section's two acts and not one.** Registering a plan
-freezes each column as a staged experiment and puts the claim on the record. Queueing
-hands them to a runner. An interface that registered and queued in one gesture would
-spend the pre-registration this section buys, because a column an operator registered
-and then thought better of queueing is exactly the case the paragraph above exists to
-keep.
+freezes each arm as a staged experiment and puts the claim on the record. Queueing hands
+them to a runner, **in an order the operator gives and section 2.11 records**. An
+interface that registered and queued in one gesture would spend the pre-registration
+this section buys, because an arm an operator registered and then thought better of
+queueing is exactly the case the paragraph above exists to keep.
 
-**Registering one column is one transaction and registering it twice writes nothing the
-second time.** The staged experiment is written and the column's reference to it is set
-together or neither is, so a registration that fails part way leaves a column
-unregistered rather than leaving a frozen experiment no column points at. **The column's
+**Registering one arm is one transaction and registering it twice writes nothing the
+second time.** The staged experiment is written and the arm's reference to it is set
+together or neither is, so a registration that fails part way leaves an arm
+unregistered rather than leaving a frozen experiment no arm points at. **The arm's
 reference is what holds the claim at most once**: it is unique and it is set only where
-it was null, so two registrations racing on one column leave one staged experiment and
-the loser finds the column already registered. Without that, one column would carry two
+it was null, so two registrations racing on one arm leave one staged experiment and
+the loser finds the arm already registered. Without that, one arm would carry two
 frozen experiments and the matrix would read two arms where the operator authored one,
 which is what section 9's row for this claim perturbs.
 
@@ -2085,7 +2195,32 @@ surface that plots an absent surprisal as zero is lying about the election,
 so where the election did not stand the surface says so rather than drawing
 a floor.
 
+**The rule is every member's and not surprisal's alone.** A member the record
+did not carry renders as absent and never as a zero, a blank cell or an empty
+string, on every surface and for every member section 2 admits a null in: the
+device and the engine a deposit did not send, the record's session and digest,
+a seed nobody recorded, an author the store could not name. **A blank is
+indistinguishable from a value that happens to be empty**, and the two are the
+fact and its absence, which is the distinction sections 2.2 and 3.2 spend
+columns and constraints to keep apart in the store. A view that spends it at
+the last step has thrown away what the store was built to hold.
+
+**It is stated here rather than left to each surface**, because the
+alternative is one surface at a time deciding, and the first one that draws a
+blank teaches every reader that a blank means zero. The record identity's
+sentinel is the case that shows the shape: an empty identity is a hash the SPU
+could not compute, so Record draws what it is rather than an empty cell, per
+section 2.3.
+
 ```graph
+node: web-the-view-names-an-absent-member
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-web
+to: web-the-view-names-an-absent-member
+
 node: web-absent-surprisal-renders-as-absent
 kind: assertion
 tag: perturbation
@@ -2201,6 +2336,7 @@ trial record like any other.
 | presence never gates a load | review, over the load path: this crate's catalog is not read there |
 | a registered experiment is immutable | compile-pin: no mutating path off the frozen type |
 | an absent forced mark is unknown and never unforced | perturbation: default an absent mark to unforced, an unmarked run ingests as a sampled one |
+| a member the record did not carry renders as absent | perturbation: render an absent member as an empty cell, a device no deposit sent is indistinguishable from one the record sent empty |
 | an absent surprisal renders as absent | perturbation: zero-fill, the view is wrong |
 | the position is stored at ingest | perturbation: after ingest, alter the summary's counts and reread, the stored position is unchanged |
 | an uncertified diagnostic record is not drawn | perturbation: drop the outcome check, an unknown run renders |
@@ -2219,8 +2355,9 @@ trial record like any other.
 | a chip filters only on a column section 2.7 indexes | review, over Record's filters: a chip on an unindexed column is a sequential scan the surface offers as though it were cheap |
 | the run list is paged and records nothing | perturbation: page on the ingest's clock alone, a tie larger than the page drops its remainder, and record a query row per page, section 2.6 fills with a list nobody reruns |
 | the seated prefix's length is landed and never derived | perturbation: derive it here from the two counts, every row reads the first draw's position as the prefix and every whole-run arm branches one input too late |
-| a plan's column registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one column and the matrix reads two arms where the operator authored one |
-| a column frees at most one member | perturbation, at the schema: drop the partial index, one column frees two and registers a sweep whose row carries one member and one value set |
+| an arm registers at most once | perturbation: register a plan twice, the second pass writes a second staged experiment against one arm and the matrix reads two arms where the operator authored one |
+| a batch runs what it queues in the order it was queued in | perturbation: drain by identity or by the state's clock, arms queued in one gesture share a timestamp and the operator's order is lost |
+| an arm frees at most one member | perturbation, at the schema: drop the partial index, one arm frees two and registers a sweep whose row carries one member and one value set |
 | an entry states the value its disposition names | perturbation, at the schema: drop the check, an entry says held and carries nothing, which is the absent-not-empty failure moved from the view into the store |
 | the task's verdict is landed and never scored here | perturbation: score a run in this crate, the verdict carries no scorer and the row claims a reading it did not receive |
 

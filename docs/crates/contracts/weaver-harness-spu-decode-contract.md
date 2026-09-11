@@ -8,6 +8,7 @@ of 2026-08-02. The residency seam keeps its own contract, `weaver-harness-spu-co
 and neither document restates the other.
 
 **Date filed:** 2026-08-02
+
 **Revised:** 2026-08-31, fifth of this date, one word stops meaning two
 things. The no-path prohibition read "no exchange carries a path" beside a
 new exchange carrying a recorded token path, one word across two meanings
@@ -15,6 +16,7 @@ in one document. The prohibition now names what it prohibits, a filesystem
 path, the handle discipline unchanged, and states that the token path is
 data of the exchange and no exception, the word being the only thing the
 two share.
+
 **Revised:** 2026-08-31, fourth of this date, the re-feed drive lands.
 `diagnostic-replay-loop` section 2 named this seam's missing exchange as the
 one act standing between the diagnostic papers and a running null replay,
@@ -25,18 +27,21 @@ own type so a supplied path can never wear a sampled path's clothes.
 Section 3's ordering, section 4's supply lines, and section 5's refusal
 list take it, the permission and the registry being `weaver-spu-PRD`
 section 13.14's, cited rather than fixed.
+
 **Revised:** 2026-08-31, third of this date, the append's cardinality is the
 generation's. The exchange read one per turn, which section 13.8's seed
 derivation already contradicted - a turn runs as many generations as its
 tool rounds - and the column gloss made sharp. It now reads one per
 generation with the tool round's re-feed named, so the exchange, the seed,
 and the column stream count the same events.
+
 **Revised:** 2026-08-31, second of this date, the refusal list cites the
 registry. The first entry of this date described the open's refusal in two
 arms and the registry is three, held whole at `weaver-spu-PRD` section 13.7
 since the same review: section 5's list now cites that registry rather than
 enumerating a share, and the column's gloss counts each append's prefill
 final, a tool round's append adding its own.
+
 **Revised:** 2026-08-31, a third intermediate for the diagnostic binding.
 Per the operator's ruling of 2026-08-30 and `weaver-spu-PRD` section 13.7 as
 amended in the same act, which holds the cadence, the enforcement, and the
@@ -49,16 +54,19 @@ declaration holds no column, and the efficient framing stays
 `weaver-spu-Spec` section 12's open election over section 4.4's provisional
 bare JSON. The SPU never learns the binding's kind, learning one admitted
 permission admin vouches for.
+
 **Revised:** 2026-08-25, a citation is corrected and nothing else. Section 5's
 pointer at the record's load bracket moves from `weaver-trace-PRD` section 3.2 to
 3.1, where that clause has sat since it was filed. No clause of this seam changes.
 Per issue 347.
+
 **Revised:** 2026-08-22, second of this date, the refusal is clerked.
 Section 5 states that every refusal on this seam reaches the record, the
 harness authoring the `refusal` event from the ask it sent and the case the
 SPU returned, per `weaver-trace-PRD` section 3.1's twenty-first kind. The
 SPU authors nothing and this seam's one emission is unchanged. No exchange
 changes and no refusal case is added.
+
 **Revised:** 2026-08-22, the elision joins the seam. The exchanges gain
 one: the harness names a half-open span of the resident sequence and the
 SPU makes it absent, per `weaver-spu-PRD` section 13.13 as chartered in
@@ -67,6 +75,7 @@ between turns on the flush's ground, and it refuses rather than bounds,
 because a span describing no removable region has no smaller true
 version the way an over-large `keep` does. Section 5 gains the refusal and
 the SPU still decides nothing, executing the span the ask names.
+
 **Revised:** 2026-08-20, the close crosses in segments. Per issue #236: a
 long turn's close outgrew the envelope bound and the seam killed what it
 could not carry, silently. Section 1 gains the segment series - one
@@ -74,6 +83,7 @@ message to every rule, each segment one write within the envelope, the
 spelling and the total bound the Spec's - and section 8 gains its
 checkable. With the series, any declared turn cap is servable and no
 answer size is a death.
+
 **Revised:** 2026-08-19, second of this date, the flush names its cut.
 Per the operator's ruling: the cleanup line is the loop's, because the
 loop knows what it does not want to re-decode, and a fixed outcome made
@@ -83,28 +93,33 @@ prefix whose permanence this seam guarantees and above by the resident
 count, the confirmation's counts carrying what held in every case. The
 SPU still decides nothing: it executes the cut the ask names, per
 `weaver-spu-PRD` section 13.9 as amended in this act.
+
 **Revised:** 2026-08-19, the generation reports the session's fullness. The
 generate exchange's closing answer carries the session's resident token
 count and its capacity beside the emission, per issue #221's arc: the
 asking loop must see pressure before the wall, and the overflow refusal
 was the only carrier of either number. Plain counts with no judgment,
 `weaver-types-Spec` section 4.4 shaping them.
+
 **Revised:** 2026-08-17, the request owns the template identity, per the
 ruling on #129. The measurement's enumeration listed it beside the block
 partition while the request carried it too, one fact in two boxes of one
 turn's pair. It is an input-side fact of the sampling values' kind and it
 travels where they travel. The code and `weaver-trace-PRD` section 3 already
 did this; the enumeration catches up.
+
 **Revised:** 2026-08-16, the sampling values leave this seam. They travelled
 here per turn and the engine builds its sampler once at session open, so they
 had no engine to reach, and they now cross in the declaration at admit. The
 conformance item widens with them: this seam carries no sampling value at all
 and the capture says so without needing to know which were frozen.
+
 **Revised:** 2026-08-12, third of this date, the request is the turn's
 contribution. Per the operator's ruling closing issue 124, the request
 content the close carries is the turn's delta as rendered, the full
 effective context being the accumulation the record determines, and the
 SPU's rendering stays final as built.
+
 **Revised:** 2026-08-12, second of this date, the receipt retires. Per the
 operator: the SPU is a function, input in and output out, stopping when it
 stops unless interrupted, and a receipt it must consume is protocol state
@@ -113,6 +128,7 @@ emission rather than its fifth exchange, owed nothing back at all, the
 trace entry being the acknowledgment, and the fault-carrier ruling's razor
 is the precedent, a second carrier for one fact earning nothing. Sections
 2, 3, 5, 6, and 8 carry the change.
+
 **Revised:** 2026-08-12, the seam's dataflow rule stated, per the operator's
 ruling of this date. Section 2 names the direction of expectation its count
 already embodied: a harness-opened exchange asks and its answer returns what
@@ -122,6 +138,7 @@ above, same date, and the exchange it names is an emission since that
 ruling. Section 6 carries the rule's edge as a prohibition, the
 SPU holding no exchange in which to ask. Stated for the SPU in particular
 and generalized to no other organ.
+
 **Revised:** 2026-08-11, the seam streams, per the operator's ruling of this
 date. The append-and-generate exchange carries each token as an intermediate
 message as it is drawn, the identifier and its rendered piece, none closing
@@ -132,6 +149,7 @@ record box, which is the record's request side gaining its wire source.
 Section 3 orders the intermediates before the answer, section 4's supplies
 follow, and the guarantee lands that the stream and the close never disagree
 about what was drawn. The stream changes the rhythm and not the record.
+
 **Revised:** 2026-08-21, the field crosses as a second intermediate.
 Section 2's append-and-generate gains one message per retained token where
 the field election of `weaver-spu-PRD` section 13.11 stands: the position,

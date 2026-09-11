@@ -5,6 +5,7 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
+
 **Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
 under. Section 2.2 gains, once per run, the run identity from the envelope, the
 effective sampling the record's `model.request` carries, the field election's depth and
@@ -15,6 +16,7 @@ at all**, seven of its eight required members having no path across this seam, w
 issue #532 found while the ingest was being written. The emitter reads a deposit the
 invocation names for what the record does not hold, on the operator's ruling of this
 date. Per issue #532.
+
 **Revised:** 2026-09-09, second of this date, the summary carries the seated
 prefix's length. Section 2.2 gains, once per run, the resident length before the
 run's first turn's input, which the emitter derives from the run's first generation
@@ -25,6 +27,7 @@ the drain began at or before the run's `load`, since a later start would name a
 later turn's floor as the prefix. Section 3 asks it of the emitter and the
 vocabulary clause names it. Per issue #527, for `weaver-web-Spec` section 5's
 whole-run arm, whose branch position it is.
+
 **Revised:** 2026-09-09, the summary names the record it was read from. Section
 2.2 gains the record's session and the record's digest per generation, once per run
 in the reader's row on the weights hash's own rule, and section 3 asks both of the
@@ -35,6 +38,7 @@ so the digest is the emitter's to compute and the reader never sees the record.
 and the vocabulary clause says so, the session being drawn from the trace charter.
 `weaver-analysis-Spec` section 5 moves in the same act, as the parties' rule
 requires. Per issue #521, on the operator's ruling of 2026-09-09.
+
 **Revised:** 2026-09-06, the summary carries the record's identity, and the owed
 sentences are current. Section 2.2 gains the weights hash per generation as the
 record spelled it, section 3 asks it of the emitter beside the two counts, and the

@@ -16,6 +16,7 @@ make. It names the refs, so what a bound cites outlives the scaffolding that pro
 it. Section 4's authored half names both. The Spec's sections 2.9 and 2.10 give them
 rows. Per the sketch at `docs/project/sketch-ablation-matrix.md` and the queue at
 issue #434.
+
 **Revised:** 2026-09-09, fourth of this date, the word "cell" is settled and this
 document's noun moves. Section 9 read the word as two senses and there were three, the
 third being the corpus's own and the largest: a named open question, which section 9's
@@ -25,6 +26,7 @@ document's declaration plus a task plus a run is a trial**. Fifteen sites move h
 four in the Spec and six in `docs/technical/weaver-agents/reproducibility.md`, and none
 in any other crate's documents, which use the sense that keeps the word.
 `weaver-web-Spec` section 10's election closes with it. Per issue #434's queue.
+
 **Revised:** 2026-09-09, third of this date, the whole-run arm's prerequisite
 lands. Section 3.5 said the parent's identity prefix's length crossed no seam
 and limited the runnable arm to one restored at a turn until it did. It
@@ -32,6 +34,7 @@ crosses `weaver-analysis-web-contract` section 2.2 as of issue #527's act
 and lands on the run's row per the Spec's section 2.2, so the limit lifts
 and the sentence cites its register. Section 4 counts the row's non-tuple
 members as five, the prefix's length joining, per the review of PR #529.
+
 **Revised:** 2026-09-09, second of this date, two features author from Stage and a
 branch is a load in both. Section 3.5 described one click and one row and two features
 stood on them: an ablation, which moves one member of the tuple and runs the arm whole
@@ -44,12 +47,14 @@ not narrowed for the wait. The whole-run arm's branch position is the parent's i
 prefix's length, owed at the analysis seam per the Spec's section 10 and landing before
 the first such arm is staged, which the third entry of this date records as done.
 Issue #524 is the register.
+
 **Revised:** 2026-09-09, the row's non-tuple members are four. Section 4 said
 the difference between the row and the tuple is lineage, and the Spec's acts
 of 2026-09-08 and 2026-09-09 put the emission's signature and the record's
 session and digest beside it, none a condition the run ran under. This
 charter is the authority for what stands outside the compound and now names
 all four. Found by the review of PR #525.
+
 **Revised:** 2026-09-07, second of this date, section 6 names the act it
 defers to. The section said identity, authentication and transport
 encryption are deferred with a named trigger and then named none, and `IAM`

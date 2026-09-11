@@ -5,6 +5,7 @@
 human's ruling of 2026-07-31.
 
 **Date filed:** 2026-07-29
+
 **Revised:** 2026-09-05, the observation answers from inside a turn. Section 3's observe
 clause no longer defers `Active` to a threading ruling: the harness's streaming poll
 takes the directive between tokens and answers it with the load's facts, per issue #441

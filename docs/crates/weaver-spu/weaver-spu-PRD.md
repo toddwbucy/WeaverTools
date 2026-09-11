@@ -63,6 +63,7 @@ with it: the ground for refusing an elected readout is the family's
 declaration rather than the serving engine's capability, both engines
 tapping as of this date, and a family declares a tap only where the bar
 has been shown for it.
+
 **Revised:** 2026-08-22, the elision is chartered. Section 13 gains 13.13
 on the operator's rulings of this date: the harness names a span of the
 resident sequence and this crate makes it absent, the outcome specified and
@@ -72,6 +73,7 @@ cognition is the loop's facing a third way, and the identity prefix bounds
 the ask from below by refusal rather than by clamping. Nothing is inserted,
 injection already sitting with the harness per apex section 9. 13.10 gains
 the refusal.
+
 **Revised:** 2026-08-21, fourth of this date, the surprisal is elected.
 Section 13 gains 13.12 on the operator's ruling on issue #258: the
 per-position surprisal vector becomes a per-load election, the first that
@@ -80,6 +82,7 @@ produced in its place whichever way the election falls. The accumulator
 behind a mean is argued as arithmetic rather than a produced reading, which
 is what keeps the election from being the recording level the trace charter
 retired. Entropy does not move. 13.10 gains its fault.
+
 **Revised:** 2026-08-21, third of this date, the generation records its
 bound. Section 13.6 gains the resolved per-turn ceiling and the stop
 condition as things that travel with the generation, per the ruling on
@@ -87,6 +90,7 @@ issue #258: both are effective values 13.8's disposition rule already
 covered and
 neither reached the record, leaving a `finish` of `length` explained by a
 number no consumer can read. Section 8's dispositions are unchanged.
+
 **Revised:** 2026-08-21, the probability field is chartered. Section 13
 gains 13.11: a per-load observability election on the ranked candidates
 at each decode position, shaped on 13.7's readout because it is the same
@@ -95,6 +99,7 @@ sampler's wall stays distinguishable from the reporting's edge. The
 election is per feature and named individually in the load's record, no
 profile bundling any set of them, and an elected field must be shown to
 change no token before it ships. 13.10 gains its fault.
+
 **Revised:** 2026-08-21, second of this date, the seed derives per
 generation. Per the operator's ruling on issue #255: section 13.8's
 re-enterability claim was false of its mechanism, one sampler standing for
@@ -105,10 +110,12 @@ and the sampler holds nothing across generations, its penalty window read
 from the resident tail rather than accumulated. Apex section 8 needs no
 amendment, having claimed only that freezing narrows variance.
 **Date filed:** 2026-07-31
+
 **Revised:** 2026-08-19, third of this date, the binary-spelling cell
 settles. The classifier code act's opening lands the Spec's section 11,
 which elects the second bin target with its reasoning, and section 10's
 cell records the settlement.
+
 **Revised:** 2026-08-19, second of this date, the classifier is chartered.
 Section 13.1's rule for later operation types is exercised for the first
 time: section 15 charters the classify submodule in its own process under
@@ -116,6 +123,7 @@ this domain root, with its own socket and its own contract,
 `weaver-harness-spu-classify-contract`, cut with this act per apex section
 10. Section 2 counts two submodules, section 6 counts three seams, and
 section 10 gains the binary-spelling cell. Nothing multiplies the organ.
+
 **Revised:** 2026-08-19, the flush names its cut. Per the operator's
 ruling: the cleanup line is the loop's, because the loop knows what it
 does not want to re-decode, and a fixed outcome made one policy true for
@@ -124,12 +132,14 @@ cut, bounded below by the identity prefix whose permanence stands
 untouched, and the no-eviction ground of section 13.3 is unchanged in
 kind: the SPU still decides nothing about what matters, it executes the
 cut the harness carries down from the loop.
+
 **Revised:** 2026-08-17, the encoder's deferral re-grounds on order of
 construction, per #93. Memory is a lossy compression of state and state is the
 trace's faithful account, so the encoder cannot precede a trustworthy trace.
 The conclusion, the domain ownership, and the built-nothing posture are
 unchanged; section 8's ground gets sturdier and the state-memory distinction is
 stated. No node or edge moves.
+
 **Revised:** 2026-08-10, the route act. Section 13.7's election crosses as one
 instruction beside the binding rather than inside it, per `weaver-types-Spec`
 section 2, and the wording that read as the binding carrying the election is
@@ -139,6 +149,7 @@ seat's finding that the judgment's position was stated nowhere, section 4.1's
 opening carries the instruction and its step 3 judges the election beside the
 devices, free before the fourth step per the ordering rule. No cell opens or
 closes and no record of this document moves.
+
 **Revised:** 2026-08-08, the backends are grounded in device authority. Section 3
 argued that authority for the fleet this crate cannot see and for the selection it
 does not make, and stopped short of the engines themselves, so what kept a

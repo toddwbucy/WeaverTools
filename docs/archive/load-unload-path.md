@@ -14,6 +14,7 @@ merged charters and contracts, binds no crate, and decides no seam. Where it and
 merged document disagree, the charter stands and this document is corrected, because
 the charters are the decision record and this is their composition read back as one
 motion.
+
 **Revised:** 2026-08-05, first this date, on the operator's ruling that loop 0 leaves
 the loop taxonomy's shelf. Loop 0 is the running agent service, the harness's own
 mechanism initiated through admin, per the recut `weaver-harness-PRD` section 2
@@ -26,6 +27,7 @@ v0.2 header read this document as the outermost loop filed beside
 loops and no longer reaches this document, which is not one. `Loops/` holds the basic
 inference loop alone, and that loop running end to end is the proof-of-concept
 milestone.
+
 **Revised:** 2026-08-14, the run identifies itself. The enter directive carries the run
 reference, and the open cell citing where the run ordinal survives across
 invocations closes on its identity half: a reference distinguishes rather than

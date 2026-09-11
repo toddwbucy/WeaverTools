@@ -531,7 +531,7 @@ mod tests {
     /// arm frees two, which is a sweep of a set the sweep's own row
     /// cannot carry.
     ///
-    /// conforms: web-a-arm-frees-at-most-one-member
+    /// conforms: web-an-arm-frees-at-most-one-member
     #[tokio::test]
     async fn a_column_frees_at_most_one_member() {
         let Some(s) = store().await else { return };

@@ -5,16 +5,19 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 6.
 
 **Date filed:** 2026-08-01
+
 **Revised:** 2026-09-06, the two large variants box their payloads. Section 4.2's
 `Enter` carries its payload boxed and `State` its load boxed, so the unit variants of
 the two enums a status read goes through stop paying the largest variant's size, per
 issue #475 under the operator's ruling of this date that clippy is a gate. The wire's
 shape does not move, a boxed field crossing as the field does.
+
 **Revised:** 2026-09-05, the artifact is named at the inventory and resolved at
 admission. Section 2's account of what admin adds beyond the parse loses the claim
 that the model artifact resolves there, per `weaver-admin-PRD` section 4.3 as ruled
 this date on issue #456: admin checks that the artifact is named, and whether it
 resolves is the SPU's under the agent's identity. Found by the review seat on PR #457.
+
 **Revised:** 2026-09-04, fourth of this date, a session stands from a record. Section 2
 gains `restore`, optional, the record the session stands from and the cut, a run and a
 turn within it, and section 4's enter carries its lineage resolved beside `stack`, never

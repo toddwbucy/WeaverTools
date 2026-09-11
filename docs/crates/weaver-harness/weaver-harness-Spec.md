@@ -10,6 +10,7 @@ on this box. The operator ruled 2026-09-07 on issue #481 that musl is out of sco
 so the clause states the target the walk is written for, glibc Linux, where both
 lengths are `size_t`, and the site carries no width cast. A port to a libc where the
 field is `socklen_t` re-enters at this clause rather than at the line.
+
 **Revised:** 2026-09-06, the restoring open takes its record. Section 2's restore
 clause of 2026-09-04 gains a perturbation record, the code act of issue #432 having
 written the tests the clause described: the restored conversation is the turned
@@ -29,16 +30,19 @@ seam reaches what the watch reached, and issue #441 closes with this act.
 answers `Observe` from any position with the load's facts held on the run, authoring
 nothing, and section 6.1's load event gains the declaration's digest the enter carries.
 Per `weaver-admin-harness-contract` section 3 as revised this date and issue #435.
+
 **Revised:** 2026-09-04, fourth of this date, a session stands from a record. Section
 2's open carries the restored conversation beside the identity under a restoring
 load, permanent for the residency, with the turn ordinal starting at the cut so the
 derived seeds continue the parent's, and section 6's prefix door admits the roles the
 restored prefix carries. Per issue #432.
+
 **Revised:** 2026-09-04, third of this date, the sink half of section 9's config
 item closes. The field is admin's to read and the harness holds a descriptor and
 never a path, which the charter's section 5 said and the item had read as a
 tension. The read half is restated for what it is, no read this crate performs
 today and a re-entry the tool workflow carries. Per issue #311.
+
 **Revised:** 2026-09-04, second of this date, the open reads the identity from
 state. Section 2's open clause names two sources under one rule, the store's
 answer to the `identity` ask where a member stands and the declaration's seed
@@ -52,11 +56,13 @@ clause gains the `grants` ask, asked by the seat at the enter and the leave and
 granted to no loop, and the `unload` the serving arm authors carries the reading
 as `UnloadClose`, per `weaver-trace-Spec` section 3 and
 `weaver-harness-state-contract` section 2 as revised this date. Per issue #411.
+
 **Revised:** 2026-09-03, the load names its loop and its member. Section
 6.1's load clause gains the two members that are not elections: the
 composing loop, handed to `serve` by the binary that runs it, and the state
 member's standing, the presence of its end on the enter. Per
 `weaver-trace-Spec` section 3 as revised the same date.
+
 **Revised:** 2026-09-02, second of this date, the last word's pipe travels
 clear of the standard streams. Section 2.2's stderr clause gains the
 equal-descriptor corner of its own placement: a write end arriving at 2 is
@@ -90,6 +96,7 @@ frame ever granting it and the entered wait spanning coordination and
 decode alone. Section 9's cell closes on it, `diagnostic-replay-loop`
 section 2 having been the creditor, and the entry's concrete signature
 joins the satellites.
+
 **Revised:** 2026-08-28, third of this date, the coordination name elects its
 mode. Section 2.2 states that the bind happens under a umask denying every bit
 outside the owner, so the name lands at `0700` rather than at whatever the
@@ -113,6 +120,7 @@ this crate's other recorder's surface and sharing no type with it, so one call s
 serves both and the kind selects the arm. The election is the member's and this
 entry records that it landed rather than restating its argument. Per epic 293
 row 13.
+
 **Revised:** 2026-08-26, fourth of this date, the recall port takes its
 clause. Section 6's port enumeration chartered the shape, replay, and
 classify ports and never the recall port the same acts built, which the
@@ -140,11 +148,13 @@ member's spawn, received in the enter directive beside the sink, no name
 derived and no dial made. The seat, the ports, the tee's attach, and the
 dead-peer conversions are untouched.
 **Date filed:** 2026-08-02
+
 **Revised:** 2026-08-26, first of this date, a citation follows a renumbering.
 Section 9's tee back-pressure election takes the queue's high-water mark from
 `weaver-trace-Spec`
 section 12, that Spec's open elections having moved from 11 when the tee took a
 section of its own there. Per issue 351.
+
 **Revised:** 2026-08-25, the load's elections arrive by two routes. Section 6.1 said
 they arrive in the enter's SPU instruction, which is true of three of them and not
 of the tee's: that one is a sibling of the instruction on the enter payload, per
@@ -152,6 +162,7 @@ of the tee's: that one is a sibling of the instruction on the enter payload, per
 election as joining the `load` declaration this date, per `weaver-trace-Spec`
 section 3. Its citation of `weaver-trace-PRD` moves from 3.2 to 3.1, where the
 clause it cites has always sat. Per issue 347.
+
 **Revised:** 2026-08-24, eighth of this date, the seat's criterion enters this
 Spec's own ledger. `diagnostic-replay-loop` section 2 named a gap section 6.2
 opens on a Gateless binding, the seat being granted on work that arrives owed an
@@ -159,12 +170,14 @@ answer and a diagnostic binding seeing none, and only the creditor recorded it.
 Section 9 now carries the cell, the widening being this Spec's act and no other
 document's. The entry below misplaced the dependency set in section 2 where it
 stands in section 1.
+
 **Revised:** 2026-08-24, seventh of this date, the run state stops electing the
 recorder. Section 3's `Run` held `recorder: Recorder`, `weaver-trace`'s
 concrete type, which a diagnostic run cannot fill and which settled the surface
 election section 9 holds open one screen away. The struct now says it is shown
 in its serving form and that what lets one field hold either mechanism is that
 election, the type moving in the act that writes the member's contract.
+
 **Revised:** 2026-08-24, sixth of this date, the third member reaches the
 manifest section. Section 1 named three internal crates and the floor plus one
 seam tagged `link`, which the composing-inside act left standing while making
@@ -174,6 +187,7 @@ list because it is absent from the tree, with its contract owed and its edge
 landing beside it. The graph and the manifest agree at three today and go to
 four in one act, which is what keeps the record checkable by the instrument
 that checks it.
+
 **Revised:** 2026-08-24, fifth of this date, the diagnostic member composes
 inside. The entry below is reversed rather than amended, and it stands so the reversal
 is visible: the operator's ruling of this date made `weaver-diagnostic` the harness's
@@ -188,6 +202,7 @@ sink count stands at one under either kind, which is the claim
 false, and the retirement is named at the site so a census comparison finds the reason.
 Section 9's item becomes the diagnostic recorder's surface, an election owed with the
 member's Spec.
+
 **Revised:** 2026-08-24, fourth of this date, the diagnostic binding writes no record.
 Section 3's enter walk scopes the receive and the `Recorder` to a serving binding and
 states once that every later authorship site reads under one, a diagnostic run reaching
@@ -199,11 +214,13 @@ perturbation. Section 8's sink count follows the kind rather than standing at on
 the assertion node keeps the name it was filed under, a rename being its own act.
 Section 9 names the diagnostic measurement's relay as owed with the driver, this crate
 naming no shape for it.
+
 **Revised:** 2026-08-24, third of this date, the seat carries the replay
 port. Section 6 grows the port for the replay ask of
 `weaver-harness-state-contract` section 2, the front-door pattern the shape
 port set, with the bound the loop's own because this ask lawfully parks at
 an open preload until the seal.
+
 **Revised:** 2026-08-24, second of this date, the no-clauses name the gate.
 Section 3's diagnostic sentence read "no pair created, no binary forked",
 which out of its sentence's context covered the classify fork, a reading a
@@ -228,12 +245,14 @@ the operator's `leave` unwinds it, at the aggregate's one arm rather than at
 each of the thirteen paths that raise one. A refusal falling before the
 bracket reaches no
 record, there being no run to author into.
+
 **Revised:** 2026-08-22, fourth of this date, the classify refusal changes
 kind. Section 6's classify clause authors `classify.request` and then either
 `classify.output` or `refusal`, per the classify contract's clause of this
 date: the guarantee that a refusal never lands as a fabricated answer is
 unchanged and the kind that carries it is the class's rather than the
 output's own variant.
+
 **Revised:** 2026-08-22, third of this date, pressure is asked for. The
 recorder's depth moved off the failure path per `weaver-trace-Spec`, so
 section 6 reads it after authoring rather than receiving a `Failure` in
@@ -241,36 +260,42 @@ place of a sequence. The obligation is unchanged and was never implemented:
 a `fault` naming `RecorderCommitPressure`, authored when the mark is first
 crossed and not again until the depth falls back under it, a persisting
 condition being one condition.
+
 **Revised:** 2026-08-22, second of this date, the refusal is authored.
 Section 6 gains the clause: a typed refusal answering an ask this crate sent
 becomes a `refusal` event carrying the ask and the seam's case, authored
 before the port answers, per the decode contract's clause of this date. The
 ports' returns are unchanged and a turn ended by a refusal closes under the
 stop reason the trace charter adds.
+
 **Revised:** 2026-08-22, the seat carries the elision port. Section 6
 gains it beside the flush's, taking `from` and `to` and forwarding them
 unjudged, per `weaver-spu-PRD` section 13.13 and the operator's ruling of
 this date that the mechanic is the program's and the policy the loop's.
 On the confirmation the harness authors the record's `elision` event from
 the span the loop named and the counts the seam returned.
+
 **Revised:** 2026-08-21, second of this date, the prefix is authored.
 Section 6 gains `author_identity`, a second message door writing the seated
 identity prefix as `message.system` with no turn, per `weaver-trace-PRD`
 section 5's ruling on issue #258: the accumulation rule's base moves from
 the configuration into the record. The door refuses every role but system on
 the tool-result door's reasoning. One assertion lands.
+
 **Revised:** 2026-08-21, the field authors per position and the load
 names its elections. Section 6's model-events clause gains the fourth
 event, one `model.field` per `Field` intermediate, authored as it arrives
 rather than accumulated. The `load` event gains the enter's diagnostic
 elections, each individually, the harness being the party that holds them
 already.
+
 **Revised:** 2026-08-20, third of this date, the output carries the
 position. Section 6's three-model-events clause names the two session
 counts riding `model.output`, the resident and the capacity this crate
 already reads at that close for the seat's fullness port, per
 `weaver-trace-PRD` section 3.1's same-act edit. One reading serves the
 record and the loop both.
+
 **Revised:** 2026-08-20, second of this date, the declared loop wins the
 resolve. Per the charter's ruling of this date on issue #243: the loop
 is a member of each agent's harness and unique to it, so section 1's
@@ -279,6 +304,7 @@ declaration's `--loop-file` flag first, the environment's name second as
 the developer's bench override, the deployed default last. The member is
 `weaver-types-Spec` section 2's and the carriage is `weaver-admin-Spec`
 section 6's, in the same act.
+
 **Revised:** 2026-08-20, the decode reads reassemble the series. Per the
 decode contract's amendment on issue #236: the decode channel's receive
 recognizes the segment preamble by the `kind` member it lacks, collects
@@ -290,6 +316,7 @@ whole frame up, a short, oversized, or interrupted series the same
 channel fault a truncation is. The seat, the ports, and every
 consumer above the channel are untouched: the series is the channel's
 fact and no layer above it sees a segment.
+
 **Revised:** 2026-08-19, fifth of this date, the seat gains the classify
 port. With the classifier code act's opening, through section 6's front
 door: content in, the artifact's scored labels back, or the missing leg's
@@ -297,6 +324,7 @@ absence. Section 1's listing gains `src/classify.rs` and the file count
 moves to nine, the enter fan-out grows the arm charter section 15.3 of
 `weaver-spu-PRD` names where the declaration carries the binding, and the
 harness authors the record's classify pair on each exchange's outcome.
+
 **Revised:** 2026-08-19, fourth of this date, the flush port carries the
 cut. Per the operator's ruling that the cleanup line is the loop's and
 the decode contract's amended flush exchange: the seat's flush takes
@@ -304,6 +332,7 @@ the decode contract's amended flush exchange: the seat's flush takes
 directive unjudged, the port staying the thin pass every context port
 is. The confirmation's counts answer what the cut resolved to under the
 seam's bounds.
+
 **Revised:** 2026-08-19, third of this date, the Python-iterating worker
 enters the tree. Issue #134's composition root had stood outside the
 repository in its own manifest so the interpreter stayed out of this
@@ -313,6 +342,7 @@ operator ruled the placement reversed: section 1 gains the `pyworker`
 bin target and its `dev_python` directory, and the interpreter
 dependency enters the manifest optional behind the `pyworker` feature,
 so no default build compiles it.
+
 **Revised:** 2026-08-19, second of this date, the seat gains the context
 ports. The context-management loop needed two ports the surface did not
 offer, and both enter by the front door section 6 names: the fullness
@@ -321,6 +351,7 @@ answer carried them, and the flush, driving the decode seam's standing
 flush exchange between turns and authoring the record's `flush` event
 with the counts before and after. Per issue #221's arc, beside the
 recall ask and the flush kind landing in the same act.
+
 **Revised:** 2026-08-19, the seat gains the state port. The
 context-injection loop needed a port the granted surface did not offer, and
 the capability change enters through the front door section 6 names, as
@@ -328,35 +359,42 @@ this charter edit beside the contract's: `Ports` grows the shape ask,
 section 1's listing gains `src/state.rs`, and the file count moves to
 eight. Per `weaver-harness-state-contract` section 7's change protocol,
 arriving in the same act as every party.
+
 **Revised:** 2026-08-18, the tool boundary ruling grows the execution
 exchange's contents from three to four and section 6's grant site follows:
 killed on the caller's clock joins as its own case, per the amended
 `weaver-harness-gate-contract` section 2, and the one-site construction is
 untouched.
+
 **Revised:** 2026-08-17, second of that date, the tool workflow opens and the
 loop closes at the type level, per issue #116: section 6 carries the audit's
 record and the granted `ToolResult`, no Deserialize, no public constructor,
 no conversion from the record block, constructed at the execution exchange's
 completion alone, with the engine opening that exchange per recovered call.
+
 **Revised:** 2026-08-17, the loop boundary reaches section 6's tool notes,
 per issue #115: the subprocess language stands as mechanics and is retired as
 the settled model, every tool sitting outside the loop by the ratified
 criterion, with the forcing rationale stated at section 6's retirement clause.
+
 **Revised:** 2026-08-16, second of that date, argv carries a host's fact and
 not an agent's. The organ argv clause of this date is narrowed rather than
 withdrawn: the headroom term stays on it, and a parameter belonging to one agent
 reaches its organ in the declaration instead. Both routes end at the same
 composition root, which is why the distinction is stated.
+
 **Revised:** 2026-08-15, the gate socket is the program's. Section 3's raise carries
 the socket this crate supplies beside the instruction it carries uninterpreted,
 derived as a sibling of the coordination socket it bound. The listener retains the
 path it bound, an exception to the no-paths rule argued the way the organ binaries
 are: a deployment fact supplied at construction rather than a name resolved at use.
+
 **Revised:** 2026-08-15, second this date, the close names its turn. Section 8's
 response renders the turn key and the run reference beside the kind where a turn
 opened, this crate composing what the gate relays. Both are carried from what the turn
 already holds rather than rebuilt, a second construction being a second chance to
 disagree with the record.
+
 **Revised:** 2026-08-13, the dev boundary is in the filesystem, per the
 architecture seat's directive of this date. Section 1 gains the worker bin
 target and the `dev_` convention: directories the developer edits carry the
@@ -365,6 +403,7 @@ worked default, and the placement rides the bin target because the blade
 requires the loop outside the library crate. Section 6 states the crossing
 single and named, one function loop 0 calls with the seat and the request,
 no reach-in either way. One review assertion lands.
+
 **Revised:** 2026-08-12, fifth of this date, the parse is chartered with the
 gate's turn half. Section 6.2 gains the frame's parse at the seat's
 threshold: the member decodes per the frame election, the octets parse as
@@ -374,20 +413,24 @@ does not parse answers refused on the exchange with the channel standing.
 One perturbation assertion lands, and one election is flagged for the
 operator, whether a refused line takes a bracket, the unrecorded reading
 standing unless overruled.
+
 **Revised:** 2026-08-12, fourth of this date, the frame's deferral narrows.
 Section 6.2's non-elections follow `weaver-types-Spec` section 4.1 as
 elected: the frame's interior closed, base64-carried octets by argument, and
 the loop entry's signature stays deferred with the client line's parse
 rather than with the frame.
+
 **Revised:** 2026-08-12, third of this date, the request is the turn's
 contribution. Section 6.1's model events follow `weaver-trace-PRD` section
 3.2 as narrowed by the operator's ruling of this date: the request the close
 splices is the turn's rendered delta, the full effective context being the
 accumulation the record determines.
+
 **Revised:** 2026-08-12, second of this date, the receipt retires. Section
 6.2's clerking answers nothing: the SPU's report is the decode seam's one
 emission, owed nothing back at all, the trace entry being the
 acknowledgment, per the decode contract's second ruling of the same date.
+
 **Revised:** 2026-08-12, the invocation. Section 6.2 charters how loop 1
 comes to run, per the operator's ruling of this date: between enter and
 leave the wait spans the coordination listener, the gate channel, and the
@@ -396,6 +439,7 @@ and the frame alone grants the seat, per frame with the wait staying loop
 0's, the third shape choice flagged for the operator at review. Section 3's
 accept-and-serve reading becomes one arm of that wait, and one review and
 one perturbation assertion land under 6.2.
+
 **Revised:** 2026-08-11, second of that date, the decode surface. Section 6.1
 charters what section 6 deferred, the exchanges, sessions, sampling, and the
 flush call: the session opens at the enter fan-out with the instruction's
@@ -406,16 +450,19 @@ channel and the coordination listener. Section 9's executor election closes in
 the negative, no runtime entering, and the surface's two shape choices are
 flagged for the operator at review. Two review assertions and one perturbation
 land under section 6.1.
+
 **Revised:** 2026-08-11, the seam streams. `poll` joins the OS surface of
 section 2.4, the wait against many that hears the stop while a generation
 streams, with the no-runtime election standing untouched and the declined
 rotation's grounds recorded beside the election.
+
 **Revised:** 2026-08-10, the route act. The enter directive and the admit
 exchange carry the SPU instruction rather than the bare binding, per
 `weaver-types-Spec` section 2, the readout election riding it uninterpreted
 to the admit, and section 1's leftover-elections list loses the readout
 accordingly. The featureless-link argument re-aims at `SpuInstruction`, the
 directive-carried type, and holds unchanged.
+
 **Revised:** 2026-08-05, the socket inversion. Per the operator: any socket
 connecting to the harness is an internal connection, so this crate binds the
 coordination socket inside the agent's sandbox and listens where section 2.3

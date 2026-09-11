@@ -6,11 +6,13 @@ only, which is the residency half of what this pair will eventually agree on. Th
 exchanges that carry work arrive with the token workflow.
 
 **Date filed:** 2026-07-31
+
 **Revised:** 2026-08-22, the refusal on this seam is clerked. The organ's
 refusal travels as it did and the harness authors the record's `refusal`
 carrying `lifecycle-refusal`, per `weaver-trace-PRD` section 3.1's
 twenty-first kind and the operator's ruling of this date. The organ authors
 nothing and no exchange changes.
+
 **Revised:** 2026-08-21, the elections become three at this seam. Section 7
 draws `surprisal-election` on `weaver-spu-PRD` section 13.12, and draws
 `field-election`, which was defined on this date and drawn by neither
@@ -20,11 +22,13 @@ not named, and states what each of the three is judged against. **No new
 refusal type and no new exchange**: the elections ride inside
 `spu-instruction` as the readout's always has, and the wire type is
 unchanged.
+
 **Revised:** 2026-08-16, the admit carries the operator-tunable values. They
 arrive with the binding in the instruction that already crosses once, which is
 the crossing that suits them, the SPU building its sampler after this exchange
 and before any turn. A parameter the binary froze is ignored where it appears,
 so this exchange gains no power to move what a deployment locked.
+
 **Revised:** 2026-08-10, the route act. The admit exchange carries the SPU
 instruction rather than the bare binding, the model binding and the readout
 election crossing together per `weaver-types-Spec` section 2, and the SPU

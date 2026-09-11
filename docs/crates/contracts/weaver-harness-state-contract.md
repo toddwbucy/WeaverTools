@@ -6,11 +6,13 @@
 load. Section 2's parking clause admits the `identity` and `recall` asks the harness
 sends at the enter where the load elects a restore, answering at the driver's seal like
 the replay ask, per `weaver-state-PRD` section 4 as revised this date and issue #432.
+
 **Revised:** 2026-09-04, fourth of this date, the identity answer is the newest run's.
 Section 2's `identity` ask serves the turnless system messages of the session's most
 recent run that holds any, not of every run, because every load records the prefix
 it seated and a session holds one per run. Found by the code act's live proof on
 PR 430, where a second load would otherwise have seated two.
+
 **Revised:** 2026-09-04, third of this date, the vocabulary gains the `identity` ask.
 Section 2 holds five names: the fifth returns the session's seated prefix as
 custody holds it, asked once at every enter before the decode open, an empty
@@ -23,12 +25,14 @@ Section 2 holds four names: the fourth reads the store's boundary as the engine
 states it, asked by the harness at the enter and the leave so the record's `unload`
 can carry whether it moved, per `weaver-trace-PRD` section 3.1 as revised this date.
 Every party lands in the same act. Per issue #411.
+
 **Revised:** 2026-09-04, first of this date, the answers are the store's and not the
 file's. One word
 in section 4, per `weaver-state-PRD` section 4 as revised this date: the store
 is a port and the engine behind it is elected, and this contract's vocabulary
 names asks and never a query language, which was true before the ruling and is
 a rule after it. Nothing crossing this seam moves.
+
 **Revised:** 2026-08-26, the channel loses its name. The wire clause held a named
 Unix socket authenticated by credential, and the operator's ruling of this date
 recuts it: admin creates a socketpair at the member's spawn, the member inherits
@@ -39,6 +43,7 @@ opener, the distillate, the asks, the answers, and the dead-peer clause read on
 the pair as they read on the dialed socket, a standing of the channel now being
 a load's pair. The squat the runtime directory's name invited retires with the
 name.
+
 **Revised:** 2026-08-25, the election is recorded as well as sent. The Vocabulary
 section's `election` term gains that the same rule is written to the `load` event, per
 `weaver-trace-Spec` section 3, so a reader of a finished record knows what this seam
@@ -48,6 +53,7 @@ rule the record names rather than one supplied from outside it. The term also
 names the third fact it had left implicit, whether every kind crosses or only the
 named ones, and states that it is a term of this seam rather than a shorthand for
 the list of kinds. Per issue 347.
+
 **Revised:** 2026-08-24, the replay ask joins the vocabulary. The ask set
 gains `replay` by section 7's own door, elected against the diagnostic
 replay loop's real need per the loop act of this date: the session's
@@ -65,6 +71,7 @@ the ask's, the one exception to the pre-ask snapshot, stated at that
 clause. Section 2 shapes it, section 8 gains its
 conformance, and every
 party merges in the act.
+
 **Revised:** 2026-08-20, the opener names its session. The `election`
 term gains the session the load declared, so the custodian can bound its
 answers to it. The ground is `weaver-state-PRD` section 4's within-a-session
@@ -72,12 +79,14 @@ ruling, which the code could not honor while the member learned a session
 only as a column on arriving distillates. Per the operator's ruling of this
 date the fact rides the opener rather than the ask, being load-declared and
 standing for the channel's life.
+
 **Revised:** 2026-08-19, third of this date, recall joins the asks. The
 vocabulary's ask set gains `recall` by section 7's own door, elected
 against the context-management loop's real need per issue #221's arc: a
 decode context is a working set the loop rebuilds after a flush, and the
 rebuilding material is custody's. Section 2 shapes the ask and its
 answer, section 8 gains its conformance.
+
 **Revised:** 2026-08-19, the serve direction takes its shape. The vocabulary
 gains the `ask` and the `answer` and the one ask name `shape`, section 2's
 serve paragraph replaces its cell-face with the flowing direction, sections

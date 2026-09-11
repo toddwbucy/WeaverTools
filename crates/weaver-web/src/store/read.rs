@@ -298,22 +298,23 @@ impl Store {
     }
 
     /// **Read four.** One experiment's value set, each value with its run
-    /// where one exists. `None` where no such experiment stands, and
-    /// `Some` with no arms where the experiment is not a sweep.
+    /// where one exists. `None` where no such experiment stands.
+    ///
+    /// **A point arm returns one arm whose value is absent**, per section
+    /// 2.9: an arm that frees nothing registers with no swept member and
+    /// produces one run. This read returned no arms for that case until
+    /// 2026-09-11, which left the run reachable only by a reader who already
+    /// had its identity - the one reader section 4 says it does not serve.
+    /// The absent value is an absence the reader can see, which is the same
+    /// answer this read already gives for an arm that never ran.
     pub async fn sweep(&self, experiment_id: i64) -> anyhow::Result<Option<Sweep>> {
         let Some(experiment) = self.experiment(experiment_id).await? else {
             return Ok(None);
         };
-        let (Some(member), Some(values)) = (
+        let swept = (
             experiment.row().swept_member.clone(),
             experiment.row().swept_values.clone(),
-        ) else {
-            return Ok(Some(Sweep {
-                experiment,
-                member: String::new(),
-                arms: Vec::new(),
-            }));
-        };
+        );
 
         // The runs this experiment produced, each with the value it was
         // produced under. One query, the association being explicit in the
@@ -327,27 +328,51 @@ impl Store {
         .fetch_all(&self.pool)
         .await?;
 
-        let mut by_value: Vec<(serde_json::Value, RunTuple)> = produced
+        let mut by_value: Vec<(Option<serde_json::Value>, RunTuple)> = produced
             .into_iter()
             .map(|r| {
+                // Kept as an option: a point arm's row carries no value, and
+                // flattening that to a JSON null would make it equal to a
+                // sweep whose value really is null.
                 let v: Option<serde_json::Value> = r.get("swept_value");
-                (v.unwrap_or(serde_json::Value::Null), run_tuple_from_row(r))
+                (v, run_tuple_from_row(r))
             })
             .collect();
 
-        // The unit is the value. Every value in the frozen set returns,
-        // with its run where one was produced under it, so an arm that
-        // never ran keeps its place.
-        let arms = values
-            .into_iter()
-            .map(|value| {
-                let run = by_value
-                    .iter()
-                    .position(|(v, _)| *v == value)
-                    .map(|i| by_value.remove(i).1);
-                Arm { value, run }
-            })
-            .collect();
+        let (member, arms) = match swept {
+            // The unit is the value. Every value in the frozen set returns,
+            // with its run where one was produced under it, so an arm that
+            // never ran keeps its place.
+            (Some(member), Some(values)) => {
+                let arms = values
+                    .into_iter()
+                    .map(|value| {
+                        let run = by_value
+                            .iter()
+                            .position(|(v, _)| v.as_ref() == Some(&value))
+                            .map(|i| by_value.remove(i).1);
+                        Arm {
+                            value: Some(value),
+                            run,
+                        }
+                    })
+                    .collect();
+                (Some(member), arms)
+            }
+            // **A point arm.** There is no set to walk, so the unit falls
+            // back to the run this arm produced, and the value it returns is
+            // absent rather than empty.
+            _ => {
+                let arms = by_value
+                    .into_iter()
+                    .map(|(_, run)| Arm {
+                        value: None,
+                        run: Some(run),
+                    })
+                    .collect();
+                (None, arms)
+            }
+        };
 
         Ok(Some(Sweep {
             experiment,
@@ -575,13 +600,13 @@ pub(crate) mod tests {
         }
 
         let sweep = s.sweep(id).await.unwrap().expect("the experiment stands");
-        assert_eq!(sweep.member, "seed");
+        assert_eq!(sweep.member.as_deref(), Some("seed"));
         // The unit is the value: three values return, two with runs and one without.
         assert_eq!(sweep.arms.len(), 3);
         let by_value: Vec<(i64, bool)> = sweep
             .arms
             .iter()
-            .map(|a| (a.value.as_i64().unwrap(), a.run.is_some()))
+            .map(|a| (a.value.as_ref().unwrap().as_i64().unwrap(), a.run.is_some()))
             .collect();
         assert_eq!(
             by_value,
@@ -843,7 +868,7 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn an_experiment_that_is_not_a_sweep_has_no_arms() {
+    async fn a_point_arm_returns_its_run_with_no_value() {
         let Some(s) = store().await else { return };
         let id: i64 = sqlx::query_scalar(
             "INSERT INTO staged_experiment (state, question) VALUES ('draft', 'a point, not a sweep') \
@@ -852,10 +877,57 @@ pub(crate) mod tests {
         .fetch_one(&s.pool)
         .await
         .unwrap();
+
+        // Before it runs there is nothing to return, which is not the same
+        // answer as the one below and is why both are watched.
         let sweep = s.sweep(id).await.unwrap().unwrap();
-        assert!(sweep.arms.is_empty());
+        assert!(sweep.arms.is_empty(), "a point arm that has not run");
+        assert!(
+            sweep.member.is_none(),
+            "the swept member is absent rather than an empty string"
+        );
         assert!(matches!(sweep.experiment, Experiment::Draft(_)));
         assert_eq!(sweep.experiment.row().state, ExperimentState::Draft);
+
+        // **Now it runs.** Section 2.9 has an arm that frees nothing produce
+        // one run, and read four returned no arms for it until 2026-09-11,
+        // which left that run reachable only by a reader who already had its
+        // identity.
+        //
+        // Perturbation: return `Vec::new()` for an experiment with no swept
+        // member and this run is unreachable again.
+        let run = format!(
+            "point-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+        seed_run(&s, &run, None, None).await;
+        sqlx::query("INSERT INTO staged_experiment_run (experiment_id, run_id) VALUES ($1, $2)")
+            .bind(id)
+            .bind(&run)
+            .execute(&s.pool)
+            .await
+            .unwrap();
+
+        let sweep = s.sweep(id).await.unwrap().unwrap();
+        assert_eq!(sweep.arms.len(), 1, "the point arm's one run");
+        let arm = &sweep.arms[0];
+        assert_eq!(
+            arm.run.as_ref().expect("the run is returned").run.0,
+            run,
+            "and it is the run this experiment produced"
+        );
+        // **Absent and not null.** A point arm was produced under no value,
+        // which is a different fact from a sweep whose value is JSON null,
+        // and section 6 has the view name the absence rather than draw it.
+        assert!(
+            arm.value.is_none(),
+            "the value is absent rather than empty: {:?}",
+            arm.value
+        );
+
         assert!(s.sweep(i64::MAX).await.unwrap().is_none());
     }
 }
