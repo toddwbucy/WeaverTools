@@ -25,7 +25,7 @@ pub mod read;
 
 pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
-pub use key::{PositionKey, RunId, TurnId};
+pub use key::{ArmId, PlanId, PositionKey, RunId, TurnId};
 // **`plan::Arm` is not re-exported and `experiment::Arm` is**, and the path
 // is the point rather than a collision worked around. They are one thing at
 // two resolutions: the arm as the plan composes it, and the arm as the
