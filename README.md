@@ -172,9 +172,10 @@ the assertions it conforms to and accruing into the same graph as it merges.
 
 - `process/WeaverTools-Working-Process.md` is the boot prompt: who is primary,
   in what order the work moves, and where it currently sits.
-- `docs/project/WeaverTools-PRD.md` is the apex: the deliverable, the five invariants,
-  the lifecycle, and the enforcement posture every other document
-  answers to.
+- `docs/crates/weaver-agents-PRD.md` is the apex: the deliverable, the five
+  invariants, the lifecycle, and the enforcement posture every other document
+  answers to. It sits beside the crate directories rather than inside one,
+  being the domain's own charter.
 - `docs/project/weaver-tools-vision.md` is the longer line the program is on.
 - `docs/crates/` holds one directory per crate, each carrying that crate's PRD
   and Spec, with the contracts under `docs/crates/contracts/` and the workflow
