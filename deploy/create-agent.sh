@@ -127,6 +127,33 @@ else
 fi
 [ -r "$ARTIFACT" ] || printf '   WARNING: the artifact is not readable from this shell: %s\n' "$ARTIFACT"
 printf '   nothing of this agent exists yet\n'
+# **Traversal is asked about here rather than discovered halfway through.**
+# root reaches every directory whatever the mode says, so no entry is needed
+# or written for it. Any other identity needs passage along a chain that runs
+# through the operator's own home, and this pool answers `setfacl` with
+# Operation not supported, so the need and the means are checked together
+# before anything is made.
+if [ "$MEMBER_IDENTITY" = "root" ]; then
+  printf '   root traverses by identity, so no access entry is needed\n'
+else
+  # **The probe sits on the filesystem that will hold the territory**, which
+  # is not always the operator's home: `.weaveragents` can be a mount or a
+  # dataset of its own, and access entries are a property of the filesystem
+  # rather than of the tree. Where that parent does not exist yet the home is
+  # the right stand-in, being where the script is about to create it.
+  probe_parent="/home/$OPERATOR/.weaveragents"
+  [ -d "$probe_parent" ] || probe_parent="/home/$OPERATOR"
+  probe=$(mktemp -d "$probe_parent/.acl-probe-XXXXXX") || die "cannot write under $probe_parent"
+  if setfacl -m "u:$MEMBER_IDENTITY:x" "$probe" 2>/dev/null; then
+    printf '   this filesystem carries access entries, so %s can be given passage\n' "$MEMBER_IDENTITY"
+  else
+    rmdir "$probe"
+    die "$probe_parent refuses access entries, so $MEMBER_IDENTITY cannot traverse to
+   its territory there. Either map root, or place the territory somewhere the
+   member can reach by ownership alone."
+  fi
+  rmdir "$probe"
+fi
 
 if [ "$APPLY" -eq 0 ]; then
   say "plan only"
@@ -159,10 +186,12 @@ sudo install -d -o "$MEMBER_USER" -g "$MEMBER_USER" -m 0700 "$STATE_DIR"
 # cannot traverse to what it owns. Execute-only entries along the chain open
 # passage without opening any listing, which is the narrowest thing that
 # makes the ownership above true rather than stated.
-for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
-  sudo setfacl -m "u:$MEMBER_IDENTITY:x" "$step" \
-    || die "no traversal for $MEMBER_IDENTITY at $step, and the member cannot reach its own territory"
-done
+if [ "$MEMBER_IDENTITY" != "root" ]; then
+  for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
+    sudo setfacl -m "u:$MEMBER_IDENTITY:x" "$step" \
+      || die "no traversal for $MEMBER_IDENTITY at $step, and the member cannot reach its own territory"
+  done
+fi
 
 say "store"
 sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
