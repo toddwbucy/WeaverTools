@@ -52,6 +52,8 @@ askama = "0.14"
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "postgres", "chrono", "migrate", "macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# The bearer is hashed before it is stored or looked up, per Spec 2.8.
+sha2 = "0.10"
 toml = "0.9"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4", features = ["derive"] }
@@ -62,3 +64,9 @@ futures = "0.3"
 anyhow = "1"
 uuid = { version = "1", features = ["v4"] }
 pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+
+[dev-dependencies]
+# `oneshot` drives the router in a test without binding a port, which is
+# what lets the Record surface's watch ask the real route for real HTML
+# rather than calling the handler and trusting the wiring.
+tower = { version = "0.5", features = ["util"] }

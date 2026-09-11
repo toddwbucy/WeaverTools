@@ -84,6 +84,13 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
+    // **The instrument's surfaces are mounted on the store alone**, per
+    // Spec section 6: a surface that renders what is kept reads the store
+    // and nothing else. They carry their own state rather than the
+    // conversation half's `AppState`, so the retirement of that half lifts
+    // it out without reaching into `surfaces/`.
+    let instrument = weaver_web::surfaces::routes().with_state(store.clone());
+
     let state = web::AppState {
         cfg: cfg.clone(),
         store,
@@ -94,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(&cfg.listen).await?;
     tracing::info!("listening on {}", cfg.listen);
-    axum::serve(listener, web::router(state))
+    axum::serve(listener, web::router(state).merge(instrument))
         .with_graceful_shutdown(shutdown_signal())
         .await?;
     Ok(())
