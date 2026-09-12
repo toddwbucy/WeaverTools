@@ -43,13 +43,29 @@ review passes found them; the second found as many as the first:
   count visibly rose, which the stated rule - no defect is new - forbids.
 - The obligation was scoped by a `/src/` directory, which the Document Format
   names as a defect in a count rather than a tightening of it, in the sentence
-  that also names this exact mis-application.
+  that also names this exact mis-application. It walked the filesystem, where
+  the format's rule is over the tracked set, and read `.rs` alone, where three
+  `tag: manifest` assertions are cited only from a `Cargo.toml`.
+- Widening the citation check to every node kind, on a misreading of that same
+  document: a header names an assertion, which the format states outright, and
+  no citation in this corpus names anything else. **A review pass asked for
+  the widening and the next one called it a defect**, which is what four
+  rounds on one act look like.
+- ```graph matched ```graphviz, so a diagram fence would declare phantom nodes
+  that mask the dangling citations this exists to catch.
+- `node:` with no space, a trailing space after `kind:`, an indented stanza:
+  each removed a node from every metric silently rather than being reported as
+  a line the gate cannot read.
+- The reporting path of `--update` compared as a set while the gating path
+  compared as a multiset, so a recurrence under a name already baselined moved
+  the baseline with nothing printed.
 """
 
 import glob
 import json
 import os
 import re
+import subprocess
 import sys
 from collections import Counter
 
@@ -61,16 +77,21 @@ BASELINE = os.path.join(HERE, "census-baseline.json")
 # finding rather than a silent miss.
 TAGS = {"compile-pin", "compile-fail", "perturbation", "manifest", "review"}
 
-GRAPH = re.compile(r"```graph(.*?)```", re.S)
-NODE_LINE = re.compile(r"^node: (.*)$", re.M)
+# **The info string is the whole word.** An unanchored `graph` also opens
+# a ```graphviz or ```graphql fence, whose contents would declare phantom
+# nodes that mask the dangling citations this gate exists to catch.
+GRAPH = re.compile(r"```graph[ \t]*\r?\n(.*?)```", re.S)
+NODE_LINE = re.compile(r"^\s*node:\s*(.*)$", re.M)
 NODE_OK = re.compile(r"^[a-z0-9-]+$")
-KIND = re.compile(r"^kind: ([\w-]+)$", re.M)
-TAG = re.compile(r"^tag: ([\w-]+)$", re.M)
-HEADER_CITE = re.compile(r"^//! conforms: ([a-z0-9-]+)\s*$", re.M)
+KIND = re.compile(r"^\s*kind:\s*(\S+)\s*$", re.M)
+TAG = re.compile(r"^\s*tag:\s*(\S+)\s*$", re.M)
+HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
 # **Anchored to the end of the word.** Unanchored, `conforms: weaver_types-x`
 # captures `weaver` and the gate names an identifier that is in no file, so a
-# reader grepping for the offender finds nothing.
-ANY_CITE = re.compile(r"conforms: (\S+)")
+# reader grepping for the offender finds nothing. A citation's own defects are
+# their own metric: a broken header and a broken declaration are two things and
+# one key reporting both leaves a reader unable to tell which they have.
+ANY_CITE = re.compile(r"conforms:[ \t]*([^\s]*)")
 
 # A build script is cargo's unit and not the crate's, and conforms to nothing.
 # `archive/` is not a workspace member and is never compiled, so counting
@@ -97,12 +118,16 @@ def members():
     block = re.search(r"^members\s*=\s*\[(.*?)\]", text, re.S | re.M)
     if not block:
         raise SystemExit("census: no workspace members in Cargo.toml")
+    # **Comments go before the split, not after.** Splitting on the comma
+    # first makes a comment part of the *next* entry's chunk, so one `#`
+    # anywhere in the array silently drops the member that follows it and
+    # every count falls without the guard below ever firing.
+    body = "\n".join(line.split("#", 1)[0] for line in block.group(1).splitlines())
     found = []
-    for raw in block.group(1).split(","):
-        entry = raw.strip()
-        if not entry or entry.startswith("#"):
+    for raw in body.split(","):
+        entry = raw.strip().strip('"')
+        if not entry:
             continue
-        entry = entry.strip('"')
         matches = sorted(glob.glob(os.path.join(ROOT, entry))) if "*" in entry else [
             os.path.join(ROOT, entry)
         ]
@@ -126,7 +151,14 @@ def docs():
 
 
 def sources():
-    """Every `.rs` a workspace member owns, and whether it owes a header.
+    """Every tracked unit a workspace member owns, and whether it owes a header.
+
+    **Tracked and not walked.** The format's rule is over "every tracked unit",
+    so a generated or scratch file left under a crate is not the corpus's and
+    must not fail a gate. **A manifest cites too**: three `tag: manifest`
+    assertions are cited only from a `Cargo.toml`, and a walk over `.rs` alone
+    reported them uncited - the same miss as declining to read a crate's tests,
+    unfixed for the half that is not Rust.
 
     **The obligation follows the unit and never a directory.**
     `WeaverTools-Document-Format` states it and names this exact
@@ -135,15 +167,16 @@ def sources():
     alone reported the crates through 2026-08-16". The first form of this
     gate scoped by `/src/` and inherited the defect it was told about.
     """
-    for member in members():
-        for base, dirs, files in os.walk(member):
-            dirs[:] = [d for d in dirs if d not in ("target", "archive")]
-            for f in sorted(files):
-                if not f.endswith(".rs"):
-                    continue
-                path = os.path.join(base, f)
-                owes = f not in NO_HEADER_OWED
-                yield path, owes
+    tracked = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "--", "*.rs", "*.toml"],
+        capture_output=True, text=True, check=True,
+    ).stdout.split()
+    inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in members())
+    for rel in sorted(tracked):
+        if not rel.startswith(inside):
+            continue
+        owes = rel.endswith(".rs") and os.path.basename(rel) not in NO_HEADER_OWED
+        yield os.path.join(ROOT, rel), owes
 
 
 def enforcement_table(text):
@@ -168,48 +201,61 @@ def take():
     # and the Document Format names `tool-trait` as one a source file may
     # cite. Measuring citations against assertions alone reports a sound
     # header as dangling.
-    nodes, declared, duplicates, malformed, odd = {}, set(), [], [], []
+    nodes, declared, duplicates, malformed, odd = {}, {}, [], [], []
     texts = {}
 
     for path in docs():
         rel = os.path.relpath(path, ROOT)
         text = read(path)
-        texts[rel] = text
+        declared_here = False
         for block in GRAPH.findall(text):
             # **Split on the record's own keyword, not on a blank line.** Two
             # records written back to back are one stanza to a blank-line
             # splitter, which drops all but the first - the same class of
             # miss as reading one `node:` per block, and invisible for the
             # same reason.
-            for stanza in re.split(r"(?=^node: )", block, flags=re.M):
+            for stanza in re.split(r"(?=^\s*(?:node|edge):)", block, flags=re.M):
                 line = NODE_LINE.search(stanza)
                 if not line:
                     continue
                 name = line.group(1).strip()
                 if not NODE_OK.match(name):
-                    malformed.append(f"{rel}: {name}")
-                    declared.add(name)
+                    malformed.append(f"{rel}: node: {name}")
                     continue
                 kind = KIND.search(stanza)
-                declared.add(name)
-                if not kind or kind.group(1) != "assertion":
-                    continue
+                kind = kind.group(1) if kind else None
                 tag = TAG.search(stanza)
                 tag = tag.group(1) if tag else None
+                # **Every kind, since a collision is one whatever the kinds
+                # are.** The format makes two spellings of one name a defect
+                # without qualifying it by kind, and this corpus declares
+                # seventy-eight nodes that are not assertions.
+                if name in declared:
+                    duplicates.append(f"{name}: {declared[name]} and {rel}")
+                else:
+                    declared[name] = rel
                 if tag is not None and tag not in TAGS:
                     odd.append(f"{name} ({tag})")
-                if name in nodes:
-                    duplicates.append(f"{name}: {nodes[name][0]} and {rel}")
-                nodes[name] = (rel, tag)
+                if kind != "assertion":
+                    continue
+                # **The first declaration keeps the node.** Letting the last
+                # win moves a duplicate's assertions to the later document and
+                # drops the earlier one out of per-document accounting
+                # entirely, so its table is never examined.
+                nodes.setdefault(name, (rel, tag))
+                declared_here = True
 
-    cited, headerless = set(), []
+        if declared_here:
+            texts[rel] = text
+
+    cited, headerless, bad_cites = set(), [], []
     for path, owes in sources():
         text = read(path)
         for raw in ANY_CITE.findall(text):
             if NODE_OK.match(raw):
                 cited.add(raw)
             else:
-                malformed.append(f"{os.path.relpath(path, ROOT)}: conforms: {raw}")
+                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {raw}")
         if owes and not HEADER_CITE.search(text):
             headerless.append(os.path.relpath(path, ROOT))
 
@@ -218,10 +264,11 @@ def take():
     # corpus-wide assurance and is not: rename that header and the mismatch
     # count stays zero while nothing is examined at all. Listed this way, a
     # document losing its table is a new entry and fails.
+    per_doc = Counter(r for r, _ in nodes.values())
     mismatch, tableless = [], []
-    for rel in sorted({r for r, _ in nodes.values()}):
+    for rel in sorted(per_doc):
         rows = enforcement_table(texts[rel])
-        count = sum(1 for r, _ in nodes.values() if r == rel)
+        count = per_doc[rel]
         if rows is None:
             tableless.append(f"{rel} ({count} assertions)")
             continue
@@ -229,7 +276,12 @@ def take():
             mismatch.append(f"{rel} ({count} nodes, {rows} rows)")
 
     return {
-        "dangling_citations": sorted(i for i in cited if i not in declared),
+        # **Against the assertions.** `WeaverTools-Document-Format`: "a header
+        # naming an assertion the corpus does not declare is a dangling edge".
+        # A previous form measured against every node kind on a misreading of
+        # that document's kebab-case rule, which admits a class the format
+        # forbids; no citation in this corpus names a non-assertion node.
+        "dangling_citations": sorted(i for i in cited if i not in nodes),
         "untagged_assertions": sorted(n for n, (_, t) in nodes.items() if t is None),
         "unknown_tags": sorted(odd),
         "uncited_perturbations": sorted(
@@ -237,14 +289,41 @@ def take():
         ),
         "duplicate_node_ids": sorted(duplicates),
         "malformed_node_ids": sorted(malformed),
+        "malformed_citations": sorted(bad_cites),
         "enforcement_table_mismatch": sorted(mismatch),
         "documents_without_an_enforcement_table": sorted(tableless),
         "sources_without_a_header": sorted(headerless),
     }
 
 
+def difference(now, was):
+    """What `now` has that `was` did not, and the reverse, as multisets.
+
+    **Both paths use this.** The gating path was fixed to a multiset and the
+    reporting path was left on a set, so a defect recurring under a name the
+    baseline already held moved the baseline with nothing printed - and the
+    rule is that moving it is a sentence in the act's commit message.
+    """
+    remaining = Counter(was)
+    gained = []
+    for item in now:
+        if remaining[item]:
+            remaining[item] -= 1
+        else:
+            gained.append(item)
+    return gained, sorted(remaining.elements())
+
+
 def main():
     reading = take()
+
+    unknown = [a for a in sys.argv[1:] if a != "--update"]
+    if unknown:
+        # **A mistyped flag refuses.** Falling through to the comparison runs
+        # a mode the operator did not ask for and prints a pass, which for a
+        # script whose subject is a confident wrong number is the same hazard.
+        print(f"census: unrecognised argument: {unknown[0]}", file=sys.stderr)
+        return 2
 
     if "--update" in sys.argv:
         # **It says what moved.** The rule is that moving the baseline is a
@@ -255,9 +334,8 @@ def main():
         if os.path.exists(BASELINE):
             with open(BASELINE, encoding="utf-8") as fh:
                 old = json.load(fh)
-        for key in sorted(reading):
-            gained = [x for x in reading[key] if x not in old.get(key, [])]
-            lost = [x for x in old.get(key, []) if x not in reading[key]]
+        for key in sorted(set(reading) | set(old)):
+            gained, lost = difference(reading.get(key, []), old.get(key, []))
             if gained or lost:
                 print(f"{key}: {len(old.get(key, []))} -> {len(reading[key])}")
                 for x in gained:
@@ -277,20 +355,24 @@ def main():
     with open(BASELINE, encoding="utf-8") as fh:
         before = json.load(fh)
 
+    missing = sorted(set(before) - set(reading))
+    if missing:
+        print(
+            f"census: the baseline holds keys this reading does not: {missing}.\n"
+            "A metric that disappears stops being gated silently; rename it in\n"
+            "the baseline or say in the act why it goes.",
+            file=sys.stderr,
+        )
+        return 2
+
     appeared_anywhere = False
     for key in sorted(reading):
         # **A multiset and not a set.** Two of these lists can hold the same
         # string twice - one id declared a third time, one malformed id
         # written twice - and a set comparison calls the second occurrence
         # familiar while the count visibly rises.
-        remaining = Counter(before.get(key, []))
         now = reading[key]
-        appeared = []
-        for item in now:
-            if remaining[item]:
-                remaining[item] -= 1
-            else:
-                appeared.append(item)
+        appeared, _ = difference(now, before.get(key, []))
         was = list(before.get(key, []))
         mark = "NEW" if appeared else ("down" if len(now) < len(was) else "")
         print(f"{mark:>4}  {key:<28} {len(now):>4}   (baseline {len(was)})")

@@ -23,7 +23,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("census", os.path.join(HERE, "census.py"))
@@ -87,6 +87,13 @@ class Census(unittest.TestCase):
         write(self.dir, "crates/demo/tests/it.rs", "// conforms: fix-untagged\n")
         self.was = census.ROOT
         census.ROOT = self.dir
+        # **The fixture is a repository**, because the gate reads the tracked
+        # set rather than walking, which is the format's own rule and the one
+        # thing a walk cannot honour.
+        import subprocess
+        for cmd in (["init", "-q"], ["add", "-A"]):
+            subprocess.run(["git", "-C", self.dir] + cmd, check=True,
+                           capture_output=True)
         self.baseline = census.BASELINE
         census.BASELINE = os.path.join(self.dir, "baseline.json")
         self.addCleanup(shutil.rmtree, self.dir, True)
@@ -134,7 +141,8 @@ class Census(unittest.TestCase):
         """**Through `main`**, so the exit code and the comparison are what is
         watched rather than a re-implementation of them beside the gate."""
         self.assertEqual(run("--update"), 0)
-        before = json.load(open(census.BASELINE))["dangling_citations"]
+        with open(census.BASELINE, encoding="utf-8") as fh:
+            before = json.load(fh)["dangling_citations"]
         self.assertEqual(run(), 0, "the reading it just took")
 
         write(self.dir, "crates/demo/src/bare.rs", BARE.replace("nonexistent", "absent"))
@@ -152,38 +160,54 @@ class Census(unittest.TestCase):
         write(self.dir, "docs/demo-Spec.md", CORPUS + CORPUS + CORPUS)
         self.assertEqual(run(), 1, "a third copy is new")
 
+    def test_update_names_a_recurrence_under_a_name_it_already_holds(self):
+        """**The reporting path compares as the gating path does.** A set
+        comparison calls the second occurrence familiar and moves the baseline
+        in silence, which leaves the act's commit message nothing to say."""
+        write(self.dir, "docs/demo-Spec.md", CORPUS + CORPUS)
+        self.assertEqual(run("--update"), 0)
+        write(self.dir, "docs/demo-Spec.md", CORPUS + CORPUS + CORPUS)
+        code, out = run_out("--update")
+        self.assertEqual(code, 0)
+        self.assertIn("duplicate_node_ids", out, f"the move is named: {out}")
+
+    def test_an_unrecognised_argument_refuses(self):
+        self.assertEqual(run("--updat"), 2)
+
     def test_a_member_that_is_not_there_refuses_rather_than_counting_zero(self):
         write(self.dir, "Cargo.toml", 'members = [\n  "crates/gone",\n]\n')
         with self.assertRaises(SystemExit):
             census.take()
 
 
-def run(*args):
-    out = io.StringIO()
+def run_out(*args):
+    """The gate, with both streams captured.
+
+    **Stderr too.** Uncaptured, the gate's own "Something is new" banner
+    prints into an all-green run and a passing suite reads as a failing one,
+    which is the state that teaches people to stop reading test output.
+    """
+    out, err = io.StringIO(), io.StringIO()
     was = os.sys.argv
     os.sys.argv = ["census"] + list(args)
     try:
-        with redirect_stdout(out):
-            return census.main()
-    finally:
-        os.sys.argv = was
-
-
-def run_out():
-    out = io.StringIO()
-    was = os.sys.argv
-    os.sys.argv = ["census"]
-    try:
-        with redirect_stdout(out):
+        with redirect_stdout(out), redirect_stderr(err):
             code = census.main()
     finally:
         os.sys.argv = was
-    return code, out.getvalue()
+    return code, out.getvalue() + err.getvalue()
+
+
+def run(*args):
+    return run_out(*args)[0]
 
 
 def write(root, rel, text):
     with open(os.path.join(root, rel), "w", encoding="utf-8") as fh:
         fh.write(text)
+    import subprocess
+    if os.path.isdir(os.path.join(root, ".git")):
+        subprocess.run(["git", "-C", root, "add", "-A"], check=True, capture_output=True)
 
 
 if __name__ == "__main__":

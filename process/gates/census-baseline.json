@@ -16,8 +16,9 @@
   ],
   "duplicate_node_ids": [],
   "enforcement_table_mismatch": [],
+  "malformed_citations": [],
   "malformed_node_ids": [
-    "docs/crates/weaver-agents-PRD.md: WeaverTools"
+    "docs/crates/weaver-agents-PRD.md: node: WeaverTools"
   ],
   "sources_without_a_header": [
     "crates/weaver-analysis/src/field.rs",
@@ -47,6 +48,10 @@
     "crates/weaver-state/src/engine/mod.rs",
     "crates/weaver-state/src/engine/postgres.rs",
     "crates/weaver-state/src/engine/sqlite.rs",
+    "crates/weaver-web/archive/conversation/src/channel.rs",
+    "crates/weaver-web/archive/conversation/src/registry.rs",
+    "crates/weaver-web/archive/conversation/src/router.rs",
+    "crates/weaver-web/archive/conversation/src/user.rs",
     "crates/weaver-web/src/adapters/gate.rs",
     "crates/weaver-web/src/adapters/mod.rs",
     "crates/weaver-web/src/adapters/upstream.rs",

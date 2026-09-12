@@ -124,8 +124,8 @@ not bought, never that none exists** - the inverse overclaim forecloses tests th
 may later want.
 
 **Gates G1-G7 run on every act** (mechanical, level discipline, graph facts, vocabulary,
-duplication authority, extraction completeness, rulings landed). H1-H6 are phase three's, in force per
-Working Process section 6, H6 having joined them 2026-09-11.
+duplication authority, extraction completeness, rulings landed). H1-H6 are phase
+three's, in force per Working Process section 6, H6 having joined 2026-09-11.
 
 **A ruling is a claim about the whole corpus.** A review finding names one sighting of its
 violation, so an act that lands a ruling ends with a corpus-wide sweep for every wording
@@ -333,9 +333,10 @@ when the graph lands - the graph indexes them, it does not replace them:
    clippy and fmt are run - **before the first review and again after the
    rework**, since a fix is an act and can regress what it is fixing.
 
-   **It counts what the other five devices structurally cannot see.** Each of those verifies an artifact against itself: a test against
-   its code, a lint against its crate, a compile pin against its types.
-   **None of them compares a claim in a document against a fact in code.**
+   **It counts what the other five devices structurally cannot see.** Each of
+   those verifies an artifact against itself: a test against its code, a lint
+   against its crate, a compile pin against its types. **None compares a claim
+   in a document against a fact in code.**
 
    ```text
    dangling_citations                      a citation naming no node
@@ -349,14 +350,14 @@ when the graph lands - the graph indexes them, it does not replace them:
    sources_without_a_header                phase three's rule, per unit
    ```
 
-   **The rule is that no defect is new, not that every number is zero.** The
-   comparison is by identity: swapping one defect for another of the same kind
-   leaves the count still and is caught anyway. A gate nobody can pass is a
-   gate everyone learns to ignore, which item 5 already says of clippy, so the
-   backlog is a baseline rather than a failure. `--update` moves it, and
-   **moving it is a sentence in the act's commit message**, not a quiet
-   re-reading. `process/gates/census-baseline.json` carries the reading and
-   `test_census.py` a fixture holding one of each defect.
+   **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
+   file carries the invocation and not a second copy of it: two authorities
+   for one gate is the duplication G5 refuses, and the two had already drifted
+   in wording before this sentence replaced them. What is worth repeating here
+   is the shape - **no defect is new, rather than every number zero**, the
+   backlog being a baseline because a gate nobody can pass is one everyone
+   learns to ignore, which item 5 already says of clippy.
+   `process/gates/test_census.py` is its fixture and runs beside it.
 
    **A new `tag: perturbation` node is cited by code in the same act, or its
    enforcement-table row is marked owed.** Twelve of the thirteen documents
