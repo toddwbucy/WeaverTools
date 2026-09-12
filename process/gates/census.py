@@ -89,6 +89,14 @@ review passes found them; the second found as many as the first:
   written `node:x` was accepted where the grammar is `key: value`. **A reader
   that tolerates a shape the format does not admit is as wrong as one that
   drops it** - both are matched loosely and judged strictly now.
+- That fix reached `node:` and not `kind:` or `tag:` beside it, so
+  `kind:assertion` and an empty `tag:` still passed. **The neighbours of a
+  changed line are the sweep the corpus already has a rule for**, and this
+  file broke it one line after applying it.
+- Citations were collected into a set, so a second identical dangling one was
+  folded away before `main` compared as a multiset. **The same
+  set-for-multiset mistake in a third place**, after the gating path and the
+  update path each carried it.
 """
 
 import glob
@@ -117,8 +125,11 @@ GRAPH = re.compile(r"```graph[ \t]*\r?\n(.*?)```", re.S)
 # so the line is matched loosely and judged strictly.
 NODE_LINE = re.compile(r"^[ \t]*node:(.*)$", re.M)
 NODE_OK = re.compile(r"^[a-z0-9-]+$")
-KIND = re.compile(r"^\s*kind:\s*(\S+)\s*$", re.M)
-TAG = re.compile(r"^\s*tag:\s*(\S+)\s*$", re.M)
+# Matched loosely and judged strictly, as `node:` is: the separator is part of
+# the record, and a reader that tolerates `kind:assertion` accepts a shape the
+# format does not admit. The node line's fix did not reach its neighbours.
+KIND = re.compile(r"^[ \t]*kind:(.*)$", re.M)
+TAG = re.compile(r"^[ \t]*tag:(.*)$", re.M)
 HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
 # **The whole rest of the line, and only from a comment.** Capturing one token
 # credits `conforms: valid-node trailing` as a sound citation and says nothing
@@ -271,6 +282,18 @@ def enforcement_table(text):
     return found
 
 
+def field(pattern, stanza):
+    """A record's field, and whether it is written in a shape the format
+    admits. `None` for absent, which an untagged assertion legitimately is."""
+    found = pattern.search(stanza)
+    if not found:
+        return None, False
+    raw = found.group(1)
+    if not raw or not raw[0].isspace() or not raw.strip():
+        return None, True
+    return raw.strip(), False
+
+
 def take():
     """One reading. Every value is a sorted list of the offenders themselves,
     so the comparison is by identity rather than by count."""
@@ -304,10 +327,12 @@ def take():
                 if not NODE_OK.match(name):
                     malformed.append(f"{rel}: node: {name}")
                     continue
-                kind = KIND.search(stanza)
-                kind = kind.group(1) if kind else None
-                tag = TAG.search(stanza)
-                tag = tag.group(1) if tag else None
+                kind, bad_kind = field(KIND, stanza)
+                tag, bad_tag = field(TAG, stanza)
+                if bad_kind or bad_tag:
+                    which = "kind" if bad_kind else "tag"
+                    malformed.append(f"{rel}: {name}, {which} is not `key: value`")
+                    continue
                 # **Every kind, since a collision is one whatever the kinds
                 # are.** The format makes two spellings of one name a defect
                 # without qualifying it by kind, and this corpus declares
@@ -330,7 +355,11 @@ def take():
         if declared_here:
             texts[rel] = text
 
-    cited, headerless, bad_cites = set(), [], []
+    # **A list and not a set.** A second identical dangling citation is a
+    # second defect; folding it into a set removes it before `main` compares
+    # as a multiset. This is the same set-for-multiset mistake the gating path
+    # and the update path each carried, in the place the data is built.
+    cited, headerless, bad_cites = [], [], []
     for path, owes, archived in sources():
         # **An archived file cites nothing.** It is never compiled, so a
         # citation in it buys no instrument - and letting its text satisfy a
@@ -344,7 +373,7 @@ def take():
             if raw and not raw[0].isspace():
                 bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms:{raw}")
             elif NODE_OK.match(value):
-                cited.add(value)
+                cited.append(value)
             else:
                 bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {value}")
         if owes and not HEADER_CITE.search(text):
@@ -381,7 +410,7 @@ def take():
         "untagged_assertions": sorted(n for n, (_, t) in nodes.items() if t is None),
         "unknown_tags": sorted(odd),
         "uncited_perturbations": sorted(
-            n for n, (_, t) in nodes.items() if t == "perturbation" and n not in cited
+            n for n, (_, t) in nodes.items() if t == "perturbation" and n not in set(cited)
         ),
         "duplicate_node_ids": sorted(duplicates),
         "malformed_node_ids": sorted(malformed),

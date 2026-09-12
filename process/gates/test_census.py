@@ -55,6 +55,14 @@ node:fix-no-separator
 kind: assertion
 tag: perturbation
 
+node: fix-kind-no-separator
+kind:assertion
+tag: review
+
+node: fix-empty-tag
+kind: assertion
+tag:
+
 node: fix-cited-pin
 kind: assertion
 tag: compile-pin
@@ -153,9 +161,14 @@ class Census(unittest.TestCase):
         # second is a grammar the format does not admit even though the
         # identifier in it is sound.
         ids = " ".join(reading["malformed_node_ids"])
-        self.assertEqual(len(reading["malformed_node_ids"]), 2, ids)
+        self.assertEqual(len(reading["malformed_node_ids"]), 4, ids)
         self.assertIn("fix-Malformed-Id", ids)
         self.assertIn("no space after the key", ids)
+        # A field written `kind:assertion`, and one written `tag:` with nothing
+        # after it - both shapes the grammar does not admit, and neither is an
+        # untagged assertion, which is a legitimate thing to be.
+        self.assertIn("fix-kind-no-separator", ids)
+        self.assertIn("fix-empty-tag", ids)
 
         # The table is found by its own header, and the documents that carry
         # none are the metric, so one losing its table is a new entry rather
@@ -237,6 +250,17 @@ class Census(unittest.TestCase):
         os.remove(os.path.join(self.dir, "crates/demo/src/bare.rs"))
         reading = census.take()
         self.assertNotIn("crates/demo/src/bare.rs", reading["sources_without_a_header"])
+
+    def test_a_second_identical_dangling_citation_is_a_second_defect(self):
+        """**The set is upstream of the multiset.** Folding citations into a
+        set removes a repeat before `main` can compare by identity - the same
+        set-for-multiset mistake the gating and update paths each carried."""
+        self.assertEqual(run("--update"), 0)
+        write(self.dir, "crates/demo/src/second.rs",
+              "//! conforms: fix-nonexistent\n")
+        code, out = run_out()
+        self.assertEqual(code, 1, out)
+        self.assertIn("+ fix-nonexistent", out)
 
     def test_an_unrecognised_argument_refuses(self):
         self.assertEqual(run("--updat"), 2)
