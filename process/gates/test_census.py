@@ -51,6 +51,10 @@ node: fix-Malformed-Id
 kind: assertion
 tag: review
 
+node:fix-no-separator
+kind: assertion
+tag: perturbation
+
 node: fix-cited-pin
 kind: assertion
 tag: compile-pin
@@ -70,6 +74,9 @@ BARE = """//! A file with no header citation.
 
 /// conforms: fix-nonexistent
 /// conforms: Fix_Broken.Citation
+/// conforms: fix-cited-pin trailing words
+/// conforms:fix-cited-pin
+/// the header form reads `conforms: <crate>-<slug>` and is not a citation
 fn f() {}
 """
 
@@ -121,8 +128,15 @@ class Census(unittest.TestCase):
 
         # **A broken header and a broken declaration are two things.** One key
         # reporting both leaves a reader unable to tell which they have.
-        self.assertEqual(len(reading["malformed_citations"]), 1)
-        self.assertIn("Fix_Broken.Citation", reading["malformed_citations"][0])
+        # Three broken headers and one piece of prose that is not a header:
+        # a bad identifier, a trailing word after a sound one, and a missing
+        # separator. The prose mentions the form and must not be a finding.
+        bad = " ".join(reading["malformed_citations"])
+        self.assertEqual(len(reading["malformed_citations"]), 3, bad)
+        self.assertIn("Fix_Broken.Citation", bad)
+        self.assertIn("trailing words", bad)
+        self.assertIn("conforms:fix-cited-pin", bad)
+        self.assertNotIn("<crate>", bad, "prose quoting the form is not a citation")
         self.assertNotIn(
             "Fix_Broken.Citation", " ".join(reading["malformed_node_ids"])
         )
@@ -135,8 +149,13 @@ class Census(unittest.TestCase):
 
         # A malformed id is named rather than dropped into silence, where it
         # would make every citation to it read as dangling.
-        self.assertEqual(len(reading["malformed_node_ids"]), 1)
-        self.assertIn("fix-Malformed-Id", reading["malformed_node_ids"][0])
+        # A bad identifier, and a record with no space after its key - the
+        # second is a grammar the format does not admit even though the
+        # identifier in it is sound.
+        ids = " ".join(reading["malformed_node_ids"])
+        self.assertEqual(len(reading["malformed_node_ids"]), 2, ids)
+        self.assertIn("fix-Malformed-Id", ids)
+        self.assertIn("no space after the key", ids)
 
         # The table is found by its own header, and the documents that carry
         # none are the metric, so one losing its table is a new entry rather

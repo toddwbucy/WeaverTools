@@ -84,6 +84,11 @@ review passes found them; the second found as many as the first:
   ran.
 - `--update` truncated the baseline before serialising, so an interrupt left
   the gate's whole memory half written.
+- A citation was read as its first token, so `conforms: valid-node trailing`
+  credited the node and said nothing about the rest of the line; and a record
+  written `node:x` was accepted where the grammar is `key: value`. **A reader
+  that tolerates a shape the format does not admit is as wrong as one that
+  drops it** - both are matched loosely and judged strictly now.
 """
 
 import glob
@@ -106,17 +111,22 @@ TAGS = {"compile-pin", "compile-fail", "perturbation", "manifest", "review"}
 # a ```graphviz or ```graphql fence, whose contents would declare phantom
 # nodes that mask the dangling citations this gate exists to catch.
 GRAPH = re.compile(r"```graph[ \t]*\r?\n(.*?)```", re.S)
-NODE_LINE = re.compile(r"^\s*node:\s*(.*)$", re.M)
+# **The separator is part of the record.** `node:x` is not `node: x`, and a
+# reader that tolerates the first accepts a record the grammar does not admit
+# while a reader that simply fails to match it drops the node into silence -
+# so the line is matched loosely and judged strictly.
+NODE_LINE = re.compile(r"^[ \t]*node:(.*)$", re.M)
 NODE_OK = re.compile(r"^[a-z0-9-]+$")
 KIND = re.compile(r"^\s*kind:\s*(\S+)\s*$", re.M)
 TAG = re.compile(r"^\s*tag:\s*(\S+)\s*$", re.M)
 HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
-# **Anchored to the end of the word.** Unanchored, `conforms: weaver_types-x`
-# captures `weaver` and the gate names an identifier that is in no file, so a
-# reader grepping for the offender finds nothing. A citation's own defects are
-# their own metric: a broken header and a broken declaration are two things and
-# one key reporting both leaves a reader unable to tell which they have.
-ANY_CITE = re.compile(r"conforms:[ \t]*([^\s]*)")
+# **The whole rest of the line, and only from a comment.** Capturing one token
+# credits `conforms: valid-node trailing` as a sound citation and says nothing
+# about the trailing text; capturing the bare word anywhere makes prose that
+# quotes the header form into a finding against a file with no defect. A
+# citation's own defects are their own metric, a broken header and a broken
+# declaration being two things a reader must tell apart.
+ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
 
 # A build script is cargo's unit and not the crate's, and conforms to nothing.
 # `archive/` is not a workspace member and is never compiled, so counting
@@ -286,7 +296,11 @@ def take():
                 line = NODE_LINE.search(stanza)
                 if not line:
                     continue
-                name = line.group(1).strip()
+                raw = line.group(1)
+                name = raw.strip()
+                if raw and not raw[0].isspace():
+                    malformed.append(f"{rel}: node:{raw} (no space after the key)")
+                    continue
                 if not NODE_OK.match(name):
                     malformed.append(f"{rel}: node: {name}")
                     continue
@@ -326,10 +340,13 @@ def take():
             continue
         text = read(path)
         for raw in ANY_CITE.findall(text):
-            if NODE_OK.match(raw):
-                cited.add(raw)
+            value = raw.strip()
+            if raw and not raw[0].isspace():
+                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms:{raw}")
+            elif NODE_OK.match(value):
+                cited.add(value)
             else:
-                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {raw}")
+                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {value}")
         if owes and not HEADER_CITE.search(text):
             headerless.append(os.path.relpath(path, ROOT))
 

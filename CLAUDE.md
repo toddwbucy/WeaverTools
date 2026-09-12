@@ -268,8 +268,9 @@ when the graph lands - the graph indexes them, it does not replace them:
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
    operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
    workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
-   before that crate's act merges. It is the cheapest of the six and the only
-   one a person has to type, which is how it went unrun.
+   before that crate's act merges. It is the cheapest of the six, and until the
+   census joined it the only one a person had to type, which is how it went
+   unrun.
 
    **Stated per crate because the workspace did not pass when the gate
    landed, and a gate nobody can pass is a gate everyone learns to ignore.**
