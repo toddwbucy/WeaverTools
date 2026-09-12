@@ -88,6 +88,17 @@ except ValueError:
 [ -n "$BUILT" ] || die "cargo metadata names no target directory, so where the build lands is unknown"
 BUILT="$BUILT/release"
 
+# **The features the stack is built with decide what an agent can elect.**
+# `weaver-state` carries its engines behind features and takes sqlite by
+# default, so a build that does not name postgres installs a member that
+# refuses every agent electing it. Measured 2026-09-11: karl's load refused
+# with `descriptors_unusable` while the territory's state.log held the real
+# fault, `no engine named "postgres" in this binary`, and the installed
+# member carried none of the 286 postgres symbols the experiment stacks do.
+# Substrates arrive one at a time and each is a feature rather than a
+# default, so this list is the one place the deployment says which are in.
+FEATURES=weaver-spu/cuda,weaver-harness/pyworker,weaver-state/postgres
+
 # ---------------------------------------------------------------- 1. box facts
 say "box"
 printf '  host          %s\n' "$(hostname)"
@@ -100,6 +111,11 @@ printf '  worker-binary %s\n' "$WORKER_BINARY"
 # nothing. A fact that decides the answer belongs where a reader of the
 # output can see it.
 printf '  built from    %s\n' "$BUILT"
+# **The feature set is a box fact for the same reason the paths are.** It
+# decides which store engines the installed member can serve, so an agent
+# that loads on one stack and refuses on another differs here and nowhere a
+# reader could see.
+printf '  features      %s\n' "$FEATURES"
 printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null || echo none)"
 
 # The cccl window of #397. Outside it the engine does not compile, and a
@@ -173,8 +189,7 @@ cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analys
 # ------------------------------------------------------------------- 4. build
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --locked --workspace \
-    --features weaver-spu/cuda,weaver-harness/pyworker
+  cargo build --release --locked --workspace --features "$FEATURES"
 printf '  ok\n'
 
 # --------------------------------------------------------------------- 5. plan
