@@ -344,7 +344,8 @@ when the graph lands - the graph indexes them, it does not replace them:
    untagged_assertions                     a node no tag query can reach
    unknown_tags                            a tag outside the format's five
    duplicate_node_ids                      one identifier, two declarations
-   malformed_node_ids                      a line this gate cannot read
+   malformed_node_ids                      a declaration this gate cannot read
+   malformed_citations                     a citation this gate cannot read
    enforcement_table_mismatch              a document against its own table
    documents_without_an_enforcement_table  the table a row is owed in
    sources_without_a_header                phase three's rule, per unit

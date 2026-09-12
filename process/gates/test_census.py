@@ -69,6 +69,7 @@ SOURCE = """//! conforms: fix-cited-pin
 BARE = """//! A file with no header citation.
 
 /// conforms: fix-nonexistent
+/// conforms: Fix_Broken.Citation
 fn f() {}
 """
 
@@ -111,6 +112,14 @@ class Census(unittest.TestCase):
         self.assertEqual(reading["unknown_tags"], ["fix-odd-tag (socket)"])
 
         self.assertEqual(reading["dangling_citations"], ["fix-nonexistent"])
+
+        # **A broken header and a broken declaration are two things.** One key
+        # reporting both leaves a reader unable to tell which they have.
+        self.assertEqual(len(reading["malformed_citations"]), 1)
+        self.assertIn("Fix_Broken.Citation", reading["malformed_citations"][0])
+        self.assertNotIn(
+            "Fix_Broken.Citation", " ".join(reading["malformed_node_ids"])
+        )
         self.assertEqual(reading["uncited_perturbations"], ["fix-uncited-perturbation"])
 
         # **A block declares several nodes**, so a reader taking the first
@@ -170,6 +179,19 @@ class Census(unittest.TestCase):
         code, out = run_out("--update")
         self.assertEqual(code, 0)
         self.assertIn("duplicate_node_ids", out, f"the move is named: {out}")
+
+    def test_a_document_with_two_enforcement_tables_counts_both(self):
+        """Stopping at the first counts one section's rows against the whole
+        document's assertions - a loud false mismatch beside a silent omission
+        of the rows that do exist."""
+        two = CORPUS + "\n| claim | instrument |\n|---|---|\n| a second table | review |\n"
+        write(self.dir, "docs/demo-Spec.md", two)
+        reading = census.take()
+        # Four assertions against two tables of one row each: the mismatch
+        # names two rows. Stopping at the first would name one.
+        self.assertEqual(
+            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (4 nodes, 2 rows)"]
+        )
 
     def test_an_unrecognised_argument_refuses(self):
         self.assertEqual(run("--updat"), 2)

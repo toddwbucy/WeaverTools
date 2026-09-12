@@ -59,6 +59,17 @@ review passes found them; the second found as many as the first:
 - The reporting path of `--update` compared as a set while the gating path
   compared as a multiset, so a recurrence under a name already baselined moved
   the baseline with nothing printed.
+- A metric's entry carried its own count, so adding one assertion to a
+  document with no enforcement table read as one defect gone and another
+  arrived. **It would have fired on the first act of issue #558's backlog**,
+  which is a gate crying wolf on its first real use.
+- `os.walk` is unordered, so the first declaration of a duplicated identifier -
+  the one kept - depended on the filesystem, and two seats could baseline
+  different strings from one commit.
+- `archive/` was excluded in a comment and not in the code, putting four files
+  that are never compiled into a backlog with no way to close them.
+- Only the first enforcement table in a document was read, and `--update`
+  raised on a baseline key the reading no longer had.
 """
 
 import glob
@@ -98,6 +109,7 @@ ANY_CITE = re.compile(r"conforms:[ \t]*([^\s]*)")
 # either gives the metric a floor nobody can reach - the shape that teaches
 # people to stop reading a number.
 NO_HEADER_OWED = ("build.rs",)
+ARCHIVED = f"{os.sep}archive{os.sep}"
 
 
 def read(path):
@@ -144,7 +156,13 @@ def docs():
         # every node the live one does, so ingesting both files each id under
         # duplicates, files every perturbation it declares under uncited, and
         # lets the last declaration read win.
-        dirs[:] = [d for d in dirs if d not in (".git", "archive")]
+        # **Sorted, so two boxes read one commit the same way.** `os.walk`
+        # yields directories in the filesystem's order, and the first
+        # declaration of a duplicated identifier is the one kept, so an
+        # unsorted walk lets two seats baseline different strings from the
+        # same tree - the machine-dependent gate the enforcement section
+        # already records for the clippy count.
+        dirs[:] = sorted(d for d in dirs if d not in (".git", "archive"))
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)
@@ -175,22 +193,32 @@ def sources():
     for rel in sorted(tracked):
         if not rel.startswith(inside):
             continue
-        owes = rel.endswith(".rs") and os.path.basename(rel) not in NO_HEADER_OWED
+        owes = (
+            rel.endswith(".rs")
+            and os.path.basename(rel) not in NO_HEADER_OWED
+            and f"{os.sep}archive{os.sep}" not in f"{os.sep}{rel}"
+        )
         yield os.path.join(ROOT, rel), owes
 
 
 def enforcement_table(text):
-    """Rows of a document's enforcement table, header excluded, or `None`."""
+    """Rows across every enforcement table a document carries, or `None`.
+
+    **Every table and not the first.** Nothing in the Document Format stops a
+    document splitting its enforcement across two tables, and stopping at the
+    first counts one section's rows against the whole document's assertions -
+    a loud false mismatch beside a silent omission of the rows that do exist.
+    """
     lines = text.splitlines()
+    found = None
     for i, line in enumerate(lines):
         if re.match(r"^\|\s*claim\s*\|\s*instrument\s*\|", line, re.I):
-            rows = 0
+            found = found or 0
             for row in lines[i + 2:]:
                 if not row.startswith("|"):
                     break
-                rows += 1
-            return rows
-    return None
+                found += 1
+    return found
 
 
 def take():
@@ -270,7 +298,12 @@ def take():
         rows = enforcement_table(texts[rel])
         count = per_doc[rel]
         if rows is None:
-            tableless.append(f"{rel} ({count} assertions)")
+            # **The entry is the document and not its count.** With the count
+            # in the string, adding one assertion to a tableless Spec reads as
+            # one defect gone and another arrived, and the gate fails for a
+            # document that was tableless before and after. It would have
+            # fired on the first act of issue #558's own backlog.
+            tableless.append(rel)
             continue
         if rows != count:
             mismatch.append(f"{rel} ({count} nodes, {rows} rows)")
@@ -337,7 +370,7 @@ def main():
         for key in sorted(set(reading) | set(old)):
             gained, lost = difference(reading.get(key, []), old.get(key, []))
             if gained or lost:
-                print(f"{key}: {len(old.get(key, []))} -> {len(reading[key])}")
+                print(f"{key}: {len(old.get(key, []))} -> {len(reading.get(key, []))}")
                 for x in gained:
                     print(f"  + {x}")
                 for x in lost:
