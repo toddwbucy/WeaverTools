@@ -99,7 +99,7 @@ the file rather than trusting a version remembered from a summary.
    section 5 - the set ratifies as the complete document set for the toolless
    inference deliverable, the tool workflow's later arrival a planned re-entry.
    Checklist item 7 (quarry deletion) outlives ratification and waits on G6.
-3. **Phase three, coding.** Open, gates H1-H5 in force per Working Process
+3. **Phase three, coding.** Open, gates H1-H6 in force per Working Process
    section 6. The floor (`weaver-traits`, `weaver-types`) and the recorder
    (`weaver-trace`) are the first acts, and every source file carries a
    `//! conforms: <crate>-<slug>` header per Document Format v0.14, and code
@@ -124,8 +124,8 @@ not bought, never that none exists** - the inverse overclaim forecloses tests th
 may later want.
 
 **Gates G1-G7 run on every act** (mechanical, level discipline, graph facts, vocabulary,
-duplication authority, extraction completeness, rulings landed). H1-H5 are phase three
-candidates and are not in force.
+duplication authority, extraction completeness, rulings landed). H1-H6 are phase
+three's, in force per Working Process section 6, H6 having joined 2026-09-11.
 
 **A ruling is a claim about the whole corpus.** A review finding names one sighting of its
 violation, so an act that lands a ruling ends with a corpus-wide sweep for every wording
@@ -253,7 +253,7 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**During authoring, enforcement rests on five devices and no graph.** These do not retire
+**During authoring, enforcement rests on six devices and no graph.** These do not retire
 when the graph lands - the graph indexes them, it does not replace them:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
@@ -268,8 +268,9 @@ when the graph lands - the graph indexes them, it does not replace them:
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
    operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
    workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
-   before that crate's act merges. It is the cheapest of the five and the only
-   one a person has to type, which is how it went unrun.
+   before that crate's act merges. It is the cheapest of the six, and until the
+   census joined it the only one a person had to type, which is how it went
+   unrun.
 
    **Stated per crate because the workspace did not pass when the gate
    landed, and a gate nobody can pass is a gate everyone learns to ignore.**
@@ -328,6 +329,54 @@ when the graph lands - the graph indexes them, it does not replace them:
    linted at all and `--workspace` answers a smaller question than twelve
    per-crate runs do.
 
+6. **The census**, on the operator's ruling of 2026-09-11.
+   `python3 process/gates/census.py`, run from the repository root wherever
+   clippy and fmt are run - **before the first review and again after the
+   rework**, since a fix is an act and can regress what it is fixing.
+
+   **It counts what the other five devices structurally cannot see.** Each of
+   those verifies an artifact against itself: a test against its code, a lint
+   against its crate, a compile pin against its types. **None compares a claim
+   in a document against a fact in code.**
+
+   ```text
+   dangling_citations                      a citation naming no node
+   uncited_perturbations                   a tag claiming an instrument
+   untagged_assertions                     a node no tag query can reach
+   unknown_tags                            a tag outside the format's five
+   duplicate_node_ids                      one identifier, two declarations
+   malformed_node_ids                      a declaration this gate cannot read
+   malformed_citations                     a citation this gate cannot read
+   enforcement_table_mismatch              a document against its own table
+   documents_without_an_enforcement_table  the table a row is owed in
+   sources_without_a_header                phase three's rule, per unit
+   ```
+
+   **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
+   file carries the invocation and not a second copy of it: two authorities
+   for one gate is the duplication G5 refuses. **The rule is section 6's, in
+   full, and is not restated here** - the first form of this sentence said so
+   and then restated three of its clauses, which is the condition it claimed
+   to have removed. `process/gates/test_census.py` is the gate's fixture and
+   runs beside it.
+
+   **Issue #558 is the backlog** and records how it came about: nineteen of
+   the first thirty-three uncited perturbations were born in documents-only
+   commits, the Spec authoring an assertion that phase three would code later,
+   with nothing holding the receipt.
+
+   **It has been wrong twenty-two times and its docstring lists every one**,
+   which is worth reading before trusting a number it prints. The shape
+   repeats: a regular expression too strict about where text sits, printing a
+   count that is confidently too low. `\w` does not match a hyphen, so
+   `compile-pin` and `compile-fail` read as untagged and **fifty four of them
+   were published in this file as a defect count**. A graph block declares
+   several nodes and the first form read one, calling seventy sound citations
+   dangling. Declining to read a crate's `tests/` moved fifteen perturbations
+   into the uncited column, **citing and owing a header being different
+   questions** that one walk was answering. There are no untagged assertions
+   in this corpus.
+
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
 code defects while accumulating 53 dangling edges of its own. A clean automated gate is
@@ -345,11 +394,82 @@ The coding session answers each finding with a commit. More than four review rou
 with the seat means the diff is not the problem. The pull request is pulled and the
 work re-enters authoring.
 
+**The seat reviews twice, and the second pass reviews the rework.** Answering
+fifteen findings is itself an act, and on 2026-09-11 it introduced a real defect
+in three pull requests out of four: a transaction that was not a snapshot, a
+sweep whose claim was measured against one marker of several, and a newtype that
+held its kind for the compiler and not for the value. **Each was found by the
+pass that came after the fixes**, not by the one that found the original
+defects. So a second pass is not optional where the first produced substantive
+work; where the first returned nothing actionable, a second is ritual.
+
+**Passing means no finding that changes behaviour or corrects a claim is
+unanswered.** A declined finding is answered - with the reason on the pull
+request, since the record carries the finding as it stood either way.
+
+**The reviews are cheap in the resource that is scarce.** A pass runs in a
+sub-agent, so its own hundred-odd thousand tokens never enter the session's
+window and only the findings do. **Do not spend a review pass on what the
+census counts**: a reviewer's attention on "is this perturbation cited" is
+attention not on "does this fix hold", and the first is deterministic.
+
+The order, then: gates including the census, first review, answer every finding,
+gates again, second review, then out of draft.
+
 A pull request leaves draft only when the code review seat passes it. Leaving draft is
 what invokes CodeRabbit, which is the final pass and is expected to confirm rather
 than to find work. Two exchanges with CodeRabbit is the ceiling. A third means the
 draft phase did not finish, so the pull request returns to draft and the seat works it
 again before it comes back out.
+
+## Command output is context, and the session pays for it
+
+**On the operator's ruling of 2026-09-11, after a session spent twenty-two
+percent of a one-million-token window on the output of its own commands.**
+Not on the work, and not on the conversation: on `cat`, on full test runs, on
+`psql` dumps, and on re-reading files already in the window. The corpus is
+large and a session that reads it carelessly runs out of room to think.
+
+**Verbose network and database output goes to a file, then the file is
+queried.** A result held once on disk can be grepped ten times for nothing,
+where a result printed to the session is paid for once and then paid for again
+in every later turn that carries it. Write to the scratchpad, report the count,
+read back only the rows that matter.
+
+**Cargo writes its diagnostics to stderr, so a pipe without `2>&1` discards
+what it claims to filter** and prints a clean nothing whether the command
+succeeded or failed. The enforcement section above spends a paragraph on this
+exact failure and calls the zero it prints the most expensive line in that
+section. The first form of this block dropped the redirect from three of its
+own examples.
+
+```text
+cargo test -p <crate> 2>&1 | grep -E '^test result|FAILED'
+cargo build 2>&1          | grep -E '^error' -A4
+cargo clippy -p <crate> --all-targets --message-format=short -- -D warnings 2>&1 \
+                          | grep -cE '^crates/.*: error:'
+git diff                  --stat first; the full diff only for the hunk in hand
+a listing                 aggregated - uniq -c, awk totals - never row by row
+a file already read       sed -n 'X,Yp', never cat
+```
+
+**A count from a pipe is still not the command's verdict**: a crate that fails
+to compile emits no `test result` line at all, so the grep prints nothing and
+nothing reads like success. Check the exit status where the answer matters.
+
+**Never `git checkout --` a file to undo an experiment.** It restores the
+index, and an uncommitted rewrite in that file is gone. Copy the file aside
+and copy it back; this session destroyed one that way on 2026-09-11.
+
+**Grep the narrowest thing that answers the question.** `grep -c` where a
+count settles it. A path rather than a tree. One section of a Spec rather than
+the Spec, which at two and a half thousand lines is most of a percent of the
+window each time it is opened.
+
+**This is a discipline and not a tooling gap.** A retrieval index over the
+corpus would cut the document half of it, and is wanted for other reasons -
+but the command output above is the session's own doing and no index touches
+it.
 
 ## Conventions carried from the quarry
 
