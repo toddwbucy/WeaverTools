@@ -353,34 +353,28 @@ when the graph lands - the graph indexes them, it does not replace them:
 
    **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
    file carries the invocation and not a second copy of it: two authorities
-   for one gate is the duplication G5 refuses, and the two had already drifted
-   in wording before this sentence replaced them. What is worth repeating here
-   is the shape - **no defect is new, rather than every number zero**, the
-   backlog being a baseline because a gate nobody can pass is one everyone
-   learns to ignore, which item 5 already says of clippy.
-   `process/gates/test_census.py` is its fixture and runs beside it.
+   for one gate is the duplication G5 refuses. **The rule is section 6's, in
+   full, and is not restated here** - the first form of this sentence said so
+   and then restated three of its clauses, which is the condition it claimed
+   to have removed. `process/gates/test_census.py` is the gate's fixture and
+   runs beside it.
 
-   **A new `tag: perturbation` node is cited by code in the same act, or its
-   enforcement-table row is marked owed.** Twelve of the thirteen documents
-   declaring assertions carry no such table, which the census counts rather
-   than assumes, so for most of the corpus the rule reads as "cited in the
-   same act" until that document grows one. The gate counts the ones that are
-   neither. Issue #558 is the backlog and records why: nineteen of the first
-   thirty-three were born in documents-only commits, the Spec authoring an
-   assertion that phase three would code later, with nothing holding the
-   receipt.
+   **Issue #558 is the backlog** and records how it came about: nineteen of
+   the first thirty-three uncited perturbations were born in documents-only
+   commits, the Spec authoring an assertion that phase three would code later,
+   with nothing holding the receipt.
 
-   **It was wrong four times before it had a test**, which is worth knowing
-   before trusting any number it prints, and the script records each. A graph
-   block declares several nodes and the first form read one, calling seventy
-   sound citations dangling. A section 9 is the enforcement table in
-   `weaver-web-Spec` and the failure vocabulary in `weaver-spu-Spec`. `\w`
-   does not match a hyphen, so `compile-pin` and `compile-fail` read as
-   untagged and **fifty four of them were published in this file as a defect
-   count**. And declining to read a crate's `tests/` stopped collecting the
-   citations there, moving fifteen perturbations into the uncited column -
-   **citing and owing a header are different questions** and one walk answered
-   both. There are no untagged assertions in this corpus.
+   **It has been wrong twenty-two times and its docstring lists every one**,
+   which is worth reading before trusting a number it prints. The shape
+   repeats: a regular expression too strict about where text sits, printing a
+   count that is confidently too low. `\w` does not match a hyphen, so
+   `compile-pin` and `compile-fail` read as untagged and **fifty four of them
+   were published in this file as a defect count**. A graph block declares
+   several nodes and the first form read one, calling seventy sound citations
+   dangling. Declining to read a crate's `tests/` moved fifteen perturbations
+   into the uncited column, **citing and owing a header being different
+   questions** that one walk was answering. There are no untagged assertions
+   in this corpus.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero

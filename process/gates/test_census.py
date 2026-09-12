@@ -86,7 +86,13 @@ class Census(unittest.TestCase):
         write(self.dir, "crates/demo/src/bare.rs", BARE)
         # A test directory cites and does not owe a header.
         write(self.dir, "crates/demo/tests/it.rs", "// conforms: fix-untagged\n")
+        # **Each restore is registered as its global is mutated.** A failure
+        # in the git calls below would otherwise skip tearDown and leave
+        # `census.ROOT` pointed at a temp directory for the rest of the suite,
+        # where every later test reads an empty corpus and reports zeros.
+        self.addCleanup(shutil.rmtree, self.dir, True)
         self.was = census.ROOT
+        self.addCleanup(setattr, census, "ROOT", census.ROOT)
         census.ROOT = self.dir
         # **The fixture is a repository**, because the gate reads the tracked
         # set rather than walking, which is the format's own rule and the one
@@ -96,8 +102,8 @@ class Census(unittest.TestCase):
             subprocess.run(["git", "-C", self.dir] + cmd, check=True,
                            capture_output=True)
         self.baseline = census.BASELINE
+        self.addCleanup(setattr, census, "BASELINE", census.BASELINE)
         census.BASELINE = os.path.join(self.dir, "baseline.json")
-        self.addCleanup(shutil.rmtree, self.dir, True)
 
     def tearDown(self):
         census.ROOT = self.was
@@ -184,7 +190,11 @@ class Census(unittest.TestCase):
         """Stopping at the first counts one section's rows against the whole
         document's assertions - a loud false mismatch beside a silent omission
         of the rows that do exist."""
-        two = CORPUS + "\n| claim | instrument |\n|---|---|\n| a second table | review |\n"
+        # **Adjacent, with no blank line.** Separated by one, a row loop that
+        # runs past its own table still stops at the blank; written back to
+        # back it counts the next header and separator as claims and then
+        # counts that table's rows again. Two tables of one row read as five.
+        two = CORPUS.rstrip("\n") + "\n| claim | instrument |\n|---|---|\n| a second | review |\n"
         write(self.dir, "docs/demo-Spec.md", two)
         reading = census.take()
         # Four assertions against two tables of one row each: the mismatch
@@ -192,6 +202,22 @@ class Census(unittest.TestCase):
         self.assertEqual(
             reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (4 nodes, 2 rows)"]
         )
+
+    def test_a_new_file_not_yet_staged_still_owes_a_header(self):
+        """**The gate is run mid-act**, which is when a source file is written
+        and not yet added. Reading the index alone prints a clean pass on the
+        very work the gate was added to check."""
+        path = os.path.join(self.dir, "crates/demo/src/fresh.rs")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("// no header at all\n")
+        reading = census.take()
+        self.assertIn("crates/demo/src/fresh.rs", reading["sources_without_a_header"])
+
+    def test_a_tracked_file_deleted_and_unstaged_does_not_crash_the_gate(self):
+        """The other half of the same mid-act state."""
+        os.remove(os.path.join(self.dir, "crates/demo/src/bare.rs"))
+        reading = census.take()
+        self.assertNotIn("crates/demo/src/bare.rs", reading["sources_without_a_header"])
 
     def test_an_unrecognised_argument_refuses(self):
         self.assertEqual(run("--updat"), 2)

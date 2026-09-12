@@ -70,6 +70,20 @@ review passes found them; the second found as many as the first:
   that are never compiled into a backlog with no way to close them.
 - Only the first enforcement table in a document was read, and `--update`
   raised on a baseline key the reading no longer had.
+- Reading every table then ran one table's row loop into the next one's
+  header, counting two adjacent tables of one row each as five - a fix whose
+  own watch only covered the case where a blank line separated them.
+- The index lists a file the disk may not hold, so a tracked file deleted and
+  not yet staged killed the gate with a traceback, and a new file not yet
+  added was invisible to the header count. **Both are the ordinary mid-act
+  state**, which is when the gate is told to run.
+- `ls-files` output was split on whitespace, so a path with a space became two
+  paths that are not there.
+- Text in `archive/` still fed the citation set, so a citation in a file that
+  is never compiled could take a perturbation out of the backlog while no test
+  ran.
+- `--update` truncated the baseline before serialising, so an interrupt left
+  the gate's whole memory half written.
 """
 
 import glob
@@ -110,6 +124,7 @@ ANY_CITE = re.compile(r"conforms:[ \t]*([^\s]*)")
 # people to stop reading a number.
 NO_HEADER_OWED = ("build.rs",)
 ARCHIVED = f"{os.sep}archive{os.sep}"
+HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 
 
 def read(path):
@@ -185,20 +200,39 @@ def sources():
     alone reported the crates through 2026-08-16". The first form of this
     gate scoped by `/src/` and inherited the defect it was told about.
     """
-    tracked = subprocess.run(
-        ["git", "-C", ROOT, "ls-files", "--", "*.rs", "*.toml"],
-        capture_output=True, text=True, check=True,
-    ).stdout.split()
+    def git(*flags):
+        # **NUL separated.** A path with a space is two entries to `split()`,
+        # and git C-quotes a non-ASCII one, so both arrive as paths that are
+        # not there.
+        out = subprocess.run(
+            ["git", "-C", ROOT, "ls-files", "-z", *flags, "--", "*.rs", "*.toml"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        return [x for x in out.split("\0") if x]
+
+    # **Tracked, plus work that is not staged yet.** The format's rule is over
+    # the tracked unit to exclude what is generated or scratch, not to make an
+    # act's own new file invisible - and the gate is run mid-act, which is
+    # exactly when a new source file is written and not yet added. Untracked
+    # here means untracked and not ignored, so a build product stays out.
+    seen = set(git()) | set(git("--others", "--exclude-standard"))
     inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in members())
-    for rel in sorted(tracked):
+    for rel in sorted(seen):
         if not rel.startswith(inside):
             continue
+        path = os.path.join(ROOT, rel)
+        # **The index lists it; the disk may not.** A tracked file deleted and
+        # not yet staged is the ordinary mid-act state, and reading it is a
+        # traceback where the gate owes a reading.
+        if not os.path.isfile(path):
+            continue
+        archived = ARCHIVED in f"{os.sep}{rel}"
         owes = (
             rel.endswith(".rs")
             and os.path.basename(rel) not in NO_HEADER_OWED
-            and f"{os.sep}archive{os.sep}" not in f"{os.sep}{rel}"
+            and not archived
         )
-        yield os.path.join(ROOT, rel), owes
+        yield path, owes, archived
 
 
 def enforcement_table(text):
@@ -210,25 +244,31 @@ def enforcement_table(text):
     a loud false mismatch beside a silent omission of the rows that do exist.
     """
     lines = text.splitlines()
-    found = None
-    for i, line in enumerate(lines):
-        if re.match(r"^\|\s*claim\s*\|\s*instrument\s*\|", line, re.I):
-            found = found or 0
-            for row in lines[i + 2:]:
-                if not row.startswith("|"):
-                    break
-                found += 1
+    found, i = None, 0
+    while i < len(lines):
+        if not HEADER_ROW.match(lines[i]):
+            i += 1
+            continue
+        # **A row loop that does not stop at the next header** counts that
+        # table's header and separator as claims and then counts its rows
+        # again when the outer scan reaches it. Two adjacent tables of one
+        # row each read as five.
+        found = found or 0
+        i += 2
+        while i < len(lines) and lines[i].startswith("|") and not HEADER_ROW.match(lines[i]):
+            found += 1
+            i += 1
     return found
 
 
 def take():
     """One reading. Every value is a sorted list of the offenders themselves,
     so the comparison is by identity rather than by count."""
-    # **`declared` holds every node whatever its kind.** The corpus declares
-    # vocabulary, document, crate, term and axiom nodes beside its assertions,
-    # and the Document Format names `tool-trait` as one a source file may
-    # cite. Measuring citations against assertions alone reports a sound
-    # header as dangling.
+    # **`declared` holds every node whatever its kind**, which is what makes
+    # a duplicated identifier detectable across kinds. It is not what
+    # citations are measured against: a header names an assertion, per the
+    # Document Format, and the widening that once measured against every kind
+    # was a misreading this file records in its docstring.
     nodes, declared, duplicates, malformed, odd = {}, {}, [], [], []
     texts = {}
 
@@ -277,7 +317,13 @@ def take():
             texts[rel] = text
 
     cited, headerless, bad_cites = set(), [], []
-    for path, owes in sources():
+    for path, owes, archived in sources():
+        # **An archived file cites nothing.** It is never compiled, so a
+        # citation in it buys no instrument - and letting its text satisfy a
+        # perturbation would take that claim out of the backlog while no test
+        # runs, which is the opposite of what this metric is for.
+        if archived:
+            continue
         text = read(path)
         for raw in ANY_CITE.findall(text):
             if NODE_OK.match(raw):
@@ -375,9 +421,14 @@ def main():
                     print(f"  + {x}")
                 for x in lost:
                     print(f"  - {x}")
-        with open(BASELINE, "w", encoding="utf-8") as fh:
+        # **Written beside and moved into place.** `open(..., "w")` truncates
+        # first, so an interrupt or a serialisation error leaves the gate's
+        # whole memory half written and every later run dies in `json.load`.
+        tmp = BASELINE + ".new"
+        with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(reading, fh, indent=2, sort_keys=True)
             fh.write("\n")
+        os.replace(tmp, BASELINE)
         print("baseline written:", json.dumps({k: len(v) for k, v in reading.items()}))
         return 0
 
