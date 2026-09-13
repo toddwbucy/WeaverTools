@@ -91,6 +91,19 @@ DECLARATION="$AGENTS_DIR/$NAME.yaml"
 [ -n "$MEMBER_IDENTITY" ] || die "name the account the store must admit: --member-identity <account>
    'root' matches what weaver-admin runs as today and works now.
    '$MEMBER_USER' is the charter's design and needs admin's privilege drop first."
+# **An engine this script cannot provision is refused here rather than written
+# into a declaration.** `weaver-types` admits `none`, `sqlite` and `postgres`,
+# and anything else fails the inventory's parse after every account, database
+# and access entry has already been made. `none` is a lawful election and not
+# one this script can serve: the whole second half of it provisions a store
+# and probes the two gates over it, and an agent electing no store has none of
+# that to verify. Declare that one by hand.
+case "$ENGINE" in
+  sqlite|postgres) ;;
+  none) die "an agent electing no store is not this script's to make: everything below provisions one and probes its two gates. Declare it by hand, without state-election, state-store.database or state-store.role, which the inventory refuses for that engine." ;;
+  *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres." ;;
+esac
+
 getent passwd "$MEMBER_IDENTITY" >/dev/null || [ "$MEMBER_IDENTITY" = "$MEMBER_USER" ] \
   || die "no such account: $MEMBER_IDENTITY"
 HBA=""; IDENT=""   # asked of the store itself rather than guessed from a distro path

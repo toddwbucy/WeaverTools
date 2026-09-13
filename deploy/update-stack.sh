@@ -188,8 +188,24 @@ for agent in $ALLOW_LIST; do
   # The engine under `state-store`, not the first `engine:` in the file, and
   # an absent election means the crate's own default rather than none.
   elected=$(sed -n '/^state-store:/,/^[^[:space:]]/p' "$decl" \
-    | sed -n 's/^[[:space:]]*engine:[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
+    | sed -n 's/^[[:space:]]*engine:[[:space:]]*//p' | head -1)
+  # **The value is what YAML means by it, not the characters after the colon.**
+  # `engine: "postgres"` is the same election as `engine: postgres`, and taking
+  # the raw run of non-space characters compared `weaver-state/"postgres"`
+  # against the feature list and refused a build that carried it. A trailing
+  # comment goes, then surrounding quotes of either kind, then the space
+  # between. This is not a YAML parser and does not pretend to be one: the
+  # field is a bare scalar on one line, and there is no yaml module on either
+  # seat to do it properly.
+  elected=${elected%%#*}
+  elected=$(printf '%s' "$elected" \
+    | sed -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/")
   [ -n "$elected" ] || elected=sqlite
+  # **`none` is an election and not an absence.** It is a lawful `StoreEngine`
+  # and admin starts no member for it, per `inventory.rs`, which does not even
+  # ask for the member binary in that case. There is no `weaver-state/none`
+  # feature to look for, so comparing would refuse every agent that elects it.
+  [ "$elected" = none ] && continue
   case ",$FEATURES," in
     *",weaver-state/$elected,"*) ;;
     *) die "$agent elects the $elected store and the build carries $FEATURES, so the member would refuse it at load. Name weaver-state/$elected in FEATURES, or change the declaration." ;;
