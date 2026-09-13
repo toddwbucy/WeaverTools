@@ -22,13 +22,14 @@ from this repository's own history and nowhere a reader holding it can open dire
 
     git archive -o /tmp/repro.tar 0bca344 experiments/cross-precision-repro
 
-**A directory needs `git archive` and not `git show`**, which on one prints the tree's
-entry names and retrieves no file. **And it writes an archive rather than extracting
-one**: piped to `tar -x` this line recreates `experiments/` in the tree when run from
-the repository root, and `tar -x -C` exits 2 whenever the destination does not already
-exist. `-o` needs no destination directory and cannot write into the working tree at
-all. Section 1 of the Working Process carries the three forms and says which act each
-is.
+**A directory needs `git archive` and not `git show`**, which on a directory prints
+the tree's entry names and retrieves no file. **And it writes an archive rather than
+extracting one**: piped to `tar -x` this line recreates `experiments/` in the tree when
+run from the repository root, and `tar -x -C` exits 2 whenever the destination does not
+already exist. `-o` needs no destination directory and does not unpack, so nothing
+appears at that path in the working tree - **and the `/tmp` is doing work**, `-o`
+writing wherever it is pointed. Section 1 of the Working Process carries the three
+forms and says which act each is.
 
 This document is where the departure stands for this crate and the
 charter cites it rather than restating it.
