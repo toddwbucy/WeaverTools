@@ -88,6 +88,42 @@ except ValueError:
 [ -n "$BUILT" ] || die "cargo metadata names no target directory, so where the build lands is unknown"
 BUILT="$BUILT/release"
 
+# **The features the build takes decide what an agent can elect.**
+# `weaver-state` carries its engines behind features, so a build that does not
+# name an engine installs a member that refuses every agent electing it.
+# Measured 2026-09-11: karl's load refused with `descriptors_unusable` while
+# the territory's state.log held the real fault, `no engine named "postgres"
+# in this binary`, and the installed member carried none of the postgres
+# symbols the pinned experiment stacks do.
+#
+# **Every engine the stack serves is named, the default one included.**
+# `weaver-state` is `default = ["sqlite"]`, so an earlier form of this line
+# shipped sqlite by inheritance while claiming to enumerate what is in.
+# Narrowing that default, or passing `--no-default-features` for any reason,
+# would then have refused every sqlite-electing agent: this act's own fault in
+# the other engine, with this line printing a set that said nothing about it.
+# Substrates arrive one at a time and each is named rather than inherited.
+#
+# **Two sets, because the test step selects fewer packages than the build.**
+# A feature of a package the step does not select refuses with `none of the
+# selected packages contains this feature`, so the members' set is stated once
+# and the spu's is added for the build alone.
+# **What the deployment installs is named, not discovered.** A form of the
+# plan below walked the build directory to find its subject, and this box sets
+# `CARGO_TARGET_DIR` to a directory another project shares: the plan proposed
+# installing fifty-odd files, every `.d` and `.rlib` among them, and `hades`
+# and its libraries from a workspace that has nothing to do with this one.
+# Discovering the subject from a directory is how a deployment installs what
+# it was never asked to. The workspace also builds `weaver-web`,
+# `weaver-web-connector`, `weaver-analysis` and `weaver-spu-classify`, which
+# this box does not carry and this script does not ship. A member joins by
+# being written here.
+MEMBERS="pyworker worker weaver-admin weaver-gate weaver-spu weaver-state"
+
+MEMBER_FEATURES=weaver-harness/pyworker,weaver-state/sqlite,weaver-state/postgres
+SPU_FEATURES=weaver-spu/cuda
+FEATURES="$SPU_FEATURES,$MEMBER_FEATURES"
+
 # ---------------------------------------------------------------- 1. box facts
 say "box"
 printf '  host          %s\n' "$(hostname)"
@@ -100,7 +136,19 @@ printf '  worker-binary %s\n' "$WORKER_BINARY"
 # nothing. A fact that decides the answer belongs where a reader of the
 # output can see it.
 printf '  built from    %s\n' "$BUILT"
-printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null || echo none)"
+# **The feature set is a box fact for the same reason the paths are**, and it
+# is printed as what it is. This line runs before the build and before any
+# install, so it is what this run would build with and never a reading of the
+# member already on the box. The outcome is reported where an outcome can be
+# read: step 9 prints the `state_store` the load event names, out of the sink,
+# after the member has served it.
+printf '  will build    %s\n' "$FEATURES"
+printf '  will install  %s\n' "$MEMBERS"
+# **One line, because the query answers once per device.** Three cards gave
+# three lines into one `%s`, so two of them printed with no label and no
+# indent. The driver is the box's, not the card's, so the first answer is the
+# answer and a disagreement between cards is not a thing this can report.
+printf '  driver        %s\n' "$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || echo none)"
 
 # The cccl window of #397. Outside it the engine does not compile, and a
 # failure here is cheaper than one twenty minutes into a build.
@@ -120,6 +168,50 @@ if [ -z "$CCCL" ]; then
 elif ! cccl_in_window "$CCCL"; then
   die "cccl $CCCL is outside the 3.1.4-3.3.4 window #397 measured. Fix the pin first."
 fi
+
+# **What the agents elect is checked against what the build will carry**, on
+# the review of 2026-09-13 and for the reason the cccl gate above gives: a
+# failure here is cheaper than one twenty minutes into a build, and this class
+# cost a build, an install and a rollback before it named itself. `weaver-admin
+# validate` cannot cover it. It asks that the binary exists and that the store
+# admits the role, never that the binary carries the engine, which is why karl
+# validated and then refused at load.
+#
+# **The two statements are separate on purpose and reconciled here.**
+# `create-agent.sh` writes the engine into a declaration and this script names
+# what the build carries, and neither reads the other. That is tolerable only
+# while something compares them, so this is that something: edit one and not
+# the other and the run refuses by name before it spends the build.
+for agent in $ALLOW_LIST; do
+  decl="$AGENT_DIR/$agent.yaml"
+  [ -f "$decl" ] || continue
+  # The engine under `state-store`, not the first `engine:` in the file, and
+  # an absent election means the crate's own default rather than none.
+  elected=$(sed -n '/^state-store:/,/^[^[:space:]]/p' "$decl" \
+    | sed -n 's/^[[:space:]]*engine:[[:space:]]*//p' | head -1)
+  # **The value is what YAML means by it, not the characters after the colon.**
+  # `engine: "postgres"` is the same election as `engine: postgres`, and taking
+  # the raw run of non-space characters compared `weaver-state/"postgres"`
+  # against the feature list and refused a build that carried it. A trailing
+  # comment goes, then surrounding quotes of either kind, then the space
+  # between. This is not a YAML parser and does not pretend to be one: the
+  # field is a bare scalar on one line, and there is no yaml module on either
+  # seat to do it properly.
+  elected=${elected%%#*}
+  elected=$(printf '%s' "$elected" \
+    | sed -e 's/[[:space:]]*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'\$/\1/")
+  [ -n "$elected" ] || elected=sqlite
+  # **`none` is an election and not an absence.** It is a lawful `StoreEngine`
+  # and admin starts no member for it, per `inventory.rs`, which does not even
+  # ask for the member binary in that case. There is no `weaver-state/none`
+  # feature to look for, so comparing would refuse every agent that elects it.
+  [ "$elected" = none ] && continue
+  case ",$FEATURES," in
+    *",weaver-state/$elected,"*) ;;
+    *) die "$agent elects the $elected store and the build carries $FEATURES, so the member would refuse it at load. Name weaver-state/$elected in FEATURES, or change the declaration." ;;
+  esac
+done
+printf '  elected store every agent in the allow-list elects one this build carries\n'
 
 # --------------------------------------------------------------- 2. update main
 say "tree"
@@ -166,24 +258,41 @@ say "test"
 # worker binaries, so what the plan compared and the install copied was not
 # what the recorded build command made. Measured: both came back carrying
 # this step's timestamp and a digest other than the build's.
-cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-analysis \
-  --features weaver-harness/pyworker 2>&1 | grep -E '^test result' | \
+# **`weaver-state` is selected here now**, on the review of 2026-09-13. It was
+# not, so the shipped store member first compiled at the build below and its
+# postgres engine carried no test at all against sqlite's thirteen. Selecting
+# the package is also what lets the step name a `weaver-state` feature, the
+# refusal that kept it out being about selection rather than about the flag.
+cargo test --release --locked \
+  -p weaver-trace -p weaver-harness -p weaver-analysis -p weaver-state \
+  --features "$MEMBER_FEATURES" 2>&1 | grep -E '^test result' | \
   awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
 
 # ------------------------------------------------------------------- 4. build
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --locked --workspace \
-    --features weaver-spu/cuda,weaver-harness/pyworker
+  cargo build --release --locked --workspace --features "$FEATURES"
 printf '  ok\n'
 
 # --------------------------------------------------------------------- 5. plan
 say "plan"
 CHANGED=()
-for b in $(ls "$BIN_DIR"); do
-  [ -f "$BUILT/$b" ] || continue
-  d=$(sha256sum "$BIN_DIR/$b" | cut -d' ' -f1)
+for b in $MEMBERS; do
+  [ -f "$BUILT/$b" ] \
+    || die "the build produced no $b, so the plan cannot speak for it. Check that $b is still a bin target of this workspace."
   n=$(sha256sum "$BUILT/$b" | cut -d' ' -f1)
+  # **A member the box has never held is a change, not an absence.** The
+  # earlier form walked `$BIN_DIR`, so a member the build made and the box had
+  # never installed was invisible: the loop skipped it, `CHANGED` never held
+  # it, and the run rolled back an install that could not have contained it.
+  # The member this act ships is exactly the one a box without it could not
+  # have been given.
+  if [ ! -f "$BIN_DIR/$b" ]; then
+    printf '  %-22s NEW      %s\n' "$b" "${n:0:12}"
+    CHANGED+=("$b")
+    continue
+  fi
+  d=$(sha256sum "$BIN_DIR/$b" | cut -d' ' -f1)
   if [ "$d" = "$n" ]; then
     printf '  %-22s unchanged\n' "$b"
   else
@@ -230,6 +339,12 @@ fi
 
 # ------------------------------------------------------------------ 7. install
 PATCHED=()
+ADDED=()
+# The agent the verify step has loaded right now, empty whenever none is. Every
+# rollback from inside that step happens with a worker running, and a restore
+# that leaves it running puts the old declaration and the old binaries under a
+# live agent that came up on neither.
+LOADED_AGENT=""
 COMPLETED=0
 RESTORED=0
 INSTALL_DONE=0
@@ -253,6 +368,20 @@ restore() {
   [ "$RESTORED" -eq 0 ] || return 0
   RESTORED=1
   local failed=0
+  # **The running agent goes down before the files move under it.** A load that
+  # succeeded and then failed its read-back left a worker serving while the
+  # declaration it came up on and the binaries it was exec'd from were both
+  # put back, so the box ran an agent that matched nothing on disk. It is not
+  # reloaded: a verified agent is left unloaded by the normal path too, and
+  # bringing one up on restored binaries is a load this script was not asked
+  # to perform.
+  if [ -n "$LOADED_AGENT" ]; then
+    printf '  unloading %s before the restore\n' "$LOADED_AGENT" >&2
+    sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" \
+      unload "$LOADED_AGENT" >/dev/null 2>&1 \
+      || { printf '  %s WOULD NOT UNLOAD. It is still serving, and the files below go back under it. Stop the unit by hand before loading anything.\n' "$LOADED_AGENT" >&2; failed=1; }
+    LOADED_AGENT=""
+  fi
   if [ ${#PATCHED[@]} -gt 0 ]; then
     for entry in "${PATCHED[@]}"; do
       printf '  restoring declaration %s\n' "${entry%%|*}" >&2
@@ -262,15 +391,27 @@ restore() {
   fi
   if [ "$INSTALL_DONE" -eq 1 ] && [ -n "$BACKUP" ]; then
     printf '  rolling the binaries back from %s\n' "$BACKUP" >&2
+    # **What the box never held is removed rather than restored.** Leaving it
+    # would put this run's own half-finished work on a box the rollback claims
+    # to have returned to where it started.
+    for b in "${ADDED[@]}"; do
+      printf '  removing %s, which the box did not hold before this run\n' "$b" >&2
+      sudo rm -f "$BIN_DIR/$b" \
+        || { printf '  FAILED to remove %s\n' "$b" >&2; failed=1; }
+    done
     for b in "${CHANGED[@]}"; do
       # Never backed up is never replaced, so there is nothing to put back.
-      [ -f "$BACKUP/$b" ] || continue
+      # **Asked with the privilege that made it**: the backup directory is
+      # root's, so an unprivileged test read every entry as absent and the
+      # restore silently put nothing back.
+      sudo test -f "$BACKUP/$b" || continue
       sudo install -o root -g root -m 0755 "$BACKUP/$b" "$BIN_DIR/$b" \
         || { printf '  FAILED to restore %s\n' "$b" >&2; failed=1; }
     done
   fi
   if [ "$failed" -ne 0 ]; then
     printf '  RESTORE INCOMPLETE - inspect %s and %s by hand\n' "$BIN_DIR" "$BACKUP" >&2
+    printf '  and check with weaver-admin that no agent is still loaded\n' >&2
   fi
   return 0
 }
@@ -312,7 +453,14 @@ if [ ${#CHANGED[@]} -gt 0 ]; then
   # armed before it does rather than after the loop closes.
   INSTALL_DONE=1
   for b in "${CHANGED[@]}"; do
-    sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
+    # **A binary the box has never held has nothing to back up**, and `cp`
+    # refusing a source that is not there would abort the install mid-loop.
+    # Its undo is removal rather than restoration, so it is recorded as such.
+    if [ -f "$BIN_DIR/$b" ]; then
+      sudo cp -a "$BIN_DIR/$b" "$BACKUP/$b"
+    else
+      ADDED+=("$b")
+    fi
     sudo install -o root -g root -m 0755 "$BUILT/$b" "$BIN_DIR/$b"
     printf '  installed %s\n' "$b"
   done
@@ -404,14 +552,30 @@ for AGENT in $ALLOW_LIST; do
   printf '  %s\n' "$AGENT"
   LINES=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  # Claimed before the load rather than after it, so a load that comes up and
+  # then dies on its read-back is still a load the restore knows to undo.
+  LOADED_AGENT="$AGENT"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
   LATER=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   NEW=$(( LATER - LINES ))
-  [ "$NEW" -gt 0 ] || rollback "$AGENT: the load wrote no events to $SINK"
+  # **A sink that gained nothing points at the sink, and the fault is rarely
+  # there.** A member built without the elected engine answers
+  # `descriptors_unusable` and writes no load event, so this refusal named the
+  # trace sink while the real fault sat in the territory's `state.log`, which
+  # is where the first look at that incident did not go. The refusal carries
+  # the member's own last words rather than sending the reader to the wrong
+  # subsystem. Naming the fault properly is the admin-harness contract's act,
+  # not this script's; pointing at where it is already written is this one's.
+  if [ "$NEW" -le 0 ]; then
+    said=$(sudo -n tail -n 3 "$(dirname "$SINK")/state/state.log" 2>/dev/null || true)
+    [ -n "$said" ] && printf '  the state member last said:\n%s\n' "$said" >&2
+    rollback "$AGENT: the load wrote no events to $SINK"
+  fi
   if ! tail -n "$NEW" "$SINK" | weaver_read_load; then
     rollback "$AGENT: the load event does not name its composer; the install did not take"
   fi
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  LOADED_AGENT=""
   VERIFIED=$((VERIFIED + 1))
 done
 [ "$VERIFIED" -gt 0 ] || rollback "no agent in the allow-list could be verified"

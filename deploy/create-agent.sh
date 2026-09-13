@@ -35,6 +35,15 @@ APPLY=0
 ARTIFACT=""
 SESSION=""
 MEMBER_IDENTITY=""
+# **The engine is an election and not a constant.** An earlier form wrote
+# `postgres` into every declaration with nothing saying so, while
+# `deploy/update-stack.sh` separately named which engines the build carries.
+# Two statements of one fact from two decisions is how a declaration comes to
+# elect an engine the installed member cannot serve, which is what happened on
+# 2026-09-11. They are still two statements, deliberately, because a build
+# serves engines no agent has elected yet; `update-stack.sh` reconciles them
+# before it spends a build, and refuses by name where they disagree.
+ENGINE=postgres
 while [ $# -gt 0 ]; do
   case "$1" in
     --apply)    APPLY=1 ;;
@@ -45,6 +54,7 @@ while [ $# -gt 0 ]; do
     --artifact) [ $# -ge 2 ] || die "--artifact needs a path"; ARTIFACT=$2; shift ;;
     --session)  [ $# -ge 2 ] || die "--session needs a name"; SESSION=$2; shift ;;
     --member-identity) [ $# -ge 2 ] || die "--member-identity needs an account"; MEMBER_IDENTITY=$2; shift ;;
+    --engine)   [ $# -ge 2 ] || die "--engine needs a name"; ENGINE=$2; shift ;;
     *) printf 'unknown argument: %s\n' "$1" >&2; exit 2 ;;
   esac
   shift
@@ -81,6 +91,19 @@ DECLARATION="$AGENTS_DIR/$NAME.yaml"
 [ -n "$MEMBER_IDENTITY" ] || die "name the account the store must admit: --member-identity <account>
    'root' matches what weaver-admin runs as today and works now.
    '$MEMBER_USER' is the charter's design and needs admin's privilege drop first."
+# **An engine this script cannot provision is refused here rather than written
+# into a declaration.** `weaver-types` admits `none`, `sqlite` and `postgres`,
+# and anything else fails the inventory's parse after every account, database
+# and access entry has already been made. `none` is a lawful election and not
+# one this script can serve: the whole second half of it provisions a store
+# and probes the two gates over it, and an agent electing no store has none of
+# that to verify. Declare that one by hand.
+case "$ENGINE" in
+  postgres) ;;
+  none|sqlite) die "$ENGINE is a lawful election and not one this script can make. The inventory refuses state-store.database and state-store.role for it, per weaver-admin/src/inventory.rs, and this script writes both because provisioning them is what it is for: a role, a database, an admission line and two probes over them. Declare a $ENGINE agent by hand, without those two fields$( [ "$ENGINE" = none ] && printf ' and without state-election' ). What this option exists for is to name the engine rather than assume it, so that deploy/update-stack.sh can reconcile the declaration against the build." ;;
+  *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres, and this script can provision only postgres." ;;
+esac
+
 getent passwd "$MEMBER_IDENTITY" >/dev/null || [ "$MEMBER_IDENTITY" = "$MEMBER_USER" ] \
   || die "no such account: $MEMBER_IDENTITY"
 HBA=""; IDENT=""   # asked of the store itself rather than guessed from a distro path
@@ -98,6 +121,7 @@ plan "admission       local $DATABASE $ROLE peer map=weaver"
 plan "identity map    weaver $MEMBER_IDENTITY -> $ROLE"
 plan "allow-list      $NAME appended to $ALLOW_LIST"
 plan "declaration     $DECLARATION     session $SESSION, artifact $ARTIFACT"
+plan "store engine    $ENGINE         which the deployed member must carry"
 
 # What must not already be there. Creation is refused rather than merged,
 # because a half-made agent that looks whole is worse than an absent one.
@@ -273,7 +297,7 @@ state-election:
 # boundary, and named on the load event like every fact that decides a
 # record.
 state-store:
-  engine: postgres
+  engine: $ENGINE
   database: $DATABASE
   role: $ROLE
 YAML
