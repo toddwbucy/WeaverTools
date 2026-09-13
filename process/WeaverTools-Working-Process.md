@@ -48,13 +48,24 @@ ruling of 2026-09-13. A retired document or module is deleted, and whatever refe
 it cites the content against a ref reachable from `main`. Branches and worktrees are
 how work in flight is held.
 
-**The command differs by what is cited, and one of the two only looks right.**
-`git show <ref>:<path>` prints a file. On a directory it prints the tree's entry names
-and retrieves nothing, so a citation that reads as a recovery instruction recovers
-nothing - which PR #567 shipped twice before CodeRabbit caught it.
+**The command differs by what is cited, and reading is not the same act as
+materialising.** `git show <ref>:<path>` prints a file to stdout. On a directory it
+prints the tree's entry names and retrieves nothing, so a citation that reads as a
+recovery instruction recovers nothing - which PR #567 shipped twice before CodeRabbit
+caught it.
 
-    a file        git show <ref>:<path>
-    a directory   git archive <ref> <path> | tar -x
+    read a file           git show <ref>:<path>
+    save a file           git show <ref>:<path> > /tmp/<name>
+    materialise a tree    git archive <ref> <path> | tar -x -C /tmp/<dir>
+
+**Materialising happens outside the working tree, and the destination is part of the
+instruction.** `tar -x` extracts relative to the current directory, so the obvious
+form of that last line, run from the repository root, recreates the directory the
+ruling deleted - and a reader who then commits has undone the rule by following the
+citation. The first form of this section shipped that command without a destination.
+
+**A citation is for reading and recovery is the exception.** Most of the time the
+first line is the whole answer: the content is wanted on screen, not back in the tree.
 
 A copy inside the tree duplicates a job git already does, so every encounter with it
 becomes a question about which copy is authoritative - and that question has no cheap
