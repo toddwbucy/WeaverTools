@@ -81,9 +81,12 @@ review passes found them; the second found as many as the first:
   paths that are not there.
 - Text in `archive/` still fed the citation set, so a citation in a file that
   is never compiled could take a perturbation out of the backlog while no test
-  ran. **Both archive bugs are held by the fixture from 2026-09-13**, the one
-  archive under a member having been deleted at PR #563 - so the branch is
-  exercised by nothing in the tree and would go dark unwatched otherwise.
+  ran. **Both archive bugs are moot from 2026-09-13**: every archive directory
+  was deleted at PR #563 and the standing rule is that none may exist, so the
+  gate's exclusion for them was removed rather than kept. It had silently
+  exempted any future directory named `archive/` from the header rule, which
+  is the opposite of what a rule against archives wants - one appearing now is
+  counted like any other source and shows up as headerless.
 - `--update` truncated the baseline before serialising, so an interrupt left
   the gate's whole memory half written.
 - A citation was read as its first token, so `conforms: valid-node trailing`
@@ -141,12 +144,12 @@ HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
 # declaration being two things a reader must tell apart.
 ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
 
-# A build script is cargo's unit and not the crate's, and conforms to nothing.
-# `archive/` is not a workspace member and is never compiled, so counting
-# either gives the metric a floor nobody can reach - the shape that teaches
-# people to stop reading a number.
+# A build script is cargo's unit and not the crate's, and conforms to nothing,
+# so counting it gives the metric a floor nobody can reach - the shape that
+# teaches people to stop reading a number. **`archive/` used to sit here and
+# does not**, per 2026-09-13: no archive directory may stand in the tree, so
+# exempting one would hide the violation rather than measure it.
 NO_HEADER_OWED = ("build.rs",)
-ARCHIVED = f"{os.sep}archive{os.sep}"
 HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 
 
@@ -200,7 +203,7 @@ def docs():
         # unsorted walk lets two seats baseline different strings from the
         # same tree - the machine-dependent gate the enforcement section
         # already records for the clippy count.
-        dirs[:] = sorted(d for d in dirs if d not in (".git", "archive"))
+        dirs[:] = sorted(d for d in dirs if d != ".git")
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)
@@ -249,13 +252,8 @@ def sources():
         # traceback where the gate owes a reading.
         if not os.path.isfile(path):
             continue
-        archived = ARCHIVED in f"{os.sep}{rel}"
-        owes = (
-            rel.endswith(".rs")
-            and os.path.basename(rel) not in NO_HEADER_OWED
-            and not archived
-        )
-        yield path, owes, archived
+        owes = rel.endswith(".rs") and os.path.basename(rel) not in NO_HEADER_OWED
+        yield path, owes
 
 
 def enforcement_table(text):
@@ -362,13 +360,7 @@ def take():
     # as a multiset. This is the same set-for-multiset mistake the gating path
     # and the update path each carried, in the place the data is built.
     cited, headerless, bad_cites = [], [], []
-    for path, owes, archived in sources():
-        # **An archived file cites nothing.** It is never compiled, so a
-        # citation in it buys no instrument - and letting its text satisfy a
-        # perturbation would take that claim out of the backlog while no test
-        # runs, which is the opposite of what this metric is for.
-        if archived:
-            continue
+    for path, owes in sources():
         text = read(path)
         for raw in ANY_CITE.findall(text):
             value = raw.strip()

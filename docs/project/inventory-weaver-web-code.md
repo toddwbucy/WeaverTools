@@ -22,13 +22,17 @@ frozen copy at `crates/weaver-web/archive/conversation/` is gone**, git being th
 which reverses this register's ruling of 2026-09-06 and matches the answer question 2
 took on 2026-09-07. A copy drifts: three of the nine files its manifest hashed had
 stopped matching their originals, and the other six had not, so a reader met an
-alternate version of three live modules with nothing marking which three. **The call-site
+alternate version of three live modules with nothing marking which three.
+**The call-site
 map the archive act found by trying is carried into the Retires section above**, that
 manifest having been the only place it was written down and being original analysis
-rather than a copy of anything. **And the count in it was wrong**: eight sites, not the
-nine this register has said since 2026-09-06, which counted one module's import line as
-a site and three others' as not. The crossings are byte-identical to what `78aa739`
-carried, so this is a miscount corrected rather than a tree that moved. Per PR #563.
+rather than a copy of anything. **And the count in it was wrong**: ten sites and five
+imports, not the nine this register has said since 2026-09-06, which counted one
+module's import line as a site and four others' as not. Two crossings had been missed
+entirely, `user::routes()` at `web/mod.rs:39` and the `is_admin()` call at
+`web/admin.rs:39`, the first of them the only crossing into `web/user.rs`, which is the
+largest of the four retiring files and had been carrying a row of none. Found by the
+olympus seat's review of PR #563.
 
 **Revised:** 2026-09-08, the citation act lands and this register's own figures are
 corrected. PR #510 repointed twenty-seven of the crate's comment citations, redirected
@@ -74,11 +78,10 @@ it is stated by ruling rather than by total.
 register. **`registry.rs` splits rather than retiring whole**: it carries
 `Participant`'s `role` and `is_admin()`, which is the role model the charter's section 6
 keeps as structural and which `web/admin.rs` gates on, so its separation is the section
-6 act. **The four retiring files cannot be lifted out independently**, eight call sites
+6 act. **The four retiring files cannot be lifted out independently**, nine call sites
 crossing into them from modules that do not retire, which is why the archive at
-`crates/weaver-web/archive/conversation/` was made a frozen copy while the build still
-compiled the originals. This sentence read nine and is corrected above to eight, and the
-archive it names was deleted 2026-09-13 at PR #563, git being the copy. Section 1's ruling list said four ruling-wanted modules where its own
+`crates/weaver-web/archive/conversation/` is a frozen copy and the build still compiles
+the originals. Section 1's ruling list said four ruling-wanted modules where its own
 table has five. **And the edition alignment is measured**: it is not the real work its
 comment claims.
 
@@ -175,27 +178,51 @@ the operator says whether it is reworked or rewritten.
 ### Retires, 882 lines by file and fewer in fact
 
 **These four cannot be lifted out independently**, which this register did
-not say and the archive act of 2026-09-06 found by trying. **Eight call
+not say and the archive act of 2026-09-06 found by trying. **Ten call
 sites cross into them from modules that do not retire**, and one of those
 sites is the role model, so `registry.rs` splits rather than going. The
 lines below are the files' and the removable subset is smaller.
 
-**The eight, measured 2026-09-13 at `ecfa256`** and byte-identical to what
-`78aa739` carried, so this map is the input to the act that removes them:
+**Measured 2026-09-13 at `0bca344`**, which is the last commit before the
+archive was deleted and is reachable from `main`. This map is the input to
+the act that removes them, so it is stated in three parts because the
+removal has to touch all three.
 
-| module | crosses to | at |
+**Ten sites**, a site being a use of an item:
+
+| in | crosses to | at |
 |---|---|---|
-| `bin/weaver-web.rs` | `registry::reconcile_providers`, `registry::reconcile_agents` | 37, 60 |
-| `queue.rs` | `router::on_agent_message`, `channel::messages_since_last_close` | 185, 223 |
+| `bin/weaver-web.rs` | `registry::reconcile_providers` | 37 |
+| `bin/weaver-web.rs` | `registry::reconcile_agents` | 60 |
+| `queue.rs` | `router::on_agent_message` | 185 |
+| `queue.rs` | `channel::messages_since_last_close` | 223 |
 | `web/admin.rs` | `registry::Participant`, in a signature | 37 |
-| `web/mod.rs` | `Participant`, `registry::by_id`, `EventView` | 83, 95, 230 |
+| `web/admin.rs` | `Participant::is_admin` | 39 |
+| `web/mod.rs` | `user::routes` | 39 |
+| `web/mod.rs` | `registry::Participant`, in a signature | 83 |
+| `web/mod.rs` | `registry::by_id` | 95 |
+| `web/mod.rs` | `channel::EventView`, in a signature | 230 |
 
-**A site is a use of an item, and an import is not one.** Stating the rule
-is what the count needs: this register said nine from 2026-09-06 to
-2026-09-13, which counted `queue.rs`'s `use crate::channel;` as a site
-while not counting `web/mod.rs`'s two import lines or `web/admin.rs`'s one.
-Counted either way consistently the answer is eight sites or twelve sites
-and four imports, and nine is neither.
+**Five imports**, at `bin/weaver-web.rs:10`, `queue.rs:7`,
+`web/admin.rs:9`, and `web/mod.rs:12` and `:15`.
+
+**Four module declarations**, which are how the retiring modules are
+reachable at all and are the lines that make the crate stop compiling if
+they outlive their files: `lib.rs:8`, `:13` and `:14` for `channel`,
+`registry` and `router`, and `web/mod.rs:10` for `user`.
+
+**The count has been wrong twice and the rule is why.** This register said
+nine from 2026-09-06 to 2026-09-13, counting `queue.rs`'s import as a site
+while not counting four others. Corrected to eight the same day, it was
+still short: `user::routes` and `Participant::is_admin` are calls that name
+no module path, so a search for `channel::`, `registry::` and `router::`
+cannot see them. **`web/user.rs` is the largest of the four retiring files
+and carried a row of no crossings at all.**
+
+A method call is the case a path search structurally misses, so the
+measurement is now taken the other way round - enumerate what the four
+modules export, then find each name. That is reproducible, which the
+earlier figures were not.
 
 | file | lines | why |
 |---|---|---|
