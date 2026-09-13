@@ -6,8 +6,9 @@ and cannot yet stand behind, in one place, so a reader does not have to find the
 reading closely.
 
 **Lifted from `weaver-tools-technical-report` appendix B** when that report was
-archived to `docs/archive/` on 2026-08-23, because the register outlived the document
-that housed it. Its entries were
+retired on 2026-08-23, because the register outlived the document that housed
+it. The report is at `git show 0bca344:docs/archive/weaver-tools-technical-report.md`,
+git being the archive per the ruling of 2026-09-13. Its entries were
 written as an appendix and are being reworked into a standing list, which is why this
 is a sketch: the categories hold, the wording still points at a report in places, and
 the whole thing is meant to be developed further.
