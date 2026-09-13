@@ -101,8 +101,11 @@ record's own events, reissue byte-exact at the gate socket, compare,
 deposit. **That harness left this repository on 2026-09-13** for the
 `weaver-experiments` tree, per `WeaverTools-Working-Process` section 5.
 That tree has no remote, so the name above resolves to nothing a reader
-holding this repository can open, and the content is at
-`git show 0bca344:experiments/cross-precision-repro/`.
+holding this repository can open. The content is recovered from this
+repository's own history, with `git archive` because the target is a
+directory and `git show` on one lists its entries without retrieving them:
+
+    git archive 0bca344 experiments/cross-precision-repro | tar -x
 
 Two entries on this box, the same
 declaration apart from the artifact path, the same declared seed and

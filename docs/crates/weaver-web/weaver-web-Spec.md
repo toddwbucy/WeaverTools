@@ -18,9 +18,16 @@ of 2026-09-09 is untouched and stands as it was decided**: its subject is a file
 and a stored key carrying the matrix-coordinate sense, which holds wherever the file
 sits, so the path it quoted is dropped rather than repointed and the closed item is
 not amended with a later fact. **That tree has no remote**, so the content is reached
-at `git show 0bca344:experiments/cross-precision-repro/` and nowhere a reader holding
-this repository can open directly. This document is where the departure stands for
-this crate and the charter cites it rather than restating it.
+from this repository's own history and nowhere a reader holding it can open directly:
+
+    git archive 0bca344 experiments/cross-precision-repro | tar -x
+
+**A directory needs `git archive` and not `git show`.** `git show <ref>:<dir>/` prints
+the tree's entry names and retrieves no file, so the first form of this line named a
+command that lists the harness rather than recovering it. The file form,
+`git show <ref>:<path>`, is what section 1 of the Working Process gives and is correct
+for one file. This document is where the departure stands for this crate and the
+charter cites it rather than restating it.
 
 **Revised:** 2026-09-11, fourth of this date, an authored row's identity says what it
 addresses. Section 2 gains the convention and sections 2.9 and 2.10 name their keys:
