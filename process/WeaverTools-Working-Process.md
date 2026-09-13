@@ -56,13 +56,16 @@ caught it.
 
     read a file           git show <ref>:<path>
     save a file           git show <ref>:<path> > /tmp/<name>
-    materialise a tree    git archive <ref> <path> | tar -x -C /tmp/<dir>
+    save a tree           git archive -o /tmp/<name>.tar <ref> <path>
 
-**Materialising happens outside the working tree, and the destination is part of the
-instruction.** `tar -x` extracts relative to the current directory, so the obvious
-form of that last line, run from the repository root, recreates the directory the
-ruling deleted - and a reader who then commits has undone the rule by following the
-citation. The first form of this section shipped that command without a destination.
+**The tree form writes an archive and never extracts.** Two earlier forms of this line
+did, and each failed differently: `| tar -x` extracts relative to the current
+directory, so run from the repository root it recreates the directory the ruling
+deleted, and a reader who then commits has undone the rule by following the citation;
+`| tar -x -C /tmp/<dir>` fixed that and then exited 2 whenever the destination did not
+already exist. **`git archive -o` is one command, needs no destination directory, and
+cannot write into the working tree at all** - the reader unpacks it where they choose,
+which is their decision to make rather than this rule's.
 
 **A citation is for reading and recovery is the exception.** Most of the time the
 first line is the whole answer: the content is wanted on screen, not back in the tree.
