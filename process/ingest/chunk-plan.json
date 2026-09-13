@@ -1,0 +1,221 @@
+{
+  "ref": "eebecf17e28d8787c7c67b8d5707aabd3304a226",
+  "ceiling_tokens": 32768,
+  "target_tokens": 28000,
+  "overlap": "one whole structural unit, repeated at each boundary",
+  "estimates": "token counts are characters divided by the per-kind ratio and have not been measured with the embedder's tokenizer",
+  "held_out": [
+    {
+      "path": "crates/weaver-admin/src/inventory.rs",
+      "bytes": 84429,
+      "content_sha256": "cf0cdb89c5883aa7d71d38ff48581cb44c191a0b70101e7389e3c18bf36387c2",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 41982,
+          "units": 29,
+          "estimated_tokens": 13994
+        },
+        {
+          "start": 40800,
+          "end": 84429,
+          "units": 2,
+          "estimated_tokens": 14543
+        }
+      ]
+    },
+    {
+      "path": "crates/weaver-harness/src/engine.rs",
+      "bytes": 157578,
+      "content_sha256": "d55265dd5dd7d4b1f4c9dd44085738e6c4b9de3b75f30876532a88d78e6fef74",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 80713,
+          "units": 11,
+          "estimated_tokens": 26904
+        },
+        {
+          "start": 80003,
+          "end": 157578,
+          "units": 2,
+          "estimated_tokens": 25858
+        }
+      ]
+    },
+    {
+      "path": "crates/weaver-harness/src/lifecycle.rs",
+      "bytes": 201873,
+      "content_sha256": "b6c2200b24df12320a015dd1104e9a582e79cd37a74558613c0ee1de9e17ce4e",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 19331,
+          "units": 20,
+          "estimated_tokens": 6443
+        },
+        {
+          "start": 18768,
+          "end": 101907,
+          "units": 4,
+          "estimated_tokens": 27713
+        },
+        {
+          "start": 99587,
+          "end": 182754,
+          "units": 32,
+          "estimated_tokens": 27722
+        },
+        {
+          "start": 181530,
+          "end": 201873,
+          "units": 5,
+          "estimated_tokens": 6781
+        }
+      ]
+    },
+    {
+      "path": "crates/weaver-spu/src/family/mod.rs",
+      "bytes": 115166,
+      "content_sha256": "02d17b6b84fa2eda594691aa792b1bdbe1705fdd2185dcd8855d79123416cf23",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 64887,
+          "units": 45,
+          "estimated_tokens": 21629
+        },
+        {
+          "start": 63877,
+          "end": 115166,
+          "units": 2,
+          "estimated_tokens": 17096
+        }
+      ]
+    },
+    {
+      "path": "crates/weaver-spu/src/main.rs",
+      "bytes": 95532,
+      "content_sha256": "2872537c220a1fb5874778c87a6f5a36226ac8d0e71cfd6b0c394b67a4867b43",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 77682,
+          "units": 27,
+          "estimated_tokens": 25894
+        },
+        {
+          "start": 70170,
+          "end": 95532,
+          "units": 2,
+          "estimated_tokens": 8454
+        }
+      ]
+    },
+    {
+      "path": "docs/crates/weaver-admin/weaver-admin-Spec.md",
+      "bytes": 134576,
+      "content_sha256": "5294be89847d9d27e7b451f401cefb54ed32ce5ca2958d7b620ff602915ab710",
+      "chars_per_token_assumed": 4,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 109521,
+          "units": 11,
+          "estimated_tokens": 27380
+        },
+        {
+          "start": 105058,
+          "end": 134576,
+          "units": 3,
+          "estimated_tokens": 7379
+        }
+      ]
+    },
+    {
+      "path": "docs/crates/weaver-harness/weaver-harness-Spec.md",
+      "bytes": 173048,
+      "content_sha256": "13f3226f1c94484eb71047f326acdc5df3e0359da2683e92bfb5c9d5c08b930c",
+      "chars_per_token_assumed": 4,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 105032,
+          "units": 7,
+          "estimated_tokens": 26258
+        },
+        {
+          "start": 102081,
+          "end": 173048,
+          "units": 5,
+          "estimated_tokens": 17741
+        }
+      ]
+    },
+    {
+      "path": "docs/crates/weaver-spu/weaver-spu-Spec.md",
+      "bytes": 187667,
+      "content_sha256": "1c8ca58909ebcbae00d91badd261d002aa64cf5b6113251a7007c679bc92828f",
+      "chars_per_token_assumed": 4,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 106076,
+          "units": 7,
+          "estimated_tokens": 26519
+        },
+        {
+          "start": 87596,
+          "end": 187667,
+          "units": 10,
+          "estimated_tokens": 25017
+        }
+      ]
+    },
+    {
+      "path": "docs/crates/weaver-types/weaver-types-Spec.md",
+      "bytes": 133263,
+      "content_sha256": "1419291e50e614d8481efa4e23e7ff99a6367e03be4d210dff307490188c7197",
+      "chars_per_token_assumed": 4,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 67297,
+          "units": 5,
+          "estimated_tokens": 16824
+        },
+        {
+          "start": 61783,
+          "end": 133263,
+          "units": 4,
+          "estimated_tokens": 17870
+        }
+      ]
+    },
+    {
+      "path": "docs/crates/weaver-web/weaver-web-Spec.md",
+      "bytes": 147689,
+      "content_sha256": "cff99496ad699e5405f2c79f42bae1e7a0cbd671b33031c7fea57700ebc06416",
+      "chars_per_token_assumed": 4,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 101407,
+          "units": 5,
+          "estimated_tokens": 25351
+        },
+        {
+          "start": 84395,
+          "end": 147689,
+          "units": 8,
+          "estimated_tokens": 15823
+        }
+      ]
+    }
+  ]
+}
