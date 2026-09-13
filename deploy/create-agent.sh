@@ -99,9 +99,9 @@ DECLARATION="$AGENTS_DIR/$NAME.yaml"
 # and probes the two gates over it, and an agent electing no store has none of
 # that to verify. Declare that one by hand.
 case "$ENGINE" in
-  sqlite|postgres) ;;
-  none) die "an agent electing no store is not this script's to make: everything below provisions one and probes its two gates. Declare it by hand, without state-election, state-store.database or state-store.role, which the inventory refuses for that engine." ;;
-  *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres." ;;
+  postgres) ;;
+  none|sqlite) die "$ENGINE is a lawful election and not one this script can make. The inventory refuses state-store.database and state-store.role for it, per weaver-admin/src/inventory.rs, and this script writes both because provisioning them is what it is for: a role, a database, an admission line and two probes over them. Declare a $ENGINE agent by hand, without those two fields$( [ "$ENGINE" = none ] && printf ' and without state-election' ). What this option exists for is to name the engine rather than assume it, so that deploy/update-stack.sh can reconcile the declaration against the build." ;;
+  *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres, and this script can provision only postgres." ;;
 esac
 
 getent passwd "$MEMBER_IDENTITY" >/dev/null || [ "$MEMBER_IDENTITY" = "$MEMBER_USER" ] \
