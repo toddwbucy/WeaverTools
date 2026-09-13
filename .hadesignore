@@ -29,14 +29,22 @@
 # gitignore syntax has no case-insensitivity flag and the census reading uses
 # `re.I`, so the case classes are written out. Without them `ARCHIVE/` is
 # ingested while the census flags it - the two halves of one rule disagreeing,
-# which CodeRabbit found on PR #566. `test_census.py` holds them congruent.
+# which CodeRabbit found on PR #566.
+#
+# **Eight patterns, and the reading is bounded so eight is enough.** Two
+# prefixes by two plural forms by two suffix forms. The reading allowed any
+# number of leading underscores and gitignore cannot say that, which left the
+# halves 93 names apart on a second reading. `test_census.py` generates the
+# whole cross-product and fails on any disagreement, rather than checking a
+# list somebody wrote out - which is how the first eight passed.
 **/[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
 **/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
 **/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
 **/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
-**/__[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
 
 # **Experiments are a separate corpus and left this tree** on 2026-09-13, per
 # Working Process section 5 and issue #564. Kept after the departure for the

@@ -392,6 +392,7 @@ class Census(unittest.TestCase):
         case that decides it.
         """
         import fnmatch
+        import itertools
 
         with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
             patterns = [ln.strip() for ln in fh
@@ -402,17 +403,36 @@ class Census(unittest.TestCase):
         def excluded(name):
             return any(fnmatch.fnmatchcase(name, n) for n in names)
 
-        for name in ("archive", "Archive", "ARCHIVE", "archives", "ARCHIVES",
-                     "archived", "Archived", "_archive", "_ARCHIVE",
-                     "archive-2026", "ARCHIVE_2026", "archives-old"):
-            self.assertIsNotNone(census.ARCHIVE_DIR.match(name),
-                                 f"the reading misses {name}")
-            self.assertTrue(excluded(name), f".hadesignore misses {name}")
+        # **Generated and not listed.** The first form of this test checked
+        # twelve names somebody wrote out, passed, and left the two halves 93
+        # names apart - every one of them a leading underscore combined with a
+        # suffix, which is exactly the combination a hand list does not think
+        # of. CodeRabbit found it on PR #566.
+        disagree = []
+        for prefix, stem, plural, suffix in itertools.product(
+            ["", "_", "__", "___"],
+            ["archive", "Archive", "ARCHIVE", "aRcHiVe"],
+            ["", "s", "d", "S", "D"],
+            ["", "-2026", "_old", "-x", "_Y"],
+        ):
+            name = prefix + stem + plural + suffix
+            reading = census.ARCHIVE_DIR.match(name) is not None
+            if reading != excluded(name):
+                disagree.append(f"{name}: reading={reading} ignore={not reading}")
+        self.assertEqual(disagree, [], "the two halves match different names")
 
-        for name in ("archiver", "archiving", "arch", "architecture"):
+        # The stem is not a prefix match: these are words, and neither half
+        # may claim them.
+        for name in ("archiver", "archiving", "arch", "architecture",
+                     "archivist", "archival"):
             self.assertIsNone(census.ARCHIVE_DIR.match(name),
                               f"the reading flags {name}")
             self.assertFalse(excluded(name), f".hadesignore excludes {name}")
+
+        # And the plain case is covered by both, so an empty pattern file
+        # cannot pass this test by making both halves match nothing.
+        self.assertIsNotNone(census.ARCHIVE_DIR.match("archive"))
+        self.assertTrue(excluded("archive"))
 
     def test_update_refuses_to_baseline_an_archive(self):
         """The rule is zero, so the escape hatch is closed in both directions.

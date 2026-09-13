@@ -235,7 +235,15 @@ def ls_files(*flags):
 # `ARCHIVE/`, `archives/`, `archived/`, `_archive/` and `archive-2026/` all read
 # as clean. The trailing group stops at `-` or `_` so `archiver` is a word and
 # not a finding.
-ARCHIVE_DIR = re.compile(r"^_*archive(?:s|d)?(?:[-_].*)?$", re.I)
+#
+# **One optional leading underscore and not `_*`.** The wider form had no
+# expressible counterpart in `.hadesignore`, gitignore having no way to say
+# "any number of", so the two halves of the rule matched different sets - 93
+# names apart, found by CodeRabbit on PR #566. **The family is bounded so both
+# halves can state it exactly**, which is worth more than reaching `___archive`:
+# a set neither half covers is consistent, where a set one covers and the other
+# does not is the ingest taking a frozen copy the gate is about to refuse.
+ARCHIVE_DIR = re.compile(r"^_?archive(?:s|d)?(?:[-_].*)?$", re.I)
 
 
 def archives():
