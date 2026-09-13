@@ -379,7 +379,7 @@ restore() {
     printf '  unloading %s before the restore\n' "$LOADED_AGENT" >&2
     sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" \
       unload "$LOADED_AGENT" >/dev/null 2>&1 \
-      || printf '  %s would not unload; it is running against restored files\n' "$LOADED_AGENT" >&2
+      || { printf '  %s WOULD NOT UNLOAD. It is still serving, and the files below go back under it. Stop the unit by hand before loading anything.\n' "$LOADED_AGENT" >&2; failed=1; }
     LOADED_AGENT=""
   fi
   if [ ${#PATCHED[@]} -gt 0 ]; then
@@ -411,6 +411,7 @@ restore() {
   fi
   if [ "$failed" -ne 0 ]; then
     printf '  RESTORE INCOMPLETE - inspect %s and %s by hand\n' "$BIN_DIR" "$BACKUP" >&2
+    printf '  and check with weaver-admin that no agent is still loaded\n' >&2
   fi
   return 0
 }
