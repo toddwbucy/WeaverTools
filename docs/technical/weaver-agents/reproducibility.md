@@ -103,9 +103,11 @@ deposit. **That harness left this repository on 2026-09-13** for the
 That tree has no remote, so the name above resolves to nothing a reader
 holding this repository can open. The content is recovered from this
 repository's own history, with `git archive` because the target is a
-directory and `git show` on one lists its entries without retrieving them:
+directory and `git show` on one lists its entries without retrieving
+them, and outside the tree because `tar -x` extracts relative to the
+current directory and would otherwise put `experiments/` back:
 
-    git archive 0bca344 experiments/cross-precision-repro | tar -x
+    git archive 0bca344 experiments/cross-precision-repro | tar -x -C /tmp/repro
 
 Two entries on this box, the same
 declaration apart from the artifact path, the same declared seed and

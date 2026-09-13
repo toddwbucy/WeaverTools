@@ -20,13 +20,18 @@ sits, so the path it quoted is dropped rather than repointed and the closed item
 not amended with a later fact. **That tree has no remote**, so the content is reached
 from this repository's own history and nowhere a reader holding it can open directly:
 
-    git archive 0bca344 experiments/cross-precision-repro | tar -x
+    git archive 0bca344 experiments/cross-precision-repro | tar -x -C /tmp/repro
 
 **A directory needs `git archive` and not `git show`.** `git show <ref>:<dir>/` prints
 the tree's entry names and retrieves no file, so the first form of this line named a
-command that lists the harness rather than recovering it. The file form,
-`git show <ref>:<path>`, is what section 1 of the Working Process gives and is correct
-for one file. This document is where the departure stands for this crate and the
+command that lists the harness rather than recovering it.
+
+**And the destination is part of it.** `tar -x` extracts relative to the current
+directory, so without `-C` this line run from the repository root recreates
+`experiments/` in the tree - undoing the ruling by obeying its own citation. Section 1
+of the Working Process carries the three forms and says which act each is.
+
+This document is where the departure stands for this crate and the
 charter cites it rather than restating it.
 
 **Revised:** 2026-09-11, fourth of this date, an authored row's identity says what it
