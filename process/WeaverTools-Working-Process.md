@@ -63,9 +63,16 @@ did, and each failed differently: `| tar -x` extracts relative to the current
 directory, so run from the repository root it recreates the directory the ruling
 deleted, and a reader who then commits has undone the rule by following the citation;
 `| tar -x -C /tmp/<dir>` fixed that and then exited 2 whenever the destination did not
-already exist. **`git archive -o` is one command, needs no destination directory, and
-cannot write into the working tree at all** - the reader unpacks it where they choose,
-which is their decision to make rather than this rule's.
+already exist. **`git archive -o` is one command and needs no destination directory**,
+and what it does not do is unpack: nothing appears at `<path>` in the working tree, so
+the failure the first form had is structurally gone. The reader unpacks the archive
+where they choose, which is their decision rather than this rule's.
+
+**The `/tmp` in that line is doing work and is not decoration.** `-o` writes wherever
+it is pointed, so `git archive -o ./x.tar` lands a tarball in the repository. An
+earlier form of this paragraph said the option could not write into the working tree
+at all, which is false and was corrected by CodeRabbit on PR #567 - **the option
+removes the unpacking hazard and the path removes the writing one.**
 
 **A citation is for reading and recovery is the exception.** Most of the time the
 first line is the whole answer: the content is wanted on screen, not back in the tree.
