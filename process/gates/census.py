@@ -520,6 +520,29 @@ def main():
         print(f"census: unrecognised argument: {unknown[0]}", file=sys.stderr)
         return 2
 
+    # **`archive_directories` is not a backlog and cannot be baselined.**
+    # Every other metric here is a count the baseline may hold, the rule being
+    # that no defect is new. This one's rule is that it is zero, per
+    # `WeaverTools-Working-Process` section 1, and the generic `--update` path
+    # defeated it: create an archive, run `--update`, and every later run
+    # passes at one. Found by CodeRabbit on PR #566.
+    #
+    # **Only `--update` refuses.** A plain run reports the archive through the
+    # ordinary comparison and exits 1, because a new archive is a new defect
+    # and that is what 1 means here. What is closed is the recording of it, and
+    # separately the trusting of a baseline that already holds one.
+    if "--update" in sys.argv and reading["archive_directories"]:
+        print("census: archive directories stand in this tree:", file=sys.stderr)
+        for d in reading["archive_directories"]:
+            print(f"  {d}", file=sys.stderr)
+        print(
+            "Git is the archive, per WeaverTools-Working-Process section 1, so\n"
+            "this reading is zero and is not a backlog. Delete them rather than\n"
+            "recording them; a plain run reports them as the new defect they are.",
+            file=sys.stderr,
+        )
+        return 2
+
     if "--update" in sys.argv:
         # **It says what moved.** The rule is that moving the baseline is a
         # sentence in the act's commit message, and an operator who has to
@@ -554,6 +577,19 @@ def main():
 
     with open(BASELINE, encoding="utf-8") as fh:
         before = json.load(fh)
+
+    # **A baseline holding one is a poisoned baseline.** The reading above is
+    # already zero or the run returned, so a nonempty entry here was written by
+    # a version without that guard, or by hand.
+    if before.get("archive_directories"):
+        print(
+            "census: the baseline records archive directories: "
+            f"{before['archive_directories']}.\n"
+            "That reading is zero by rule and cannot be carried as a backlog.\n"
+            "Clear the entry in the baseline; the tree is already clean.",
+            file=sys.stderr,
+        )
+        return 2
 
     missing = sorted(set(before) - set(reading))
     if missing:

@@ -26,13 +26,17 @@
 #
 # **A family of spellings**, because a rule naming today's instance is the same
 # mistake as deleting today's instance. The reading matches the same set.
-**/archive/
-**/archives/
-**/archived/
-**/[Aa]rchive/
-**/_archive/
-**/archive-*/
-**/archive_*/
+# gitignore syntax has no case-insensitivity flag and the census reading uses
+# `re.I`, so the case classes are written out. Without them `ARCHIVE/` is
+# ingested while the census flags it - the two halves of one rule disagreeing,
+# which CodeRabbit found on PR #566. `test_census.py` holds them congruent.
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
+**/__[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
 
 # **Experiments are a separate corpus and left this tree** on 2026-09-13, per
 # Working Process section 5 and issue #564. Kept after the departure for the

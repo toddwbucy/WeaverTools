@@ -378,6 +378,73 @@ class Census(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("docs/archive/", out)
 
+    def test_the_two_halves_of_the_archive_rule_agree(self):
+        """The reading and the ignore file match the same names.
+
+        gitignore syntax has no case-insensitivity flag and `ARCHIVE_DIR` uses
+        `re.I`, so `ARCHIVE/` was flagged by the census and ingested by HADES -
+        the two halves of one rule disagreeing, found by CodeRabbit on PR #566.
+
+        **Congruence in both directions.** A name the reading flags must be
+        excluded, or the ingest takes a frozen copy the gate is about to
+        refuse. A name the reading passes must not be excluded, or the ingest
+        silently drops a directory nobody said to drop - `archiver` being the
+        case that decides it.
+        """
+        import fnmatch
+
+        with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
+            patterns = [ln.strip() for ln in fh
+                        if ln.strip() and not ln.startswith("#")]
+        # The directory-name half of each `**/NAME/` pattern.
+        names = [p[3:-1] for p in patterns if p.startswith("**/") and p.endswith("/")]
+
+        def excluded(name):
+            return any(fnmatch.fnmatchcase(name, n) for n in names)
+
+        for name in ("archive", "Archive", "ARCHIVE", "archives", "ARCHIVES",
+                     "archived", "Archived", "_archive", "_ARCHIVE",
+                     "archive-2026", "ARCHIVE_2026", "archives-old"):
+            self.assertIsNotNone(census.ARCHIVE_DIR.match(name),
+                                 f"the reading misses {name}")
+            self.assertTrue(excluded(name), f".hadesignore misses {name}")
+
+        for name in ("archiver", "archiving", "arch", "architecture"):
+            self.assertIsNone(census.ARCHIVE_DIR.match(name),
+                              f"the reading flags {name}")
+            self.assertFalse(excluded(name), f".hadesignore excludes {name}")
+
+    def test_update_refuses_to_baseline_an_archive(self):
+        """The rule is zero, so the escape hatch is closed in both directions.
+
+        Every other metric may be carried in the baseline, no defect being new.
+        This one's rule is that it is zero, and the generic `--update` path
+        defeated it: create an archive, run `--update`, and every later run
+        passes at one. Found by CodeRabbit on PR #566.
+        """
+        os.makedirs(os.path.join(self.dir, "docs/archive"))
+        write(self.dir, "docs/archive/old.md", "# frozen\n")
+
+        code, out = run_out("--update")
+        self.assertEqual(code, 2)
+        self.assertIn("docs/archive/", out)
+        # **And it wrote nothing.** A refusal that still moved the baseline
+        # would be the hole with a message on it.
+        self.assertFalse(os.path.exists(census.BASELINE))
+
+    def test_a_baseline_holding_an_archive_is_refused(self):
+        """The other direction: a baseline written before that guard existed."""
+        self.assertEqual(run("--update"), 0)
+        with open(census.BASELINE, encoding="utf-8") as fh:
+            base = json.load(fh)
+        base["archive_directories"] = ["docs/archive/"]
+        with open(census.BASELINE, "w", encoding="utf-8") as fh:
+            json.dump(base, fh)
+
+        code, out = run_out()
+        self.assertEqual(code, 2)
+        self.assertIn("docs/archive/", out)
+
     def test_the_hadesignore_carries_the_load_bearing_patterns(self):
         """The exclusion half, which had no watch at all.
 
@@ -391,8 +458,18 @@ class Census(unittest.TestCase):
         path = os.path.join(REPO, ".hadesignore")
         with open(path, encoding="utf-8") as fh:
             body = fh.read()
-        for pattern in ("**/archive/", "experiments/"):
-            self.assertIn(pattern, body, pattern)
+        import fnmatch
+
+        lines = [ln.strip() for ln in body.splitlines()
+                 if ln.strip() and not ln.startswith("#")]
+        self.assertIn("experiments/", lines)
+        # **Matched by behaviour and not by spelling.** The archive half is
+        # written as character classes, so a substring check for "archive"
+        # finds nothing while the patterns work - which is how the first form
+        # of this assertion failed on a correct file.
+        names = [p[3:-1] for p in lines if p.startswith("**/") and p.endswith("/")]
+        self.assertTrue(any(fnmatch.fnmatchcase("archive", n) for n in names),
+                        "no pattern in .hadesignore matches an archive directory")
 
     def test_an_archive_directory_anywhere_is_reported(self):
         """The instrument for the ruling of 2026-09-13.
