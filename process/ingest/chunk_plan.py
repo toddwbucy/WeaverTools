@@ -33,9 +33,15 @@ held-out file for no reason. Measured on 2026-09-13: the working tree held one
 document main did not, which read as a file missing from the graph until the
 ref was named.
 
-    python3 process/ingest/chunk_plan.py              # write the manifest
-    python3 process/ingest/chunk_plan.py --check      # verify it is current
-    python3 process/ingest/chunk_plan.py --ref HEAD   # against another ref
+    python3 process/ingest/chunk_plan.py                    # write, at main
+    python3 process/ingest/chunk_plan.py --check --ref HEAD # in an act
+    python3 process/ingest/chunk_plan.py --check            # against main
+
+**In an act, name HEAD.** The default ref is `main`, which is right for
+building the manifest the ingest reads and wrong for checking one: the edit
+being checked is the act's own and `main` does not have it, so the default
+reports current on exactly the branch that moved it. HEAD is a commit rather
+than the working tree, so this runs after committing.
 """
 
 import hashlib
@@ -170,10 +176,29 @@ def tracked():
             if f.endswith((".rs", ".md", ".toml")) and ARCHIVED not in f"/{f}"]
 
 
-def read(rel):
-    """The content at the ref, not on disk. See the docstring above."""
+def read_bytes(rel):
+    """The raw blob at the ref, undecoded and unconverted.
+
+    **No `text=True`.** It decodes the blob and converts newlines, so the
+    length and every offset taken from it counted characters while the manifest
+    declared bytes, and the hash was over converted text rather than over what
+    git holds. A single multibyte character before a boundary made a consumer
+    slicing bytes cut in the wrong place, and nothing in the manifest could say
+    so - the hash matched, being computed from the same decoded copy. Found by
+    CodeRabbit on PR #562, and raised unfixed by this act's own self-review.
+    """
     return subprocess.run(["git", "-C", ROOT, "show", f"{ref()}:{rel}"],
-                          capture_output=True, text=True, check=True).stdout
+                          capture_output=True, check=True).stdout
+
+
+def read(rel):
+    """The blob decoded, for matching only. Offsets come from `to_bytes`."""
+    return read_bytes(rel).decode("utf-8")
+
+
+def to_bytes(text, at):
+    """A character offset as the byte offset the manifest promises."""
+    return len(text[:at].encode("utf-8"))
 
 
 def fences(text):
@@ -225,9 +250,10 @@ def units(text, pattern, inner, cpt):
 
 def pieces_for(rel):
     ext = os.path.splitext(rel)[1]
-    text = read(rel)
+    raw = read_bytes(rel)
+    text = raw.decode("utf-8")
     cpt = RATIO[ext]
-    if len(text) / cpt <= TARGET:
+    if len(raw) / cpt <= TARGET:
         return None
     us = units(text, UNIT.get(ext, r"^## "), INNER.get(ext), cpt)
     if len(us) < MIN_SEAMS:
@@ -251,9 +277,12 @@ def pieces_for(rel):
         cur.append((off, size))
     if cur:
         out.append(cur)
+    # **Offsets converted once, here.** Everything above matched on the decoded
+    # copy because that is what the regexes need; what the manifest publishes is
+    # the byte offset a consumer slices with.
     pieces = [
-        {"start": p[0][0],
-         "end": p[-1][0] + p[-1][1],
+        {"start": to_bytes(text, p[0][0]),
+         "end": to_bytes(text, p[-1][0] + p[-1][1]),
          "units": len(p),
          "estimated_tokens": sum(s for _, s in p) // cpt}
         for p in out
@@ -270,8 +299,8 @@ def pieces_for(rel):
         )
     return {
         "path": rel,
-        "bytes": len(text),
-        "content_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "bytes": len(raw),
+        "content_sha256": hashlib.sha256(raw).hexdigest(),
         "chars_per_token_assumed": cpt,
         "pieces": pieces,
     }
