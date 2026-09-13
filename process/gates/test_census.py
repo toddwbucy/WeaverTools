@@ -26,6 +26,8 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# The repository, captured before any test repoints `census.ROOT` at a fixture.
+REPO = os.path.dirname(os.path.dirname(HERE))
 spec = importlib.util.spec_from_file_location("census", os.path.join(HERE, "census.py"))
 census = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(census)
@@ -299,6 +301,99 @@ class Census(unittest.TestCase):
         self.assertEqual(reading["uncited_perturbations"],
                          ["fix-uncited-perturbation"])
 
+    def test_a_deleted_archive_stops_being_reported_before_it_is_staged(self):
+        """The mid-act state, which the first form of this gate failed.
+
+        `archives()` read the index and never the disk, so an act that obeyed
+        the rule by deleting an archive failed the gate until the deletion was
+        staged. `sources()` has carried the guard for this since the bug list's
+        entry on the same subject, forty lines away. Found by the olympus
+        review of 2026-09-13.
+        """
+        os.makedirs(os.path.join(self.dir, "docs/archive"))
+        write(self.dir, "docs/archive/old.md", "# gone\n")
+        self.assertEqual(census.take()["archive_directories"], ["docs/archive/"])
+
+        # Deleted on disk, still in the index - the state a run is in between
+        # `rm` and `git add`.
+        shutil.rmtree(os.path.join(self.dir, "docs/archive"))
+        self.assertEqual(census.take()["archive_directories"], [])
+
+    def test_the_spellings_a_rule_naming_one_instance_would_miss(self):
+        """Section 1's own sentence, applied to this reading.
+
+        A rule naming today's instance is the same mistake as deleting today's
+        instance, and the first form matched `archive` exactly.
+        """
+        for name in ("Archive", "ARCHIVE", "archives", "archived",
+                     "_archive", "archive-2026"):
+            os.makedirs(os.path.join(self.dir, "docs", name))
+            write(self.dir, f"docs/{name}/x.md", "# x\n")
+            self.assertEqual(census.take()["archive_directories"],
+                             [f"docs/{name}/"], name)
+            shutil.rmtree(os.path.join(self.dir, "docs", name))
+            run_git(self.dir, "add", "-A")
+
+        # **`archiver` is a word.** The family stops at a separator so a crate
+        # or module whose name merely begins with the stem is not a finding.
+        os.makedirs(os.path.join(self.dir, "docs/archiver"))
+        write(self.dir, "docs/archiver/x.md", "# x\n")
+        self.assertEqual(census.take()["archive_directories"], [])
+
+    def test_an_untracked_archive_is_reported_before_it_is_added(self):
+        """The branch `write()` cannot reach.
+
+        Every `write()` in this file runs `git add -A`, so both of the first
+        tests exercised the tracked path only and dropping `--others` from
+        `archives()` left all fourteen green. `sources()` has the equivalent
+        watch and bypasses `write()` the same way.
+        """
+        os.makedirs(os.path.join(self.dir, "docs/archive"))
+        with open(os.path.join(self.dir, "docs/archive/new.md"), "w") as fh:
+            fh.write("# not added\n")
+        self.assertEqual(census.take()["archive_directories"], ["docs/archive/"])
+
+    def test_a_nested_archive_is_one_entry(self):
+        """One directory, one row.
+
+        The comparison is by identity, so a nested pair reported twice moves
+        two baseline rows when one directory is removed.
+        """
+        os.makedirs(os.path.join(self.dir, "docs/archive/sub/archive"))
+        write(self.dir, "docs/archive/sub/archive/a.md", "# a\n")
+        self.assertEqual(census.take()["archive_directories"], ["docs/archive/"])
+
+    def test_main_fails_and_names_the_archive_it_found(self):
+        """Through `main`, which is what this file's docstring asks for.
+
+        The metric exists to fail the gate. Both of the first tests called
+        `take()`, so nothing pinned that an appearing archive returns 1 and
+        prints the path.
+        """
+        self.assertEqual(run("--update"), 0)
+        os.makedirs(os.path.join(self.dir, "docs/archive"))
+        write(self.dir, "docs/archive/old.md", "# gone\n")
+
+        code, out = run_out()
+        self.assertEqual(code, 1)
+        self.assertIn("docs/archive/", out)
+
+    def test_the_hadesignore_carries_the_load_bearing_patterns(self):
+        """The exclusion half, which had no watch at all.
+
+        Drop `**/archive/` from `.hadesignore` and nothing moved: no gate, no
+        test, no reading. HADES honours the file - both ingest walkers call
+        `add_custom_ignore_filename` - so the line is live rather than inert,
+        and what was missing was anything that notices its removal.
+
+        **The repository's own file and not a fixture**, which is the point.
+        """
+        path = os.path.join(REPO, ".hadesignore")
+        with open(path, encoding="utf-8") as fh:
+            body = fh.read()
+        for pattern in ("**/archive/", "experiments/"):
+            self.assertIn(pattern, body, pattern)
+
     def test_an_archive_directory_anywhere_is_reported(self):
         """The instrument for the ruling of 2026-09-13.
 
@@ -351,6 +446,11 @@ def run_out(*args):
 
 def run(*args):
     return run_out(*args)[0]
+
+
+def run_git(root, *args):
+    import subprocess
+    subprocess.run(["git", "-C", root, *args], check=True, capture_output=True)
 
 
 def write(root, rel, text):

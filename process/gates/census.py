@@ -212,14 +212,40 @@ def docs():
                 yield os.path.join(base, f)
 
 
+def ls_files(*flags):
+    """The tracked set, or whatever `flags` narrows it to.
+
+    **NUL separated.** A path with a space is two entries to `split()`, and git
+    C-quotes a non-ASCII one, so both arrive as paths that are not there.
+
+    Lifted from `sources()` on the olympus review of 2026-09-13, where it stood
+    duplicated verbatim but for the pathspec and the second copy relied on this
+    comment silently.
+    """
+    out = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "-z", *flags],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return [x for x in out.split("\0") if x]
+
+
+# **A family of spellings and not one.** `WeaverTools-Working-Process` section 1
+# says a rule naming today's instance is the same mistake as deleting today's
+# instance, and the first form of this matched `archive` exactly: `Archive/`,
+# `ARCHIVE/`, `archives/`, `archived/`, `_archive/` and `archive-2026/` all read
+# as clean. The trailing group stops at `-` or `_` so `archiver` is a word and
+# not a finding.
+ARCHIVE_DIR = re.compile(r"^_*archive(?:s|d)?(?:[-_].*)?$", re.I)
+
+
 def archives():
-    """Every directory named `archive` in the tree, which must be none.
+    """Every directory in the tree whose name says archive, which must be none.
 
     **The ruling of 2026-09-13 is that git is the archive**, so no archive
     directory stands in the repository. Deleting the two that existed removed
     that day's instances and nothing stopped the next one, which is the shape
     the ruling was made against - the deletion and this count being the two
-    halves of one rule.
+    halves of one rule. Section 1 of the Working Process owns it.
 
     **The whole tracked set and not the workspace members.** `docs/archive/`
     sat outside every member and held sixteen files, so a check scoped the way
@@ -228,24 +254,40 @@ def archives():
 
     **Untracked too**, on the same reasoning `sources()` gives: the gate runs
     mid-act, and an archive being created is exactly when saying so is cheap.
-    Ignored files stay out, so a build product named `archive` is not a
-    finding.
-    """
-    def git(*flags):
-        out = subprocess.run(
-            ["git", "-C", ROOT, "ls-files", "-z", *flags],
-            capture_output=True, text=True, check=True,
-        ).stdout
-        return [x for x in out.split("\0") if x]
 
+    **On disk and not only in the index**, which is the guard `sources()` has
+    carried since the bug list's entry on the same subject. Without it a
+    deleted archive still read as standing until the deletion was staged, so
+    **the gate failed the very act that obeys the rule** - found by the olympus
+    review of 2026-09-13.
+
+    Two exemptions, both named rather than left to be read off a sentence:
+
+    **An ignored directory is not counted.** A `.gitignore` line is therefore a
+    way out of the rule, and it is accepted because HADES honours `.gitignore`
+    too, so the ingest agrees with the count. What it costs is a frozen copy on
+    disk for a human reader, which is the same cost the rule is about - so a
+    seat that finds one adds the deletion rather than the ignore line.
+
+    **An empty directory is not counted**, git listing files and never
+    directories. It cannot reach another seat: git carries no empty directory,
+    so the window is one working tree, one act long, holding nothing.
+    """
     found = set()
     # git reports forward slashes on every platform, so this does not use
     # os.sep - which `sources()` needs and this does not.
-    for rel in set(git()) | set(git("--others", "--exclude-standard")):
+    for rel in set(ls_files()) | set(ls_files("--others", "--exclude-standard")):
+        if not os.path.isfile(os.path.join(ROOT, rel)):
+            continue
         parts = rel.split("/")
         for i, part in enumerate(parts[:-1]):
-            if part == "archive":
+            if ARCHIVE_DIR.match(part):
+                # **The outermost only.** A nested pair reported two entries
+                # for one directory, and removing the outer one then moved two
+                # baseline rows for one act where the comparison is by
+                # identity.
                 found.add("/".join(parts[: i + 1]) + "/")
+                break
     return sorted(found)
 
 
@@ -267,14 +309,7 @@ def sources():
     gate scoped by `/src/` and inherited the defect it was told about.
     """
     def git(*flags):
-        # **NUL separated.** A path with a space is two entries to `split()`,
-        # and git C-quotes a non-ASCII one, so both arrive as paths that are
-        # not there.
-        out = subprocess.run(
-            ["git", "-C", ROOT, "ls-files", "-z", *flags, "--", "*.rs", "*.toml"],
-            capture_output=True, text=True, check=True,
-        ).stdout
-        return [x for x in out.split("\0") if x]
+        return ls_files(*flags, "--", "*.rs", "*.toml")
 
     # **Tracked, plus work that is not staged yet.** The format's rule is over
     # the tracked unit to exclude what is generated or scratch, not to make an
