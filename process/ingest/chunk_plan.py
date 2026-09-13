@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cut the few files that exceed the embedder's window, at semantic seams.
 
-**Most files need nothing.** 253 of 263 tracked units fit a 32,768-token
+**Most files need nothing.** 245 of 255 tracked units fit a 32,768-token
 window whatever the tokenizer says, so this is not a chunking strategy for a
 corpus - it is a held-out list for the handful that do not fit, and it exists
 because a one-size cut through those files would break them mid-thought.

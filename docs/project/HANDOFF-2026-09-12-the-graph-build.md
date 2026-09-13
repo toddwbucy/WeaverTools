@@ -242,8 +242,8 @@ token - it came from somewhere this document does not say. Ten are held out
 because the hold-out test is the target and not the ceiling, which is the
 headroom doing its job.
 
-**Run the tokenizer over the ten held-out files, before anything else.** 253 of
-263 tracked units fit whatever the tokenizer says, so this is ten files rather
+**Run the tokenizer over the ten held-out files, before anything else.** 245 of
+255 tracked units fit whatever the tokenizer says, so this is ten files rather
 than a corpus. Two of them - `weaver-admin-Spec` at about 33,644 tokens and
 `weaver-types-Spec` at about 33,315 - sit within three percent of the ceiling,
 which is inside the error of any ratio, and `main.rs` at 31,844 sits the same
@@ -291,7 +291,7 @@ step in one.
 **A crash between the delete and the write needs to be loud rather than
 ordered around.** Ordering buys something only where the failure is quiet, and
 where it is quiet no ordering saves you. What has to hold is per-file outcome
-reporting: 263 files where one fails mid-write and the job reports success is
+reporting: 255 files where one fails mid-write and the job reports success is
 the shape that hides, and it is a reporting property rather than a sequencing
 one. A file left with no chunks is picked up by the next run on the hash alone.
 

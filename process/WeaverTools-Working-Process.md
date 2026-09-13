@@ -864,7 +864,14 @@ than the profile's bare claim. It is deliberately not a corpus member and
 nothing here is written against it. It does not reach the gates, and a reading
 it produces is evidence about the code rather than authority over a document.
 
-**Where the work sits as of 2026-09-02.** The seat is using the framework
+**Where the work sits as of 2026-09-13.** `experiments/` left this repository for the
+`weaver-experiments` tree under section 5's ruling of that date, with its history, and
+every archive directory left under section 1's. The paragraph on the experiment
+directory below was written about #404 and about a directory that no longer stands
+here; it is kept because the reporting defect it names is unfixed and travels with the
+runs.
+
+**Where the work sat as of 2026-09-02.** The seat is using the framework
 rather than building it, per the 2026-08-19 shift, and the pulls this week
 came from use exactly as that shift predicted: the diagnostic leg's papers
 were pulled by a replay that had to run, the artifact criteria by
@@ -892,7 +899,10 @@ edges. Which figure a check reads therefore matters, and the closing checklist's
 item 5 reads nodes. A rebuild returning any other figure has found either an
 unlanded edit or an assertion an act changed without recording.
 
-**Code is not ingested into the graph and that is deliberate.** The earlier ground
+**Code is not ingested into the graph as of the v3 build, and that is deliberate.**
+The v4 build named in `docs/project/HANDOFF-2026-09-12-the-graph-build` reverses it
+crate by crate, which is the point of taking one crate at a time - and until that
+build runs, the standing position below is the one in force. The earlier ground
 was that conformance headers cited retired assertions and ingesting would bake
 dangling edges into the map. That count reached zero on 2026-08-08. The standing
 ground is the operator's, recorded here because a later reader will find the

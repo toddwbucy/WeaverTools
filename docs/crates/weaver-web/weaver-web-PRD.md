@@ -6,6 +6,11 @@ ratified on its own terms under the per-charter rule of 2026-08-23, and a
 rewrite does not inherit that. Whether this text has cleared its gates is
 the operator's to say.
 
+**Revised:** 2026-09-13, the driver this document names by filename leaves the
+repository, per the Spec's status entry of this date, which is where that fact stands
+for this crate. Section 9's cell ruling of 2026-09-09 is untouched and the path it
+quoted is dropped, the subject being a filename rather than a location.
+
 **Revised:** 2026-09-09, fifth of this date, the plan and the refs are authored objects.
 Section 3.5 gains what an ablation composes before any column is registered, a parent
 and a set of columns with a disposition for every member of the tuple, and says that
@@ -935,10 +940,9 @@ this crate designs around the gap until it closes.
   trial**, which this document now says, the word being free in the corpus and sitting
   beside the experiment that authors it and the run that executes it. The
   matrix-coordinate sense also stands in code and in deposits, the driver
-  `experiments/cross-precision-repro/confirm_cells.py` by name and a `cells` key the
-  configs and every deposit written against them carry. **Those are weighed and left**:
-  a filename and a stored key are not prose, and renaming them would strand the deposits
-  that already spell it.
+  `confirm_cells.py` by name and a `cells` key the configs and every deposit written
+  against them carry. **Those are weighed and left**: a filename and a stored key are
+  not prose, and renaming them would strand the deposits that already spell it.
 - **The field election's depth**, which sets how many alternatives a
   position keeps. The records on hand carry forty and fifty. It is the
   operator's ruling and the number one wishes had been kept is discovered

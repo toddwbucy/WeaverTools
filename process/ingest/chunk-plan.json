@@ -1,5 +1,5 @@
 {
-  "ref": "eebecf17e28d8787c7c67b8d5707aabd3304a226",
+  "ref": "19d79a443862424e38801a3fc0e1084cd76afda2",
   "ceiling_tokens": 32768,
   "target_tokens": 28000,
   "overlap": "one whole structural unit, repeated at each boundary",
@@ -199,21 +199,21 @@
     },
     {
       "path": "docs/crates/weaver-web/weaver-web-Spec.md",
-      "bytes": 147689,
-      "content_sha256": "cff99496ad699e5405f2c79f42bae1e7a0cbd671b33031c7fea57700ebc06416",
+      "bytes": 149224,
+      "content_sha256": "1d53052fdc85335382906e51365e980bf5ded5e76b54dbdda74f8340f4f9802c",
       "chars_per_token_assumed": 4,
       "pieces": [
         {
           "start": 0,
-          "end": 101407,
+          "end": 102976,
           "units": 5,
-          "estimated_tokens": 25351
+          "estimated_tokens": 25744
         },
         {
-          "start": 84395,
-          "end": 147689,
+          "start": 85964,
+          "end": 149224,
           "units": 8,
-          "estimated_tokens": 15823
+          "estimated_tokens": 15815
         }
       ]
     }

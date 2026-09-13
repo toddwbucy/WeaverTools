@@ -1,8 +1,8 @@
 ---
 title: reproducibility, confirmed in the lab
 summary: a recorded turn reissued from the trace alone reproduced bit-exact across reloads - method, result, scope
-version: v0.2
-date: 2026-08-25
+version: v0.3
+date: 2026-09-13
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -95,10 +95,21 @@ separate prefill from decode - a first-token stamp is the missing fact.
 
 Run later the same day, scripted rather than hand-driven, because the
 manual reissue was the one weakness the first result named. The harness
-lives at `experiments/cross-precision-repro/` and drives the whole
-protocol: serve a short and a longer turn, unload fully, reload, read
-the request texts back from the record's own events, reissue byte-exact
-at the gate socket, compare, deposit. Two entries on this box, the same
+at `cross-precision-repro/` drives the whole protocol: serve a short and
+a longer turn, unload fully, reload, read the request texts back from the
+record's own events, reissue byte-exact at the gate socket, compare,
+deposit. **That harness left this repository on 2026-09-13** for the
+`weaver-experiments` tree, per `WeaverTools-Working-Process` section 5.
+That tree has no remote, so the name above resolves to nothing a reader
+holding this repository can open. The content is recovered from this
+repository's own history, with `git archive` because the target is a
+directory and `git show` on one lists its entries without retrieving
+them, and to a file rather than an extraction because extracting from
+the repository root would put `experiments/` back:
+
+    git archive -o /tmp/repro.tar 0bca344 experiments/cross-precision-repro
+
+Two entries on this box, the same
 declaration apart from the artifact path, the same declared seed and
 turn texts, single device, no sharding:
 
