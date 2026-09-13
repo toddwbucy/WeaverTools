@@ -43,6 +43,54 @@ arrives with edits already made has skipped the gate rather than passed it.
 A gate is a condition, not an intention. Every gate below is written so that it can be
 checked by looking, and a gate that cannot be checked by looking is not a gate.
 
+**Git is the archive, and no archive directory stands in the tree.** The operator's
+ruling of 2026-09-13. A retired document or module is deleted, and whatever referenced
+it cites the content against a ref reachable from `main`. Branches and worktrees are
+how work in flight is held.
+
+**The command differs by what is cited, and reading is not the same act as
+materialising.** `git show <ref>:<path>` prints a file to stdout. On a directory it
+prints the tree's entry names and retrieves nothing, so a citation that reads as a
+recovery instruction recovers nothing - which PR #567 shipped twice before CodeRabbit
+caught it.
+
+    read a file           git show <ref>:<path>
+    save a file           git show <ref>:<path> > /tmp/<name>
+    save a tree           git archive -o /tmp/<name>.tar <ref> <path>
+
+**The tree form writes an archive and never extracts.** Two earlier forms of this line
+did, and each failed differently: `| tar -x` extracts relative to the current
+directory, so run from the repository root it recreates the directory the ruling
+deleted, and a reader who then commits has undone the rule by following the citation;
+`| tar -x -C /tmp/<dir>` fixed that and then exited 2 whenever the destination did not
+already exist. **`git archive -o` is one command and needs no destination directory**,
+and what it does not do is unpack: nothing appears at `<path>` in the working tree, so
+the failure the first form had is structurally gone. The reader unpacks the archive
+where they choose, which is their decision rather than this rule's.
+
+**The `/tmp` in that line is doing work and is not decoration.** `-o` writes wherever
+it is pointed, so `git archive -o ./x.tar` lands a tarball in the repository. An
+earlier form of this paragraph said the option could not write into the working tree
+at all, which is false and was corrected by CodeRabbit on PR #567 - **the option
+removes the unpacking hazard and the path removes the writing one.**
+
+**A citation is for reading and recovery is the exception.** Most of the time the
+first line is the whole answer: the content is wanted on screen, not back in the tree.
+
+A copy inside the tree duplicates a job git already does, so every encounter with it
+becomes a question about which copy is authoritative - and that question has no cheap
+answer. The `weaver-web` archive held nine files at its deletion, three drifted from
+their originals and six byte-identical, and telling them apart cost a hash of every
+file. A commit cannot drift. **The rule is every archive**, `docs/archive/` included:
+a record of a decision is not a second copy of the thing decided, and the carve-out
+made on that ground was overturned the day it was made.
+
+**The rule has two halves and neither is a substitute for the other.** `census.py`'s
+`archive_directories` reading holds the tree at zero, per H6. `.hadesignore` excludes
+the pattern from the ingest, for the window between a directory appearing and someone
+acting on the finding. A rule naming today's instance is the same mistake as deleting
+today's instance, so both halves match a family of spellings rather than one.
+
 ## 2. Document states
 
 Three states, and the transition between each pair is an event with a gate.
@@ -336,6 +384,26 @@ the first, which is the failure this phase exists to prevent.
 The graph is what code is checked against in phase three. Prose does not answer a
 conformance query and a graph does.
 
+**A workspace and a knowledge graph are not the same unit.** The operator's ruling of
+2026-09-13. More than one tree feeds one graph, each on its own schedule, and ingest
+is per workspace - so a tree joins when it is ready to be read rather than when the
+graph is built. Three are named: this repository, which is the instrument and what the
+instrument is; `weaver-experiments`, which is what was run on it; and the paper drafts
+later.
+
+**The reason is that the trees answer to different clocks.** Every gate in section 4
+and section 6 checks a claim against current state, which is right for a tree that
+describes something still changing. An experiment is a dated fact that must never
+change: it was run against a commit, and `weaver-web` alone has had nine migrations
+and a rewritten Spec since the runs now held elsewhere. Under one set of rules the
+edges point at current state and the graph answers confidently that an old result is
+about today's code.
+
+**`experiments/` left this repository on 2026-09-13** under that ruling, with its
+history, and the reruns are when it becomes worth ingesting. Broken links out are
+accepted on the operator's ruling of the same date, every one of those experiments
+being due a rerun whatever the graph decides.
+
 ### Closing checklist
 
 Phase two closes on a checklist, each item verifiable by looking. Closing it is what
@@ -441,6 +509,13 @@ and a deliberate increase a sentence in the act that takes it. **A new
 row is marked owed**; issue #558 is the backlog of the ones that are neither.
 Landed on the operator's ruling of 2026-09-11, after drift in `weaver-trace-Spec`
 stood three weeks and was found by accident.
+
+**`archive_directories` joined the reading on 2026-09-13** and is the instrument for
+section 1's archive rule. It is the one metric that is not a claim measured against a
+fact, and it lives here because the census is the only gate that reads the tracked
+set. **Its baseline is zero and stays zero**, which makes it the exception to the
+no-defect-is-new rule above: an increase is not a backlog entry to be taken with a
+sentence, it is the rule being broken.
 
 **The seat reviews twice, and the second pass reviews the rework.** Answering a
 review is itself an act: on 2026-09-11 it introduced a real defect in three pull

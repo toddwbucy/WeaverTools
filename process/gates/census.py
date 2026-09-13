@@ -86,7 +86,10 @@ review passes found them; the second found as many as the first:
   gate's exclusion for them was removed rather than kept. It had silently
   exempted any future directory named `archive/` from the header rule, which
   is the opposite of what a rule against archives wants - one appearing now is
-  counted like any other source and shows up as headerless.
+  counted like any other source and shows up as headerless. **And is counted
+  directly**, `archive_directories` having joined the reading the same week,
+  since a header rule catches an archived `.rs` and says nothing about an
+  archived `.md`.
 - `--update` truncated the baseline before serialising, so an interrupt left
   the gate's whole memory half written.
 - A citation was read as its first token, so `conforms: valid-node trailing`
@@ -209,6 +212,93 @@ def docs():
                 yield os.path.join(base, f)
 
 
+def ls_files(*flags):
+    """The tracked set, or whatever `flags` narrows it to.
+
+    **NUL separated.** A path with a space is two entries to `split()`, and git
+    C-quotes a non-ASCII one, so both arrive as paths that are not there.
+
+    Lifted from `sources()` on the olympus review of 2026-09-13, where it stood
+    duplicated verbatim but for the pathspec and the second copy relied on this
+    comment silently.
+    """
+    out = subprocess.run(
+        ["git", "-C", ROOT, "ls-files", "-z", *flags],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return [x for x in out.split("\0") if x]
+
+
+# **A family of spellings and not one.** `WeaverTools-Working-Process` section 1
+# says a rule naming today's instance is the same mistake as deleting today's
+# instance, and the first form of this matched `archive` exactly: `Archive/`,
+# `ARCHIVE/`, `archives/`, `archived/`, `_archive/` and `archive-2026/` all read
+# as clean. The trailing group stops at `-` or `_` so `archiver` is a word and
+# not a finding.
+#
+# **One optional leading underscore and not `_*`.** The wider form had no
+# expressible counterpart in `.hadesignore`, gitignore having no way to say
+# "any number of", so the two halves of the rule matched different sets - 93
+# names apart, found by CodeRabbit on PR #566. **The family is bounded so both
+# halves can state it exactly**, which is worth more than reaching `___archive`:
+# a set neither half covers is consistent, where a set one covers and the other
+# does not is the ingest taking a frozen copy the gate is about to refuse.
+ARCHIVE_DIR = re.compile(r"^_?archive(?:s|d)?(?:[-_].*)?$", re.I)
+
+
+def archives():
+    """Every directory in the tree whose name says archive, which must be none.
+
+    **The ruling of 2026-09-13 is that git is the archive**, so no archive
+    directory stands in the repository. Deleting the two that existed removed
+    that day's instances and nothing stopped the next one, which is the shape
+    the ruling was made against - the deletion and this count being the two
+    halves of one rule. Section 1 of the Working Process owns it.
+
+    **The whole tracked set and not the workspace members.** `docs/archive/`
+    sat outside every member and held sixteen files, so a check scoped the way
+    `sources()` is would have seen one of the two directories it exists to
+    catch.
+
+    **Untracked too**, on the same reasoning `sources()` gives: the gate runs
+    mid-act, and an archive being created is exactly when saying so is cheap.
+
+    **On disk and not only in the index**, which is the guard `sources()` has
+    carried since the bug list's entry on the same subject. Without it a
+    deleted archive still read as standing until the deletion was staged, so
+    **the gate failed the very act that obeys the rule** - found by the olympus
+    review of 2026-09-13.
+
+    Two exemptions, both named rather than left to be read off a sentence:
+
+    **An ignored directory is not counted.** A `.gitignore` line is therefore a
+    way out of the rule, and it is accepted because HADES honours `.gitignore`
+    too, so the ingest agrees with the count. What it costs is a frozen copy on
+    disk for a human reader, which is the same cost the rule is about - so a
+    seat that finds one adds the deletion rather than the ignore line.
+
+    **An empty directory is not counted**, git listing files and never
+    directories. It cannot reach another seat: git carries no empty directory,
+    so the window is one working tree, one act long, holding nothing.
+    """
+    found = set()
+    # git reports forward slashes on every platform, so this does not use
+    # os.sep - which `sources()` needs and this does not.
+    for rel in set(ls_files()) | set(ls_files("--others", "--exclude-standard")):
+        if not os.path.isfile(os.path.join(ROOT, rel)):
+            continue
+        parts = rel.split("/")
+        for i, part in enumerate(parts[:-1]):
+            if ARCHIVE_DIR.match(part):
+                # **The outermost only.** A nested pair reported two entries
+                # for one directory, and removing the outer one then moved two
+                # baseline rows for one act where the comparison is by
+                # identity.
+                found.add("/".join(parts[: i + 1]) + "/")
+                break
+    return sorted(found)
+
+
 def sources():
     """Every tracked unit a workspace member owns, and whether it owes a header.
 
@@ -227,14 +317,7 @@ def sources():
     gate scoped by `/src/` and inherited the defect it was told about.
     """
     def git(*flags):
-        # **NUL separated.** A path with a space is two entries to `split()`,
-        # and git C-quotes a non-ASCII one, so both arrive as paths that are
-        # not there.
-        out = subprocess.run(
-            ["git", "-C", ROOT, "ls-files", "-z", *flags, "--", "*.rs", "*.toml"],
-            capture_output=True, text=True, check=True,
-        ).stdout
-        return [x for x in out.split("\0") if x]
+        return ls_files(*flags, "--", "*.rs", "*.toml")
 
     # **Tracked, plus work that is not staged yet.** The format's rule is over
     # the tracked unit to exclude what is generated or scratch, not to make an
@@ -412,6 +495,7 @@ def take():
         "enforcement_table_mismatch": sorted(mismatch),
         "documents_without_an_enforcement_table": sorted(tableless),
         "sources_without_a_header": sorted(headerless),
+        "archive_directories": archives(),
     }
 
 
@@ -442,6 +526,29 @@ def main():
         # a mode the operator did not ask for and prints a pass, which for a
         # script whose subject is a confident wrong number is the same hazard.
         print(f"census: unrecognised argument: {unknown[0]}", file=sys.stderr)
+        return 2
+
+    # **`archive_directories` is not a backlog and cannot be baselined.**
+    # Every other metric here is a count the baseline may hold, the rule being
+    # that no defect is new. This one's rule is that it is zero, per
+    # `WeaverTools-Working-Process` section 1, and the generic `--update` path
+    # defeated it: create an archive, run `--update`, and every later run
+    # passes at one. Found by CodeRabbit on PR #566.
+    #
+    # **Only `--update` refuses.** A plain run reports the archive through the
+    # ordinary comparison and exits 1, because a new archive is a new defect
+    # and that is what 1 means here. What is closed is the recording of it, and
+    # separately the trusting of a baseline that already holds one.
+    if "--update" in sys.argv and reading["archive_directories"]:
+        print("census: archive directories stand in this tree:", file=sys.stderr)
+        for d in reading["archive_directories"]:
+            print(f"  {d}", file=sys.stderr)
+        print(
+            "Git is the archive, per WeaverTools-Working-Process section 1, so\n"
+            "this reading is zero and is not a backlog. Delete them rather than\n"
+            "recording them; a plain run reports them as the new defect they are.",
+            file=sys.stderr,
+        )
         return 2
 
     if "--update" in sys.argv:
@@ -478,6 +585,19 @@ def main():
 
     with open(BASELINE, encoding="utf-8") as fh:
         before = json.load(fh)
+
+    # **A baseline holding one is a poisoned baseline.** The reading above is
+    # already zero or the run returned, so a nonempty entry here was written by
+    # a version without that guard, or by hand.
+    if before.get("archive_directories"):
+        print(
+            "census: the baseline records archive directories: "
+            f"{before['archive_directories']}.\n"
+            "That reading is zero by rule and cannot be carried as a backlog.\n"
+            "Clear the entry in the baseline; the tree is already clean.",
+            file=sys.stderr,
+        )
+        return 2
 
     missing = sorted(set(before) - set(reading))
     if missing:

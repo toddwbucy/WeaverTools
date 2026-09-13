@@ -350,7 +350,13 @@ when the graph lands - the graph indexes them, it does not replace them:
    enforcement_table_mismatch              a document against its own table
    documents_without_an_enforcement_table  the table a row is owed in
    sources_without_a_header                phase three's rule, per unit
+   archive_directories                     a frozen copy of live code
    ```
+
+   **The last one is not a claim against a fact and is here anyway**, because
+   the census is the only device that reads the tracked set.
+   `WeaverTools-Working-Process` section 1 carries the rule, section 6 carries
+   what this reading owes it, and the ingest half is `.hadesignore`.
 
    **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
    file carries the invocation and not a second copy of it: two authorities

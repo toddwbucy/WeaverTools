@@ -1,0 +1,53 @@
+# What a HADES ingest of this workspace does not read.
+#
+# **A workspace declares its own exclusions.** The ingest is configured on the
+# server and the corpus lives here, so a rule kept only on the server is a
+# rule the tree cannot be checked against. Per issue #565.
+#
+# Syntax follows .gitignore: one pattern per line, `#` comments, `/` anchors
+# to this file's directory, a trailing `/` matches directories only.
+#
+# **Only what this workspace adds.** The server already skips `__pycache__`,
+# `node_modules`, `target` and `venv` by default and hidden directories with
+# them, so listing those here is a copy that drifts when the server's defaults
+# move rather than a rule this tree is stating. Both entries below are
+# load-bearing.
+
+# **Frozen copies of live code.** An ingest walking one puts the same symbols
+# in twice under two paths, so symbol resolution has two answers and no basis
+# for choosing, and retrieval returns the stale text as readily as the live.
+#
+# `WeaverTools-Working-Process` section 1 carries the rule: git is the archive
+# and no archive directory stands in this tree at all. The two that did were
+# deleted at PR #563 and `census.py`'s `archive_directories` reading holds it
+# at zero. **This is the second half of that rule and not a substitute for
+# it** - it covers the window between a directory appearing and someone acting
+# on the finding.
+#
+# **A family of spellings**, because a rule naming today's instance is the same
+# mistake as deleting today's instance. The reading matches the same set.
+# gitignore syntax has no case-insensitivity flag and the census reading uses
+# `re.I`, so the case classes are written out. Without them `ARCHIVE/` is
+# ingested while the census flags it - the two halves of one rule disagreeing,
+# which CodeRabbit found on PR #566.
+#
+# **Eight patterns, and the reading is bounded so eight is enough.** Two
+# prefixes by two plural forms by two suffix forms. The reading allowed any
+# number of leading underscores and gitignore cannot say that, which left the
+# halves 93 names apart on a second reading. `test_census.py` generates the
+# whole cross-product and fails on any disagreement, rather than checking a
+# list somebody wrote out - which is how the first eight passed.
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
+**/[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee]/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd]/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
+**/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
+
+# **Experiments are a separate corpus and left this tree** on 2026-09-13, per
+# Working Process section 5 and issue #564. Kept after the departure for the
+# same reason the archive patterns are kept after the deletion: the rule is
+# about the class and not about today's directory.
+experiments/
