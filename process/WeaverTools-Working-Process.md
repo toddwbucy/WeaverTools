@@ -45,8 +45,16 @@ checked by looking, and a gate that cannot be checked by looking is not a gate.
 
 **Git is the archive, and no archive directory stands in the tree.** The operator's
 ruling of 2026-09-13. A retired document or module is deleted, and whatever referenced
-it cites `git show <ref>:<path>` against a ref reachable from `main`. Branches and
-worktrees are how work in flight is held.
+it cites the content against a ref reachable from `main`. Branches and worktrees are
+how work in flight is held.
+
+**The command differs by what is cited, and one of the two only looks right.**
+`git show <ref>:<path>` prints a file. On a directory it prints the tree's entry names
+and retrieves nothing, so a citation that reads as a recovery instruction recovers
+nothing - which PR #567 shipped twice before CodeRabbit caught it.
+
+    a file        git show <ref>:<path>
+    a directory   git archive <ref> <path> | tar -x
 
 A copy inside the tree duplicates a job git already does, so every encounter with it
 becomes a question about which copy is authoritative - and that question has no cheap
