@@ -340,6 +340,11 @@ fi
 # ------------------------------------------------------------------ 7. install
 PATCHED=()
 ADDED=()
+# The agent the verify step has loaded right now, empty whenever none is. Every
+# rollback from inside that step happens with a worker running, and a restore
+# that leaves it running puts the old declaration and the old binaries under a
+# live agent that came up on neither.
+LOADED_AGENT=""
 COMPLETED=0
 RESTORED=0
 INSTALL_DONE=0
@@ -363,6 +368,20 @@ restore() {
   [ "$RESTORED" -eq 0 ] || return 0
   RESTORED=1
   local failed=0
+  # **The running agent goes down before the files move under it.** A load that
+  # succeeded and then failed its read-back left a worker serving while the
+  # declaration it came up on and the binaries it was exec'd from were both
+  # put back, so the box ran an agent that matched nothing on disk. It is not
+  # reloaded: a verified agent is left unloaded by the normal path too, and
+  # bringing one up on restored binaries is a load this script was not asked
+  # to perform.
+  if [ -n "$LOADED_AGENT" ]; then
+    printf '  unloading %s before the restore\n' "$LOADED_AGENT" >&2
+    sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" \
+      unload "$LOADED_AGENT" >/dev/null 2>&1 \
+      || printf '  %s would not unload; it is running against restored files\n' "$LOADED_AGENT" >&2
+    LOADED_AGENT=""
+  fi
   if [ ${#PATCHED[@]} -gt 0 ]; then
     for entry in "${PATCHED[@]}"; do
       printf '  restoring declaration %s\n' "${entry%%|*}" >&2
@@ -532,6 +551,9 @@ for AGENT in $ALLOW_LIST; do
   printf '  %s\n' "$AGENT"
   LINES=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  # Claimed before the load rather than after it, so a load that comes up and
+  # then dies on its read-back is still a load the restore knows to undo.
+  LOADED_AGENT="$AGENT"
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
   LATER=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   NEW=$(( LATER - LINES ))
@@ -552,6 +574,7 @@ for AGENT in $ALLOW_LIST; do
     rollback "$AGENT: the load event does not name its composer; the install did not take"
   fi
   sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" unload "$AGENT" >/dev/null 2>&1 || true
+  LOADED_AGENT=""
   VERIFIED=$((VERIFIED + 1))
 done
 [ "$VERIFIED" -gt 0 ] || rollback "no agent in the allow-list could be verified"
