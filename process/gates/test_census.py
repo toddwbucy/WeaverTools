@@ -262,6 +262,45 @@ class Census(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("+ fix-nonexistent", out)
 
+    def test_a_file_under_a_members_archive_owes_no_header_and_cites_nothing(self):
+        """The prune this suite did not hold, and which has failed twice.
+
+        The docstring of the gate records both: `archive/` excluded in a
+        comment and not in the code, putting four never-compiled files into a
+        backlog with no way to close them, and text in `archive/` still
+        feeding the citation set. **Nothing in the tree exercises this after
+        2026-09-13**, the one archive under a member having been deleted at
+        PR #563, so the fixture is where it lives now.
+        """
+        os.makedirs(os.path.join(self.dir, "crates/demo/archive"))
+        # Header-less, and citing the one perturbation the corpus leaves
+        # uncited - so a prune that fails shows up in two metrics at once.
+        write(self.dir, "crates/demo/archive/old.rs",
+              "/// conforms: fix-uncited-perturbation\nfn gone() {}\n")
+        reading = census.take()
+
+        self.assertNotIn("crates/demo/archive/old.rs",
+                         reading["sources_without_a_header"])
+        # **An archived citation buys no instrument.** Letting it count would
+        # close a backlog entry while no test runs.
+        self.assertEqual(reading["uncited_perturbations"],
+                         ["fix-uncited-perturbation"])
+
+    def test_the_same_file_outside_an_archive_owes_and_cites(self):
+        """The perturbation for the test above.
+
+        Without it that test passes on a gate that has stopped reading
+        `crates/` at all, which is the shape of failure this file exists to
+        catch - a watch that cannot fail.
+        """
+        write(self.dir, "crates/demo/src/old.rs",
+              "/// conforms: fix-uncited-perturbation\nfn gone() {}\n")
+        reading = census.take()
+
+        self.assertIn("crates/demo/src/old.rs",
+                      reading["sources_without_a_header"])
+        self.assertEqual(reading["uncited_perturbations"], [])
+
     def test_an_unrecognised_argument_refuses(self):
         self.assertEqual(run("--updat"), 2)
 

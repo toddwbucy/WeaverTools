@@ -81,7 +81,9 @@ review passes found them; the second found as many as the first:
   paths that are not there.
 - Text in `archive/` still fed the citation set, so a citation in a file that
   is never compiled could take a perturbation out of the backlog while no test
-  ran.
+  ran. **Both archive bugs are held by the fixture from 2026-09-13**, the one
+  archive under a member having been deleted at PR #563 - so the branch is
+  exercised by nothing in the tree and would go dark unwatched otherwise.
 - `--update` truncated the baseline before serialising, so an interrupt left
   the gate's whole memory half written.
 - A citation was read as its first token, so `conforms: valid-node trailing`

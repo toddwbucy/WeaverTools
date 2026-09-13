@@ -17,6 +17,19 @@ The figure read 4,531 until 2026-09-07 and was off by one.
 **Two of those acts have now landed.** The crate stands at **4,002 lines**
 and one migration, and the register below marks what moved.
 
+**Revised:** 2026-09-13, the archive is deleted and question 1 is re-answered. **The
+frozen copy at `crates/weaver-web/archive/conversation/` is gone**, git being the copy,
+which reverses this register's ruling of 2026-09-06 and matches the answer question 2
+took on 2026-09-07. A copy drifts: three of the nine files its manifest hashed had
+stopped matching their originals, and the other six had not, so a reader met an
+alternate version of three live modules with nothing marking which three. **The call-site
+map the archive act found by trying is carried into the Retires section above**, that
+manifest having been the only place it was written down and being original analysis
+rather than a copy of anything. **And the count in it was wrong**: eight sites, not the
+nine this register has said since 2026-09-06, which counted one module's import line as
+a site and three others' as not. The crossings are byte-identical to what `78aa739`
+carried, so this is a miscount corrected rather than a tree that moved. Per PR #563.
+
 **Revised:** 2026-09-08, the citation act lands and this register's own figures are
 corrected. PR #510 repointed twenty-seven of the crate's comment citations, redirected
 one and left nine with their retiring modules, and PR #509 gave the role a home at Spec
@@ -61,10 +74,11 @@ it is stated by ruling rather than by total.
 register. **`registry.rs` splits rather than retiring whole**: it carries
 `Participant`'s `role` and `is_admin()`, which is the role model the charter's section 6
 keeps as structural and which `web/admin.rs` gates on, so its separation is the section
-6 act. **The four retiring files cannot be lifted out independently**, nine call sites
+6 act. **The four retiring files cannot be lifted out independently**, eight call sites
 crossing into them from modules that do not retire, which is why the archive at
-`crates/weaver-web/archive/conversation/` is a frozen copy and the build still compiles
-the originals. Section 1's ruling list said four ruling-wanted modules where its own
+`crates/weaver-web/archive/conversation/` was made a frozen copy while the build still
+compiled the originals. This sentence read nine and is corrected above to eight, and the
+archive it names was deleted 2026-09-13 at PR #563, git being the copy. Section 1's ruling list said four ruling-wanted modules where its own
 table has five. **And the edition alignment is measured**: it is not the real work its
 comment claims.
 
@@ -161,10 +175,27 @@ the operator says whether it is reworked or rewritten.
 ### Retires, 882 lines by file and fewer in fact
 
 **These four cannot be lifted out independently**, which this register did
-not say and the archive act of 2026-09-06 found by trying. Nine call sites
-cross into them from modules that do not retire, and one of those sites is
-the role model, so `registry.rs` splits rather than going. The lines below
-are the files' and the removable subset is smaller.
+not say and the archive act of 2026-09-06 found by trying. **Eight call
+sites cross into them from modules that do not retire**, and one of those
+sites is the role model, so `registry.rs` splits rather than going. The
+lines below are the files' and the removable subset is smaller.
+
+**The eight, measured 2026-09-13 at `ecfa256`** and byte-identical to what
+`78aa739` carried, so this map is the input to the act that removes them:
+
+| module | crosses to | at |
+|---|---|---|
+| `bin/weaver-web.rs` | `registry::reconcile_providers`, `registry::reconcile_agents` | 37, 60 |
+| `queue.rs` | `router::on_agent_message`, `channel::messages_since_last_close` | 185, 223 |
+| `web/admin.rs` | `registry::Participant`, in a signature | 37 |
+| `web/mod.rs` | `Participant`, `registry::by_id`, `EventView` | 83, 95, 230 |
+
+**A site is a use of an item, and an import is not one.** Stating the rule
+is what the count needs: this register said nine from 2026-09-06 to
+2026-09-13, which counted `queue.rs`'s `use crate::channel;` as a site
+while not counting `web/mod.rs`'s two import lines or `web/admin.rs`'s one.
+Counted either way consistently the answer is eight sites or twelve sites
+and four imports, and nine is neither.
 
 | file | lines | why |
 |---|---|---|
@@ -334,8 +365,16 @@ act that comes first.
 ## What the operator rules
 
 1. **Whether the retiring 882 lines are deleted, kept, or moved. Ruled
-   2026-09-06: moved**, and landed at PR #469 as a frozen copy with a
-   manifest and checksums, the build still compiling the originals. The
+   2026-09-06: moved. Re-ruled 2026-09-13: deleted**, the archive at
+   `crates/weaver-web/archive/conversation/` removed and git left as the
+   copy. **The first ruling stands as what was decided then**, and it
+   landed at PR #469 as a frozen copy with a manifest and checksums, the
+   build still compiling the originals. What changed is not the argument
+   but a fact the argument did not have: **a copy drifts from what it
+   copies.** Three of the nine files the manifest hashed no longer matched
+   their originals, and the graph work made the cost concrete, an ingest
+   walking the tree meeting two `registry.rs` with identical symbols.
+   Landed at PR #563, where the reversal is argued in full. The
    options as they stood: deleting
    them is cheap and makes the crate read as what it is. Keeping them means
    the crate builds and serves something while the instrument is written
