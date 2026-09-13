@@ -104,10 +104,10 @@ That tree has no remote, so the name above resolves to nothing a reader
 holding this repository can open. The content is recovered from this
 repository's own history, with `git archive` because the target is a
 directory and `git show` on one lists its entries without retrieving
-them, and outside the tree because `tar -x` extracts relative to the
-current directory and would otherwise put `experiments/` back:
+them, and to a file rather than an extraction because extracting from
+the repository root would put `experiments/` back:
 
-    git archive 0bca344 experiments/cross-precision-repro | tar -x -C /tmp/repro
+    git archive -o /tmp/repro.tar 0bca344 experiments/cross-precision-repro
 
 Two entries on this box, the same
 declaration apart from the artifact path, the same declared seed and
