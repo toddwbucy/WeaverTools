@@ -299,6 +299,29 @@ class Census(unittest.TestCase):
         self.assertEqual(reading["uncited_perturbations"],
                          ["fix-uncited-perturbation"])
 
+    def test_an_archive_directory_anywhere_is_reported(self):
+        """The instrument for the ruling of 2026-09-13.
+
+        Two directories, because the two that existed differed in the way
+        that matters: one sat under a workspace member and one did not, and a
+        check scoped the way `sources()` is would have caught only the first.
+        """
+        os.makedirs(os.path.join(self.dir, "crates/demo/archive"))
+        os.makedirs(os.path.join(self.dir, "docs/archive/handoffs"))
+        write(self.dir, "crates/demo/archive/old.rs", "fn gone() {}\n")
+        write(self.dir, "docs/archive/handoffs/old.md", "# gone\n")
+
+        self.assertEqual(census.take()["archive_directories"],
+                         ["crates/demo/archive/", "docs/archive/"])
+
+    def test_a_tree_with_no_archive_directory_reports_none(self):
+        """The perturbation of the test above.
+
+        Without it that test passes on a reading that names every directory,
+        or on one that has stopped filtering at all.
+        """
+        self.assertEqual(census.take()["archive_directories"], [])
+
     def test_an_unrecognised_argument_refuses(self):
         self.assertEqual(run("--updat"), 2)
 

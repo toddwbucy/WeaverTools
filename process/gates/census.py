@@ -86,7 +86,10 @@ review passes found them; the second found as many as the first:
   gate's exclusion for them was removed rather than kept. It had silently
   exempted any future directory named `archive/` from the header rule, which
   is the opposite of what a rule against archives wants - one appearing now is
-  counted like any other source and shows up as headerless.
+  counted like any other source and shows up as headerless. **And is counted
+  directly**, `archive_directories` having joined the reading the same week,
+  since a header rule catches an archived `.rs` and says nothing about an
+  archived `.md`.
 - `--update` truncated the baseline before serialising, so an interrupt left
   the gate's whole memory half written.
 - A citation was read as its first token, so `conforms: valid-node trailing`
@@ -207,6 +210,43 @@ def docs():
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)
+
+
+def archives():
+    """Every directory named `archive` in the tree, which must be none.
+
+    **The ruling of 2026-09-13 is that git is the archive**, so no archive
+    directory stands in the repository. Deleting the two that existed removed
+    that day's instances and nothing stopped the next one, which is the shape
+    the ruling was made against - the deletion and this count being the two
+    halves of one rule.
+
+    **The whole tracked set and not the workspace members.** `docs/archive/`
+    sat outside every member and held sixteen files, so a check scoped the way
+    `sources()` is would have seen one of the two directories it exists to
+    catch.
+
+    **Untracked too**, on the same reasoning `sources()` gives: the gate runs
+    mid-act, and an archive being created is exactly when saying so is cheap.
+    Ignored files stay out, so a build product named `archive` is not a
+    finding.
+    """
+    def git(*flags):
+        out = subprocess.run(
+            ["git", "-C", ROOT, "ls-files", "-z", *flags],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        return [x for x in out.split("\0") if x]
+
+    found = set()
+    # git reports forward slashes on every platform, so this does not use
+    # os.sep - which `sources()` needs and this does not.
+    for rel in set(git()) | set(git("--others", "--exclude-standard")):
+        parts = rel.split("/")
+        for i, part in enumerate(parts[:-1]):
+            if part == "archive":
+                found.add("/".join(parts[: i + 1]) + "/")
+    return sorted(found)
 
 
 def sources():
@@ -412,6 +452,7 @@ def take():
         "enforcement_table_mismatch": sorted(mismatch),
         "documents_without_an_enforcement_table": sorted(tableless),
         "sources_without_a_header": sorted(headerless),
+        "archive_directories": archives(),
     }
 
 

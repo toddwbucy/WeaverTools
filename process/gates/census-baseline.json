@@ -1,4 +1,5 @@
 {
+  "archive_directories": [],
   "dangling_citations": [],
   "documents_without_an_enforcement_table": [
     "docs/crates/weaver-admin/weaver-admin-Spec.md",

@@ -350,7 +350,17 @@ when the graph lands - the graph indexes them, it does not replace them:
    enforcement_table_mismatch              a document against its own table
    documents_without_an_enforcement_table  the table a row is owed in
    sources_without_a_header                phase three's rule, per unit
+   archive_directories                     a frozen copy of live code
    ```
+
+   **The last one is not a claim against a fact and is here anyway.** Git is
+   the archive, per the operator's ruling of 2026-09-13, so no archive
+   directory stands in this tree - and the census is the only device that
+   reads the tracked set, which makes it the only place that rule can have an
+   instrument. The two that existed were deleted at PR #563 and the reading
+   holds at zero. **The ingest half of the same rule is `.hadesignore`**, per
+   issue #565: deletion and exclusion are two halves of one rule, since a rule
+   naming today's instance is the same mistake as deleting today's instance.
 
    **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
    file carries the invocation and not a second copy of it: two authorities
