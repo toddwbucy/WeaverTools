@@ -360,6 +360,19 @@ when the graph lands - the graph indexes them, it does not replace them:
    to have removed. `process/gates/test_census.py` is the gate's fixture and
    runs beside it.
 
+   **One artifact is generated and can go stale, and the gate for it is
+   conditional.** `process/ingest/chunk-plan.json` names the ten files too
+   large for the embedder's window and the byte offsets they are cut at, and
+   it is computed from `main`. **An act that edits any file named in it runs
+   `python3 process/ingest/chunk_plan.py --check`**, which exits 1 and says
+   whether the held-out set moved or only its content did.
+
+   It is conditional because the corpus is not: nine acts in ten touch nothing
+   held out, and a gate that always passes is one people stop reading. Under
+   the update rule of `HANDOFF-2026-09-12-the-graph-build` section 6a a stale
+   manifest is consequential, the ingest re-cutting on a hash that no longer
+   matches what the offsets describe.
+
    **Issue #558 is the backlog** and records how it came about: nineteen of
    the first thirty-three uncited perturbations were born in documents-only
    commits, the Spec authoring an assertion that phase three would code later,
