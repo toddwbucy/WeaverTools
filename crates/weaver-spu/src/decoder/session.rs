@@ -1074,6 +1074,84 @@ mod tests {
         assert_eq!(order.len() / 2, 3, "three draws, the stop token among them");
     }
 
+    /// A cancel mid-path stops the re-feed, and what the answer may report as
+    /// said is bounded by what became resident rather than by what was asked
+    /// for. The recomputed draws are one per recorded token landed, so their
+    /// count is the length of the recorded prefix that reached the resident
+    /// state, which is the slice the caller detokenizes for the emission.
+    ///
+    /// The drive stops differently from a generation. A generation's answer
+    /// is its own draws and a short one is short in both text and
+    /// measurement, where a re-feed is handed the whole path upfront: the
+    /// text is the record's and the measurement is the run's, so a cancel
+    /// parts them and only this count says where.
+    ///
+    /// Perturbation: land the recorded token before honouring the cancel, so
+    /// the resident gains a position the draw count does not name, and the
+    /// prefix assertion fails with three landed against two drawn. Watched
+    /// under exactly that change.
+    ///
+    /// **What this does not watch.** The emission slice itself is taken in
+    /// `main.rs`, which is the binary, so this pins the invariant that slice
+    /// rests on and not the slice. Reverting the caller to `path_tokens` in
+    /// full leaves this green, and a seam-level cancelled re-feed is what
+    /// would catch it. Named here rather than left for a reader to discover.
+    #[test]
+    fn a_cancelled_refeed_lands_only_the_prefix_its_draws_count() {
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(3)],
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+            false,
+        );
+        session.open(&[TokenId(4)]).expect("the prefix lands");
+        let path = [TokenId(7), TokenId(8), TokenId(9)];
+        let generated = session
+            .refeed(
+                &[TokenId(5)],
+                &path,
+                TokenId(0),
+                &mut CancelsAfter { polls: 0, limit: 2 },
+                None,
+                &mut |_, _, _| {},
+                &mut |_, _| {},
+                11,
+                64,
+            )
+            .expect("the re-feed runs");
+
+        assert_eq!(
+            generated.stopped,
+            Stopped::Cancelled,
+            "the cancel is what stopped it"
+        );
+        assert_eq!(
+            generated.tokens.len(),
+            2,
+            "one recomputed draw per recorded token landed, and the third never was"
+        );
+        let landed: Vec<TokenId> = log
+            .borrow()
+            .decoded
+            .iter()
+            .filter(|(tokens, _)| tokens.len() == 1 && path.contains(&tokens[0]))
+            .map(|(tokens, _)| tokens[0])
+            .collect();
+        assert_eq!(
+            landed,
+            path[..generated.tokens.len()].to_vec(),
+            "the recorded tokens that reached the resident state are exactly the prefix              the draw count names, which is the slice the emission is read from"
+        );
+        assert!(
+            !landed.contains(&TokenId(9)),
+            "the cancelled tail never became resident and may not be reported as said"
+        );
+    }
+
     /// Cancels after a set number of polls, which is how a token-boundary bound
     /// is made observable without a clock.
     struct CancelsAfter {

@@ -1036,7 +1036,18 @@ fn serve_decode(
                 // resident is what the answer reports as said, and the
                 // recomputed draws ride the measurement's output slots,
                 // where the comparison reads them against the record.
-                let emission = match resident.detokenize(&path_tokens) {
+                //
+                // **The prefix, because a cancel stops the path part way.**
+                // `refeed` pushes one recomputed draw per recorded token it
+                // lands, so the count of those draws is the count of path
+                // tokens that became resident. Taking the whole path instead
+                // reported text for positions the run never reached, over a
+                // measurement that covered only the prefix, and the re-feed
+                // is the one drive that cannot absorb that: its whole purpose
+                // is field-for-field comparability against the source record,
+                // and nothing in the answer said which suffix was invented.
+                let landed = generated.tokens.len();
+                let emission = match resident.detokenize(&path_tokens[..landed]) {
                     Ok(text) => text,
                     Err(fault) => {
                         eprintln!("{}", decode_fault_line(&fault));
