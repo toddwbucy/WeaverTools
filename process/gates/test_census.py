@@ -487,6 +487,15 @@ class Census(unittest.TestCase):
         directory-only, and `check-ignore --no-index` cannot tell that a path
         absent from disk is a directory, so the right pattern and the wrong one
         both read as no-match without it.
+
+        **And the probe answers from this manifest and nothing else.** git reads
+        `core.excludesFile` and the repository's `info/exclude` alongside a
+        `.gitignore`, so a seat with a global `*.py` rule would see
+        `census.py` reported as excluded and this test fail for a reason that
+        is not in `.hadesignore` at all. Both are emptied. **A gate whose answer
+        depends on the box is the hazard `CLAUDE.md` records for the clippy
+        count**, and the same shape the olympus seat found in `--exclude-standard`
+        on 2026-09-13.
         """
         import subprocess
 
@@ -499,6 +508,10 @@ class Census(unittest.TestCase):
                        capture_output=True)
         with open(os.path.join(probe, ".gitignore"), "w", encoding="utf-8") as fh:
             fh.write(manifest)
+        # An init template can seed info/exclude, so it is emptied rather than
+        # assumed absent.
+        with open(os.path.join(probe, ".git", "info", "exclude"), "w") as fh:
+            fh.write("")
 
         def ignored(rel, is_dir):
             full = os.path.join(probe, rel)
@@ -506,7 +519,8 @@ class Census(unittest.TestCase):
             if not is_dir:
                 open(full, "w").close()
             return subprocess.run(
-                ["git", "-C", probe, "check-ignore", "--no-index", rel],
+                ["git", "-C", probe, "-c", "core.excludesFile=",
+                 "check-ignore", "--no-index", rel],
                 capture_output=True,
             ).returncode == 0
 
