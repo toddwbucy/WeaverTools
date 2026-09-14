@@ -474,11 +474,14 @@ class Census(unittest.TestCase):
         graph again - the state f8c8618 fixed. And `**/tests/fixtures/` had no
         watch at all: delete it and nothing moved.
 
-        **Matched with git's own engine and not with `fnmatch`.** `fnmatch`
-        lets `*` cross a `/`, so it accepts `*/tests/fixtures/` for a path
-        three segments deep where gitignore does not - the test would have
-        passed on a pattern that excludes nothing. `.hadesignore` follows
-        gitignore syntax, so gitignore decides. Found by CodeRabbit on PR #575.
+        **Everything here is matched with git's own engine.** `fnmatch` lets
+        `*` cross a `/`, so it accepted `*/tests/fixtures/` for a path three
+        segments deep where gitignore does not, and a line-membership check
+        accepts any order where gitignore is last-match-wins. Both forms passed
+        on manifests that exclude the wrong things. `.hadesignore` follows
+        gitignore syntax, so gitignore decides. Both found by CodeRabbit on
+        PR #575, the second refuting this test's own earlier claim that the
+        negations had no behaviour to match against.
 
         **The path is created before the check.** A trailing `/` means
         directory-only, and `check-ignore --no-index` cannot tell that a path
@@ -489,15 +492,7 @@ class Census(unittest.TestCase):
 
         with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
             manifest = fh.read()
-        lines = [ln.strip() for ln in manifest.splitlines()
-                 if ln.strip() and not ln.startswith("#")]
-        # The negations are literal by design - a negation that drifts is a
-        # gate silently leaving the graph, which no behaviour test can see
-        # without running an ingest.
-        for needed in ("process/*", "!process/gates/", "!process/ingest/"):
-            self.assertIn(needed, lines, f".hadesignore lost {needed}")
 
-        # The fixture rule is matched on what it excludes, by git.
         probe = os.path.join(self.dir, "ignoreprobe")
         os.makedirs(probe)
         subprocess.run(["git", "-C", probe, "init", "-q"], check=True,
@@ -515,6 +510,18 @@ class Census(unittest.TestCase):
                 capture_output=True,
             ).returncode == 0
 
+        # **The process rule, as git reads it.** `process/*` excludes the four
+        # documents and the two negations name the instruments back in. Order
+        # decides it: move a negation above `process/*` and the line is still
+        # present while the gate it names leaves the graph.
+        self.assertTrue(ignored("process/WeaverTools-Working-Process.md", False),
+                        "a process document is not excluded")
+        self.assertFalse(ignored("process/gates/census.py", False),
+                         "census.py is excluded - H6 is not in the graph")
+        self.assertFalse(ignored("process/ingest/chunk_plan.py", False),
+                         "chunk_plan.py is excluded")
+
+        # The fixture rule, the same way.
         self.assertTrue(ignored("crates/weaver-spu/tests/fixtures", True),
                         "a crate's tests/fixtures/ is not excluded")
         self.assertTrue(
