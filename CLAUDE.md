@@ -236,17 +236,22 @@ closing its checklist is what ratifies the set.** That happened: the graph stood
 **`WeaverTools_v4` is the current graph and v3 is reference only.** It is a
 rebuild rather than a migration, on the operator's ruling, and it holds the
 compiled code beside the corpus joined by `cites` edges. v3 has no code side and
-its rows are stale. `docs/project/HANDOFF-2026-09-12-the-graph-build` is the
+its rows are stale. `docs/project/HANDOFF-2026-09-12-the-graph-build.md` is the
 plan and carries every figure with the commit it was measured at.
 
-The sequence the operator settled on 2026-08-03, with steps 1 and 2 landed:
+The sequence the operator settled on 2026-08-03. Step 1 landed 2026-08-04.
+**Step 2 is landed in substance and not as written**: the code is in the graph,
+but by a rebuild at a commit rather than by nodes accruing as work merges, the
+corpus's rule being drop-and-rebuild with no upsert. What step 3 needs from it
+is met either way.
 
 1. **Graph from the documents.** Phase two. This is ratification, not an audit.
 2. **Code**, with code nodes accruing into the graph as work merges. The graph is a code
    generation input and a ledger the operator follows during generation.
 3. **A GraphSAGE GNN**, trained only once the graph has seen conforming code. **Its
-   precondition is met and the training waits on the audit's remediation**, per the
-   operator's sequencing of 2026-09-13. The signal worth learning is
+   precondition is met and the training waits on the audit's remediation**, which is
+   the operator's sequencing and **is owed a landing** - it stands in conversation
+   and in no document of the set. The signal worth learning is
    `code -> assertion`, and the quarry was no bootstrap: 25 files carried a conformance
    header citing 7 distinct spec node ids. GraphSAGE is
    the right family because it is inductive, so code nodes added at merge time get
@@ -261,13 +266,12 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**Enforcement rests on six, and on a graph beside them.** Four are instruments
-a claim names as its tag and two are gates over the tree, which the apex's
-section 11 separates and which is the authority for what each one is. **This
-file carries the invocations and the readings, which that section does not**, so
-the two are not copies and a divergence between them is a defect to file rather
-than a preference. Where they already differ: item 4 below names CodeRabbit
-where the apex says third-party review.
+**Enforcement rests on six, and on a graph beside them.** Four bear on one
+claim and two are gates over the tree, which the apex's section 11 separates and
+which is the authority for what each one is. **This file carries how to run
+them** - the commands, the flags, and the failure modes each has - which that
+section does not, so the two are not copies. It records no reading: item 5 says
+why, and issue #471 is the register.
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
 2. **Compile-time pins** for invariants that are type properties. A runtime test
@@ -275,7 +279,8 @@ where the apex says third-party review.
 3. **Perturbation-verified tests** for invariants that are behaviours. Always confirm the
    test fails when the property is removed - a test that passes either way converts
    "unenforced" into "documented as enforced", which is worse than no test.
-4. Human and CodeRabbit review. Read the review **body**, not the thread count: CR posts
+4. Human and third-party review, CodeRabbit being this program's instance of the
+   second. Read the review **body**, not the thread count: CR posts
    findings outside the diff range that create no thread and are absent from the
    "actionable comments" total.
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
@@ -400,7 +405,7 @@ where the apex says third-party review.
 
    It is conditional because the corpus is not: nine acts in ten touch nothing
    held out, and a gate that always passes is one people stop reading. Under
-   the update rule of `HANDOFF-2026-09-12-the-graph-build` section 6a a stale
+   the update rule of `HANDOFF-2026-09-12-the-graph-build.md` section 6a a stale
    manifest is consequential, the ingest re-cutting on a hash that no longer
    matches what the offsets describe.
 

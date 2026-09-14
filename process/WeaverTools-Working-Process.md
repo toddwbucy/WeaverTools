@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.31, 2026-09-02. Companion to the Working Rules, the Document
+**Version:** v0.32, 2026-09-14. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -670,8 +670,11 @@ parties, draws, and four term definitions, and three assertion records, so
 the stated expectation of 293 nodes and 429 edges is withdrawn as stale.
 The next rebuild derives its expected census from a fresh pass over the
 merged set before it runs, stated as numbers at that pass per this
-section's own discipline, and HADES remains down meanwhile, so the rebuild
-is owed and not runnable.
+section's own discipline. **That rebuild ran**: HADES returned 2026-09-13 and
+`WeaverTools_v4` was built against `e2a5378`, a rebuild rather than a migration
+on the operator's ruling, with `WeaverTools_v3` kept as reference only.
+`docs/project/HANDOFF-2026-09-12-the-graph-build.md` carries its figures with
+the commit each was measured at.
 
 The floor probe of 2026-08-04 is the evidence the entry into code rested on: a
 commissioned session with no repository access rebuilt both floor crates from the
@@ -879,8 +882,9 @@ artifacts that already existed and needed identity, and the vector bar by
 a comparison that wanted a number. What stands open, in the order the
 seat holds it: the family taps toward the scale the lens needs (#212), the
 streaming shape the sink's declaration already permits and no run has
-exercised, the counting pass the roll above names, and the graph rebuild
-owed since `98c8713` and unrunnable while HADES is down. One operational
+exercised, and the counting pass the roll above names. The graph rebuild owed
+since `98c8713` is no longer among them, HADES having returned 2026-09-13.
+One operational
 finding rides beside them, filed 2026-09-02 as #404: a deployment whose
 organ binaries and admin come from different commits dies with a bare
 `Undecodable` and reports as `no_residency`, naming neither the binaries
@@ -902,7 +906,7 @@ unlanded edit or an assertion an act changed without recording.
 **Code is ingested into the graph, and the position that said otherwise was
 discharged by its own trigger.** `WeaverTools_v4` holds the compiled code beside
 the document corpus, joined by `cites` edges from a code file to the assertion
-its header names, per `docs/project/HANDOFF-2026-09-12-the-graph-build`.
+its header names, per `docs/project/HANDOFF-2026-09-12-the-graph-build.md`.
 
 **Two grounds held it back and both are spent.** The first was that conformance
 headers cited retired assertions, so ingesting would bake dangling edges into
@@ -915,10 +919,13 @@ named a condition rather than a principle**, and the condition lifted when phase
 three began coding against a ratified set. A graph built now records a shape
 both halves are holding to.
 
-**It has not made the architecture stable and does not claim to.** What it
-supplies is the comparison no gate in section 6 can make, a number in prose
-against a count of symbols, and the first audit against it is at
-`docs/project/audit-2026-09-13-the-corpus-against-its-code.md`.
+**It has not made the architecture stable and does not claim to.** Nor does it
+supply the claim-against-fact comparison, which is H6's and is stated four
+hundred lines above. What it supplies is the claim H6 cannot reach: **the census
+compares notation against notation, and a number written out in prose is not
+notation.** A Spec saying eighteen where the code compiles twenty-one passes
+every reading. The first audit against the graph is at
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md.`
 
 **The seat shifted 2026-08-19, on the operator's direction: from building
 the framework to using it.** The apex deliverable stands and is exceeded,

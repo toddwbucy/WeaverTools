@@ -326,11 +326,19 @@ Probably `build.rs` and units outside the compile graph, but a silent four-file
 gap at twelve crates is a silent forty-file gap at a corpus, and it is one
 `comm -13` to settle. **The extractors reproduce three of four census metrics
 exactly - `dangling_citations` 0, `sources_without_a_header` 48,
-`uncited_perturbations` 33 - and disagree on the fourth**: 478 `cites` edges
+`uncited_perturbations` 33 - and disagreed on the fourth**: 478 `cites` edges
 against the census's 481 distinct file-and-assertion pairs, out of 516 raw
-occurrences. Three edges. Candidates are the `archive/` exclusion, whether
-`tests/` counts as citing, and the three `tag: manifest` assertions cited only
-from a `Cargo.toml`.
+occurrences. Three edges. The candidates named here were the `archive/`
+exclusion, whether `tests/` counts as citing, and the three `tag: manifest`
+assertions cited only from a `Cargo.toml`.
+
+**Closed 2026-09-14, and it was the third candidate.** `.toml` files were not
+routed to the code half, so the three manifest citations had no source file in
+the graph to carry them. The routing landed and the graph now holds **481**,
+measured live at `mcp__hades__db_count db=WeaverTools_v4
+collection=wt_cites_edges`. The two readings agree and this is no longer an open
+gap. **The 478 above is kept as what was measured on 2026-09-12** rather than
+overwritten, since the figure is what made the third candidate findable.
 
 **A third gap, found on 2026-09-13 by counting and then closed the same day.**
 The graph held 185 code files against 181 counted `.rs` and `.toml`. **The four
