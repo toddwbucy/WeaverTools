@@ -5,13 +5,17 @@
 # rule the tree cannot be checked against. Per issue #565.
 #
 # Syntax follows .gitignore: one pattern per line, `#` comments, `/` anchors
-# to this file's directory, a trailing `/` matches directories only.
+# to this file's directory, a trailing `/` matches directories only. **`**/`
+# is the escape from anchoring** and matches at any depth, which nine lines
+# below rely on, and **`!` names a path back in** after a broader line took it
+# out - last match wins, so order is part of the rule.
 #
 # **Only what this workspace adds.** The server already skips `__pycache__`,
 # `node_modules`, `target` and `venv` by default and hidden directories with
 # them, so listing those here is a copy that drifts when the server's defaults
-# move rather than a rule this tree is stating. Both entries below are
-# load-bearing.
+# move rather than a rule this tree is stating. Every stanza below is
+# load-bearing - five of them at 2026-09-14 - and each says what it excludes
+# and why, so a later act can tell a live rule from filler.
 
 # **Frozen copies of live code.** An ingest walking one puts the same symbols
 # in twice under two paths, so symbol resolution has two answers and no basis
@@ -57,7 +61,10 @@ experiments/
 # rulebook as subject matter is a category error - it cost three review rounds
 # on PR #570 before it was named. An earlier form of this stanza said they had
 # left the repository. They had not, and the sentence framed a live rule as a
-# legacy safety net a later act could delete. The rule is current.
+# legacy safety net a later act could delete. **The rule is current, and it
+# does not depend on where the documents sit**: if they later leave the tree
+# the way experiments/ did, this entry stays, so a seat with copies on disk
+# does not ingest them. Delete the rule only when no seat has the documents.
 #
 # **The contents are excluded and not the directory, because `gates/` and
 # `ingest/` are named back in.** gitignore cannot re-include a file whose parent
@@ -83,9 +90,14 @@ process/*
 # beside the set it scaffolded, and puts an audit inside the graph it audits.
 docs/project/
 
-# **Test fixtures are data, not corpus.** Five raw float tables under
-# `crates/weaver-spu/tests/fixtures/gptoss/` were ingested as documents - twenty
-# three lines of numbers carrying a vector each - while the `.ndjson` fixtures
-# beside them under `weaver-analysis` were not, purely by extension. A class rule
-# rather than an instance, in the shape the archive stanza already argues for.
+# **Test fixtures are data, not corpus.** Five numeric tables under
+# `crates/weaver-spu/tests/fixtures/gptoss/` - twenty three lines across the
+# five, nine chunks in the graph - were ingested as documents, while the
+# `.ndjson` fixtures under `weaver-analysis` were not, by extension alone. One
+# pattern for the class the tree has, `tests/fixtures/` at any depth. It is
+# not a spelling family the way the archive stanza is: no crate spells it
+# another way today, and the test that holds this line holds the pattern, not
+# a family. **It comes after the `process/` negations on purpose**: a fixture
+# set under `process/gates/` would be data too, and last-match-wins excludes
+# it. None exists, and `test_census.py` builds its fixtures in a temp dir.
 **/tests/fixtures/

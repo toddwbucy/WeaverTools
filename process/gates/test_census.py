@@ -465,6 +465,38 @@ class Census(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("docs/archive/", out)
 
+    def test_the_hadesignore_holds_the_process_negations_and_the_fixture_rule(self):
+        """Two lines with no watch until 2026-09-14, and the review named both.
+
+        `process/*` with `!process/gates/` and `!process/ingest/` is the rule
+        that keeps the census in the graph and the four documents out. Retype
+        one negation and both gates stayed green while the census left the
+        graph again - the state f8c8618 fixed. And `**/tests/fixtures/` had no
+        watch at all: delete it and nothing moved. **Matched by behaviour**, the
+        way the archive test does it, so a rename of the pattern that keeps the
+        effect passes and one that loses it fails.
+        """
+        import fnmatch
+
+        with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
+            lines = [ln.strip() for ln in fh
+                     if ln.strip() and not ln.startswith("#")]
+        # The negations are literal by design - a negation that drifts is a
+        # gate silently leaving the graph.
+        for needed in ("process/*", "!process/gates/", "!process/ingest/"):
+            self.assertIn(needed, lines, f".hadesignore lost {needed}")
+        # The fixture rule is matched on what it excludes. Directory patterns
+        # end in "/", so match the directory path with the slash stripped.
+        dirs = [p[:-1] for p in lines if p.endswith("/") and not p.startswith("!")]
+        def excluded(path):
+            return any(fnmatch.fnmatchcase(path, d) for d in dirs)
+        self.assertTrue(excluded("crates/weaver-spu/tests/fixtures"),
+                        "a crate's tests/fixtures/ is not excluded")
+        self.assertTrue(excluded("crates/weaver-analysis/tests/fixtures"))
+        # And it must not reach a test file or a source directory.
+        self.assertFalse(excluded("crates/weaver-spu/tests"))
+        self.assertFalse(excluded("crates/weaver-spu/src/fixtures_loader"))
+
     def test_the_hadesignore_carries_the_load_bearing_patterns(self):
         """The exclusion half, which had no watch at all.
 
