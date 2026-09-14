@@ -185,3 +185,45 @@ than a surprise. None of them is reachable today, no launcher having crossed.
   apart from the sink logit without the generator. The fixture crosses
   verbatim regardless: regenerating it needs the quarry's generator, and the
   ambiguity is resolved by that generator's source when the reader crosses.
+
+## The carried prose still speaks as the quarry, and stays that way
+
+Review of 2026-09-14, filed as issue #561 against `transformer.cu` and widened
+to `build.rs` by the review of PR #573. Both files open on prose written for
+the previous program, and every claim in it is false against this corpus. The
+carry rule keeps them unedited for the same reason it keeps the kernel defects
+above unfixed, so they are recorded here instead.
+
+**`kernels/transformer.cu` opens on a conformance header naming an apparatus
+this program excludes.** It cites `docs/architecture/weaver-spu/`, and no
+`docs/architecture` exists, the Spec sitting at `docs/crates/weaver-spu/`. It
+anchors on `spec-02-only-crate-holds-gpu-memory`, which is declared nowhere in
+`docs` or `process` and carries the quarry's `spec-NN-` naming rather than this
+corpus's kebab-case node ids. And it describes a trace through
+`documentation-code-conformance-methodology`, `wt_doc_assertions`,
+`wt_axiom_basis` and `WT_IS`, none of which exist here and none of which could:
+axioms and conformance scoring were the quarry's apparatus and stay out of what
+this program ships, and the phase two graph is built from documents rather than
+from code. A reader who believed that header would go looking for an instrument
+this program has no mechanism to have produced.
+
+**`build.rs` opens on a migration note for pull requests this tree never had.**
+It says the kernel sources were folded in from `weaver-inference` in `PR-0.5.C`
+and that a Persephone proto step retired in `PR-1.J`. Those four strings appear
+in no other tracked file.
+
+**Neither is corrected in place, and the reason is the carry itself.** Editing
+either file changes the hash recorded above and falsifies
+`spu-kernels-cross-with-their-fixtures`, a merged assertion of the Spec's
+section 10 cited from `src/lib.rs`. A code act may not do that, so the honest
+disposition is the one this section exists for: name the false claim where the
+reader meets the carry, and leave the carried bytes alone. The first draft of
+PR #573 deleted the header and was withdrawn on exactly this ground.
+
+**What that means for H1.** `transformer.cu`'s header is not a `conforms:`
+citation this corpus can resolve, and it must not be read as one. The rule that
+a `conforms:` line finds its declaration in a merged Spec is answered for these
+two files by this entry rather than by anything inside them. Which assertion,
+if any, the kernel set should cite is a question for the Spec, and it clears
+when an act takes the kernels off the verbatim carry. Until then the prose is
+inherited, wrong, and known.
