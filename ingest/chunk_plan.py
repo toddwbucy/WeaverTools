@@ -33,9 +33,9 @@ held-out file for no reason. Measured on 2026-09-13: the working tree held one
 document main did not, which read as a file missing from the graph until the
 ref was named.
 
-    python3 process/ingest/chunk_plan.py                    # write, at main
-    python3 process/ingest/chunk_plan.py --check --ref HEAD # in an act
-    python3 process/ingest/chunk_plan.py --check            # against main
+    python3 ingest/chunk_plan.py                    # write, at main
+    python3 ingest/chunk_plan.py --check --ref HEAD # in an act
+    python3 ingest/chunk_plan.py --check            # against main
 
 **In an act, name HEAD.** The default ref is `main`, which is right for
 building the manifest the ingest reads and wrong for checking one: the edit
@@ -51,7 +51,7 @@ import re
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chunk-plan.json")
 
 # The embedder's ceiling, and the target this cuts to. The gap is headroom for

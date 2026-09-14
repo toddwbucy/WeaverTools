@@ -12,9 +12,9 @@ section already says of clippy, so the backlog is a baseline rather than a
 failure. The comparison is by identity and not by count: swapping one defect
 for another of the same kind leaves the count still and is caught anyway.
 
-    python3 process/gates/census.py            # against the baseline
-    python3 process/gates/census.py --update   # take a new reading
-    python3 process/gates/test_census.py       # the fixture, per defect
+    python3 gates/census.py            # against the baseline
+    python3 gates/census.py --update   # take a new reading
+    python3 gates/test_census.py       # the fixture, per defect
 
 **Every bug of this script's own is recorded here**, because each printed a
 confident wrong number and a gate that does that is worse than no gate. Two
@@ -115,7 +115,7 @@ import subprocess
 import sys
 from collections import Counter
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASELINE = os.path.join(HERE, "census-baseline.json")
 

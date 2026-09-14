@@ -23,3 +23,16 @@ target
 # Working list, not a member of the document set and never ratified
 docs/project/open-items.md
 __pycache__/
+
+# **The process documents are how the work is done, not what it ships.**
+# `WeaverTools-Working-Process`, `-Document-Format`, `-Working-Rules` and
+# `-Handoff-Format` govern the corpus rather than belonging to it, and the set
+# cites them by document id rather than by path, so nothing in the tree dangles
+# when they are not in it. Operator's ruling of 2026-09-14. They stay on every
+# seat's disk and travel between seats the way a handoff does.
+#
+# **The instruments they describe are not in here and are tracked.** `gates/`
+# and `ingest/` left this directory in the same act, because a gate that is not
+# version controlled cannot be reviewed, cannot run in CI, and has no baseline
+# anyone can diff. H6 is the census and the census is `gates/census.py`.
+process/

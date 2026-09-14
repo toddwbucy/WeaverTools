@@ -13,7 +13,7 @@ the argument this file is.
 comparison it is checking passes whatever `main` does, which is the watch
 that cannot fail wearing the costume of a test.
 
-    python3 process/gates/test_census.py
+    python3 gates/test_census.py
 """
 
 import importlib.util
@@ -27,7 +27,7 @@ from contextlib import redirect_stderr, redirect_stdout
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # The repository, captured before any test repoints `census.ROOT` at a fixture.
-REPO = os.path.dirname(os.path.dirname(HERE))
+REPO = os.path.dirname(HERE)
 spec = importlib.util.spec_from_file_location("census", os.path.join(HERE, "census.py"))
 census = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(census)

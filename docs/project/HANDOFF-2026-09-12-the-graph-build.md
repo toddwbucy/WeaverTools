@@ -159,7 +159,7 @@ hand means one cut at a section boundary rather than a judgement.
 
 ## 4a. The held-out cut plan, as offsets
 
-`process/ingest/chunk_plan.py` emits `process/ingest/chunk-plan.json`: for each
+`ingest/chunk_plan.py` emits `ingest/chunk-plan.json`: for each
 held-out file, its byte length, its SHA-256, and the pieces as byte offsets.
 Ten files become twenty two pieces.
 

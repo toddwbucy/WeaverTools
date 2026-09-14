@@ -84,11 +84,20 @@ deployable proto-stateful agent -> autonomic calculator tool -> then memory.
 
 ## Where the work stands, and what governs it
 
-**Four process documents in `WeaverTools/process/` govern everything and outrank this
-file.** Read them before acting: `WeaverTools-Working-Process` (phases, seats, gates),
+**Four process documents govern everything and outrank this file.** Read them before
+acting: `WeaverTools-Working-Process` (phases, seats, gates),
 `WeaverTools-Document-Format` (the graph notation), `WeaverTools-Working-Rules`
-(editorial), `WeaverTools-Handoff-Format`. They carry versions and change often, so read
-the file rather than trusting a version remembered from a summary.
+(editorial), `WeaverTools-Handoff-Format`. They carry versions and change often, so
+read the file rather than trusting a version remembered from a summary.
+
+**They are not in this repository**, on the operator's ruling of 2026-09-14. They sit at
+`WeaverTools/process/` on a seat that has them and are gitignored there, because they
+govern the corpus rather than belonging to it and this program does not ship its own
+working method. **The set cites them by document id and never by path**, so nothing in
+the tree dangles without them - but a fresh clone does not have them, and a seat that
+finds `process/` empty asks the operator rather than proceeding on this file alone.
+`gates/` and `ingest/` are the instruments those documents describe and are tracked, at
+the repository root.
 
 **Three phases, and the program is in the third.**
 
@@ -330,7 +339,7 @@ when the graph lands - the graph indexes them, it does not replace them:
    per-crate runs do.
 
 6. **The census**, on the operator's ruling of 2026-09-11.
-   `python3 process/gates/census.py`, run from the repository root wherever
+   `python3 gates/census.py`, run from the repository root wherever
    clippy and fmt are run - **before the first review and again after the
    rework**, since a fix is an act and can regress what it is fixing.
 
@@ -363,16 +372,16 @@ when the graph lands - the graph indexes them, it does not replace them:
    for one gate is the duplication G5 refuses. **The rule is section 6's, in
    full, and is not restated here** - the first form of this sentence said so
    and then restated three of its clauses, which is the condition it claimed
-   to have removed. `process/gates/test_census.py` is the gate's fixture and
+   to have removed. `gates/test_census.py` is the gate's fixture and
    runs beside it.
 
    **One artifact is generated and can go stale, and the gate for it is
-   conditional.** `process/ingest/chunk-plan.json` names the ten files too
+   conditional.** `ingest/chunk-plan.json` names the ten files too
    large for the embedder's window and the byte offsets they are cut at.
    **An act that edits any file named in it runs**
 
    ```text
-   python3 process/ingest/chunk_plan.py --check --ref HEAD
+   python3 ingest/chunk_plan.py --check --ref HEAD
    ```
 
    which exits 1 and says whether the held-out set moved or only its content
