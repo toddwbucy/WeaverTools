@@ -544,6 +544,13 @@ class Census(unittest.TestCase):
         # And it must not reach a test file or a source directory.
         self.assertFalse(ignored("crates/weaver-spu/tests/native.rs", False))
         self.assertFalse(ignored("crates/weaver-spu/src", True))
+        # **The trailing slash is load-bearing and this is what holds it.**
+        # `**/tests/fixtures` without it matches a regular file of that name
+        # too, and every assertion above passes either way. The rule excludes
+        # a directory of data, not a file that happens to share its name.
+        self.assertFalse(ignored("crates/weaver-gate/tests/fixtures", False),
+                         "the rule reaches a regular file, so it is not "
+                         "directory-only")
 
     def test_the_hadesignore_carries_the_load_bearing_patterns(self):
         """The exclusion half, which had no watch at all.
