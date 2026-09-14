@@ -1086,10 +1086,19 @@ mod tests {
     /// text is the record's and the measurement is the run's, so a cancel
     /// parts them and only this count says where.
     ///
-    /// Perturbation: land the recorded token before honouring the cancel, so
-    /// the resident gains a position the draw count does not name, and the
-    /// prefix assertion fails with three landed against two drawn. Watched
-    /// under exactly that change.
+    /// **The whole decode log is asserted, positions included**, the way the
+    /// sibling above asserts it. A value-only reading cannot see a recorded
+    /// token landed at the wrong absolute position, which the append-only
+    /// discipline this module pins forbids, and it drops the terminator
+    /// entirely because the terminator is in no path.
+    ///
+    /// Perturbations watched, each run under exactly the change named. Land
+    /// the recorded token before honouring the cancel and the log carries
+    /// three recorded positions against two draws. Return from the cancel arm
+    /// without landing the terminator and the log ends at the last recorded
+    /// token, which `spu-terminator-on-every-path` forbids. Move the signals
+    /// record above the cancel check and the step count runs one past the
+    /// draws it is paired with.
     ///
     /// **What this does not watch.** The emission slice itself is taken in
     /// `main.rs`, which is the binary, so this pins the invariant that slice
@@ -1134,21 +1143,23 @@ mod tests {
             2,
             "one recomputed draw per recorded token landed, and the third never was"
         );
-        let landed: Vec<TokenId> = log
-            .borrow()
-            .decoded
-            .iter()
-            .filter(|(tokens, _)| tokens.len() == 1 && path.contains(&tokens[0]))
-            .map(|(tokens, _)| tokens[0])
-            .collect();
         assert_eq!(
-            landed,
-            path[..generated.tokens.len()].to_vec(),
-            "the recorded tokens that reached the resident state are exactly the prefix              the draw count names, which is the slice the emission is read from"
+            generated.signals.steps(),
+            generated.tokens.len(),
+            "one measurement per landed position, the pairing a break could part"
         );
-        assert!(
-            !landed.contains(&TokenId(9)),
-            "the cancelled tail never became resident and may not be reported as said"
+        assert_eq!(
+            log.borrow().decoded.clone(),
+            vec![
+                (vec![TokenId(4)], 0),
+                (vec![TokenId(5)], 1),
+                (vec![TokenId(7)], 2),
+                (vec![TokenId(8)], 3),
+                (vec![TokenId(0)], 4),
+            ],
+            "two recorded positions and then the terminator, the cancelled third \
+             never landing, so the prefix the draw count names is what the \
+             emission may report as said"
         );
     }
 
