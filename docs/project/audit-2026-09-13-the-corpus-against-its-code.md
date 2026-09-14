@@ -250,11 +250,28 @@ could not reach them.
 root at both trees. `weaver-trace`, `weaver-state` and `weaver-diagnostic` are
 documented under `docs/crates/weaver-harness/` while their code sits flat at
 `crates/weaver-trace`, `crates/weaver-state` and `crates/weaver-diagnostic`, and
-no ruling in Working Process carves an exception. **No graph query reaches this
-because code is not ingested, so nothing in the graph holds the shape of
-`crates/`.** If it is a defect rather than a settled exception it is a
-three-crate move touching every path dependency in the workspace, which makes it
-the operator's rather than a later mirror check's.
+no ruling in Working Process carves an exception. If it is a defect rather than a
+settled exception it is a three-crate move touching every path dependency in the
+workspace, which makes it the operator's rather than a later mirror check's.
+
+**The reason the audit missed it is not the reason first recorded here.** This
+section said no graph query reaches it because code is not ingested. That is
+false, and it was written by accepting a reviewer's reasoning without running
+anything against it. **The code is ingested**: 185 files in `codebase_files`,
+each carrying its `path`, alongside 4,749 symbols and 3,348 call edges, built
+2026-09-14. Comparing `docs/crates/weaver-harness/weaver-trace/` against
+`crates/weaver-trace/` is one query over two collections that were both sitting
+there.
+
+**So this was reachable and no dimension asked.** That is a worse answer than
+the one it replaces and a more useful one: the six dimensions were chosen before
+the graph was surveyed, and directory shape was not among them. A defect the
+method could not reach is a limit. A defect the method could have reached and
+did not is a gap in the dimensions, and the next audit adds one.
+
+**Recorded at length because of where it happened.** A claim was taken on
+authority and repeated without a check, in the document whose subject is claims
+taken on authority and repeated without a check.
 
 **G1 is a gate nobody ran.** Seventeen forbidden-word hits stand across `docs`
 and `process`, and fifteen files carry semicolons. The audit queried the graph
