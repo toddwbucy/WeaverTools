@@ -253,8 +253,11 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**During authoring, enforcement rests on six devices and no graph.** These do not retire
-when the graph lands - the graph indexes them, it does not replace them:
+**Enforcement rests on six devices, and since 2026-09-14 on a graph beside
+them.** The devices do not retire - the graph indexes them and does not replace
+them, which the first audit measured rather than assumed: eleven of its thirty
+five findings are invisible to every census reading, and the census is one of
+the six. The apex's section 11 is the authority and carries the same list:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
 2. **Compile-time pins** for invariants that are type properties. A runtime test

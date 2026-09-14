@@ -14,6 +14,21 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 
+**Revised:** 2026-09-14, section 11 counts six devices and a graph that exists.
+Clippy at deny-warnings joined on the operator's ruling of 2026-09-06 and the
+census on the ruling of 2026-09-11, so the list of four was two short for eight
+days. **And the section's claim that no graph measures code against this
+document set is superseded**: `WeaverTools_v4` was built 2026-09-14 and holds
+185 code files and 4,749 symbols beside the corpus's 413 assertion nodes, joined
+by 481 `cites` edges. The reasoning against it has expired rather than been
+refuted - a conformance graph wants settled intent, and phase three has been
+coding against a ratified set since 2026-08-04. The two artifacts section 11
+distinguished, one built from documents and one from code, are now one database,
+and the disagreement between them is what a reader wants. The graph indexes the
+six devices and replaces none of them, which the audit of 2026-09-13 measured
+rather than assumed: eleven of its thirty five findings are invisible to every
+census reading. Per act-03 of the epic at #569.
+
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
 section 3 describes one serving turn, gate to gate. The operator's ruling of
@@ -1125,20 +1140,39 @@ is party to. A Spec written first documents code instead of governing it.
 
 ## 11. Enforcement
 
-No graph measures code against this document set during this program. The PRD to
-Spec to contract to code chain is enforced by the four devices below and does not
-require a database. A conformance graph measures whether code matches settled
-intent, and this program deliberately unsettles intent, so that graph is early
-rather than slow. It is the instrument for the phase after this one.
+The PRD to Spec to contract to code chain is enforced by the six devices below.
+**None of them requires a database, and one now has one.**
 
-**The mapping graph is a different artifact and this section does not prohibit it.**
-It is generated from the documents rather than from the code, it answers questions
-about the documents, and completing it is what ratifies the set. Section 0 declares
-the root node it is built from. The two artifacts share a word and share nothing
-else: one is built from code and asked whether the documents were obeyed, and the
-other is built from documents and asked whether they cohere.
+**This section said no graph measures code against this document set during this
+program, and that is superseded.** `WeaverTools_v4` was built 2026-09-14 and
+holds both halves in one graph: 185 code files and 4,749 symbols beside the
+corpus's 413 assertion nodes, joined by 481 `cites` edges running from a code
+file to the assertion its header names. The chain this section calls the PRD to
+Spec to contract to code chain is now a traversal.
 
-What enforces instead:
+**The reasoning that argued against it was right and has expired rather than
+been refuted.** A conformance graph measures whether code matches settled
+intent, and a program that deliberately unsettles intent gets early answers from
+one. What changed is that phase three has been coding against ratified documents
+since 2026-08-04, so the intent the graph measures against is settled enough for
+the answer to mean something. **The graph arrived when its precondition did.**
+
+**The two artifacts this section distinguished have become one.** The mapping
+graph is generated from the documents, answers questions about the documents,
+and completing it is what ratified the set - section 0 declares the root node it
+is built from. The conformance graph is built from code and asked whether the
+documents were obeyed. `WeaverTools_v4` is both, in one database, and the join
+is the point: neither question is interesting alone and the disagreement between
+them is what a reader wants.
+
+**The graph does not retire the six devices and does not replace them.** It
+indexes them. The first audit run against it, on 2026-09-13, found thirty five
+defects of which **eleven are structurally invisible to every one of the
+census's eleven readings** - which is the argument for both the devices and the
+graph standing together, and is recorded at
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md`.
+
+What enforces:
 
 1. **Conformance trace headers in source**, carrying the code to assertion to
    document chain.
@@ -1150,9 +1184,22 @@ What enforces instead:
    "unenforced" into "documented as enforced".
 4. **Human and third-party review**, reading the review body rather than the
    thread count.
+5. **Clippy at deny-warnings, per crate at the point of an act**, on the
+   operator's ruling of 2026-09-06. The gate is the crate the act touched rather
+   than the workspace, because a crate that fails to compile under
+   deny-warnings leaves its dependents unlinted and a workspace sweep answers a
+   smaller question than a per-crate run does.
+6. **The census**, on the operator's ruling of 2026-09-11, run before the first
+   review and again after the rework, a fix being an act that can regress what
+   it is fixing. **It counts what the other five structurally cannot see**: each
+   of those verifies an artifact against itself, and none compares a claim in a
+   document against a fact in code. `WeaverTools-Working-Process` section 6 owns
+   the rule as H6.
 
 A clean automated gate is evidence that the gate did not fire. It is not
-evidence of correctness.
+evidence of correctness. **That was an argument when this section was written
+and it is a measurement now**: the census reproduced its baseline exactly at
+`e2a5378` while eleven defects stood in the corpus it had just read clean.
 
 ## 12. Why this architecture
 
