@@ -225,7 +225,7 @@ contribution, independent of its code): per-invocation tool safety classificatio
 messages with all wire format isolated at the composition root, and `SO_PEERCRED`-verified
 Unix sockets for all internal IPC.
 
-## Enforcement, and when the graph arrives
+## Enforcement, and the graph that arrived
 
 **Corrected 2026-08-03.** This section previously said the new program builds no graph
 until just before the memory leg lands. `WeaverTools-Working-Process` section 5 governs
@@ -233,14 +233,22 @@ and says otherwise: **phase two stands up a HADES graph from the merged document
 closing its checklist is what ratifies the set.** That happened: the graph stood up
 2026-08-04 as `WeaverTools_v3` and the set ratified the same day.
 
-The sequence the operator settled on 2026-08-03:
+**`WeaverTools_v4` is the current graph and v3 is reference only.** It is a
+rebuild rather than a migration, on the operator's ruling, and it holds the
+compiled code beside the corpus joined by `cites` edges. v3 has no code side and
+its rows are stale. `docs/project/HANDOFF-2026-09-12-the-graph-build` is the
+plan and carries every figure with the commit it was measured at.
+
+The sequence the operator settled on 2026-08-03, with steps 1 and 2 landed:
 
 1. **Graph from the documents.** Phase two. This is ratification, not an audit.
 2. **Code**, with code nodes accruing into the graph as work merges. The graph is a code
    generation input and a ledger the operator follows during generation.
-3. **A GraphSAGE GNN**, trained only once the graph has seen conforming code. It waits
-   because the signal worth learning is `code -> assertion`, and the quarry is no bootstrap:
-   25 files carry a conformance header and they cite 7 distinct spec node ids. GraphSAGE is
+3. **A GraphSAGE GNN**, trained only once the graph has seen conforming code. **Its
+   precondition is met and the training waits on the audit's remediation**, per the
+   operator's sequencing of 2026-09-13. The signal worth learning is
+   `code -> assertion`, and the quarry was no bootstrap: 25 files carried a conformance
+   header citing 7 distinct spec node ids. GraphSAGE is
    the right family because it is inductive, so code nodes added at merge time get
    embeddings with no retrain.
 
@@ -253,11 +261,13 @@ an assertion that grounds in no invariant is **representation, not an omission**
 coverage number is a fact to read rather than a target to reach. Writing that down first
 is what stops a low number from being argued away once someone sees it.
 
-**Enforcement rests on six devices, and since 2026-09-14 on a graph beside
-them.** The devices do not retire - the graph indexes them and does not replace
-them, which the first audit measured rather than assumed: eleven of its thirty
-five findings are invisible to every census reading, and the census is one of
-the six. The apex's section 11 is the authority and carries the same list:
+**Enforcement rests on six, and on a graph beside them.** Four are instruments
+a claim names as its tag and two are gates over the tree, which the apex's
+section 11 separates and which is the authority for what each one is. **This
+file carries the invocations and the readings, which that section does not**, so
+the two are not copies and a divergence between them is a defect to file rather
+than a preference. Where they already differ: item 4 below names CodeRabbit
+where the apex says third-party review.
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
 2. **Compile-time pins** for invariants that are type properties. A runtime test

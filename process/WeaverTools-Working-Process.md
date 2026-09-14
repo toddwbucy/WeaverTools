@@ -899,17 +899,26 @@ edges. Which figure a check reads therefore matters, and the closing checklist's
 item 5 reads nodes. A rebuild returning any other figure has found either an
 unlanded edit or an assertion an act changed without recording.
 
-**Code is not ingested into the graph as of the v3 build, and that is deliberate.**
-The v4 build named in `docs/project/HANDOFF-2026-09-12-the-graph-build` reverses it
-crate by crate, which is the point of taking one crate at a time - and until that
-build runs, the standing position below is the one in force. The earlier ground
-was that conformance headers cited retired assertions and ingesting would bake
-dangling edges into the map. That count reached zero on 2026-08-08. The standing
-ground is the operator's, recorded here because a later reader will find the
-earlier one discharged and needs the current one: the architecture is not stable
-while acts like the 2026-08-05 re-entry still move it, and a conformance graph
-built from moving code would record a shape neither the documents nor the code
-will keep.
+**Code is ingested into the graph, and the position that said otherwise was
+discharged by its own trigger.** `WeaverTools_v4` holds the compiled code beside
+the document corpus, joined by `cites` edges from a code file to the assertion
+its header names, per `docs/project/HANDOFF-2026-09-12-the-graph-build`.
+
+**Two grounds held it back and both are spent.** The first was that conformance
+headers cited retired assertions, so ingesting would bake dangling edges into
+the map. That count reached zero on 2026-08-08. The second was the operator's
+and was recorded here because a later reader would find the first discharged and
+need the current one: the architecture is not stable while acts like the
+2026-08-05 re-entry still move it, and a conformance graph built from moving
+code records a shape neither the documents nor the code will keep. **That ground
+named a condition rather than a principle**, and the condition lifted when phase
+three began coding against a ratified set. A graph built now records a shape
+both halves are holding to.
+
+**It has not made the architecture stable and does not claim to.** What it
+supplies is the comparison no gate in section 6 can make, a number in prose
+against a count of symbols, and the first audit against it is at
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md`.
 
 **The seat shifted 2026-08-19, on the operator's direction: from building
 the framework to using it.** The apex deliverable stands and is exceeded,
