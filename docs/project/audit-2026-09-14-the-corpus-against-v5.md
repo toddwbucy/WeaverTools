@@ -140,8 +140,12 @@ instrument - which is the same shape the first pass found in weaver-spu.
 ### The layout that describes a crate not on disk
 
 `weaver-web-Spec` section 1 names seven directories. Four do not exist, one is
-a file, and about 3,300 lines of the crate sit under names the layout never
-gives. **This is why the epic's largest act cannot start**: most of the twenty
+a file, and a large part of the crate sits under names the layout never gives.
+**The quantity is deliberately absent** - section 2 withdraws the figure this
+sentence used to carry, and repeating it here would be the same unreproducible
+number in a second place.
+
+**This is why the epic's largest act cannot start**: most of the twenty
 one headerless weaver-web files have nothing honest to cite until the layout
 admits the modules that exist. `act-18` now hard-blocks `act-08`, and the first
 pass's own warning about authoring assertions nobody needs has a named cause.
@@ -246,8 +250,9 @@ the first missed, which is what a second pass is for and is not the same as
 auditing the first.
 
 **That thirty nine more defects means the corpus is worse than it read.** The
-corpus is the same. The graph is exact now, one dimension was added, and the
-verifiers rejected what they should. The number went up because the instrument
+corpus is the same. The graph is exact now, the dimensions rotated so one
+question was asked that had never been asked, and the verifiers rejected what
+they should. The number went up because the instrument
 got better.
 
 **That the epic's header projection improved.** It did not. Section 4's
