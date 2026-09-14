@@ -33,6 +33,15 @@ seam tags, a `compile-fail` tag cited at a file holding no instrument, and a
 said so since before the graph existed. This is the first measurement of how
 much it was not firing on.
 
+**And the constraint that governs everything below.** `act-08` could take the
+header backlog from 48 to 27 by authoring twenty one assertions nobody needs,
+which converts an honest "unenforced" into "documented as enforced" - the
+failure the perturbation rule exists to prevent. **The assertions come first
+because they are owed, or they do not come.** It is stated again at section 8
+and it is stated here because it decides whether the largest act in the epic is
+progress or damage, and a reader who stops after section 4 should still have
+met it.
+
 ## 2. The baseline, at open
 
 ```
@@ -54,7 +63,7 @@ section 7 gives.
 |---|---|---|
 | claim-vs-code-drift | 12 | a count in prose against a count of symbols |
 | structural-orphans | 9 | an edge whose endpoint no document declares |
-| headerless-sources | 6 | which crate the backlog actually sits in |
+| headerless-sources | 6 | which crate the backlog sits in |
 | enforcement-tables | 4 | a table against its own document's nodes |
 | tag-vs-instrument | 3 | a tag against what the citing file holds |
 | uncited-perturbations | 1 | an instrument that exists and is not cited |
@@ -98,8 +107,8 @@ weaver-types-Spec     FaultCase block lists ten, code compiles eleven, and the
                       same Spec's prose already says eleven
 weaver-harness-Spec   Outcome pinned as "two cases" - the code has one, and the
                       same Spec's section 6 already says one
-weaver-harness-Spec   "Nine library files", listing src/classify.rs, which has
-                      never existed in any commit - the crate has twelve
+weaver-harness-Spec   "Nine library files" - the crate has twelve, four of
+                      them never listed at all
 weaver-gate-Spec      "Four files", omitting src/tools.rs - the tool executor
                       the same section's next paragraph argues for
 weaver-types-Spec     Payload lists five variants, the code carries seven, and
@@ -109,9 +118,15 @@ weaver-trace          failure.rs's own module header says five cases and "a
                       both say four
 ```
 
-**A compile-pin assertion is among them.** `harness-outcome-two-cases` pins a
-count the code contradicts, so the pin either does not compile what it claims or
-pins the wrong thing. That is the most serious single item in the set.
+**A compile-pin assertion is among them, and it is worse than a count.**
+`crates/weaver-harness/src/failure.rs` pins `harness-outcome-two-cases` on line
+2. Twenty lines below, `Outcome` carries one variant whose own doc comment argues
+at length that a second would be "the reserved slot the apex forbids in data as
+firmly as in an interface". **The pin does not only contradict a count. It
+contradicts the reasoning printed in the same file, under the header carrying
+it.** `crates/weaver-trace/src/failure.rs` is the same shape: the header says
+five cases, the enum has four, and the "a sixth case reaches every caller" line
+sits directly above the four. Sharpened by the olympus seat, 2026-09-14.
 
 ### Two graph facts no reading could reach
 
@@ -201,9 +216,22 @@ floor-link or a seam that needs a contract authored.
 ## 7. What this audit did not establish
 
 **That the code is right and the documents wrong.** Every claim-vs-code finding
-establishes only that the two disagree. `src/classify.rs` is the visible
-counter-shape: a file the Spec asserts three times that has never existed, which
-may be an owed placement rather than a stale line.
+establishes only that the two disagree, and the audit's own example of this was
+itself overstated. It hedged `src/classify.rs` as a file that may be an owed
+placement, and **the Spec answers that on its own page**: line 556 reads "Nine
+library files, two of them placements", and the revision entry at line 321 lands
+"the seat gains the classify absence". A placement is a declared device, so no
+hedge was needed. `crates/weaver-spu/src/bin/classify.rs` also exists, so the
+never-existed claim was true only of the harness path and false as summarized.
+
+**The real defect in that listing is larger than the audit found.** The Spec
+names nine and the crate holds twelve, and the gap is not classify. Four library
+files exist that the listing never names - `failure.rs`, `record.rs`,
+`replay.rs`, `spawn.rs` - and `src/tools.rs` is listed as "blocked" while
+carrying 118 lines and its own `conforms:` header. So the count is wrong because
+four files were never listed and one placement has been filled without the
+listing moving. **`act-13` is rewritten to that before anyone works it**, per the
+olympus seat's review of 2026-09-14.
 
 **That anything compiles or passes.** No `cargo build`, test, clippy or fmt was
 run. No perturbation was verified to fail on removal. The five weaver-spu
@@ -213,6 +241,34 @@ instruments were read, not executed.
 where the queries pointed. `weaver-internal`, most contracts, `weaver-admin`'s
 code, `weaver-gate`'s code and `weaver-diagnostic`'s Spec were barely touched.
 **Silence here is absence of a query, not absence of a defect.**
+
+**Two concrete instances of that, found by the olympus seat and not by this
+audit.** Both are worth naming because each shows a different reason the method
+could not reach them.
+
+**The recursive mirror.** Document Format says a member crate nests inside its
+root at both trees. `weaver-trace`, `weaver-state` and `weaver-diagnostic` are
+documented under `docs/crates/weaver-harness/` while their code sits flat at
+`crates/weaver-trace`, `crates/weaver-state` and `crates/weaver-diagnostic`, and
+no ruling in Working Process carves an exception. **No graph query reaches this
+because code is not ingested, so nothing in the graph holds the shape of
+`crates/`.** If it is a defect rather than a settled exception it is a
+three-crate move touching every path dependency in the workspace, which makes it
+the operator's rather than a later mirror check's.
+
+**G1 is a gate nobody ran.** Seventeen forbidden-word hits stand across `docs`
+and `process`, and fifteen files carry semicolons. The audit queried the graph
+and the census and never ran the mechanical checks, which is the same shape as
+its own thesis one level out: **the census is a gate that fired and saw nothing,
+and G1 is a gate that was not fired at all.** One of those seventeen was in this
+document, at the table in section 3, and is corrected.
+
+*A note on that finding as it was filed.* The review attributed the staleness to
+`CLAUDE.md` calling these checks "all currently clean". That phrase appears
+nowhere in `CLAUDE.md` or in any document in this corpus - what stands at
+`CLAUDE.md:168` is a dated 2026-09-06 reading of `build` and `fmt`, framed by
+its own next sentence as something a later reader re-runs rather than trusts.
+The tree-wide counts are right and were re-derived here. The attribution is not.
 
 **That the 48 and 33 baselines are wrong.** They are the checked-in backlog and
 they describe real debt. This audit moves six of the 33 and ten of the 48. The
