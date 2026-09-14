@@ -12,7 +12,7 @@ use std::process::Command;
 /// route is what the instrument sees.
 #[test]
 fn the_dependency_set_is_empty() {
-    let out = Command::new("cargo")
+    let out = Command::new(env!("CARGO"))
         .args([
             "tree",
             "-p",
@@ -21,12 +21,20 @@ fn the_dependency_set_is_empty() {
             "normal,build",
             "--prefix",
             "none",
+            // This inner cargo may not write the lock as a side effect of
+            // answering. It does not prove the lock was in step, the outer
+            // `cargo test` having resolved before this binary was spawned,
+            // which is issue #551's third ask and is not bought here.
             "--locked",
             "--offline",
         ])
         .output()
         .expect("cargo tree runs");
-    assert!(out.status.success(), "cargo tree answers");
+    assert!(
+        out.status.success(),
+        "cargo tree failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     let tree = String::from_utf8(out.stdout).expect("utf8");
     let dependencies: Vec<&str> = tree
         .lines()

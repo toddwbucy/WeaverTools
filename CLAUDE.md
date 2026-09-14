@@ -156,20 +156,32 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
 From `WeaverTools/`. Nightly, edition 2024, twelve packages.
 
 ```bash
-cargo build --workspace
-cargo test --workspace
-cargo test -p weaver-harness            # one crate
-cargo clippy --workspace --all-targets -- -D warnings
+cargo build --workspace --locked
+cargo test --workspace --locked
+cargo test -p weaver-harness --locked   # one crate
+cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo fmt --all -- --check
 ```
 
+**`--locked` on every command that resolves**, closing the first ask of
+issue #551. Without it cargo repairs a manifest change in place and the gate
+answers about a tree the repository does not record, which has happened twice,
+`weaver-admin`'s `sha2` on 2026-09-04 and `weaver-web`'s pair on 2026-09-11.
+With it the run refuses before a single test binary is spawned, so the drift
+is loud where it used to be silent. `fmt` resolves nothing and takes no flag.
+**This is the only place the refusal fires**: the deploy's own test line
+selects four crates, so the manifest instruments of `weaver-gate` and
+`weaver-internal` are reached by these commands and by nothing else.
+
 **Every command was run from `WeaverTools/` on 2026-09-06 before being
-written here**, which is the difference between a command that works and one
-that ought to. `build --workspace` and `fmt --all -- --check` returned clean.
-`test --workspace` passed 584 and failed none. `test -p weaver-harness`
-passed 105 and failed none. The clippy line returned the backlog section
-"Enforcement" describes. A later reader re-runs rather than trusting the
-date.
+written here**, and each was run again under `--locked` on 2026-09-14 when
+that flag was added, which is the difference between a command that works and
+one that ought to. At the second reading `build --workspace` and
+`fmt --all -- --check` returned clean, `test --workspace` passed 624 and
+failed none, `test -p weaver-harness` passed 110 and failed none, and the
+clippy line returned the backlog section "Enforcement" describes. **The lock
+was untouched by every one of them.** A later reader re-runs rather than
+trusting the date.
 
 **No `--features` flag belongs on the clippy line here.** `weaver-spu`
 declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
