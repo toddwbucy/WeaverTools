@@ -8,7 +8,7 @@
 use std::path::PathBuf;
 
 use weaver_spu::artifact;
-use weaver_spu::decoder::session::{NeverCancels, StopCondition};
+use weaver_spu::decoder::session::{NeverCancels, PositionedSinks, SamplerBuild, StopCondition};
 use weaver_spu::family::FamilyName;
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
@@ -130,11 +130,14 @@ fn a_safetensors_artifact_generates_through_the_native_engine() {
             },
             &mut NeverCancels,
             &mut |_token| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         )
         .expect("the generation completes");
 
@@ -223,11 +226,14 @@ fn the_surprisal_election_governs_the_native_session() {
                 },
                 &mut NeverCancels,
                 &mut |_token| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the generation completes");
 
@@ -347,11 +353,14 @@ fn the_pair_agrees_with_the_single_card() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("generates");
         let text = resident.detokenize(&generated.tokens).expect("detokenizes");
@@ -439,11 +448,14 @@ fn an_elected_readout_travels_with_the_generation() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("generates");
         match (elected, &generated.residual) {
@@ -612,11 +624,14 @@ fn an_elected_readout_is_admitted_by_a_gguf_family_that_declares_a_tap() {
             },
             &mut NeverCancels,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         )
         .expect("generates");
 
@@ -710,11 +725,14 @@ fn the_pair_reports_its_pace() {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("generates");
         let elapsed = started.elapsed().as_secs_f64();
@@ -819,11 +837,14 @@ fn a_large_sharded_safetensors_serves_across_the_pair() {
             },
             &mut NeverCancels,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         )
         .expect("the 32B generates");
     let secs = opened.elapsed().as_secs_f64();

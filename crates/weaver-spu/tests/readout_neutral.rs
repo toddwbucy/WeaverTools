@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
 use weaver_spu::decoder::backend::TokenId;
-use weaver_spu::decoder::session::{NeverCancels, StopCondition};
+use weaver_spu::decoder::session::{NeverCancels, PositionedSinks, SamplerBuild, StopCondition};
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_spu::sampling::EffectiveKnobs;
@@ -147,11 +147,14 @@ fn draw(resident: &weaver_spu::residency::Resident, seed: u64) -> (Vec<TokenId>,
             },
             &mut NeverCancels,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            seed,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed,
+                penalty_window: 64,
+            },
         )
         .expect("the generation runs");
     (

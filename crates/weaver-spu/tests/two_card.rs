@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 
 use weaver_spu::decoder::backend::TokenId;
-use weaver_spu::decoder::session::{NeverCancels, StopCondition};
+use weaver_spu::decoder::session::{NeverCancels, PositionedSinks, SamplerBuild, StopCondition};
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency};
 use weaver_spu::sampling::EffectiveKnobs;
@@ -70,11 +70,14 @@ fn generate_plain(resident: &weaver_spu::residency::Resident) -> (Vec<TokenId>, 
             },
             &mut NeverCancels,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         )
         .expect("generates");
     let text = resident.detokenize(&generated.tokens).expect("detokenizes");

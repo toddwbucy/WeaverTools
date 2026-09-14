@@ -550,7 +550,9 @@ fn host_only(path: &std::path::Path) -> Result<ResidentModel, DecodeFault> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::decoder::session::{NeverCancels, Session, StopCondition};
+    use crate::decoder::session::{
+        NeverCancels, PositionedSinks, SamplerBuild, Session, StopCondition,
+    };
     use crate::sampling::{Disposition, Knobs, TunableValues};
 
     /// A small instruct model that loads on the host in about a second.
@@ -942,11 +944,14 @@ mod tests {
                 },
                 &mut NeverCancels,
                 &mut |_| streamed += 1,
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the generation runs");
 

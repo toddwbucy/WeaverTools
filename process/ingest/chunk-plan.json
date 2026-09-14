@@ -1,5 +1,5 @@
 {
-  "ref": "19d79a443862424e38801a3fc0e1084cd76afda2",
+  "ref": "4fc99c95e5bfe40159eff194666c5a822363e52c",
   "ceiling_tokens": 32768,
   "target_tokens": 28000,
   "overlap": "one whole structural unit, repeated at each boundary",
@@ -78,6 +78,26 @@
       ]
     },
     {
+      "path": "crates/weaver-spu/src/decoder/session.rs",
+      "bytes": 86675,
+      "content_sha256": "6f3191883091c6a9d4adac2948b35c057a8649372e23e441cdc13907ef41f9e8",
+      "chars_per_token_assumed": 3,
+      "pieces": [
+        {
+          "start": 0,
+          "end": 36932,
+          "units": 12,
+          "estimated_tokens": 12310
+        },
+        {
+          "start": 10622,
+          "end": 86675,
+          "units": 2,
+          "estimated_tokens": 25351
+        }
+      ]
+    },
+    {
       "path": "crates/weaver-spu/src/family/mod.rs",
       "bytes": 115166,
       "content_sha256": "02d17b6b84fa2eda594691aa792b1bdbe1705fdd2185dcd8855d79123416cf23",
@@ -99,19 +119,19 @@
     },
     {
       "path": "crates/weaver-spu/src/main.rs",
-      "bytes": 95532,
-      "content_sha256": "2872537c220a1fb5874778c87a6f5a36226ac8d0e71cfd6b0c394b67a4867b43",
+      "bytes": 96147,
+      "content_sha256": "e84d69fd4310e06e73111bdece88144300764f78f1626e590e9b9132f8e66fa6",
       "chars_per_token_assumed": 3,
       "pieces": [
         {
           "start": 0,
-          "end": 77682,
+          "end": 78297,
           "units": 27,
-          "estimated_tokens": 25894
+          "estimated_tokens": 26099
         },
         {
-          "start": 70170,
-          "end": 95532,
+          "start": 70785,
+          "end": 96147,
           "units": 2,
           "estimated_tokens": 8454
         }
