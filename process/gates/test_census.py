@@ -472,30 +472,57 @@ class Census(unittest.TestCase):
         that keeps the census in the graph and the four documents out. Retype
         one negation and both gates stayed green while the census left the
         graph again - the state f8c8618 fixed. And `**/tests/fixtures/` had no
-        watch at all: delete it and nothing moved. **Matched by behaviour**, the
-        way the archive test does it, so a rename of the pattern that keeps the
-        effect passes and one that loses it fails.
+        watch at all: delete it and nothing moved.
+
+        **Matched with git's own engine and not with `fnmatch`.** `fnmatch`
+        lets `*` cross a `/`, so it accepts `*/tests/fixtures/` for a path
+        three segments deep where gitignore does not - the test would have
+        passed on a pattern that excludes nothing. `.hadesignore` follows
+        gitignore syntax, so gitignore decides. Found by CodeRabbit on PR #575.
+
+        **The path is created before the check.** A trailing `/` means
+        directory-only, and `check-ignore --no-index` cannot tell that a path
+        absent from disk is a directory, so the right pattern and the wrong one
+        both read as no-match without it.
         """
-        import fnmatch
+        import subprocess
 
         with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
-            lines = [ln.strip() for ln in fh
-                     if ln.strip() and not ln.startswith("#")]
+            manifest = fh.read()
+        lines = [ln.strip() for ln in manifest.splitlines()
+                 if ln.strip() and not ln.startswith("#")]
         # The negations are literal by design - a negation that drifts is a
-        # gate silently leaving the graph.
+        # gate silently leaving the graph, which no behaviour test can see
+        # without running an ingest.
         for needed in ("process/*", "!process/gates/", "!process/ingest/"):
             self.assertIn(needed, lines, f".hadesignore lost {needed}")
-        # The fixture rule is matched on what it excludes. Directory patterns
-        # end in "/", so match the directory path with the slash stripped.
-        dirs = [p[:-1] for p in lines if p.endswith("/") and not p.startswith("!")]
-        def excluded(path):
-            return any(fnmatch.fnmatchcase(path, d) for d in dirs)
-        self.assertTrue(excluded("crates/weaver-spu/tests/fixtures"),
+
+        # The fixture rule is matched on what it excludes, by git.
+        probe = os.path.join(self.dir, "ignoreprobe")
+        os.makedirs(probe)
+        subprocess.run(["git", "-C", probe, "init", "-q"], check=True,
+                       capture_output=True)
+        with open(os.path.join(probe, ".gitignore"), "w", encoding="utf-8") as fh:
+            fh.write(manifest)
+
+        def ignored(rel, is_dir):
+            full = os.path.join(probe, rel)
+            os.makedirs(full if is_dir else os.path.dirname(full), exist_ok=True)
+            if not is_dir:
+                open(full, "w").close()
+            return subprocess.run(
+                ["git", "-C", probe, "check-ignore", "--no-index", rel],
+                capture_output=True,
+            ).returncode == 0
+
+        self.assertTrue(ignored("crates/weaver-spu/tests/fixtures", True),
                         "a crate's tests/fixtures/ is not excluded")
-        self.assertTrue(excluded("crates/weaver-analysis/tests/fixtures"))
+        self.assertTrue(
+            ignored("crates/weaver-analysis/tests/fixtures/a.ndjson", False),
+            "a file under tests/fixtures/ is not excluded")
         # And it must not reach a test file or a source directory.
-        self.assertFalse(excluded("crates/weaver-spu/tests"))
-        self.assertFalse(excluded("crates/weaver-spu/src/fixtures_loader"))
+        self.assertFalse(ignored("crates/weaver-spu/tests/native.rs", False))
+        self.assertFalse(ignored("crates/weaver-spu/src", True))
 
     def test_the_hadesignore_carries_the_load_bearing_patterns(self):
         """The exclusion half, which had no watch at all.
