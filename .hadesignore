@@ -52,11 +52,12 @@
 # about the class and not about today's directory.
 experiments/
 
-# **The process documents govern the corpus and are not part of it**, and are
-# not in this repository at all from 2026-09-14 - the entry is kept so a seat
-# that has them on disk does not ingest them. A gate reading its own rulebook
-# as subject matter is a category error, and it cost three review rounds on
-# PR #570 before it was named.
+# **The process documents govern the corpus and are not part of it.** They are
+# tracked here and excluded from the ingest, because a gate reading its own
+# rulebook as subject matter is a category error - it cost three review rounds
+# on PR #570 before it was named. An earlier form of this stanza said they had
+# left the repository. They had not, and the sentence framed a live rule as a
+# legacy safety net a later act could delete. The rule is current.
 #
 # **The contents are excluded and not the directory, because `gates/` and
 # `ingest/` are named back in.** gitignore cannot re-include a file whose parent
@@ -81,3 +82,10 @@ process/*
 # 2026-09-14, and these files contribute none. Ingesting them puts scaffolding
 # beside the set it scaffolded, and puts an audit inside the graph it audits.
 docs/project/
+
+# **Test fixtures are data, not corpus.** Five raw float tables under
+# `crates/weaver-spu/tests/fixtures/gptoss/` were ingested as documents - twenty
+# three lines of numbers carrying a vector each - while the `.ndjson` fixtures
+# beside them under `weaver-analysis` were not, purely by extension. A class rule
+# rather than an instance, in the shape the archive stanza already argues for.
+**/tests/fixtures/
