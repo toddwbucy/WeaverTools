@@ -57,7 +57,23 @@ experiments/
 # that has them on disk does not ingest them. A gate reading its own rulebook
 # as subject matter is a category error, and it cost three review rounds on
 # PR #570 before it was named.
-process/
+#
+# **The contents are excluded and not the directory, because `gates/` and
+# `ingest/` are named back in.** gitignore cannot re-include a file whose parent
+# directory is excluded, so `process/` followed by `!process/gates/` reads as a
+# rule and does nothing: the walk never descends far enough to see the negation.
+# Excluding `process/*` prunes the four documents sitting directly under it while
+# leaving the directory walkable, and `*` does not match `/`, so nothing deeper is
+# caught by that line.
+#
+# **The two named back are instruments and not documents**, which is the same
+# distinction PR #570 drew: `census.py` is H6, `test_census.py` holds it to its
+# baseline, and `chunk_plan.py --check` is a gate CLAUDE.md names. A gate that is
+# not in the graph cannot be found by a query about the gates, and these three
+# were out of it for as long as this entry read `process/`.
+process/*
+!process/gates/
+!process/ingest/
 
 # **Working registers, sketches and dated readings stay in the repository and
 # out of the graph.** They decide nothing and declare nothing: every one of the
