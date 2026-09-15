@@ -2,7 +2,7 @@
 title: The loop
 summary: the operator surface - the seat's calls, the one crossing, and everything the framework refuses to decide
 version: v0.1
-date: 2026-08-24
+date: 2026-09-15
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -59,9 +59,9 @@ its unit, comes up as the provisioned agent identity, binds the coordination soc
 inside its own sandbox, creates the unnamed pairs its organs are reached over, and
 sits there being one sealed agent.
 
-**Loop 1 is the builder's**, and loops above it are further builder loops. Both
-builder-facing surfaces reach loop 1 and above and exclude loop 0, so loop 0 is the
-service that runs your loop and is never itself supplied through either surface.
+**Loop 1 is the builder's**, and loops above it are further builder loops. The one
+builder-facing surface reaches loop 1 and above and excludes loop 0, so loop 0 is the
+service that runs your loop and is never itself supplied through it.
 
 ## The seat drives a serving binding
 
@@ -193,9 +193,11 @@ compiled array.**
 
 ## What this page does not yet carry
 
-- **The extension seam and the working-list socket** are the two builder-facing
-  surfaces and are named here rather than described. What a builder writes against
-  each, and how a loop is dropped in beside a running agent, is owed.
+- **The extension seam** is the one builder-facing surface and is named here rather
+  than described. What a builder writes against it, at the Python stage and at the
+  compiled one, is owed. A second surface binding a separate-process loop beside a
+  running agent was named here until the operator's ruling of 2026-09-15 retired it,
+  and no such loop is coming.
 - **The worked examples.** The kit's project book is the part this page most
   obviously lacks. The repository records the loops the agents run, and a reader
   would be better served by two of them read line by line than by any amount of
