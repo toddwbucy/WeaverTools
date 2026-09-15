@@ -5,7 +5,7 @@ Code is written against it under the gates of Working Process section 6.
 
 **Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
 Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
-where `weaver-gate-Spec` section 2 and `weaver-harness-Spec` section 2.3 already
+where `weaver-gate-Spec` section 2 and `weaver-harness-Spec` section 2.2 already
 ground the same two clauses, and the ownership pin beside them is named as
 grounding in nothing. No record is added or removed and section 10's figures move
 with the edges rather than with the total, which `act-12` re-derives. Per the
@@ -830,7 +830,7 @@ section 10 buys the dumpable flag and this suite does not buy its neighbour, whi
 the same split `weaver-gate-Spec` section 2 takes on the same pair. **Both ground where
 their twins ground, in apex section 5.1**, an end that crosses an exec and a process
 that can be attached to being two routes to the same descriptor, and the possession case
-rests on there being none. The argument is `weaver-harness-Spec` section 2.3's and
+rests on there being none. The argument is `weaver-harness-Spec` section 2.2's and
 `weaver-gate-Spec` section 2's and is pointed at rather than restated. The ownership pin
 beside them grounds in nothing, being the representation this crate elected for a
 descriptor and not a claim about who can reach one.

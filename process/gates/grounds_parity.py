@@ -143,7 +143,19 @@ def read_corpus():
     for path in census.docs():
         rel = os.path.relpath(path, census.ROOT)
         for block in census.GRAPH.findall(census.read(path)):
-            for stanza in re.split(r"(?=^\s*(?:node|edge):)", block, flags=re.M):
+            # **Split on the keyword, not on `keyword:`.** Requiring the colon
+            # here means a header that lacks it - `edge grounds` - never starts a
+            # stanza, so it folds into the one above and is read as that stanza's
+            # body. The walk then reports nothing, which is the failure this file
+            # exists to stop. Splitting on the word and demanding the colon below
+            # turns a silent merge into a counted fault.
+            for stanza in re.split(r"(?=^\s*(?:node|edge)\b)", block, flags=re.M):
+                head = stanza.lstrip()[:5].rstrip()
+                if head in ("node", "edge") and not re.match(
+                    r"^\s*(?:node|edge):\s*\S", stanza
+                ):
+                    faults.append(f"{rel}: a `{head}` header is not `key: value`")
+                    continue
                 node, bad_node = census.field(census.NODE_LINE, stanza)
                 if node or bad_node:
                     kind, _ = census.field(census.KIND, stanza)
@@ -172,12 +184,22 @@ def read_corpus():
                 else:
                     grounds.setdefault(src, set()).add(dst)
 
+    # **A dangling edge is reported AND dropped.** The first form reported it and
+    # kept it, so an edge naming no declared axiom still reached `--tally` and
+    # still widened an axiom set - the instrument counting what it had just called
+    # unreadable. Endpoints are known only once every document is read, so the
+    # filter runs here rather than at the point of collection.
+    kept = {}
     for src, targets in grounds.items():
         if src not in assertions:
             faults.append(f"grounds from `{src}`, which no document declares as an assertion")
+            continue
         for dst in sorted(targets):
             if dst not in axioms:
                 faults.append(f"grounds to `{dst}`, which no document declares as an axiom")
+            else:
+                kept.setdefault(src, set()).add(dst)
+    grounds = kept
 
     crates = {}
     for node_id in assertions:
@@ -302,7 +324,7 @@ def main():
         print(f"cross-crate pairs scoring [{BAND:.3f}, {CUT}), for reading by hand")
         for j, a, b in band:
             print(f"  {j:.2f}  {a:<46} {b}")
-        print(f"{len(band)} pairs")
+        print(f"{len(band)} pairs, {len(faults)} unreadable, printed by --faults")
         return 0
 
     agree = disagree = 0
