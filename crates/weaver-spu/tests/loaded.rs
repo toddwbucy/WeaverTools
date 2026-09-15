@@ -1037,6 +1037,170 @@ mod seam_success {
         std::fs::remove_file(&log_path).ok();
     }
 
+    /// **A cancelled re-feed certifies nothing and faults across the seam.**
+    /// The drive is handed the whole recorded path upfront, so the text it
+    /// owes is the record's while the measurement is the run's, and a cancel
+    /// parts them. What would be left to say is a prefix, which is the nothing
+    /// the registry's second arm already refuses, so the seam carries a fault
+    /// rather than a `ReFed` whose text covers positions the run never
+    /// reached, per the operator's ruling of 2026-09-14.
+    ///
+    /// **The cancel is queued behind the directive rather than raced against
+    /// it.** Both frames are sent before the drive starts, so the poll at the
+    /// top of the first position finds the cancel already waiting and the stop
+    /// lands at zero. Nothing here depends on how fast the device is.
+    ///
+    /// **The certificate is what is withheld, not every frame.** This admit
+    /// elects no field and asks no column, so nothing streams from the sinks
+    /// and the socket is silent until the fault. Where a field or column is
+    /// elected the intermediates for the positions that did become resident
+    /// have already crossed, per `weaver-harness-Spec` section 6 and
+    /// `weaver-diagnostic-Spec` section 3.2, which have them author as they
+    /// arrive. They are true of what ran. This test reads the certificate's
+    /// absence and says so rather than claiming a silence it arranged.
+    ///
+    /// **This is the instrument the unit test cannot be.** The guard is in the
+    /// binary, so `session.rs`'s cancelled re-feed test pins what the session
+    /// does and not what the caller decides about it. Removing the
+    /// `cancel.cancelled` term from that guard leaves the unit test green and
+    /// this one red, which is the whole reason it is here.
+    ///
+    /// Perturbation: drop `cancel.cancelled` from the re-feed arm's guard and
+    /// the process answers `ReFed` and exits clean. Watched under exactly that
+    /// removal.
+    #[test]
+    fn a_cancelled_refeed_faults_and_certifies_nothing() {
+        use weaver_traits::{ContentBlock, Message, Role};
+        use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
+
+        let Some(model) = model_present() else {
+            eprintln!("SKIP a_cancelled_refeed_faults: no model at {MODEL}");
+            return;
+        };
+        if device_context().is_none() {
+            eprintln!("SKIP a_cancelled_refeed_faults: no CUDA device");
+            return;
+        }
+        let _device = device_lock();
+
+        let (lifecycle, child_lifecycle) = seqpacket_pair();
+        let (decode_parent, child_decode) = seqpacket_pair();
+        let log_path = std::env::temp_dir().join(format!(
+            "weaver-spu-refeed-cancel-child-{}.log",
+            std::process::id()
+        ));
+        let log = std::fs::File::create(&log_path).expect("a child log file");
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-spu"));
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::from(log));
+        place_inherited(
+            &mut command,
+            &[child_lifecycle.as_raw_fd(), child_decode.as_raw_fd()],
+        );
+        let mut child = command.spawn().expect("the binary starts");
+        bound_receives(&lifecycle, 120);
+        bound_receives(&decode_parent, 120);
+        let decode = weaver_spu::channel::decode_from_owned(decode_parent);
+
+        let admitted = ask(
+            &lifecycle,
+            1,
+            LifecycleDirective::Admit {
+                instruction: SpuInstruction {
+                    classify: None,
+                    decoder: DecoderInstruction {
+                        model_binding: ModelBinding {
+                            artifact: ArtifactRef(model.to_string_lossy().into_owned()),
+                            devices: vec![DeviceOrdinal(0)],
+                        },
+                        residual_readout_election: false,
+                        field_election: None,
+                        surprisal_election: false,
+                        refeed_permission: true,
+                        column_permission: false,
+                        identity: vec![],
+                        tunable_values: [
+                            ("max-tokens-per-turn".to_string(), 64.0),
+                            ("context-capacity".to_string(), 1024.0),
+                            ("seed".to_string(), 37.0),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    },
+                },
+            },
+        );
+        assert_eq!(admitted.payload, Payload::Answer(LifecycleAnswer::Admitted));
+
+        let send = |directive: &TokenDirective| {
+            let body = serde_json::to_vec(directive).expect("a directive renders");
+            decode.send_octets(&body).expect("the frame sends");
+        };
+
+        send(&TokenDirective::Open {
+            session: SessionId("s-cancelled".into()),
+            column_ask: false,
+            messages: vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "You answer in as few words as possible.".into(),
+                }],
+            }],
+        });
+        let opened: TokenAnswer = serde_json::from_slice(
+            &decode.recv_octets().expect("the open answers"),
+        )
+        .expect("the answer parses");
+        assert_eq!(opened, TokenAnswer::Opened, "the session opens");
+
+        // Both frames before the drive starts, so the first poll finds the
+        // cancel rather than racing the device for it.
+        send(&TokenDirective::ReFeed {
+            turn: TurnKey("t-1".into()),
+            rendered: "anything".into(),
+            path: vec![1, 2, 3],
+        });
+        send(&TokenDirective::Cancel {
+            turn: TurnKey("t-1".into()),
+        });
+
+        // **No certificate crosses.** A read either fails on the closed socket
+        // or, where the peer's exit has not landed yet, returns no frame at
+        // all. Nothing else is in flight here, this admit electing no field
+        // and asking no column, so any frame at all is the answer that must
+        // not arrive.
+        match decode.recv_octets() {
+            Err(_) => {}
+            Ok(frame) => panic!(
+                "a cancelled re-feed answered instead of faulting: {}",
+                String::from_utf8_lossy(&frame)
+            ),
+        }
+
+        drop(decode);
+        drop(lifecycle);
+        let status = wait_bounded(
+            &mut child,
+            30,
+            &format!(
+                "the cancelled worker exits, child stderr at {}",
+                log_path.display()
+            ),
+        );
+        assert!(
+            !status.success(),
+            "the fault is the exit code as well as the line"
+        );
+        let said = std::fs::read_to_string(&log_path).unwrap_or_default();
+        assert!(
+            said.contains("\"fault\":\"undecodable\""),
+            "the fault names itself on stderr, which held: {said}"
+        );
+        std::fs::remove_file(&log_path).ok();
+    }
+
     /// **The null re-feed recomputes the recorded draws exactly.** Process
     /// one is the source: a real generation against the real engine, its
     /// rendered form and token path captured from its own answer. Process
