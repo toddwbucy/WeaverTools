@@ -385,9 +385,17 @@ indexes them, it does not replace them:
    Run it after committing, HEAD being a commit and not the working tree.
 
    **Where it fails and the act is the only one in flight**, regenerate with
-   `--ref HEAD` and commit the manifest in the same act. The manifest then
-   describes what `main` holds the moment the act merges, which is what the
-   ingest reads.
+   `--ref HEAD` and commit the manifest in the same act, so the content the
+   manifest describes is the content that merges.
+
+   **The `ref` field names the commit the manifest was built at, which is the
+   act's own tip and not the commit `main` ends up carrying.** A squash, a merge
+   or a rebase gives `main` a different sha. The field is provenance - it says
+   what this content was hashed against - and the content, not the ref, is what
+   makes the manifest current. An earlier form of this paragraph said the
+   manifest describes what `main` holds the moment the act merges, which is true
+   of the content and false of the field, and was read as a claim about the
+   field by two review seats in a row.
 
    **Where several acts are in flight at once, the act reports it stale and
    commits no regeneration**, on the operator's ruling of 2026-09-14. A

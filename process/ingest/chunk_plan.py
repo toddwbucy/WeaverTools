@@ -168,20 +168,40 @@ def resolve(rev):
             sha = out.stdout.strip()
             # Only a local branch can lag; a sha, a tag or HEAD cannot.
             if cand == rev and not rev.startswith("origin/"):
-                up = subprocess.run(["git", "-C", ROOT, "rev-parse", "--verify",
-                                     "-q", f"origin/{rev}^{{commit}}"],
-                                    capture_output=True, text=True)
+                # **The configured upstream, not a guessed `origin/<rev>`.**
+                # An earlier form built the string, so `--ref refs/heads/main`
+                # asked about `origin/refs/heads/main`, which does not exist,
+                # and the protection silently did not run. `@{upstream}` is
+                # what the branch is actually tracking.
+                up = subprocess.run(
+                    ["git", "-C", ROOT, "rev-parse", "--verify", "-q",
+                     f"{rev}@{{upstream}}^{{commit}}"],
+                    capture_output=True, text=True)
                 if up.returncode == 0 and up.stdout.strip() != sha:
-                    behind = subprocess.run(
+                    upstream = up.stdout.strip()
+                    # **Rejects behind AND diverged, by asking the question in
+                    # the other direction.** The first form asked whether local
+                    # was an ancestor of upstream, which is true only when local
+                    # is strictly behind - so a diverged branch, which also
+                    # lacks upstream commits, passed. Asking whether upstream is
+                    # an ancestor of local keeps equal and ahead and rejects
+                    # both of the others. Found by CodeRabbit on #591.
+                    contains = subprocess.run(
                         ["git", "-C", ROOT, "merge-base", "--is-ancestor",
-                         sha, up.stdout.strip()], capture_output=True)
-                    if behind.returncode == 0:
+                         upstream, sha], capture_output=True)
+                    if contains.returncode != 0:
+                        base = subprocess.run(
+                            ["git", "-C", ROOT, "merge-base", sha, upstream],
+                            capture_output=True, text=True).stdout.strip()
+                        how = "diverged from" if base not in (sha, upstream) \
+                            else "is behind"
                         return None, None, (
-                            f"local {rev} is behind origin/{rev} "
-                            f"({sha[:12]} against {up.stdout.strip()[:12]}). "
+                            f"local {rev} {how} its upstream "
+                            f"({sha[:12]} against {upstream[:12]}). "
                             "Pull, or name the ref you mean with --ref: a "
-                            "manifest checked against a stale base reports a "
-                            "correct manifest as stale.")
+                            "manifest checked against a base that lacks "
+                            "upstream commits reports a correct manifest as "
+                            "stale.")
             return sha, cand, None
     return None, None, (f"cannot resolve ref {rev!r} here, and no origin/{rev} "
                         "either. Fetch it, or name one with --ref.")
@@ -386,7 +406,22 @@ def main():
         # acts, written by an in-act `--ref HEAD` run against a commit that was
         # then amended away, and every run exited 0. The provenance line named a
         # commit reachable from no branch. Found by the olympus seat on #587.
+        # **A missing `ref` is refused, not skipped.** The first form guarded
+        # with `if was_ref:`, so a manifest carrying no ref at all skipped both
+        # git checks - and the parity comparison below strips `ref` from each
+        # side, so every remaining field matching made it pass. The guard added
+        # to catch an unreachable ref had an escape hatch for no ref. Found by
+        # CodeRabbit on #591. The shape check also settles the ast-grep note on
+        # the same lines: the value reaches `git` as a list argument and never a
+        # shell, and it is now a 40-character hex string before it goes there.
         was_ref = was.get("ref")
+        if not isinstance(was_ref, str) or not re.fullmatch(r"[0-9a-f]{40}",
+                                                            was_ref):
+            print(f"the manifest carries no usable ref ({was_ref!r}). "
+                  "It records the commit its content was hashed against, and "
+                  "without one the check cannot tell a current manifest from "
+                  "one built anywhere.", file=sys.stderr)
+            return 1
         if was_ref:
             known = subprocess.run(["git", "-C", ROOT, "cat-file", "-e",
                                     f"{was_ref}^{{commit}}"],
