@@ -2,6 +2,14 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
+**Revised:** 2026-09-15, the dependency clause reads two internal crates. Section 1's
+clause said this crate linked `weaver-trace` and no other, and argued that a floor
+link would be a dependency nothing consumes - true of the consumption and false of
+the manifest, which has carried `weaver-types` as well. The clause now states both
+and settles neither, charter section 1 declaring the `floor-link` on the operator's
+ruling of 2026-09-14 and charter section 5 holding a cell for what it is drawn for
+and a second for the `weaver-trace` edge. Per the audit of 2026-09-13 and issue #569.
+
 **Revised:** 2026-09-06, the enter's asks park on the seal. Section 4's parking law
 holds the `identity` and `recall` asks beside the `replay` ask where the member
 stands with the preload door and no seal has landed, each answered at the seal in
@@ -175,17 +183,13 @@ from: weaver-state
 to: state-custody-without-policy
 ```
 
-It links two internal crates, which corrects this clause in the act of
-2026-09-14. `weaver-trace` carries the canonical event vocabulary the ingest
-parses, and `weaver-types` is a `floor-link` declared at charter section 1 on
-the operator's ruling of that date, standing ahead of the source file that
-will consume it. The earlier reading of this clause said the crate linked
-`weaver-trace` and no other, and argued that a floor link here would be a
-dependency nothing consumes - true of the consumption and false of the
-manifest, which has carried both crates. **Neither edge's standing is settled
-here**: charter section 5 holds one cell for what the floor link is drawn for
-and a second for the `weaver-trace` dependency, which cannot be a floor link
-and has no contract to be a seam under.
+It links two internal crates. `weaver-trace` carries the canonical event
+vocabulary the ingest parses, and `weaver-types` is a `floor-link` declared at
+charter section 1. No source file here consumes either name outside this
+crate's own tests. **Neither edge's standing is settled here**: charter
+section 5 holds one cell for what the floor link is drawn for and a second
+for the `weaver-trace` dependency, and this clause restates those cells
+rather than answering them.
 
 **Dependencies, external.** One per engine, each behind a feature named for
 its engine so a build compiles the integrations it deploys and no other, per

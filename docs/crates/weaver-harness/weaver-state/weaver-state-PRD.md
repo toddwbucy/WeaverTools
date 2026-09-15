@@ -2,16 +2,18 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-14, the floor link is declared and two cells open. Section 1
+**Revised:** 2026-09-15, the floor link is declared and two cells open. Section 1
 projects the `weaver-types` dependency the manifest carries as the `floor-link`
 record the graph had no edge for, and states that it stands ahead of any consumer on
-the operator's ruling of this date: the dependency stays, this crate not being
-finished. Section 5 opens what this charter cannot answer - which member of that
-floor crate this crate consumes, the seam's own contract drawing nothing from it,
-and what becomes of the `weaver-trace` dependency, which cannot be a floor link and
-would be this corpus's first `link` seam between two members of one domain. That
-edge stays undeclared and in breach of H2 until the operator rules, which the cell
-states rather than hides. No dependency changes in this act. Per
+the operator's ruling of 2026-09-14: the dependency stays, this crate not being
+finished. **The edge is declared because the ruling licenses the dependency and H2
+asks every Cargo edge to be declared, and for no reason beyond those two** - what the
+link is drawn for is section 5's first new cell, the seam's own contract answering
+"From `weaver-types`. Nothing". Section 5's second new cell is the `weaver-trace`
+dependency, which cannot be a floor link, has no contract to be a seam under, and
+stands against H2's "No dependency on a sibling" with no reading that answers it.
+That edge stays undeclared and in breach of H2 until the operator rules, which the
+cell states rather than hides. No dependency changes in this act. Per
 `docs/project/audit-2026-09-13-the-corpus-against-its-code.md` section 4 and the
 second pass of 2026-09-14, and issue #569.
 
@@ -441,19 +443,23 @@ that day rather than a shared file or a shared connection today.
   `weaver-types` and rules that crate out of it by name, and Document Format section
   4 admits a floor link only to a floor crate. What is left is a `seam` tagged `link`
   under a contract that does not exist, or the edge coming off.
-  **The sibling rule bears on the cell and does not close it.** That crate is this
-  crate's sibling, both declaring a `parent` edge to `weaver-harness`, and H2's "No
-  dependency on a sibling" reads alongside G3's "No lateral edge to a sibling
-  appears". What the corpus forbids under that rule is the untagged edge:
-  `weaver-types-PRD` section 1 carries the live instance, two floor crates under one
-  root whose dependency "is a floor link and not a lateral edge", declared as what it
-  is and passing the gate. Document Format section 3 is the same reading from the
-  other side, that nesting "is not a visibility rule, a Cargo boundary, or a claim
-  about who may depend on what" and that the records settle it. **So a declared
-  sibling edge is admitted where a vocabulary admits it, and this pair has none**:
-  every seam this corpus carries runs from a domain root to its member or crosses a
-  domain on a socket, and a `link` seam between two members of one domain would be
-  the first. That is what makes the cell the operator's.
+  **H2's "No dependency on a sibling" stands unanswered against this pair, and this
+  charter does not answer it.** That crate is this crate's sibling, both declaring a
+  `parent` edge to `weaver-harness`. Two readings were put and neither settles it.
+  One is that the bar is the directory, which Document Format section 3 refuses:
+  nesting "is not a visibility rule, a Cargo boundary, or a claim about who may
+  depend on what", and the records settle it instead. **That disposes of the
+  directory and supplies no licence**, H2's sentence not being about the directory.
+  The other is that declaring an edge cures it, on `weaver-types-PRD` section 1,
+  where two floor crates under one root carry a dependency that "is a floor link and
+  not a lateral edge". **That instance does not reach this pair**: H2's own first
+  sentence admits a floor link by name, so what licenses it there is the category,
+  and this pair is expressly not a floor link. So the sentence applies on its face
+  and the cell is open on it.
+  **What is measured rather than argued** is that no `link` seam in this corpus runs
+  between two members of one domain. Every `link` seam it carries runs from a domain
+  root to its member. A seam here would be the first of its shape, which is a reason
+  for the operator to rule rather than a rule this charter can read off.
   **What the tree says meanwhile.** Nothing but this crate's own tests reaches that
   crate, so the cheap reading is that the dependency is a test fixture and moves to
   where fixtures live, which needs a prior ruling on whether H2 reaches a
