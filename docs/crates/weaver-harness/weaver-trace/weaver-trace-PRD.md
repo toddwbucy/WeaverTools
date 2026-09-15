@@ -1285,6 +1285,11 @@ excepts is stated here, and it stays selection: the prefix's payload crosses as 
 record rendered it, and no election adds to or subtracts from it. Transformation of what
 was selected is `weaver-state`'s work and decision about what it means is the harness's
 loops', and a tee that computed would smuggle the first into this crate.
+**`weaver-trace-Spec` section 11 declares the record for this clause.** This
+charter argues the claim and Document Format section 4 gives the declaration to
+the Spec: a charter says what is needed and why, and a Spec states its subject
+crate's records. The identifier is `trace-tee-selects-never-computes` and this
+charter declares no assertion node of its own.
 
 **The election is fixed at load and arrives with the declaration.** What the
 operator elected is thereby a load condition the record carries like any
@@ -1298,13 +1303,3 @@ stream and never thins it. No account of the record, canonical, outbound, or
 working, changes because a tee stands beside it, and an act that trimmed the
 trace to what the tee keeps would have inverted the derivative and the
 account.
-
-```graph
-node: trace-tee-selects-never-computes
-kind: assertion
-tag: review
-
-edge: asserts
-from: weaver-trace
-to: trace-tee-selects-never-computes
-```
