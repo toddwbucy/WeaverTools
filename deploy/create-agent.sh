@@ -23,6 +23,14 @@
 # **No password exists anywhere in here.** Peer authentication derives the
 # object gate's identity from the kernel fact rather than asserting it a
 # second time, so there is no secret to store, rotate, or leak.
+#
+# **The member's account is derived and no longer named**, as of 2026-09-15 and
+# issue #545. `weaver-admin` resolves `weaver-<name>-state`, drops to it at the
+# member's spawn, hands it the territory by chown, and asks the store's first
+# gate as it, so there is one account the store must admit and this script
+# cannot choose a weaker one. The `--member-identity` flag that named the
+# choice while the code ran the member as root is refused rather than ignored,
+# a box provisioned under it having mapped root in `pg_ident.conf`.
 set -euo pipefail
 
 say()  { printf '\n== %s\n' "$*"; }
@@ -34,7 +42,6 @@ shift || true
 APPLY=0
 ARTIFACT=""
 SESSION=""
-MEMBER_IDENTITY=""
 # **The engine is an election and not a constant.** An earlier form wrote
 # `postgres` into every declaration with nothing saying so, while
 # `deploy/update-stack.sh` separately named which engines the build carries.
@@ -53,7 +60,12 @@ while [ $# -gt 0 ]; do
     # below.
     --artifact) [ $# -ge 2 ] || die "--artifact needs a path"; ARTIFACT=$2; shift ;;
     --session)  [ $# -ge 2 ] || die "--session needs a name"; SESSION=$2; shift ;;
-    --member-identity) [ $# -ge 2 ] || die "--member-identity needs an account"; MEMBER_IDENTITY=$2; shift ;;
+    --member-identity) die "--member-identity is retired as of 2026-09-15, issue #545. The
+   member's account is weaver-<name>-state, derived by weaver-admin from the
+   agent's name, and the store must admit that and nothing else. An agent made
+   before this date mapped root: change its pg_ident.conf line to name
+   weaver-<name>-state, give that account traversal to its territory, and chown
+   the territory to it." ;;
     --engine)   [ $# -ge 2 ] || die "--engine needs a name"; ENGINE=$2; shift ;;
     *) printf 'unknown argument: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -81,16 +93,12 @@ AGENTS_DIR=$(sudo -n cat "$ADMIN_CONFIG/agent-config-directory" 2>/dev/null || e
 ALLOW_LIST="$ADMIN_CONFIG/allow-list"
 DECLARATION="$AGENTS_DIR/$NAME.yaml"
 
-# **Whose identity the store admits is unresolved and this script will not
-# guess it.** The charter has the member hold a uid of its own and dial the
-# store under it. The code does not do that yet: `weaver-admin` asks the
-# store from its own process, so the identity that must be admitted is
-# whichever account admin runs as, which is root today. Mapping the member's
-# account would provision for a design nothing implements, and mapping root
-# silently would bake in the weaker property. So the operator names it.
-[ -n "$MEMBER_IDENTITY" ] || die "name the account the store must admit: --member-identity <account>
-   'root' matches what weaver-admin runs as today and works now.
-   '$MEMBER_USER' is the charter's design and needs admin's privilege drop first."
+# **Whose identity the store admits is settled and derived.** The charter has
+# the member hold a uid of its own and dial the store under it, and as of
+# 2026-09-15 the code does: the account is the one this script makes, so the
+# identity map, the territory's owner and the spawn's uid are one fact rather
+# than three the operator keeps agreeing.
+
 # **An engine this script cannot provision is refused here rather than written
 # into a declaration.** `weaver-types` admits `none`, `sqlite` and `postgres`,
 # and anything else fails the inventory's parse after every account, database
@@ -104,8 +112,6 @@ case "$ENGINE" in
   *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres, and this script can provision only postgres." ;;
 esac
 
-getent passwd "$MEMBER_IDENTITY" >/dev/null || [ "$MEMBER_IDENTITY" = "$MEMBER_USER" ] \
-  || die "no such account: $MEMBER_IDENTITY"
 HBA=""; IDENT=""   # asked of the store itself rather than guessed from a distro path
 
 say "plan for agent '$NAME'"
@@ -118,7 +124,7 @@ plan "state territory $STATE_DIR       $MEMBER_USER 0700, which the agent's uid 
 plan "role            $ROLE            postgres, no password, peer only"
 plan "database        $DATABASE        owned by $ROLE"
 plan "admission       local $DATABASE $ROLE peer map=weaver"
-plan "identity map    weaver $MEMBER_IDENTITY -> $ROLE"
+plan "identity map    weaver $MEMBER_USER -> $ROLE"
 plan "allow-list      $NAME appended to $ALLOW_LIST"
 plan "declaration     $DECLARATION     session $SESSION, artifact $ARTIFACT"
 plan "store engine    $ENGINE         which the deployed member must carry"
@@ -152,32 +158,30 @@ fi
 [ -r "$ARTIFACT" ] || printf '   WARNING: the artifact is not readable from this shell: %s\n' "$ARTIFACT"
 printf '   nothing of this agent exists yet\n'
 # **Traversal is asked about here rather than discovered halfway through.**
-# root reaches every directory whatever the mode says, so no entry is needed
-# or written for it. Any other identity needs passage along a chain that runs
-# through the operator's own home, and this pool answers `setfacl` with
-# Operation not supported, so the need and the means are checked together
-# before anything is made.
-if [ "$MEMBER_IDENTITY" = "root" ]; then
-  printf '   root traverses by identity, so no access entry is needed\n'
+# **Traversal is asked about here rather than discovered halfway through.** The
+# member needs passage along a chain that runs through the operator's own home,
+# which is 0700, and this pool answers `setfacl` with Operation not supported,
+# so the need and the means are checked together before anything is made.
+# **The probe sits on the filesystem that will hold the territory**, which is
+# not always the operator's home: `.weaveragents` can be a mount or a dataset
+# of its own, and access entries are a property of the filesystem rather than
+# of the tree. Where that parent does not exist yet the home is the right
+# stand-in, being where the script is about to create it. **The entry names the
+# operator and not the member**, the member's account not existing until the
+# apply below makes it, and what is asked here is whether the filesystem
+# carries entries at all rather than which account gets one.
+probe_parent="/home/$OPERATOR/.weaveragents"
+[ -d "$probe_parent" ] || probe_parent="/home/$OPERATOR"
+probe=$(mktemp -d "$probe_parent/.acl-probe-XXXXXX") || die "cannot write under $probe_parent"
+if setfacl -m "u:$OPERATOR:x" "$probe" 2>/dev/null; then
+  printf '   this filesystem carries access entries, so %s can be given passage\n' "$MEMBER_USER"
 else
-  # **The probe sits on the filesystem that will hold the territory**, which
-  # is not always the operator's home: `.weaveragents` can be a mount or a
-  # dataset of its own, and access entries are a property of the filesystem
-  # rather than of the tree. Where that parent does not exist yet the home is
-  # the right stand-in, being where the script is about to create it.
-  probe_parent="/home/$OPERATOR/.weaveragents"
-  [ -d "$probe_parent" ] || probe_parent="/home/$OPERATOR"
-  probe=$(mktemp -d "$probe_parent/.acl-probe-XXXXXX") || die "cannot write under $probe_parent"
-  if setfacl -m "u:$MEMBER_IDENTITY:x" "$probe" 2>/dev/null; then
-    printf '   this filesystem carries access entries, so %s can be given passage\n' "$MEMBER_IDENTITY"
-  else
-    rmdir "$probe"
-    die "$probe_parent refuses access entries, so $MEMBER_IDENTITY cannot traverse to
-   its territory there. Either map root, or place the territory somewhere the
-   member can reach by ownership alone."
-  fi
   rmdir "$probe"
+  die "$probe_parent refuses access entries, so $MEMBER_USER cannot traverse to
+   its territory there. Place the territory on a filesystem that carries them,
+   or somewhere the member can reach by ownership alone."
 fi
+rmdir "$probe"
 
 if [ "$APPLY" -eq 0 ]; then
   say "plan only"
@@ -210,12 +214,10 @@ sudo install -d -o "$MEMBER_USER" -g "$MEMBER_USER" -m 0700 "$STATE_DIR"
 # cannot traverse to what it owns. Execute-only entries along the chain open
 # passage without opening any listing, which is the narrowest thing that
 # makes the ownership above true rather than stated.
-if [ "$MEMBER_IDENTITY" != "root" ]; then
-  for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
-    sudo setfacl -m "u:$MEMBER_IDENTITY:x" "$step" \
-      || die "no traversal for $MEMBER_IDENTITY at $step, and the member cannot reach its own territory"
-  done
-fi
+for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
+  sudo setfacl -m "u:$MEMBER_USER:x" "$step" \
+    || die "no traversal for $MEMBER_USER at $step, and the member cannot reach its own territory"
+done
 
 say "store"
 sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
@@ -239,7 +241,7 @@ sudo cp -a "$IDENT" "$IDENT.before-$NAME"
 sudo grep -qE '^local[[:space:]]+all[[:space:]]+all[[:space:]]+peer' "$HBA" \
   || die "no 'local all all peer' line in $HBA to place the admission before"
 sudo sed -i "0,/^local\s\+all\s\+all\s\+peer/s||local   $DATABASE   $ROLE   peer map=weaver\nlocal   all             all                                     peer|" "$HBA"
-printf 'weaver          %s                    %s\n' "$MEMBER_IDENTITY" "$ROLE" | sudo tee -a "$IDENT" >/dev/null
+printf 'weaver          %s                    %s\n' "$MEMBER_USER" "$ROLE" | sudo tee -a "$IDENT" >/dev/null
 sudo systemctl reload postgresql
 
 say "declaration"
@@ -312,8 +314,8 @@ say "both gates, verified rather than assumed"
 # **Each probe names the role.** Without `-U` psql defaults the role to the
 # connecting account's own name, so the check would ask about a role nobody
 # created and fail for a reason that is not the gate.
-if sudo -u "$MEMBER_IDENTITY" psql -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
-  printf '   %s reaches the database as %s\n' "$MEMBER_IDENTITY" "$ROLE"
+if sudo -u "$MEMBER_USER" psql -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
+  printf '   %s reaches the database as %s\n' "$MEMBER_USER" "$ROLE"
 else
   die "the member cannot reach its database: the first gate or the map is wrong"
 fi
