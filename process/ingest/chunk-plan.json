@@ -1,5 +1,5 @@
 {
-  "ref": "63d385863e495cfcde175fad9d7cb3487e568da2",
+  "ref": "1cad124f0f656d7785f40de2b343e9884861abe9",
   "ceiling_tokens": 32768,
   "target_tokens": 28000,
   "overlap": "one whole structural unit, repeated at each boundary",
@@ -160,7 +160,7 @@
     {
       "path": "docs/crates/weaver-spu/weaver-spu-Spec.md",
       "bytes": 189480,
-      "content_sha256": "2dbe01b0fe878d3bee4aa2020629fcf5430d92dccf14da71e3632bee52848ed9",
+      "content_sha256": "06edce054ea260eea41bfdb6a32e2908c5a66c2441e7d5046eddb20bd0096f58",
       "chars_per_token_assumed": 4,
       "pieces": [
         {
@@ -199,19 +199,19 @@
     },
     {
       "path": "docs/crates/weaver-web/weaver-web-Spec.md",
-      "bytes": 149224,
-      "content_sha256": "1d53052fdc85335382906e51365e980bf5ded5e76b54dbdda74f8340f4f9802c",
+      "bytes": 149675,
+      "content_sha256": "cd9135eb118a735e45430373665e93e4c33793efd7a9754a5d8e6722669d51fb",
       "chars_per_token_assumed": 4,
       "pieces": [
         {
           "start": 0,
-          "end": 102976,
+          "end": 103427,
           "units": 5,
-          "estimated_tokens": 25744
+          "estimated_tokens": 25856
         },
         {
-          "start": 85964,
-          "end": 149224,
+          "start": 86415,
+          "end": 149675,
           "units": 8,
           "estimated_tokens": 15815
         }

@@ -384,9 +384,26 @@ indexes them, it does not replace them:
    default reports the manifest current on exactly the branch that moved it.
    Run it after committing, HEAD being a commit and not the working tree.
 
-   Where it fails, regenerate with `--ref HEAD` and commit the manifest in the
-   same act. The manifest then describes what `main` holds the moment the act
-   merges, which is what the ingest reads.
+   **Where it fails and the act is the only one in flight**, regenerate with
+   `--ref HEAD` and commit the manifest in the same act. The manifest then
+   describes what `main` holds the moment the act merges, which is what the
+   ingest reads.
+
+   **Where several acts are in flight at once, the act reports it stale and
+   commits no regeneration**, on the operator's ruling of 2026-09-14. A
+   whole-tree artifact regenerated inside a parallel act is built against a tree
+   holding that act's edit and not its siblings', so the copies conflict - and
+   the conflict is the lucky case. Where the hunks do not overlap the merge is
+   clean and the manifest is wrong. **A failing `--check` is the expected result
+   in a parallel batch**, recorded in the pull request body, and one regeneration
+   runs against settled `main` before the ingest.
+
+   **Regenerate after the final commit.** An amended or rebased commit leaves the
+   `ref` field naming an object reachable from no branch, which no other reader
+   can look up. `63d38586` stood on `main` through six acts that way, written by
+   an in-act `--ref HEAD` run against a commit that was then amended. `--check`
+   now refuses a `ref` this repository does not hold, and one that is not an
+   ancestor of the ref being checked.
 
    It is conditional because the corpus is not: nine acts in ten touch nothing
    held out, and a gate that always passes is one people stop reading. Under
