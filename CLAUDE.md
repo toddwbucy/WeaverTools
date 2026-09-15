@@ -251,7 +251,9 @@ delivered. **The structure was right and the edges were never drawn.** The new p
 guard against repeating that is a rule the operator settled before any labelling began:
 an assertion that grounds in no invariant is **representation, not an omission**, and the
 coverage number is a fact to read rather than a target to reach. Writing that down first
-is what stops a low number from being argued away once someone sees it.
+is what stops a low number from being argued away once someone sees it. **That rule has
+one stated exception and Document Format section 4 carries it**, per the ruling of
+2026-09-14. Read it there rather than from a copy here.
 
 **During authoring, enforcement rests on six devices and no graph.** These do not retire
 when the graph lands - the graph indexes them, it does not replace them:

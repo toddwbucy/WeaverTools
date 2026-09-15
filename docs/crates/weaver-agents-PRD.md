@@ -14,6 +14,13 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 
+**Revised:** 2026-09-14, section 5's representation rule says it reads a claim
+rather than a wording. Where one clause recurs across Specs and its statements
+disagree about the edge, the disagreement is a defect rather than two readings, and
+the sentence points at Document Format section 4 rather than restating how it
+resolves. One sentence, no invariant changed and no edge moved. Per the parity
+ruling of this date at that section, and issue #569.
+
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
 section 3 describes one serving turn, gate to gate. The operator's ruling of
@@ -445,7 +452,8 @@ those serves an invariant because the invariants are not about representation. T
 coverage number is a fact to read rather than a target to reach, and it is stated
 that way here so it cannot later be argued down: the prior program's basis reached
 seven of seventy-one claims and the answer was to keep the layer rather than to ask
-what the layer was for.
+what the layer was for. **This rule has one stated exception and Document Format
+section 4 carries it**, per the ruling of 2026-09-14. Read it there.
 
 **The named exception to Working Process section 7 ran its course and is
 closed.** The 5.1 restatement and 5.4 were taken early on 2026-07-31, further

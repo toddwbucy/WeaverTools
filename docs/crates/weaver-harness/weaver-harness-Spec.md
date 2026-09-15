@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, fourth of the Spec pass and the first above the
 floor. Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-14, the out-of-order refusal says why it takes one axiom.
+Section 3 carries one `grounds` edge where `weaver-gate-Spec` section 2 and
+`weaver-spu-Spec` section 9 carry two on the same clause, and the second is an
+organ's reason rather than the loop's. The asymmetry is stated at the clause so it
+reads as a judgment. No edge and no record moves, and no count in this document
+changes. Per the parity ruling of this date at Document Format section 4, and
+issue #569.
+
 **Revised:** 2026-09-07, the receive site names the width it reads. Section 2.3's
 control-message walk read the kernel's two lengths through a cast to `usize` that is
 a no-op on glibc and real on musl, and the gate of enforcement device five named it
@@ -1402,6 +1410,16 @@ made structural. The pin reaches the completeness half, every out-of-order case
 arriving at an arm, and the perturbation reaches what the arm returns, which is
 the contract's own named error. Grounding one and not the other would say the
 invariant is a reason for the type and not for the behaviour, which is backwards.
+**The refusal does not also ground in apex section 5.5, where `weaver-gate-Spec` section
+2 and `weaver-spu-Spec` section 9 ground their own out-of-order records, and the
+asymmetry is a reading rather than a dropped edge.** That second reason is an organ's: a
+directive arrives in an order the organ did not choose, and refusing rather than
+queueing returns a cross-domain timing failure to the party that invariant makes
+answerable for it. This crate is that party. The same refusal here is one contract's
+stated ordering held against the party that breached it, not two domains' orderings
+reconciled, and 5.5 says nothing about what happens inside one domain. **The pin is
+outside that reading**, its own twin at `weaver-gate-Spec` section 2 carrying the one
+edge this crate carries, so there is no asymmetry there to explain.
 
 ```graph
 node: harness-channel-state-three-positions
