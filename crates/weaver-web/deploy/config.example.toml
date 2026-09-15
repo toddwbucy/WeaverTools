@@ -1,8 +1,9 @@
 # weaver-web server configuration (Spec section 8).
 # Default path: /etc/weaver-web/config.toml, override with --config.
 # The server holds everything that is not box-bound; agents are not
-# declared here. They arrive with the connector's hello (Spec
-# section 8), so the roster lives in connector.toml on the box that
+# declared here. They arrive with the connector's hello, which
+# section 8 does not name: it charters the link and leaves the frame
+# to wire.rs. So the roster lives in connector.toml on the box that
 # runs them.
 
 listen   = "0.0.0.0:8080"                                  # browsers

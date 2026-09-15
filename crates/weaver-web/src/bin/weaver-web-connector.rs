@@ -2,7 +2,7 @@
 //! and holds every box-bound reach - gate sockets, verb invocation,
 //! trace sinks, the load-state observable, the declaration read. It
 //! renders nothing, stores nothing, and only dials out (PRD section
-//! 3): the server's address is the one line that changes when the
+//! 5): the server's address is the one line that changes when the
 //! presentation stack moves.
 
 use clap::Parser;

@@ -69,9 +69,11 @@ pub struct AgentConfig {
     pub trace: PathBuf,
 }
 
-// Read by the upstream adapter once it is implemented (Spec section
-// 10). Providers are the server's business alone: nothing
-// upstream-facing touches the agents' box.
+// Read by the upstream adapter once it is implemented. No Spec
+// section charters one: the charter's section 7 retires upstream
+// models as guests and leaves the built code unchartered until a
+// later act rules on it. Providers are the server's business alone:
+// nothing upstream-facing touches the agents' box.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct ProviderConfig {

@@ -39,9 +39,10 @@ struct View {
 }
 
 /// The server's per-agent views, fed by the link. Agents register
-/// dynamically as hellos announce them (roster-by-hello, Spec
-/// section 8) and are never removed: a view over a departed agent
-/// stays readable, honestly stale.
+/// dynamically as hellos announce them, roster-by-hello. Spec
+/// section 8 charters the link and names no roster, so this module
+/// and the link hold that rule between them. Views are never removed:
+/// a view over a departed agent stays readable, honestly stale.
 #[derive(Clone)]
 pub struct TraceViews {
     views: Arc<Mutex<HashMap<String, Arc<View>>>>,

@@ -558,8 +558,8 @@ of its own rather than a line here.
   this register carries, so the defect outlived every retirement and had to
   be answered rather than waited out.
 
-  **The disposition: twenty-seven repointed, one redirected, nine left.**
-  The nine are in the six files this register retires and go with their
+  **The disposition: twenty-seven repointed, one redirected, ten left.**
+  The ten are in the six files this register retires and go with their
   modules, so a sweep reporting zero would be reporting on files that are
   leaving. `store.rs`'s role citation was redirected rather than repointed,
   its subject being what the section 6 act separates, and it now names Spec
@@ -568,6 +568,30 @@ of its own rather than a line here.
   **two named a claim the rewrite dropped rather than moved**, the
   display-engine constraint, which no standing document carries and which
   those two comments now say plainly rather than citing a section for.
+
+  **These figures were taken with a line-oriented probe and are corrected
+  here, 2026-09-14, by PR #585.** The crate wraps comments at about
+  sixty-six columns, so a citation whose number falls after the break is two
+  lines, and no search that reads one line at a time can see it. Measured
+  again whole-file with the newlines normalized away, the live crate carried
+  **twenty-eight** references to sections 11 through 17 at `b97fd0b^1`
+  rather than twenty-two, and **twelve** of them stood in `wire.rs` rather
+  than ten. The act repointed ten of that file's twelve, so the defect this
+  register says had to be answered rather than waited out was answered in
+  part: `wire.rs` lines 572 and 626 carried section 16 forward. The left set
+  is ten rather than nine, `queue.rs` carrying a fourth at its line 214.
+  **The same blind spot produced the correction above**, where a grep
+  matching a single digit dropped `section 10`. A probe that reads a line is
+  the same kind of instrument as a probe that reads a digit.
+
+  **PR #585 answers seven of the twenty-eight's survivors and one of the
+  ten.** The seven are the files that carry and the files no module owns -
+  `wire.rs` twice, `traceview.rs`, `config.rs`, `bin/weaver-web-connector.rs`
+  and two under `deploy/` - none of which were in that act's diff or are in
+  any retiring module. The one is `web/user.rs:83`, whose target survives the
+  retirement where its section number does not: the charter's section 6 names
+  the retired Spec's section 14 outright and carries its claim. **Nine
+  stand**, and they stand on this register's own ground.
 - **Two sites carry code a merged act moved past, and both now say so in
   place.** Found by the reviews of PR #510 rather than by this reading.
   `adapters/gate.rs`'s `socket_exists` infers load state from a socket

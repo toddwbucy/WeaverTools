@@ -80,7 +80,8 @@ async fn open_session(
         .create_participant(&form.name, &form.name, "human", None)
         .await?;
     // v1: roles come from the config's admin list, reapplied so a
-    // first-time admin name lands with its role (the charter's section 6).
+    // first-time admin name lands with its role (the charter's
+    // section 6).
     state
         .store
         .reconcile_roles(state.cfg.admins.clone())
@@ -89,7 +90,8 @@ async fn open_session(
     state.store.open_session(&token, pid).await?;
     // Strict blocks any cross-site request from carrying the session,
     // which is the CSRF defense for every mutating route. The Secure
-    // attribute deliberately waits for the TLS act (PRD roadmap 2):
+    // attribute deliberately waits for the TLS act, deferred at the
+    // charter's section 6 on its own trigger and not the IAM act's:
     // v1 is plain HTTP on the LAN, and Secure would break the cookie.
     let cookie = format!("ww_session={token}; Path=/; HttpOnly; SameSite=Strict");
     Ok(([(header::SET_COOKIE, cookie)], Redirect::to("/channels")).into_response())

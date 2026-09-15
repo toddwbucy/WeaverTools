@@ -65,9 +65,9 @@ instead of rearchitecting.
 ## Documents
 
 - [`weaver-web-PRD.md`](../../docs/crates/weaver-web/weaver-web-PRD.md)  - 
-  what and why: the surfaces, the rulings (display-engine constraint,
-  scope, identity and responsibility), the roadmap, and the asks filed
-  upstream.
+  what and why: the surfaces, what the crate is not, the placement and
+  identity rulings, what the rewrite keeps and what it retires, and the
+  asks filed upstream.
 - [`weaver-web-Spec.md`](../../docs/crates/weaver-web/weaver-web-Spec.md)  - 
   how: every representation election, cited from the code that implements
   it.
@@ -100,9 +100,10 @@ binary - hello, trace backfill and live tail, turns with typed
 refusals, verbs, declarations, and redial with fresh backfill.
 Redeployment of the split shape on the agents' box is the remaining
 live proof. v1 trusts its LAN - no authentication or TLS by
-deliberate, documented deferral (PRD section 6 and roadmap item 2:
-passkeys and TLS land together, triggered by the surfaces being
-stable in daily use).
+deliberate, documented deferral (PRD section 6, which names the IAM
+act and two triggers rather than one: identity when the listener
+becomes reachable beyond the network the operator admitted, and
+transport encryption when the traffic leaves it).
 
 ## License
 

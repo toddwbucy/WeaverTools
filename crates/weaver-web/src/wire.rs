@@ -568,8 +568,9 @@ async fn serve_connection(
 
 /// The connector's whole life: dial the server, say hello, tail the
 /// traces, answer asks, and redial with backoff when the link drops.
-/// Reconnection re-runs the hello and a fresh trace backfill (Spec
-/// section 8).
+/// Reconnection re-runs the hello and a fresh trace backfill. Spec
+/// section 8 charters the link and names neither the hello nor the
+/// backfill, so this module is where the reconnect's shape is named.
 pub async fn connector_run(cfg: Arc<ConnectorConfig>) {
     let gates: Arc<HashMap<String, GateAdapter>> = Arc::new(
         cfg.agents
@@ -623,8 +624,10 @@ async fn connector_connection(
         return;
     }
 
-    // Fresh tailers per connection: fresh backfill, per Spec section
-    // 16. The server marks the reconnect, so the re-read is bracketed.
+    // Fresh tailers per connection: fresh backfill. Spec section 8
+    // charters the link and names no backfill, so the rule is this
+    // module's. The server marks the reconnect, so the re-read is
+    // bracketed.
     let mut tasks: Vec<tokio::task::JoinHandle<()>> = Vec::new();
     for a in &cfg.agents {
         let (agent, path, tx) = (a.name.clone(), a.trace.clone(), tx.clone());

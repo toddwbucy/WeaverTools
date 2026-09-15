@@ -1,10 +1,13 @@
-//! The HTTP surface (Spec section 6). Two sub-surfaces mirror the
-//! framework's two external boundaries and the two roles the PRD
-//! names: `user` is the gate surface (channels, messages), `admin` is
-//! the operator surface (lifecycle verbs, trace views), gated on the
-//! participant's role. The browser is a display engine, a constraint the
-//! retired charter carried at its section 3 and the rewrite states
-//! nowhere, per the register.
+//! The HTTP surface. **Spec section 6 is the surfaces tree's and this
+//! module is the conversation half**, which retires with the modules
+//! `docs/project/inventory-weaver-web-code.md` names, so that number
+//! says where a surface is chartered rather than where this one is.
+//! Two sub-surfaces mirror the framework's two external boundaries and
+//! the two roles the PRD names: `user` is the gate surface (channels,
+//! messages), `admin` is the operator surface (lifecycle verbs, trace
+//! views), gated on the participant's role. The browser is a display
+//! engine, a constraint the retired charter carried at its section 3
+//! and the rewrite states nowhere, per the register.
 
 pub mod admin;
 pub mod user;
