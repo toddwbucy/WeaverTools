@@ -151,11 +151,58 @@ def resolve(rev):
     form raised `CalledProcessError` and exited 1 - the same code staleness
     uses, so a misconfigured job read as a stale manifest.
     """
+    # **A local ref behind its upstream is refused, not silently preferred.**
+    # A local `main` that had not been pulled made `--check` report a correct
+    # manifest as stale, in the failing direction, and `--check` against main is
+    # the one command a second seat runs to confirm a settle. Found by the
+    # olympus seat on #591.
+    #
+    # **Local is still tried first**, because `--ref HEAD` must mean this HEAD.
+    # An earlier form of this fix put `origin/` first and resolved `--ref HEAD`
+    # to `origin/HEAD`, which answers about the remote's default branch and not
+    # about the tree in hand - a defect introduced while repairing one.
     for cand in (rev, f"origin/{rev}"):
         out = subprocess.run(["git", "-C", ROOT, "rev-parse", "--verify", "-q",
                               f"{cand}^{{commit}}"], capture_output=True, text=True)
         if out.returncode == 0:
-            return out.stdout.strip(), cand, None
+            sha = out.stdout.strip()
+            # Only a local branch can lag; a sha, a tag or HEAD cannot.
+            if cand == rev and not rev.startswith("origin/"):
+                # **The configured upstream, not a guessed `origin/<rev>`.**
+                # An earlier form built the string, so `--ref refs/heads/main`
+                # asked about `origin/refs/heads/main`, which does not exist,
+                # and the protection silently did not run. `@{upstream}` is
+                # what the branch is actually tracking.
+                up = subprocess.run(
+                    ["git", "-C", ROOT, "rev-parse", "--verify", "-q",
+                     f"{rev}@{{upstream}}^{{commit}}"],
+                    capture_output=True, text=True)
+                if up.returncode == 0 and up.stdout.strip() != sha:
+                    upstream = up.stdout.strip()
+                    # **Rejects behind AND diverged, by asking the question in
+                    # the other direction.** The first form asked whether local
+                    # was an ancestor of upstream, which is true only when local
+                    # is strictly behind - so a diverged branch, which also
+                    # lacks upstream commits, passed. Asking whether upstream is
+                    # an ancestor of local keeps equal and ahead and rejects
+                    # both of the others. Found by CodeRabbit on #591.
+                    contains = subprocess.run(
+                        ["git", "-C", ROOT, "merge-base", "--is-ancestor",
+                         upstream, sha], capture_output=True)
+                    if contains.returncode != 0:
+                        base = subprocess.run(
+                            ["git", "-C", ROOT, "merge-base", sha, upstream],
+                            capture_output=True, text=True).stdout.strip()
+                        how = "diverged from" if base not in (sha, upstream) \
+                            else "is behind"
+                        return None, None, (
+                            f"local {rev} {how} its upstream "
+                            f"({sha[:12]} against {upstream[:12]}). "
+                            "Pull, or name the ref you mean with --ref: a "
+                            "manifest checked against a base that lacks "
+                            "upstream commits reports a correct manifest as "
+                            "stale.")
+            return sha, cand, None
     return None, None, (f"cannot resolve ref {rev!r} here, and no origin/{rev} "
                         "either. Fetch it, or name one with --ref.")
 
@@ -350,13 +397,52 @@ def main():
             return 2
         with open(MANIFEST, encoding="utf-8") as fh:
             was = json.load(fh)
-        # **The ref is recorded and not compared.** A manifest built at main is
-        # valid for any ref whose held-out content is identical, and comparing
-        # the field would report "content changed" for a commit that changed
-        # nothing this manifest describes.
-        if was.get("ref") != plan["ref"]:
+        # **The ref is not compared for equality, and IS checked for
+        # reachability.** A manifest built at main stays valid for any ref whose
+        # held-out content is identical, so comparing the field would report
+        # "content changed" for a commit that changed nothing this manifest
+        # describes. But a ref no reader can look up is a different failure and
+        # this check could not see it: `63d38586` stood on `main` through six
+        # acts, written by an in-act `--ref HEAD` run against a commit that was
+        # then amended away, and every run exited 0. The provenance line named a
+        # commit reachable from no branch. Found by the olympus seat on #587.
+        # **A missing `ref` is refused, not skipped.** The first form guarded
+        # with `if was_ref:`, so a manifest carrying no ref at all skipped both
+        # git checks - and the parity comparison below strips `ref` from each
+        # side, so every remaining field matching made it pass. The guard added
+        # to catch an unreachable ref had an escape hatch for no ref. Found by
+        # CodeRabbit on #591. The shape check also settles the ast-grep note on
+        # the same lines: the value reaches `git` as a list argument and never a
+        # shell, and it is now a 40-character hex string before it goes there.
+        was_ref = was.get("ref")
+        if not isinstance(was_ref, str) or not re.fullmatch(r"[0-9a-f]{40}",
+                                                            was_ref):
+            print(f"the manifest carries no usable ref ({was_ref!r}). "
+                  "It records the commit its content was hashed against, and "
+                  "without one the check cannot tell a current manifest from "
+                  "one built anywhere.", file=sys.stderr)
+            return 1
+        if was_ref:
+            known = subprocess.run(["git", "-C", ROOT, "cat-file", "-e",
+                                    f"{was_ref}^{{commit}}"],
+                                   capture_output=True).returncode == 0
+            if not known:
+                print(f"the manifest names ref {was_ref[:12]}, which this "
+                      "repository does not hold.", file=sys.stderr)
+                print("regenerate after the final commit: an amended or "
+                      "rebased commit leaves the field naming an object no "
+                      "other reader can look up.", file=sys.stderr)
+                return 1
+            reachable = subprocess.run(
+                ["git", "-C", ROOT, "merge-base", "--is-ancestor",
+                 was_ref, plan["ref"]], capture_output=True).returncode == 0
+            if not reachable:
+                print(f"the manifest names ref {was_ref[:12]}, which is not an "
+                      f"ancestor of {plan['ref'][:12]}.", file=sys.stderr)
+                return 1
+        if was_ref != plan["ref"]:
             print(f"manifest built at {was.get('ref','?')[:12]}, "
-                  f"checking {plan['ref'][:12]}")
+                  f"checking {plan['ref'][:12]}", file=sys.stderr)
         if {k: v for k, v in was.items() if k != "ref"} != \
            {k: v for k, v in plan.items() if k != "ref"}:
             # **`.get` and not `[...]`.** A truncated manifest raised KeyError

@@ -4,6 +4,13 @@
 //! id where the shape is ask-answer, the trace streaming unasked. Link
 //! loss is marked, never smoothed: pending asks fail typed, and the
 //! server inserts discontinuity marks into every trace view.
+//!
+//! **Section 8 charters the link and names none of its frames.** The
+//! words hello, backfill and discontinuity appear nowhere in that Spec,
+//! and roster appears once in another sense, so every citation of
+//! section 8 in this module names the link and never the frame. The
+//! frames are this module's, and a later act that charters them is
+//! where those citations stop needing this paragraph.
 
 use crate::adapters::gate::{GateAdapter, GateClose, GateError};
 use crate::config::ConnectorConfig;
@@ -569,7 +576,7 @@ async fn serve_connection(
 /// The connector's whole life: dial the server, say hello, tail the
 /// traces, answer asks, and redial with backoff when the link drops.
 /// Reconnection re-runs the hello and a fresh trace backfill (Spec
-/// section 16).
+/// section 8, and the frame rule in this module's header).
 pub async fn connector_run(cfg: Arc<ConnectorConfig>) {
     let gates: Arc<HashMap<String, GateAdapter>> = Arc::new(
         cfg.agents
@@ -623,8 +630,9 @@ async fn connector_connection(
         return;
     }
 
-    // Fresh tailers per connection: fresh backfill, per Spec section
-    // 16. The server marks the reconnect, so the re-read is bracketed.
+    // Fresh tailers per connection: fresh backfill (Spec section 8,
+    // and this module's frame rule). The server marks the reconnect,
+    // so the re-read is bracketed.
     let mut tasks: Vec<tokio::task::JoinHandle<()>> = Vec::new();
     for a in &cfg.agents {
         let (agent, path, tx) = (a.name.clone(), a.trace.clone(), tx.clone());

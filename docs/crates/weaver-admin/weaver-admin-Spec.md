@@ -5,6 +5,13 @@ agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 
+**Revised:** 2026-09-14, the atomic close-on-exec claim carries its edge.
+Section 6's behavioural half grounds in apex section 5.1, where
+`weaver-harness-Spec` section 2.2 grounds the same clause on the possession case,
+and section 1's ownership half is named as grounding in nothing. No record is
+added or removed and section 10's figures are `act-14`'s to re-derive. Per the
+parity ruling of this date at Document Format section 4, and issue #569.
+
 **Revised:** 2026-09-07, the repair-nothing test takes its record. Section 4 said
 no test reaches the existence checks, and one has since the crate landed on
 2026-08-05: a missing home refuses and nothing is built, watched under perturbation.
@@ -1331,17 +1338,21 @@ to: admin-init-system-over-command-line
 ```
 
 **The subprocess inherits nothing it was not deliberately given, because every
-descriptor this crate holds is close-on-exec atomically at creation,** no
-descriptor existing for an instant between its creating call and its flag.
-The one deliberate gift is the member's own end of the first door's pair, per
-the operator's ruling of 2026-08-26: created atomically flagged like
-everything else and re-armed onto the member's fixed number in the spawn path
-itself, so the inheritance is an act at one site and never a default
-anywhere. This is the behavioural half
-of the custody section 1 opens, and section 10's third walk makes it a test,
-where section 1's half is the ownership the compiler holds. The two halves
-carry separate records because a test cannot demonstrate ownership and the
-borrow checker cannot see a flag.
+descriptor this crate holds is close-on-exec atomically at creation,** no descriptor
+existing for an instant between its creating call and its flag. The one deliberate gift
+is the member's own end of the first door's pair, per the operator's ruling of
+2026-08-26: created atomically flagged like everything else and re-armed onto the
+member's fixed number in the spawn path itself, so the inheritance is an act at one site
+and never a default anywhere. This is the behavioural half of the custody section 1
+opens, and section 10's third walk makes it a test, where section 1's half is the
+ownership the compiler holds. The two halves carry separate records because a test
+cannot demonstrate ownership and the borrow checker cannot see a flag. **The behavioural
+half grounds in apex section 5.1 where `weaver-harness-Spec` section 2.2 grounds the
+same claim**, a pair with no name being authenticated by possession of the descriptor
+and by nothing else, so an end that crosses an exec is a credential handed to whatever
+runs next and the window a later `fcntl` opens is where it is handed over. The ownership
+half at section 1 grounds in nothing, being this crate's representation of a descriptor
+rather than a claim about who can reach one.
 
 ```graph
 node: admin-cloexec-atomic-at-creation
@@ -1351,6 +1362,10 @@ tag: perturbation
 edge: asserts
 from: weaver-admin
 to: admin-cloexec-atomic-at-creation
+
+edge: grounds
+from: admin-cloexec-atomic-at-creation
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **The unit template is fixed and the name is the one variable.** The
@@ -2081,8 +2096,8 @@ is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share.
 
-**Which invariant each claim serves, and why most serve none.** Eleven of the
-thirty-seven carry a `grounds` edge and those eleven carry twelve edges, one
+**Which invariant each claim serves, and why most serve none.** Twelve of the
+thirty-seven carry a `grounds` edge and those twelve carry thirteen edges, one
 record grounding in two invariants. **All three records this act adds
 ground in none**, and the paragraph accounts for each rather than one. Section
 6's runtime directory mode is an election about a boundary this crate
@@ -2095,25 +2110,25 @@ notation runs from an assertion to an **axiom**, per Document Format section
 on edges, and an assertion-to-assertion edge would have been a new relation
 smuggled in under an existing name.
 
-**The twelve are named rather than numbered**, an ordinal in document order
-being the thing that goes stale next. Six run to
-`axiom-floor-is-vocabulary-behavior-is-socket`, one to
-`axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`,
-and four to `axiom-harness-integrates-by-the-loop`.
-**The test applied is whether the axiom is the reason the claim exists, or
-whether the claim is a precondition of the axiom's own stated reason,** per
-Document Format section 4. Remove the socket invariant and this crate has
-no reason to publish no library and no reason to hold one internal dependency,
-no reason for the verbs to sit behind a principal check, no envelope has to
-arrive whole or a truncation to count as a fault, and the dial's bound has
-nothing to bound, so those six ground in it. Remove it and the log is still
-NDJSON, the FIFO still opens nonblocking, the inventory still repairs nothing,
-and the identity is still built from the validated name, so those ground in
-nothing.
-**Twenty-three claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: most of what this Spec elects is a
-rendering, a mode, an ordering, or a route, and representation is what the
-invariants are not about.
+**The thirteen are named rather than numbered**, an ordinal in document order being the
+thing that goes stale next. Seven run to `axiom-floor-is-vocabulary-behavior-is-socket`,
+one to `axiom-contract-is-a-complete-interface`, one to `axiom-organ-and-submodule`, and
+four to `axiom-harness-integrates-by-the-loop`. **The test applied is whether the axiom
+is the reason the claim exists, or whether the claim is a precondition of the axiom's
+own stated reason,** per Document Format section 4. Remove the socket invariant and this
+crate has no reason to publish no library and no reason to hold one internal dependency,
+no reason for the verbs to sit behind a principal check, no envelope has to arrive whole
+or a truncation to count as a fault, and the dial's bound has nothing to bound, so those
+six ground in it. **The atomic close-on-exec of section 6 grounds in it by the second
+relation rather than the first**, on the argument that clause states. **The record total
+this paragraph reads against is stale and is `act-14`'s**, the crate carrying forty
+records rather than thirty-seven, so the ungrounded figure below is derived from it
+rather than being a fourth count this act could correct on its own. Remove it and the
+log is still NDJSON, the FIFO still opens nonblocking, the inventory still repairs
+nothing, and the identity is still built from the validated name, so those ground in
+nothing. **Twenty-three claims grounding in no invariant is the expected result and not
+a gap**, per Document Format section 4: most of what this Spec elects is a rendering, a
+mode, an ordering, or a route, and representation is what the invariants are not about.
 
 **`axiom-join-key-travels-with-the-work` takes nothing from this crate,** and
 the reason is that invariant's own scope rather than an oversight in this pass.

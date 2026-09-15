@@ -10,6 +10,13 @@ the thinkpad seat beside the rewritten `weaver-web-PRD` of the same date.
 The prior text is replaced whole rather than amended, and git is its
 archive.
 
+**Revised:** 2026-09-14, section 9 counts the rows it holds. The table took its
+thirty-third row at the fourth act of 2026-09-11 and the sentence beside it was left
+at the count before that, so the section disagreed with the banner entry that had
+just moved it. One row is still marked owed and the rows beside it are thirty-two.
+No claim moves, no instrument changes, and no row is added or removed. Found by the
+audit of 2026-09-13, per epic #569.
+
 **Revised:** 2026-09-13, the driver this document names by filename leaves the
 repository. `experiments/` moved to the `weaver-experiments` tree on the operator's
 ruling of this date, recorded at `WeaverTools-Working-Process` section 5, so
@@ -2465,7 +2472,7 @@ act that lands it states what removal makes it fail and confirms it does.
 **A row marked owed has no instrument and is not counted as enforced.** One
 stands so marked as of 2026-09-11, the batch's order, whose table section 2.11
 describes and no migration builds. The marking is the point: a row reading like
-the thirty-one beside it would tell a reader the claim is held, which is the
+the thirty-two beside it would tell a reader the claim is held, which is the
 same failure as a watch that passes either way and is why this table says which
 it is.
 

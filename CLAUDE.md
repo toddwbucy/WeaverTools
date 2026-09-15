@@ -156,20 +156,32 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
 From `WeaverTools/`. Nightly, edition 2024, twelve packages.
 
 ```bash
-cargo build --workspace
-cargo test --workspace
-cargo test -p weaver-harness            # one crate
-cargo clippy --workspace --all-targets -- -D warnings
+cargo build --workspace --locked
+cargo test --workspace --locked
+cargo test -p weaver-harness --locked   # one crate
+cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo fmt --all -- --check
 ```
 
+**`--locked` on every command that resolves**, closing the first ask of
+issue #551. Without it cargo repairs a manifest change in place and the gate
+answers about a tree the repository does not record, which has happened twice,
+`weaver-admin`'s `sha2` on 2026-09-04 and `weaver-web`'s pair on 2026-09-11.
+With it the run refuses before a single test binary is spawned, so the drift
+is loud where it used to be silent. `fmt` resolves nothing and takes no flag.
+**This is the only place the refusal fires**: the deploy's own test line
+selects four crates, so the manifest instruments of `weaver-gate` and
+`weaver-internal` are reached by these commands and by nothing else.
+
 **Every command was run from `WeaverTools/` on 2026-09-06 before being
-written here**, which is the difference between a command that works and one
-that ought to. `build --workspace` and `fmt --all -- --check` returned clean.
-`test --workspace` passed 584 and failed none. `test -p weaver-harness`
-passed 105 and failed none. The clippy line returned the backlog section
-"Enforcement" describes. A later reader re-runs rather than trusting the
-date.
+written here**, and each was run again under `--locked` on 2026-09-14 when
+that flag was added, which is the difference between a command that works and
+one that ought to. At the second reading `build --workspace` and
+`fmt --all -- --check` returned clean, `test --workspace` passed 624 and
+failed none, `test -p weaver-harness` passed 110 and failed none, and the
+clippy line returned the backlog section "Enforcement" describes. **The lock
+was untouched by every one of them.** A later reader re-runs rather than
+trusting the date.
 
 **No `--features` flag belongs on the clippy line here.** `weaver-spu`
 declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
@@ -225,7 +237,7 @@ contribution, independent of its code): per-invocation tool safety classificatio
 messages with all wire format isolated at the composition root, and `SO_PEERCRED`-verified
 Unix sockets for all internal IPC.
 
-## Enforcement, and when the graph arrives
+## Enforcement, and the graph
 
 **Corrected 2026-08-03.** This section previously said the new program builds no graph
 until just before the memory leg lands. `WeaverTools-Working-Process` section 5 governs
@@ -251,10 +263,13 @@ delivered. **The structure was right and the edges were never drawn.** The new p
 guard against repeating that is a rule the operator settled before any labelling began:
 an assertion that grounds in no invariant is **representation, not an omission**, and the
 coverage number is a fact to read rather than a target to reach. Writing that down first
-is what stops a low number from being argued away once someone sees it.
+is what stops a low number from being argued away once someone sees it. **That rule has
+one stated exception and Document Format section 4 carries it**, per the ruling of
+2026-09-14. Read it there rather than from a copy here.
 
-**During authoring, enforcement rests on six devices and no graph.** These do not retire
-when the graph lands - the graph indexes them, it does not replace them:
+**Enforcement rests on six devices**, enumerated by `weaver-agents-PRD` section 11,
+which this list restates. The graph has landed and they do not retire - the graph
+indexes them, it does not replace them:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
 2. **Compile-time pins** for invariants that are type properties. A runtime test
@@ -381,9 +396,34 @@ when the graph lands - the graph indexes them, it does not replace them:
    default reports the manifest current on exactly the branch that moved it.
    Run it after committing, HEAD being a commit and not the working tree.
 
-   Where it fails, regenerate with `--ref HEAD` and commit the manifest in the
-   same act. The manifest then describes what `main` holds the moment the act
-   merges, which is what the ingest reads.
+   **Where it fails and the act is the only one in flight**, regenerate with
+   `--ref HEAD` and commit the manifest in the same act, so the content the
+   manifest describes is the content that merges.
+
+   **The `ref` field names the commit the manifest was built at, which is the
+   act's own tip and not the commit `main` ends up carrying.** A squash, a merge
+   or a rebase gives `main` a different sha. The field is provenance - it says
+   what this content was hashed against - and the content, not the ref, is what
+   makes the manifest current. An earlier form of this paragraph said the
+   manifest describes what `main` holds the moment the act merges, which is true
+   of the content and false of the field, and was read as a claim about the
+   field by two review seats in a row.
+
+   **Where several acts are in flight at once, the act reports it stale and
+   commits no regeneration**, on the operator's ruling of 2026-09-14. A
+   whole-tree artifact regenerated inside a parallel act is built against a tree
+   holding that act's edit and not its siblings', so the copies conflict - and
+   the conflict is the lucky case. Where the hunks do not overlap the merge is
+   clean and the manifest is wrong. **A failing `--check` is the expected result
+   in a parallel batch**, recorded in the pull request body, and one regeneration
+   runs against settled `main` before the ingest.
+
+   **Regenerate after the final commit.** An amended or rebased commit leaves the
+   `ref` field naming an object reachable from no branch, which no other reader
+   can look up. `63d38586` stood on `main` through six acts that way, written by
+   an in-act `--ref HEAD` run against a commit that was then amended. `--check`
+   now refuses a `ref` this repository does not hold, and one that is not an
+   ancestor of the ref being checked.
 
    It is conditional because the corpus is not: nine acts in ten touch nothing
    held out, and a gate that always passes is one people stop reading. Under

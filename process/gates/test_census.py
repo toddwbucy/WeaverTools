@@ -465,6 +465,93 @@ class Census(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("docs/archive/", out)
 
+    def test_the_hadesignore_holds_the_process_negations_and_the_fixture_rule(self):
+        """Two lines with no watch until 2026-09-14, and the review named both.
+
+        `process/*` with `!process/gates/` and `!process/ingest/` is the rule
+        that keeps the census in the graph and the four documents out. Retype
+        one negation and both gates stayed green while the census left the
+        graph again - the state f8c8618 fixed. And `**/tests/fixtures/` had no
+        watch at all: delete it and nothing moved.
+
+        **Everything here is matched with git's own engine.** `fnmatch` lets
+        `*` cross a `/`, so it accepted `*/tests/fixtures/` for a path three
+        segments deep where gitignore does not, and a line-membership check
+        accepts any order where gitignore is last-match-wins. Both forms passed
+        on manifests that exclude the wrong things. `.hadesignore` follows
+        gitignore syntax, so gitignore decides. Both found by CodeRabbit on
+        PR #575, the second refuting this test's own earlier claim that the
+        negations had no behaviour to match against.
+
+        **The path is created before the check.** A trailing `/` means
+        directory-only, and `check-ignore --no-index` cannot tell that a path
+        absent from disk is a directory, so the right pattern and the wrong one
+        both read as no-match without it.
+
+        **And the probe answers from this manifest and nothing else.** git reads
+        `core.excludesFile` and the repository's `info/exclude` alongside a
+        `.gitignore`, so a seat with a global `*.py` rule would see
+        `census.py` reported as excluded and this test fail for a reason that
+        is not in `.hadesignore` at all. Both are emptied. **A gate whose answer
+        depends on the box is the hazard `CLAUDE.md` records for the clippy
+        count**, and the same shape the olympus seat found in `--exclude-standard`
+        on 2026-09-13.
+        """
+        import subprocess
+
+        with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
+            manifest = fh.read()
+
+        probe = os.path.join(self.dir, "ignoreprobe")
+        os.makedirs(probe)
+        subprocess.run(["git", "-C", probe, "init", "-q"], check=True,
+                       capture_output=True)
+        with open(os.path.join(probe, ".gitignore"), "w", encoding="utf-8") as fh:
+            fh.write(manifest)
+        # An init template can seed info/exclude, so it is emptied rather than
+        # assumed absent.
+        with open(os.path.join(probe, ".git", "info", "exclude"), "w") as fh:
+            fh.write("")
+
+        def ignored(rel, is_dir):
+            full = os.path.join(probe, rel)
+            os.makedirs(full if is_dir else os.path.dirname(full), exist_ok=True)
+            if not is_dir:
+                open(full, "w").close()
+            return subprocess.run(
+                ["git", "-C", probe, "-c", "core.excludesFile=",
+                 "check-ignore", "--no-index", rel],
+                capture_output=True,
+            ).returncode == 0
+
+        # **The process rule, as git reads it.** `process/*` excludes the four
+        # documents and the two negations name the instruments back in. Order
+        # decides it: move a negation above `process/*` and the line is still
+        # present while the gate it names leaves the graph.
+        self.assertTrue(ignored("process/WeaverTools-Working-Process.md", False),
+                        "a process document is not excluded")
+        self.assertFalse(ignored("process/gates/census.py", False),
+                         "census.py is excluded - H6 is not in the graph")
+        self.assertFalse(ignored("process/ingest/chunk_plan.py", False),
+                         "chunk_plan.py is excluded")
+
+        # The fixture rule, the same way.
+        self.assertTrue(ignored("crates/weaver-spu/tests/fixtures", True),
+                        "a crate's tests/fixtures/ is not excluded")
+        self.assertTrue(
+            ignored("crates/weaver-analysis/tests/fixtures/a.ndjson", False),
+            "a file under tests/fixtures/ is not excluded")
+        # And it must not reach a test file or a source directory.
+        self.assertFalse(ignored("crates/weaver-spu/tests/native.rs", False))
+        self.assertFalse(ignored("crates/weaver-spu/src", True))
+        # **The trailing slash is load-bearing and this is what holds it.**
+        # `**/tests/fixtures` without it matches a regular file of that name
+        # too, and every assertion above passes either way. The rule excludes
+        # a directory of data, not a file that happens to share its name.
+        self.assertFalse(ignored("crates/weaver-gate/tests/fixtures", False),
+                         "the rule reaches a regular file, so it is not "
+                         "directory-only")
+
     def test_the_hadesignore_carries_the_load_bearing_patterns(self):
         """The exclusion half, which had no watch at all.
 
