@@ -1074,17 +1074,19 @@ mod tests {
         assert_eq!(order.len() / 2, 3, "three draws, the stop token among them");
     }
 
-    /// A cancel mid-path stops the re-feed, and what the answer may report as
-    /// said is bounded by what became resident rather than by what was asked
-    /// for. The recomputed draws are one per recorded token landed, so their
-    /// count is the length of the recorded prefix that reached the resident
-    /// state, which is the slice the caller detokenizes for the emission.
+    /// A cancel mid-path stops the re-feed where the poll saw it, and the
+    /// session is left well framed: the recorded prefix that landed, the
+    /// terminator after it, and one recomputed draw and one measurement per
+    /// landed position. This is what the caller reads to know that a cancelled
+    /// re-feed certifies a prefix rather than the path it was handed.
     ///
-    /// The drive stops differently from a generation. A generation's answer
-    /// is its own draws and a short one is short in both text and
-    /// measurement, where a re-feed is handed the whole path upfront: the
-    /// text is the record's and the measurement is the run's, so a cancel
-    /// parts them and only this count says where.
+    /// **The caller faults on it rather than answering.** The drive is given
+    /// the whole path upfront, so the text it owes is the record's while the
+    /// measurement is the run's, and a cancel parts them. A part-way answer
+    /// could only certify a prefix, which is the nothing the empty-path arm
+    /// refuses, so `main.rs` treats a cancelled re-feed as a fault. This test
+    /// pins what the session does under the cancel, not what the binary
+    /// decides about it.
     ///
     /// **The whole decode log is asserted, positions included**, the way the
     /// sibling above asserts it. A value-only reading cannot see a recorded
@@ -1100,11 +1102,13 @@ mod tests {
     /// record above the cancel check and the step count runs one past the
     /// draws it is paired with.
     ///
-    /// **What this does not watch.** The emission slice itself is taken in
-    /// `main.rs`, which is the binary, so this pins the invariant that slice
-    /// rests on and not the slice. Reverting the caller to `path_tokens` in
-    /// full leaves this green, and a seam-level cancelled re-feed is what
-    /// would catch it. Named here rather than left for a reader to discover.
+    /// **What this does not watch.** The caller's fault is taken in `main.rs`,
+    /// which is the binary, so nothing here would go red if that branch were
+    /// dropped and a cancelled re-feed answered instead. A seam-level
+    /// cancelled re-feed would catch it and there is none, which is bounded
+    /// by the fact that nothing can produce one: the decode socket's peer is
+    /// the harness by descriptor possession, and the harness refuses every
+    /// directive during this drive rather than cancelling it.
     #[test]
     fn a_cancelled_refeed_lands_only_the_prefix_its_draws_count() {
         let log = Rc::new(RefCell::new(Log {

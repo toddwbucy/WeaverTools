@@ -1028,26 +1028,34 @@ fn serve_decode(
                         return Err(());
                     }
                 };
-                if cancel.fatal || stream_fatal.get() {
+                // **A cancelled re-feed answers nothing and faults.** The
+                // drive is handed the whole path upfront, so the text it owes
+                // is the record's while the measurement is the run's, and a
+                // cancel parts them: a part-way stop could only certify a
+                // prefix, and a prefix is the nothing the empty-path arm
+                // above already refuses as an exchange asking to certify
+                // nothing. Comparability against the source record is the
+                // whole of this drive's purpose, so a partial certificate is
+                // worth less than an absence and reads like more.
+                //
+                // **Unreachable through the harness and refused anyway.** The
+                // decode socket is an inherited descriptor from a socketpair
+                // the harness made, so its peer is that harness by
+                // possession, and the harness refuses every directive during
+                // this drive rather than cancelling it. Nothing can produce
+                // this today. It is answered rather than assumed away because
+                // the alternative is a branch that decides what a run means
+                // by accident the first time someone wires a stop to it.
+                if cancel.cancelled || cancel.fatal || stream_fatal.get() {
                     eprintln!("{}", fault_line(&ChannelFault::Undecodable));
                     return Err(());
                 }
                 // **The emission is the recorded path's text**: what became
                 // resident is what the answer reports as said, and the
                 // recomputed draws ride the measurement's output slots,
-                // where the comparison reads them against the record.
-                //
-                // **The prefix, because a cancel stops the path part way.**
-                // `refeed` pushes one recomputed draw per recorded token it
-                // lands, so the count of those draws is the count of path
-                // tokens that became resident. Taking the whole path instead
-                // reported text for positions the run never reached, over a
-                // measurement that covered only the prefix, and the re-feed
-                // is the one drive that cannot absorb that: its whole purpose
-                // is field-for-field comparability against the source record,
-                // and nothing in the answer said which suffix was invented.
-                let landed = generated.tokens.len();
-                let emission = match resident.detokenize(&path_tokens[..landed]) {
+                // where the comparison reads them against the record. Whole,
+                // because the only stop that could shorten it faults above.
+                let emission = match resident.detokenize(&path_tokens) {
                     Ok(text) => text,
                     Err(fault) => {
                         eprintln!("{}", decode_fault_line(&fault));
