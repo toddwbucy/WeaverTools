@@ -1149,10 +1149,9 @@ mod seam_success {
                 }],
             }],
         });
-        let opened: TokenAnswer = serde_json::from_slice(
-            &decode.recv_octets().expect("the open answers"),
-        )
-        .expect("the answer parses");
+        let opened: TokenAnswer =
+            serde_json::from_slice(&decode.recv_octets().expect("the open answers"))
+                .expect("the answer parses");
         assert_eq!(opened, TokenAnswer::Opened, "the session opens");
 
         // Both frames before the drive starts, so the first poll finds the
