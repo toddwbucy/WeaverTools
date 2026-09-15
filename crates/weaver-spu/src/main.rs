@@ -1042,7 +1042,7 @@ fn serve_decode(
                         return Err(());
                     }
                 };
-                // **A cancelled re-feed answers nothing and faults.** The
+                // **A cancelled re-feed certifies nothing and faults.** The
                 // drive is handed the whole path upfront, so the text it owes
                 // is the record's while the measurement is the run's, and a
                 // cancel parts them: a part-way stop could only certify a
@@ -1060,6 +1060,15 @@ fn serve_decode(
                 // this today. It is answered rather than assumed away because
                 // the alternative is a branch that decides what a run means
                 // by accident the first time someone wires a stop to it.
+                //
+                // **What it withholds is the certificate, not every frame.**
+                // An elected field or column streams from the sinks above as
+                // each position lands, per `weaver-harness-Spec` section 6 and
+                // `weaver-diagnostic-Spec` section 3.2, so a cancel at K has
+                // already sent the intermediates for the K positions that
+                // became resident. Those are true of what ran and are not
+                // retracted. What never crosses is the `ReFed` answer, which
+                // is the thing that would have claimed the path was certified.
                 if cancel.cancelled || cancel.fatal || stream_fatal.get() {
                     eprintln!("{}", fault_line(&ChannelFault::Undecodable));
                     return Err(());

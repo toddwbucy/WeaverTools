@@ -1037,7 +1037,7 @@ mod seam_success {
         std::fs::remove_file(&log_path).ok();
     }
 
-    /// **A cancelled re-feed answers nothing and faults across the seam.**
+    /// **A cancelled re-feed certifies nothing and faults across the seam.**
     /// The drive is handed the whole recorded path upfront, so the text it
     /// owes is the record's while the measurement is the run's, and a cancel
     /// parts them. What would be left to say is a prefix, which is the nothing
@@ -1050,6 +1050,15 @@ mod seam_success {
     /// top of the first position finds the cancel already waiting and the stop
     /// lands at zero. Nothing here depends on how fast the device is.
     ///
+    /// **The certificate is what is withheld, not every frame.** This admit
+    /// elects no field and asks no column, so nothing streams from the sinks
+    /// and the socket is silent until the fault. Where a field or column is
+    /// elected the intermediates for the positions that did become resident
+    /// have already crossed, per `weaver-harness-Spec` section 6 and
+    /// `weaver-diagnostic-Spec` section 3.2, which have them author as they
+    /// arrive. They are true of what ran. This test reads the certificate's
+    /// absence and says so rather than claiming a silence it arranged.
+    ///
     /// **This is the instrument the unit test cannot be.** The guard is in the
     /// binary, so `session.rs`'s cancelled re-feed test pins what the session
     /// does and not what the caller decides about it. Removing the
@@ -1060,7 +1069,7 @@ mod seam_success {
     /// the process answers `ReFed` and exits clean. Watched under exactly that
     /// removal.
     #[test]
-    fn a_cancelled_refeed_faults_and_answers_nothing() {
+    fn a_cancelled_refeed_faults_and_certifies_nothing() {
         use weaver_traits::{ContentBlock, Message, Role};
         use weaver_types::{SessionId, TokenAnswer, TokenDirective, TurnKey};
 
@@ -1157,9 +1166,11 @@ mod seam_success {
             turn: TurnKey("t-1".into()),
         });
 
-        // **Nothing crosses.** A read either fails on the closed socket or,
-        // where the peer's exit has not landed yet, returns no frame at all.
-        // What must never arrive is an answer.
+        // **No certificate crosses.** A read either fails on the closed socket
+        // or, where the peer's exit has not landed yet, returns no frame at
+        // all. Nothing else is in flight here, this admit electing no field
+        // and asking no column, so any frame at all is the answer that must
+        // not arrive.
         match decode.recv_octets() {
             Err(_) => {}
             Ok(frame) => panic!(
