@@ -1,8 +1,3 @@
-// WeaverTools conformance trace (generated from the `weavertools` graph; documentation-code-conformance-methodology sec 1).
-// crate: weaver-spu. This load-bearing file implements the spec node(s) below; the anchor is the stable node id, not prose.
-//   - spec-02-only-crate-holds-gpu-memory  [embodies]  (docs/architecture/weaver-spu/weaver-spu-Spec.md)
-// graph: weavertools conformance graph :: wt_doc_assertions/<node> -> wt_axiom_basis -> WT_IS (the code->spec->axiom trace).
-//
 // Transformer inference kernels for Qwen/Llama/Mistral/Gemma4 architectures.
 //
 // All kernels operate on f16 data (__half). Element-wise operations
