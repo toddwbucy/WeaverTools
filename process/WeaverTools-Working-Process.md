@@ -902,18 +902,20 @@ unlanded edit or an assertion an act changed without recording.
 **Code is ingested into the graph, and the position that it should not be is
 retired as of 2026-09-14.** The v4 build named in
 `docs/project/HANDOFF-2026-09-12-the-graph-build` reversed it crate by crate, and
-the builds since carry the code layer beside the document layer. Two grounds were
-given for holding code out and both are discharged. The earlier was that
-conformance headers cited retired assertions and ingesting would bake dangling
-edges into the map, and that count reached zero on 2026-08-08. The later was the
-operator's: the architecture is not stable while acts like the 2026-08-05 re-entry
-still move it, and a conformance graph built from moving code would record a shape
-neither the documents nor the code will keep. **What that ground did not anticipate
-is the question the graph answered first**, which is where a document and the code
-disagree about a count, a file list, or a name. That question does not wait on the
-architecture settling, and the audits of 2026-09-13 and 2026-09-14 are what it
-produced. Both are dated readings rather than members of the set. `weaver-agents-PRD`
-section 11 carries the same retirement, landed in the same act.
+the builds since carry Rust sources beside the Markdown documents. Issue #579
+records what the ingest does not take. Two grounds were given for holding code
+out and both are discharged. The earlier was that conformance headers cited
+retired assertions and ingesting would bake dangling edges into the map, and that
+count reached zero on 2026-08-08. The later was the operator's: the architecture
+is not stable while acts like the 2026-08-05 re-entry still move it, and a
+conformance graph built from moving code would record a shape neither the
+documents nor the code will keep. **What that ground did not anticipate is the
+question the graph answered first**, which is where a document and the code
+disagree about a count, a file list, or a name. That question does not wait on
+the architecture settling, and the audits of 2026-09-13 and 2026-09-14 are what
+it produced. Both are dated readings rather than members of the set.
+`weaver-agents-PRD` section 11 carries the same retirement, landed in the same
+act.
 
 **The seat shifted 2026-08-19, on the operator's direction: from building
 the framework to using it.** The apex deliverable stands and is exceeded,
