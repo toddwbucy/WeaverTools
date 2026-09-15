@@ -5,6 +5,16 @@ written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
 
+**Revised:** 2026-09-14, the two exhaustive enums carry their edges and the
+arguments are this document's. Sections 3.2 and 6 ground in apex section 5.3
+where `weaver-trace-Spec` grounds the serving record's pair, on this seam's own
+change protocol rather than on that record's charter closure, and section 1's
+no-trace-dependency clause is named as a different claim from the
+no-internal-dependency one the floor Specs ground. Section 7's reading moves from
+one grounded and fourteen ungrounded to three and twelve, re-derived here because
+no act in issue #569 owns this document. Per the parity ruling of this date at
+Document Format section 4.
+
 **Revised:** 2026-09-09, the divergence position is the resident length at the draw.
 Section 3.3's `Divergence` carried a `position` in both variants and said nothing of
 what it counted from, and the pass indexed the turn's input-plus-output identifiers,
@@ -73,13 +83,17 @@ used.
 payloads without re-encoding them, and `weaver-traits` for the message model the
 replayed contributions carry, which the contract's vocabulary clause draws.
 
-**This crate does not link `weaver-trace`, and the negative is an election rather
-than an accident.** The two records share a form and not a type: the canonical form
-of `weaver-trace-Spec` section 2 is this record's by the charter's own naming, and
-following a rule is not linking its author. Linking it would buy nothing this crate
-needs, that crate's `Kind` being exhaustive and closed against the kinds a replay
-authors, and would cost the counterpart relation the charter rests on, a mechanism
-that depended on its twin being a submodule of it in all but name.
+**This crate does not link `weaver-trace`, and the negative is an election rather than
+an accident.** It is not the no-internal-dependency claim the floor Specs and
+`weaver-analysis-Spec` section 1 ground in apex section 5.1, and it carries no edge for
+that reason: this crate holds an internal dependency, `weaver-traits` above, so what is
+claimed here is the absence of one particular link and the reason is the counterpart
+relation rather than the socket invariant. The two records share a form and not a type:
+the canonical form of `weaver-trace-Spec` section 2 is this record's by the charter's
+own naming, and following a rule is not linking its author. Linking it would buy nothing
+this crate needs, that crate's `Kind` being exhaustive and closed against the kinds a
+replay authors, and would cost the counterpart relation the charter rests on, a
+mechanism that depended on its twin being a submodule of it in all but name.
 
 ```graph
 node: diagnostic-no-trace-dependency
@@ -223,29 +237,34 @@ narrower ground the flush's presence leaves standing**: the loop's grant names t
 flush and not the elision, and a later act that grants one adds the kind with its
 own argument rather than finding a variant seated for it.
 
-**`residual.column` is carried because the diagnostic binding may ask past the
-fold**, per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7
-as amended, and the decode contract's third intermediate. One event per
-sampled position - each decode forward, and each reissued append's prefill
-final position, nothing else of the prompt, per that clause's bound. **A
-recorded tool round replays as an ordinary append and is covered**: the
-replay calls no tool, per the absent-kinds paragraph above, and the recorded
-`message.tool_result` still re-feeds as its own append, whose prefill final
-samples the continuation's first token - the position after the retrieved
-fact lands, which a bound excluding it would hollow at exactly the point a
-diagnosis reads. Authored by the harness
-from the intermediate the seam delivered, carrying the position it names, the
-layer count, and the tap's width, the values crossing in the provisional bare
-JSON the floor states and the efficient encoding being section 8's open
-election beside the seam's own at `weaver-spu-Spec` section 12. **Authored
-only where the ask stood, and under a standing ask a sampled position without
-one is charter 13.10's fault**, owned there since this act and cited rather
-than restated: an elected observation that silently stopped observing. This
-record's `Failure` enum cannot yet express it, and the case lands with the
-code act that builds the seam, named in section 8 as owed. The record's
-identity is its provenance and never a member, per section 4's discriminant
-and the parent charter's 2026-08-24 correction, so nothing here reads the
-kind's presence as identifying anything.
+**`residual.column` is carried because the diagnostic binding may ask past the fold**,
+per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as amended, and
+the decode contract's third intermediate. One event per sampled position - each decode
+forward, and each reissued append's prefill final position, nothing else of the prompt,
+per that clause's bound. **A recorded tool round replays as an ordinary append and is
+covered**: the replay calls no tool, per the absent-kinds paragraph above, and the
+recorded `message.tool_result` still re-feeds as its own append, whose prefill final
+samples the continuation's first token - the position after the retrieved fact lands,
+which a bound excluding it would hollow at exactly the point a diagnosis reads. Authored
+by the harness from the intermediate the seam delivered, carrying the position it names,
+the layer count, and the tap's width, the values crossing in the provisional bare JSON
+the floor states and the efficient encoding being section 8's open election beside the
+seam's own at `weaver-spu-Spec` section 12. **Authored only where the ask stood, and
+under a standing ask a sampled position without one is charter 13.10's fault**, owned
+there since this act and cited rather than restated: an elected observation that
+silently stopped observing. This record's `Failure` enum cannot yet express it, and the
+case lands with the code act that builds the seam, named in section 8 as owed. The
+record's identity is its provenance and never a member, per section 4's discriminant and
+the parent charter's 2026-08-24 correction, so nothing here reads the kind's presence as
+identifying anything. **The exhaustiveness grounds in apex section 5.3, and not on the
+serving record's reason.** `weaver-trace-Spec` section 3 argues from a set closed by
+ruling and matching its charter one to one, and this set is not that one: seventeen
+kinds, thirteen of them the serving vocabulary's and four this record's own, so closure
+by charter does not carry across. What carries is the contract's. Section 7 of
+`weaver-harness-diagnostic-contract` makes a change to this kind set a change both
+parties merge in one act, which is a closure the seam states, and a consumer able to
+absorb a further kind into a wildcard would leave that stated closure unenforced on the
+side that reads.
 
 ```graph
 node: diagnostic-kind-set-exhaustive
@@ -255,6 +274,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-diagnostic
 to: diagnostic-kind-set-exhaustive
+
+edge: grounds
+from: diagnostic-kind-set-exhaustive
+to: axiom-contract-is-a-complete-interface
 ```
 
 ### 3.3 The payload shapes
@@ -579,10 +602,15 @@ Exhaustive, so a new case reaches every caller.
         RequiredFieldAbsent { field: FieldName },
     }
 
-**A refusal has no effect on the sink and a write failure is terminal for the
-record**, per the contract's section 5. What the harness does with either is its
-own, and this crate reports rather than decides, which is the no-policy half of the
-charter's section 1.
+**A refusal has no effect on the sink and a write failure is terminal for the record**,
+per the contract's section 5. What the harness does with either is its own, and this
+crate reports rather than decides, which is the no-policy half of the charter's section
+1. **It grounds in apex section 5.3, where `weaver-trace-Spec` section 9 grounds the
+same claim, and on this document's own arithmetic rather than on that one's.** `Failure`
+carries two cases here against that record's four, so what exhaustiveness buys is that a
+third reaches every caller in the act that adds it. Section 5 of the contract names the
+two, and an interface that named its errors and then let a third arrive silently would
+have the hole that invariant forbids.
 
 ```graph
 node: diagnostic-failure-enum-exhaustive
@@ -592,6 +620,10 @@ tag: compile-pin
 edge: asserts
 from: weaver-diagnostic
 to: diagnostic-failure-enum-exhaustive
+
+edge: grounds
+from: diagnostic-failure-enum-exhaustive
+to: axiom-contract-is-a-complete-interface
 ```
 
 ## 7. What is enforced, and by which instrument
@@ -647,11 +679,17 @@ sibling crate's participation and is not this document's to elect.
 claims, across sections 1 through 6, rather than gathered here, per Document Format
 section 6. Fifteen sit there and none sits here.
 
-**Which invariant each claim serves.** One carries a `grounds` edge.
+**Which invariant each claim serves.** Three carry a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no
 socket crate: a seam that crosses no process line has no socket to hold, and a
-mechanism that acquired one would be claiming a boundary it does not have. The other
-four axioms reach none of these claims. **Fourteen claims grounding in no invariant
+mechanism that acquired one would be claiming a boundary it does not have.
+`axiom-contract-is-a-complete-interface` takes the two exhaustive enums, the kind
+set of section 3.2 and the failure vocabulary of section 6, which
+`weaver-trace-Spec` grounds there too. **The edges are owed on the parity rule
+Document Format section 4 states and the arguments are this document's**, that
+record's closure resting on a charter and this one's on the seam's own change
+protocol, each argued at its clause. The other three axioms reach none of these
+claims. **Twelve claims grounding in no invariant
 is the expected result and not a gap**, per Document Format section 4: most of this
 document is representation, and representation is what the invariants are not
 about.

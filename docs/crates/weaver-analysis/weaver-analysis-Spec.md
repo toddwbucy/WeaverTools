@@ -5,6 +5,14 @@ written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
 
+**Revised:** 2026-09-14, the runtime clause says why it carries no edge.
+Section 1's no-runtime-no-socket-crate record states a reason that differs from the
+one the floor Specs and `weaver-diagnostic-Spec` section 1 ground the same clause
+on, this crate dialing a socket and using it, and the clause now says that the
+difference is why there is no edge. No edge, no record and no count in this
+document changes. Per the parity ruling of this date at Document Format section 4,
+and issue #569.
+
 **Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
 under. Section 5 reports, once per run, the run identity this reader already holds and
 rendered nowhere, the effective sampling, the field election's depth and the lineage
@@ -246,9 +254,14 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **No async runtime and no socket crate in the resolved tree**, the floor Specs'
-build-time `cargo tree` assertion read here for a different reason: this crate
-dials one Unix socket and binds none, so the standard library's own client is the
-whole of what it needs.
+build-time `cargo tree` assertion read here for a different reason: this crate dials one
+Unix socket and binds none, so the standard library's own client is the whole of what it
+needs. **The different reason is why this record carries no `grounds` edge where the
+floor's and `weaver-diagnostic-Spec` section 1's do.** Theirs hold because a socket
+crate would be a capability those crates must not have, and this crate has it and uses
+it, dialing the state port of section 3. What is left here is a dependency election over
+which client does the dialing, and an election between two ways of doing the same
+permitted thing reads the same under every invariant.
 
 ```graph
 node: analysis-no-runtime-no-socket-crate

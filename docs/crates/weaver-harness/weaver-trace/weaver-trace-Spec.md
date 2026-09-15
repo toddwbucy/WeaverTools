@@ -5,6 +5,14 @@ build order. Code is written against it under the gates of Working Process secti
 
 **Date filed:** 2026-08-01
 
+**Revised:** 2026-09-14, section 12 opens the question of whether apex section 5.1
+reaches this crate. Section 10 argues it reaches nothing here, and four other Specs
+ground in it one or other of the two manifest claims this crate states bare, one of them
+this record's mirror on the same facts. No edge, no record and no count in this document
+changes, and the entry is the disagreement stated where a later reader of this Spec
+meets it. Per the parity ruling of this date at Document Format section 4, and issue
+#569.
+
 **Revised:** 2026-09-11, four count words catch up to the charter and to this
 document's own later entries. **Nothing about the crate changes and nothing about the
 charter is in question**: `weaver-trace-PRD` section 3.1 lists twenty-one kinds by name
@@ -1948,6 +1956,23 @@ to: trace-tee-no-turn-backpressure
 
 ## 12. Open elections
 
+- **Whether apex section 5.1 reaches this crate at all.** Section 10 argues it
+  reaches nothing here, on two grounds: this crate is not floor, so the vocabulary
+  clause governs none of its manifest, and its one seam does not cross a process
+  line, so the socket clause governs none of its elections. **Four other Specs
+  ground in that invariant one or other of the two manifest claims this crate
+  states bare**, the no-internal-dependency claim at `weaver-traits-Spec` section 1
+  and `weaver-analysis-Spec` section 1, and the no-runtime-no-socket-crate claim at
+  `weaver-types-Spec` section 1 and `weaver-diagnostic-Spec` section 1. The last of
+  those is this record's mirror, with the same `link` seam and the same
+  crossing-no-process-line fact read to the opposite conclusion. **So either this
+  section's argument is wrong or those four edges are**, and the question is not a
+  count. Note that the first ground reads against the apex's own words, 5.1 saying
+  in terms what a crate outside the floor links and takes from it. Opened
+  2026-09-14 by the parity act of issue #569, which drew the two edges here and
+  withdrew them on the rule at Document Format section 4 that a reason covering a
+  whole document is a stated reason. Nothing in that issue owns the answer:
+  `act-15`'s remit is a recount.
 - **The in-RAM read cost.** Section 4 elects rendered lines plus an envelope index,
   which costs one parse per message per prompt assembly. Reopened by a measurement
   showing that cost material against the decode it precedes, which is the charter's

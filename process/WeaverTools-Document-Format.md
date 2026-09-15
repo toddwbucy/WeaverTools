@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.17, 2026-08-23. Companion to the Working Process. Project
+**Version:** v0.18, 2026-09-14. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -330,6 +330,46 @@ mode the prior program's basis reached at seven of seventy-one claims: the numbe
 low and the response was to keep the layer rather than ask what the layer was for.
 What the edge is for is the query, and a query is only worth its answer if a missing
 edge means the claim is representation rather than that nobody got to it.
+
+**A clause grounded in one Spec is grounded in every Spec that states it for the same
+reason, and where the reason differs the Spec says so at the clause.** Settled here
+on 2026-09-14. Several claims recur across crates in one wording - a flag cleared, a
+descriptor flagged at creation, an enum exhaustive against its contract, a manifest
+carrying no internal dependency - and an edge on one statement and none on its twin
+is a clause that was copied without its edge rather than a second judgment. So the
+asymmetry is the defect and it resolves both ways: the edge is drawn where the second
+Spec argues what the first argued, and the second Spec states its different reason
+where it has one, which is what turns a bare clause into a decision a later reader
+meets rather than a gap.
+
+**Parity is not coverage and this rule reaches no further than the asymmetry.** A
+clause bare in every Spec that states it is representation under the paragraph above
+and nothing here touches it, and no edge is drawn whose argument no Spec makes. The
+rule exists because the paragraph above protects a considered nothing and cannot
+distinguish one from a copy, and that is the whole of the gap it fills. An act that
+read it as licence to raise the grounded count would collect the edges drawn to
+satisfy a demand, which is the failure the paragraph above names by its number.
+
+**A reason is stated wherever the Spec states it, and the enforcement section is one
+of the places.** The clause above says a differing reason is written at the clause,
+and that is where a Spec writes a new one, the clause being where a reader meets the
+claim. It is not where a Spec is read for one already written: a Spec that argues in
+its enforcement section that one axiom reaches nothing in it has stated a reason for
+every clause in it, and the parity rule is answered before the clauses are reached.
+One question has one answer each - write at the clause, read at both - and the first
+form of this paragraph gave two answers to the second by naming only the enforcement
+section. Where such a document-wide reason stands, a parity edge drawn against it is
+a disagreement between two Specs about an axiom's scope rather than a copy repaired,
+and that disagreement goes to the operator, which is what stops this rule from
+settling a scope question by the side effect of counting slugs. Stated because the
+act that landed it drew two such edges into `weaver-trace-Spec` before that
+document's own enforcement section was read, and withdrew them.
+
+**The comparison is over the set of axioms and never over whether the edge is
+there.** Two statements of one clause can both carry an edge and still disagree, one
+grounding in two invariants where the other grounds in one, and a reading that asks
+only whether a `grounds` edge exists reports that pair as agreeing. The corpus
+carried exactly that case while the first reading of this rule was taken.
 
 Between code and an assertion:
 

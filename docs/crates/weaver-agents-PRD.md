@@ -14,13 +14,20 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 
-**Revised:** 2026-09-14, section 11 counts six devices, and the prediction that no
-graph would measure code against this document set during this program is retired.
-The two devices that arrived since, clippy on the operator's ruling of 2026-09-06
-and the census on the ruling of 2026-09-11, are appended as 5 and 6 rather than
-sorted in, because device 3 is the one this corpus cites by its ordinal. **What the
-graph holds is not stated here**, a count written into a charter being stale by the
-next merge.
+**Revised:** 2026-09-14, second of this date, section 5's representation rule
+says it reads a claim rather than a wording. Where one clause recurs across Specs
+and its statements disagree about the edge, the disagreement is a defect rather
+than two readings, and the sentence points at Document Format section 4 rather
+than restating how it resolves. One sentence, no invariant changed and no edge
+moved. Per the parity ruling of this date at that section, and issue #569.
+
+**Revised:** 2026-09-14, first of this date, section 11 counts six devices, and
+the prediction that no graph would measure code against this document set during
+this program is retired. The two devices that arrived since, clippy on the
+operator's ruling of 2026-09-06 and the census on the ruling of 2026-09-11, are
+appended as 5 and 6 rather than sorted in, because device 3 is the one this corpus
+cites by its ordinal. **What the graph holds is not stated here**, a count written
+into a charter being stale by the next merge.
 
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
@@ -453,7 +460,8 @@ those serves an invariant because the invariants are not about representation. T
 coverage number is a fact to read rather than a target to reach, and it is stated
 that way here so it cannot later be argued down: the prior program's basis reached
 seven of seventy-one claims and the answer was to keep the layer rather than to ask
-what the layer was for.
+what the layer was for. **This rule has one stated exception and Document Format
+section 4 carries it**, per the ruling of 2026-09-14. Read it there.
 
 **The named exception to Working Process section 7 ran its course and is
 closed.** The 5.1 restatement and 5.4 were taken early on 2026-07-31, further

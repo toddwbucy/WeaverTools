@@ -3,6 +3,14 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
+Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
+where `weaver-gate-Spec` section 2 and `weaver-harness-Spec` section 2.2 already
+ground the same two clauses, and the ownership pin beside them is named as
+grounding in nothing. No record is added or removed and section 10's figures move
+with the edges rather than with the total, which `act-12` re-derives. Per the
+parity ruling of this date at Document Format section 4, and issue #569.
+
 **Revised:** 2026-09-10, the native path judges the family before the shapes.
 Section 4.1 says that a family that path does not serve refuses as a family and
 never as a load: the architecture the artifact declares is read first, the refusal
@@ -807,21 +815,25 @@ than one number landed with the decoder cut, in the act the entry of 2026-08-02
 records, so what stands here is the order read from the receiving side and the
 election carries no record in this document.
 
-**Entry adopts both, then performs its two sets, before the first read.** The
-process wraps descriptors 3 and 4 as owned handles, sets close-on-exec on
-both, and clears its dumpable flag, per charter section 7. Both are sets and
-never checks, per the rule `weaver-organ-channel` section 2 states: a step
-that finds a flag wrong and reports leaves the descriptor inheritable and the
-process attachable, which is the condition the set exists to prevent. The
-close-on-exec set matters here even though this crate forks nothing, because
-`execve` clears the flag and the requirement is stated against the last exec.
-**The wrap is not a formality.** Descriptors are owned types end to end in this
-crate, so no raw number outlives the thing it names and no close happens twice.
-**The close-on-exec set is review's by election and not by impossibility,** an
-`fcntl` reading the flag as cheaply as the `prctl` that reads the one set beside
-it: the second walk of section 10 buys the dumpable flag and this suite does not
-buy its neighbour, which is the same split `weaver-gate-Spec` section 2 takes on
-the same pair.
+**Entry adopts both, then performs its two sets, before the first read.** The process
+wraps descriptors 3 and 4 as owned handles, sets close-on-exec on both, and clears its
+dumpable flag, per charter section 7. Both are sets and never checks, per the rule
+`weaver-organ-channel` section 2 states: a step that finds a flag wrong and reports
+leaves the descriptor inheritable and the process attachable, which is the condition the
+set exists to prevent. The close-on-exec set matters here even though this crate forks
+nothing, because `execve` clears the flag and the requirement is stated against the last
+exec. **The wrap is not a formality.** Descriptors are owned types end to end in this
+crate, so no raw number outlives the thing it names and no close happens twice. **The
+close-on-exec set is review's by election and not by impossibility,** an `fcntl` reading
+the flag as cheaply as the `prctl` that reads the one set beside it: the second walk of
+section 10 buys the dumpable flag and this suite does not buy its neighbour, which is
+the same split `weaver-gate-Spec` section 2 takes on the same pair. **Both ground where
+their twins ground, in apex section 5.1**, an end that crosses an exec and a process
+that can be attached to being two routes to the same descriptor, and the possession case
+rests on there being none. The argument is `weaver-harness-Spec` section 2.2's and
+`weaver-gate-Spec` section 2's and is pointed at rather than restated. The ownership pin
+beside them grounds in nothing, being the representation this crate elected for a
+descriptor and not a claim about who can reach one.
 
 ```graph
 node: spu-descriptors-owned-types
@@ -840,6 +852,10 @@ edge: asserts
 from: weaver-spu
 to: spu-dumpable-flag-cleared
 
+edge: grounds
+from: spu-dumpable-flag-cleared
+to: axiom-floor-is-vocabulary-behavior-is-socket
+
 node: spu-channel-ends-close-on-exec
 kind: assertion
 tag: review
@@ -847,6 +863,10 @@ tag: review
 edge: asserts
 from: weaver-spu
 to: spu-channel-ends-close-on-exec
+
+edge: grounds
+from: spu-channel-ends-close-on-exec
+to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
 **Entry verifies that it holds exactly two descriptors beyond the standard
@@ -3339,28 +3359,34 @@ was left behind, a test being unable to detect its own absence. Whether the
 comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
-**Which invariant each claim serves, and why most serve none.** Twelve `grounds`
-edges run from nine of the seventy-nine: four to
-`axiom-contract-is-a-complete-interface`, four
-to `axiom-floor-is-vocabulary-behavior-is-socket`, three to
-`axiom-harness-integrates-by-the-loop`, and one to
-`axiom-organ-and-submodule`, the two out-of-order refusals carrying two edges each
-because the contract states the ordering and the loop is answerable for that
-ordering holding. **The test applied is whether the axiom is the reason the claim
-exists, or the claim a precondition of the axiom's own stated reason.** Remove the
-socket invariant and this crate has no reason to be a process the harness starts
-rather than a library it calls, no reason to carry a truncation obligation attached
-to a socket type nobody would have elected, and no reason to refuse a signal-borne
-cancel, so those three ground in it. Remove it and the session is still append-only,
-the registry still substitutes nothing, and every sampling knob still carries a
-disposition, so those ground in nothing.
-`axiom-join-key-travels-with-the-work` takes nothing from this crate, and the
-absence is that invariant's own scope rather than a gap: every directive on the
-residency seam belongs to no turn and apex section 5.2 exempts it by name, and on
-the decode seam, where the work does belong to a turn, this document asserts
-nothing about attribution because that seam's encoding is section 12's open
-election. The nine claims section 0 names are another Spec's to ground, including
-the socket election and the envelope bound the truncation obligation rests on.
+**Which invariant each claim serves, and why most serve none.** Fourteen `grounds`
+edges run from eleven of the seventy-nine: four to
+`axiom-contract-is-a-complete-interface`, six to
+`axiom-floor-is-vocabulary-behavior-is-socket`, three to
+`axiom-harness-integrates-by-the-loop`, and one to `axiom-organ-and-submodule`, the two
+out-of-order refusals carrying two edges each because the contract states the ordering
+and the loop is answerable for that ordering holding. **The test applied is whether the
+axiom is the reason the claim exists, or the claim a precondition of the axiom's own
+stated reason.** Remove the socket invariant and this crate has no reason to be a
+process the harness starts rather than a library it calls, no reason to carry a
+truncation obligation attached to a socket type nobody would have elected, and no reason
+to refuse a signal-borne cancel, so those three ground in it. **The two hygiene claims
+of section 2 ground in it by the second relation rather than the first**, that invariant
+resting possession-as-authentication on no third party reaching a socket with no
+address, and a descriptor that crosses an exec or a process that admits an attach each
+being such a reach. **The record total this paragraph reads against is stale and is
+`act-12`'s**, the crate carrying eighty-nine records rather than seventy-nine, so the
+ungrounded figure below is the one derived from it rather than a fourth count this act
+could correct on its own.
+Remove it and the session is still append-only, the registry still substitutes nothing,
+and every sampling knob still carries a disposition, so those ground in nothing.
+`axiom-join-key-travels-with-the-work` takes nothing from this crate, and the absence is
+that invariant's own scope rather than a gap: every directive on the residency seam
+belongs to no turn and apex section 5.2 exempts it by name, and on the decode seam,
+where the work does belong to a turn, this document asserts nothing about attribution
+because that seam's encoding is section 12's open election. The nine claims section 0
+names are another Spec's to ground, including the socket election and the envelope bound
+the truncation obligation rests on.
 
 **The loop invariant reaches three claims and stops at this crate's interior.** It
 binds what crosses between domains and says nothing about what happens inside one,

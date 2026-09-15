@@ -5,6 +5,13 @@ date, reviewed in PR, and ratified by the operator on the review's close of
 the same date. Code is written against it under the gates of Working Process
 section 6.
 
+**Revised:** 2026-09-14, the empty dependency set carries the edge its wider
+twins carry. Section 1's claim grounds in apex section 5.1, where
+`weaver-traits-Spec` section 1, `weaver-analysis-Spec` section 1 and
+`weaver-harness-Spec` section 1 ground the narrower claim of holding no internal
+dependency. One edge, no record added or removed. Per the parity ruling of this
+date at Document Format section 4, and issue #569.
+
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-internal-Spec`
 **Parent:** `weaver-internal-PRD`
@@ -24,14 +31,20 @@ framework's own members alone.
 
 ## 1. The crate
 
-One library target and nothing else: no binary, because a member holds no process,
-and no socket bound anywhere in the crate, because a member that listened would
-have an inbound seam the charter forbids. **The dependency set is empty.** The
-first member computes over its arguments with the standard library alone, and an
-empty set is the manifest form of the charter's pure bar: a crate that cannot name
-a filesystem, network, or clock crate cannot reach one by dependency. A member
-that needs a dependency is arguing for a promotion-space entry with operator-owned
-risk, and that argument happens in an act, not in a manifest edit.
+One library target and nothing else: no binary, because a member holds no process, and
+no socket bound anywhere in the crate, because a member that listened would have an
+inbound seam the charter forbids. **The dependency set is empty.** The first member
+computes over its arguments with the standard library alone, and an empty set is the
+manifest form of the charter's pure bar: a crate that cannot name a filesystem, network,
+or clock crate cannot reach one by dependency. A member that needs a dependency is
+arguing for a promotion-space entry with operator-owned risk, and that argument happens
+in an act, not in a manifest edit. **The empty set grounds in apex section 5.1**, where
+`weaver-traits-Spec` section 1, `weaver-analysis-Spec` section 1 and
+`weaver-harness-Spec` section 1 ground the narrower claim of holding no internal
+dependency, and the reason carries because this set is the wider one: a crate that names
+no crate at all names no internal crate either, and the capability half is the same half
+those three argue, a member that cannot name a network crate being one that cannot reach
+another process except over a seam this invariant governs.
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 gates, per the workspace's standing terms.
@@ -44,6 +57,10 @@ tag: manifest
 edge: asserts
 from: weaver-internal
 to: internal-no-dependencies
+
+edge: grounds
+from: internal-no-dependencies
+to: axiom-floor-is-vocabulary-behavior-is-socket
 
 node: internal-one-library-target
 kind: assertion
