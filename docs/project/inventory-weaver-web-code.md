@@ -538,13 +538,22 @@ of its own rather than a line here.
   **This register's own figures were wrong and are corrected here.** It
   recorded thirty-five citations, twenty-two dangling and thirteen
   resolving. Measured by occurrence rather than by line, the Spec citations
-  alone were **thirty-seven**, twenty-two [corrected 2026-09-15 to
-  **thirty-one**, see the last paragraph of this bullet] dangling at
-  sections 11 through 17 and **fifteen** resolving, with eight charter
-  citations beside them. The
+  alone were **thirty-seven** - twenty-two dangling at sections 11 through 17
+  and **fifteen** resolving - with eight charter citations beside them. The
   undercount came from a grep matching a single digit, which silently drops
   `section 10`, and the same grep is why the register said thirteen where the
   act measured fifteen.
+
+  **Corrected 2026-09-15: the total is forty-six and the dangling half is
+  thirty-one.** The last paragraph of this bullet re-derives the dangling
+  count as thirty-one live, and thirty-one plus the fifteen resolving is
+  forty-six, not thirty-seven. **Thirty-seven is kept above as the historical
+  figure** rather than overwritten, because the two readings are what this
+  bullet is about. An earlier form of this correction moved the part in place
+  and left the sum, which is the count-check rule missed inside the register
+  whose own subject is a miscount - the fourth instrument failure recorded
+  here, after the single-digit grep, the line-oriented search, and the rows
+  lost off the head of a probe's output.
 
   **The twenty-two that dangled were the safe ones.** They named Spec
   sections the rewritten document does not have, so a reader following one
