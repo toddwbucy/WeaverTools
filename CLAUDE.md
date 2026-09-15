@@ -384,9 +384,34 @@ indexes them, it does not replace them:
    default reports the manifest current on exactly the branch that moved it.
    Run it after committing, HEAD being a commit and not the working tree.
 
-   Where it fails, regenerate with `--ref HEAD` and commit the manifest in the
-   same act. The manifest then describes what `main` holds the moment the act
-   merges, which is what the ingest reads.
+   **Where it fails and the act is the only one in flight**, regenerate with
+   `--ref HEAD` and commit the manifest in the same act, so the content the
+   manifest describes is the content that merges.
+
+   **The `ref` field names the commit the manifest was built at, which is the
+   act's own tip and not the commit `main` ends up carrying.** A squash, a merge
+   or a rebase gives `main` a different sha. The field is provenance - it says
+   what this content was hashed against - and the content, not the ref, is what
+   makes the manifest current. An earlier form of this paragraph said the
+   manifest describes what `main` holds the moment the act merges, which is true
+   of the content and false of the field, and was read as a claim about the
+   field by two review seats in a row.
+
+   **Where several acts are in flight at once, the act reports it stale and
+   commits no regeneration**, on the operator's ruling of 2026-09-14. A
+   whole-tree artifact regenerated inside a parallel act is built against a tree
+   holding that act's edit and not its siblings', so the copies conflict - and
+   the conflict is the lucky case. Where the hunks do not overlap the merge is
+   clean and the manifest is wrong. **A failing `--check` is the expected result
+   in a parallel batch**, recorded in the pull request body, and one regeneration
+   runs against settled `main` before the ingest.
+
+   **Regenerate after the final commit.** An amended or rebased commit leaves the
+   `ref` field naming an object reachable from no branch, which no other reader
+   can look up. `63d38586` stood on `main` through six acts that way, written by
+   an in-act `--ref HEAD` run against a commit that was then amended. `--check`
+   now refuses a `ref` this repository does not hold, and one that is not an
+   ancestor of the ref being checked.
 
    It is conditional because the corpus is not: nine acts in ten touch nothing
    held out, and a gate that always passes is one people stop reading. Under
