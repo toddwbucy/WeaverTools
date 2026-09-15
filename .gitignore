@@ -22,4 +22,10 @@ target
 
 # Working list, not a member of the document set and never ratified
 docs/project/open-items.md
+
+# Coordination state between one working tree and one database, per box, and
+# not a member of the corpus. Regenerated on demand by process/ingest/chunk_plan.py
+# against whatever commit is being ingested. Tracked from 2026-09-12 to
+# 2026-09-15, in which time nothing ever read it but the script that writes it.
+process/ingest/chunk-plan.json
 __pycache__/

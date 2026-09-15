@@ -101,3 +101,9 @@ docs/project/
 # set under `process/gates/` would be data too, and last-match-wins excludes
 # it. None exists, and `test_census.py` builds its fixtures in a temp dir.
 **/tests/fixtures/
+
+# The chunk plan is this tree's coordination state with the graph it would be
+# ingested into, so ingesting it is the graph reading a note about itself. It
+# is gitignored as of 2026-09-15 and named here so the exclusion does not rest
+# on `.json` having no handler, which is accident rather than intent.
+process/ingest/chunk-plan.json

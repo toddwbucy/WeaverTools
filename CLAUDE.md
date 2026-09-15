@@ -381,55 +381,21 @@ indexes them, it does not replace them:
    to have removed. `process/gates/test_census.py` is the gate's fixture and
    runs beside it.
 
-   **One artifact is generated and can go stale, and the gate for it is
-   conditional.** `process/ingest/chunk-plan.json` names the ten files too
-   large for the embedder's window and the byte offsets they are cut at.
-   **An act that edits any file named in it runs**
+   **The chunk plan is not tracked and no gate reads it**, on the operator's
+   ruling of 2026-09-15. `process/ingest/chunk-plan.json` names the files too
+   large for the embedder's window and the offsets they would be cut at, and it
+   is coordination state between one working tree and one database rather than
+   a member of the corpus. It is gitignored beside `docs/project/open-items.md`
+   and excluded in `.hadesignore`, and `process/ingest/chunk_plan.py` regenerates
+   it on demand against whatever commit is being ingested.
 
-   ```text
-   python3 process/ingest/chunk_plan.py --check --ref HEAD
-   ```
-
-   which exits 1 and says whether the held-out set moved or only its content
-   did. **`--ref HEAD` and not the default**, which is `main`: the act's own
-   edit is the thing being checked and `main` does not have it yet, so the
-   default reports the manifest current on exactly the branch that moved it.
-   Run it after committing, HEAD being a commit and not the working tree.
-
-   **Where it fails and the act is the only one in flight**, regenerate with
-   `--ref HEAD` and commit the manifest in the same act, so the content the
-   manifest describes is the content that merges.
-
-   **The `ref` field names the commit the manifest was built at, which is the
-   act's own tip and not the commit `main` ends up carrying.** A squash, a merge
-   or a rebase gives `main` a different sha. The field is provenance - it says
-   what this content was hashed against - and the content, not the ref, is what
-   makes the manifest current. An earlier form of this paragraph said the
-   manifest describes what `main` holds the moment the act merges, which is true
-   of the content and false of the field, and was read as a claim about the
-   field by two review seats in a row.
-
-   **Where several acts are in flight at once, the act reports it stale and
-   commits no regeneration**, on the operator's ruling of 2026-09-14. A
-   whole-tree artifact regenerated inside a parallel act is built against a tree
-   holding that act's edit and not its siblings', so the copies conflict - and
-   the conflict is the lucky case. Where the hunks do not overlap the merge is
-   clean and the manifest is wrong. **A failing `--check` is the expected result
-   in a parallel batch**, recorded in the pull request body, and one regeneration
-   runs against settled `main` before the ingest.
-
-   **Regenerate after the final commit.** An amended or rebased commit leaves the
-   `ref` field naming an object reachable from no branch, which no other reader
-   can look up. `63d38586` stood on `main` through six acts that way, written by
-   an in-act `--ref HEAD` run against a commit that was then amended. `--check`
-   now refuses a `ref` this repository does not hold, and one that is not an
-   ancestor of the ref being checked.
-
-   It is conditional because the corpus is not: nine acts in ten touch nothing
-   held out, and a gate that always passes is one people stop reading. Under
-   the update rule of `HANDOFF-2026-09-12-the-graph-build` section 6a a stale
-   manifest is consequential, the ingest re-cutting on a hash that no longer
-   matches what the offsets describe.
+   **It was tracked from 2026-09-12 to 2026-09-15 and nothing ever read it but
+   the script that writes it.** The ingest does not: HADES chunks by its own
+   analyzers, and the runs of 2026-09-15 cut `session.rs` into twenty-two chunks
+   against the two pieces the manifest specified. What the tracking did produce
+   was a conflict between two pull requests that would have reverted five
+   corrected entries had the hunks not overlapped, and a `ref` naming an object
+   no branch reached standing on `main` through six acts.
 
    **Issue #558 is the backlog** and records how it came about: nineteen of
    the first thirty-three uncited perturbations were born in documents-only
