@@ -4,6 +4,15 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-09-14, the floor link is declared. Section 1 projects the
+`weaver-traits` dependency the manifest has carried since this crate was built as
+the `floor-link` record the graph had no edge for, that crate being floor per
+`weaver-agents-PRD` section 5.1 and this one asking it nothing. No dependency
+changes and no classification is invented: the edge the Spec's dependency clause
+already argued is now declared where a mapper reads it. Per the audit of
+2026-09-13, finding `floor-link-edges-missing-for-real-cargo-deps`, and epic #569
+`act-10`.
+
 **Revised:** 2026-09-01, the vector bar is measured. Section 4's
 passive-read comparison holds the vectors exact within one device model,
 per the differencing measurement of this date, the float tolerance
@@ -204,6 +213,23 @@ kind: crate
 edge: parent
 from: weaver-diagnostic
 to: weaver-harness
+```
+
+**It links the floor and asks it nothing.** `weaver-traits` carries the message
+model the replayed contributions hold, which `weaver-harness-diagnostic-contract`'s
+vocabulary clause draws and which `weaver-diagnostic-Spec` section 1 states as this
+crate's internal dependency. That crate is floor per `weaver-agents-PRD` section
+5.1, and nothing here asks it to do anything, so the record is a `floor-link` and
+never a `seam`, Document Format section 4 reserving the seam for the asking
+relation. The manifest carried the dependency and the graph carried no edge for it
+until this act, which is the H2 breach the audit of 2026-09-13 found and this block
+retires. What this crate does not link is section 2's, and the manifest test reads
+both halves off the resolved tree.
+
+```graph
+edge: floor-link
+from: weaver-diagnostic
+to: weaver-traits
 ```
 
 ## 2. What it is not
