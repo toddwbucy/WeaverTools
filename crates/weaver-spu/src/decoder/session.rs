@@ -1287,11 +1287,14 @@ mod tests {
                 &path,
                 TokenId(0),
                 &mut CancelsAfter { polls: 0, limit: 2 },
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the re-feed runs");
 
