@@ -1015,11 +1015,13 @@ is exactly `weaver-types` without the `config` feature, read against the
 graph's floor links under gate H2, `weaver-traits` having left with the tool
 boundary ruling of 2026-08-18. No async runtime, no logging crate, and no
 YAML implementation in the resolved tree, by the build-time `cargo tree`
-assertion the floor Specs share. And the package has a lib target, read from
-`cargo metadata`, which is the precondition of the compile-fail bullet above
-rather than a fact about the crate's shape: without the target cargo collects
-no doctest and the two pinned bind shapes go unenforced with this section
-still claiming them.
+assertion the floor Specs share. And the package has a lib target **carrying
+`doctest = true`**, both read from `cargo metadata`, which is the precondition
+of the compile-fail bullet above rather than a fact about the crate's shape.
+The two are one instrument because either removal has the same effect: with no
+target, and equally with the target kept and its doctests disabled, cargo
+collects no doctest and the two pinned bind shapes go unenforced with this
+section still claiming them.
 
 **Which invariant each claim serves, and why nineteen serve none.** Seventeen
 `grounds` edges run from sixteen of the thirty-five, nine to
@@ -1059,8 +1061,10 @@ the fork and carries no record in this document, per section 0.
 **Three groups among the sixteen are worth stating rather than leaving to be
 read.** Two of the four manifest claims ground in the socket invariant
 because those two are the linkage facts that invariant defines: the gate is
-a separate executable no other crate links because its behavior is reached
-over a socket, and its one internal dependency is a floor link because the
+a separate executable whose own resolved tree draws no organ, because its
+behavior is reached over a socket - **the reverse half, that no workspace
+crate links the gate, is review's per section 1**, a forward tree walk being
+unable to establish it - and its one internal dependency is a floor link because the
 floor is the two crates every domain draws from and no domain contains. The
 other two ground in nothing and belong with the representations below, the
 absent runtime being a thinness claim and the lib target being the
