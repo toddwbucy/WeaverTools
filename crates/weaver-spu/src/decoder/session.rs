@@ -129,6 +129,51 @@ impl CancelPoll for NeverCancels {
     }
 }
 
+/// What the sampler is built from at the start of every generation, per
+/// `weaver-spu-Spec` section 8.5.
+///
+/// **Grouped because the two fix one reseed together and nothing else.** The
+/// seed is the caller's, derived from the declared one and the generation's
+/// identity, and crosses to [`Backend::reseed`]. The window is the length of
+/// resident tail the penalty knobs describe, and it is spent on this side of
+/// that seam, cutting the slice the reseed is handed rather than crossing as
+/// an argument of its own. A generation and a re-feed build the sampler the
+/// same way, which is why one type serves both.
+pub struct SamplerBuild {
+    /// This generation's derived seed.
+    pub seed: u64,
+    /// How much of the resident tail the penalty reads, in tokens.
+    pub penalty_window: usize,
+}
+
+/// Where a retained position's field lands: the position, the ranked
+/// candidates, and the realized rank.
+pub type FieldSink<'s> = &'s mut dyn FnMut(u64, Vec<(u32, f32)>, u32);
+
+/// The positioned intermediates of the decode contract's section 2, and the
+/// field's election that governs one of them.
+///
+/// **What the generate and the re-feed drive hand out per position, the
+/// token stream excepted.** The field and the column each carry the position
+/// they pair with, because neither crosses per renderable piece the way the
+/// token does, and the re-feed drive produces both while streaming no token,
+/// which is why the token sink is not a member here.
+///
+/// **The field's depth and its sink are one member rather than two**, because
+/// either alone is meaningless: a depth with nowhere to put the measurement
+/// runs the ranking and drops it, and a sink with no depth never fires. Held
+/// as a pair, absent where unelected per `weaver-spu-Spec` section 7.5, the
+/// type admits neither half-state rather than naming the rule in prose and
+/// leaving it representable.
+pub struct PositionedSinks<'s> {
+    /// The field's elected depth paired with where each retained position's
+    /// field lands, or `None` where the election does not stand. The sink
+    /// takes the position, the ranked candidates, and the realized rank.
+    pub field: Option<(usize, FieldSink<'s>)>,
+    /// Where each sampled position's column lands, where the ask stood.
+    pub on_column: &'s mut dyn FnMut(u64, Vec<Vec<f32>>),
+}
+
 /// The resident session.
 ///
 /// **The resident sequence moves only by appends and by the recorded
@@ -271,11 +316,8 @@ impl<'a> Session<'a> {
         stop: &StopCondition,
         cancel: &mut dyn CancelPoll,
         on_token: &mut dyn FnMut(TokenId),
-        field: Option<usize>,
-        on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
-        on_column: &mut dyn FnMut(u64, Vec<Vec<f32>>),
-        seed: u64,
-        penalty_window: usize,
+        mut sinks: PositionedSinks<'_>,
+        sampler: SamplerBuild,
     ) -> Result<Generated, DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -334,9 +376,9 @@ impl<'a> Session<'a> {
         // generation ever consumed, appendable and quietly wrong, which is
         // the disagreement the poison exists to refuse. This sits after a
         // commit and therefore takes the commit's discipline.
-        let window_start = self.resident.len().saturating_sub(penalty_window);
+        let window_start = self.resident.len().saturating_sub(sampler.penalty_window);
         let window: Vec<TokenId> = self.resident[window_start..].to_vec();
-        if let Err(fault) = self.backend.reseed(seed, &window) {
+        if let Err(fault) = self.backend.reseed(sampler.seed, &window) {
             return Err(self.poison(fault));
         }
         let decode_started = std::time::Instant::now();
@@ -389,7 +431,7 @@ impl<'a> Session<'a> {
                 // loudly here rather than omitting silently, the silent
                 // absence being what the fault rule forbids.
                 match self.backend.take_columns() {
-                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    Some(columns) => (sinks.on_column)(self.resident.len() as u64, columns),
                     None => {
                         return Err(self.poison(DecodeFault::Engine {
                             detail: "the column ask stood and no column arrived at a \
@@ -423,11 +465,11 @@ impl<'a> Session<'a> {
             // ranking costs no second read of the distribution and no
             // second copy of it. Absent where unelected, and absent rather
             // than empty where the distribution carried none.
-            if let Some(depth) = field
+            if let Some((depth, on_field)) = sinks.field.as_mut()
                 && let Some((entropy_and_logits, position)) =
                     step.as_ref().map(|s| (s, self.resident.len() as u64))
                 && let Some((ranked, realized)) =
-                    measurement::field(&entropy_and_logits.1, token.0 as usize, depth)
+                    measurement::field(&entropy_and_logits.1, token.0 as usize, *depth)
             {
                 on_field(position, ranked, realized);
             }
@@ -501,18 +543,14 @@ impl<'a> Session<'a> {
     /// a stop token inside it was the source's business - and the
     /// terminator lands after the path exactly as it landed after the
     /// source's generation, so the resident state mirrors the source's.
-    #[allow(clippy::too_many_arguments)]
     pub fn refeed(
         &mut self,
         delta: &[TokenId],
         path: &[TokenId],
         terminator: TokenId,
         cancel: &mut dyn CancelPoll,
-        field: Option<usize>,
-        on_field: &mut dyn FnMut(u64, Vec<(u32, f32)>, u32),
-        on_column: &mut dyn FnMut(u64, Vec<Vec<f32>>),
-        seed: u64,
-        penalty_window: usize,
+        mut sinks: PositionedSinks<'_>,
+        sampler: SamplerBuild,
     ) -> Result<Generated, DecodeFault> {
         if !self.opened {
             return Err(DecodeFault::NotOpen);
@@ -539,9 +577,9 @@ impl<'a> Session<'a> {
         // derived seed, the resident tail's window - because the recomputed
         // draw is only evidence if it is the draw the source would have
         // made.
-        let window_start = self.resident.len().saturating_sub(penalty_window);
+        let window_start = self.resident.len().saturating_sub(sampler.penalty_window);
         let window: Vec<TokenId> = self.resident[window_start..].to_vec();
-        if let Err(fault) = self.backend.reseed(seed, &window) {
+        if let Err(fault) = self.backend.reseed(sampler.seed, &window) {
             return Err(self.poison(fault));
         }
         let decode_started = std::time::Instant::now();
@@ -565,7 +603,7 @@ impl<'a> Session<'a> {
                 // an asked column arrives at every sampled position or the
                 // pass faults.
                 match self.backend.take_columns() {
-                    Some(columns) => on_column(self.resident.len() as u64, columns),
+                    Some(columns) => (sinks.on_column)(self.resident.len() as u64, columns),
                     None => {
                         return Err(self.poison(DecodeFault::Engine {
                             detail: "the column ask stood and no column arrived at a \
@@ -579,10 +617,10 @@ impl<'a> Session<'a> {
                 Ok(token) => token,
                 Err(fault) => return Err(self.poison(fault)),
             };
-            if let Some(depth) = field
+            if let Some((depth, on_field)) = sinks.field.as_mut()
                 && let Some((_, logits)) = step.as_ref()
                 && let Some((ranked, realized)) =
-                    measurement::field(logits, recorded.0 as usize, depth)
+                    measurement::field(logits, recorded.0 as usize, *depth)
             {
                 on_field(self.resident.len() as u64, ranked, realized);
             }
@@ -762,6 +800,9 @@ mod tests {
         /// Fail the nth `distribution` call, counting from zero.
         fail_distribution_call: Option<usize>,
         distributions: std::cell::Cell<usize>,
+        /// What `take_columns` answers. `None` is the unarmed tap, which is
+        /// what every test that does not reach for the column wants.
+        columns: Option<Vec<Vec<f32>>>,
     }
 
     /// A backend that records what it was asked to do. The seam this doubles is
@@ -829,6 +870,9 @@ mod tests {
             log.sampled += 1;
             Ok(token)
         }
+        fn take_columns(&mut self) -> Option<Vec<Vec<f32>>> {
+            self.0.borrow().columns.clone()
+        }
         fn truncate_to(&mut self, position: usize) -> Result<(), DecodeFault> {
             self.0.borrow_mut().truncated.push(position);
             Ok(())
@@ -838,6 +882,108 @@ mod tests {
             Ok(())
         }
         fn close(&mut self) {}
+    }
+
+    /// **Each positioned sink fires at the position it names, and the
+    /// unelected field fires at none.**
+    ///
+    /// The field's depth and its sink are one member, so what holds the
+    /// pairing is a run that elects a depth and counts what arrives against a
+    /// run that elects none and counts nothing. Both sinks are dispatched
+    /// from the same loop and carry the same shape of position, which is the
+    /// pair a wrong wiring would swap without the compiler noticing, the
+    /// ranked candidates and the layer stack being different types only
+    /// inside their vectors.
+    #[test]
+    fn each_positioned_sink_fires_at_the_position_it_names() {
+        let columns = vec![vec![0.5_f32, 0.25], vec![0.125, 0.0625]];
+        let log = Rc::new(RefCell::new(Log {
+            script: vec![TokenId(1), TokenId(2), TokenId(0)],
+            columns: Some(columns.clone()),
+            ..Default::default()
+        }));
+        let mut session = Session::new(
+            Box::new(Recorder(Rc::clone(&log), DISTRIBUTION.to_vec())),
+            64,
+            FlushMechanism::TruncateToPosition,
+            false,
+        );
+        session.open(&[TokenId(7)]).expect("the prefix lands");
+        session.ask_columns();
+
+        let mut fields: Vec<(u64, usize, u32)> = Vec::new();
+        let mut taken: Vec<(u64, Vec<Vec<f32>>)> = Vec::new();
+        let mut on_field = |position: u64, ranked: Vec<(u32, f32)>, realized: u32| {
+            fields.push((position, ranked.len(), realized));
+        };
+        session
+            .append_and_generate(
+                &[TokenId(8)],
+                &StopCondition {
+                    stop_tokens: vec![TokenId(0)],
+                    terminator: TokenId(0),
+                    max_tokens: 8,
+                },
+                &mut NeverCancels,
+                &mut |_| {},
+                PositionedSinks {
+                    field: Some((4, &mut on_field as FieldSink)),
+                    on_column: &mut |position: u64, layers: Vec<Vec<f32>>| {
+                        taken.push((position, layers));
+                    },
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
+            )
+            .expect("the generation runs");
+
+        assert!(
+            !fields.is_empty(),
+            "an elected depth reaches the field sink"
+        );
+        assert!(
+            fields.iter().all(|(_, ranked, _)| *ranked == 4),
+            "the elected depth is the ranking's width: {fields:?}"
+        );
+        assert!(!taken.is_empty(), "an armed tap reaches the column sink");
+        assert!(
+            taken.iter().all(|(_, layers)| *layers == columns),
+            "the column sink takes the forward's layers, not the field's: {taken:?}"
+        );
+        // **The column is taken at the draw site and the field only where the
+        // token is retained**, so the stop draw takes a column and owes no
+        // field. The positions are therefore a prefix rather than a match, and
+        // asserting equality here would be asserting against the rule the loop
+        // states above the stop check.
+        let field_positions: Vec<u64> = fields.iter().map(|(p, _, _)| *p).collect();
+        let column_positions: Vec<u64> = taken.iter().map(|(p, _)| *p).collect();
+        // **The absolute positions, because the two checks below are relative
+        // and a shared wrong offset satisfies both.** The fixture fixes them:
+        // the open leaves one token resident, the delta a second, and the
+        // three scripted draws sit at 2, 3 and 4, the last being the stop.
+        assert_eq!(
+            column_positions,
+            vec![2, 3, 4],
+            "a column at each draw site, counted from the resident length"
+        );
+        assert_eq!(
+            field_positions,
+            vec![2, 3],
+            "a field at each retained draw, the stop owing none"
+        );
+        assert_eq!(
+            column_positions.len(),
+            field_positions.len() + 1,
+            "the stop draw takes a column and owes no field: {column_positions:?} \
+             against {field_positions:?}"
+        );
+        assert_eq!(
+            field_positions,
+            column_positions[..field_positions.len()],
+            "where both fire they name one position, not two readings of it"
+        );
     }
 
     /// **The re-feed appends the recorded token whatever the draw said, and
@@ -872,11 +1018,14 @@ mod tests {
                 &[TokenId(7), TokenId(8), TokenId(9)],
                 TokenId(0),
                 &mut NeverCancels,
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the re-feed runs");
 
@@ -945,11 +1094,14 @@ mod tests {
             },
             &mut NeverCancels,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         );
         assert!(
             matches!(outcome, Err(DecodeFault::Engine { .. })),
@@ -992,11 +1144,14 @@ mod tests {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the generation runs");
 
@@ -1043,11 +1198,14 @@ mod tests {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the generation runs");
 
@@ -1168,11 +1326,14 @@ mod tests {
                 },
                 &mut cancel,
                 &mut |token| streamed.push(token),
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("the generation runs");
         assert_eq!(
@@ -1198,11 +1359,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("first turn");
         let after_first = session.resident_len();
@@ -1218,11 +1382,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("second turn");
 
@@ -1248,11 +1415,14 @@ mod tests {
                     &stop_at(50),
                     &mut cancel,
                     &mut |_| {},
-                    None,
-                    &mut |_, _, _| {},
-                    &mut |_, _| {},
-                    11,
-                    64,
+                    PositionedSinks {
+                        field: None,
+                        on_column: &mut |_, _| {},
+                    },
+                    SamplerBuild {
+                        seed: 11,
+                        penalty_window: 64,
+                    },
                 )
                 .expect("a turn");
             assert!(
@@ -1278,11 +1448,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a turn");
         assert_eq!(generated.stopped, Stopped::Complete);
@@ -1310,11 +1483,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a cancelled turn");
         assert_eq!(generated.stopped, Stopped::Cancelled);
@@ -1342,11 +1518,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a cancelled turn");
         assert_eq!(
@@ -1375,11 +1554,14 @@ mod tests {
             &stop_at(50),
             &mut cancel,
             &mut |_| {},
-            None,
-            &mut |_, _, _| {},
-            &mut |_, _| {},
-            11,
-            64,
+            PositionedSinks {
+                field: None,
+                on_column: &mut |_, _| {},
+            },
+            SamplerBuild {
+                seed: 11,
+                penalty_window: 64,
+            },
         );
         match refusal {
             Err(DecodeFault::Overflow {
@@ -1410,11 +1592,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a turn");
         session.flush(0).expect("flush");
@@ -1437,11 +1622,14 @@ mod tests {
                     &stop_at(50),
                     &mut cancel,
                     &mut |_| {},
-                    None,
-                    &mut |_, _, _| {},
-                    &mut |_, _| {},
-                    11,
-                    64,
+                    PositionedSinks {
+                        field: None,
+                        on_column: &mut |_, _| {},
+                    },
+                    SamplerBuild {
+                        seed: 11,
+                        penalty_window: 64,
+                    },
                 )
                 .expect("a turn");
             (session, log)
@@ -1506,11 +1694,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a turn");
         let grown = session.resident_len();
@@ -1547,11 +1738,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             ),
             Err(DecodeFault::NotOpen),
             "the session no longer serves"
@@ -1579,11 +1773,14 @@ mod tests {
                     &stop_at(50),
                     &mut cancel,
                     &mut |_| {},
-                    None,
-                    &mut |_, _, _| {},
-                    &mut |_, _| {},
-                    11,
-                    64
+                    PositionedSinks {
+                        field: None,
+                        on_column: &mut |_, _| {},
+                    },
+                    SamplerBuild {
+                        seed: 11,
+                        penalty_window: 64,
+                    },
                 )
                 .is_err(),
             "the fault surfaces"
@@ -1594,11 +1791,14 @@ mod tests {
                 &stop_at(50),
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             ),
             Err(DecodeFault::NotOpen),
             "and the session no longer serves"
@@ -1655,11 +1855,14 @@ mod tests {
                 },
                 &mut NeverCancels,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                11,
-                64,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 11,
+                    penalty_window: 64,
+                },
             )
             .expect("a generation stands so there is an interior");
 
@@ -1729,11 +1932,14 @@ mod tests {
                         },
                         &mut NeverCancels,
                         &mut |_| {},
-                        None,
-                        &mut |_, _, _| {},
-                        &mut |_, _| {},
-                        11,
-                        64,
+                        PositionedSinks {
+                            field: None,
+                            on_column: &mut |_, _| {},
+                        },
+                        SamplerBuild {
+                            seed: 11,
+                            penalty_window: 64,
+                        },
                     )
                     .expect("the generation runs");
             }
@@ -1785,11 +1991,14 @@ mod tests {
                 &stop,
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                0xAAAA,
-                2,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 0xAAAA,
+                    penalty_window: 2,
+                },
             )
             .expect("the first generation runs");
         let window_before = log.borrow().reseeds[0].1.len();
@@ -1800,11 +2009,14 @@ mod tests {
                 &stop,
                 &mut cancel,
                 &mut |_| {},
-                None,
-                &mut |_, _, _| {},
-                &mut |_, _| {},
-                0xBBBB,
-                2,
+                PositionedSinks {
+                    field: None,
+                    on_column: &mut |_, _| {},
+                },
+                SamplerBuild {
+                    seed: 0xBBBB,
+                    penalty_window: 2,
+                },
             )
             .expect("the second generation runs");
 

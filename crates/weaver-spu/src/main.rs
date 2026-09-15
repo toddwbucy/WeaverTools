@@ -27,7 +27,9 @@ use weaver_spu::channel::{
     self, ChannelFault, DecodeSocket, EntryFault, Inherited, LifecycleChannel,
 };
 use weaver_spu::decoder::backend::{DecodeFault, TokenId};
-use weaver_spu::decoder::session::{CancelPoll, Session, StopCondition, Stopped};
+use weaver_spu::decoder::session::{
+    CancelPoll, FieldSink, PositionedSinks, SamplerBuild, Session, StopCondition, Stopped,
+};
 use weaver_spu::family;
 use weaver_spu::readout::ReadoutElection;
 use weaver_spu::residency::{Headroom, Residency, Resident, StopSet};
@@ -722,11 +724,17 @@ fn serve_decode(
                     &stop,
                     &mut cancel,
                     &mut on_token,
-                    effective.field_depth.map(|d| d as usize),
-                    &mut on_field,
-                    &mut on_column,
-                    generation_seed,
-                    effective.knobs.repetition_window as usize,
+                    PositionedSinks {
+                        field: match effective.field_depth {
+                            Some(d) => Some((d as usize, &mut on_field as FieldSink)),
+                            None => None,
+                        },
+                        on_column: &mut on_column,
+                    },
+                    SamplerBuild {
+                        seed: generation_seed,
+                        penalty_window: effective.knobs.repetition_window as usize,
+                    },
                 ) {
                     Ok(generated) => generated,
                     Err(DecodeFault::Overflow {
@@ -1001,11 +1009,17 @@ fn serve_decode(
                     &path_tokens,
                     standing.stop.terminator,
                     &mut cancel,
-                    effective.field_depth.map(|d| d as usize),
-                    &mut on_field,
-                    &mut on_column,
-                    generation_seed,
-                    effective.knobs.repetition_window as usize,
+                    PositionedSinks {
+                        field: match effective.field_depth {
+                            Some(d) => Some((d as usize, &mut on_field as FieldSink)),
+                            None => None,
+                        },
+                        on_column: &mut on_column,
+                    },
+                    SamplerBuild {
+                        seed: generation_seed,
+                        penalty_window: effective.knobs.repetition_window as usize,
+                    },
                 ) {
                     Ok(generated) => generated,
                     Err(DecodeFault::Overflow {
