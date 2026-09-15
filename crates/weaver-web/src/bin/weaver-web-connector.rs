@@ -1,9 +1,10 @@
 //! The connector: runs on the agents' own box as the operator's uid
 //! and holds every box-bound reach - gate sockets, verb invocation,
 //! trace sinks, the load-state observable, the declaration read. It
-//! renders nothing, stores nothing, and only dials out (PRD section
-//! 5): the server's address is the one line that changes when the
-//! presentation stack moves.
+//! renders nothing, stores nothing, and only dials out (Spec section
+//! 8, which names the connector and the one dialed link): the server's
+//! address is the one line that changes when the presentation stack
+//! moves.
 
 use clap::Parser;
 use std::path::PathBuf;

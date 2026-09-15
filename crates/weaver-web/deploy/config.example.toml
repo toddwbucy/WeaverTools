@@ -1,10 +1,10 @@
 # weaver-web server configuration (Spec section 8).
 # Default path: /etc/weaver-web/config.toml, override with --config.
 # The server holds everything that is not box-bound; agents are not
-# declared here. They arrive with the connector's hello, which
-# section 8 does not name: it charters the link and leaves the frame
-# to wire.rs. So the roster lives in connector.toml on the box that
-# runs them.
+# declared here. They arrive with the connector's hello, a frame the
+# Spec does not name: section 8 charters the link and no section
+# charters its frames. So the roster lives in connector.toml on the
+# box that runs them.
 
 listen   = "0.0.0.0:8080"                                  # browsers
 database = "postgres:///weaver_web?host=/run/postgresql"   # local socket, peer auth

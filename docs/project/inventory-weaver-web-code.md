@@ -538,8 +538,10 @@ of its own rather than a line here.
   **This register's own figures were wrong and are corrected here.** It
   recorded thirty-five citations, twenty-two dangling and thirteen
   resolving. Measured by occurrence rather than by line, the Spec citations
-  alone were **thirty-seven**, twenty-two dangling at sections 11 through 17
-  and **fifteen** resolving, with eight charter citations beside them. The
+  alone were **thirty-seven**, twenty-two [corrected 2026-09-15 to
+  **thirty-one**, see the last paragraph of this bullet] dangling at
+  sections 11 through 17 and **fifteen** resolving, with eight charter
+  citations beside them. The
   undercount came from a grep matching a single digit, which silently drops
   `section 10`, and the same grep is why the register said thirteen where the
   act measured fifteen.
@@ -554,12 +556,14 @@ of its own rather than a line here.
   where section 9 is what is enforced, and `store.rs` cited section 5 for the
   single writer where section 5 is staged experiments. **A dangling citation
   announces itself and a resolving one does not**, which is why the smaller
-  number was the worse one. Ten of the twenty-two stood in `wire.rs`, which
+  number was the worse one. Ten [corrected 2026-09-15 to **twelve**, of
+  which the act repointed ten] of the twenty-two stood in `wire.rs`, which
   this register carries, so the defect outlived every retirement and had to
   be answered rather than waited out.
 
-  **The disposition: twenty-seven repointed, one redirected, ten left.**
-  The ten are in the six files this register retires and go with their
+  **The disposition at that act, 2026-09-08: twenty-seven repointed, one
+  redirected, nine [corrected 2026-09-15 to **eleven**] left.**
+  They are in the six files this register retires and go with their
   modules, so a sweep reporting zero would be reporting on files that are
   leaving. `store.rs`'s role citation was redirected rather than repointed,
   its subject being what the section 6 act separates, and it now names Spec
@@ -570,28 +574,49 @@ of its own rather than a line here.
   those two comments now say plainly rather than citing a section for.
 
   **These figures were taken with a line-oriented probe and are corrected
-  here, 2026-09-14, by PR #585.** The crate wraps comments at about
+  above, 2026-09-15, by PR #585.** The crate wraps comments at about
   sixty-six columns, so a citation whose number falls after the break is two
   lines, and no search that reads one line at a time can see it. Measured
-  again whole-file with the newlines normalized away, the live crate carried
-  **twenty-eight** references to sections 11 through 17 at `b97fd0b^1`
-  rather than twenty-two, and **twelve** of them stood in `wire.rs` rather
-  than ten. The act repointed ten of that file's twelve, so the defect this
-  register says had to be answered rather than waited out was answered in
-  part: `wire.rs` lines 572 and 626 carried section 16 forward. The left set
-  is ten rather than nine, `queue.rs` carrying a fourth at its line 214.
-  **The same blind spot produced the correction above**, where a grep
-  matching a single digit dropped `section 10`. A probe that reads a line is
-  the same kind of instrument as a probe that reads a digit.
+  again whole-file with the newlines normalized away, `b97fd0b^1` carried
+  **thirty-four** references to sections 11 through 17, **three** of them in
+  the `archive/conversation/` copy deleted since, leaving **thirty-one**
+  live rather than twenty-two. **Twelve** stood in `wire.rs` rather than
+  ten, and the act repointed ten of the twelve, so the defect this register
+  says had to be answered rather than waited out was answered in part:
+  `wire.rs` lines 572 and 626 carried section 16 forward to 2026-09-14. The
+  left set is eleven rather than nine, `queue.rs` carrying a fourth at its
+  line 214 and `adapters/upstream.rs` a second at its line 9.
 
-  **PR #585 answers seven of the twenty-eight's survivors and one of the
-  ten.** The seven are the files that carry and the files no module owns -
-  `wire.rs` twice, `traceview.rs`, `config.rs`, `bin/weaver-web-connector.rs`
-  and two under `deploy/` - none of which were in that act's diff or are in
-  any retiring module. The one is `web/user.rs:83`, whose target survives the
-  retirement where its section number does not: the charter's section 6 names
-  the retired Spec's section 14 outright and carries its claim. **Nine
-  stand**, and they stand on this register's own ground.
+  **That probe reports thirty-one or thirty-two on one stated rule**, and
+  the rule is worth writing down because two seats measured this page and
+  differed by one. `adapters/upstream.rs:9` reads "Spec sections 10 and 15",
+  one head over two numbers. Counted as two sightings it is thirty-two live
+  and one of them falls in this range. Counted as one sighting at its first
+  number it is thirty-one and none does. **This page takes the second**,
+  the smaller and the one a reader counting citations would take, and names
+  the row so the other reading is reachable rather than lost.
+
+  **The instrument failed three times and each failure was cheaper to make
+  than to find.** A grep matching a single digit dropped `section 10`, which
+  is the correction above. A search reading one line at a time dropped every
+  wrapped citation, which is this paragraph. And a first reading of the
+  corrected probe was taken through `tail -30`, which silently cut five rows
+  off the head of its own output and reported twenty-eight where the probe
+  had said thirty-one - **a count from a truncated pipe, which is the
+  failure `CLAUDE.md` names and this act then committed.** The probe was
+  right the second time and the reading of it was not.
+
+  **PR #585 answers seven of the thirty-one's survivors**, at `README.md:97`,
+  `deploy/config.example.toml:5`, `deploy/weaver-web.sudoers:1`,
+  `traceview.rs:43`, `wire.rs:572`, `wire.rs:626` and `web/user.rs:83`, the
+  last of these being one of the eleven left and the only one of them whose
+  target survives its module's retirement. **Two more it answers were never
+  in that set**, `config.rs:72` citing section 10 and
+  `bin/weaver-web-connector.rs:4` citing PRD section 3, both of them
+  resolving to a live section about another subject and both invisible until
+  the corrected probe. **Ten stand**, and they stand on this register's own
+  ground.
+
 - **Two sites carry code a merged act moved past, and both now say so in
   place.** Found by the reviews of PR #510 rather than by this reading.
   `adapters/gate.rs`'s `socket_exists` infers load state from a socket

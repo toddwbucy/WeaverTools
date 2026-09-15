@@ -80,8 +80,9 @@ async fn open_session(
         .create_participant(&form.name, &form.name, "human", None)
         .await?;
     // v1: roles come from the config's admin list, reapplied so a
-    // first-time admin name lands with its role (the charter's
-    // section 6).
+    // first-time admin name lands with its role. Spec section 2.8 is
+    // the role's home and points at the charter's section 6 from
+    // there.
     state
         .store
         .reconcile_roles(state.cfg.admins.clone())

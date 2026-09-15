@@ -65,9 +65,9 @@ instead of rearchitecting.
 ## Documents
 
 - [`weaver-web-PRD.md`](../../docs/crates/weaver-web/weaver-web-PRD.md)  - 
-  what and why: the surfaces, what the crate is not, the placement and
-  identity rulings, what the rewrite keeps and what it retires, and the
-  asks filed upstream.
+  what and why: the surfaces, what the crate is not, the record it
+  holds, the placement and identity rulings, what the rewrite keeps and
+  what it retires, the asks filed upstream, and the open cells.
 - [`weaver-web-Spec.md`](../../docs/crates/weaver-web/weaver-web-Spec.md)  - 
   how: every representation election, cited from the code that implements
   it.

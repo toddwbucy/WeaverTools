@@ -36,7 +36,8 @@ pub struct ServerConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConnectorConfig {
     /// The server's link address, the one line that changes when the
-    /// presentation stack moves to another box (PRD section 5).
+    /// presentation stack moves to another box (Spec section 8:
+    /// separated by changing one address).
     #[serde(default = "default_server")]
     pub server: String,
     /// Directory of agent declarations, served read-only to the admin
@@ -69,11 +70,13 @@ pub struct AgentConfig {
     pub trace: PathBuf,
 }
 
-// Read by the upstream adapter once it is implemented. No Spec
-// section charters one: the charter's section 7 retires upstream
-// models as guests and leaves the built code unchartered until a
-// later act rules on it. Providers are the server's business alone:
-// nothing upstream-facing touches the agents' box.
+// Read by the upstream adapter once it is implemented. **No standing
+// section charters one**: the retired Spec's section 10 did and the
+// rewrite carried nothing forward, which is why `adapters/upstream.rs`
+// still cites a number that now means open elections. That module
+// retires, so its citation is left where it stands and this one does
+// not repeat it. Providers are the server's business alone: nothing
+// upstream-facing touches the agents' box.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct ProviderConfig {
