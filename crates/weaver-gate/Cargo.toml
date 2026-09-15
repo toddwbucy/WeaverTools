@@ -7,12 +7,11 @@ publish.workspace = true
 description = "The outer membrane: the sole work ingress, its hook, and the boundary that judges every peer"
 
 # One binary, forked and exec'd by the harness during the enter fan-out, per
-# weaver-gate-Spec section 1. Nothing links this crate.
+# weaver-gate-Spec section 1. No other crate links this one.
 #
-# The lib target beside it is not an API for a consumer. It exists because the
-# Spec's bind-shape pins are compile-fail doctests and cargo runs doctests for
-# lib targets only, so a bin-only crate would carry them as text that never
-# executes. The same reading weaver-spu takes, on the same ground.
+# The lib target beside it is not an API for a consumer. Why it is declared is
+# weaver-gate-Spec section 1's to say and is not restated here, per gate G5:
+# tests/manifest.rs pins its presence and cites the same clause.
 [lib]
 name = "weaver_gate"
 path = "src/lib.rs"

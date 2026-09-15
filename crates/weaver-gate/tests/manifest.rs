@@ -1,4 +1,5 @@
 //! conforms: gate-one-binary
+//! conforms: gate-lib-target-exists
 //! conforms: gate-floor-link-types-without-config
 //! conforms: gate-no-runtime-no-logging-no-yaml
 //!
@@ -144,11 +145,10 @@ fn the_floor_link_is_taken_without_config() {
     );
 }
 
-/// **One binary.** The gate is its own executable and nothing links it, so the
-/// manifest declares exactly one `[[bin]]`.
-///
-/// The `[lib]` beside it is not an API for a consumer: it exists so the Spec's
-/// bind-shape pins execute, cargo running doctests for lib targets only.
+/// **One binary.** The gate is its own executable and no other crate links it,
+/// so the manifest declares exactly one `[[bin]]`. The bin target's own use of
+/// the lib target beside it is this crate's wiring, per `weaver-gate-Spec`
+/// section 1, and the no-organ test above is what holds the linkage claim.
 #[test]
 fn the_manifest_declares_one_binary() {
     let manifest = manifest();
@@ -156,6 +156,64 @@ fn the_manifest_declares_one_binary() {
         manifest.matches("[[bin]]").count(),
         1,
         "one binary, forked and exec'd by the harness"
+    );
+}
+
+/// **The package has a lib target.** It is the precondition of an instrument
+/// this crate claims rather than a fact about the crate's shape, and the
+/// reasoning is `weaver-gate-Spec` section 1's - not restated here, per gate
+/// G5. Fold the modules into the binary and cargo collects no doctest,
+/// `gate-bind-shapes-pinned-by-doctest` goes unenforced, and every other gate
+/// still passes.
+///
+/// **The subject is the resolved target and not the `[lib]` table**, because
+/// cargo auto-discovers `src/lib.rs` whether or not the table is written. A
+/// test that scanned the manifest for `[lib]` would fail on a removal that
+/// changes nothing and pass on the removal that matters, which is the reading
+/// this test was rewritten out of on 2026-09-14.
+///
+/// Perturbation: fold the modules into `main.rs` with `mod` declarations,
+/// delete `src/lib.rs` and drop the `[lib]` table - the refactor that ends
+/// doctest collection while leaving a crate that builds. Watched under exactly
+/// that on 2026-09-14: this test fails naming the target, the other five in
+/// this file pass, and `cargo test -p weaver-gate --doc` answers "no library
+/// targets found in package `weaver-gate`" where it had run three doctests.
+/// **Deleting `src/lib.rs` alone is not the watch** - the bin's `use
+/// weaver_gate::` lines stop compiling, so the test never runs and a failure
+/// that proves nothing is reported instead.
+#[test]
+fn the_package_has_a_lib_target() {
+    let out = Command::new(env!("CARGO"))
+        .args([
+            "metadata",
+            "--no-deps",
+            "--format-version",
+            "1",
+            "--locked",
+            "--offline",
+        ])
+        .output()
+        .expect("cargo metadata runs");
+    assert!(
+        out.status.success(),
+        "cargo metadata failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let meta: serde_json::Value = serde_json::from_slice(&out.stdout).expect("metadata is json");
+    let has_lib = meta["packages"]
+        .as_array()
+        .expect("packages is an array")
+        .iter()
+        .filter(|p| p["name"] == "weaver-gate")
+        .flat_map(|p| p["targets"].as_array().expect("targets is an array"))
+        .any(|t| {
+            t["kind"]
+                .as_array()
+                .is_some_and(|ks| ks.iter().any(|k| k == "lib"))
+        });
+    assert!(
+        has_lib,
+        "no lib target: cargo collects no doctest and the bind-shape pins go unenforced"
     );
 }
 

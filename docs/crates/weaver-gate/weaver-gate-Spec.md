@@ -6,6 +6,14 @@ workflow. Code is written against it under the gates of Working Process section 
 
 **Date filed:** 2026-08-02
 
+**Revised:** 2026-09-14, the document counts what the crate holds. Section 1's
+layout table mirrors `crates/weaver-gate/src` and its dependency set is the one
+internal crate the manifest declares. Section 2's close-on-exec rests on the
+planned fork section 8 charters rather than on this crate spawning nothing,
+which it stopped doing when the shell landed. Section 6 sorts every record
+under the instrument that holds it and states the totals by the section each
+record is declared in.
+
 **Revised:** 2026-08-28, third of this date, the election's direction is
 stated plainly. Section 3 records that `0770` narrows against the two boxes
 measured and widens the group's reach against the common umasks, the boundary
@@ -92,16 +100,25 @@ because a citation is what it is.
 **It is written from the merged corpus alone,** per the ruling of 2026-08-01
 that keeps the old tree's Specs out of the Spec pass.
 
-**The bound is the charter's own half-chartered line.** What is fully
-specifiable is the raise and the lower, the boundary predicate, and the
-process facts. The turn exchanges, the relay's interior, streaming,
-backpressure, cancellation, drain, and concurrent clients defer with the
-token workflow, per charter section 8, each waiting rather than missing.
+**The bound is the charter's own half-chartered line, and the line has
+moved.** What is fully specifiable is the raise and the lower, the boundary
+predicate, the process facts, and the turn half that arrived 2026-08-12: the
+turn exchanges, the relay's interior, the line bound, the flow control, and
+concurrency against the one-turn loop, all chartered at section 4.
+**Streaming and partial output are what still defer,** with the token
+workflow's extensions to the world contract's section 3, per section 7 and
+charter section 8, waiting rather than missing. What a lower does with an
+in-flight connection is section 3's and defers there.
 
 ## 1. The crate
 
 **One binary.** The gate is its own executable, forked and exec'd by the
-harness during the enter fan-out, per apex section 12, and nothing links it.
+harness during the enter fan-out, per apex section 12, and no other crate
+links it. **The bin target does link the lib target beside it,** which is
+this crate's own wiring rather than a consumer's reach: what the socket
+invariant means is that a crate answering to this one arrives over a socket,
+which `tests/manifest.rs` pins by finding no organ in the resolved tree at
+any depth.
 
 ```graph
 node: gate-one-binary
@@ -120,16 +137,45 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 **Layout.** One module per obligation, with the lib target beside the entry.
 
     src/lib.rs      the module roots, and the target the bind-shape pins run under
-    src/main.rs     entry, the two hygiene sets, and wiring, and nothing else
-    src/channel.rs  the seam end and the exchange service, section 2
+    src/main.rs     entry, the two hygiene sets, and the exchange service, section 2
+    src/channel.rs  the seam end: adoption, the framed send and recv, section 2
     src/hook.rs     the instruction's resolution, the bind, the predicate, section 3
     src/relay.rs    the pass-through, section 4
     src/tools.rs    the shell execution, this crate's one held tool, section 8
 
-Six files. `lib.rs` is not an API for a consumer: section 6's bind-shape pins
-are compile-fail doctests and cargo runs doctests for lib targets alone, so a
-bin-only crate would carry them as text that never executes. The binary is
-`main.rs` alone, per the manifest's one `[[bin]]`.
+Six files, and the two section 2 lines divide one section between them.
+`channel.rs` is the seam end alone, adoption and the framed send and recv
+and the fault render over descriptor 3. The service that drives them is the
+serve loop in `main.rs`, with the dispatch and the response routing beside
+it, which is what the entry line reaches and why it does not read to wiring
+and nothing else.
+
+**The lib target exists so the pins can execute.** `lib.rs` is not an API for
+a consumer. Section 6's bind-shape pins are compile-fail doctests, cargo
+collects doctests from lib targets alone, and a bin-only crate would carry
+them as text that never runs. **So the target's presence is a precondition of
+an instrument this document claims,** and it is asserted rather than assumed:
+fold the modules into the binary and the pins stop being collected while
+every other gate still passes, which is the reading that converts unenforced
+into documented as enforced.
+
+**The claim is about the resolved target and not the `[lib]` table**, a
+distinction measured rather than reasoned to: cargo auto-discovers `src/lib.rs`
+whether or not the table is written, so an instrument reading the manifest for
+`[lib]` fails on a removal that changes nothing and passes on the removal that
+matters. The instrument reads `cargo metadata`. This clause is where the
+reasoning lives and the manifest and its test cite it rather than restating
+it, per gate G5.
+
+```graph
+node: gate-lib-target-exists
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-gate
+to: gate-lib-target-exists
+```
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
@@ -148,9 +194,14 @@ with no table, so the trait has no consumer here, and
 `serde_json` encodes and decodes the seam's envelopes and touches no client
 byte, because the client's line is octets this crate must not read, per the
 opacity rule. `nix` is the OS surface, on the grounds
-`weaver-harness-Spec` section 2.4 argued: the needed calls are `bind`,
-`listen`, `accept`, `getsockopt` for the peer credential, `fcntl`, and the
-two `prctl` sets of section 2.
+`weaver-harness-Spec` section 2.4 argued. The needed calls are `bind`,
+`listen`, `accept` and `poll` for the serve loop of section 4, `getsockopt`
+for the peer credential and `getuid` for the predicate it feeds, `umask`
+around the bind for the mode election of section 3, `fcntl` for the channel
+end's close-on-exec, `killpg` and `waitid` for the group kill and the reap
+of section 8, and the two `prctl` sets of section 2. Every one of them is
+named because a list that omits a call is a surface this document understates
+and a builder discovers.
 
 ```graph
 node: gate-floor-link-types-without-config
@@ -213,9 +264,17 @@ to: gate-descriptors-owned-types
 **Entry performs two hygiene sets and one election, before the first read.**
 The dumpable flag is cleared and the channel end is set close-on-exec, both
 sets and never checks, per charter section 7 and the set-not-check rule of
-`weaver-organ-channel` section 2: this crate spawns nothing, so the flag is
-defense against a compromise's exec rather than a planned fork, and it costs
-one call. The election is the parent-death signal, which the charter leaves
+`weaver-organ-channel` section 2. **Close-on-exec answers a planned fork and
+not only a compromise's exec.** This crate forks and execs a shell at every
+invocation of the one tool it holds, per section 8, so without the flag
+descriptor 3 - the channel to the harness - is inherited by a child process
+running a command the model chose, which is the adversary the whole boundary
+is built against handed the interior's own handle. An earlier form of this
+clause reasoned from this crate spawning nothing, which was true when it was
+written and stopped being true when the shell landed on 2026-08-18. The rule
+is unchanged and its reason is now load-bearing rather than precautionary,
+and it still costs one call. The election is the parent-death signal, which
+the charter leaves
 to this Spec: taken, one `prctl` naming `SIGTERM`, with its guarantee stated
 at the width the kernel gives it and no wider. The signal fires on the
 termination of the thread that forked this process, not of the harness
@@ -859,7 +918,10 @@ agent's own uid denied by construction, per section 3. The test is the one
 `weaver-types-Spec` section 3 owed this document, landed: a connection
 from the agent uid is refused at accept, before any content is read,
 confirmed by watching content reach the harness when the predicate is
-weakened.
+weakened. **The walk carries two records,** the peer authenticated at accept
+and the agent uid denied by construction, both section 3's: a boundary that
+authenticated the dialer and then admitted it would satisfy the first and
+fail the walk, so the two are not one claim stated twice.
 
 **The second walk: a same-uid process attaches to the gate.** The adversary
 is the same tool surface, the attack a `ptrace` or `/proc/[pid]/fd` reach
@@ -904,15 +966,21 @@ overclaim this corpus refuses in prose and has no reason to admit in a graph.
 The load-bearing absence this crate relies on, `PeerIdentity` deriving no
 `Deserialize`, is the floor's pin, per `weaver-types-Spec` section 3.
 
-**Enforced by the manifest.** The internal dependency is exactly
-`weaver-types` without the `config` feature, read against the graph's floor
-links under gate H2, `weaver-traits` having left with the tool boundary
-ruling of 2026-08-18, per section 1. No async runtime, no logging crate, and
-no YAML implementation in the resolved tree, by the build-time `cargo tree`
-assertion the floor Specs share.
+**Enforced by the manifest.** Four claims, all of them section 1's. One
+`[[bin]]` and no organ anywhere in the resolved tree, which is the linkage
+half of the socket invariant read off the manifest. The internal dependency
+is exactly `weaver-types` without the `config` feature, read against the
+graph's floor links under gate H2, `weaver-traits` having left with the tool
+boundary ruling of 2026-08-18. No async runtime, no logging crate, and no
+YAML implementation in the resolved tree, by the build-time `cargo tree`
+assertion the floor Specs share. And the package has a lib target, read from
+`cargo metadata`, which is the precondition of the compile-fail bullet above
+rather than a fact about the crate's shape: without the target cargo collects
+no doctest and the two pinned bind shapes go unenforced with this section
+still claiming them.
 
-**Which invariant each claim serves, and why eighteen serve none.** Seventeen
-`grounds` edges run from sixteen of the thirty-four, nine to
+**Which invariant each claim serves, and why nineteen serve none.** Seventeen
+`grounds` edges run from sixteen of the thirty-five, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
@@ -930,7 +998,7 @@ invariant because
 `weaver-harness-gate-contract` section 3 states the ordering outright, that
 lower is last and terminal and that turn exchanges are valid only between a
 completed raise and a lower, so the claim was never the internal
-representation that invariant excludes. **Eighteen claims grounding
+representation that invariant excludes. **Nineteen claims grounding
 in no invariant is the expected result and not a gap**, per Document Format
 section 4: most of what this document elects is a representation, a
 placement, or a hygiene set the charter's walks argue, and representation is
@@ -947,11 +1015,14 @@ harness and no other organ's handle, is `weaver-harness-Spec`'s to enforce at
 the fork and carries no record in this document, per section 0.
 
 **Three groups among the sixteen are worth stating rather than leaving to be
-read.** The two manifest claims ground in the socket invariant because both
-are the linkage facts that invariant defines: the gate is a separate
-executable nothing links because its behavior is reached over a socket, and
-its one internal dependency is a floor link because the floor is the two
-crates every domain draws from and no domain contains. The bind site's two
+read.** Two of the four manifest claims ground in the socket invariant
+because those two are the linkage facts that invariant defines: the gate is
+a separate executable no other crate links because its behavior is reached
+over a socket, and its one internal dependency is a floor link because the
+floor is the two crates every domain draws from and no domain contains. The
+other two ground in nothing and belong with the representations below, the
+absent runtime being a thinness claim and the lib target being the
+scaffolding an instrument stands on. The bind site's two
 records ground there for a reason both halves share, the pinned shapes and
 the general prohibition being halves of a divided claim: a listener built
 anywhere but the one site is a socket the accept predicate never guards,
@@ -1012,16 +1083,33 @@ election, per section 6, and grounds on the same footing, an exec'd image holdin
 end being a third party in possession of a socket with no address.
 
 **Where the assertion records sit, and which of these bullets another crate
-declares.** The records are at the clauses that argue the claims, across
-sections 1 through 5, rather than gathered here, per Document Format section
-6: this section sorts by instrument and the arguments are elsewhere, so a
-block here would sit apart from the prose that earns it. One record is the
-exception and sits at the end of this section, the doctest pinning of the two
-bind-site shapes, whose argument is nowhere else and whose general
-prohibition is section 3's. Thirty-four records in all, seventeen from this
-section's sorting with the walks counted in and the rest from the elections
-outside it, a split's two halves both counting as this section's because
-neither was elected and one was divided out, per Document Format section 3.
+declares.** The records are at the clauses that argue the claims rather than
+gathered here, per Document Format section 6: this section sorts by
+instrument and the arguments are elsewhere, so a block here would sit apart
+from the prose that earns it. One record is the exception and sits at the end
+of this section, the doctest pinning of the two bind-site shapes, whose
+argument is nowhere else and whose general prohibition is section 3's.
+
+**Thirty-five records in all, and the split is where they are declared,
+which a reader can count.** Four in section 1, eight in section 2, eleven in
+section 3, five in section 4, one in section 5, five in section 8, and this
+section's one. **Every one of the thirty-five is sorted above** under the
+instrument that holds it, and the instruments divide them four to the
+manifest, two to the compiler, one to compile-fail, nineteen to a
+perturbation-verified test, and nine to review. The three walks carry five of
+those across two instruments, four perturbations and the parent-death
+signal's backing, which is why the walks are not a sixth column. **The
+earlier form of this sentence gave the
+split as an unmeasurable one** - so many from this section's sorting and the
+rest from the elections outside it - and no reading of the section reproduced
+the figure it gave, which is how it stood wrong from the day it was written
+without any act noticing. The records the tool boundary ruling landed in
+section 8 and the two the mode election landed in section 3 were sorted here
+nowhere at all, which is the substance behind the arithmetic. **A split
+stated as a count of declarations is one the next act can check by counting
+declarations**, and it is also why the scope clause above no longer says
+sections 1 through 5, six records sitting outside them.
+
 **Two of the bullets above are claims another crate argues,** and carry no
 record here: the floor's three exhaustive wire enums and `PeerIdentity`'s
 missing `Deserialize`, both `weaver-types-Spec`'s. An assertion belongs where
@@ -1074,10 +1162,38 @@ that format forbids.
   and both are confirmed by watching an over-bound line reach the channel
   when the bound check is removed and a bound-exact line die when the check
   reads exclusive.
+- The umask lock is reentrant within a thread: the raise holds a umask
+  across the bind, so a caller that sets one around this crate's use takes a
+  non-reentrant mutex twice on one thread and hangs. The watch runs the
+  nested raise on its own thread against a timeout, per section 3, a
+  deadlock being the one failure a test cannot observe from inside.
+- The socket mode is the boundary's election: `0o770` is elected in the
+  creating call rather than inherited, confirmed by watching the umask guard
+  removed and the socket bind at the runner's own umask, per section 3.
+- The shell execution's four watches are section 8's and are argued there:
+  the one held tool, the one clock, the group kill, and the drain riding the
+  run, each with the removal that makes it fail named at the clause. They
+  are named here because this sorting reaches every record and not only the
+  records that predate the tool boundary ruling of 2026-08-18, and the
+  argument stays where the instrument is rather than being restated, per
+  gate G5.
 - The unparseable-line refusal is the harness's, per its Spec section 6.2 as
   of the turn-half act: no test here parses a client line, and a test that
   did would be the opacity rule breached by the suite, which review checks
   for.
+
+**Held by review, each by an election argued at its own clause.** The
+channel end's close-on-exec and the parent-death signal's backing, both
+section 2's and both discussed above. The instruction's two consumed
+fields, the client socket's type, this crate unlinking nothing, and the
+general bind-site prohibition, all section 3's. The relay reading no client
+content, section 4's. The fault sitting below the exchange layer, section
+5's. The execution's four contents, section 8's, the enumeration being a
+shape the compiler holds once the answer type carries the cases. **Nine in
+all, and the tag means the instrument was not bought and never that none
+exists**, per apex section 11. None of the nine is cited from a test file,
+which is what would make the tag the inverse overclaim rather than an
+election.
 
 ```graph
 node: gate-bind-shapes-pinned-by-doctest
