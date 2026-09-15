@@ -1,5 +1,5 @@
 //! conforms: harness-fault-below-the-exchange-layer
-//! conforms: harness-outcome-two-cases
+//! conforms: harness-outcome-one-case
 //! conforms: harness-failed-set-refuses-construction
 //!
 //! The failure vocabulary, per `weaver-harness-Spec` section 7. A refusal is a

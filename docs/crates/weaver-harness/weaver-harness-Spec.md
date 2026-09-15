@@ -71,13 +71,16 @@ leftovers.
 
     src/lib.rs         re-exports, and nothing else
     src/channel.rs     organ-channel I/O and descriptor custody, section 2
+    src/spawn.rs       the organ fork's three calls, section 2.2
     src/lifecycle.rs   the harness type, the run state, the fan-out, section 3
     src/authorship.rs  trace authorship, section 4
     src/assembly.rs    prompt assembly's deterministic floor, section 5
-    src/tools.rs       the tool system, blocked, section 6
-    src/engine.rs      loop 1's seat, the extension seam, section 6
+    src/tools.rs       the granted tool result, section 6
+    src/engine.rs      loop 1's seat, the extension seam, sections 6 and 6.1
     src/state.rs       the state seam's ask end, section 6
-    src/classify.rs    the label seam's ask end, section 6
+    src/replay.rs      the diagnostic replay loop, section 6.2
+    src/failure.rs     the failure vocabulary, section 7
+    src/record.rs      the run's record, one shape over two mechanisms, section 9
 
     src/bin/worker/main.rs    the composition root, framework, section 6
     src/bin/worker/dev_loop/  the loop body, the developer's, section 6
@@ -86,10 +89,23 @@ leftovers.
     src/bin/pyworker/py_loop.rs  the connector at the crossing, framework, section 6
     src/bin/pyworker/dev_python/ the loop files, the developer's, section 6
 
-Nine library files, two of them placements, the way `weaver-traits-Spec`
-section 1 places its blocked and deferred modules, and two bin targets: the
+Twelve library files and no placement among them, and two bin targets: the
 demonstration worker, arriving with the wiring act, and the Python-iterating
-worker, entering the tree 2026-08-19 behind the `pyworker` feature.
+worker, entering the tree 2026-08-19 behind the `pyworker` feature. **This
+listing is re-derived from the tree rather than amended**, four modules having
+landed without it moving - `spawn.rs`, `record.rs`, `failure.rs` and
+`replay.rs` - and `src/tools.rs` having been listed as blocked while the
+granted tool result of section 6 fills it.
+
+**`src/classify.rs` leaves the listing, and the disagreement that leaves behind
+is named rather than settled here.** No such file exists and the label seam's
+ask end is in the tree all the same: the arm stands on the run in
+`lifecycle.rs`, its channel is `channel.rs`'s, and the port is `engine.rs`'s.
+Section 6 elects the module by name and the tree elects three others, so one of
+the two is behind and this section is not where that is decided. A listing says
+what the tree holds and a placement election is section 6's to make, so the
+listing names where the ask end is and the election stays at the clause that
+argues it, for an act reading that clause against the code.
 
 **The dev boundary is visible in the filesystem, per the architecture seat's
 directive of 2026-08-13.** A directory the developer is meant to edit carries
@@ -147,15 +163,15 @@ to: harness-dev-boundary-in-the-filesystem
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
 
-**The dependency set is three internal crates and two external ones, and each is
-argued.** **It becomes four when `weaver-diagnostic` is built**, that crate being the
+**The dependency set is four internal crates and two external ones, and each is
+argued.** **It became four when `weaver-diagnostic` was built**, that crate being the
 mechanism this crate authors a diagnostic-trace through per the ruling of 2026-08-24,
 and a mechanism this crate authors through is linked rather than dialed, which is the
 ground `weaver-trace` already stands on. The count here is the manifest's and the
-manifest holds three today, so the record below reads against what `Cargo.toml` carries
-rather than against what the corpus has ruled. The two move together in the act that
-builds the member. `weaver-traits` and `weaver-types` are the floor links the charter
-declares, the first for the message model the authoring path licenses, the second for
+manifest holds four, so the record below reads against what `Cargo.toml` carries and
+that file and the corpus's ruling now say the same thing. `weaver-traits` and
+`weaver-types` are the floor links the charter declares, the first for the message
+model the authoring path licenses, the second for
 the wire vocabulary of loop 0 and the identity types the envelope carries.
 `weaver-types` is taken **without its `config` feature**: this crate reads no field from
 the agent config's file, so it links no parser. The SPU instruction and the gate
@@ -172,32 +188,34 @@ feature off only if the two types sit on the unconditional side. The owed edit i
 on the working list rather than made here, a correction to a merged document landing
 after this branch rather than beside it. `weaver-trace` is the seam tagged `link`, the
 recorder this crate authors through under a serving binding, and `weaver-diagnostic`
-will be the recorder it authors through under a diagnostic one, per apex section 6 as
-ruled 2026-08-24, and is absent from the list above because it is absent from the tree.
+is the recorder it authors through under a diagnostic one, per apex section 6 as
+ruled 2026-08-24, and it stands in the set on the same ground, the member being
+built and the manifest declaring it.
 **Its contract landed 2026-08-27 and its edge with it.** `weaver-trace`'s link is
 recorded as a seam tagged `link` via `weaver-harness-trace-contract`, and the
 diagnostic member's is recorded the same way via
 `weaver-harness-diagnostic-contract`, declared in `weaver-harness-PRD` section 4
-where the asking side carries it. **The graph is therefore at four and the manifest
-at three**, and they part on purpose until the member is built: an edge is declared
-by a document and a dependency by a manifest, so the act that wrote the papers moved
-the first and the act that writes the crate moves the second. **This section's list
-reads against the manifest**, which is the instrument that checks it, so the crate's
-absence from the list above is the list being right rather than behind.
-`serde_json` encodes and decodes the
-loop 0 envelopes, whose JSON election is `weaver-types-Spec` section 4.3's. `nix` is the
-OS surface, elected in section 2.4 where the grounds and the record live. **The set and
-the feature are two records rather than one.** Gate H2 reads the internal edges against
+where the asking side carries it. **The graph and the manifest are both at four**,
+having parted on purpose while the member was unbuilt: an edge is declared by a
+document and a dependency by a manifest, so the act that wrote the papers moved the
+first and the act that wrote the crate moved the second, and the second has landed.
+**This section's list reads against the manifest**, which is the instrument that
+checks it, and `tests/manifest.rs` asserts the four-crate set and cites this
+section for it, so a list at three was the list being behind rather than the tree
+being ahead. `serde_json` encodes and decodes the loop 0 envelopes, whose JSON
+election is `weaver-types-Spec` section 4.3's. `nix` is the OS surface, elected in
+section 2.4 where the grounds and the record live. **The set and the feature are two
+records rather than one.** Gate H2 reads the internal edges against
 the graph and reads no feature list, and the featureless take is a `Cargo.toml` fact of
 its own, so a single record would hand one instrument's read to a claim it does not
 cover. **The set grounds in the socket invariant and the feature grounds in nothing.**
 Apex section 5.1 is the reason the two organs appear nowhere in this list: a crate this
 one asks to do something is reached over a socket, so the internal set is the floor plus
-the recorders this crate authors through, one today and two when the diagnostic member
-is built, each linked because the call crosses no process line, which is what apex
-section 5.1's rule turns on. The harness does ask each to record, which is why the
-record is a `seam` tagged `link` rather than a `floor-link`. Which features a floor link
-is taken with is a build election that would read the same under any invariant.
+the two recorders this crate authors through, each linked because the call crosses no
+process line, which is what apex section 5.1's rule turns on. The harness does ask
+each to record, which is why the record is a `seam` tagged `link` rather than a
+`floor-link`. Which features a floor link is taken with is a build election that
+would read the same under any invariant.
 
 ```graph
 node: harness-internal-dependency-set
@@ -1506,15 +1524,23 @@ prefix, then the message sequence, then the tool schemas, per apex section 3
 step 4, and the property that assembly is deterministic over the working
 structure's contents: the same records assemble the same prompt, byte for
 byte, which is what makes a replayed run's prompts comparable at all. **The two
-claims take two instruments.** Determinism is section 8's perturbation bullet,
-and the order of parts is review's by election, a test reading the three parts
-out of an assembled prompt reaching it and this suite buying the byte-for-byte
-comparison that holds whatever order landed.
+claims take two instruments and both are bought.** Determinism is section 8's
+perturbation bullet. The order of parts was review's by election, a test
+reading the three parts out of an assembled prompt named as what would reach it
+and declined, and `tests/authorship.rs` holds that test: it assembles a prompt
+from an identity, one message, and one schema, and asserts the three appear in
+that order in the rendered string. **So the election is retired rather than
+argued down.** `review` says an instrument was not bought and never that none
+exists, so a claim whose own named instrument is in the tree takes the
+instrument's tag, and this one is section 8's perturbation bullet beside
+determinism. The two stay two records because the byte-for-byte comparison
+holds whatever order landed and cannot see the order move, which is the reason
+the order was given a claim of its own.
 
 ```graph
 node: harness-prompt-part-order
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-harness
@@ -2309,28 +2335,35 @@ pub enum ChannelFault {
     Truncated { bound: usize },
     Undecodable,
     Closed,
+    SocketPathUnusable { errno: i32 },
+    WrongPeer { uid: u32 },
 }
 
 pub enum Outcome {
     Left,
-    ChannelClosed,
 }
 ```
 
-**Three faults, and the split from refusals is principled.** A refusal is a
+**Five faults, and the split from refusals is principled.** A refusal is a
 typed answer on an exchange, and every refusal this crate issues or carries is
 a `lifecycle-refusal`, the floor's type, drawn and never twinned. A channel
 fault is a failure below the exchange layer: a truncated read, octets that do
 not decode to an envelope and so cannot be attributed to any exchange for a
-refusal to answer, and closure, which `weaver-organ-channel` section 2 rules
-is observed as death and never synthesized into an answer. `Outcome` names the
-two ways service ends, the leave answered or the far process gone, so the
-composition root branches on a value rather than a guess. **The split is
-review's by election and the outcome enum is a type property.** A test can watch
+refusal to answer, closure, which `weaver-organ-channel` section 2 rules is
+observed as death and never synthesized into an answer, a coordination name
+that could not be bound, and a dialing peer refused at the accept before any
+byte. **The last two arrive with the socket inversion of 2026-08-05 and this
+block carried three until this act**, the bind and the credential check being
+the clauses of section 2.3 that inversion landed. Neither can be answered on
+an exchange, there being no exchange yet in either case, which is the same
+ground the first three stand on. `Outcome` names the one way service ends
+ordinarily, the leave answered, so the composition root branches on a value
+rather than a guess. **The split is review's by election and the outcome enum
+is a type property.** A test can watch
 a refusal answer where a fault should have ended the service, which is the reach
 this suite declines while `weaver-gate-Spec` section 5 and `weaver-spu-Spec`
-section 9 adopt the same split from their own sides, and the enum's two cases
-are exhaustive so a third reaches every caller loudly. **The split grounds in
+section 9 adopt the same split from their own sides, and the enum's one case is
+exhaustive so a second reaches every caller loudly. **The split grounds in
 apex section 5.3 and the outcome enum does not.** A contract naming the errors
 it can return is what makes its refusal set closed, so a failure below the
 exchange layer sits outside that set by construction rather than by taste, and
@@ -2375,13 +2408,13 @@ edge: grounds
 from: harness-fault-below-the-exchange-layer
 to: axiom-contract-is-a-complete-interface
 
-node: harness-outcome-two-cases
+node: harness-outcome-one-case
 kind: assertion
 tag: compile-pin
 
 edge: asserts
 from: weaver-harness
-to: harness-outcome-two-cases
+to: harness-outcome-one-case
 ```
 
 ## 8. What is enforced, and by which instrument
@@ -2458,7 +2491,7 @@ runtime, no logging crate, and no HTTP client in the resolved external tree,
 by the build-time `cargo tree` assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Nineteen of the
-forty-eight carry a `grounds` edge and one of the nineteen carries two, so the edges
+sixty-six carry a `grounds` edge and one of the nineteen carries two, so the edges
 number twenty: ten to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
 `axiom-harness-integrates-by-the-loop`, three to
 `axiom-join-key-travels-with-the-work`, and three to
@@ -2482,11 +2515,15 @@ no reason to bound a receive, to demand that one write arrive as one read, to fl
 descriptor before an exec, to create a pair before a fork, or to keep a loop from
 minting a port, so those ground in it. Remove it and `nix` is still the OS crate,
 descriptors are still owned types, the child's ends still land at 3 and 4, and the
-fork still runs three calls, so those ground in nothing. **Twenty-nine claims
+fork still runs three calls, so those ground in nothing. **Forty-seven claims
 grounding in no invariant is the expected result and not a gap**, per Document
 Format section 4: most of what a Spec elects is a format, a name shape, a count, or
 an ordering of its own interior, and representation is what the invariants are not
-about.
+about. **Both figures in this paragraph read against the sixty-six**, the
+disclosure below covering the narrative below it and not this one, which is the
+reading two findings of the audit of 2026-09-13 reached opposite answers on. The
+numerator has not moved since it was written and the denominator had, so the
+paragraph read as a live count and was one, wrong by eighteen in both terms.
 
 **Four calls are worth stating rather than left to be read.** The descriptor
 numbering is ungrounded on the apex's own words, 5.1 leaving how a far end
@@ -2532,10 +2569,13 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Sixty-six records in all as of 2026-09-06, measured
-from the records, the restoring open's joining that day, where the narrative below
+prohibition is section 2.3's. Sixty-six records in all, measured from the records
+and re-measured 2026-09-15 at the same figure, where the narrative below
 reads forty-eight as of the inversion of 2026-08-05 and did not move with the acts
-since, which is named here rather than restated. Forty-eight as of the inversion of
+since, which is named here rather than restated. **The disclosure reaches the
+narrative below this sentence and never the paragraphs above it**, stated because
+it was read both ways: the grounded and ungrounded figures above are live counts
+and are re-derived with this act. Forty-eight as of the inversion of
 2026-08-05, which retired the adopted end's close-on-exec, that end no longer
 existing, and added the coordination bind, the accept's credential check, and
 the bind's refusal to unlink, all three of section 2.3. Twenty come from this
@@ -2609,6 +2649,14 @@ for the organs whose side is unwritten.
 - Deterministic assembly: one working structure assembles one prompt,
   byte-identical across runs, confirmed by watching the comparison fail when
   iteration order stops being sequence order.
+- The order of parts: a prompt assembled from an identity, one message, and one
+  schema renders the three in that order, confirmed by watching the assertion
+  fail when the render puts the schemas before the messages, and again when it
+  puts the identity last. **The determinism bullet above sees neither move**,
+  both reorderings being deterministic, which is why the order carries a watch
+  of its own rather than riding the comparison. Retagged from `review` here,
+  the election having named this test as the one not bought while the suite
+  held it.
 
 ```graph
 node: harness-path-shapes-pinned-by-doctest
