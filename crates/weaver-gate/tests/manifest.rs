@@ -10,6 +10,40 @@
 
 use std::process::Command;
 
+/// One place the cargo calls are made, so a flag change cannot land in one
+/// copy and leave two tests asserting about different resolutions.
+///
+/// `--locked --offline` and the manifest path are appended here rather than at
+/// each call site. The lock file is the subject: a resolution that fetched or
+/// updated would be asserting about a tree this repository does not record.
+/// The manifest path is passed because the working directory a test binary
+/// runs in is not this crate's, and a call that resolved another workspace
+/// would answer a question nobody asked.
+fn cargo_output(args: &[&str]) -> String {
+    let mut full: Vec<&str> = args.to_vec();
+    full.extend_from_slice(&[
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"),
+    ]);
+    let out = Command::new(env!("CARGO"))
+        .args(&full)
+        .output()
+        .unwrap_or_else(|error| panic!("cargo {} runs: {error}", args[0]));
+    assert!(
+        out.status.success(),
+        "cargo {} failed: {}",
+        args[0],
+        String::from_utf8_lossy(&out.stderr)
+    );
+    String::from_utf8(out.stdout).expect("utf8")
+}
+
+fn cargo_json(args: &[&str]) -> serde_json::Value {
+    serde_json::from_str(&cargo_output(args)).expect("cargo output is json")
+}
+
 /// One helper for both depths, so a flag change cannot land in one copy and
 /// leave the two tests asserting about different resolutions.
 fn resolved_tree(edges: &str, depth: Option<&str>) -> String {
@@ -21,25 +55,12 @@ fn resolved_tree(edges: &str, depth: Option<&str>) -> String {
         edges,
         "--prefix",
         "none",
-        // The lock file is the subject: a resolution that fetched or updated
-        // would be asserting about a tree this repository does not record.
-        "--locked",
-        "--offline",
     ];
     if let Some(depth) = depth {
         args.push("--depth");
         args.push(depth);
     }
-    let out = Command::new(env!("CARGO"))
-        .args(&args)
-        .output()
-        .expect("cargo tree runs");
-    assert!(
-        out.status.success(),
-        "cargo tree failed: {}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-    String::from_utf8(out.stdout).expect("utf8")
+    cargo_output(&args)
 }
 
 fn crate_names(tree: &str) -> Vec<String> {
@@ -145,10 +166,15 @@ fn the_floor_link_is_taken_without_config() {
     );
 }
 
-/// **One binary.** The gate is its own executable and no other crate links it,
-/// so the manifest declares exactly one `[[bin]]`. The bin target's own use of
-/// the lib target beside it is this crate's wiring, per `weaver-gate-Spec`
-/// section 1, and the no-organ test above is what holds the linkage claim.
+/// **One binary.** The gate is its own executable, so the manifest declares
+/// exactly one `[[bin]]`. The bin target's own use of the lib target beside it
+/// is this crate's wiring, per `weaver-gate-Spec` section 1.
+///
+/// **This does not hold "no other crate links it".** The no-organ test above
+/// reads `cargo tree -p weaver-gate`, which is the forward relation, what this
+/// crate links. A workspace member adding `weaver-gate` to its dependencies
+/// leaves every test in this file passing. The reverse half is review's, per
+/// Spec section 1, and wants a reverse walk or a workspace-wide manifest scan.
 #[test]
 fn the_manifest_declares_one_binary() {
     let manifest = manifest();
@@ -159,61 +185,82 @@ fn the_manifest_declares_one_binary() {
     );
 }
 
-/// **The package has a lib target.** It is the precondition of an instrument
-/// this crate claims rather than a fact about the crate's shape, and the
-/// reasoning is `weaver-gate-Spec` section 1's - not restated here, per gate
-/// G5. Fold the modules into the binary and cargo collects no doctest,
-/// `gate-bind-shapes-pinned-by-doctest` goes unenforced, and every other gate
+/// **The lib target stands and collects the doctests.** It is the precondition
+/// of an instrument this crate claims rather than a fact about the crate's
+/// shape, and the reasoning is `weaver-gate-Spec` section 1's - not restated
+/// here, per gate G5.
+///
+/// **Two assertions, because the property has two silent ways out.** Fold the
+/// modules into the binary and there is no lib target. Keep the target and set
+/// `doctest = false` and the target stands while `cargo test -p weaver-gate`
+/// stops running the pins. Either way
+/// `gate-bind-shapes-pinned-by-doctest` goes unenforced and every other gate
 /// still passes.
 ///
-/// **The subject is the resolved target and not the `[lib]` table**, because
-/// cargo auto-discovers `src/lib.rs` whether or not the table is written. A
-/// test that scanned the manifest for `[lib]` would fail on a removal that
-/// changes nothing and pass on the removal that matters, which is the reading
-/// this test was rewritten out of on 2026-09-14.
+/// **A third way out is held by the compiler and not by this test.** The pins
+/// are doctests on `hook.rs`, and a `hook` that left the lib's module graph
+/// would take them with it - but `relay.rs:34` has `use crate::hook::Admitted`,
+/// so removing the declaration is `error[E0432]` and not a silent
+/// unenforcement. Making the module private does not remove it: measured
+/// 2026-09-15, `mod hook;` with a re-export builds and the two compile-fail
+/// doctests are still collected. **An assertion on `pub mod hook;` would fail
+/// on that change while the property held**, which is why this test does not
+/// carry one.
 ///
-/// Perturbation: fold the modules into `main.rs` with `mod` declarations,
-/// delete `src/lib.rs` and drop the `[lib]` table - the refactor that ends
-/// doctest collection while leaving a crate that builds. Watched under exactly
-/// that on 2026-09-14: this test fails naming the target, the other five in
-/// this file pass, and `cargo test -p weaver-gate --doc` answers "no library
-/// targets found in package `weaver-gate`" where it had run three doctests.
-/// **Deleting `src/lib.rs` alone is not the watch** - the bin's `use
-/// weaver_gate::` lines stop compiling, so the test never runs and a failure
-/// that proves nothing is reported instead.
+/// **Two removals nothing here reaches**, per the Spec clause: a doctest
+/// deleted from `hook.rs`, and the pins moved to a module no target compiles.
+/// Both want an inventory of the collected doctests, and `cargo test --doc`
+/// inside a `cargo test` waits on the build lock - a hang being the one failure
+/// a watch cannot report.
+///
+/// Perturbations, each run alone on 2026-09-15 with the other five tests in
+/// this file passing:
+///
+/// 1. Modules folded into `main.rs`, `src/lib.rs` deleted, `[lib]` dropped -
+///    fails at the target, and `--doc` answers "no library targets found".
+/// 2. `doctest = false` added to `[lib]` - fails at the doctest field, and
+///    `cargo test -p weaver-gate --no-fail-fast` runs no `Doc-tests` section
+///    where it had run two compile-fail pins. An explicit `cargo test --doc`
+///    still collects them, the flag overriding the target setting, so the
+///    removal is invisible to that one command and visible to the gate.
+/// 3. `pub mod hook;` made private with a re-export - builds, collects, and is
+///    not a removal of the property, which is the finding above.
+///
+/// **Deleting `src/lib.rs` alone is not among them**: the bin's `use
+/// weaver_gate::` lines stop compiling, so the test never runs and a build
+/// failure that proves nothing is reported instead.
 #[test]
-fn the_package_has_a_lib_target() {
-    let out = Command::new(env!("CARGO"))
-        .args([
-            "metadata",
-            "--no-deps",
-            "--format-version",
-            "1",
-            "--locked",
-            "--offline",
-        ])
-        .output()
-        .expect("cargo metadata runs");
-    assert!(
-        out.status.success(),
-        "cargo metadata failed: {}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let meta: serde_json::Value = serde_json::from_slice(&out.stdout).expect("metadata is json");
-    let has_lib = meta["packages"]
+fn the_lib_target_stands_and_collects_the_doctests() {
+    let meta = cargo_json(&["metadata", "--no-deps", "--format-version", "1"]);
+    let package = meta["packages"]
         .as_array()
         .expect("packages is an array")
         .iter()
-        .filter(|p| p["name"] == "weaver-gate")
-        .flat_map(|p| p["targets"].as_array().expect("targets is an array"))
-        .any(|t| {
-            t["kind"]
-                .as_array()
-                .is_some_and(|ks| ks.iter().any(|k| k == "lib"))
-        });
-    assert!(
-        has_lib,
-        "no lib target: cargo collects no doctest and the bind-shape pins go unenforced"
+        .find(|p| p["name"] == "weaver-gate")
+        // Named apart from the assertions below so a metadata call that
+        // returned another workspace blames itself rather than the target.
+        .expect("weaver-gate is not in this metadata: the call resolved another workspace");
+
+    // A lib target's `kind` mirrors its crate types, so `crate-type =
+    // ["rlib"]` reports `rlib` with doctests still collected. Matching the
+    // family keeps this from failing on a change that breaks nothing.
+    const LIB_KINDS: [&str; 6] = ["lib", "rlib", "dylib", "cdylib", "staticlib", "proc-macro"];
+    let lib = package["targets"]
+        .as_array()
+        .expect("targets is an array")
+        .iter()
+        .find(|t| {
+            t["kind"].as_array().is_some_and(|ks| {
+                ks.iter()
+                    .any(|k| k.as_str().is_some_and(|k| LIB_KINDS.contains(&k)))
+            })
+        })
+        .expect("no lib target: cargo collects no doctest and the bind-shape pins go unenforced");
+
+    assert_eq!(
+        lib["doctest"],
+        serde_json::Value::Bool(true),
+        "doctest = false: `cargo test -p weaver-gate` runs no doctest and the pins go unenforced"
     );
 }
 

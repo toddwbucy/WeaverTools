@@ -2,8 +2,9 @@
 //! conforms: gate-channel-state-three-positions
 //! conforms: gate-closure-is-death
 //!
-//! Entry, the two hygiene sets, and wiring, and nothing else, per
-//! `weaver-gate-Spec` sections 1 and 2.
+//! Entry, the serve loop, and the dispatch, per `weaver-gate-Spec` section 1.
+//! The two hygiene sets are `channel.rs`'s, performed inside `adopt`, which
+//! this file calls and does not repeat.
 //!
 //! **The exchange service is a serial loop over the channel.** A directive out
 //! of order for the channel's state answers `OutOfOrder`, per
