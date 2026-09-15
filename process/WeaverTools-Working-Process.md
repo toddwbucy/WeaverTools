@@ -899,17 +899,21 @@ edges. Which figure a check reads therefore matters, and the closing checklist's
 item 5 reads nodes. A rebuild returning any other figure has found either an
 unlanded edit or an assertion an act changed without recording.
 
-**Code is not ingested into the graph as of the v3 build, and that is deliberate.**
-The v4 build named in `docs/project/HANDOFF-2026-09-12-the-graph-build` reverses it
-crate by crate, which is the point of taking one crate at a time - and until that
-build runs, the standing position below is the one in force. The earlier ground
-was that conformance headers cited retired assertions and ingesting would bake
-dangling edges into the map. That count reached zero on 2026-08-08. The standing
-ground is the operator's, recorded here because a later reader will find the
-earlier one discharged and needs the current one: the architecture is not stable
-while acts like the 2026-08-05 re-entry still move it, and a conformance graph
-built from moving code would record a shape neither the documents nor the code
-will keep.
+**Code is ingested into the graph, and the position that it should not be is
+retired as of 2026-09-14.** The v4 build named in
+`docs/project/HANDOFF-2026-09-12-the-graph-build` reversed it crate by crate, and
+the builds since carry the code layer beside the document layer. Two grounds were
+given for holding code out and both are discharged. The earlier was that
+conformance headers cited retired assertions and ingesting would bake dangling
+edges into the map, and that count reached zero on 2026-08-08. The later was the
+operator's: the architecture is not stable while acts like the 2026-08-05 re-entry
+still move it, and a conformance graph built from moving code would record a shape
+neither the documents nor the code will keep. **What that ground did not anticipate
+is the question the graph answered first**, which is where a document and the code
+disagree about a count, a file list, or a name. That question does not wait on the
+architecture settling, and the audits of 2026-09-13 and 2026-09-14 are what it
+produced. Both are dated readings rather than members of the set. `weaver-agents-PRD`
+section 11 carries the same retirement, landed in the same act.
 
 **The seat shifted 2026-08-19, on the operator's direction: from building
 the framework to using it.** The apex deliverable stands and is exceeded,

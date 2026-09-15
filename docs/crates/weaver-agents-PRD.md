@@ -17,11 +17,13 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 **Revised:** 2026-09-14, section 11 counts six devices and a graph that exists.
 The section predicted that no graph would measure code against this document set
 during this program and that the mapping graph and the conformance graph would
-share a word and nothing else. `WeaverTools_v5` holds both layers, so the
-prediction is recorded as retired rather than deleted. The two devices that
-arrived since, clippy on the operator's ruling of 2026-09-06 and the census on
-the ruling of 2026-09-11, are appended as 5 and 6 rather than sorted in, because
-the corpus cites the first four by their ordinal.
+share a word and nothing else. The graph holds both layers, so the prediction is
+recorded as retired rather than deleted, and the same act retires it in Working
+Process section 7. The two devices that arrived since, clippy on the operator's
+ruling of 2026-09-06 and the census on the ruling of 2026-09-11, are appended as
+5 and 6 rather than sorted in, because device 3 is the one this corpus cites by
+its ordinal. **No count is written here**, the figures belonging to a dated
+reading and living in `docs/project/audit-2026-09-14-the-corpus-against-v5.md`.
 
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
@@ -1134,31 +1136,33 @@ is party to. A Spec written first documents code instead of governing it.
 
 ## 11. Enforcement
 
-**The graph exists, and this section was written before it did.** `WeaverTools_v5`
-stands on the HADES server, read 2026-09-14: one named graph, `codebase_graph`, over
-35 collections, holding both layers at once. The document layer carries 413 assertion
-nodes, and the code layer carries 185 files with 481 `cites` edges running from a file
-to the assertion its conformance header names. The PRD to Spec to contract to code
-chain is therefore measurable end to end, and
-`docs/project/audit-2026-09-13-the-corpus-against-its-code.md` with its second pass of
-2026-09-14 are the first two readings taken through it.
+**The graph exists, and this section was written before it did.** The graph on the
+HADES server holds both layers at once: the documents, with the assertion nodes
+declared in them, and the code files, with a `cites` edge running from each file to
+the assertion its conformance header names. Section 0 declares the root node it is
+built from. So the code to assertion to document chain this section states is
+queryable rather than only readable, and the figures live in
+`docs/project/audit-2026-09-14-the-corpus-against-v5.md`. They live there and not
+here because a count written into a charter is stale by the next merge and then
+argues with the query, which is why a measurement belongs to a dated reading.
 
 **What that retires is the prediction that the two graphs share a word and nothing
-else.** This section held that a conformance graph is built from code and asks whether
-the documents were obeyed, that a mapping graph is built from documents and asks
-whether they cohere, and that only the second belonged to this program because the
-first needs settled intent and this program unsettles intent deliberately. They are
-one database now, and why the prediction failed is worth keeping: the graph answered
-a cheaper question first, which is where a document and the code disagree about a
-count, a file list, or a name. That question does not wait on intent settling. It
-waits on both layers being in one place.
+else.** This section held that a conformance graph is built from code and asks
+whether the documents were obeyed, that a mapping graph is built from documents and
+asks whether they cohere, and that only the second belonged to this program because
+the first needs settled intent and this program unsettles intent deliberately. They
+are one graph now, and why the prediction failed is worth keeping: the graph
+answered a cheaper question first, which is where a document and the code disagree
+about a count, a file list, or a name. That question does not wait on intent
+settling. It waits on both layers being in one place. Working Process section 7
+carried the same prediction and this act retires it there in the same sweep.
 
-**The devices below are not retired by it.** The graph indexes them rather than
-replacing them, because each of them is a check a person or a compiler performs and
-what the graph adds is the query that finds where one was never performed. The chain
-is enforced by the six devices below, and none of them requires a database. A clean
-graph reading is subject to the closing line of this section as surely as a clean
-gate is.
+**The devices below are not retired by it.** The graph indexes them and does not
+replace them, because each of them is a check a person or a compiler performs and
+what the graph adds is the query that finds where one was never performed. The PRD
+to Spec to contract to code chain is enforced by the six devices below, and a
+reading of the graph stands under this section's closing line as surely as a clean
+gate does.
 
 What enforces:
 
@@ -1173,17 +1177,16 @@ What enforces:
 4. **Human and third-party review**, reading the review body rather than the
    thread count.
 5. **Clippy at deny-warnings**, which became a gate on the operator's ruling of
-   2026-09-06. Working Process section 6 places it as the floor beside `cargo
-   fmt`, so it carries no number in the H-gate series and is not H5, which is
-   the architecture seat's advisory pass. What has to pass is the crate the act
-   touched rather than the workspace, and `CLAUDE.md` carries the invocation.
-6. **The census**, `process/gates/census.py`, which is H6 on the operator's ruling
-   of 2026-09-11. It is the only device that compares a claim in a document
-   against a fact in code, every other one verifying an artifact against itself.
-   Working Process section 6 owns its rule, and this section does not restate it.
+   2026-09-06. It is the floor beside `cargo fmt` and carries no number in the
+   H-gate series, so it is not H5, which is the architecture seat's advisory
+   pass. `CLAUDE.md` states its scope and its invocation.
+6. **The census**, `process/gates/census.py`, which is H6 on the operator's
+   ruling of 2026-09-11. Working Process section 6 states its rule, and this
+   section does not.
 
 The last two arrived after the first four and are appended rather than sorted in,
-because this corpus cites these entries by their ordinal.
+because device 3 is cited by its ordinal elsewhere in this corpus and renumbering
+would move what those citations point at.
 
 A clean automated gate is evidence that the gate did not fire. It is not
 evidence of correctness.
