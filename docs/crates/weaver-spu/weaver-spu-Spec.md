@@ -3,6 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
+**Revised:** 2026-09-15, the layout mirrors the source tree and section 10's counts
+are read from it. Section 1's table named two paths under `decoder/` that no file
+answers to and left six modules unlisted, and it now mirrors
+`crates/weaver-spu`. Section 10 reads eighty-nine records against fourteen
+`grounds` edges from eleven of them and seventy-eight grounding in no invariant,
+names the third record carrying two edges, and states where each record is declared
+in place of a sorting split that had gone two counts stale. No record is added,
+removed, or retagged. Per issue #569.
+
 **Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
 Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
 where `weaver-gate-Spec` section 2 and `weaver-harness-Spec` section 2.2 already
@@ -490,22 +499,37 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 
 **Layout.** The crate is the umbrella's substrate, per charter section 2: the
 family libraries and the socket presentation, with each semantic domain in its
-own submodule. One submodule exists.
+own submodule. One submodule exists. **The table mirrors the source tree** -
+twenty-five modules under `src`, the seven family modules standing on one line
+here, with the build script and the kernels directory beside them. The test
+targets are section 1.2's and are not repeated here.
 
-    src/main.rs             entry, the hygiene sets, the service loop
-    src/channel.rs          the two channel ends and envelope I/O, section 2
-    src/residency.rs        admit and release, the device, section 3
-    src/family/mod.rs       the family surface and its registry, section 5
-    src/family/<name>.rs    one module per family, template and parsing
-    src/decoder/mod.rs      the decode submodule, section 4
-    src/decoder/session.rs  the resident session and its append path
-    src/decoder/backend.rs  the backend seam, GGUF and native as peers
-    src/decoder/gguf.rs     the GGUF backend
-    src/decoder/native.rs   the candle-native backend
-    src/decoder/measure.rs  measurement production, section 6
-    src/decoder/readout.rs  the residual tap, section 7
-    src/gpu/                the CUDA forward path, sharding, and its kernels
-    kernels/transformer.cu  the salvaged kernels, section 10
+    src/lib.rs                  the module declarations, and the lib target the
+                                doctest instruments run under
+    src/main.rs                 entry, the hygiene sets, the service loop
+    src/bin/classify.rs         the classify arm's own binary, section 11
+    src/channel.rs              the two channel ends and envelope I/O, section 2
+    src/residency.rs            admit and release, the device, section 3
+    src/artifact.rs             resolution, the header read, and the weights
+                                hash, section 3's free steps
+    src/measurement.rs          measurement production, section 6
+    src/readout.rs              the residual tap and its reduction, section 7
+    src/sampling.rs             the knobs and their dispositions, section 8
+    src/family/mod.rs           the family surface and its registry, section 5
+    src/family/<name>.rs        one module per family, seven of them, template
+                                and parsing
+    src/decoder/mod.rs          the decode submodule, section 4
+    src/decoder/session.rs      the resident session and its append path
+    src/decoder/backend.rs      the backend seam, GGUF and native as peers
+    src/decoder/gguf.rs         the GGUF backend
+    src/decoder/gguf_tap.rs     the GGUF tap, the readout's one unsafe surface
+    src/decoder/native.rs       the candle-native backend
+    src/decoder/native_pair.rs  the native forward sharded across two devices
+    src/gpu/mod.rs              the device queries the admission judgment reads,
+                                compiled under `cuda` alone, section 3
+    build.rs                    the kernel compile, gated on `cuda`
+    kernels/transformer.cu      the salvaged kernels, section 10
+    kernels/PROVENANCE.md       what crossed and what has not, section 10
 
 **A later operation type is a sibling of `decoder/`, in its own process.**
 Per charter section 13.1 the encoder and the other operation types arrive as
@@ -3360,26 +3384,29 @@ comparisons crossed is therefore a fact about the carry that a reader
 establishes and a runner cannot.
 
 **Which invariant each claim serves, and why most serve none.** Fourteen `grounds`
-edges run from eleven of the seventy-nine: four to
+edges run from eleven of the eighty-nine: four to
 `axiom-contract-is-a-complete-interface`, six to
 `axiom-floor-is-vocabulary-behavior-is-socket`, three to
-`axiom-harness-integrates-by-the-loop`, and one to `axiom-organ-and-submodule`, the two
-out-of-order refusals carrying two edges each because the contract states the ordering
-and the loop is answerable for that ordering holding. **The test applied is whether the
-axiom is the reason the claim exists, or the claim a precondition of the axiom's own
-stated reason.** Remove the socket invariant and this crate has no reason to be a
-process the harness starts rather than a library it calls, no reason to carry a
+`axiom-harness-integrates-by-the-loop`, and one to `axiom-organ-and-submodule`.
+**Three records carry two edges each**, which is the whole of the difference between
+the fourteen and the eleven: the two out-of-order refusals, because the contract
+states the ordering and the loop is answerable for that ordering holding, and the
+floor-link record of section 1.1, which says at its own clause that it carries both
+edges. **The test applied is whether the axiom is the reason the claim exists, or
+the claim a precondition of the axiom's own stated reason.** Remove the socket
+invariant and this crate has no reason to be a process the harness starts rather
+than a library it calls, no reason to carry a
 truncation obligation attached to a socket type nobody would have elected, and no reason
 to refuse a signal-borne cancel, so those three ground in it. **The two hygiene claims
 of section 2 ground in it by the second relation rather than the first**, that invariant
 resting possession-as-authentication on no third party reaching a socket with no
 address, and a descriptor that crosses an exec or a process that admits an attach each
-being such a reach. **The record total this paragraph reads against is stale and is
-`act-12`'s**, the crate carrying eighty-nine records rather than seventy-nine, so the
-ungrounded figure below is the one derived from it rather than a fourth count this act
-could correct on its own.
-Remove it and the session is still append-only, the registry still substitutes nothing,
-and every sampling knob still carries a disposition, so those ground in nothing.
+being such a reach. **The floor-link record is the sixth**, and its edge there is the
+plainest of them: the crate links the floor at all because a socket cannot carry
+shared vocabulary, which section 1.1 argues where the record sits.
+Remove the invariant and the session is still append-only, the registry still
+substitutes nothing, and every sampling knob still carries a disposition, so those
+ground in nothing.
 `axiom-join-key-travels-with-the-work` takes nothing from this crate, and the absence is
 that invariant's own scope rather than a gap: every directive on the residency seam
 belongs to no turn and apex section 5.2 exempts it by name, and on the decode seam,
@@ -3404,7 +3431,7 @@ count exists for the first walk above, a writable handle to the agent's own reco
 sitting inside the agent's model server, and the discipline it checks is the
 harness's at the fork rather than the loop's at a seam.
 
-**Seventy-one claims grounding in no invariant is the expected result and not a gap**,
+**Seventy-eight claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4, and the ratio is low here for a structural reason
 rather than an unfinished one. The bulk of this document is decode mechanics,
 sampling, family libraries, kernels, device judgment, residency bookkeeping, and
@@ -3433,12 +3460,19 @@ re-feed act of 2026-08-31 without this count moving, that act's own
 oversight, and the column act of 2026-09-01 that recounts here adds three -
 the registry, the crossing, and the arrives-or-faults rule the review seat
 held it to - and moves one from review to perturbation, the unasked-vector
-watch its ground obliged it to buy. **The split between this section's sorting
-and the elections outside it is owed and is not restated here**: it read
-thirty-one and twenty-nine against a total of sixty, and the nineteen records
-since are not divided by any count this act can take mechanically. The total
-and the tag census below are verifiable and are corrected. The split wants the
-reading that produced it, and is flagged rather than guessed.
+watch its ground obliged it to buy. **The split this paragraph used to owe, this
+section's sorting against the elections outside it, is retired for a count that
+needs no reading.** It read thirty-one and twenty-nine against a total of sixty,
+was never brought forward, and by 2026-09-15 disagreed with the total three
+paragraphs above it: that sixty and the nineteen records it put since sum to
+seventy-nine where the crate carries eighty-nine. It was never recoverable
+mechanically either, since which bullet here covers which record is a judgment and
+an election is a reading rather than a tag. Where each record is declared is a
+fact, and this is the count, each subsection counting to its section: nine in
+section 1, seven in section 2, eleven in section 3, eighteen in section 4, nine in
+section 5, seven in section 6, ten in section 7, two in section 7.5, five in
+section 8, two in section 8.5, three in section 9, four in this section, and two
+in section 11.
 
 A divided claim's two halves both count with the sorting, per
 Document Format section 3, which is where the absence and width divisions of
@@ -3467,12 +3501,13 @@ conditions of the admission judgment and the release's free-before-answer
 ordering. Those reach the driver through a seam a suite could double and this
 Spec does not introduce, so they are unbought for the seam rather than for the
 watch, and introducing that seam is a larger act than this one. Every `review`
-tag in this document states its ground at its own clause, and outside three
+tag in this document states its ground at its own clause, and outside two
 cases the ground is that no instrument was bought rather than that none exists.
-The three exceptions say so where they sit: the absence of anything laid in for
+The two exceptions say so where they sit: the absence of anything laid in for
 an operation type that does not exist, and the kernels' comparisons above.
-Section 7's unasked-vector watch stood third among them until the column act
-built its seam and bought it, as its ground obliged.
+Section 7's unasked-vector watch was a third of them until the column act
+built its seam and bought it, as its ground obliged, and it carries
+`perturbation` rather than `review` since that act.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section
