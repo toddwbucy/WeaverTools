@@ -1,4 +1,4 @@
-# weaver-web-connector configuration (Spec section 3).
+# weaver-web-connector configuration (Spec section 8).
 # Default path: /etc/weaver-web/connector.toml, override with --config.
 # The connector runs on the agents' own box as the operator's uid and
 # holds every box-bound reach. Box facts live here: the agent roster

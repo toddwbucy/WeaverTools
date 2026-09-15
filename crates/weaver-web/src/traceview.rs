@@ -1,9 +1,14 @@
 //! The trace view (Spec section 6), split across the link (Spec
-//! section 8): the
-//! connector tails each agent's NDJSON file and streams every event
-//! and mark over the link, the server holds the bounded rings and the
-//! per-agent broadcast the views render from. Rotation, truncation,
-//! and link loss all surface as discontinuity marks, never smoothed.
+//! section 8): the connector tails each agent's NDJSON file and streams
+//! every event and mark over the link, the server holds the bounded
+//! rings and the per-agent broadcast the views render from. Rotation,
+//! truncation, and link loss all surface as discontinuity marks, never
+//! smoothed.
+//!
+//! **Section 8 charters the link and names none of its frames**, so the
+//! roster below and the discontinuity mark cite it for the link and not
+//! for the thing named. Discontinuity appears nowhere in that Spec and
+//! roster appears once, in another sense.
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -39,9 +44,10 @@ struct View {
 }
 
 /// The server's per-agent views, fed by the link. Agents register
-/// dynamically as hellos announce them (roster-by-hello, Spec
-/// section 16) and are never removed: a view over a departed agent
-/// stays readable, honestly stale.
+/// dynamically as hellos announce them, roster-by-hello (Spec
+/// section 8, and the frame rule in this module's header). Views are
+/// never removed: a view over a departed agent stays readable,
+/// honestly stale.
 #[derive(Clone)]
 pub struct TraceViews {
     views: Arc<Mutex<HashMap<String, Arc<View>>>>,

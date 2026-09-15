@@ -1,4 +1,6 @@
-# weaver-web lifecycle verbs (Spec section 11). Install as
+# weaver-web lifecycle verbs (Spec section 7.2, which charters the
+# verbs and names no privilege: sudo and the widening below appear
+# nowhere in that Spec and are the deployment's). Install as
 # /etc/sudoers.d/weaver-web (mode 0440, visudo -c to verify).
 # The one privilege widening the application asks of the box.
 #

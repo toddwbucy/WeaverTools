@@ -1,10 +1,17 @@
-//! The HTTP surface (Spec section 6). Two sub-surfaces mirror the
-//! framework's two external boundaries and the two roles the PRD
-//! names: `user` is the gate surface (channels, messages), `admin` is
-//! the operator surface (lifecycle verbs, trace views), gated on the
-//! participant's role. The browser is a display engine, a constraint the
-//! retired charter carried at its section 3 and the rewrite states
-//! nowhere, per the register.
+//! The HTTP surface. **Spec section 6 is the surfaces tree's and this
+//! module is not a surface**: it is the split that holds both halves,
+//! and `docs/project/inventory-weaver-web-code.md` holds it unruled
+//! rather than retiring it, waiting on the charter's section 6 trigger
+//! being met. So that number says where a surface is chartered and not
+//! where this one is.
+//!
+//! Two sub-surfaces mirror the framework's two external boundaries and
+//! the two roles the PRD names: `user` is the gate surface (channels,
+//! messages) and the conversation half the rewrite retired, `admin` is
+//! the operator surface (lifecycle verbs, trace views) and the
+//! instrument's ancestor. Both are gated on the participant's role. The
+//! browser is a display engine, a constraint the retired charter carried
+//! at its section 3 and the rewrite states nowhere, per the register.
 
 pub mod admin;
 pub mod user;
@@ -101,7 +108,8 @@ pub async fn session_participant(
 
 /// The agents the surfaces name: the link's latest roster, which
 /// survives a link drop so a known agent stays named rather than
-/// vanishing (Spec section 8).
+/// vanishing. Spec section 8 charters the link and names no roster, so
+/// the survival rule is this module's.
 pub async fn nav_agents(state: &AppState) -> Vec<String> {
     state.link.roster().await
 }

@@ -24,10 +24,18 @@ license = "Apache-2.0"
 publish = false
 description = "The WeaverTools suite's frontend: channel, lifecycle, and trace surfaces over weaver agents."
 
-# **The first database dependency in this workspace, and it is this crate's
-# alone.** A frontend holding its own store is ordinary, and nothing else in
-# the workspace carries one. Whether the tree now has a database, or whether
-# this stays a property of one member, is held at the Spec's section 15.
+# **This crate's store is Postgres and it is not the workspace's only one.**
+# A frontend holding its own store is ordinary. `weaver-state` carries
+# `rusqlite` on by default, as the sqlx note below turns on, so the claim
+# that nothing else in the workspace carries a database was false from that
+# dependency's arrival. **Whether the tree now has a database, or whether
+# this stays a property of one member, was the retired Spec's section 15
+# election, and the rewrite dropped it.** The licence election stood beside
+# it in that same section and was dropped too, then restored at section 10
+# on 2026-09-06, which is the shape a restore takes here and is why the
+# pointer eight lines above resolves and this one does not. No standing
+# section holds this one, so restoring it is the operator's rather than
+# this manifest's.
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"
