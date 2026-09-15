@@ -117,30 +117,34 @@ from: gate-one-binary
 to: axiom-floor-is-vocabulary-behavior-is-socket
 ```
 
-**Layout.** One module per obligation, with one placement.
+**Layout.** One module per obligation, with the lib target beside the entry.
 
+    src/lib.rs      the module roots, and the target the bind-shape pins run under
     src/main.rs     entry, the two hygiene sets, and wiring, and nothing else
     src/channel.rs  the seam end and the exchange service, section 2
     src/hook.rs     the instruction's resolution, the bind, the predicate, section 3
-    src/relay.rs    the pass-through, deferred, section 4
+    src/relay.rs    the pass-through, section 4
+    src/tools.rs    the shell execution, this crate's one held tool, section 8
 
-Four files, `relay.rs` standing as a placement the way the harness Spec
-places its deferred modules.
+Six files. `lib.rs` is not an API for a consumer: section 6's bind-shape pins
+are compile-fail doctests and cargo runs doctests for lib targets alone, so a
+bin-only crate would carry them as text that never executes. The binary is
+`main.rs` alone, per the manifest's one `[[bin]]`.
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly
 feature used.
 
-**The dependency set is two internal crates and two external ones, the
-second internal as of the tool workflow's opening act.** `weaver-types` is
-taken **without its `config` feature**: this crate reads no configuration
-file, per charter section 3, the gate instruction arriving over the seam
-instead, so no parser enters a process whose whole argument is that it holds
-little, which is the thinness the feature gate exists for, per
-`weaver-types-Spec` section 1. `weaver-traits` joined when this crate became
-the tool contract's executor, per `weaver-harness-gate-contract` section 7:
-the trait is dispatched here and nowhere the loop reaches, which is the
-boundary the dependency direction states - the floor's tool contract is in
-scope for the organ beyond the membrane and absent from the loop's seat.
+**The dependency set is one internal crate and two external ones.**
+`weaver-types` is taken **without its `config` feature**: this crate reads no
+configuration file, per charter section 3, the gate instruction arriving over
+the seam instead, so no parser enters a process whose whole argument is that
+it holds little, which is the thinness the feature gate exists for, per
+`weaver-types-Spec` section 1. It is the charter's one floor link and the
+whole internal set. **`weaver-traits` is not taken.** It joined with the tool
+workflow's opening act as the tool contract's executor and left with the tool
+boundary ruling of 2026-08-18: the shell is this crate's own verb, dispatched
+with no table, so the trait has no consumer here, and
+`weaver-harness-gate-contract` section 7 draws nothing from it.
 `serde_json` encodes and decodes the seam's envelopes and touches no client
 byte, because the client's line is octets this crate must not read, per the
 opacity rule. `nix` is the OS surface, on the grounds
@@ -900,11 +904,11 @@ overclaim this corpus refuses in prose and has no reason to admit in a graph.
 The load-bearing absence this crate relies on, `PeerIdentity` deriving no
 `Deserialize`, is the floor's pin, per `weaver-types-Spec` section 3.
 
-**Enforced by the manifest.** The internal dependencies are exactly
-`weaver-types` without the `config` feature and, as of the tool workflow's
-opening act, `weaver-traits` for the tool contract this crate executes, read
-against the graph's floor links under gate H2. No async runtime, no logging crate, and no YAML
-implementation in the resolved tree, by the build-time `cargo tree`
+**Enforced by the manifest.** The internal dependency is exactly
+`weaver-types` without the `config` feature, read against the graph's floor
+links under gate H2, `weaver-traits` having left with the tool boundary
+ruling of 2026-08-18, per section 1. No async runtime, no logging crate, and
+no YAML implementation in the resolved tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
 **Which invariant each claim serves, and why eighteen serve none.** Seventeen
@@ -926,7 +930,7 @@ invariant because
 `weaver-harness-gate-contract` section 3 states the ordering outright, that
 lower is last and terminal and that turn exchanges are valid only between a
 completed raise and a lower, so the claim was never the internal
-representation that invariant excludes. **Eight claims grounding
+representation that invariant excludes. **Eighteen claims grounding
 in no invariant is the expected result and not a gap**, per Document Format
 section 4: most of what this document elects is a representation, a
 placement, or a hygiene set the charter's walks argue, and representation is
@@ -1014,7 +1018,7 @@ sections 1 through 5, rather than gathered here, per Document Format section
 block here would sit apart from the prose that earns it. One record is the
 exception and sits at the end of this section, the doctest pinning of the two
 bind-site shapes, whose argument is nowhere else and whose general
-prohibition is section 3's. Thirty-three records in all, seventeen from this
+prohibition is section 3's. Thirty-four records in all, seventeen from this
 section's sorting with the walks counted in and the rest from the elections
 outside it, a split's two halves both counting as this section's because
 neither was elected and one was divided out, per Document Format section 3.
