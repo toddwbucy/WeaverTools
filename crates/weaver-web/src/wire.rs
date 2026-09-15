@@ -569,7 +569,7 @@ async fn serve_connection(
 /// The connector's whole life: dial the server, say hello, tail the
 /// traces, answer asks, and redial with backoff when the link drops.
 /// Reconnection re-runs the hello and a fresh trace backfill (Spec
-/// section 16).
+/// section 8).
 pub async fn connector_run(cfg: Arc<ConnectorConfig>) {
     let gates: Arc<HashMap<String, GateAdapter>> = Arc::new(
         cfg.agents

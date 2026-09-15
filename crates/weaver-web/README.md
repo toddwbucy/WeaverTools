@@ -94,7 +94,7 @@ loopback and both binaries run on one box. See
 The one-binary v1 was built and live-proven: real turns against real
 local agents, including two agents answering one message concurrently
 from separate GPUs. The two-process split of 2026-08-25 (PRD section
-3, Spec section 16) compiles clean, passes clippy and tests, and its
+5, Spec section 8) compiles clean, passes clippy and tests, and its
 link protocol is exercised end to end against the real connector
 binary - hello, trace backfill and live tail, turns with typed
 refusals, verbs, declarations, and redial with fresh backfill.

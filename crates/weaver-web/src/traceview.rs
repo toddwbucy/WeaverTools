@@ -40,7 +40,7 @@ struct View {
 
 /// The server's per-agent views, fed by the link. Agents register
 /// dynamically as hellos announce them (roster-by-hello, Spec
-/// section 16) and are never removed: a view over a departed agent
+/// section 8) and are never removed: a view over a departed agent
 /// stays readable, honestly stale.
 #[derive(Clone)]
 pub struct TraceViews {

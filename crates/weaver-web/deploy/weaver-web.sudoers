@@ -1,4 +1,4 @@
-# weaver-web lifecycle verbs (Spec section 11). Install as
+# weaver-web lifecycle verbs (Spec section 7.2). Install as
 # /etc/sudoers.d/weaver-web (mode 0440, visudo -c to verify).
 # The one privilege widening the application asks of the box.
 #
