@@ -376,10 +376,16 @@ Produces the knowledge graph as a standing artifact, and performs ratification. 
 HADES database is stood up from the merged documents, which are already structured to
 graph cleanly, with the edges and vocabulary present.
 
-The graph is generated and is never hand-edited. If the graph is wrong about a
-document, the document is wrong, and the fix is a phase one reopening for that
-piece followed by a rebuild. A hand-edited graph is a second source of truth and
-drifts from the first, which is the failure this phase exists to prevent.
+The graph is generated and is never hand-edited. Where the graph and a document
+disagree, which of them is wrong is the first question and not a foregone one.
+If the document is wrong, the fix is a phase one reopening for that piece
+followed by a rebuild. If the document is right, the defect is in extraction, in
+ingest, or in what the build took, and the fix is there followed by a rebuild.
+Issue #579 is the standing instance: the ingest took Rust sources and Markdown
+and left the manifests out, so the graph is wrong about three conformance
+citations whose documents are correct. Either way the repair is to a source and
+never to the graph. A hand-edited graph is a second source of truth and drifts
+from the first, which is the failure this phase exists to prevent.
 
 The graph is what code is checked against in phase three. Prose does not answer a
 conformance query and a graph does.
