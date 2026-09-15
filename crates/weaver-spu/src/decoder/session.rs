@@ -959,6 +959,20 @@ mod tests {
         // states above the stop check.
         let field_positions: Vec<u64> = fields.iter().map(|(p, _, _)| *p).collect();
         let column_positions: Vec<u64> = taken.iter().map(|(p, _)| *p).collect();
+        // **The absolute positions, because the two checks below are relative
+        // and a shared wrong offset satisfies both.** The fixture fixes them:
+        // the open leaves one token resident, the delta a second, and the
+        // three scripted draws sit at 2, 3 and 4, the last being the stop.
+        assert_eq!(
+            column_positions,
+            vec![2, 3, 4],
+            "a column at each draw site, counted from the resident length"
+        );
+        assert_eq!(
+            field_positions,
+            vec![2, 3],
+            "a field at each retained draw, the stop owing none"
+        );
         assert_eq!(
             column_positions.len(),
             field_positions.len() + 1,
