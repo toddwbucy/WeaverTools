@@ -14,16 +14,13 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 
 **Date filed:** 2026-07-28
 
-**Revised:** 2026-09-14, section 11 counts six devices and a graph that exists.
-The section predicted that no graph would measure code against this document set
-during this program and that the mapping graph and the conformance graph would
-share a word and nothing else. The graph holds both layers, so the prediction is
-recorded as retired rather than deleted, and the same act retires it in Working
-Process section 7. The two devices that arrived since, clippy on the operator's
-ruling of 2026-09-06 and the census on the ruling of 2026-09-11, are appended as
-5 and 6 rather than sorted in, because device 3 is the one this corpus cites by
-its ordinal. **No count is written here**, the figures belonging to a dated
-reading and living in `docs/project/audit-2026-09-14-the-corpus-against-v5.md`.
+**Revised:** 2026-09-14, section 11 counts six devices, and the prediction that no
+graph would measure code against this document set during this program is retired.
+The two devices that arrived since, clippy on the operator's ruling of 2026-09-06
+and the census on the ruling of 2026-09-11, are appended as 5 and 6 rather than
+sorted in, because device 3 is the one this corpus cites by its ordinal. **What the
+graph holds is not stated here**, a count written into a charter being stale by the
+next merge.
 
 **Revised:** 2026-08-31, step 6's in-place clause is scoped to the turn it
 describes. The clause read as a property of the SPU seam in general, and
@@ -1136,33 +1133,17 @@ is party to. A Spec written first documents code instead of governing it.
 
 ## 11. Enforcement
 
-**The graph exists, and this section was written before it did.** The graph on the
-HADES server holds both layers at once: the documents, with the assertion nodes
-declared in them, and the code files, with a `cites` edge running from each file to
-the assertion its conformance header names. Section 0 declares the root node it is
-built from. So the code to assertion to document chain this section states is
-queryable rather than only readable, and the figures live in
-`docs/project/audit-2026-09-14-the-corpus-against-v5.md`. They live there and not
-here because a count written into a charter is stale by the next merge and then
-argues with the query, which is why a measurement belongs to a dated reading.
-
-**What that retires is the prediction that the two graphs share a word and nothing
-else.** This section held that a conformance graph is built from code and asks
-whether the documents were obeyed, that a mapping graph is built from documents and
-asks whether they cohere, and that only the second belonged to this program because
-the first needs settled intent and this program unsettles intent deliberately. They
-are one graph now, and why the prediction failed is worth keeping: the graph
-answered a cheaper question first, which is where a document and the code disagree
-about a count, a file list, or a name. That question does not wait on intent
-settling. It waits on both layers being in one place. Working Process section 7
-carried the same prediction and this act retires it there in the same sweep.
+**The graph exists, and this section was written before it did.** This section
+predicted that no graph would measure code against this document set during this
+program, and that a conformance graph built from code and a mapping graph built
+from documents would share a word and nothing else. Both predictions are retired,
+and Working Process sections 5 and 7 and `CLAUDE.md` carry the same retirement,
+landed in the same act. What the graph holds is a reading and is not stated in a
+charter.
 
 **The devices below are not retired by it.** The graph indexes them and does not
-replace them, because each of them is a check a person or a compiler performs and
-what the graph adds is the query that finds where one was never performed. The PRD
-to Spec to contract to code chain is enforced by the six devices below, and a
-reading of the graph stands under this section's closing line as surely as a clean
-gate does.
+replace them. The PRD to Spec to contract to code chain is enforced by the six
+devices below.
 
 What enforces:
 
@@ -1177,9 +1158,8 @@ What enforces:
 4. **Human and third-party review**, reading the review body rather than the
    thread count.
 5. **Clippy at deny-warnings**, which became a gate on the operator's ruling of
-   2026-09-06. It is the floor beside `cargo fmt` and carries no number in the
-   H-gate series, so it is not H5, which is the architecture seat's advisory
-   pass. `CLAUDE.md` states its scope and its invocation.
+   2026-09-06. Working Process section 6 and `CLAUDE.md` state its place and its
+   invocation, and this section does not.
 6. **The census**, `process/gates/census.py`, which is H6 on the operator's
    ruling of 2026-09-11. Working Process section 6 states its rule, and this
    section does not.

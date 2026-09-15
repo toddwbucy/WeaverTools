@@ -376,10 +376,10 @@ Produces the knowledge graph as a standing artifact, and performs ratification. 
 HADES database is stood up from the merged documents, which are already structured to
 graph cleanly, with the edges and vocabulary present.
 
-The graph is generated from the documents and is never hand-edited. If the graph is
-wrong the document is wrong, and the fix is a phase one reopening for that piece
-followed by a rebuild. A hand-edited graph is a second source of truth and drifts from
-the first, which is the failure this phase exists to prevent.
+The graph is generated and is never hand-edited. If the graph is wrong about a
+document, the document is wrong, and the fix is a phase one reopening for that
+piece followed by a rebuild. A hand-edited graph is a second source of truth and
+drifts from the first, which is the failure this phase exists to prevent.
 
 The graph is what code is checked against in phase three. Prose does not answer a
 conformance query and a graph does.
