@@ -2,15 +2,18 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-14, the floor link is declared and the trace edge is opened as
-a cell. Section 1 projects the `weaver-types` dependency the manifest carries as the
-`floor-link` record the graph had no edge for, and states why it stands ahead of any
-consumer, per the operator's ruling of this date on `CVC-13`: the crate is
-mid-construction and the link is held for the engine layer that will use it. Section
-5 opens the classification of the `weaver-trace` dependency, which cannot be a floor
-link under `weaver-agents-PRD` section 5.1 and has no contract to be a seam under.
-No dependency changes in this act. Per the audits of 2026-09-13 and 2026-09-14 and
-epic #569 `act-10`.
+**Revised:** 2026-09-14, the floor link is declared and two cells open. Section 1
+projects the `weaver-types` dependency the manifest carries as the `floor-link`
+record the graph had no edge for, and states that it stands ahead of any consumer on
+the operator's ruling of this date: the dependency stays, this crate not being
+finished. Section 5 opens what this charter cannot answer - which member of that
+floor crate this crate consumes, the seam's own contract drawing nothing from it,
+and what becomes of the `weaver-trace` dependency, which cannot be a floor link and
+would be this corpus's first `link` seam between two members of one domain. That
+edge stays undeclared and in breach of H2 until the operator rules, which the cell
+states rather than hides. No dependency changes in this act. Per
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md` section 4 and the
+second pass of 2026-09-14, and issue #569.
 
 **Revised:** 2026-09-04, third of this date, a session may stand on another record's
 holdings. Section 4 states the restore: the door stands under a restoring load as under
@@ -119,17 +122,17 @@ to: weaver-harness
 ```
 
 **It links `weaver-types` as floor, and the link stands ahead of its consumer.**
-The store election's block is `state-election`, shaped at `weaver-types-Spec`
-section 2 and read at section 4 below, and the floor link is taken for that shape.
-That crate is floor per `weaver-agents-PRD` section 5.1, this crate asks it nothing,
-so the record is a `floor-link` and never a `seam`. **No source file here consumes
-it today, and the reason it stands anyway is the operator's ruling of 2026-09-14:**
-this crate is not finished, its engine layer having stopped mid-construction while
-other work took the seat, and the declaration is held for the consumer that half
-will carry rather than left behind by one that went away. The reason is written
-down because a declared dependency with no consumer and no stated reason is what an
-audit re-reports as a defect on every pass, and a standing reason is the only thing
-that retires that reading.
+That crate is floor per `weaver-agents-PRD` section 5.1, this crate asks it
+nothing, so the record is a `floor-link` and never a `seam`. **No source file here
+consumes it today, and it stands anyway on the operator's ruling of 2026-09-14:**
+the dependency stays because this crate is not finished, and a link held for work
+not yet done is an election rather than a leftover. The ruling is the whole of the
+reason and this charter adds none, because a declared dependency with no consumer
+and no written reason is what an audit re-reports on every pass, and because a
+reason invented to fill the gap is worse than the gap. **Which member of that crate
+this one will consume is section 5's cell**, opened rather than answered: the one
+candidate this charter could have named is refused by the seam's own contract, whose
+vocabulary clause reads "**From `weaver-types`.** Nothing."
 
 ```graph
 edge: floor-link
@@ -138,8 +141,9 @@ to: weaver-types
 ```
 
 **The `weaver-trace` dependency is not classified here**, and section 5 carries the
-cell. It is the one internal edge in this charter that the corpus does not answer,
-because it is not a floor link and the contract a seam would need does not exist.
+cell. That crate is this crate's sibling, both declaring a `parent` edge to
+`weaver-harness`, and what a sibling edge may be is the narrow question the cell
+turns on rather than a bar on the edge existing.
 
 ## 2. What it is not
 
@@ -430,19 +434,44 @@ that day rather than a shared file or a shared connection today.
 
 ## 5. Open cells
 
-- **The classification of the `weaver-trace` dependency. Opened 2026-09-14.** The
-  manifest carries the crate and the graph carries no edge for it, which is the H2
-  breach the audit of 2026-09-13 found. **The floor-link reading is closed and this
-  cell does not reopen it:** `weaver-agents-PRD` section 5.1 rules the floor exactly
-  `weaver-traits` and `weaver-types` and rules `weaver-trace` out of it by name, and
-  Document Format section 4 admits a `floor-link` only to a floor crate. What is
-  left is a `seam` tagged `link`, which section 4 requires a governing contract for,
-  and no contract in this corpus binds this pair. Authoring one is a claim the same
-  apex section contradicts twice, naming the harness that crate's only caller and
-  the harness-to-trace seam the one such seam in the base set, so the cell belongs
-  to the operator rather than to this charter. It closes with a ruling that either
-  lands the contract and amends those two sentences, or takes the dependency off
-  this crate's production surface, where today nothing but a test reaches it.
+- **What the `weaver-trace` dependency is, or whether it stays. Opened 2026-09-14.**
+  The manifest carries the crate and the graph carries no edge for it, which is the
+  H2 breach the audit of 2026-09-13 found. **The `floor-link` branch is closed**:
+  `weaver-agents-PRD` section 5.1 rules the floor exactly `weaver-traits` and
+  `weaver-types` and rules that crate out of it by name, and Document Format section
+  4 admits a floor link only to a floor crate. What is left is a `seam` tagged `link`
+  under a contract that does not exist, or the edge coming off.
+  **The sibling rule bears on the cell and does not close it.** That crate is this
+  crate's sibling, both declaring a `parent` edge to `weaver-harness`, and H2's "No
+  dependency on a sibling" reads alongside G3's "No lateral edge to a sibling
+  appears". What the corpus forbids under that rule is the untagged edge:
+  `weaver-types-PRD` section 1 carries the live instance, two floor crates under one
+  root whose dependency "is a floor link and not a lateral edge", declared as what it
+  is and passing the gate. Document Format section 3 is the same reading from the
+  other side, that nesting "is not a visibility rule, a Cargo boundary, or a claim
+  about who may depend on what" and that the records settle it. **So a declared
+  sibling edge is admitted where a vocabulary admits it, and this pair has none**:
+  every seam this corpus carries runs from a domain root to its member or crosses a
+  domain on a socket, and a `link` seam between two members of one domain would be
+  the first. That is what makes the cell the operator's.
+  **What the tree says meanwhile.** Nothing but this crate's own tests reaches that
+  crate, so the cheap reading is that the dependency is a test fixture and moves to
+  where fixtures live, which needs a prior ruling on whether H2 reaches a
+  dev-dependency at all - `WeaverTools-Working-Process` section 6 does not say, and
+  `weaver-admin` declares one floor crate in both sections under a single record.
+  The dear reading is that a finished ingest calls into it, which makes the seam real
+  and owes it a contract, and owes `weaver-agents-PRD` section 5.1 the retirement of
+  "the harness is its only caller".
+- **Which member of `weaver-types` this crate consumes. Opened 2026-09-14.** The
+  floor link is declared at section 1 and the operator has ruled it stays. What the
+  corpus does not carry is what it is for. The store election's block,
+  `state-election`, was the candidate and does not serve: it is shaped at
+  `weaver-types-Spec` section 2 and rides the enter directive rather than this
+  crate's seam, and the seam's own contract answers "**From `weaver-types`.**
+  Nothing" in its vocabulary clause. So the link is sound by the ruling and
+  unexplained by the corpus, and the cell closes when the consumer is written or
+  when a clause names what it draws. Stated as a cell rather than guessed at,
+  because the guess is what an audit would have to un-write.
 - **The schema extension.** Apex section 9's door names one and this charter
   does not write it: the shape of the distillate the tee emits is settled with
   `weaver-harness-state-contract`, because the schema is the seam's vocabulary

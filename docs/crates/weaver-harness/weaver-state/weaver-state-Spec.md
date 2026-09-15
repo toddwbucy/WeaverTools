@@ -175,11 +175,17 @@ from: weaver-state
 to: state-custody-without-policy
 ```
 
-It links
-`weaver-trace` for the canonical event vocabulary its ingest parses and no
-other internal crate: the floor's wire trio does not cross this seam, the
-distillate being the seam's own vocabulary per the contract, so the floor
-links would be dependencies nothing here consumes.
+It links two internal crates, which corrects this clause in the act of
+2026-09-14. `weaver-trace` carries the canonical event vocabulary the ingest
+parses, and `weaver-types` is a `floor-link` declared at charter section 1 on
+the operator's ruling of that date, standing ahead of the source file that
+will consume it. The earlier reading of this clause said the crate linked
+`weaver-trace` and no other, and argued that a floor link here would be a
+dependency nothing consumes - true of the consumption and false of the
+manifest, which has carried both crates. **Neither edge's standing is settled
+here**: charter section 5 holds one cell for what the floor link is drawn for
+and a second for the `weaver-trace` dependency, which cannot be a floor link
+and has no contract to be a seam under.
 
 **Dependencies, external.** One per engine, each behind a feature named for
 its engine so a build compiles the integrations it deploys and no other, per

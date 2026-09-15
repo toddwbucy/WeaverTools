@@ -9,9 +9,9 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 the `floor-link` record the graph had no edge for, that crate being floor per
 `weaver-agents-PRD` section 5.1 and this one asking it nothing. No dependency
 changes and no classification is invented: the edge the Spec's dependency clause
-already argued is now declared where a mapper reads it. Per the audit of
-2026-09-13, finding `floor-link-edges-missing-for-real-cargo-deps`, and epic #569
-`act-10`.
+already argued is now declared where a mapper reads it. Per
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md` section 4, which
+found three real Cargo dependencies carrying no crate-level edge, and issue #569.
 
 **Revised:** 2026-09-01, the vector bar is measured. Section 4's
 passive-read comparison holds the vectors exact within one device model,
@@ -223,8 +223,20 @@ crate's internal dependency. That crate is floor per `weaver-agents-PRD` section
 never a `seam`, Document Format section 4 reserving the seam for the asking
 relation. The manifest carried the dependency and the graph carried no edge for it
 until this act, which is the H2 breach the audit of 2026-09-13 found and this block
-retires. What this crate does not link is section 2's, and the manifest test reads
-both halves off the resolved tree.
+retires. The crate this one does not link, and the election behind that absence,
+are `weaver-diagnostic-Spec` section 1's, where `diagnostic-no-trace-dependency`
+stands and where the manifest test reads both halves off the resolved tree: that
+`weaver-trace` is absent and that `weaver-traits` is present.
+
+**The link stands ahead of a source file that names it, as `weaver-state`'s does.**
+No `.rs` file in this crate mentions `weaver_traits` today, only the manifest and
+the test that reads it, so the message model the dependency is taken for is drawn
+by the contract and not yet spelled in this crate's own source. The dependency is
+an election either way, and it is recorded here for the same reason the sibling
+member's is: a declared dependency whose reason is unwritten is one a later audit
+re-reports on every pass. **Whether the reason should instead be the crate's
+consumption is `weaver-diagnostic-Spec` section 1's to settle**, that clause being
+the one that argues the dependency set, and it is not amended here.
 
 ```graph
 edge: floor-link
