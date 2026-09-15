@@ -14,8 +14,16 @@ use std::process::Command;
 /// copy and leave two tests asserting about different resolutions.
 ///
 /// `--locked --offline` and the manifest path are appended here rather than at
-/// each call site. The lock file is the subject: a resolution that fetched or
-/// updated would be asserting about a tree this repository does not record.
+/// each call site. **The flags keep this inner cargo from writing the lock as a
+/// side effect of answering, and they gate nothing.** The outer `cargo test`
+/// resolved and repaired the lock before this binary was spawned, so by the
+/// time these calls run there is no drift left for them to see: measured
+/// 2026-09-15 at 9caf02b, a dependency added to another crate's manifest leaves
+/// every test in this file passing and `Cargo.lock` modified. An earlier form
+/// of this comment said the lock file was the subject, which is the overclaim
+/// issue #551 was filed against. `process/gates/lock.sh` is the instrument that
+/// can fail and it runs before the suite, which is the only place it can.
+///
 /// The manifest path is passed because the working directory a test binary
 /// runs in is not this crate's, and a call that resolved another workspace
 /// would answer a question nobody asked.
