@@ -183,16 +183,26 @@ clippy line returned the backlog section "Enforcement" describes. **The lock
 was untouched by every one of them.** A later reader re-runs rather than
 trusting the date.
 
-**No `--features` flag belongs on the clippy line here.** `weaver-spu`
-declares `default = ["gguf"]`, `gguf`, and `cuda`, so the inference path is
-on without one. **The quarry's command below is not this one** and carries a
+**The quarry's command below is not this one** and carries a
 `weaver-spu/inference` flag that is correct there and errors here, which is
 a mistake this file's own reader made on 2026-09-06 before these commands
 existed.
 
-`--features weaver-spu/cuda` will not compile on a box with no `nvcc`, which
-is why no gate command carries it: the CUDA path is verified where the
-hardware is, per issue #397's parking.
+**`weaver-spu`'s gate carries `--features cuda,gguf`**, on the operator's
+ruling of 2026-09-15. `default = ["gguf"]` puts the inference path on without
+a flag, so a bare run lints the crate and leaves `decoder/native.rs`,
+`decoder/native_pair.rs` and every test that reaches them uncompiled. They are
+not small and they are where the device is touched.
+
+    cargo clippy -p weaver-spu --all-targets --features cuda,gguf --locked \
+      -- -D warnings
+
+**A seat that cannot compile the feature does not gate the crate, and
+therefore does not land acts in it.** An earlier form of this file reasoned
+the other way, from one box having no `nvcc` to no gate command carrying the
+flag anywhere, which narrowed the gate for every seat to accommodate a
+machine that should not be acting on the SPU at all. The device is the
+olympus lane and the gate follows the lane.
 
 ## Building the quarry (read-only verification)
 
