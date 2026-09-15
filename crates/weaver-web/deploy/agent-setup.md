@@ -57,7 +57,7 @@ the box, and the path to it is shorter than the notes above imply: v1
 sessions are anonymous, so anyone who can reach the listener and types
 a name from the config's `admins` list holds the admin role, and the
 admin role drives these verbs. The trust boundary is the LAN and the
-box until the IAM act lands (weaver-web-PRD section 8, item 2), and a
+box until the IAM act lands (weaver-web-PRD section 6), and a
 deployer widening `listen` beyond a trusted LAN before that act is
 undoing the deployment's one safety assumption.
 

@@ -225,7 +225,7 @@ contribution, independent of its code): per-invocation tool safety classificatio
 messages with all wire format isolated at the composition root, and `SO_PEERCRED`-verified
 Unix sockets for all internal IPC.
 
-## Enforcement, and when the graph arrives
+## Enforcement, and the graph
 
 **Corrected 2026-08-03.** This section previously said the new program builds no graph
 until just before the memory leg lands. `WeaverTools-Working-Process` section 5 governs
@@ -255,8 +255,9 @@ is what stops a low number from being argued away once someone sees it. **That r
 one stated exception and Document Format section 4 carries it**, per the ruling of
 2026-09-14. Read it there rather than from a copy here.
 
-**During authoring, enforcement rests on six devices and no graph.** These do not retire
-when the graph lands - the graph indexes them, it does not replace them:
+**Enforcement rests on six devices**, enumerated by `weaver-agents-PRD` section 11,
+which this list restates. The graph has landed and they do not retire - the graph
+indexes them, it does not replace them:
 
 1. Conformance trace headers in source carrying `code -> assertion -> doc`.
 2. **Compile-time pins** for invariants that are type properties. A runtime test

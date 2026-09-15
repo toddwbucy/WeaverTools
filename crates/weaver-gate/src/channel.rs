@@ -83,9 +83,11 @@ pub struct Channel {
 /// before the first read.
 ///
 /// The dumpable flag is cleared and the channel end is set close-on-exec, both
-/// sets and never checks. This crate spawns nothing, so the flag is defense
-/// against a compromise's exec rather than a planned fork, and it costs one
-/// call.
+/// sets and never checks. **Close-on-exec answers a planned fork**, per
+/// `weaver-gate-Spec` section 2: `tools.rs` forks and execs a shell at every
+/// invocation of the one tool this crate holds, and without the flag this
+/// descriptor - the channel to the harness - is inherited by a child running a
+/// command the model chose. It costs one call.
 ///
 /// **The parent-death signal is elected, with its guarantee stated at the width
 /// the kernel gives it and no wider.** It fires on the termination of the

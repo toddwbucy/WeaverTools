@@ -4,6 +4,18 @@
 terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
+**Revised:** 2026-09-15, the floor link is opened rather than declared. Section 1
+records that the `weaver-traits` dependency the manifest carries has no crate-level
+edge, which is an H2 breach, and states why this charter does not close it: the
+ground a floor link would stand on is the message model, and
+`weaver-harness-diagnostic-contract`'s vocabulary clause draws that for the harness
+and says the recorder does not draw it. An edge declared against its own governing
+contract is worse than the missing edge. **An earlier form of this act declared the
+record and was withdrawn on the review of 2026-09-15**, which found the contract
+clause this entry now cites. No dependency changes. Per
+`docs/project/audit-2026-09-13-the-corpus-against-its-code.md` section 4, which
+found three real Cargo dependencies carrying no crate-level edge, and issue #569.
+
 **Revised:** 2026-09-01, the vector bar is measured. Section 4's
 passive-read comparison holds the vectors exact within one device model,
 per the differencing measurement of this date, the float tolerance
@@ -205,6 +217,30 @@ edge: parent
 from: weaver-diagnostic
 to: weaver-harness
 ```
+
+**The `weaver-traits` dependency is not declared here, and the reason is that this
+charter cannot state a ground the seam's own contract allows.** The manifest carries
+that crate and the graph carries no edge for it, which is the H2 breach the audit of
+2026-09-13 found. The obvious ground is the message model, and it does not survive
+reading: `weaver-harness-diagnostic-contract`'s vocabulary clause draws that model
+from `weaver-traits` and then says who draws it, that **the harness draws it and the
+recorder does not**, those payloads being opaque to the recorder. This crate is the
+recorder. Apex section 5.1 has which floor crates a crate links follow from what it
+draws, and section 5.3's mechanical consequence has a party linking the crate that
+defines what it emits, so a floor link declared here would be declared against both.
+**No `.rs` file under `src/` names `weaver_traits`** either, so nothing in the tree
+supplies the ground the contract withholds.
+
+**What this crate does not link, and the election behind that absence, are
+`weaver-diagnostic-Spec` section 1's**, where `diagnostic-no-trace-dependency` stands
+and where the manifest test reads the resolved tree. That test asserts the presence of
+`weaver-traits` as well as the absence of `weaver-trace`, so the dependency is pinned
+by an instrument while its reason is unwritten - which is the shape that makes this a
+question rather than an omission. **The question is the operator's**: a dependency no
+source consumes and no contract draws is either removed or given a ground, and it is
+the same question `weaver-state` carries twice at that charter's section 5. Removing
+it is a code act and fails the test that pins it, so neither half belongs to this
+charter.
 
 ## 2. What it is not
 
