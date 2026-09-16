@@ -411,10 +411,9 @@ it, which is the no-dangling-endpoint precondition reaching code.
 **The four forms are admitted on the ruling of 2026-09-15, and what moved was this
 document.** `census.py` and the mapper read all four and had since before the question
 was put, so a rule admitting one alone was a rule the working system did not run under
-and no gate was ever going to fail a file for breaking it. The alternative was to hoist
-every
-citation into a file header, which a manifest cannot hold at all, and the manifest
-citations are the ones that let H2 be asked of the graph: it carries
+and no gate was ever going to fail a file for breaking it. The alternative was to
+hoist every citation into a file header, which a manifest cannot hold at all, and the
+manifest citations are the ones that let H2 be asked of the graph: it carries
 `crates/weaver-analysis/Cargo.toml` citing `analysis-no-internal-dependency`, which is
 a claim about a dependency list that no other file in that crate can make. The marker
 set is closed at four and a fifth is a Format act rather than a convenience.
