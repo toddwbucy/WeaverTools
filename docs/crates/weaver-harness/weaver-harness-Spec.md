@@ -7,7 +7,7 @@ floor. Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #602
+**Landing PR:** #623
 
 ---
 
@@ -16,10 +16,16 @@ floor. Code is written against it under the gates of Working Process section 6.
 Build instructions for `weaver-harness`: the module layout, the item signatures,
 the channel mechanics this crate holds, the descriptor custody as code, and the
 elections a builder would otherwise invent. It is derived from
-`weaver-harness-PRD` and from the four contracts this crate is party to,
-`weaver-admin-harness-contract`, `weaver-harness-trace-contract`,
-`weaver-harness-spu-contract`, and `weaver-harness-gate-contract`, together with
-`weaver-organ-channel`, the drawn material three of them share.
+`weaver-harness-PRD` and from the contracts this crate is party to, which that
+charter's section 4 counts at eight: `weaver-admin-harness-contract`,
+`weaver-harness-gate-contract`, `weaver-harness-spu-contract`,
+`weaver-harness-spu-decode-contract`, `weaver-harness-spu-classify-contract`,
+`weaver-harness-state-contract`, `weaver-harness-trace-contract`, and
+`weaver-harness-diagnostic-contract`, together with `weaver-organ-channel`, the
+drawn material the three organ-channel contracts share. **This document derives
+from seven of the eight**, the label seam's representation being owed to the act
+that builds the classify leg, which is why the count here and the citations
+below differ by one.
 
 Level discipline. The charter says what the crate needs and why. This document
 says how it is represented, and per gate G2 it elects against grounds the charter
@@ -307,9 +313,14 @@ to: axiom-harness-integrates-by-the-loop
 
 ## 2. The channels, and custody as code
 
-This crate is party to three socket seams and creates two of them. The
-mechanics below are one election carried and the obligations the contracts
-land here, each with its contract named.
+This crate is party to six socket seams and creates the pair behind four of
+them. The two it does not create are the coordination seam, a named socket this
+crate binds rather than a pair, and the state seam, whose pair admin creates at
+the member's spawn and whose near end arrives here inside the enter directive,
+per `weaver-harness-state-contract`. Party to and creates are different counts
+and the charter's section 4 carries both. The mechanics below are one election
+carried and the obligations the contracts land here, each with its contract
+named.
 
 ### 2.1 The socket type, carried
 
@@ -317,7 +328,10 @@ land here, each with its contract named.
 `weaver-types-Spec` section 4 rather than re-deciding it.** That Spec elects the
 type for the organ channels and names this document as a landing site: the
 boundary property of `weaver-organ-channel` section 2 comes from the socket
-type, and this crate creates the residency and gate pairs. The election arrives
+type, and of the four pairs this crate creates the residency and gate pairs are
+the two that carry the organ envelope. The decode and classify pairs are not
+organ channels, per `weaver-spu-PRD` sections 13.2 and 15.2, so what reaches
+them is the sentence above rather than that Spec's naming. The election arrives
 with its obligation. **The receive buffer is sized to the maximum envelope of
 64 kibibytes, and a read that returns with `MSG_TRUNC` set is a channel fault
 and never a message.** Verified against a live kernel rather than reasoned:
@@ -413,9 +427,12 @@ to: harness-coordination-door-states-its-mode
 
 **Both ends of every created pair carry close-on-exec from the creating act,
 by `SOCK_CLOEXEC` in the `socketpair` call rather than by a later `fcntl`.**
-This crate creates three pairs across a run, the residency and decode pairs in
-one act before the SPU fork and the gate pair before the gate fork, and the
-rule is the same at each.
+This crate creates four pairs across a run, the residency and decode pairs in
+one act before the SPU fork, the classify pair before the classify fork, and the
+gate pair before the gate fork, and the rule is the same at each. It creates
+three where the agent declares no classifier, that submodule being optional by
+presence per `weaver-spu-PRD` section 15.3, and the rule does not change with
+the count.
 `weaver-harness-spu-contract` section 1 requires the harness's own end flagged
 from the pair's creation. The atomic form is elected because the alternative
 has a window: this process forks a subprocess per tool call, a fork between

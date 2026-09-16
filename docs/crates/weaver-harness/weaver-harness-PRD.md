@@ -351,14 +351,20 @@ sockets that authenticate their peer, by credential where the channel has a name
 by possession where it has none. The coordination seam is a named socket this crate
 binds and authenticates by credential, root or refused, per
 `weaver-admin-harness-contract` section 2 as of the inversion of 2026-08-05. Four are
-unnamed pairs this crate creates at its organ forks and authenticate by possession:
-the boundary pair, the residency and decode pairs whose far ends the SPU child
-carries, and the classify pair of the process this crate forks beside its siblings
-per `weaver-spu-PRD` section 15.3. The sixth
-is the state seam of the 2026-08-18 charter, an unnamed pair since the
-operator's ruling of 2026-08-26: admin creates it at the member's spawn and
-this crate receives its end inside the enter directive, beside the sink, so
-it authenticates by possession like the pairs this crate makes itself.
+unnamed pairs this crate creates before the far end exists and authenticate by
+possession: the boundary pair, the residency and decode pairs whose far ends the SPU
+child carries, and the classify pair of the classify process, which this crate starts
+beside its siblings per `weaver-spu-PRD` section 15.3. **Not all four are organ
+forks**, the classify process being no organ and its seam no organ channel per the
+record paragraph of this section, so what the four share is the creating act rather
+than the kind of peer at the far end. **Three of them stand in every run and the
+classify pair stands in some**, that submodule being optional by presence, so an agent
+declaring no classifier has this crate creating three. The seam is in the count all
+the same, this enumeration counting the seams the corpus holds and not the channels a
+run opens. The sixth is the state seam of the 2026-08-18 charter, an unnamed pair
+since the operator's ruling of 2026-08-26: admin creates it at the member's spawn and
+this crate receives its end inside the enter directive, beside the sink, so it
+authenticates by possession like the pairs this crate makes itself.
 
 The seventh and eighth seams are the ones to `weaver-trace` and to
 `weaver-diagnostic`, the two record mechanisms this crate authors through. Neither
@@ -383,8 +389,12 @@ it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn co
 because they belong to no turn, per 5.2 as scoped by the re-authoring of
 2026-08-01.
 
-**The three rows to `weaver-spu` are named for the infixes their contracts carry**,
-which are this document's own words for them throughout. `weaver-spu-PRD` section 6
+**The three rows to `weaver-spu` carry this document's own words for those seams, and
+two of the three are named for the infixes their contracts carry.** The residency row
+is the exception. Its contract is `weaver-harness-spu-contract` and holds no infix,
+the party rule alone having named it while it was the only seam between this pair, and
+`weaver-harness-spu-decode-contract` section 0 records that the residency contract's
+name stands unchanged where the two later names take one. `weaver-spu-PRD` section 6
 is the authority on that crate's seams and names the same three residency, token and
 label, in that order.
 
@@ -483,10 +493,16 @@ socket seam that does. The organ rule of Document Format section 4 puts an
 organ channel's declaration on the organ's side, so the boundary, residency and
 coordination seams each resolve through their contracts with no record
 declared here on any organ's behalf. **The decode and classify seams are not
-organ channels**, per `weaver-spu-PRD` sections 13.2 and 15.2, and their
-records stand on the organ's side all the same because each of their contracts
-says so in its own words: the edge is declared by the organ and appears in that
-charter's section 6. The state seam is a member seam rather
+organ channels**, per `weaver-spu-PRD` sections 13.2 and 15.2, so that rule does
+not reach them and the Format's other branch does: on a seam with one asking
+party the asker declares, and this crate is the asker on both. Their records
+stand in `weaver-spu-PRD` section 6 all the same, each contract's section 0
+putting the edge on the organ's side in its own words. **That is a disagreement
+between the Format and the corpus, named here rather than settled.** A contract
+does not decide a notation question the Format owns, per G2, and a charter act
+that amended the Format to match would be the same level violation running the
+other way, so the placement is owed a ruling and this document declares no
+record that would double either edge. The state seam is a member seam rather
 than an organ channel, the asking side declares, and its record stands in the
 dependency block above with `weaver-harness-state-contract` as its `via`. A
 seam without the contract that governs it fails G3 rather than passing
@@ -494,11 +510,10 @@ incompletely, and none is in that state now. The diagnostic member was the last
 one that was, its relation standing while its edge waited on
 `weaver-harness-diagnostic-contract`, and the contract, the edge and its `via`
 landed together 2026-08-27 as the paragraph above said they would. The seams as
-they stand: the boundary seam, named turn
-ingress until the egress ruling gave it a second direction, resolves through
-`weaver-harness-gate-contract` as of the gate pair's merge on 2026-08-01, and
-the SPU's three through `weaver-harness-spu-contract`,
-`weaver-harness-spu-decode-contract` and
+they stand: the boundary seam, named turn ingress until the egress ruling gave it
+a second direction, resolves through `weaver-harness-gate-contract` as of the gate
+pair's merge on 2026-08-01, and the SPU's three through
+`weaver-harness-spu-contract`, `weaver-harness-spu-decode-contract` and
 `weaver-harness-spu-classify-contract`.
 
 The coordination seam is no longer in that state. `weaver-admin-harness-contract` is
@@ -646,8 +661,9 @@ structure that does not decode at assembly, the hole authored as the fault it
 is rather than handed to the model as context, and a seated identity prefix
 the record cannot account for. The third is why this enumeration cannot be
 derived from the organs' own: a dead party is exactly
-the one that cannot report, so the SPU's cases at `weaver-spu-PRD` section
-13.10 and the gate's at `weaver-gate-PRD` section 13.4 are silent about their
+the one that cannot report, so the SPU's cases at `weaver-spu-PRD` sections
+13.10 and 15.6, one set per submodule since the classify submodule raises its
+own, and the gate's at `weaver-gate-PRD` section 13.4, are silent about their
 own deaths by construction, and the harness's observation is the only account
 there is. The fourth was authored by the built crate before it was named
 here, which is the enumeration read against standing practice and found one

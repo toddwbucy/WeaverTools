@@ -15,7 +15,7 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 **Date filed:** 2026-07-28
 **Document ID:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #587
+**Landing PR:** #623
 
 ---
 
@@ -534,13 +534,13 @@ work from, which is what lets an organ be built against its own contract alone.
 
 **An organ presents one seam per service within its domain, and the plural is the
 general case rather than an exception.** A socket serves one service, so an organ with
-two kinds of traffic holds two ends under two contracts, which is what `weaver-spu`
-already does with residency at one end and decode at the other. The alternative is one
-channel carrying two services, where a flush ordering written for one silently becomes
-a rule about the other and neither party can say why it holds. **The seam's identity is
-the contract governing it and not the pair of crates it runs between**, which is why
-two seams between one pair need two names and why a reader counting crate pairs would
-miscount this program's shape.
+three kinds of traffic holds three seams under three contracts, which is what
+`weaver-spu` already does with residency, decode and classify, per `weaver-spu-PRD`
+section 6. The alternative is one channel carrying two services, where a flush ordering
+written for one silently becomes a rule about the other and neither party can say why
+it holds. **The seam's identity is the contract governing it and not the pair of crates
+it runs between**, which is why three seams between one pair need three names and why a
+reader counting crate pairs would miscount this program's shape.
 
 **The loop is answerable for correctness and for timing.** It ensures that point A talks
 to point B correctly and at the right time. Correctly means the vocabulary each contract
