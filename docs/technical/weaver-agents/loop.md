@@ -163,12 +163,15 @@ The springs are where wires land. They are not everywhere.
 
 ## A miswired loop costs the project and not the board
 
-**Every failure in a loop file is printed and survived.** A loop that throws, a file
-that will not parse, a file that cannot be read at all - each falls back to running
-a plain unshaped turn. So a broken loop costs the injection and never the agent's
-answer.
+**Every failure in a loop file is printed and survived, at the stage that reads
+one.** A loop that throws, a file that will not parse, a file that cannot be read at
+all - each falls back to running a plain unshaped turn, so a broken loop costs the
+injection and never the agent's answer. **That is the file stage's property and not
+the compiled stage's.** A worker carrying its loop in the binary reads no file and
+takes no `--loop-file`, refusing it as an unknown parameter, so a loop named at that
+stage fails the load rather than falling back.
 
-That is the property the kit analogy actually turns on. You can wire it wrong,
+The fallback is the property the kit analogy turns on. You can wire it wrong,
 watch it do nothing interesting, and try again on the next turn, without the board
 breaking and without the session dying.
 
