@@ -1,3 +1,5 @@
+//! conforms: spu-system-folds-where-the-template-has-no-system-turn
+//!
 //! The mistral3 family, per `weaver-spu-Spec` section 5.
 //!
 //! Everything mistral3 defines sits here: its instruction markers, the

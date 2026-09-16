@@ -1,3 +1,5 @@
+//! conforms: spu-system-folds-where-the-template-has-no-system-turn
+//!
 //! The gemma4 family, per `weaver-spu-Spec` section 5.
 //!
 //! Everything gemma4 defines sits here: its turn markers, the rendering that

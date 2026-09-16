@@ -1,3 +1,5 @@
+//! conforms: spu-native-refuses-an-unserved-family-as-a-family
+//!
 //! The candle-native backend, per `weaver-spu-Spec` section 4.1.
 //!
 //! **The second peer, standing.** GGUF owns quantized artifacts on consumer

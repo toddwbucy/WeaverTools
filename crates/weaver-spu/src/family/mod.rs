@@ -3,6 +3,7 @@
 //! conforms: spu-registry-no-silent-substitution
 //! conforms: spu-share-kernels-own-orchestration
 //! conforms: spu-parse-reports-unrecovered-call
+//! conforms: spu-system-folds-where-the-template-has-no-system-turn
 //!
 //! The family surface and its registry, per `weaver-spu-Spec` section 5.
 //!

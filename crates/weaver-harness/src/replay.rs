@@ -1,3 +1,8 @@
+//! conforms: diagnostic-record-identifies-itself-at-the-open
+//! conforms: diagnostic-identity-absent-not-invented
+//! conforms: diagnostic-outcome-absent-not-manufactured
+//! conforms: diagnostic-divergence-position-is-the-resident-length
+//!
 //! The diagnostic replay, per `diagnostic-replay-loop` and
 //! `weaver-harness-Spec` section 6.2's second criterion: the seat granted
 //! once at the run's opening, on the run itself as the work, the operator's
