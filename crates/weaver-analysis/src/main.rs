@@ -13,10 +13,12 @@
 //! the turn, the perplexity, the residency, the output count and the
 //! record's identity, an absent member omitted at the wire rather than
 //! rendered null, which is the half of the identity rule this root's
-//! rendering verb holds. The record's session, the record's digest, the
-//! seated prefix's length, and the run with the conditions it ran under
-//! are declared by that section and reach no code, per issue #538, so they
-//! are named here as owed rather than cited.
+//! rendering verb holds and the half `tests/stream.rs` watches by running
+//! the verb, no library call reaching the rendering. The record's
+//! session, the record's digest, the seated prefix's length, and the run
+//! with the conditions it ran under are declared by that section and
+//! reach no code, per issue #538, so they are named here as owed rather
+//! than cited.
 
 use std::io::Read;
 

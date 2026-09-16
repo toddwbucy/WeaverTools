@@ -22,8 +22,13 @@
 //!
 //! **One preload per standing of this driver**, per `weaver-analysis-Spec`
 //! section 4, whose instrument is a compile-fail pin on the shape that
-//! would break it. **Both of this crate's pins stand here** because a
-//! compile-fail pin is a doctest and a doctest is the root's to hold. The
+//! would break it. **Both of this crate's pins are written here**, each
+//! reaching the crate the way a caller reaches it, through the public
+//! path rather than through a module's internals, and a citation sits
+//! with its own doctest, so both citations sit here too. That is where
+//! these two are written and not where a compile-fail pin has to be
+//! written: rustdoc collects a doctest from any documented item, and a
+//! module holding a pin of its own cites it from its own header. The
 //! structure each rests on is its own module's, the seal consuming the
 //! sender being `preload.rs`'s.
 //!

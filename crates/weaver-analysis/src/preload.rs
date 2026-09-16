@@ -1,5 +1,4 @@
 //! conforms: analysis-seal-ends-the-preload
-//! conforms: analysis-dials-as-invoked
 //!
 //! The seam's sender, per `weaver-analysis-Spec` section 4: three things in
 //! one order - the election opens the channel, a distillate per elected
@@ -11,10 +10,16 @@
 //! consumes the sink into a sender and sealing consumes the sender, so a
 //! second opener on a channel that carried one is not expressible: a retry
 //! is a new run of this crate rather than a second preload inside one.
-//! **The shape is this module's and the pin that holds it is the root's**,
-//! per Spec section 6: the instrument the clause names is a compile-fail
-//! pin, a compile-fail pin is a doctest, and `lib.rs` carries the citation
-//! with the doctest rather than here. It dials under whatever identity it
+//! **The shape is this module's and the pin that watches it is written in
+//! `lib.rs`**, per Spec section 6, which names a compile-fail pin as the
+//! instrument. The pin reaches the sender through the crate's public
+//! path, `lib.rs` carries the citation beside the doctest it is, and
+//! nothing about the instrument obliged that placement over a pin written
+//! here.
+//!
+//! **The sink is any writer and this module dials nothing.** [`open`]
+//! takes a `W: Write` and never names a socket, so the dial belongs to the
+//! composition root, which opens it under whatever identity the process
 //! was invoked with and mints none, the credential's rightness judged at
 //! the far end by the door.
 
