@@ -58,7 +58,7 @@ class Unchecked(Exception):
     """A command this script depends on did not run."""
 
 
-def run(args, spare=()):
+def run(args, spare=(), env=None):
     """Standard output of a command, refusing an exit status it did not expect.
 
     **A helper that discards the status prints a clean nothing for a command
@@ -67,8 +67,16 @@ def run(args, spare=()):
     an empty stdout, so a walk over a bad ref finds no documents and reports
     every one of them sound. `spare` names the non-zero statuses that carry
     meaning at a call site, and every other one raises.
+
+    **A command that cannot be launched raises here too.** An absent `gh` is an
+    OSError rather than a status, and left uncaught it ends the run in a
+    traceback rather than in the unchecked answer this script has for a
+    derivation it could not make.
     """
-    done = subprocess.run(args, capture_output=True, text=True)
+    try:
+        done = subprocess.run(args, capture_output=True, text=True, env=env)
+    except OSError as error:
+        raise Unchecked(f"{' '.join(args)}\n  {error}") from error
     if done.returncode and done.returncode not in spare:
         first = done.stderr.strip().splitlines()
         raise Unchecked(f"{' '.join(args)}\n  exit {done.returncode}: "
@@ -133,25 +141,37 @@ def landing_commit(path, ref):
     return landing
 
 
+def numbers(commit, repo):
+    """Pull request numbers GitHub associates with one commit.
+
+    **A failed `gh api` writes its error to standard output**, the `-q` filter
+    not being applied to it, so a caller reading stdout without the status gets
+    `{"message":"No` where it expected a number and reports that as the
+    document's landing pull request. The status is checked here and the tokens
+    are required to be digits, because either alone lets that through.
+    """
+    env = {**os.environ, "GITHUB_TOKEN": ""}
+    out = run(["gh", "api", f"repos/{repo}/commits/{commit}/pulls",
+               "-q", ".[].number"], env=env)
+    found = out.split()
+    if any(not token.isdigit() for token in found):
+        raise Unchecked(f"gh api for {commit[:8]} answered with something that "
+                        f"is not a number: {found[0][:40]}")
+    return found
+
+
 def pull_request(commit, repo):
     """The pull request a commit arrived in, squashed or merged."""
-    env = {**os.environ, "GITHUB_TOKEN": ""}
-    direct = subprocess.run(
-        ["gh", "api", f"repos/{repo}/commits/{commit}/pulls", "-q", ".[].number"],
-        capture_output=True, text=True, env=env,
-    ).stdout.split()
+    direct = numbers(commit, repo)
     if direct:
         return direct[0]
     # A merge commit rather than a squash: the branch commit belongs to no pull
-    # request, and the merge that brought it in does.
+    # request, and the merge that brought it in does. Reached only where the
+    # lookup above succeeded and found nothing, a failed lookup having raised.
     merge = run(["git", "log", "--ancestry-path", "--merges", "--reverse",
                  f"{commit}..origin/main"], spare=(128,)).split("\n")
     if merge and merge[0].startswith("commit "):
-        sha = merge[0].split()[1]
-        found = subprocess.run(
-            ["gh", "api", f"repos/{repo}/commits/{sha}/pulls", "-q", ".[].number"],
-            capture_output=True, text=True, env=env,
-        ).stdout.split()
+        found = numbers(merge[0].split()[1], repo)
         if found:
             return found[0]
     return None
