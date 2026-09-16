@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.20, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.21, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -571,6 +571,29 @@ from the apex rather than hand-edited, per Working Process section 5's checklist
 ratification became per-charter on 2026-08-23 a charter no longer waits on that mark,
 and whether a ratified charter carries its own `tag: ratified` is the open question
 section 9 names.
+
+**`review` means an instrument was not bought and never that none exists**, per
+apex section 11, and the checkable form of that rule is this: a `review` assertion
+cited from a unit under a crate's `tests/` target is refuted unless its own clause
+names what was declined and what was taken in its place. A test is an instrument,
+so a citation from one says an instrument exists, and a tag reading `review` beside
+it says the opposite of what the citing file says. Naming the non-purchase is what
+separates an election from an overclaim, because the overclaim forecloses tests the
+corpus may later want and a clause that argues its own declining is not making the
+claim by accident. The corpus already writes it that way where it was thought about,
+`weaver-gate-Spec` section 6 holding its review claims by an election argued at each
+clause, and `weaver-diagnostic-Spec` section 7 stating the rule in these words beside
+the shared fixture that would buy the one claim it declines.
+
+**Two shapes answer a sighting and which one it is takes a per-claim read.** Either
+the tag moves to the instrument the test is, or the citation moves to the unit the
+claim is enforced in, a header citing a claim whose test is elsewhere in the crate
+being the second shape. Both have been found in this corpus, so the query that finds
+a sighting does not settle it, and a retag taken over a directory would be the same
+overclaim run the other way. The query is every `review` node with a `cites` edge from
+a path under `tests/`, it returned thirteen on 2026-09-14, and issue #569 carries the
+readings and their dispositions rather than this document, a count written here being
+stale by the next act.
 
 A second key for the instrument would grow
 the fixed set for a fact the existing key already carries, and the point of the fixed
