@@ -15,7 +15,9 @@ Per the operator's ruling of this date there is one surface, the extension seam 
 stages: a loop file a Python-iterating worker reads per crossing while a builder
 develops, and that loop compiled into the worker binary to deploy. The
 separate-process proxy loop is not built and the wording naming it is retired
-corpus-wide. Per issue #310.
+everywhere it is stated as current. The accumulated entry of 2026-08-05 keeps
+the word `drop-in` and is left as a dated record of what the charter said rather
+than as a claim about what it says. Per issue #310.
 
 **Revised:** 2026-09-04, third of this date, the restored conversation is prefix.
 Section 2's prompt assembly names the recorded conversation through the cut as prefix
@@ -215,8 +217,8 @@ agent's internal logic, which the running loop 0 service executes, and a loop 0
 filed beside those documents would read as one more supplied loop rather than as
 the service that executes them. **There is one builder-facing surface, it is
 limited to loop 1 and above, and it excludes loop 0.** It is the extension seam
-of section 6, composed against and compiled into the worker binary, and it has
-two stages rather than two forms: a builder develops against it as a loop file
+of section 6, composed against at the worker's composition root, and it has two
+stages rather than two forms: a builder develops against it as a loop file
 that a Python-iterating worker reads per crossing, and deploys by compiling that
 loop into the worker binary. Loop 0 is the service that runs a builder's loop at
 either stage, and is not itself supplied through it. **The socket-binding surface
