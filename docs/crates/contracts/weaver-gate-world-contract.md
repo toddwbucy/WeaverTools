@@ -50,22 +50,27 @@ above read out rather than a gap in it.** Stated here as of 2026-09-16, because
 `weaver-web-PRD` carried such a record until that date and a later reader with the
 same client in hand would write it again. A seam is declared from the declaring
 side and its `via` names the contract governing the pair, so a record naming this
-page asserts that the crate at its far end signed this page. No crate does. A
-client is built against this page and nothing else, per section 2, which is the
-same fact from the client's side: the page owes it an interface and the page binds
-it to nothing. The category a client falls in is the world, and a crate that
-happens to be a client is an instance of that category rather than a party
-alongside it.
+page asserts that the crate at its far end signed it. None did, the far end of
+this boundary being the world. A client is built against this page and nothing
+else, per section 2, which is the same fact from the client's side: the page owes
+it an interface and the page binds it to nothing. The category a client falls in
+is the world, and a crate that happens to be a client is an instance of that
+category rather than a party alongside it.
 
 **What the deleted record was reaching for is real and is stated where it belongs.**
 `weaver-gate-PRD` section 2 has the world dialing and this crate binding and
 accepting, and `weaver-web-Spec` section 1 has that crate reaching the agent
 exactly as an outside consumer does, a socket dialed by path. Both crossings are
-this boundary working. Neither is a seam by the operator's rule of 2026-09-15,
-which has seams standing between organs, between agents, or between two separate
-physical entities: a consumer holds no organ and no channel with the harness, and
-the client end of this socket sits on the box the agent runs on, the local
-principal of section 1 being local by construction.
+this boundary working. **What neither carries is a seam edge, and the absence is
+the graph's rule rather than a ruling that the boundary is not a seam.** A seam
+edge runs between two crate nodes, the far end of this one is the world, and the
+graph carries no node for it, so the `party` edge above is the whole of what the
+graph can hold here. `weaver-admin-PRD` section 6 says the same of its own two
+outward boundaries and names this page as the shape they share, so a later reader
+meets one reading rather than two. **The world at this boundary is a local
+principal**, per the party prose above and the named local Unix sockets of
+`weaver-gate-PRD` section 2, so a client stands on the box the agent runs on by
+construction and no document owes a placement clause to put it there.
 
 ## 1. The channel
 

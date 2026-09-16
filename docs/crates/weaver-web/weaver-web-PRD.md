@@ -48,6 +48,15 @@ via: weaver-analysis-web-contract
 tag: socket
 ```
 
+**The gate reach is real and carries no seam edge**, as of 2026-09-16, and the
+absence is stated here because this block is where a record would be written. A
+seam edge runs between two crate nodes and the far end of that boundary is the
+world, which the graph carries no node for, so `weaver-gate-world-contract`
+names one crate and signs the world in prose, per its section 0. A record ran
+from this crate to `weaver-gate` until that date and named that page as its
+`via`, which asserted a signature this crate never gave. The boundary is
+unchanged and only the record went.
+
 ## 1. What this crate is
 
 WeaverTools is a diagnostic and analytic instrument. It lets an engineer
