@@ -330,6 +330,70 @@ fn mismatched_payload_refuses() {
     ));
 }
 
+/// **A measurement is a licensed kind-payload pair and splices verbatim**,
+/// per Spec section 3: `model.measurement` takes `Payload::ModelMeasurement`
+/// and no other kind takes that payload, and the SPU's rendered blob reaches
+/// the line as the octets it arrived in, no re-encoding of this crate's
+/// between them.
+///
+/// Perturbation: drop the `(ModelMeasurement, Some(ModelMeasurement))` arm of
+/// `pairing_licensed` and the third submit refuses; widen it to
+/// `(_, Some(ModelMeasurement))` and the fourth is admitted; round-trip
+/// `render`'s body through `serde_json::Value` and the blob returns with its
+/// members reordered. Watched under each, one at a time.
+///
+/// **This is the watch the retired test carried without naming.** Its
+/// predecessor `absent_measurement_members_emit_nothing` asserted a skip
+/// election this crate does not make, so its three assertions could not fail,
+/// and the `submit` above them licensing this pair was the only construction
+/// of it in the crate.
+#[test]
+fn the_measurement_is_a_licensed_pair_and_splices_verbatim() {
+    let (mut r, _path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections())))
+        .unwrap();
+    r.submit(event(Kind::TurnStarted, Some("t-1"), None))
+        .unwrap();
+    let blob = r#"{"model":"qwen3-4b-instruct","weights_hash":"sha256:abc","input_tokens":[1,2],"output_tokens":[3],"blocks":[{"label":"turn-delta","start":0,"end":2}],"timings":{"prefill_ns":"1000","decode_ns":"2000"}}"#;
+    r.submit(event(
+        Kind::ModelMeasurement,
+        Some("t-1"),
+        Some(Payload::ModelMeasurement(
+            raw_payload(blob).expect("the measurement blob splices"),
+        )),
+    ))
+    .expect("the measurement kind takes the measurement payload");
+    let line = r
+        .structure()
+        .by_kind(Kind::ModelMeasurement)
+        .next()
+        .expect("the admitted event reached the structure")
+        .line
+        .clone();
+    assert!(
+        line.contains(blob),
+        "the organ's octets reach the line unaltered: {line}"
+    );
+    let err = r
+        .submit(event(
+            Kind::ModelRequest,
+            Some("t-1"),
+            Some(Payload::ModelMeasurement(
+                raw_payload(blob).expect("the measurement blob splices"),
+            )),
+        ))
+        .unwrap_err();
+    assert!(
+        matches!(
+            err,
+            Failure::RefusedOnSubmit {
+                reason: SubmitRefusal::PayloadMalformed
+            }
+        ),
+        "no other kind takes the measurement payload"
+    );
+}
+
 /// **The output carries the session's position**, per `weaver-trace-Spec`
 /// section 3: an analysis placing a turn inside the context has the record
 /// and nothing else once the run is over, and a member that serializes is

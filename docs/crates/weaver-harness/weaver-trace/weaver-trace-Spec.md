@@ -1497,25 +1497,53 @@ Spec asserts it.** The property is `weaver-spu-Spec`'s
 `spu-absent-not-empty-vector`, where the rendering happens, and section 3 argues
 why: the measurement splices, so this crate names none of its members and elects
 no `skip_serializing_if` over them. A bullet here would sort an instrument under
-a claim this document does not make. **The crate ran a test named for the
-property and no longer does**, the removal landing 2026-09-16 on issue #606.
-`tests/recorder.rs`'s `absent_measurement_members_emit_nothing` stated a
-perturbation that removed a skip election, `event.rs` carries the measurement as
+a claim this document does not make. **The crate ran a test named for that
+property and now runs one named for what it watches**, the exchange landing
+2026-09-16 on issue #606. `tests/recorder.rs`'s
+`absent_measurement_members_emit_nothing` stated a perturbation that removed a
+skip election, `event.rs` carries the measurement as
 `Payload::ModelMeasurement(Box<RawValue>)` with no such election to remove, and
 its three assertions passed because the blob the test built never held those
 members rather than because an election of this crate's kept them out. A watch
 that cannot fail is what apex section 11's third device calls worse than no
-test, so the test retired rather than being retagged. **The other two courses
-were shut before the choice was made.** Electing a skip here would open the
-organ's content this Spec's section 3 carries opaque, retiring the splice rule
-in the same breath that invoked it, and buying an instrument for
-`trace-splice-or-shape` would claim a doctrine over six payloads on one
-payload's reading. What the removal costs is one construction: no test of this
-crate now builds a `model.measurement` event, which is the state
-`model.request`, `model.field`, `flush` and the tool bracket's `Deferred` were
-already in, so the consistency is restored rather than a hole opened. **The
-file's header is true of its contents again** for the claim this act reaches,
-that a test sorted under this section answers to a record of it.
+test. **The other two courses were shut before the choice was made.** Electing a
+skip here would open the organ's content this Spec's section 3 carries opaque,
+retiring the splice rule in the same breath that invoked it, and buying an
+instrument for `trace-splice-or-shape` would claim a doctrine over six payloads
+on one payload's reading.
+
+**What that test held besides its three vacuous assertions was a pairing
+watch, and deleting it opened a hole rather than restoring a consistency.** The
+`submit` above those assertions licensed `model.measurement` against
+`Payload::ModelMeasurement`, and it was the only construction of that pair
+anywhere in this crate. Measured on 2026-09-16 rather than reasoned: with that
+arm cut from `pairing_licensed` and nothing else touched, the whole crate gate
+`cargo test -p weaver-trace` answered green, so a later act in this crate could
+have broken the mapping, passed the per-crate gate Working Process section 6
+sets, and merged a recorder refusing every `model.measurement` event as
+malformed. The surviving catch sat in `weaver-harness`'s own suite, which is a
+workspace-run catch and not one the acting crate's gate takes. **The earlier
+reading of this cost, that the removal left one construction unbuilt and
+restored a consistency with `model.request` and `flush`, is withdrawn as
+wrong**, and the watch is restored under a name for the property it can hold,
+`the_measurement_is_a_licensed_pair_and_splices_verbatim`: the measurement is a
+licensed pair, no other kind takes that payload, and the organ's octets reach
+the line unaltered. It fails under each of three cuts taken one at a time, the
+arm dropped, the arm widened to any kind, and the render re-encoded through a
+`Value`.
+
+**The restored test answers to no record of this Spec, and that is the right
+sort rather than an owing.** What it watches is one row of
+`trace-kind-payload-mapping-total` and one payload's reading of
+`trace-splice-or-shape`, both review-tagged claims made over the whole set of
+twenty-one kinds and of every spliced payload. A `perturbation` tag on either
+would claim an instrument for a claim the instrument does not reach, a tag
+naming the mechanism its own clause names rather than the nearest test that
+touches it, and a node declared for the single row would be a second authority
+on a fact `pairing_licensed` already holds, which gate G5 refuses. **The file's
+header remains false of eleven of its twenty-six tests**, which name no
+perturbation while the header says each does, and that half of issue #606 is
+owed by an act that is not this one.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
 forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`

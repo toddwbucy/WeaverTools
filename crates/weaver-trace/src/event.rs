@@ -185,14 +185,18 @@ pub enum Kind {
 /// The kind-to-payload mapping is total, twenty-one kinds and sixteen
 /// dispositions, the payload-free case counting as one of them.
 /// **`pairing_licensed` in `writer.rs` enforces the mapping and is the
-/// authority on it**, this comment naming only which shape each kind reaches:
-/// `session.closed` and `turn.started` carry nothing, `unload` carries
-/// `UnloadClose` where a member stood and nothing where none did, `load`
+/// authority on it**, this comment naming only which variant of this enum
+/// each kind reaches. Variants throughout rather than the shapes they hold,
+/// so a row reads against the licensing match with no translation step, and
+/// because six variants hold `Box<RawValue>` and a shape cannot tell them
+/// apart: `session.closed` and `turn.started` carry nothing, `unload`
+/// carries `Unload` where a member stood and nothing where none did, `load`
 /// carries `Elections`, the four message kinds carry `Message`,
 /// `turn.closed` carries `TurnClosed`, `fault` carries `Fault`, `flush`
 /// carries `Flush`, `elision` carries `Elision`, `refusal` carries
-/// `Refusal`, the four model kinds carry their four own shapes, the classify
-/// pair carries its two, and the tool bracket's two carry `Deferred`.
+/// `Refusal`, the four model kinds carry their four own variants, the
+/// classify pair carries its two, and the tool bracket's two carry
+/// `Deferred`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum Payload {
