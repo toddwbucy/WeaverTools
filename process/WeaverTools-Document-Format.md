@@ -31,10 +31,11 @@ already being written and says where the notation goes.
 The document layer is what the corpus is made of. The subject layer is what the corpus
 is about. These are different graphs sharing one file set, and a file can sit in both
 without the layers collapsing. A contract is the standing case: it is a document node
-with a container, and it is also the source of the `party` and `draws` edges that run
-between crates and of the `defines` edges that name its own seam's terms. The document
-it is and the crates it speaks about are different subjects, and a mapper that treats
-one as the other builds a graph where a file is its own dependency.
+with a container, and it is also the source of the `party` edges that bind its crates,
+the `draws` edges that name what its clause reaches, and the `defines` edges that name
+its own seam's terms. The document it is and the crates it speaks about are different
+subjects, and a mapper that treats one as the other builds a graph where a file is its
+own dependency.
 
 A document node carries a container and nothing else. The container comes from the
 directory, per section 2, so a document node is built by walking the tree rather than
@@ -193,7 +194,7 @@ charter rules the contract out rather than deferring it, there being no producer
 inside the program to bind.
 
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
-mode, an event kind. The unit G4 resolves against.
+mode, an event kind. The common unit G4 resolves against.
 
 **term.** A named meaning the documents settle that no crate owns as a single
 definition. The four terms of the harness-state seam are the standing case, the
@@ -202,12 +203,11 @@ the `answer` the serve direction carries, each established by the contract that 
 the seam rather than by either party to it. The `diagnostic-trace` is the other, a
 record kind its own charter names. **A term is not a vocabulary node under a second
 word.** A vocabulary node is one definition a crate owns and its Spec represents, which
-is what lets G4 resolve a draw against it and tells a reader which crate to open. A
-term is a meaning the corpus holds steady while code spells it wherever it needs it,
-the tee's election standing in four representations at once per `weaver-trace-Spec`
-section 3. The kind is admitted on the ruling of 2026-09-15, which took the five
-declarations the corpus already carried rather than retyping them into a kind that
-answers a different question.
+is what tells a reader which crate to open. A term is a meaning the corpus holds steady
+while code spells it wherever it needs it, the tee's election standing in four
+representations at once per `weaver-trace-Spec` section 3. The kind is admitted on the
+ruling of 2026-09-15, which took the five declarations the corpus already carried
+rather than retyping them into a kind that answers a different question.
 
 **axiom.** One of the apex's five invariants, declared by `weaver-agents-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
@@ -251,8 +251,10 @@ authors its own through the conformance header rather than through any document.
 never before. A code node is declared by its own header rather than by any fenced
 block, the way a child declares its own parent edge: the header is the set of citations
 the unit carries and it names the assertion identifiers the unit conforms to. A unit is
-any tracked file able to carry a citation in one of the four forms section 4 admits,
-the crate's manifest among them. The mapper reads headers at merge, so code accrues
+a tracked file a workspace member owns, of the kinds the reading walks, the crate's
+manifest among them and its source files the rest. **The bound is ownership and kind
+and never the marker a file could hold**, a `#` line being writable in most of a tree
+that has no business citing anything. The mapper reads headers at merge, so code accrues
 into the graph as work merges and no document restates what source already carries.
 Its identifier is the source path relative to the repository root, the one spelling the
 filesystem already enforces. The kebab-case rule governs names this format invents, and
@@ -404,25 +406,47 @@ four. `//!` is the file's own and sits at the top above any other doc comment, w
 the form to reach for where the claim is the whole file's. `///` sits at the item that
 holds the instrument and `//` at the statement that holds it, so a file carrying
 several claims can say which line answers each. `#` is the manifest's, a
-`Cargo.toml` having no doc comment to hoist a citation into. A header naming an
-assertion the corpus does not declare is a dangling edge and the mapping pass fails on
-it, which is the no-dangling-endpoint precondition reaching code.
+`Cargo.toml` having no doc comment to hoist a citation into. **Whatever the marker, a
+citation is the first thing on its line**, and a marker that trails other code on the
+same line carries none. That is the quiet failure rather than the loud one, because a
+perturbation cited in the trailing position reads as uncited and no gate names the
+line it is on. A header naming an assertion the corpus does not declare is a dangling
+edge and the mapping pass fails on it, which is the no-dangling-endpoint precondition
+reaching code.
 
-**The four forms are admitted on the ruling of 2026-09-15, and what moved was this
-document.** `census.py` and the mapper read all four and had since before the question
-was put, so a rule admitting one alone was a rule the working system did not run under
-and no gate was ever going to fail a file for breaking it. The alternative was to
-hoist every citation into a file header, which a manifest cannot hold at all, and the
-manifest citations are the ones that let H2 be asked of the graph: it carries
-`crates/weaver-analysis/Cargo.toml` citing `analysis-no-internal-dependency`, which is
-a claim about a dependency list that no other file in that crate can make. The marker
-set is closed at four and a fifth is a Format act rather than a convenience.
+**The four forms are admitted as citation forms on the ruling of 2026-09-15, and what
+moved was this document.** A citation is what binds a unit to an assertion, and
+`census.py` has resolved one from any of the four since before the question was put,
+so a rule admitting one form alone was a rule the reading gate did not run under.
+
+**The module header is a second obligation and it is still `//!` alone.** Admitting a
+form as a citation says nothing about where a file owes a header, and phase three's
+rule that every source unit carries one is read by H6 through the file-level marker by
+itself. A file citing only at item level resolves each of its citations and is counted
+headerless all the same, and four such files stand inside today's forty-eight:
+`replay.rs` in the harness, and `native.rs`, `gemma4.rs` and `mistral3.rs` in the SPU.
+`act-04-inline-citations-get-a-header` of issue #569 is the act that gives those four
+their header. This act moves no count, which is the shape of a format catching up with
+a reading rather than changing one. The alternative was to hoist every citation into
+a file header, which a manifest cannot hold at all, and the manifest citations are the
+ones that let H2 be asked of the graph: it carries `crates/weaver-analysis/Cargo.toml`
+citing `analysis-no-internal-dependency`, which is a claim about a dependency list that
+no other file in that crate can make. The marker set is closed at four and a fifth is a
+Format act rather than a convenience.
 
 Between a contract and what it binds:
 
 - `party`, from a contract to each crate it binds.
-- `draws`, from a contract to each vocabulary node its clause names. This is the
-  vocabulary clause in edge form and it is what makes G4 a query rather than a reading.
+- `draws`, from a contract to each node its clause names. This is the vocabulary
+  clause in edge form and it is what makes G4 a query rather than a reading.
+  **The endpoint kind is open and is owed.** A clause names a vocabulary node in the
+  ordinary case, and three edges in the corpus today name a term instead, the
+  `election` and the `distillate` drawn by `weaver-analysis-state-contract` and the
+  `diagnostic-trace` drawn by `weaver-harness-diagnostic-contract`. Whether a term is
+  a lawful endpoint or those three want a vocabulary node to point at is not settled
+  here. It is `act-09-draws-targets` of issue #569, which resolves every draws target
+  in one pass, and admitting the `term` kind is what lets that act be asked in terms
+  the format carries.
 
 Between a crate and what it owns or touches:
 

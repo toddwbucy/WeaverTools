@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.31, 2026-09-02. Companion to the Working Rules, the Document
+**Version:** v0.32, 2026-09-16. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -321,10 +321,15 @@ lateral edge to a sibling appears. Floor links are declared as floor links and a
 confused with the parent edge. Checked against the blocks the Document Format defines,
 where the containing section is the grounds.
 
-**G4, vocabulary.** Every name a contract's vocabulary clause draws from another crate
-resolves to a definition that exists in that crate. Every definition a crate holds is
-either named by some clause or stated to be internal. Where a clause and the floor
-disagree, the document names which side yields and why.
+**G4, vocabulary.** Every name a contract's vocabulary clause draws from elsewhere
+resolves to a definition that exists where the clause says it does. **Elsewhere is a
+crate in the ordinary case and may be another contract**, per the ruling of 2026-09-15
+that makes a contract a source of `defines` for the terms its own seam establishes, so
+a clause drawing the `election` and the `distillate` from
+`weaver-harness-state-contract` resolves against that contract and not against either
+party's charter. Every definition a crate holds is either named by some clause or
+stated to be internal. Where a clause and the floor disagree, the document names which
+side yields and why.
 
 **The gate has two halves and they run on different occasions**, per the per-charter
 ruling of 2026-08-23, which removed the phase close that used to carry both. The draw

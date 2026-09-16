@@ -1761,19 +1761,23 @@ a plan and the experiments it registers are one composition. Each writes through
 is not on the path**, which is why the group of section 3.6 is named for how it is
 reached rather than for what it does.
 
-**A surface that authors or exchanges also reaches outside this crate.**
-Compose writes its draft and asks `validate`. Live carries a turn to the
-gate and reads the measurement that comes back. Agents drives the lifecycle
-verbs and reads the observation exchange. Section 7 names those three, of
-which the gate and the analysis stream are the charter's two seams and the
-admin verbs are the operator's own program run as a subprocess. **Stage
-submits a registered experiment to the queue, and section 7 names no queue
-reach**, the queue being the harness's per the charter's section 3.5 and
-this crate's part in it a write the runner drains rather than an exchange it
-holds open. **None of them writes the recorded half** - section 3.1's ingest
-is the only writer of a position or a run - and each writes only the
-authored table it owns, through section 3.2. None reads the agent except
-where section 7 names the reach.
+**A surface that authors or exchanges also holds an exchange outside this
+crate**, a call out and an answer back rather than a write left for someone
+else to drain. Compose writes its draft and asks `validate`. Live carries a
+turn to the gate and reads the measurement that comes back. Agents drives
+the lifecycle verbs and reads the observation exchange. Section 7 names
+each of those reaches. The gate is section 7.1 and the only one of them the
+charter carries as a seam, and `validate`, the lifecycle verbs and the
+observation exchange are section 7.2's, the operator's own program run as a
+subprocess. Section 7's third is the analysis stream, which no surface
+reaches and section 3.1's ingest does. **Stage submits a registered
+experiment to the queue, and section 7 names no queue exchange**, the
+queue being the harness's per the charter's section 3.5 and this crate's
+part in it a write the runner drains rather than an exchange it holds
+open. **None of them writes the recorded half** - section 3.1's ingest is
+the only writer of a position or a run - and each writes only the authored
+table it owns, through section 3.2. None reads the agent except where
+section 7 names the reach.
 
 **The state a surface holds is a query, never a location.** A filter chip is
 a clause, and clearing it widens the list in place. A card carries the
@@ -2094,3 +2098,11 @@ a `web-` assertion beside `weaver-admin`'s.
   from the run's first generation and the contract's section 2.2 now
   carries it once per run, section 2.2 above holding it on the row. Per
   issue #527, found by the review of PR #526.
+- **What section 7 is called, now that one of its three is not a seam**,
+  opened 2026-09-16 by the act that deleted this crate's seam record to
+  `weaver-admin`. The heading reads "The seams", and 7.2's admin verbs are
+  the operator's own program run as a subprocess under a contract that
+  binds this crate to nothing. Renaming the heading, moving 7.2 out from
+  under it, and widening the word are three answers and this document
+  elects none of them. Nothing in the section's content is wrong and no
+  read is blocked on the choice, so it is named here rather than settled.

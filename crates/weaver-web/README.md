@@ -28,13 +28,21 @@ architectural event. The surfaces:
 
 Weaver-Web reaches the agent the way any outside consumer does: over
 Unix sockets and by running its binaries. It links no crate of this
-workspace. Its build surface is two contract documents under
-`docs/crates/contracts/`:
+workspace. It builds against three contract documents under
+`docs/crates/contracts/`, of which two bind it and one does not:
 
 - **The gate contract** (`weaver-gate-world-contract.md`) - the client
-  boundary. How work enters a loaded agent and how answers return.
+  boundary, and a seam of this crate's. How work enters a loaded agent
+  and how answers return.
+- **The analysis contract** (`weaver-analysis-web-contract.md`) - the
+  other seam. The emitter sends a finished record and this crate lands
+  what crosses in its own store.
 - **The operator contract** (`weaver-admin-operator-contract.md`) - the
   operator boundary. How the trace, the program's one output, leaves it.
+  **This one is not a seam of this crate's.** It binds `weaver-admin`
+  and names the operator, a human role, as its second party, so this
+  crate drives the verbs by running the operator's own program as a
+  subprocess and reads the trace as any outside consumer does.
 
 Nothing else is API. The frontend never links the framework's crates,
 never imports its internals, and never parses anything the contracts call

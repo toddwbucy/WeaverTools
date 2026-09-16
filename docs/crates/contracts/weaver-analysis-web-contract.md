@@ -29,8 +29,10 @@ and nothing on this seam reaches the harness, the SPU, or the model.
 
 **This seam is a socket.** The emitter drains a file or a stream and its
 emission leaves over a socket the reader consumes, per `weaver-web-Spec`
-section 3. It is the second of the reader's two seams, section 7.3's, and
-the only one carrying measurement rather than lifecycle.
+section 3. It is the second of the reader's two seams, section 7.3's. What
+separates it from the gate is what crosses: the gate carries this crate's
+own turn out and the answer back, where this seam carries a finished
+record of work the crate did not run.
 
 **The emitter initiates and the reader never asks**, so the charter's seam
 record runs `from: weaver-analysis`, which the act that lands this text
