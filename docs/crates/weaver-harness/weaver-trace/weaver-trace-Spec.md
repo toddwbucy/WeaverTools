@@ -1480,18 +1480,6 @@ section need not reach it alike. The rule that sorted a divided claim's two
 halves by provenance goes with the count it served: a record counts in the
 section that declares it, once, and nothing above needs a second column.
 
-**This file's header states assertion counts this section does not, and the header is
-owed to issue #603.** Three figures there disagree with what this section derives: two
-bases, forty-four and thirty-eight, each from the tree as it stood when it was written,
-and a section 11 count of three. **The section 11 count is this act's own.** Section 11
-held three assertions at this branch's base and holds four after it, so that figure is
-drift authored here rather than drift inherited, and #603 receives it as such. **The
-count is the one this section derives from the declarations.** The header's figures are
-not restated here and are not corrected in place: the Working Rules give a header no
-history to carry, #603 retires the entries corpus-wide, and a correction would preserve
-the thing being removed. Named so the disagreement is met rather than settled by
-whichever statement a reader reaches first.
-
 **Two claims another document declares.** **The close-on-exec test below is
 declared by `weaver-harness`,** whose Spec section 8 carries it as the first of
 its threat walks and has discharged the owing, because an assertion belongs where
