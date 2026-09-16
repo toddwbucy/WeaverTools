@@ -1476,20 +1476,21 @@ instruments divide them four to the compiler, three to compile-fail, three to th
 manifest, ten to a perturbation-verified test, and twenty-six to review.
 **The split is stated as a count of declarations because that is a count the next
 act can take**, where a split by provenance is a reading and two readers of one
-section need not reach it alike. A divided claim's two halves both count with
-this section's sorting, per Document Format section 3, which is where the
-path-taking prohibition and the receive site's no-flag claim count, each the
-review half of a bullet above.
+section need not reach it alike. The rule that sorted a divided claim's two
+halves by provenance goes with the count it served: a record counts in the
+section that declares it, once, and nothing above needs a second column.
 
-**This file's header states assertion counts this section does not, and the
-header is owed to issue #603.** Two entries there give a base and a section 11
-count from the tree as it stood when each was written, and neither agrees with
-what this section derives. **The count is the one this section derives from the
-declarations.** The header's figures are not restated here and are not corrected
-in place: the Working Rules give a header no history to carry, #603 retires the
-entries corpus-wide, and a correction would preserve the thing being removed.
-Named so the disagreement is met rather than settled by whichever statement a
-reader reaches first.
+**This file's header states assertion counts this section does not, and the header is
+owed to issue #603.** Three figures there disagree with what this section derives: two
+bases, forty-four and thirty-eight, each from the tree as it stood when it was written,
+and a section 11 count of three. **The section 11 count is this act's own.** Section 11
+held three assertions at this branch's base and holds four after it, so that figure is
+drift authored here rather than drift inherited, and #603 receives it as such. **The
+count is the one this section derives from the declarations.** The header's figures are
+not restated here and are not corrected in place: the Working Rules give a header no
+history to carry, #603 retires the entries corpus-wide, and a correction would preserve
+the thing being removed. Named so the disagreement is met rather than settled by
+whichever statement a reader reaches first.
 
 **Two claims another document declares.** **The close-on-exec test below is
 declared by `weaver-harness`,** whose Spec section 8 carries it as the first of
@@ -1508,8 +1509,14 @@ Spec asserts it.** The property is `weaver-spu-Spec`'s
 `spu-absent-not-empty-vector`, where the rendering happens, and section 3 argues
 why: the measurement splices, so this crate names none of its members and elects
 no `skip_serializing_if` over them. A bullet here would sort an instrument under
-a claim this document does not make, and the absence of the election is what
-makes the perturbation unavailable to this crate rather than merely unbought.
+a claim this document does not make. **The crate does run a test named for the
+property, and it answers to no record here**: `tests/recorder.rs`'s
+`absent_measurement_members_emit_nothing` states a perturbation that removes a
+skip election, and `event.rs` carries the measurement as
+`Payload::ModelMeasurement(Box<RawValue>)` with no such election to remove, so
+the watch cannot fail and the file's own header sorts it under this section. That
+test and that header are issue #606's, filed for the crate half this act does not
+reach.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
 forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
@@ -1574,6 +1581,12 @@ the fact exists.
 - The projection splices and never re-renders: an elected value whose
   re-rendering would differ from its spelling crosses byte-identical, confirmed
   by watching the comparison fail when the walk re-renders the value.
+- The `load` event names its loop and its member: a payload rendered with a
+  file-backed composer and a standing member reads both back off the canonical
+  form, the digest and the path included, watched to fail when either member's
+  serialization is skipped.
+- The output carries the session's position: a turn's record carries both counts
+  from `ModelOutput`, watched to fail when either count is dropped.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test

@@ -1287,8 +1287,8 @@ was selected is `weaver-state`'s work and decision about what it means is the ha
 loops', and a tee that computed would smuggle the first into this crate.
 **This charter declares no assertion node.** It argues the claim and Document
 Format section 4 gives the declaration to the Spec, which declares
-`trace-tee-selects-never-computes` at `weaver-trace-Spec` section 11: a charter
-says what is needed and why, and a Spec states its subject crate's records.
+`trace-tee-selects-never-computes` at `weaver-trace-Spec` section 11, where the
+rule it rests on is stated.
 
 **The election is fixed at load and arrives with the declaration.** What the
 operator elected is thereby a load condition the record carries like any
