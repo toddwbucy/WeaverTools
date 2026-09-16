@@ -11,13 +11,20 @@ corpus words and four stemmer outputs, and ten of the eleven are live as slug
 tokens, `cases` having left the slugs 2026-09-15. A table built on that reading
 reports two statements of one clause as two clauses.
 
-So the fixtures are corpus words, with one stated exception. Each group below is a
-set of inflections this corpus writes, except `("cases", "case")`, whose plural no
-slug has spelled since the rename this file records at its foot; the pair is kept
-because the stemmer is what these fixtures watch. The test is that each group
-reaches one string. What that string is does not matter and is deliberately not
-asserted: the stemmer truncates towards a common prefix rather than towards a
-lemma, and pinning the output would make a better truncation a test failure.
+So the fixtures are not invented words. Each group below is a set of inflections
+this corpus actually writes, and the test is that they reach one string. What that
+string is does not matter and is deliberately not asserted: the stemmer truncates
+towards a common prefix rather than towards a lemma, and pinning the output would
+make a better truncation a test failure.
+
+**Two different corpora are read in this file and confusing them is what the
+comments here kept getting wrong.** `CONVERGE` is prose: every word in it is
+written somewhere in `docs` or `process`, all thirty-six of them, and that is the
+only claim it makes. The liveness test below reads **slug tokens**, the words
+`node:` identifiers are built from, which is a far smaller set - eight `CONVERGE`
+words are spelled by no node id at all. A word can leave the slugs while staying
+ordinary prose, which is exactly what `cases` did, and neither fact says anything
+about the other.
 """
 
 import os
@@ -29,11 +36,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import grounds_parity as gp
 
 
-# Each tuple is one word's inflections as this corpus writes them, with the node
-# that carries each spelling named beside the group in `test_corpus_tokens`.
-# One exception, stated in the docstring above: `("cases", "case")` is kept for
-# its watch on the stemmer after `cases` left the slugs 2026-09-15, so no node
-# carries that spelling and none is named for it.
+# Each tuple is one word's inflections as this corpus writes them in prose. That
+# is the whole claim: no group is tied to a node id, and none needs to be. What
+# the tuples watch is the stemmer, which must bring every member of a group to
+# one string.
 CONVERGE = [
     ("carries", "carried", "carry"),
     ("denies", "denied", "deny"),
@@ -134,12 +140,19 @@ class Corpus(unittest.TestCase):
             self.assertIn(src, self.assertions, src)
 
     def test_the_tokens_the_second_form_split_are_in_the_corpus(self):
-        # The words below are corpus words. If a rename retires one, this
-        # fails and says so rather than leaving a fixture testing nothing.
-        # It asserts over this list and not over CONVERGE, which is what lets
-        # `("cases", "case")` stay a fixture after its plural left the slugs:
-        # the pair still watches the stemmer, and `cases` is simply not listed
-        # here. A fixture retired from this list is retired from the claim.
+        # A chosen subset of slug tokens, not every CONVERGE word and not
+        # every live token: these are the spellings the second stemmer split,
+        # so a rename that retires one would quietly restore the bug this
+        # fixture exists to catch. Fifteen further CONVERGE words are live
+        # slug tokens and are deliberately absent - they were never split and
+        # nothing about them is at risk.
+        #
+        # `cases` was removed 2026-09-15. The only slug spelling the plural was
+        # `harness-outcome-two-cases`, renamed `harness-outcome-one-case` when
+        # the Spec was read against an enum of one variant. Its CONVERGE pair
+        # stays, because CONVERGE is prose and `cases` is still written 85
+        # times in `docs` and twice more in `process`. The two sets move
+        # independently, per the docstring.
         live = set()
         for node_id, crate in self.crates.items():
             live.update(gp.slug_of(node_id, crate).split("-"))
@@ -147,14 +160,6 @@ class Corpus(unittest.TestCase):
                      "retried", "case", "closes", "close", "string",
                      "strings", "dependencies", "dependency"):
             self.assertIn(word, live, f"{word} is no longer a corpus token")
-
-    # `cases` left this list 2026-09-15 and its CONVERGE pair stayed. The only
-    # slug carrying the plural was `harness-outcome-two-cases`, renamed
-    # `harness-outcome-one-case` when the Spec was read against an enum of one
-    # variant, and no other slug spells it. The pair is one of the four splits
-    # the docstring names as what the second stemmer got wrong, so it keeps its
-    # watch on the stemmer while this list keeps meaning what it says, that
-    # every word in it is a word the corpus writes today.
 
 
 if __name__ == "__main__":
