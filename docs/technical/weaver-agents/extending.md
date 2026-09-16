@@ -2,7 +2,7 @@
 title: Extending the program
 summary: what the framework requires of you when you add a shape, a tool, or an organ, and where its requirements stop
 version: v0.1
-date: 2026-08-23
+date: 2026-09-15
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -139,9 +139,9 @@ that gets you there.**
 - **A worked example.** The most useful version of this page walks one real
   extension end to end: a seam drawing a new shape, the floor edit beside it, and
   the rebuild that makes both sides agree. That is owed.
-- **The extension seam and the working-list socket** are the two builder-facing
-  surfaces for loops rather than for the floor, and they are named in
-  [the loop](loop.md) rather than described in either place.
+- **The extension seam** is the one builder-facing surface for loops rather than
+  for the floor, and it is named in [the loop](loop.md) rather than described in
+  either place.
 - **The graph's part in this.** Documents carry their nodes and edges in a fixed
   notation and the knowledge graph is generated from them, so a floor change is a
   graph change too. What a builder owes the graph is not written here.

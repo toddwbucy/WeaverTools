@@ -200,16 +200,23 @@ that creates it. It is dialable by construction and the credential check is what
 refuses, root or refused, per `weaver-admin-harness-contract` section 2, where
 the earlier form's unreachability did the refusing and could not tell an elected
 tool from the worker. Nothing else here is dialable: the organ pairs have no
-names. **That is why it is seated in this crate
-directly and not in the loop container.** The container under `Loops/` holds the
-agent's internal logic, which the running loop 0 service executes, and a loop 0
-filed beside those documents would read as one more supplied loop rather than as
-the service that executes them. **Both builder-facing surfaces are limited to
-loop 1 and above and exclude loop 0**, not one of the two: the extension seam of
-section 6, composed against and compiled into the worker binary, and the socket
-binding the working list holds open, dropped in beside a running agent. Loop 0
-is the service that runs a builder's loop under either surface, and is not
-itself supplied through either.
+names. **That is why it is seated in this crate directly and not in the loop
+container.** The container under `Loops/` holds the agent's internal logic,
+which the running loop 0 service executes, and a loop 0 filed beside those
+documents would read as one more supplied loop rather than as the service that
+executes them. **There is one builder-facing surface, it is limited to loop 1
+and above, and it excludes loop 0.** It is the extension seam of section 6, and
+it has two stages rather than two forms: a builder develops against it as a
+loop file that a Python-iterating worker reads per crossing, and deploys by
+compiling that loop into the worker binary. Loop 0 is the service that runs a
+builder's loop at either stage, and is not itself supplied through that
+surface. **The socket-binding surface is not coming**, per the operator's
+ruling of 2026-09-15. An earlier form of this paragraph named a second surface
+beside the seam, a builder's loop standing in a separate process and reached
+over a socket, dropped in beside a running agent, and no such proxy loop is
+built. The development path and the deployment path are the one seam at two
+stages, so a loop is composed into the worker it runs under rather than bound
+to from outside it.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,
