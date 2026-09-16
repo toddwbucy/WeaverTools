@@ -61,7 +61,7 @@ sits there being one sealed agent.
 
 **Loop 1 is the builder's**, and loops above it are further builder loops. The one
 builder-facing surface reaches loop 1 and above and excludes loop 0, so loop 0 is the
-service that runs your loop and is never itself supplied through it.
+service that runs your loop and is never itself supplied through that surface.
 
 ## The seat drives a serving binding
 
@@ -195,9 +195,7 @@ compiled array.**
 
 - **The extension seam** is the one builder-facing surface and is named here rather
   than described. What a builder writes against it, at the Python stage and at the
-  compiled one, is owed. A second surface binding a separate-process loop beside a
-  running agent was named here until the operator's ruling of 2026-09-15 retired it,
-  and no such loop is coming.
+  compiled one, is owed.
 - **The worked examples.** The kit's project book is the part this page most
   obviously lacks. The repository records the loops the agents run, and a reader
   would be better served by two of them read line by line than by any amount of

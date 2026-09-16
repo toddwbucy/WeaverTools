@@ -8,17 +8,6 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
-**Revised:** 2026-09-15, first of this date, the second builder-facing surface
-retires. Section 2 asserted two surfaces reaching loop 1 and above, the extension
-seam and a socket binding that a separate-process loop would be dropped in over.
-Per the operator's ruling of this date there is one surface, the extension seam at two
-stages: a loop file a Python-iterating worker reads per crossing while a builder
-develops, and that loop compiled into the worker binary to deploy. The
-separate-process proxy loop is not built and the wording naming it is retired
-everywhere it is stated as current. The accumulated entry of 2026-08-05 keeps
-the word `drop-in` and is left as a dated record of what the charter said rather
-than as a claim about what it says. Per issue #310.
-
 **Revised:** 2026-09-04, third of this date, the restored conversation is prefix.
 Section 2's prompt assembly names the recorded conversation through the cut as prefix
 material under a restoring load, seated beside the identity and permanent for the
@@ -211,23 +200,23 @@ that creates it. It is dialable by construction and the credential check is what
 refuses, root or refused, per `weaver-admin-harness-contract` section 2, where
 the earlier form's unreachability did the refusing and could not tell an elected
 tool from the worker. Nothing else here is dialable: the organ pairs have no
-names. **That is why it is seated in this crate
-directly and not in the loop container.** The container under `Loops/` holds the
-agent's internal logic, which the running loop 0 service executes, and a loop 0
-filed beside those documents would read as one more supplied loop rather than as
-the service that executes them. **There is one builder-facing surface, it is
-limited to loop 1 and above, and it excludes loop 0.** It is the extension seam
-of section 6, composed against at the worker's composition root, and it has two
-stages rather than two forms: a builder develops against it as a loop file
-that a Python-iterating worker reads per crossing, and deploys by compiling that
-loop into the worker binary. Loop 0 is the service that runs a builder's loop at
-either stage, and is not itself supplied through it. **The socket-binding surface
-is not coming**, per the operator's ruling of 2026-09-15. An earlier form of this
-paragraph named a second surface beside the seam, a builder's loop standing in a
-separate process and reached over a socket, dropped in beside a running agent,
-and no such proxy loop is built. The development path and the deployment path are
-the one seam at two stages, so a loop is composed into the worker it runs under
-rather than bound to from outside it.
+names. **That is why it is seated in this crate directly and not in the loop
+container.** The container under `Loops/` holds the agent's internal logic,
+which the running loop 0 service executes, and a loop 0 filed beside those
+documents would read as one more supplied loop rather than as the service that
+executes them. **There is one builder-facing surface, it is limited to loop 1
+and above, and it excludes loop 0.** It is the extension seam of section 6, and
+it has two stages rather than two forms: a builder develops against it as a
+loop file that a Python-iterating worker reads per crossing, and deploys by
+compiling that loop into the worker binary. Loop 0 is the service that runs a
+builder's loop at either stage, and is not itself supplied through that
+surface. **The socket-binding surface is not coming**, per the operator's
+ruling of 2026-09-15. An earlier form of this paragraph named a second surface
+beside the seam, a builder's loop standing in a separate process and reached
+over a socket, dropped in beside a running agent, and no such proxy loop is
+built. The development path and the deployment path are the one seam at two
+stages, so a loop is composed into the worker it runs under rather than bound
+to from outside it.
 
 **Loop 0, and the machinery loop 1 composes against.** The harness owns the
 lifecycle interior of loop 0, the load and the unload, the same for every agent,

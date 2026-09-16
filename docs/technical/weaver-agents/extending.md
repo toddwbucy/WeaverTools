@@ -141,8 +141,7 @@ that gets you there.**
   the rebuild that makes both sides agree. That is owed.
 - **The extension seam** is the one builder-facing surface for loops rather than
   for the floor, and it is named in [the loop](loop.md) rather than described in
-  either place. The working-list socket stood beside it here until the operator's
-  ruling of 2026-09-15 retired it.
+  either place.
 - **The graph's part in this.** Documents carry their nodes and edges in a fixed
   notation and the knowledge graph is generated from them, so a floor change is a
   graph change too. What a builder owes the graph is not written here.
