@@ -7,7 +7,7 @@ is the operator's to say.
 **Date filed:** 2026-09-05
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #535
+**Landing PR:** #611
 
 ## Parties
 
