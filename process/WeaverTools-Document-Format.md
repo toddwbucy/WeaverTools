@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.21, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.22, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -18,10 +18,11 @@ and the edges are stated, not implied.
 
 Every document in the corpus already states edges. It states them in four notations
 and none of them is mechanical. `Parent:` headers state one kind. `Depends on:` states
-another and carries no tag. `weaver-harness-PRD` section 4 states four seams and two
-floor links in prose. Every contract's vocabulary clause states a whole edge set to a
-fixed shape by ruling, which makes it the largest body of edge data in the corpus and
-still not a form a mapper can read.
+another and carries no tag. `weaver-harness-PRD` section 4 states its crate's seams
+and floor links in prose, the charter being the authority on how many there are and
+this sentence naming the notation rather than restating the count. Every contract's
+vocabulary clause states a whole edge set to a fixed shape by ruling, which makes it
+the largest body of edge data in the corpus and still not a form a mapper can read.
 
 This document does not invent the edges. It picks one notation for edges that are
 already being written and says where the notation goes.
