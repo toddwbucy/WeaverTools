@@ -47,8 +47,14 @@ finished record from a truncated one could hold this shape and not use it.
     src/field.rs      a position's field, read from the record, section 5
     src/stream.rs     the drain, one road under every reader, section 5
     src/signals.rs    the per-position series, read on the drain, section 5
-    src/deposit.rs    the deposit the invocation names, read for what the
-                      record does not hold, section 5
+
+Eleven library files and no placement among them, and one bin target.
+**`src/deposit.rs` leaves this listing.** No such file exists, `lib.rs` declares
+ten modules beside itself, and the word appears nowhere in the crate's source, so
+a row beside the twelve read as a thirteenth file the crate holds. What reads a
+deposit is section 7's election, per the convention
+`weaver-harness-Spec` section 1 states: a listing says what the tree holds and a
+placement election stays at the clause that argues it.
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -850,11 +856,11 @@ record holds the organ binaries, the `load` event's `stack`, and the device mode
 the rest of the code identity are the operator's, per the charter's section 3, which
 already has this crate read the device model from a deposit to bound a licence.
 
-**The deposit is named by the invocation and never found beside the record.** Section
-1's layout gains `src/deposit.rs` for reading it, and the signals invocation takes the
-deposit's path beside the record's. **A rule that looked beside the record would name
-nothing on a pipe**, which section 5 above licenses as a sink shape, so the caller names
-it or names none.
+**The deposit is named by the invocation and never found beside the record.** **A rule
+that looked beside the record would name nothing on a pipe**, which section 5 above
+licenses as a sink shape, so the caller names it or names none. **What reads it is
+unelected**, per section 7, so the members a deposit would fill cross absent on the rule
+below and section 1's listing names no module for it.
 
 **The agreement rule reaches what a run can agree on.** The sampling's declared members
 agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
@@ -864,8 +870,8 @@ close and crosses on that generation's entry alone.
 
 **Where the caller names none, the device model crosses absent and the code identity
 crosses carrying only what the record held.** This crate neither infers a device from a
-driver version nor a library set from a binary it did not see, and it reads the deposit
-for these members alone.
+driver version nor a library set from a binary it did not see, and a deposit reaches
+these members alone.
 
 **Nothing here is derived.** The sampling is spliced as the record spelled it, the depth
 and the lineage are the load event's own, and a verdict is the task's. A member this
@@ -1078,3 +1084,16 @@ most of this document is representation.
   member on a new event where the closing count has been on the wire since
   2026-08-19, so the cheaper answer is also the one that asks the record for
   nothing. Per issue #461.
+- **What reads a deposit, and how, opened 2026-09-16.** Section 5 has the summary
+  carry the device model and the rest of the code identity from a deposit the
+  invocation names, and no module in this tree reads one, per section 1's listing.
+  `src/deposit.rs` is the placement, and the election owes that module and the
+  signals invocation taking the deposit's path beside the record's. Until it lands
+  the device model crosses absent and the code identity crosses carrying only the
+  `load` event's stack, which is section 5's rule for a caller that named none, so
+  the wider set is unelected rather than wrong. The clause sat in section 1's
+  listing and in section 5 in the present tense, where a representation this
+  document had not made read as one the crate held. **This is not the gap issue
+  #538 carries**, which is four summary members section 5 declares and no code
+  reaches, named as owed at `crates/weaver-analysis/src/main.rs`'s own header
+  rather than here.
