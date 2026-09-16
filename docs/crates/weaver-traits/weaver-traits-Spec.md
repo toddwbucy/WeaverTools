@@ -4,42 +4,10 @@
 merged charter. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
-
-**Revised:** 2026-08-19, the system role lands. `Role` gains `System`, the
-growing set carrying it per this Spec's own non-exhaustive election, and
-the licensed combinations gain one line: a `System` message carries `Text`
-blocks. The slot the control loop's system prompt has ridden in user role
-since PR 207's standing practice now exists in its own name, and the
-message a system role becomes is `message.system`, the trace charter and
-the harness-trace contract moving in the same act. The count-named
-assertion `traits-role-set-three` retires for
-`traits-role-kind-one-to-one`, the durable property named instead of the
-count, the code's citation moving with it in this act.
-
-**Revised:** 2026-08-18, the tool boundary ruling retires section 5's interim
-reading. The gate holds one tool, the shell, its own verb dispatched with no
-table, so no current party dispatches `tool-trait` and the harness-gate
-contract's draw of it retires with the table. The trait stays chartered for
-the constituency section 5's own foot always named, the elected outward
-corner - the registered service the egress seam awaits - and the shape and
-its three assertions stand for that day.
-
-**Revised:** 2026-08-17, the tool workflow opens: section 5's block lifts per
-the charter's own revision, the trait is chartered against the gate's
-executor and the harness's dispatch, and section 3's deferred field lists
-land - `ToolCall` carrying the name and arguments the family parse recovers,
-`ToolResultBlock` carrying the content a family renders. The
-no-safety-classification negative stands whole.
-
-**Revised:** 2026-08-10. The shared tagging test gains its fourth arm, identical
-here and in `weaver-types-Spec` section 4.3 so the two floor Specs cannot
-drift: an enum with a variant wrapping a struct that carries a spliced member
-is adjacently tagged, the trio's code act having measured internal tagging
-failing the round trip at deserialization, a failure the rule's rationale
-named only for the write side.
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #217
 
 ---
 
@@ -451,20 +419,19 @@ about which mode any agent chose.
 
 ## 5. The tool contract, chartered with the tool workflow
 
-`tool-trait` opened on 2026-08-17, per `weaver-traits-PRD` section 3.1 as
-revised: the ratified loop boundary put every tool outside the reasoning
-loop, and dispatch crosses the gate seam. `src/tool.rs` holds it. The
-opening act read the trait as the gate's executor surface over a table of
-held tools, and the tool boundary ruling of 2026-08-18 retired that reading
-the day after it landed: the gate holds exactly one tool, the shell, its own
-outbound verb dispatched directly, and the inward callables of
-`weaver-internal` are reached by their own surface and never through a dyn
-table. What stands is the constituency this section's foot stated from the
-start - the trait serves the elected outward corner alone, the registered
-service the egress seam awaits - so the trait today has a chartered shape
-and no dispatching consumer, which is a definition waiting on its corner
-rather than a reserved slot: the shape was demanded and shaped by an act,
-the corner is named, and the draw returns on the day that corner's exchange
+`tool-trait` opened on 2026-08-17, per `weaver-traits-PRD` section 3.1: the
+ratified loop boundary put every tool outside the reasoning loop, and dispatch
+crosses the gate seam. `src/tool.rs` holds it. The opening act read the trait as
+the gate's executor surface over a table of held tools, and the tool boundary
+ruling of 2026-08-18 retired that reading the day after it landed: the gate
+holds exactly one tool, the shell, its own outbound verb dispatched directly,
+and the inward callables of `weaver-internal` are reached by their own surface
+and never through a dyn table. What stands is the constituency this section's
+foot stated from the start - the trait serves the elected outward corner alone,
+the registered service the egress seam awaits - so the trait today has a
+chartered shape and no dispatching consumer, which is a definition waiting on
+its corner rather than a reserved slot: the shape was demanded and shaped by an
+act, the corner is named, and the draw returns on the day that corner's exchange
 arrives.
 
 The shape, stating the four inherited constraints as the signature they

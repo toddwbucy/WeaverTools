@@ -5,62 +5,10 @@ its charter is chartered to: the lifecycle half, with the traffic arriving via t
 workflow. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
-
-**Revised:** 2026-09-14, the document counts what the crate holds. Section 1's
-layout table mirrors `crates/weaver-gate/src` and its dependency set is the one
-internal crate the manifest declares. Section 2's close-on-exec rests on the
-planned fork section 8 charters rather than on this crate spawning nothing,
-which it stopped doing when the shell landed. Section 6 sorts every record
-under the instrument that holds it and states the totals by the section each
-record is declared in.
-
-**Revised:** 2026-08-28, third of this date, the election's direction is
-stated plainly. Section 3 records that `0770` narrows against the two boxes
-measured and widens the group's reach against the common umasks, the boundary
-resting entirely on the unit naming `Group={identity}` rather than on the
-figure alone.
-
-**Revised:** 2026-08-28, second of this date, the mode is elected in the
-creating call. Section 3 states that the raise holds a umask across the bind
-rather than setting the mode on the path afterwards, which closes the window
-in which the socket listened at the inherited mode, the path race an agent-uid
-tool could win, and the post-bind failure that would have left a file behind
-and retired `gate-refused-raise-holds-nothing`.
-
-**Revised:** 2026-08-28, the socket's mode becomes the boundary's election.
-Section 3 states that the raise elects `0o770` rather than leaving it to the
-process umask, which had produced `0777` on one box and `0775` on another
-from one build. The credential check is unchanged and the two are named as
-two locks against different adversaries. **An earlier form of this entry said
-the raise sets the mode on the bound path**, which described a draft that
-never reached `main`: the mechanism is the umask around the bind, per the
-entry above.
-
-**Revised:** 2026-08-18, the tool boundary ruling lands section 8: the shell
-execution, the one tool this crate holds as its own outbound verb, with the
-one-clock rule, the four answer contents, and the group-kill containment as
-assertions. The tool-uid cell of section 7 stands unmoved.
-
-**Revised:** 2026-08-12, the turn half arrives, act two of the first-live-turn
-epic, per the operator. Section 4 charters the relay: one `poll` across the
-listener, the accepted connections, and the channel end, serial with no
-executor and never blocking on a client, one exchange open per connection
-as the flow control, a lower closing the listener then
-the connections then answering stopped,
-frames bounded at the delimiter by a scan that reads nothing, one
-line one exchange with the exchange's identity as the routing, a 32 kibibyte
-line bound that closes the connection at the framing layer, and the client
-line's field list fixed, `text` in and `kind`-named closes out. Three
-perturbation assertions land, section 7's deferral narrows to streaming, and
-section 1's no-executor ground moves from deferral to `poll`.
-
-**Revised:** 2026-08-15, the gate socket is the program's. Section 3's two consumed
-things arrive as two fields rather than one, the access rule being the operator's
-election and the socket the program's deployment fact. The count of what this crate
-consumes is unchanged and so is every record.
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #584
 
 ---
 

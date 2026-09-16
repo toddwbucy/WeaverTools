@@ -17,106 +17,10 @@ The figure read 4,531 until 2026-09-07 and was off by one.
 **Two of those acts have now landed.** The crate stands at **4,002 lines**
 and one migration, and the register below marks what moved.
 
-**Revised:** 2026-09-13, the archive is deleted and question 1 is re-answered. **The
-frozen copy at `crates/weaver-web/archive/conversation/` is gone**, git being the copy,
-which reverses this register's ruling of 2026-09-06 and matches the answer question 2
-took on 2026-09-07. A copy drifts: three of the nine files its manifest hashed had
-stopped matching their originals, and the other six had not, so a reader met an
-alternate version of three live modules with nothing marking which three.
-**The call-site
-map the archive act found by trying is carried into the Retires section above**, that
-manifest having been the only place it was written down and being original analysis
-rather than a copy of anything. **And the count in it was wrong**: ten sites and five
-imports, not the nine this register has said since 2026-09-06, which counted one
-module's import line as a site and four others' as not. Two crossings had been missed
-entirely, `user::routes()` at `web/mod.rs:39` and the `is_admin()` call at
-`web/admin.rs:39`, the first of them the only crossing into `web/user.rs`, which is the
-largest of the four retiring files and had been carrying a row of none. Found by the
-olympus seat's review of PR #563.
-
-**Revised:** 2026-09-08, the citation act lands and this register's own figures are
-corrected. PR #510 repointed twenty-seven of the crate's comment citations, redirected
-one and left nine with their retiring modules, and PR #509 gave the role a home at Spec
-section 2.8 which the redirected one now names. **The count this register carried was
-wrong**: thirty-five against a measured forty-five, and thirteen resolving against
-fifteen, both from a grep that matched one digit and dropped `section 10`. The reviews of
-that act also found two sites where the code stands where a merged document has moved,
-`gate.rs`'s retired inference and `store.rs`'s role model, which are recorded below as
-corpus facts rather than filed, the comments at the lines being where a person meets
-them. Per issue #454.
-
-**Revised:** 2026-09-07, second of this date, the first two acts land and the register
-marks what moved. `repro.rs` is out at PR #498 with the surface that depended on it, 595
-lines against the 369 this register counted, because "clean to remove" was about its
-imports and its callers were a whole confirm surface. The schema is replaced at PR #499:
-the five conversation tables are gone and the Spec's seven are in one migration, so
-**ruling two is landed rather than merely settled**. Ruling three stands at three of five
-with `web/admin.rs` and `web/mod.rs` remaining, and **they now wait on one thing rather
-than two**, the schema having been the first of their two conditions. The reading also
-found two corpus facts this register had not: the crate's comments cite a charter that no
-longer exists, and **no file in it carries a conformance header**. The count in that
-sentence read thirty-five and is corrected below to forty-five.
-
-**Revised:** 2026-09-07, three of the five are decidable and the ruling count moves with
-them. Read module by module against the charter: `repro.rs` retires because it is
-built on the premise the rewrite retired, that reproduction is a verdict, and its
-successor is a different object split across two homes. `queue.rs` retires because every
-field of its payload is the retired charter's and the mechanism worth keeping is already
-placed with the runner at issue #442. `traceview.rs` keeps, its discontinuity marks
-being absent-not-empty at the viewer built twelve days before the charter argued for
-it, with the consuming end rewritten against the contract. **The two that remain wait on the
-schema first and on section 6 naming what it defers to**, that section deferring to "a
-named trigger" that is named nowhere while the retired Spec named the IAM act plainly.
-**Rulings one and four were landed at PRs #469 and #470 and are recorded here rather
-than answered here.** Ruling two is answered by this revision as the operator settled it,
-replaced with git as the archive and the schema virgin, and ruling three by three of its
-five. **So the register stands at three of the four answered whole and the fourth three
-fifths done**, which is a different count from the one this entry carried and the reason
-it is stated by ruling rather than by total.
-
-**Revised:** 2026-09-06, fourth of this date, the archive act reads back into the
-register. **`registry.rs` splits rather than retiring whole**: it carries
-`Participant`'s `role` and `is_admin()`, which is the role model the charter's section 6
-keeps as structural and which `web/admin.rs` gates on, so its separation is the section
-6 act. **The four retiring files cannot be lifted out independently**, nine call sites
-crossing into them from modules that do not retire, which is why the archive at
-`crates/weaver-web/archive/conversation/` is a frozen copy and the build still compiles
-the originals. Section 1's ruling list said four ruling-wanted modules where its own
-table has five. **And the edition alignment is measured**: it is not the real work its
-comment claims.
-
-**Revised:** 2026-09-06, third of this date, against the review of PR #468. The
-observation reports that no unit is installed rather than that nothing serves the
-database, a process or a hand-started binary not having been checked. **The 37 rows the
-mirror argument did not reach are classified**: twenty-one member changes, whose subject
-retires with `members`, and sixteen application errors, which no trace under admin's
-custody carries because they never reached an agent, both left open rather than answered
-by a claim about turns. The `src/` directory comparison says it is one. Entries run
-newest first, which the second of this date broke.
-
-**Revised:** 2026-09-06, second of this date, against the review of PR #468 and carrying
-the answer that review brought. **The store the register could not see is reported for
-one box**, with its five tables' row counts, its two-day span, and the finding that its
-turn rows mirror traces held elsewhere, so question 2 is answered for olympus and open
-for every other box. **The module citations resolve** against the Spec at `13b8a6a` of
-2026-08-25, git being the archive, so a reader checks each verdict against the text its
-module was written to rather than finding nothing, and the schema is named as the one
-citation that resolves nowhere. `store.rs` cites sections 5 and 14 and not 12, which is
-`traceview.rs`'s. **The crate has none of the seven directories**, where this register
-twice said one. `0002_roles.sql` joins the sessions paragraph, having made the charter's
-section 6 argument in the schema nine days before the rewrite made it in prose. Question
-1 gains its third answer, an archive at a named path.
-
-**Revised:** 2026-09-06, against the review of PR #468. The `sessions` table and the six
-templates the first draft left unclassified are classified. `web/admin.rs`'s routes are
-marked as inner and the `/admin` mount named. **And the claim that the store has no rows
-that matter is withdrawn**: it was a claim about every deployment made from one box's
-`systemctl`, and what stands in its place is the three questions someone with reach must
-answer before any drop.
-
 **Date filed:** 2026-09-06
 **Document ID:** `inventory-weaver-web-code`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
+**Landing PR:** #585
 
 ## What the reading found
 

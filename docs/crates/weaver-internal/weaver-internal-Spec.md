@@ -5,17 +5,11 @@ date, reviewed in PR, and ratified by the operator on the review's close of
 the same date. Code is written against it under the gates of Working Process
 section 6.
 
-**Revised:** 2026-09-14, the empty dependency set carries the edge its wider
-twins carry. Section 1's claim grounds in apex section 5.1, where
-`weaver-traits-Spec` section 1, `weaver-analysis-Spec` section 1 and
-`weaver-harness-Spec` section 1 ground the narrower claim of holding no internal
-dependency. One edge, no record added or removed. Per the parity ruling of this
-date at Document Format section 4, and issue #569.
-
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-internal-Spec`
 **Parent:** `weaver-internal-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #587
 
 ---
 

@@ -8,20 +8,10 @@ which is the seam category `weaver-admin-PRD` section 10 held open, settled by t
 same ruling.
 
 **Date filed:** 2026-08-01
-
-**Revised:** 2026-08-05, narrowed to the trace's exit by the admin recut. The
-operator reaches the program by running the crate with root rather than by dialing a
-service, so the socket this document governed, its peer predicate, and the request
-format that entered across it have no subject and retire from sections 1, 2, 4, 5,
-and 6. What survives is the boundary that still crosses a principal line: the output
-stream, its tee promise, its sink shapes, and the custody either side may rely on,
-which is section 3 and the clauses that serve it. The document is narrowed rather
-than retired because that boundary is real and because the 2026-08-01 durability
-ruling it carries is cited across the corpus. `peer-identity` and
-`authorization-predicate` are no longer drawn.
 **Document ID:** `weaver-admin-operator-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
+**Landing PR:** #300
 
 ---
 

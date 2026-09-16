@@ -9,95 +9,11 @@ than waiting on the set. The set-wide act of 2026-08-04 established the pattern 
 conforms to.
 
 **Date filed:** 2026-07-29
-
-**Revised:** 2026-08-24, the kind crosses the enter. Section 2.1 gains
-`binding-kind`, the operator's declaration of what a load is for, serving or
-diagnostic, per `weaver-agents-PRD` section 6 as amended this date. Absence
-means serving, so no existing declaration moves. It is defined here because
-both of the file's readers act on it and neither may define what the other
-consumes, drawn by `weaver-admin-harness-contract` in the same act, and the
-drawn count moves from six to seven.
-
-**Revised:** 2026-08-22, third of this date, a conversion is not the only
-record. Section 2.1's refusal clauses gain the rule the clerking act's
-findings share: a conversion may narrow a refusal for a reader and may not
-be the only record of it. Three narrowings are named, a crate's refusal into
-its seam's vocabulary, a seam refusal into a client's sentence, and the
-gate's bind detail into standard error, with the derived rendering and the
-`refusal` kind as what makes the first two safe **while the source
-record stands**, a narrowing being safe by the original remaining available
-rather than by the rendering being derived.
-
-**Revised:** 2026-08-22, second of this date, the refusal record joins the
-file. Section 2.1 gains `refusal-record`, a vocabulary node this crate
-defines: the seam that refused and that seam's own typed case with its
-values, per the operator's ruling that a refusal is clerked. It is defined
-here rather than in `weaver-trace` because that crate depends on no crate of
-this program and a refusal typed there would make it hold and version four
-seam vocabularies.
-
-**Revised:** 2026-08-21, second of this date, the surprisal is elected and
-two draws are repaired. Section 2.1 gains `surprisal-election`, a
-vocabulary node this crate defines and the artifact holds, on
-`weaver-spu-PRD` section 13.12: the operator's election of the per-position
-surprisal vector, a flag because a reading that exists per position has
-nothing to size. The draws paragraph moves from four drawn fields to six,
-`field-election` having been added on this date and drawn by neither
-contract it crosses, against the rule the paragraph below it states.
-
-**Revised:** 2026-08-19, second of this date, the classify binding gains
-its reader. Section 2.1's rule that a section gains a field in the act
-that gives that field a reader is exercised: the SPU's declaration section
-gains the classify role's binding with the classifier code act's opening,
-optional by presence per `weaver-spu-PRD` section 15.3, the shape being
-the Spec's. No vocabulary node moves, `agent-config` carrying the section
-as it carried the decoder's.
-
-**Revised:** 2026-08-19, the label trio lands. Section 2.3 gains
-`label-directive`, `label-answer`, and `label-refusal` on
-`weaver-harness-spu-classify-contract` section 7's demand, the fourth
-arrival and the naming ruling's currency case again: the label seam's
-loop is loop 1 and variable, so the trio is named for the seam's
-currency. The cases are the classify contract's enumeration, one owner
-and one drawer, and the shapes land in the Spec with this act.
-
-**Revised:** 2026-08-17. The count of contracts drawing `gate-instruction`
-moves from two to three: `weaver-admin-harness-contract` closes the draw the
-route act named as owed, the enter directive having carried the instruction
-since the fan-out was drawn. Owed by #105, and no definition moves.
-
-**Revised:** 2026-08-21, the field election joins the file. Section 2.1
-gains `field-election`, a vocabulary node this crate defines and the
-artifact holds, on `weaver-spu-PRD` section 13.11: the operator's election
-of the probability field at a declared depth, optional because the
-election is the thing that makes it exist. It stands beside the readout's
-election rather than merging with it, no diagnostic election being bundled
-with another, and the depth's judgment is the SPU's at admit. The shape is
-`weaver-types-Spec` section 2's.
-
-**Revised:** 2026-08-19, the tee's election joins the file. Section 2.1
-gains `state-election`, a vocabulary node this crate defines and the
-artifact holds, drawn by `weaver-admin-harness-contract` in the same act:
-the operator's election of payload key paths for the state tee, optional
-in the file because `weaver-state-PRD` section 4 rules what absence means,
-the shape being `weaver-types-Spec` section 2's.
-
-**Revised:** 2026-08-10. `residual-readout-election` moves from the fields read
-from the artifact to the fields a contract draws, and is drawn by
-`weaver-harness-spu-contract` and `weaver-admin-harness-contract` both. The
-wording it replaces had the election internal and judged by the SPU at admission
-in one paragraph, which cannot hold: the SPU reads no configuration file, so a
-field it judges is one that crossed a seam, and this one crossed none. Section
-2.1 also rules that an organ's fields are named together and cross together,
-the gate's already doing so and the SPU's not, and states the bound that keeps
-the rule on the near side of apex section 9: a section gains a field in the act
-that gives that field a reader, room made in advance being the reserved slot
-that section forbids. How the fields group is representation and stays the
-Spec's. No graph record moves, the six nodes and their edges being unchanged.
 **Document ID:** `weaver-types-PRD`
 **Parent:** `weaver-agents-PRD`
 **Depends on:** `weaver-traits`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #317
 
 ---
 

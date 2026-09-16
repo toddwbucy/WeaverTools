@@ -2,59 +2,10 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-04, second of this date, the door stands under a restoring load
-too. Section 1's condition widens: the door exists where admin named it on the
-member's vector, under a diagnostic binding or a serving load that elects a restore,
-the driver the same operator principal projecting the same three things, with the
-cut and the session rewrite of `weaver-analysis-Spec` section 4 where a branch needs
-them. The parties, the peer's authentication, and the record's replacement at the
-opener are unchanged. Per issue #432.
-
-**Revised:** 2026-09-04, the store and not its file. One phrase, per
-`weaver-state-PRD` section 4 as revised this date: the engine behind the store
-is elected and may hold no file. Nothing crossing this door moves.
-
-**Revised:** 2026-08-26, second of this date, the seam states its mechanics.
-Two facts the code act of this date elected are pinned where the seam's
-parties read them, per the audit of the same date: the seal's spelling is
-the empty JSON object on its own line, a bare line being framing residue
-and not a seal, and the preload door re-stands after any close of its
-channel, which is what carries the dead-driver retry and scopes the
-at-most-one-preload owing to a live driver. Nothing of the traffic moves.
-
-**Revised:** 2026-08-26, first of this date, the name moves behind the wall.
-The operator's ruling of
-this date recuts the wire clause: the first door loses its name, making this
-door the member's one named socket, and this door's name moves from the worker's
-runtime directory into the member's own territory on the operator's side, where
-the agent's identity holds nothing and the driver, an operator principal,
-traverses. The election, the seal, the refusals, and every ask are untouched.
-`weaver-analysis` still learns the name from the operator, no exchange carrying
-a path.
-
-**Revised:** 2026-08-24, second of this date, the sender is `weaver-analysis`.
-The operator's ruling of this date moved `weaver-diagnostic` inside the agent
-as the harness's third member, the mechanism the harness authors a
-diagnostic-trace through, which vacated the sending side of this seam: an
-inside crate cannot dial a door as an operator principal over the operator's
-own storage. `weaver-analysis`, chartered in the same act, takes the party and
-the document takes its name, a contract being named for its parties with the
-initiator first. Nothing of the mechanism moves - the door, the seal, the
-election, and the refusals are as they were, and the far side never knew which
-crate held the near one. The seam edge relocates to `weaver-analysis-PRD` with
-the party, the from side's charter carrying the edge.
-
-**Revised:** 2026-08-24, first of this date, the seal ends the preload. Section 2 gains
-the
-seal, one empty frame after the last distillate, because a close looks the
-same from a finished sender and a dying one and the replay ask of
-`weaver-harness-state-contract` answers at the seal, which must not happen
-over a prefix that looks whole. Section 5's dead-driver clause names the
-prefix unsealed. Landed with the replay loop's act, every party merging.
-
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #433
 
 ---
 
@@ -77,13 +28,13 @@ this door, the model has no path to it, and the door refuses the agent's own cre
 at the accept. The one ruled crossing into the agent that is not the two external
 contracts of 2026-08-01, per `weaver-agents-PRD` section 0 as amended 2026-08-24, and it
 exists only where the load declared the diagnostic kind or elected a restore, per
-section 1 as revised 2026-09-04.
+section 1.
 
 **This seam is a wire.** A named Unix socket on the state member, the member's one named
 door since the first lost its name to the operator's ruling of 2026-08-26, stood under a
-diagnostic binding or a serving load that elects a restore, per section 1 as revised
-2026-09-04, and authenticated by credential per the first invariant's rule for a channel
-with a name. Its name stands in the member's own territory on the operator's side, per
+diagnostic binding or a serving load that elects a restore, per section 1, and
+authenticated by credential per the first invariant's rule for a channel with a name.
+Its name stands in the member's own territory on the operator's side, per
 the same ruling: the driver is an operator principal and traverses, the worker's
 identity holds nothing there, and the squat an agent-writable directory invited is
 unrepresentable rather than defended. The door's absence under a serving load that
@@ -151,12 +102,12 @@ to: canonical-event
 ## 1. What this contract governs
 
 The second door on the state member: the preload traffic that flows when a diagnostic
-binding stands or a serving load elects a restore, per `weaver-state-PRD` section 4 as
-revised 2026-09-04, the condition under which the door exists being that admin named it
-on the member's vector under either, what each party owes, the cut and the session
-rewrite the driver may apply to what it projects, what each party owes, how the seam
-fails, and what neither party may do. It is read alongside `weaver-analysis-PRD` and
-`weaver-state-PRD` section 3, and none of the three is complete without the others.
+binding stands or a serving load elects a restore, per `weaver-state-PRD` section 4,
+the condition under which the door exists being that admin named it on the member's
+vector under either, what each party owes, the cut and the session rewrite the driver
+may apply to what it projects, what each party owes, how the seam fails, and what
+neither party may do. It is read alongside `weaver-analysis-PRD` and `weaver-state-PRD`
+section 3, and none of the three is complete without the others.
 
 ## 2. The traffic
 

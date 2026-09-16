@@ -9,34 +9,10 @@ per verb holds nothing across time, so the party that keeps an agent alive acros
 logout is the init system, and what the program relies on from it was stated nowhere.
 
 **Date filed:** 2026-08-05
-
-**Revised:** 2026-09-07, the vector's account catches up with the vector.
-Section 2 named the socket path and the two organ binaries and stopped, which
-had been incomplete since 2026-08-20, when the agent's loop file began riding
-the vector on the operator's ruling of issue #243. The classify arm's binary
-joins it at issue #497, found beside the worker's rather than placed by name.
-**Neither addition crosses anything new at this boundary**, which is why the
-omission went unnoticed and why this is a correction of the statement rather
-than a change to the contract: a manager still learns the agent name twice
-and paths the operator wrote or placed, and section 7's prohibition on the
-declaration stands untouched.
-
-**Revised:** 2026-08-16, a failed unit holds its name until it is reaped.
-Measured this date against a live manager. The condition is unreadable in the
-start ask's status and plain in the state ask, so admin reads it there and
-answers `PriorUnitUnreaped`. Reaping stays the operator's act, a program that
-reset the unit before starting discarding the evidence of the previous failure.
-
-**Revised:** 2026-08-13, the start ask carries the worker's provisioning. Per the
-operator's ruling in `weaver-admin-PRD` load step 5: the start ask of section 2 gains
-the worker's argument vector, section 5 names it among what admin supplies and
-guarantees it draws on no authority beside the allow-list, and section 7's
-prohibitions stand unchanged because no part of the agent's declaration is in it. The
-boundary's reliance set does not move, this being a widening of what admin hands the
-manager rather than anything further asked of it.
 **Document ID:** `weaver-admin-systemd-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
+**Landing PR:** #505
 
 ---
 

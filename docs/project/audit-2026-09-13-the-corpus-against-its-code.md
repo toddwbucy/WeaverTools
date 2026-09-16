@@ -218,11 +218,11 @@ floor-link or a seam that needs a contract authored.
 **That the code is right and the documents wrong.** Every claim-vs-code finding
 establishes only that the two disagree, and the audit's own example of this was
 itself overstated. It hedged `src/classify.rs` as a file that may be an owed
-placement, and **the Spec answers that on its own page**: line 556 reads "Nine
-library files, two of them placements", and the revision entry at line 321 lands
-"the seat gains the classify absence". A placement is a declared device, so no
-hedge was needed. `crates/weaver-spu/src/bin/classify.rs` also exists, so the
-never-existed claim was true only of the harness path and false as summarized.
+placement, and **the Spec answers that on its own page**: section 1's listing names
+`src/classify.rs` and closes on "Nine library files, two of them placements". A
+placement is a declared device, so no hedge was needed.
+`crates/weaver-spu/src/bin/classify.rs` also exists, so the never-existed claim was
+true only of the harness path and false as summarized.
 
 **The real defect in that listing is larger than the audit found.** The Spec
 names nine and the crate holds twelve, and the gap is not classify. Four library
