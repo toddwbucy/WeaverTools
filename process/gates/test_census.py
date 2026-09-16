@@ -240,6 +240,7 @@ class Census(unittest.TestCase):
     # green either way.
 
     def test_the_system_node_is_not_a_malformed_identifier(self):
+        """The one name section 3 declares outside the kebab rule."""
         write(self.dir, "docs/apex.md", SYSTEM_RECORD)
         reading = census.take()
 
@@ -247,14 +248,17 @@ class Census(unittest.TestCase):
         self.assertEqual(hit, [])
 
     def test_the_system_record_carries_its_own_tag_vocabulary(self):
+        """`ratified` is the system record's, per section 5."""
         write(self.dir, "docs/apex.md", SYSTEM_RECORD)
         reading = census.take()
 
         self.assertEqual([e for e in reading["unknown_tags"] if "WeaverTools" in e], [])
 
     def test_the_system_vocabulary_does_not_reach_another_kind(self):
-        # `ratified` is the system record's and no other record's. Without the
-        # kind scoping this reads clean.
+        """`ratified` is the system record's and no other record's.
+
+        Without the kind scoping this reads clean.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("kind: system", "kind: crate"))
         reading = census.take()
@@ -264,7 +268,7 @@ class Census(unittest.TestCase):
         self.assertIn("ratified", hit[0])
 
     def test_the_assertion_vocabulary_does_not_reach_the_system_record(self):
-        # The converse, which a single shared set would admit.
+        """The converse, which a single shared set would admit."""
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("tag: ratified", "tag: review"))
         reading = census.take()
@@ -274,9 +278,11 @@ class Census(unittest.TestCase):
         self.assertIn("review", hit[0])
 
     def test_the_name_alone_does_not_buy_the_exemption(self):
-        # The pair is the exemption. On the name alone this admits an
-        # assertion identifier no conformance header could legally cite,
-        # NODE_OK still governing the citation side.
+        """The pair is the exemption, and the name alone is not enough.
+
+        On the name alone this admits an assertion identifier no conformance
+        header could legally cite, NODE_OK still governing the citation side.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("kind: system", "kind: assertion")
                            .replace("tag: ratified", "tag: perturbation"))
@@ -285,20 +291,28 @@ class Census(unittest.TestCase):
         hit = [e for e in reading["malformed_node_ids"] if "WeaverTools" in e]
         self.assertEqual(len(hit), 1)
 
-    def test_the_kind_alone_does_not_buy_the_vocabulary(self):
-        # The reverse hole: a kebab-named record typing itself `system`.
+    def test_a_second_system_record_is_a_finding(self):
+        """Section 3 declares one system node, so a second one is reported.
+
+        The name is kebab-valid, so it never needed the exemption and the
+        pairing does not reach it. Without the kind check it reads entirely
+        clean and carries a vocabulary the format gives to one node.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("node: WeaverTools", "node: not-the-system"))
         reading = census.take()
 
         name = "not-the-system"
-        self.assertEqual([e for e in reading["unknown_tags"] if name in e], [])
-        self.assertEqual(
-            [e for e in reading["malformed_node_ids"] if name in e], [])
+        bad = [e for e in reading["malformed_node_ids"] if name in e]
+        self.assertEqual(len(bad), 1)
+        self.assertIn("kind: system", bad[0])
 
     def test_a_system_record_that_drops_its_tag_is_a_finding(self):
-        # Section 5 makes `ratified` what generates the set-level mark, so its
-        # absence ungrounds the mark where a wrong value would be caught.
+        """A kind that owes a tag and carries none is reported.
+
+        Section 5 makes `ratified` what generates the set-level mark, so its
+        absence ungrounds the mark where a wrong value would be caught.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("tag: ratified\n", ""))
         reading = census.take()
@@ -308,12 +322,13 @@ class Census(unittest.TestCase):
         self.assertIn("no tag", hit[0])
 
     def test_the_kind_alone_does_not_buy_the_exemption(self):
-        # **The fourth quadrant.** Catching a kind-only exemption needs a record
-        # that is both malformed and `kind: system`: the other two fixtures pair
-        # a bad name with `kind: crate`, which tests the vocabulary side, and a
-        # kebab-valid name with `kind: system`, which NODE_OK matches whether or
-        # not the exemption fires. Without this case `exempt = kind == "system"`
-        # passes the whole suite.
+        """The fourth quadrant: malformed and typed `system` at once.
+
+        The other fixtures pair a bad name with `kind: crate`, which tests the
+        vocabulary side, and a kebab-valid name with `kind: system`, which
+        NODE_OK matches whether the exemption fires or not. Without this case
+        `exempt = kind == "system"` passes the whole suite.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("node: WeaverTools", "node: NotKebab"))
         reading = census.take()
@@ -322,9 +337,12 @@ class Census(unittest.TestCase):
         self.assertEqual(len(bad), 1)
 
     def test_a_malformed_identifier_does_not_hide_the_rest_of_its_record(self):
-        # The reject used to return before the kind and the tag were read, so
-        # a record this gate could not name took its tag, its duplicate and
-        # its enforcement row out of every other reading in silence.
+        """A name this gate cannot read is one finding, not a stop.
+
+        The reject used to return before the kind and the tag were read, so a
+        record this gate could not name took its tag, its duplicate and its
+        enforcement row out of every other reading in silence.
+        """
         write(self.dir, "docs/apex.md",
               SYSTEM_RECORD.replace("node: WeaverTools", "node: NotKebab")
                            .replace("kind: system", "kind: crate"))

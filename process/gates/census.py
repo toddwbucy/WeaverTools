@@ -452,8 +452,16 @@ def take():
                 # assertion identifier no conformance header could cite, since
                 # NODE_OK still governs the citation side, and the kind alone
                 # would hand any record the vocabulary below.
-                exempt = name == SYSTEM_NODE and kind == "system"
-                if not exempt and not NODE_OK.match(name):
+                # **Section 3 declares one system node and no other**, so the
+                # two branches together are the exemption: the kind admits only
+                # this name, and the kebab rule is waived only for that kind.
+                # Keeping the name in a single condition instead leaves a
+                # conjunct no case can reach, and a claim no test can fail is
+                # what this corpus calls documented rather than enforced.
+                if kind == "system" and name != SYSTEM_NODE:
+                    malformed.append(f"{rel}: node: {name} "
+                                     f"(only {SYSTEM_NODE} is kind: system)")
+                elif kind != "system" and not NODE_OK.match(name):
                     malformed.append(f"{rel}: node: {name}")
                     # **Reported and then judged on**, rather than skipped. A
                     # reject that returns here takes the record's tag, its
