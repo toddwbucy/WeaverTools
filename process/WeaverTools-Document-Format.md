@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.18, 2026-09-14. Companion to the Working Process. Project
+**Version:** v0.19, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -31,17 +31,17 @@ already being written and says where the notation goes.
 The document layer is what the corpus is made of. The subject layer is what the corpus
 is about. These are different graphs sharing one file set, and a file can sit in both
 without the layers collapsing. A contract is the standing case: it is a document node
-with a container, and it is also the source of `party` and `draws` edges that run
-between crates. The document it is and the crates it speaks about are different
-subjects, and a mapper that treats one as the other builds a graph where a file is its
-own dependency.
+with a container, and it is also the source of the `party` and `draws` edges that run
+between crates and of the `defines` edges that name its own seam's terms. The document
+it is and the crates it speaks about are different subjects, and a mapper that treats
+one as the other builds a graph where a file is its own dependency.
 
 A document node carries a container and nothing else. The container comes from the
 directory, per section 2, so a document node is built by walking the tree rather than
 by reading a block, and only a document that is itself the source of an edge needs a
-`node` record. A contract is the one kind that qualifies, because `party` and `draws`
-run from the contract rather than from either crate. A PRD states its subject crate's
-edges and is not their source.
+`node` record. A contract is the one kind that qualifies, because `party`, `draws` and
+`defines` run from the contract rather than from either crate. A PRD states its subject
+crate's edges and is not their source.
 
 No edge joins these two layers. A document's subject is its directory and its
 filename, which the walk already has, so a `describes` edge would carry a fact
@@ -195,6 +195,20 @@ inside the program to bind.
 **vocabulary.** A named definition a crate owns and contracts draw: a trait, a type, a
 mode, an event kind. The unit G4 resolves against.
 
+**term.** A named meaning the documents settle that no crate owns as a single
+definition. The four terms of the harness-state seam are the standing case, the
+`election` that opens the channel, the `distillate` that crosses it, and the `ask` and
+the `answer` the serve direction carries, each established by the contract that governs
+the seam rather than by either party to it. The `diagnostic-trace` is the other, a
+record kind its own charter names. **A term is not a vocabulary node under a second
+word.** A vocabulary node is one definition a crate owns and its Spec represents, which
+is what lets G4 resolve a draw against it and tells a reader which crate to open. A
+term is a meaning the corpus holds steady while code spells it wherever it needs it,
+the tee's election standing in four representations at once per `weaver-trace-Spec`
+section 3. The kind is admitted on the ruling of 2026-09-15, which took the five
+declarations the corpus already carried rather than retyping them into a kind that
+answers a different question.
+
 **axiom.** One of the apex's five invariants, declared by `weaver-agents-PRD` at the
 subsection that states it. An axiom is not a claim about a crate and binds no code
 directly. It is what a claim can be grounded in, so a query can ask which claims serve
@@ -235,17 +249,18 @@ authors its own through the conformance header rather than through any document.
 
 **code.** A source unit carrying a conformance header, arriving in phase three and
 never before. A code node is declared by its own header rather than by any fenced
-block, the way a child declares its own parent edge: the header at the top of the
-file names the assertion identifiers the unit conforms to. The mapper reads headers
-at merge, so code accrues into the graph as work merges and no document restates
-what source already carries. Its identifier is the source path relative to the
-repository root, the one spelling the filesystem already enforces. The kebab-case
-rule governs names this format invents, and a path is not invented, so
-`crates/weaver-types/src/role.rs` is a node identifier as it stands. One canonical
-form, so the path cannot do what two spellings of a name do: forward slashes, no
-leading `./`, exactly as `git ls-files` prints it. The mapper derives the node
-identifier and every `cites` edge's `from` value from that one form, so a second
-spelling of one file is a defect the same way `permission-modes` beside
+block, the way a child declares its own parent edge: the header is the set of citations
+the unit carries and it names the assertion identifiers the unit conforms to. A unit is
+any tracked file able to carry a citation in one of the four forms section 4 admits,
+the crate's manifest among them. The mapper reads headers at merge, so code accrues
+into the graph as work merges and no document restates what source already carries.
+Its identifier is the source path relative to the repository root, the one spelling the
+filesystem already enforces. The kebab-case rule governs names this format invents, and
+a path is not invented, so `crates/weaver-types/src/role.rs` is a node identifier as it
+stands. One canonical form, so the path cannot do what two spellings of a name do:
+forward slashes, no leading `./`, exactly as `git ls-files` prints it. The mapper
+derives the node identifier and every `cites` edge's `from` value from that one form,
+so a second spelling of one file is a defect the same way `permission-modes` beside
 `permission-mode` would be.
 
 **A conformance count is over every tracked unit carrying a header, and a
@@ -384,10 +399,25 @@ node and its `cites` edges are read from the conformance header, which is source
 rather than notation, so section 5's block grammar is untouched and a `graph` fence
 appearing in source is a defect. The header's shape is fixed the way the keys are
 fixed, so the mapper never guesses: one line per citation, each reading
-`//! conforms: <crate>-<slug>`, at the top of the file above any other doc comment.
-A header naming an assertion the corpus does not declare is a dangling edge and the
-mapping pass fails on it, which is the no-dangling-endpoint precondition reaching
-code.
+`conforms: <crate>-<slug>` behind a comment marker its file admits, and the markers are
+four. `//!` is the file's own and sits at the top above any other doc comment, which is
+the form to reach for where the claim is the whole file's. `///` sits at the item that
+holds the instrument and `//` at the statement that holds it, so a file carrying
+several claims can say which line answers each. `#` is the manifest's, a
+`Cargo.toml` having no doc comment to hoist a citation into. A header naming an
+assertion the corpus does not declare is a dangling edge and the mapping pass fails on
+it, which is the no-dangling-endpoint precondition reaching code.
+
+**The four forms are admitted on the ruling of 2026-09-15, and what moved was this
+document.** `census.py` and the mapper read all four and had since before the question
+was put, so a rule admitting one alone was a rule the working system did not run under
+and no gate was ever going to fail a file for breaking it. The alternative was to hoist
+every
+citation into a file header, which a manifest cannot hold at all, and the manifest
+citations are the ones that let H2 be asked of the graph: it carries
+`crates/weaver-analysis/Cargo.toml` citing `analysis-no-internal-dependency`, which is
+a claim about a dependency list that no other file in that crate can make. The marker
+set is closed at four and a fifth is a Format act rather than a convenience.
 
 Between a contract and what it binds:
 
@@ -397,10 +427,14 @@ Between a contract and what it binds:
 
 Between a crate and what it owns or touches:
 
-- `defines`, from a crate to a vocabulary node. The definition site declares the
-  vocabulary node with a `node` record beside the edge. A `defines` edge does not
-  introduce its target, because an implied node has nowhere to carry a kind and
-  because implied nodes are what this format exists to remove.
+- `defines`, from a crate or a contract to a vocabulary node or a term. The definition
+  site declares the node with a `node` record beside the edge. A `defines` edge does
+  not introduce its target, because an implied node has nowhere to carry a kind and
+  because implied nodes are what this format exists to remove. **A contract sources
+  this edge where what is defined is the seam's own**, on the ruling of 2026-09-15. A
+  contract defining the terms its own clause establishes is a contract doing what it is
+  for, and relocating them into one party's charter would put a seam's vocabulary where
+  a single party owns it. The crate case is unchanged and is still the common one.
 - `elects`, from a vocabulary node that is a field to the vocabulary node whose values
   it selects from or is validated against. The floor's two-crate structure rests
   entirely on this relation: the agent config's permission mode and tool set are
@@ -418,10 +452,10 @@ Between a crate and what it owns or touches:
 **A Spec states records and is not their source, which is the shape a PRD already
 has.** `asserts` runs from the crate rather than from the document, so a Spec needs
 no `node` record of its own and section 1's rule stands unchanged: a contract is
-still the one document kind that sources an edge, because `party` and `draws` run
-from the contract itself. What changes is that the Spec joins the PRD as a document
-that states its subject crate's records, which is why this format's placement rule
-reaches it without amendment.
+still the one document kind that sources an edge, because `party`, `draws` and
+`defines` run from the contract itself. What changes is that the Spec joins the PRD
+as a document that states its subject crate's records, which is why this format's
+placement rule reaches it without amendment.
 
 **Assertion identifiers are `<crate>-<slug>` and carry no positional number.** The
 crate prefix is what keeps two Specs from naming one thing twice, and the bar on

@@ -29,15 +29,15 @@ and nothing on this seam reaches the harness, the SPU, or the model.
 
 **This seam is a socket.** The emitter drains a file or a stream and its
 emission leaves over a socket the reader consumes, per `weaver-web-Spec`
-section 3. It is the third of section 7.3's three seams and the only one
-carrying measurement rather than lifecycle.
+section 3. It is the second of the reader's two seams, section 7.3's, and
+the only one carrying measurement rather than lifecycle.
 
 **The emitter initiates and the reader never asks**, so the charter's seam
 record runs `from: weaver-analysis`, which the act that lands this text
 corrects: it had run from the reader, disagreeing with this contract's own
 name under the Document Format's rule that the initiator is named first. Its
 tag was `stream`, which is outside that document's seam vocabulary of
-`socket`, `link` and `verb`.
+`socket` and `link`.
 
 ```graph
 node: weaver-analysis-web-contract

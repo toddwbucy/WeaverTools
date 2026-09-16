@@ -48,12 +48,6 @@ via: weaver-gate-world-contract
 tag: socket
 
 edge: seam
-from: weaver-web
-to: weaver-admin
-via: weaver-admin-operator-contract
-tag: verb
-
-edge: seam
 from: weaver-analysis
 to: weaver-web
 via: weaver-analysis-web-contract

@@ -1761,17 +1761,19 @@ a plan and the experiments it registers are one composition. Each writes through
 is not on the path**, which is why the group of section 3.6 is named for how it is
 reached rather than for what it does.
 
-**A surface that authors or exchanges also holds a seam.** Compose writes
-its draft and asks `validate`. Live carries a turn to the gate and reads the
-measurement that comes back. Agents drives the lifecycle verbs and reads the
-observation exchange. Section 7 names those three. **Stage submits a
-registered experiment to the queue, and section 7 names no queue seam**, the
-queue being the harness's per the charter's section 3.5 and this crate's
-part in it a write the runner drains rather than an exchange it holds open.
-**None of them writes the recorded half** - section 3.1's ingest is the only
-writer of a position or a run - and each writes only the authored table it
-owns, through section 3.2. None reads the agent except through a seam that
-is named.
+**A surface that authors or exchanges also reaches outside this crate.**
+Compose writes its draft and asks `validate`. Live carries a turn to the
+gate and reads the measurement that comes back. Agents drives the lifecycle
+verbs and reads the observation exchange. Section 7 names those three, of
+which the gate and the analysis stream are the charter's two seams and the
+admin verbs are the operator's own program run as a subprocess. **Stage
+submits a registered experiment to the queue, and section 7 names no queue
+reach**, the queue being the harness's per the charter's section 3.5 and
+this crate's part in it a write the runner drains rather than an exchange it
+holds open. **None of them writes the recorded half** - section 3.1's ingest
+is the only writer of a position or a run - and each writes only the
+authored table it owns, through section 3.2. None reads the agent except
+where section 7 names the reach.
 
 **The state a surface holds is a query, never a location.** A filter chip is
 a clause, and clearing it widens the list in place. A card carries the
