@@ -42,12 +42,6 @@ from: weaver-web
 to: WeaverTools
 
 edge: seam
-from: weaver-web
-to: weaver-gate
-via: weaver-gate-world-contract
-tag: socket
-
-edge: seam
 from: weaver-analysis
 to: weaver-web
 via: weaver-analysis-web-contract

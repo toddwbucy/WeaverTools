@@ -1766,11 +1766,12 @@ crate**, a call out and an answer back rather than a write left for someone
 else to drain. Compose writes its draft and asks `validate`. Live carries a
 turn to the gate and reads the measurement that comes back. Agents drives
 the lifecycle verbs and reads the observation exchange. Section 7 names
-each of those reaches. The gate is section 7.1 and the only one of them the
-charter carries as a seam, and `validate`, the lifecycle verbs and the
-observation exchange are section 7.2's, the operator's own program run as a
+each of those reaches. The gate is section 7.1 and the charter carries none
+of them as a seam, and `validate`, the lifecycle verbs and the observation
+exchange are section 7.2's, the operator's own program run as a
 subprocess. Section 7's third is the analysis stream, which no surface
-reaches and section 3.1's ingest does. **Stage submits a registered
+reaches and section 3.1's ingest does, and it is the one reach of this
+crate's the charter does carry as a seam. **Stage submits a registered
 experiment to the queue, and section 7 names no queue exchange**, the
 queue being the harness's per the charter's section 3.5 and this crate's
 part in it a write the runner drains rather than an exchange it holds
@@ -1858,6 +1859,15 @@ so a whole-turn answer is presented whole and an in-flight state is clear
 rather than simulated. Closes render by kind, and an unnamed close is this
 crate's own defect and surfaces as an application error rather than as an
 agent's words.
+
+**"As any client's does" is the whole of the relation and the charter carries
+no seam record for it**, as of 2026-09-16. `weaver-gate-world-contract` names
+one party, `weaver-gate`, and names the world in prose, so a record naming it
+as a `via` claimed this crate had signed a page whose own section 0 says its
+far end signs nothing. What this crate builds against here is that page, which
+is what an external contract is for, and the reach is real without being a
+seam: a consumer holds no organ, and the socket's client end sits on the box
+the agent runs on, under section 8's connector rather than its server.
 
 ### 7.2 The admin verbs
 
@@ -2098,11 +2108,17 @@ a `web-` assertion beside `weaver-admin`'s.
   from the run's first generation and the contract's section 2.2 now
   carries it once per run, section 2.2 above holding it on the row. Per
   issue #527, found by the review of PR #526.
-- **What section 7 is called, now that one of its three is not a seam**,
+- **What section 7 is called, now that two of its three are not seams**,
   opened 2026-09-16 by the act that deleted this crate's seam record to
-  `weaver-admin`. The heading reads "The seams", and 7.2's admin verbs are
-  the operator's own program run as a subprocess under a contract that
-  binds this crate to nothing. Renaming the heading, moving 7.2 out from
+  `weaver-admin` and widened the same day by the act that deleted the one
+  to `weaver-gate`. The heading reads "The seams", and only 7.3's analysis
+  stream is carried as a seam by the charter. 7.2's admin verbs are the
+  operator's own program run as a subprocess, and 7.1's gate reach is a
+  dialed socket under an external contract, both under pages that bind
+  this crate to nothing. Renaming the heading, moving the two out from
   under it, and widening the word are three answers and this document
   elects none of them. Nothing in the section's content is wrong and no
   read is blocked on the choice, so it is named here rather than settled.
+  **The question got harder rather than nearer an answer**: at one
+  exception a reader could carry the heading as a rounding, and at two of
+  three the heading is naming the minority.

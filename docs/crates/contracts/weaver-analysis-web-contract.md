@@ -29,10 +29,15 @@ and nothing on this seam reaches the harness, the SPU, or the model.
 
 **This seam is a socket.** The emitter drains a file or a stream and its
 emission leaves over a socket the reader consumes, per `weaver-web-Spec`
-section 3. It is the second of the reader's two seams, section 7.3's. What
-separates it from the gate is what crosses: the gate carries this crate's
-own turn out and the answer back, where this seam carries a finished
-record of work the crate did not run.
+section 3. It is the reader's only seam as of 2026-09-16, section 7.3's,
+that document's 7.1 and 7.2 being reaches the charter carries no record
+for. What separates it from the gate is what crosses: the gate
+carries this crate's own turn out and the answer back, where this seam
+carries a finished record of work the crate did not run. **And what
+separates it from the gate in the graph is who signed.** Both parties to
+this page are crates and both hold a `party` edge, where
+`weaver-gate-world-contract` names one crate and names the world in prose,
+so this pair is checkable from either end and that one is not a pair.
 
 **The emitter initiates and the reader never asks**, so the charter's seam
 record runs `from: weaver-analysis`, which the act that lands this text
