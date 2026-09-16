@@ -361,8 +361,8 @@ fn take_inventory_against(
             );
             return Err(LifecycleRefusal::BoundaryUnverified);
         }
-        store_gate(boundary, database, role, |uid, gid| {
-            store_admits_as(&boundary.store_socket, uid, gid, database, role)
+        store_gate(boundary, database, role, |uid, gids| {
+            store_admits_as(&boundary.store_socket, uid, gids, database, role)
         })?;
     }
 
@@ -678,7 +678,7 @@ pub fn store_admits(socket_dir: &Path, database: &str, role: &str) -> std::io::R
 pub fn store_admits_as(
     socket_dir: &Path,
     uid: u32,
-    gid: Option<u32>,
+    gids: &[u32],
     database: &str,
     role: &str,
 ) -> std::io::Result<bool> {
@@ -694,8 +694,28 @@ pub fn store_admits_as(
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    if let Some(gid) = gid {
-        probe.gid(gid);
+    // **The probe carries the group set of the identity it stands for.**
+    // `CommandExt::gid` sets the primary group and leaves the supplementary
+    // list inherited from this crate, where the spawned member's `become_member`
+    // narrows it to exactly its own. Without this the probe reaches a store
+    // socket on a group admin holds and the identity does not, and answers
+    // about access that identity will not have: for the member that is a gate
+    // passing on a dial that will fail, and for the agent it is a refusal
+    // observed for the wrong reason.
+    if let Some(primary) = gids.first().copied() {
+        probe.gid(primary);
+        let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
+        // SAFETY: `setgroups` is async-signal-safe and touches only this forked
+        // child's credentials, before exec, while the fork still holds the
+        // privilege the call needs.
+        unsafe {
+            probe.pre_exec(move || {
+                if nix::libc::setgroups(set.len(), set.as_ptr()) < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
     }
     match probe.status()?.code() {
         Some(0) => Ok(true),
@@ -726,7 +746,7 @@ fn store_gate(
     boundary: &Boundary,
     database: &str,
     role: &str,
-    mut ask: impl FnMut(u32, Option<u32>) -> std::io::Result<bool>,
+    mut ask: impl FnMut(u32, &[u32]) -> std::io::Result<bool>,
 ) -> Result<(), LifecycleRefusal> {
     let Some(member) = boundary.member_account else {
         // Unreachable from the walk, which requires the account above, and
@@ -735,7 +755,7 @@ fn store_gate(
         eprintln!("boundary unverified: no member account to ask the store about");
         return Err(LifecycleRefusal::BoundaryUnverified);
     };
-    match ask(member.uid, Some(member.gid)) {
+    match ask(member.uid, &[member.gid]) {
         Ok(true) => {}
         Ok(false) => {
             eprintln!(
@@ -750,7 +770,7 @@ fn store_gate(
             return Err(LifecycleRefusal::BoundaryUnverified);
         }
     }
-    match ask(boundary.agent_uid, boundary.agent_gids.first().copied()) {
+    match ask(boundary.agent_uid, &boundary.agent_gids) {
         Ok(false) => Ok(()),
         Ok(true) => {
             eprintln!(
@@ -1626,15 +1646,16 @@ mod tests {
         // Both gates answering as the charter requires: the member admitted,
         // the agent refused.
         let mut asked = Vec::new();
-        let walked = store_gate(&bound, "weaver_alpha", "weaver_alpha", |uid, gid| {
-            asked.push((uid, gid));
+        let walked = store_gate(&bound, "weaver_alpha", "weaver_alpha", |uid, gids| {
+            asked.push((uid, gids.to_vec()));
             Ok(uid == 4242)
         });
         assert!(walked.is_ok(), "the member admitted and the agent refused");
         assert_eq!(
             asked,
-            vec![(4242, Some(43)), (65533, Some(65531))],
-            "the member's account first and the agent's uid second, each as itself"
+            vec![(4242, vec![43]), (65533, vec![65531])],
+            "the member's account first and the agent's uid second, each with its \
+             own whole group set rather than this crate's"
         );
         assert!(
             !asked.iter().any(|(uid, _)| *uid == bound.admin_uid),
