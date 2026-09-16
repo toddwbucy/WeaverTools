@@ -48,13 +48,14 @@ finished record from a truncated one could hold this shape and not use it.
     src/stream.rs     the drain, one road under every reader, section 5
     src/signals.rs    the per-position series, read on the drain, section 5
 
-Eleven library files and no placement among them, and one bin target.
-**`src/deposit.rs` leaves this listing.** No such file exists, `lib.rs` declares
-ten modules beside itself, and the word appears nowhere in the crate's source, so
-a row beside the twelve read as a thirteenth file the crate holds. What reads a
-deposit is section 7's election, per the convention
-`weaver-harness-Spec` section 1 states: a listing says what the tree holds and a
-placement election stays at the clause that argues it.
+Twelve rows for the twelve files the tree holds: `src/lib.rs` and the ten modules
+it declares beside itself, eleven library files in all, and `src/main.rs` as the
+one bin target. **`src/deposit.rs` leaves this listing.** No such file exists and
+the word appears nowhere in the crate's source, so the row stood as a thirteenth
+file the crate holds. The election that names that module is section 5's, where
+the deposit is argued, per the convention `weaver-harness-Spec` section 1 states:
+a listing says what the tree holds and a placement election stays at the clause
+that argues it.
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -529,11 +530,13 @@ retention was the sink shape's to give and it did not, and the charter
 carries the licence, the certification's exactness per payload, and the
 bound. **What the licence's members gate is the claim and never the drain**: the
 report names the device model and the code identity the evidence came from -
-both members of the charter's licence, read at the precisions that clause
-states from the deposit the operator holds until the record event it names
-as owed lands - and a report that cannot establish either says so and
-carries no reproducibility claim, the absent member otherwise reading as
-one.
+both members of the charter's licence, at the precisions that clause states,
+their source the deposit the operator holds until the record event that
+clause names as owed lands - and a report that cannot establish either says
+so and carries no reproducibility claim, the absent member otherwise reading
+as one. **No reader for that deposit stands in this tree**, per the election
+below and section 7's record of it, so what a deposit would have carried is
+what a report says it cannot establish until issue #538's act lands.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,
@@ -858,9 +861,12 @@ already has this crate read the device model from a deposit to bound a licence.
 
 **The deposit is named by the invocation and never found beside the record.** **A rule
 that looked beside the record would name nothing on a pipe**, which section 5 above
-licenses as a sink shape, so the caller names it or names none. **What reads it is
-unelected**, per section 7, so the members a deposit would fill cross absent on the rule
-below and section 1's listing names no module for it.
+licenses as a sink shape, so the caller names it or names none. **The signals
+invocation takes the deposit's path beside the record's**, which is the shape a caller
+names one in, and `src/deposit.rs` is the placement that reads it. **Neither stands in
+this tree**, so every invocation this crate has today is one that named none and the
+rule below is the whole of what crosses. Section 1's listing carries the files the tree
+holds and this module is not among them, and issue #538 owns the act that lands it.
 
 **The agreement rule reaches what a run can agree on.** The sampling's declared members
 agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
@@ -1084,16 +1090,21 @@ most of this document is representation.
   member on a new event where the closing count has been on the wire since
   2026-08-19, so the cheaper answer is also the one that asks the record for
   nothing. Per issue #461.
-- **What reads a deposit, and how, opened 2026-09-16.** Section 5 has the summary
-  carry the device model and the rest of the code identity from a deposit the
-  invocation names, and no module in this tree reads one, per section 1's listing.
-  `src/deposit.rs` is the placement, and the election owes that module and the
-  signals invocation taking the deposit's path beside the record's. Until it lands
-  the device model crosses absent and the code identity crosses carrying only the
-  `load` event's stack, which is section 5's rule for a caller that named none, so
-  the wider set is unelected rather than wrong. The clause sat in section 1's
-  listing and in section 5 in the present tense, where a representation this
-  document had not made read as one the crate held. **This is not the gap issue
-  #538 carries**, which is four summary members section 5 declares and no code
-  reaches, named as owed at `crates/weaver-analysis/src/main.rs`'s own header
-  rather than here.
+- **What reads a deposit, and how, recorded 2026-09-16.** **The election stands
+  and this act does not retract it**: section 5 names `src/deposit.rs` as the
+  placement and the signals invocation taking the deposit's path beside the
+  record's as the shape a caller names one in. Neither is in the tree, the word
+  appearing nowhere in the crate's source, which is section 1's claim and the
+  evidence for this one. What this act removed is the row section 1's layout
+  carried for that module, section 5 keeping the invocation shape it settled and
+  gaining the clause that says neither stands. A layout listing says what the
+  tree holds, so an elected module nobody has built is not one of its rows, and
+  the removal corrects where the election was recorded rather than whether it
+  was made. **What the summary sends today is the turn, the perplexity, the
+  residency, the output count and the weights hash**, per `render_generation`
+  at `crates/weaver-analysis/src/main.rs`, so neither the device model nor the
+  code identity crosses at all and section 5's named-none branch is unbuilt
+  rather than honoured. **That half is issue #538's**, which carries
+  `analysis-summary-reports-the-run-and-its-conditions` among the four records
+  section 5 declares and no code reaches, named as owed at that file's own
+  header.
