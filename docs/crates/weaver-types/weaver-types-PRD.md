@@ -440,8 +440,10 @@ follows loop 0, the readout above all, is roadmap the graph carries rather than 
 commitment the first build answers for. What the first coding run builds is scoped
 against the graph after it exists, and the per-binary registration of section 2.1
 already makes the config surface honest at every stage: a binary that does not
-register a field does not carry it. The six records above are the six fields this
-section lists, so a clause naming a seventh has no target and the mapping says so.
+register a field does not carry it. The ten field records above are the ten fields
+this section lists, so a clause naming an eleventh has no target and the mapping says
+so. The eleventh record of that block is `refusal-record`, which is wire vocabulary
+rather than a field, and the twelfth is the artifact the fields are held by.
 
 There is no `writes` edge from any crate, because the writer is the operator and the
 operator is not a node the graph carries. Both crates that touch the file declare
@@ -450,12 +452,16 @@ rather than deferring it.
 
 Known fields, from the passes already done: the model binding, the tool set, the
 permission mode, the residual-readout election, the gate instruction, and the trace
-sink. The last three arrived from the gate and operator-contract passes and from the
-trace pass rather than from this crate's own reasoning, which is the demand rule working
-as intended. The gate instruction names the seams the gate holds, two as of the egress
-ruling of 2026-08-07, and it travels the way the model binding does: the operator writes
-it, admin validates it, the harness carries it uninterpreted, and the gate resolves it,
-per `weaver-gate-PRD` section 10. The trace sink names where the stream lands, per
+sink. Four joined after this sentence was written, the binding kind, the state
+election, the field election and the surprisal election, each named where this
+section argues it, so the set this section lists is ten today and this sentence is
+the six it stood at. The last three of those six arrived from the gate and
+operator-contract passes and from the trace pass rather than from this crate's own
+reasoning, which is the demand rule working as intended. The gate instruction names
+the seams the gate holds, two as of the egress ruling of 2026-08-07, and it travels
+the way the model binding does: the operator writes it, admin validates it, the
+harness carries it uninterpreted, and the gate resolves it, per `weaver-gate-PRD`
+section 10. The trace sink names where the stream lands, per
 `weaver-admin-operator-contract` section 3: the operator writes it, admin validates it
 and connects the stream to it at load, and no other crate reads it.
 

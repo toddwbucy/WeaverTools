@@ -39,6 +39,12 @@ fn full_config() -> String {
 }
 
 /// The operator's kebab-case document parses into the typed surface.
+///
+/// Perturbation: drop `rename_all = "kebab-case"` from `AgentConfig` and the
+/// operator's spellings stop reaching the Rust field names, so
+/// `deny_unknown_fields` refuses `spu-instruction` and the parse fails.
+/// Verified by removing that attribute and watching this test fail at
+/// `expect("parses")`.
 #[test]
 fn a_complete_config_parses() {
     let config = parse(&full_config()).expect("parses");

@@ -321,7 +321,7 @@ level that buys nothing and costs a level in every recorded message.
 ```graph
 node: traits-role-plain-string
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-traits
@@ -344,7 +344,7 @@ which is what keeps the second case available here.
 ```graph
 node: traits-content-block-internally-tagged
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-traits
@@ -646,7 +646,7 @@ reason to refuse an internal dependency, no reason to keep an async runtime out 
 its manifest, no reason to bound a boxed future with `Send` or to hold `futures`
 off the floor, and no reason to deny `PermissionMode` a method that decides.
 Remove it and the derive set is still the data derives, the tagging test still
-yields the same two shapes, the role set is still three, and the enums are still
+yields the same two shapes, the role set is still four, and the enums are still
 non-exhaustive where the charter says the set grows, so those ground in nothing.
 **Eighteen claims grounding in no invariant is the expected result and not a gap**,
 per Document Format section 4: section 2 of this Spec is named for representation,
@@ -700,6 +700,20 @@ restated here.
   intact, confirmed by watching the test fail when a block variant is dropped.
 - An unknown tag on deserialization refuses rather than defaulting, confirmed by
   feeding a role this crate does not define.
+- `Role` serializes as a plain renamed string, per section 3, confirmed by
+  watching `rename_all` dropped from the enum and `ToolResult` cross as its Rust
+  spelling.
+- `ContentBlock` is internally tagged on `type`, per section 3, confirmed by
+  watching the tag dropped and serde's external tagging make the variant name a
+  key.
+
+**The last two moved here from `review` with this act**, per Document Format
+section 5's rule of v0.22 that `review` means an instrument was not bought and
+never that none exists. Both were cited at `tests/message_model.rs` while their
+tags said no instrument stood, which is that rule's sighting, and the file's own
+header already called all four of its tests the perturbation-verified tests of
+this section. What the act bought is the `Perturbation:` line each now carries:
+the tags were the clauses' error and the watches were owed rather than run.
 
 **This crate has no threat walk of its own, and the absence is stated rather than
 left blank.** The security mechanisms this program relies on live where processes

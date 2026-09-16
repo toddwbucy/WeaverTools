@@ -353,6 +353,12 @@ fn the_decode_refuses_the_noncanonical_forms() {
 /// 4.5: the directive and refusal internally tagged, the answer adjacent
 /// because the fault's account splices, which is the shared tagging test's
 /// spliced-member arm and would fail internal tagging at deserialization.
+///
+/// Perturbation: drop `content = "body"` from `LabelAnswer` and the answer
+/// tags internally, which buffers on the read side and cannot represent the
+/// spliced account, so the fault arm serializes and will not come back.
+/// Verified by removing that member and watching this test fail at the
+/// splice's return.
 #[test]
 fn the_label_trio_round_trips_through_bytes() {
     let ask = weaver_types::LabelDirective::Classify {

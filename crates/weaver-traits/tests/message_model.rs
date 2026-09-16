@@ -36,6 +36,11 @@ fn message_round_trips_unchanged() {
 
 /// A role serializes as a plain renamed string, per the tagging test: fieldless,
 /// so `"user"` and not `{"type": "user"}`.
+///
+/// Perturbation: drop `#[serde(rename_all = "snake_case")]` from `Role` and the
+/// rename stops happening, so `ToolResult` crosses as `"ToolResult"`. Verified
+/// by removing that attribute and watching this test fail on the second
+/// assertion.
 #[test]
 fn role_is_a_plain_string() {
     assert_eq!(serde_json::to_string(&Role::User).unwrap(), "\"user\"");
@@ -46,6 +51,11 @@ fn role_is_a_plain_string() {
 }
 
 /// A content block is internally tagged on a stable member name.
+///
+/// Perturbation: drop `tag = "type"` from `ContentBlock` and serde's default
+/// external tagging makes the variant name a key, so `Text` renders as
+/// `{"text":{"text":"hello"}}`. Verified by removing the tag and watching this
+/// test fail against exactly that shape.
 #[test]
 fn content_block_is_internally_tagged() {
     let block = ContentBlock::Text {
