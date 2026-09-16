@@ -2221,8 +2221,9 @@ tree beside the file.
 
 **Which invariant each claim serves, and why most serve none.** Twelve of the
 forty-four carry a `grounds` edge and those twelve carry thirteen edges, one
-record grounding in two invariants. **All three records the boundary act of 2026-08-28 added ground in
-none**, and the paragraph accounts for each rather than one. Section 6's runtime
+record grounding in two invariants. **All three records the boundary act of
+2026-08-28 added ground in none**, and the paragraph accounts for each rather
+than one. Section 6's runtime
 directory mode is an election about a boundary this crate provisions, and its access
 rule reachability is a consistency rule between two locks - neither is a claim an
 invariant reaches. The third, the gid set the denial walk reads, is the same shape: it
