@@ -6,7 +6,7 @@
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #586
+**Landing PR:** #626
 
 ---
 
