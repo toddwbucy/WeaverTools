@@ -1474,17 +1474,22 @@ reader can count.** Three in section 1, three in section 2, seventeen in section
 in section 8, two in section 9, this section's three, and four in section 11. The
 instruments divide them four to the compiler, three to compile-fail, three to the
 manifest, ten to a perturbation-verified test, and twenty-six to review.
-**The earlier form of this paragraph gave the split as an unmeasurable one** -
-seventeen from this section's own sorting and twenty-seven from the elections
-outside it - and no reading of the section reproduced the figures it gave. The
-base they summed to was written as forty-four by the tee act of 2026-08-26 and
-left there when `trace-load-names-its-loop-and-its-member` took the tree to
-forty-five on 2026-09-03. A split stated as a count of declarations is one the
-next act can check by counting declarations, which is the correction
-`weaver-gate-Spec` took for this same defect on 2026-09-15. A divided claim's two
-halves both count with this section's sorting, per Document Format section 3,
-which is where the path-taking prohibition and the receive site's no-flag claim
-count, each the review half of a bullet above.
+**The split is stated as a count of declarations because that is a count the next
+act can take**, where a split by provenance is a reading and two readers of one
+section need not reach it alike. A divided claim's two halves both count with
+this section's sorting, per Document Format section 3, which is where the
+path-taking prohibition and the receive site's no-flag claim count, each the
+review half of a bullet above.
+
+**This file's header states assertion counts this section does not, and the
+header is owed to issue #603.** Two entries there give a base and a section 11
+count from the tree as it stood when each was written, and neither agrees with
+what this section derives. **The count is the one this section derives from the
+declarations.** The header's figures are not restated here and are not corrected
+in place: the Working Rules give a header no history to carry, #603 retires the
+entries corpus-wide, and a correction would preserve the thing being removed.
+Named so the disagreement is met rather than settled by whichever statement a
+reader reaches first.
 
 **Two claims another document declares.** **The close-on-exec test below is
 declared by `weaver-harness`,** whose Spec section 8 carries it as the first of
@@ -1492,20 +1497,19 @@ its threat walks and has discharged the owing, because an assertion belongs wher
 its test lives. **The tagging test section 3 applies is declared by
 `weaver-types-Spec` section 4.3,** node and both edges, as the test the two floor
 Specs share, and what this document records is the election that test yields for
-`TurnClose`. Those two are tests this Spec would otherwise owe.
-`trace-tee-selects-never-computes` was a third until 2026-09-15 and is not one
-now: section 11 declares it and it counts with the forty-six, the charter keeping
-the argument and the record coming here. The threat walk closing this section
+`TurnClose`. Those two are tests this Spec would otherwise owe, and
+`trace-tee-selects-never-computes` is not a third: section 11 declares it and it
+counts with the forty-six. The threat walk closing this section
 takes no node of its own, per Document Format section 5, and it names no test of
 its own either, its instrument being the compile-fail set already recorded.
 
-**The absent-not-zero bullet left the perturbation list with its record.**
-`trace-measurement-absent-not-zero` retired on 2026-08-11 when the measurement
-became spliced, the property relocating to `weaver-spu-Spec`'s
-`spu-absent-not-empty-vector` where the rendering happens. Section 3 records that
-this crate names none of the measurement's members and elects no
-`skip_serializing_if` over them, so the bullet outlived its record and claimed a
-test this crate does not run.
+**No bullet here claims the absent-not-zero property, because no record of this
+Spec asserts it.** The property is `weaver-spu-Spec`'s
+`spu-absent-not-empty-vector`, where the rendering happens, and section 3 argues
+why: the measurement splices, so this crate names none of its members and elects
+no `skip_serializing_if` over them. A bullet here would sort an instrument under
+a claim this document does not make, and the absence of the election is what
+makes the perturbation unavailable to this crate rather than merely unbought.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
 forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
@@ -1624,16 +1628,10 @@ rendering, the harness applies it as the one party that writes, and the tee
 selects and never computes, per charter section 11. What the charter and
 `weaver-harness-state-contract` settle, this section only represents: the types
 the rule is held in, the two functions that apply it, and the conduct the applied
-tee owes the seam.
-
-**The record for that claim is this section's, and was the charter's until
-2026-09-15.** `weaver-trace-PRD` section 11 declared
-`trace-tee-selects-never-computes` where it argues the rule, which is a placement
-Document Format section 4 does not admit: a Spec declares the assertion node
-beside the `asserts` edge, at the clause the assertion names, and a charter says
-what is needed and why. The identifier does not move with the declaration, so
-`crates/weaver-trace/src/tee.rs` cites what it has always cited and the charter's
-argument stays where it was. The tag comes over unchanged and is review.
+tee owes the seam. **This document declares the record for the selection claim**,
+per Document Format section 4, which gives an assertion node to the Spec: a
+charter says what is needed and why, and a Spec states its subject crate's
+records. The instrument is review.
 
 ```graph
 node: trace-tee-selects-never-computes

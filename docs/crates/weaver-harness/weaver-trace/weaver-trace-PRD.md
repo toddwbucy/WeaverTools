@@ -1285,11 +1285,10 @@ excepts is stated here, and it stays selection: the prefix's payload crosses as 
 record rendered it, and no election adds to or subtracts from it. Transformation of what
 was selected is `weaver-state`'s work and decision about what it means is the harness's
 loops', and a tee that computed would smuggle the first into this crate.
-**`weaver-trace-Spec` section 11 declares the record for this clause.** This
-charter argues the claim and Document Format section 4 gives the declaration to
-the Spec: a charter says what is needed and why, and a Spec states its subject
-crate's records. The identifier is `trace-tee-selects-never-computes` and this
-charter declares no assertion node of its own.
+**This charter declares no assertion node.** It argues the claim and Document
+Format section 4 gives the declaration to the Spec, which declares
+`trace-tee-selects-never-computes` at `weaver-trace-Spec` section 11: a charter
+says what is needed and why, and a Spec states its subject crate's records.
 
 **The election is fixed at load and arrives with the declaration.** What the
 operator elected is thereby a load condition the record carries like any
