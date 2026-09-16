@@ -7,7 +7,7 @@ build order. Code is written against it under the gates of Working Process secti
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #587
+**Landing PR:** #601
 
 ---
 
@@ -1388,15 +1388,6 @@ carrying a string, so a caller branches on a value.
 `Failure` is exhaustive, so a fifth case reaches every caller at compile time in
 the act that adds it.
 
-**The crate carries the retired variant until the act that removes it**, which
-follows this one. `Failure::CommitPressure` stands in the built enum and `submit`
-still returns it after the event has reached the working structure and the
-writer's queue, which is the behaviour this section stopped specifying rather
-than the behaviour it describes. **A reader comparing the two should read this
-section as what is authorized and the crate as what is built**, per gate H1's
-direction: a Spec merges and code answers to it, so the window between them is
-the ordinary one and not a divergence to reconcile.
-
 ```graph
 node: trace-failure-enum-exhaustive
 kind: assertion
@@ -1470,32 +1461,53 @@ build-time `cargo tree` assertion the floor Specs share. The `serde_json`
 feature the manifest must carry rather than one it must not, and its record sits
 at the dependency clause with the rest of that election.
 
-**Where the records sit, and the two claims another document declares.** The
-assertion records are at the clauses that argue the claims, across sections 1
-through 9 and section 11, rather than gathered here, per Document Format section 6:
-this section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Forty-one sit there and three sit at the
-end of this section, being the claims argued only here. Seventeen of the forty-four
-come from this section's own sorting and twenty-seven from the elections outside it, the
-path-taking prohibition counting here rather than as an election because it was
-divided out of this section's own bullet and never elected, per Document Format
-section 3.
-**The close-on-exec test below is declared by `weaver-harness`,** whose Spec
-section 8 carries it as the first of its threat walks and has discharged the
-owing, because an assertion belongs where its test lives. **The tagging test
-section 3 applies is declared by `weaver-types-Spec` section 4.3,** node and both
-edges, as the test the two floor Specs share, and what this document records is
-the election that test yields for `TurnClose`. The charter's
-`trace-tee-selects-never-computes` binds this crate's tee module from outside
-this document as well, per section 11, and is not counted with that pair: those
-two are tests this Spec would otherwise owe, while the charter's claim sits with
-its own argument and owes this document nothing. The threat walk closing this
-section takes no node of its own, per Document Format section 5, and it names no
-test of its own either, its instrument being the compile-fail set already
-recorded.
+**Where the records sit.** The assertion records are at the clauses that argue
+the claims, across sections 1 through 9 and section 11, rather than gathered
+here, per Document Format section 6: this section sorts by instrument and the
+arguments are elsewhere, so a block here would sit apart from the prose that
+earns it. Three sit at the end of this section, being the claims argued only
+here.
+
+**Forty-six records in all, and the split is where they are declared, which a
+reader can count.** Three in section 1, three in section 2, seventeen in section
+3, five in section 4, two in section 5, four in section 6, two in section 7, one
+in section 8, two in section 9, this section's three, and four in section 11. The
+instruments divide them four to the compiler, three to compile-fail, three to the
+manifest, ten to a perturbation-verified test, and twenty-six to review.
+**The split is stated as a count of declarations because that is a count the next
+act can take**, where a split by provenance is a reading and two readers of one
+section need not reach it alike. The rule that sorted a divided claim's two
+halves by provenance goes with the count it served: a record counts in the
+section that declares it, once, and nothing above needs a second column.
+
+**Two claims another document declares.** **The close-on-exec test below is
+declared by `weaver-harness`,** whose Spec section 8 carries it as the first of
+its threat walks and has discharged the owing, because an assertion belongs where
+its test lives. **The tagging test section 3 applies is declared by
+`weaver-types-Spec` section 4.3,** node and both edges, as the test the two floor
+Specs share, and what this document records is the election that test yields for
+`TurnClose`. Those two are tests this Spec would otherwise owe, and
+`trace-tee-selects-never-computes` is not a third: section 11 declares it and it
+counts with the forty-six. The threat walk closing this section
+takes no node of its own, per Document Format section 5, and it names no test of
+its own either, its instrument being the compile-fail set already recorded.
+
+**No bullet here claims the absent-not-zero property, because no record of this
+Spec asserts it.** The property is `weaver-spu-Spec`'s
+`spu-absent-not-empty-vector`, where the rendering happens, and section 3 argues
+why: the measurement splices, so this crate names none of its members and elects
+no `skip_serializing_if` over them. A bullet here would sort an instrument under
+a claim this document does not make. **The crate does run a test named for the
+property, and it answers to no record here**: `tests/recorder.rs`'s
+`absent_measurement_members_emit_nothing` states a perturbation that removes a
+skip election, and `event.rs` carries the measurement as
+`Payload::ModelMeasurement(Box<RawValue>)` with no such election to remove, so
+the watch cannot fail and the file's own header sorts it under this section. That
+test and that header are issue #606's, filed for the crate half this act does not
+reach.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
-forty-four carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
+forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1513,9 +1525,9 @@ reason to report pressure rather than author it, and no reason to hold the
 envelope out of the tee's election, so those three ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Thirty-nine claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: sixteen of the forty-four are section 3's
-event schema and fourteen of those sixteen ground in nothing, a schema being
+**Forty-one claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: seventeen of the forty-six are section 3's
+event schema and fifteen of those seventeen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
 **Two calls are worth stating rather than leaving to be read.** The two contract
@@ -1548,10 +1560,6 @@ the fact exists.
   the writer re-renders from the event.
 - Gapless run-scoped sequence under the run's whole traffic, confirmed by watching
   a gap appear when a refused submission consumes a sequence.
-- Absent rather than zero: an event whose measurement carries no signal
-  vectors emits no member for them, confirmed by watching an empty array
-  appear when the skip election is removed, since an empty array and an
-  absent instrument are the two facts the charter separates.
 - The tee's election on the `load` event: a payload rendered under a
   non-default election carries the rule back off the canonical form, watched to
   fail when the member is dropped from the shape.
@@ -1561,6 +1569,12 @@ the fact exists.
 - The projection splices and never re-renders: an elected value whose
   re-rendering would differ from its spelling crosses byte-identical, confirmed
   by watching the comparison fail when the walk re-renders the value.
+- The `load` event names its loop and its member: a payload rendered with a
+  file-backed composer and a standing member reads both back off the canonical
+  form, the digest and the path included, watched to fail when either member's
+  serialization is skipped.
+- The output carries the session's position: a turn's record carries both counts
+  from `ModelOutput`, watched to fail when either count is dropped.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test
@@ -1612,11 +1626,23 @@ to: trace-receive-shape-pinned-by-doctest
 **The distillation surface is a sixth module, `src/tee.rs`, and this section
 authorizes it.** The mechanism is this crate's because what is tee'd is its own
 rendering, the harness applies it as the one party that writes, and the tee
-selects and never computes, per charter section 11, whose assertion
-`trace-tee-selects-never-computes` binds the module from the clause that argues
-it. What the charter and `weaver-harness-state-contract` settle, this section
-only represents: the types the rule is held in, the two functions that apply
-it, and the conduct the applied tee owes the seam.
+selects and never computes, per charter section 11. What the charter and
+`weaver-harness-state-contract` settle, this section only represents: the types
+the rule is held in, the two functions that apply it, and the conduct the applied
+tee owes the seam. **This document declares the record for the selection claim**,
+per Document Format section 4, which gives an assertion node to the Spec: a
+charter says what is needed and why, and a Spec states its subject crate's
+records. The instrument is review.
+
+```graph
+node: trace-tee-selects-never-computes
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-trace
+to: trace-tee-selects-never-computes
+```
 
 **The election is two types, and the rule is held in the shape it is applied
 in.**
