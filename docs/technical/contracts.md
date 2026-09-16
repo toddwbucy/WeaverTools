@@ -1,8 +1,8 @@
 ---
 title: Contracts
 summary: every seam this program governs, with its parties, its tag, and where the merged contract lives
-version: v0.1
-date: 2026-08-22
+version: v0.2
+date: 2026-09-16
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -29,13 +29,49 @@ itself is written and in force.
 
 ## The internal seams
 
-Seven, declared in the corpus at the declaring side. Six sockets and one link.
+Ten, declared in the corpus at the declaring side. Eight sockets and two links.
+
+**The count is of seams that carry a seam edge, which is not the same as every
+boundary this program has.** The three contracts below this section govern
+boundaries whose far side is a front-end principal, an operator, or the init
+system, and the graph carries no node for a principal outside the program, so each
+of those is a seam that carries no edge and none of them joins the ten, per
+`weaver-admin-PRD` section 6. Two of the ten stand at least partly outside the
+agent, both of them `weaver-analysis`'s, and they are counted here because both
+ends are crates.
 
 ### weaver-admin-harness-contract
 
 `weaver-admin` to `weaver-harness`, **socket**. Lifecycle authority inward:
 enter, leave, and stop. Admin dials, one connection per verb, and the harness
 reads the peer credential at every accept before any byte. Read-out not drafted.
+
+### weaver-analysis-state-contract
+
+`weaver-analysis` to `weaver-state`, **socket**. The preload seam: a finished
+record parsed outside the agent, landed in the custodian's holdings so that what it
+holds is indistinguishable from what a live tee would have landed. The driver sends
+and the custodian speaks at no time here. A named door on the custodian, credential
+authenticated, standing only under a diagnostic binding or a load that elects a
+restore, and refusing the agent's own credential at the accept. Read-out not
+drafted.
+
+### weaver-analysis-web-contract
+
+`weaver-analysis` to `weaver-web`, **socket**. The signals seam, and the one seam
+with neither end inside an agent: what a parsed record measured at each generated
+position - the tokens drawn, the entropy the generation measured, and the surprisal
+where that election stands - out to the connector, which lands it in its own store
+and draws from the store rather than from the wire. The emitter sends and the
+reader asks nothing. Read-out not drafted.
+
+### weaver-harness-diagnostic-contract
+
+`weaver-harness` to `weaver-diagnostic`, **link**. The second record mechanism, and
+the diagnostic binding's: the harness decides what a replay is and when a pass
+opens and closes, and the recorder assigns ordering, produces canonical form, and
+hands the rendering to the sink admin opened. It holds no policy. Crosses no
+process line, so it authenticates nothing. Read-out not drafted.
 
 ### weaver-harness-gate-contract
 
@@ -66,8 +102,9 @@ channel, the distillate feeds it, shape and recall answer. Read-out not drafted.
 
 ### weaver-harness-trace-contract
 
-`weaver-harness` to `weaver-trace`, **link**. The one seam in the base set that
-crosses no process line, so it authenticates nothing. Read-out not drafted.
+`weaver-harness` to `weaver-trace`, **link**. One of the two seams that cross no
+process line, so it authenticates nothing, the diagnostic seam above being the
+other and linked for the same reason. Read-out not drafted.
 
 ## The two external contracts
 
@@ -81,6 +118,12 @@ verbs are not: the operator contract governs the record and says outright that
 running the admin binary is running the crate rather than a channel it governs,
 so an outside consumer has no page for that surface and builds it on deployment
 fact. The ask for one is filed.
+
+**Consuming these two is not the same as being a party**, and `weaver-web` is now
+both. It builds against this pair the way anything outside the program would, and
+it signs `weaver-analysis-web-contract` above as one of two crates, which is a seam
+that carries an edge and reaches no agent. The two here carry none, their far side
+being whoever dials and whoever the operator is.
 
 ### weaver-gate-world-contract
 

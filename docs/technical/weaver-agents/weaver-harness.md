@@ -1,8 +1,8 @@
 ---
 title: weaver-harness
 summary: the switchboard: the loops, the seams, and sole authorship of the trace
-version: v0.1
-date: 2026-08-24
+version: v0.2
+date: 2026-09-16
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -93,20 +93,22 @@ returns the agent to loaded and idle, and none unloads it.
 
 ## Seams
 
-**Seven, this crate being a party to every internal seam the program has.**
-The boundary seam to [weaver-gate](weaver-gate.md), the coordination seam to
-[weaver-admin](weaver-admin.md), three to [weaver-spu](weaver-spu.md) -
+**Eight, which is eight of the program's ten internal seams and no longer all of
+them.** The boundary seam to [weaver-gate](weaver-gate.md), the coordination seam
+to [weaver-admin](weaver-admin.md), three to [weaver-spu](weaver-spu.md) -
 residency, decode, and classify, each on its own socket - the state seam to
-[weaver-state](weaver-state.md), and the trace seam, which crosses no process
-line and is tagged link rather than socket. Contracts for each are on
-[the contracts page](../contracts.md).
+[weaver-state](weaver-state.md), and the two record mechanisms, the trace seam and
+the diagnostic seam, which cross no process line and are tagged link rather than
+socket. The two seams this crate holds no end of belong to the crate that parses a
+finished record, and both of those stand outside the agent. Contracts for each are
+on [the contracts page](../contracts.md).
 
 Authentication follows the channel's nature: by credential where a socket has
 a name - coordination, and the member's preload door - and by possession
 where it has none, the state pair and the organ pairs existing only as
 descriptors the right processes hold.
 
-**The charter's own count is five and is short by two** - the classify seam
+**The charter's own count is six and is short by two** - the classify seam
 was declared on the SPU's side after that count was taken, and residency and
 decode were collapsed into one entry where the contracts page carries them
 separately. This page reports the discrepancy rather than settling it: where

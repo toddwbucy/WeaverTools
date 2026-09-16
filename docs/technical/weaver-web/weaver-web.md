@@ -1,8 +1,8 @@
 ---
 title: weaver-web
 summary: the first consumer: channel, lifecycle, and trace surfaces reaching an agent across the two external contracts
-version: v0.2
-date: 2026-08-25
+version: v0.3
+date: 2026-09-16
 commit: unreleased
 parent: WeaverTools Technical Documentation
 ---
@@ -103,12 +103,18 @@ architecture change is tested against this constraint first.
 
 ## Seams
 
-**None into the agent, and that is the point.** It holds no seam in the sense
-the crate papers use the word: no contract binds it to any component, because
-contracts bind parties inside the program and this sits outside.
+**None into the agent, and that is the point.** No contract binds this crate to a
+component of an agent, because a component's contracts bind parties inside the
+program and this sits outside.
 
-What it has instead is **two external contracts, which are pages rather than
-partners** - written for whoever builds against them and owing nothing back.
+**One seam that goes nowhere near an agent**, arriving after this page was first
+written. `weaver-analysis-web-contract` binds this crate to the crate that parses a
+finished record, both parties crates and neither end inside an agent. What crosses
+is what a completed run measured, and it is read out on
+[the contracts page](../contracts.md) with the rest rather than restated here.
+
+What it has toward an agent is **two external contracts, which are pages rather
+than partners** - written for whoever builds against them and owing nothing back.
 See [the contracts page](../contracts.md). Across the first it dials the gate
 socket and speaks one line per turn. Across the second it reads the record the
 operator holds.
