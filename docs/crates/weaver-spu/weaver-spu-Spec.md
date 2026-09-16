@@ -3,14 +3,15 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
-**Revised:** 2026-09-15, the layout mirrors the source tree and section 10's counts
-are read from it. Section 1's table named two paths under `decoder/` that no file
-answers to and left six modules unlisted, and it now mirrors
-`crates/weaver-spu`. Section 10 reads eighty-nine records against fourteen
-`grounds` edges from eleven of them and seventy-eight grounding in no invariant,
-names the third record carrying two edges, and states where each record is declared
-in place of a sorting split that had gone two counts stale. No record is added,
-removed, or retagged. Per issue #569.
+**Revised:** 2026-09-15, the layout and section 10's counts are read from the
+source tree. Section 1's table named two paths under `decoder/` that no file
+answers to and left six modules unlisted, and its rows now come from
+`crates/weaver-spu`, with the absence of anything holding them there stated at
+the table rather than asserted away. Section 10 reads eighty-nine records against
+fourteen `grounds` edges from eleven of them and seventy-eight grounding in no
+invariant, names the third record carrying two edges, and states where each record
+is declared, sections 0 and 12 at zero, in place of a sorting split that had gone
+two counts stale. No record is added, removed, or retagged. Per issue #569.
 
 **Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
 Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
@@ -499,19 +500,25 @@ to: axiom-floor-is-vocabulary-behavior-is-socket
 
 **Layout.** The crate is the umbrella's substrate, per charter section 2: the
 family libraries and the socket presentation, with each semantic domain in its
-own submodule. One submodule exists. **The table mirrors the source tree** -
-twenty-five modules under `src`, the seven family modules standing on one line
-here, with the build script and the kernels directory beside them. The test
-targets are section 1.2's and are not repeated here.
+own submodule. One submodule exists. The rows below are read from
+`crates/weaver-spu` rather than kept beside it: twenty-five modules under `src`,
+the seven family modules standing on one line here, with the build script and the
+kernels directory. The test targets are section 1.2's and are not repeated here.
+**Nothing holds this table to the tree**, and it drifted to two paths no file
+answered to and six unlisted modules before the reading of 2026-09-15. The walk
+that would catch the next drift belongs beside the fixture surface's own, which
+section 1.2 names, and is not bought here, so a reader wanting the rows current
+takes the walk rather than trusting them.
 
     src/lib.rs                  the module declarations, and the lib target the
                                 doctest instruments run under
     src/main.rs                 entry, the hygiene sets, the service loop
     src/bin/classify.rs         the classify arm's own binary, section 11
     src/channel.rs              the two channel ends and envelope I/O, section 2
-    src/residency.rs            admit and release, the device, section 3
-    src/artifact.rs             resolution, the header read, and the weights
-                                hash, section 3's free steps
+    src/residency.rs            admit and release, and the device judgment that
+                                is the third free step, section 3
+    src/artifact.rs             resolution and the header read, the first two
+                                free steps, and the weights hash, section 3
     src/measurement.rs          measurement production, section 6
     src/readout.rs              the residual tap and its reduction, section 7
     src/sampling.rs             the knobs and their dispositions, section 8
@@ -3395,9 +3402,9 @@ floor-link record of section 1.1, which says at its own clause that it carries b
 edges. **The test applied is whether the axiom is the reason the claim exists, or
 the claim a precondition of the axiom's own stated reason.** Remove the socket
 invariant and this crate has no reason to be a process the harness starts rather
-than a library it calls, no reason to carry a
-truncation obligation attached to a socket type nobody would have elected, and no reason
-to refuse a signal-borne cancel, so those three ground in it. **The two hygiene claims
+than a library it calls, no reason to carry a truncation obligation attached to a
+socket type nobody would have elected, and no reason to refuse a signal-borne
+cancel, so those three ground in it. **The two hygiene claims
 of section 2 ground in it by the second relation rather than the first**, that invariant
 resting possession-as-authentication on no third party reaching a socket with no
 address, and a descriptor that crosses an exec or a process that admits an attach each
@@ -3472,7 +3479,10 @@ fact, and this is the count, each subsection counting to its section: nine in
 section 1, seven in section 2, eleven in section 3, eighteen in section 4, nine in
 section 5, seven in section 6, ten in section 7, two in section 7.5, five in
 section 8, two in section 8.5, three in section 9, four in this section, and two
-in section 11.
+in section 11. **Sections 0 and 12 declare none and the zero is stated rather
+than left out**, section 0 saying what this document is and section 12 holding
+the open elections, so those thirteen are every section that declares a record
+and the sum is complete rather than right by coincidence.
 
 A divided claim's two halves both count with the sorting, per
 Document Format section 3, which is where the absence and width divisions of
@@ -3506,8 +3516,9 @@ cases the ground is that no instrument was bought rather than that none exists.
 The two exceptions say so where they sit: the absence of anything laid in for
 an operation type that does not exist, and the kernels' comparisons above.
 Section 7's unasked-vector watch was a third of them until the column act
-built its seam and bought it, as its ground obliged, and it carries
-`perturbation` rather than `review` since that act.
+built its seam and bought it, as its ground obliged. What tag it carries since
+is recorded where that act's changes are, in the paragraph on where the records
+sit, and is not restated here.
 
 **The out-of-order refusal is stated and bought on both seams, per section 9,
 and this crate's side of the owing is discharged.** `weaver-types-Spec` section
