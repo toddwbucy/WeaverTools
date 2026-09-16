@@ -1,3 +1,8 @@
+//! conforms: state-store-is-a-port
+//! conforms: state-indexes-built-at-load
+//! conforms: state-distillate-lands-whole
+//! conforms: state-serve-restricts-to-the-session
+//!
 //! The service engine, per `weaver-state-Spec` section 3 and the ruling of
 //! 2026-09-04: one database per agent, reached over the store's unix socket
 //! under the member's own account, the store's peer authentication mapping

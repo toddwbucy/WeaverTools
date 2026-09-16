@@ -1,3 +1,5 @@
+//! conforms: state-store-is-a-port
+//!
 //! The engines behind the port, one module each behind its feature, per
 //! `weaver-state-Spec` sections 1 and 3.
 

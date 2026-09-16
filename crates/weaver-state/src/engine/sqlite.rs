@@ -1,3 +1,8 @@
+//! conforms: state-store-is-a-port
+//! conforms: state-indexes-built-at-load
+//! conforms: state-distillate-lands-whole
+//! conforms: state-serve-restricts-to-the-session
+//!
 //! The embedded engine, per `weaver-state-Spec` section 3: the store the
 //! 2026-08-18 ruling elected, one file in the member's territory, behind the
 //! `sqlite` feature and the default an absent election means.

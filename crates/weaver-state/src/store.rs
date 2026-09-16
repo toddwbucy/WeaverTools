@@ -1,3 +1,4 @@
+//! conforms: state-store-is-a-port
 //! conforms: state-distillate-lands-whole
 //! conforms: state-indexes-built-at-load
 //! conforms: state-serve-restricts-to-the-session
