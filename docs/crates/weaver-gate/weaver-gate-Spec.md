@@ -8,7 +8,7 @@ workflow. Code is written against it under the gates of Working Process section 
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #611
+**Landing PR:** #620
 
 ---
 
@@ -1184,9 +1184,9 @@ general bind-site prohibition, all section 3's. The relay reading no client
 content, section 4's. The fault sitting below the exchange layer, section
 5's. The execution's four contents, section 8's, where the tag records that
 no watch was bought for the enumeration - **if the compiler held it the tag
-would be `compile-pin`**, and which of the two it is belongs with the retag
-`act-34` already owes this crate. **Nine in all, and the tag means the
-instrument was not bought and never that none exists**, per apex section 11.
+would be `compile-pin`**, and which of the two it is belongs with the audit
+named below. **Nine in all, and the tag means the instrument was not bought
+and never that none exists**, per apex section 11.
 **The walk behind that reading is over file-level `conforms:` headers alone**
 and finds all nine cited from `src/`. It under-reads in two ways and the
 clearance is weaker than it sounds by both. It does not reach the in-file
@@ -1195,7 +1195,12 @@ does not reach a citation written at an item or at a statement, which the
 Document Format's section 4 admits beside the file header. So it is not a
 clearance against the inverse overclaim and is not offered as one:
 `gate-execution-four-contents` is cited from `tools.rs`, whose unit suite
-holds a test per content. Auditing the nine is `act-34`'s.
+holds a test per content. **Auditing the nine is not `act-34`'s**, that act
+having landed the format rule in Document Format section 5 and taken no
+retag, and all nine of these sit outside the rule's scope in any case,
+cited from `src/` file headers rather than at a test. The audit is named as
+owed in issue #569's `act-34` entry and falls to the next act that opens
+this document.
 
 ```graph
 node: gate-bind-shapes-pinned-by-doctest

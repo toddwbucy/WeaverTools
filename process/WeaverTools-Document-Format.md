@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.20, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.21, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -558,7 +558,9 @@ node's identifier being a path. Per the operator's ruling of 2026-09-16.
 seam it is `socket` or `link`. On an assertion it is the instrument that enforces the
 claim, `compile-pin`, `compile-fail`, `perturbation`, `manifest`, or `review`, which
 is the sorting every Spec already performs in its own enforcement section and which
-apex section 11 requires a claim to state. **A threat walk's test tags
+apex section 11 requires a claim to state. A second key for the instrument would
+grow the fixed set for a fact the existing key already carries, and the point of the
+fixed set is that the mapper never guesses. **A threat walk's test tags
 `perturbation`**, settled here rather than seven times: the Specs phrase their
 walks as a category beside the perturbation-verified list, and apex section 11's
 third device is written as a blanket obligation on behavioral tests, always
@@ -572,9 +574,57 @@ ratification became per-charter on 2026-08-23 a charter no longer waits on that 
 and whether a ratified charter carries its own `tag: ratified` is the open question
 section 9 names.
 
-A second key for the instrument would grow
-the fixed set for a fact the existing key already carries, and the point of the fixed
-set is that the mapper never guesses.
+**`review` means an instrument was not bought and never that none exists**, per
+apex section 11, and the checkable form of that rule is a sighting rather than a
+verdict. A `review` assertion cited at a test is a disagreement between its tag and
+its citation: a test is an instrument, so a citation written at one says an
+instrument exists, and a tag reading `review` beside it says the opposite. Cited at
+a test means the citation a file under a crate's `tests/` target carries, every unit
+there being a test, or a citation written at an item or at a statement inside a
+`#[cfg(test)]` suite. **The scope follows where the instrument sits and never a
+directory.** `weaver-state` and `weaver-web` have no `tests/` target at all and hold
+every test they have in the in-file suite, so a scope named for the directory is
+empty by construction for two of the twelve crates, and section 4 admits four
+citation markers where a path under `tests/` reads one.
+
+**A sighting is read per claim and four dispositions occur in this corpus.** The tag
+moves, where the test is the instrument the claim wants and the clause bought it
+without saying so. The citation is deleted, where the unit that holds the instrument
+already cites the claim and the test-side citation is a second copy of an edge the
+graph has. The citation names a different node, where the test beside it holds a
+neighbouring claim and the header cited this one instead. Or nothing moves, where
+the clause names what was declined and what was taken in its place and the test
+watches a property the claim does not make. **A retag taken over the reading** would
+write a defect at every claim of the last kind, which is the same overclaim run the
+other way.
+
+**The clause settles the tag and never the citation.** A clause naming what was
+declined and what was taken in its place answers whether `review` is the right tag,
+and it says nothing about whether the citation sits at the unit that holds the
+claim. Both of this corpus's mis-citations stand under clauses that argue their own
+declining, so a compliant clause closes a sighting's first question and leaves the
+second one open. Naming the non-purchase is what separates an election from an
+overclaim, because the overclaim forecloses tests the corpus may later want.
+
+**Two Specs write their clauses that way and neither is evidence of compliance under
+this scope.** `weaver-diagnostic-Spec` section 7 states the rule in these words
+beside the shared fixture that would buy the one claim it declines, and
+`weaver-gate-Spec` section 6 argues an election at each of its nine clauses while
+saying of its own walk that it is not a clearance against the inverse overclaim and
+is not offered as one. Both crates cite every one of those claims from `src/` file
+headers, which the scope does not reach, so what the two show is the clause a sound
+election carries rather than a corpus that complies.
+
+**The reading is taken from the tree and the rule carries no instrument yet.** It is
+every node whose record reads `tag: review` matched against every `conforms:`
+citation under `crates`, narrowed to the citations the scope above admits, which
+wants a grep over two trees and no graph server. Issue #569 carries each reading with
+its date and each sighting with its disposition rather than this document, a count
+written here being stale by the next act. **The reading is owed to
+`act-20-census-readings`**, the act that extends the census, because the census is
+the one device that compares a claim in a document against a fact in code and this
+rule is that comparison exactly. Until it lands, the rule is checked by looking and a
+sighting is answered on the act that opens the file it sits in.
 
 Keys are `node`, `kind`, `edge`, `from`, `to`, `via`, and `tag`. A record
 begins with `node` or with `edge` and no record carries both. Unknown keys are a defect
@@ -643,6 +693,13 @@ check, being one document and one clause rather than a comparison across Specs.
 It does not say what any document contains. Level discipline is G2's and the three
 document kinds are the Working Process's. A document that carries correct blocks and
 wrong material passes this format and fails that gate.
+
+**One clause stands against that and section 5 carries it.** The `review` tag's rule
+reads a Spec clause for the non-purchase it names, which is material rather than
+notation. It is admitted because `review` is this format's own vocabulary and the
+clause is the only place the tag's meaning can be read: a tag saying an instrument
+was not bought cannot be checked without the sentence naming which one. The exception
+is that clause and no other, and a second one is a Format act.
 
 It does not make the graph. Phase two builds the graph from documents written this way
 and never by hand.
