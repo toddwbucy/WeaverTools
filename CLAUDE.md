@@ -130,11 +130,9 @@ three's, in force per Working Process section 6, H6 having joined 2026-09-11.
 **A ruling is a claim about the whole corpus.** A review finding names one sighting of its
 violation, so an act that lands a ruling ends with a corpus-wide sweep for every wording
 the ruling retires - and the sweep must be whitespace-normalized, because prose wraps at 88
-columns and any phrase can straddle a break. This file is the standing proof of what
-happens otherwise: the 2026-08-01 rename swept the corpus clean and left `CLAUDE.md`
-behind, because `CLAUDE.md` was not in the tree. **It entered the tree 2026-08-24**, at
-the repo root with the workspace copy a symlink into it, precisely so that corpus-wide
-sweeps reach this file too.
+columns and any phrase can straddle a break. **This file is in the tree so that a
+corpus-wide sweep reaches it**, a rename having once swept the corpus clean and left it
+behind for sitting outside.
 
 ## This machine is not the deployment box
 
@@ -165,10 +163,9 @@ cargo fmt --all -- --check
 
 **`--locked` on every command that resolves**, closing the first ask of
 issue #551. Without it cargo repairs a manifest change in place and the gate
-answers about a tree the repository does not record, which has happened twice,
-`weaver-admin`'s `sha2` on 2026-09-04 and `weaver-web`'s pair on 2026-09-11.
-With it the run refuses before a single test binary is spawned, so the drift
-is loud where it used to be silent. `fmt` resolves nothing and takes no flag.
+answers about a tree the repository does not record. With it the run refuses
+before a single test binary is spawned, so the drift is loud rather than
+silent. `fmt` resolves nothing and takes no flag.
 **This is the only place the refusal fires**: the deploy's own test line
 selects four crates, so the manifest instruments of `weaver-gate` and
 `weaver-internal` are reached by these commands and by nothing else.
@@ -199,20 +196,12 @@ above rests on. Whether the lock deserves a sentence in the corpus is #551's
 remaining question and the operator's to answer. The script's header carries the
 measurements and the reasoning and they are not copied here, per gate G5.
 
-**Every command was run from `WeaverTools/` on 2026-09-06 before being
-written here**, and each was run again under `--locked` on 2026-09-14 when
-that flag was added, which is the difference between a command that works and
-one that ought to. At the second reading `build --workspace` and
-`fmt --all -- --check` returned clean, `test --workspace` passed 624 and
-failed none, `test -p weaver-harness` passed 110 and failed none, and the
-clippy line returned the backlog section "Enforcement" describes. **The lock
-was untouched by every one of them.** A later reader re-runs rather than
-trusting the date.
+**Every command here was run before being written here, and none of them
+touches the lock.** Counts go stale, so a later reader re-runs rather than
+trusting a number.
 
-**The quarry's command below is not this one** and carries a
-`weaver-spu/inference` flag that is correct there and errors here, which is
-a mistake this file's own reader made on 2026-09-06 before these commands
-existed.
+**The quarry's command below is not this one.** It carries a
+`weaver-spu/inference` flag that is correct there and errors here.
 
 **`weaver-spu`'s gate carries `--features cuda,gguf`**, on the operator's
 ruling of 2026-09-15. `default = ["gguf"]` puts the inference path on without
@@ -224,11 +213,9 @@ not small and they are where the device is touched.
       -- -D warnings
 
 **A seat that cannot compile the feature does not gate the crate, and
-therefore does not land acts in it.** An earlier form of this file reasoned
-the other way, from one box having no `nvcc` to no gate command carrying the
-flag anywhere, which narrowed the gate for every seat to accommodate a
-machine that should not be acting on the SPU at all. The device is the
-olympus lane and the gate follows the lane.
+therefore does not land acts in it.** The device is the olympus lane and the
+gate follows the lane, rather than narrowing for every seat to accommodate a
+box that should not be acting on the SPU at all.
 
 ## Building the quarry (read-only verification)
 
@@ -275,13 +262,11 @@ Unix sockets for all internal IPC.
 
 ## Enforcement, and the graph
 
-**Corrected 2026-08-03.** This section previously said the new program builds no graph
-until just before the memory leg lands. `WeaverTools-Working-Process` section 5 governs
-and says otherwise: **phase two stands up a HADES graph from the merged documents, and
-closing its checklist is what ratifies the set.** That happened: the graph stood up
-2026-08-04 as `WeaverTools_v3` and the set ratified the same day.
+**Phase two stands up a HADES graph from the merged documents, and closing its
+checklist is what ratifies the set**, per `WeaverTools-Working-Process` section 5. The
+graph stood up 2026-08-04 as `WeaverTools_v3` and the set ratified the same day.
 
-The sequence the operator settled on 2026-08-03:
+The sequence:
 
 1. **Graph from the documents.** Phase two. This is ratification, not an audit.
 2. **Code**, with code nodes accruing into the graph as work merges. The graph is a code
@@ -329,11 +314,8 @@ indexes them, it does not replace them:
    nobody owns.
 
    **Issue #471 is the register and this file keeps no census.** A count
-   written here is stale by the next act and then argues with the command:
-   the table that stood here through 2026-09-06 named seven failing crates
-   and cited issue #475 as its largest item, and by 2026-09-07 #475 was
-   closed and the table was naming crates that had since cleared. Measure
-   rather than read:
+   written here is stale by the next act and then argues with the command.
+   Measure rather than read:
 
    ```bash
    for c in $(ls crates); do
@@ -351,29 +333,22 @@ indexes them, it does not replace them:
    **`BROKEN` means the run failed for a reason that is not a lint** and the
    crate's gate is unknown rather than passed. It is separated because a
    loop that counts lint lines out of a pipe reports the exit status of
-   `grep` and prints a clean zero for a run that never linted, which is how
-   issue #471's stale gate command went unnoticed. That command's
-   `--features weaver-spu/inference` errors on its first argument, and
-   through a counting pipe it reads as clean.
-   **The zero a broken run prints is the most expensive line in this
-   section**, so it prints a word instead.
+   `grep` and prints a clean zero for a run that never linted. A bad flag is
+   enough to cause it, erroring on cargo's first argument and reading as clean
+   through the pipe. **The zero a broken run prints is the most expensive line
+   in this section**, so it prints a word instead.
 
    **It counts the source lines the lint names**, so a finding whose path
    clippy prints relative to the crate rather than the tree is not in the
    count. That is not the case in this tree today, and it is where to look
    first if a crate you know is dirty reads zero.
 
-   **The count is per box and this file records none.** Two seats ran that
-   loop against `704bb3d` on 2026-09-07 and got different answers, the
-   thinkpad seat four findings and the olympus seat five. The one they
-   disagree on is `mhdr.msg_controllen as usize` at
-   `crates/weaver-harness/src/channel.rs:452`, and the lint that names it
-   fires only where that cast is a no-op, which is a property of the target's
-   headers rather than of the tree. **Why the two boxes differ is not
-   established here** and is #471's to settle. What the disagreement settles
-   already is that **a count is a reading taken on a box**, which is the
-   second reason it does not live in this file, and #471 carries each reading
-   with the seat that took it.
+   **The count is per box and this file records none.** Two seats running
+   that loop on one commit have returned different answers, a cast whose lint
+   fires only where it is a no-op being a property of the target's headers
+   rather than of the tree. **A count is a reading taken on a box**, which is
+   the second reason it does not live here, and #471 carries each reading with
+   the seat that took it.
 
    **The workspace sweep is not the gate and under-reports it.** A crate that
    fails does not compile under deny-warnings, so its dependents are not
@@ -412,10 +387,8 @@ indexes them, it does not replace them:
    **`WeaverTools-Working-Process` section 6 owns the rule**, as H6, and this
    file carries the invocation and not a second copy of it: two authorities
    for one gate is the duplication G5 refuses. **The rule is section 6's, in
-   full, and is not restated here** - the first form of this sentence said so
-   and then restated three of its clauses, which is the condition it claimed
-   to have removed. `process/gates/test_census.py` is the gate's fixture and
-   runs beside it.
+   full, and is not restated here.** `process/gates/test_census.py` is the
+   gate's fixture and runs beside it.
 
    **The chunk plan is not tracked and no gate reads it**, on the operator's
    ruling of 2026-09-15. `process/ingest/chunk-plan.json` names the files too
@@ -425,13 +398,10 @@ indexes them, it does not replace them:
    and excluded in `.hadesignore`, and `process/ingest/chunk_plan.py` regenerates
    it on demand against whatever commit is being ingested.
 
-   **It was tracked from 2026-09-12 to 2026-09-15 and nothing ever read it but
-   the script that writes it.** The ingest does not: HADES chunks by its own
-   analyzers, and the runs of 2026-09-15 cut `session.rs` into twenty-two chunks
-   against the two pieces the manifest specified. What the tracking did produce
-   was a conflict between two pull requests that would have reverted five
-   corrected entries had the hunks not overlapped, and a `ref` naming an object
-   no branch reached standing on `main` through six acts.
+   **Nothing reads it but the script that writes it.** The ingest does not:
+   HADES chunks by its own analyzers regardless of what the manifest says. A
+   whole-tree artifact under version control is what two parallel acts collide
+   on, and the collision is the lucky case.
 
    **Issue #558 is the backlog** and records how it came about: nineteen of
    the first thirty-three uncited perturbations were born in documents-only
@@ -441,14 +411,8 @@ indexes them, it does not replace them:
    **It has been wrong twenty-two times and its docstring lists every one**,
    which is worth reading before trusting a number it prints. The shape
    repeats: a regular expression too strict about where text sits, printing a
-   count that is confidently too low. `\w` does not match a hyphen, so
-   `compile-pin` and `compile-fail` read as untagged and **fifty four of them
-   were published in this file as a defect count**. A graph block declares
-   several nodes and the first form read one, calling seventy sound citations
-   dangling. Declining to read a crate's `tests/` moved fifteen perturbations
-   into the uncited column, **citing and owing a header being different
-   questions** that one walk was answering. There are no untagged assertions
-   in this corpus.
+   count that is confidently too low. Read the docstring rather than a copy of
+   it here. There are no untagged assertions in this corpus.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero
@@ -497,11 +461,11 @@ again before it comes back out.
 
 ## Command output is context, and the session pays for it
 
-**On the operator's ruling of 2026-09-11, after a session spent twenty-two
-percent of a one-million-token window on the output of its own commands.**
-Not on the work, and not on the conversation: on `cat`, on full test runs, on
-`psql` dumps, and on re-reading files already in the window. The corpus is
-large and a session that reads it carelessly runs out of room to think.
+**On the operator's ruling of 2026-09-11.** A session can spend a fifth of a
+one-million-token window on the output of its own commands: not on the work
+and not on the conversation, but on `cat`, on full test runs, on `psql` dumps,
+and on re-reading files already in the window. The corpus is large and a
+session that reads it carelessly runs out of room to think.
 
 **Verbose network and database output goes to a file, then the file is
 queried.** A result held once on disk can be grepped ten times for nothing,
@@ -511,10 +475,8 @@ read back only the rows that matter.
 
 **Cargo writes its diagnostics to stderr, so a pipe without `2>&1` discards
 what it claims to filter** and prints a clean nothing whether the command
-succeeded or failed. The enforcement section above spends a paragraph on this
-exact failure and calls the zero it prints the most expensive line in that
-section. The first form of this block dropped the redirect from three of its
-own examples.
+succeeded or failed. The enforcement section above calls the zero it prints
+the most expensive line in that section.
 
 ```text
 cargo test -p <crate> 2>&1 | grep -E '^test result|FAILED'
@@ -532,7 +494,7 @@ nothing reads like success. Check the exit status where the answer matters.
 
 **Never `git checkout --` a file to undo an experiment.** It restores the
 index, and an uncommitted rewrite in that file is gone. Copy the file aside
-and copy it back; this session destroyed one that way on 2026-09-11.
+and copy it back.
 
 **Grep the narrowest thing that answers the question.** `grep -c` where a
 count settles it. A path rather than a tree. One section of a Spec rather than
@@ -556,9 +518,7 @@ it.
 - **OPSEC / publish boundary.** The open-core plan extracts the SPU as a separate public
   crate, so the guard is the *publish* boundary: no commercial, GTM, or strategy material
   and no single-operator-vs-multi-tenant distinction in anything destined to be published.
-  **Check visibility, never assume it.** On 2026-08-03 this file asserted both repos were
-  private while `toddwbucy/WeaverTools` had been public since its creation on 2026-07-28.
-  By 2026-08-24 both `WeaverTools` and `Weaver-Web` were PRIVATE again - the state has
-  now changed twice, which is the rule's whole point: a dated assertion in this file is
-  a record, never a current fact. One command settles it:
+  **Check visibility, never assume it.** It has changed more than once and this file
+  has been wrong about it, so any statement of it here is a record rather than a
+  current fact. One command settles it:
   `gh repo view toddwbucy/WeaverTools --json visibility`.
