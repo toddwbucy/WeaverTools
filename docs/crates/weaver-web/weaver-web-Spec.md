@@ -13,7 +13,7 @@ archive.
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #611
+**Landing PR:** #614
 
 ## 0. What this document is
 
@@ -1766,11 +1766,13 @@ crate**, a call out and an answer back rather than a write left for someone
 else to drain. Compose writes its draft and asks `validate`. Live carries a
 turn to the gate and reads the measurement that comes back. Agents drives
 the lifecycle verbs and reads the observation exchange. Section 7 names
-each of those reaches. The gate is section 7.1 and the only one of them the
-charter carries as a seam, and `validate`, the lifecycle verbs and the
-observation exchange are section 7.2's, the operator's own program run as a
-subprocess. Section 7's third is the analysis stream, which no surface
-reaches and section 3.1's ingest does. **Stage submits a registered
+each of those reaches. The gate is section 7.1 and the charter carries no seam
+record for it, and `validate`, the lifecycle verbs and the observation
+exchange are section 7.2's, the operator's own program run as a
+subprocess and carrying no record either. Section 7's third is the analysis
+stream, which no surface reaches and section 3.1's ingest does, and it is the
+one seam the charter records, a reach into this crate rather than one of its
+own. **Stage submits a registered
 experiment to the queue, and section 7 names no queue exchange**, the
 queue being the harness's per the charter's section 3.5 and this crate's
 part in it a write the runner drains rather than an exchange it holds
@@ -1858,6 +1860,19 @@ so a whole-turn answer is presented whole and an in-flight state is clear
 rather than simulated. Closes render by kind, and an unnamed close is this
 crate's own defect and surfaces as an application error rather than as an
 agent's words.
+
+**"As any client's does" is the whole of the relation and the charter carries
+no seam record for it**, as of 2026-09-16. `weaver-gate-world-contract` names
+one party in the graph, `weaver-gate`, and signs the world in prose because the
+graph carries no node for it, so a record naming that page as a `via` claimed
+this crate was a signatory in its own name. It is not: a crate that happens to
+be a client is an instance of the world rather than a party beside it, per that
+page's section 0. What this crate builds against here is that page, which is
+what an external contract is for, and **the reach is a seam that carries no
+seam edge**, the far end having no node for an edge to reach. The channel is a
+named local Unix socket, per `weaver-gate-PRD` section 2 and that page's
+section 0, so the client end stands on the box the agent runs on by
+construction rather than by a placement clause.
 
 ### 7.2 The admin verbs
 
@@ -2106,3 +2121,8 @@ a `web-` assertion beside `weaver-admin`'s.
   under it, and widening the word are three answers and this document
   elects none of them. Nothing in the section's content is wrong and no
   read is blocked on the choice, so it is named here rather than settled.
+  **The act that deleted 7.1's seam record the same day left this count
+  where it stood.** A world-facing boundary is a seam that carries no seam
+  edge, per `weaver-gate-world-contract` section 0 and `weaver-admin-PRD`
+  section 6, so the gate reach is still one of the two the heading names
+  correctly and only its record went.

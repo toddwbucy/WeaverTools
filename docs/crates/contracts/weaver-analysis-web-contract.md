@@ -7,7 +7,7 @@ is the operator's to say.
 **Date filed:** 2026-09-05
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #611
+**Landing PR:** #614
 
 ## Parties
 
@@ -32,7 +32,12 @@ emission leaves over a socket the reader consumes, per `weaver-web-Spec`
 section 3. It is the second of the reader's two seams, section 7.3's. What
 separates it from the gate is what crosses: the gate carries this crate's
 own turn out and the answer back, where this seam carries a finished
-record of work the crate did not run.
+record of work the crate did not run. **And what separates it from the gate
+in the graph is who signed.** Both parties to this page are crates and both
+hold a `party` edge, so this pair is checkable from either end. The gate's
+page names one crate and signs the world in prose, the graph carrying no
+node for a principal outside the program, so as of 2026-09-16 it is the
+`via` of no seam record and that boundary is a seam holding no seam edge.
 
 **The emitter initiates and the reader never asks**, so the charter's seam
 record runs `from: weaver-analysis`, which the act that lands this text
