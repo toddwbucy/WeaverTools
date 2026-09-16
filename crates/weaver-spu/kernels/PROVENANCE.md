@@ -143,8 +143,13 @@ comparisons' inputs are here, the comparisons are not.
 That is a stated gap rather than a discovered one. It is named here, and in the
 crate's open items, so that a later reader checking the carry finds the answer
 recorded rather than inferring completeness from the presence of the fixtures.
-The remaining carry is the `src/gpu/` volume of the Spec's layout, which needs
-the `cuda` feature, `cudarc`, and a device to run against.
+The remaining carry is that module and the cudarc launchers it drives, which
+would land under `src/gpu/` beside the device queries `gpu/mod.rs` already
+holds, and it needs the `cuda` feature, `cudarc`, and a device to run against.
+**It named a `src/gpu/` volume of the Spec's layout until 2026-09-15**, when
+that row was read against the tree and turned out to describe a forward path and
+a sharding that live in `src/decoder/native_pair.rs`, so the carry is named by
+what it is rather than by a row.
 
 ## Known defects in the carried material, inherited verbatim
 
