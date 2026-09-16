@@ -180,8 +180,15 @@ own**, on issue #551's third ask and as of 2026-09-15.
 
 It runs from any directory and answers in an exit status: 0 the resolution is
 in step with the lock, 1 drift, 2 the gate could not run and the lock is
-unchecked rather than clean. It compiles nothing, so it costs well under a
-second and it goes first, ahead of the commands above and of the census. An
+unchecked rather than clean. **Two answers are definitive and the middle one is
+not**: drift whose resolution completes offline reads 1, and drift needing the
+network - a package or a fork rev the local cache does not hold - reads 2
+alongside a cold cache and an unreadable manifest, because cargo fails before it
+reaches the refusal that names the lock. So 2 means unchecked rather than
+drifted, the message says which it might be, and a run after `cargo clean` or on
+a fresh clone answers it for a tree that may be fine. It compiles nothing, so it
+costs well under a second and it goes first, ahead of the commands above and of
+the census. An
 instrument that runs inside a test binary cannot do this job at all, `cargo
 test` having resolved and repaired the lock before the binary is spawned, which
 is the defect #551 was filed against.
