@@ -13,7 +13,7 @@ conforms to.
 **Parent:** `weaver-agents-PRD`
 **Depends on:** `weaver-traits`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #317
+**Landing PR:** #613
 
 ---
 
