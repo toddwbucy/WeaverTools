@@ -23,8 +23,9 @@ fn the_dependency_set_is_empty() {
             "none",
             // This inner cargo may not write the lock as a side effect of
             // answering. It does not prove the lock was in step, the outer
-            // `cargo test` having resolved before this binary was spawned,
-            // which is issue #551's third ask and is not bought here.
+            // `cargo test` having resolved before this binary was spawned.
+            // `process/gates/lock.sh` is where that is bought, ahead of the
+            // suite, per issue #551's third ask.
             "--locked",
             "--offline",
         ])

@@ -173,6 +173,32 @@ is loud where it used to be silent. `fmt` resolves nothing and takes no flag.
 selects four crates, so the manifest instruments of `weaver-gate` and
 `weaver-internal` are reached by these commands and by nothing else.
 
+**The flag refuses only where a seat types it, so the lock has a gate of its
+own**, on issue #551's third ask and as of 2026-09-15.
+
+    process/gates/lock.sh
+
+It runs from any directory and answers in an exit status: 0 the resolution is
+in step with the lock, 1 drift, 2 the gate could not run and the lock is
+unchecked rather than clean. **0 and 1 are definitive and 2 is not**: drift
+whose resolution completes offline reads 1, and drift needing the network - a
+package or a fork rev the local cache does not hold - reads 2 alongside a cold
+cache and an unreadable manifest, because cargo fails before it reaches the
+refusal that names the lock. So 2 means unchecked rather than drifted, the
+message says which it might be, and a run after `cargo clean` or on a fresh
+clone answers it for a tree that may be fine. It compiles nothing, so it
+costs well under a second and it goes first, ahead of the commands above and of
+the census. An
+instrument that runs inside a test binary cannot do this job at all, `cargo
+test` having resolved and repaired the lock before the binary is spawned, which
+is the defect #551 was filed against.
+
+**It is not a seventh enforcement device, and no document in this corpus carries
+a rule about the lock.** It is build hygiene under the resolution every command
+above rests on. Whether the lock deserves a sentence in the corpus is #551's
+remaining question and the operator's to answer. The script's header carries the
+measurements and the reasoning and they are not copied here, per gate G5.
+
 **Every command was run from `WeaverTools/` on 2026-09-06 before being
 written here**, and each was run again under `--locked` on 2026-09-14 when
 that flag was added, which is the difference between a command that works and
