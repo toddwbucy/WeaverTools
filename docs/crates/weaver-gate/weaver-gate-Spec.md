@@ -8,7 +8,7 @@ workflow. Code is written against it under the gates of Working Process section 
 **Document ID:** `weaver-gate-Spec`
 **Parent:** `weaver-gate-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #584
+**Landing PR:** #611
 
 ---
 
@@ -1188,9 +1188,12 @@ would be `compile-pin`**, and which of the two it is belongs with the retag
 `act-34` already owes this crate. **Nine in all, and the tag means the
 instrument was not bought and never that none exists**, per apex section 11.
 **The walk behind that reading is over file-level `conforms:` headers alone**
-and finds all nine cited from `src/`. It does not reach the in-file
-`#[cfg(test)]` suites `channel.rs`, `relay.rs` and `tools.rs` carry, so it is
-not a clearance against the inverse overclaim and is not offered as one:
+and finds all nine cited from `src/`. It under-reads in two ways and the
+clearance is weaker than it sounds by both. It does not reach the in-file
+`#[cfg(test)]` suites `channel.rs`, `relay.rs` and `tools.rs` carry, and it
+does not reach a citation written at an item or at a statement, which the
+Document Format's section 4 admits beside the file header. So it is not a
+clearance against the inverse overclaim and is not offered as one:
 `gate-execution-four-contents` is cited from `tools.rs`, whose unit suite
 holds a test per content. Auditing the nine is `act-34`'s.
 

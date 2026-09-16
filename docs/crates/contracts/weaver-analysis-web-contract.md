@@ -7,7 +7,7 @@ is the operator's to say.
 **Date filed:** 2026-09-05
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #535
+**Landing PR:** #611
 
 ## Parties
 
@@ -29,15 +29,17 @@ and nothing on this seam reaches the harness, the SPU, or the model.
 
 **This seam is a socket.** The emitter drains a file or a stream and its
 emission leaves over a socket the reader consumes, per `weaver-web-Spec`
-section 3. It is the third of section 7.3's three seams and the only one
-carrying measurement rather than lifecycle.
+section 3. It is the second of the reader's two seams, section 7.3's. What
+separates it from the gate is what crosses: the gate carries this crate's
+own turn out and the answer back, where this seam carries a finished
+record of work the crate did not run.
 
 **The emitter initiates and the reader never asks**, so the charter's seam
 record runs `from: weaver-analysis`, which the act that lands this text
 corrects: it had run from the reader, disagreeing with this contract's own
 name under the Document Format's rule that the initiator is named first. Its
 tag was `stream`, which is outside that document's seam vocabulary of
-`socket`, `link` and `verb`.
+`socket` and `link`.
 
 ```graph
 node: weaver-analysis-web-contract

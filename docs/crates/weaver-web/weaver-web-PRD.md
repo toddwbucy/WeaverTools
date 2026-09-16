@@ -31,7 +31,7 @@ decision two of #439.
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #567
+**Landing PR:** #611
 
 ```graph
 node: weaver-web
@@ -46,12 +46,6 @@ from: weaver-web
 to: weaver-gate
 via: weaver-gate-world-contract
 tag: socket
-
-edge: seam
-from: weaver-web
-to: weaver-admin
-via: weaver-admin-operator-contract
-tag: verb
 
 edge: seam
 from: weaver-analysis

@@ -101,9 +101,11 @@ the file rather than trusting a version remembered from a summary.
    Checklist item 7 (quarry deletion) outlives ratification and waits on G6.
 3. **Phase three, coding.** Open, gates H1-H6 in force per Working Process
    section 6. The floor (`weaver-traits`, `weaver-types`) and the recorder
-   (`weaver-trace`) are the first acts, and every source file carries a
-   `//! conforms: <crate>-<slug>` header per Document Format v0.14, and code
-   accrues into the graph as it merges.
+   (`weaver-trace`) are the first acts, and every source unit carries its
+   citations in one of the four comment forms `WeaverTools-Document-Format`
+   section 4 admits, of which `//!` is the file-level header H6 reads, and
+   code accrues into the graph as it merges. No version is pinned here
+   because the Format moves and this file has carried a stale pin before.
 
 As of 2026-08-05 the corpus holds 8 PRDs, 8 contracts, 7 Specs, and **245 assertion
 records across the seven Specs**. Survey it rather than guessing:
