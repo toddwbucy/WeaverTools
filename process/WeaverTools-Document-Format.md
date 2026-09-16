@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.19, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.20, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -443,14 +443,31 @@ Between a contract and what it binds:
 - `party`, from a contract to each crate it binds.
 - `draws`, from a contract to each node its clause names. This is the vocabulary
   clause in edge form and it is what makes G4 a query rather than a reading.
-  **The endpoint kind is open and is owed.** A clause names a vocabulary node in the
-  ordinary case, and three edges in the corpus today name a term instead, the
-  `election` and the `distillate` drawn by `weaver-analysis-state-contract` and the
-  `diagnostic-trace` drawn by `weaver-harness-diagnostic-contract`. Whether a term is
-  a lawful endpoint or those three want a vocabulary node to point at is not settled
-  here. It is `act-09-draws-targets` of issue #569, which resolves every draws target
-  in one pass, and admitting the `term` kind is what lets that act be asked in terms
-  the format carries.
+  **An endpoint is a `vocabulary` node or a `term` node and nothing else**, on the
+  ruling of 2026-09-16 that closes the item the format left open here. A clause names
+  a meaning the contract depends on, and section 3 types a meaning two ways: a
+  `vocabulary` node where one crate owns the definition, and a `term` where the
+  documents settle the meaning and no crate owns it as a single definition. Both are
+  meanings, so both are drawn, and the `election` and the `distillate` drawn by
+  `weaver-analysis-state-contract` and the `diagnostic-trace` drawn by
+  `weaver-harness-diagnostic-contract` are admitted where they stand rather than
+  retyped. **The other seven kinds section 3 declares are each disposed of**, which
+  is what makes the rule exhaustive rather than merely stated: an artifact is
+  reached through the field the clause draws, per the `holds` entry below, and the
+  `system` node, a crate, a document, an axiom, an assertion and a code unit are the
+  subjects of other edges entirely. Two plus seven is section 3's nine, and an act
+  that adds a kind adds it to one side of that count or the other.
+  **A field of a drawn meaning is not a second endpoint.**
+  `weaver-harness-state-contract` section 7 draws the `canonical-event` and then
+  spells its five envelope fields, which says what the drawn meaning carries rather
+  than naming five more meanings, and the edge points at the node that owns them.
+  The artifact case runs the other way because an artifact is not a meaning, so a
+  clause that needs one points at the field, which is, and `holds` carries the rest.
+  Those five are declared nowhere and this rule asks for no declaration of them,
+  the format carrying no edge between a meaning and its parts and `elects` running
+  from a field to the values it selects from rather than to the whole it sits in.
+  **A `draws` edge introduces no node**, exactly as a `defines` edge does not, so an
+  endpoint no document declares is a dangling edge rather than an implied node.
 
 Between a crate and what it owns or touches:
 

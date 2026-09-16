@@ -13,7 +13,7 @@ conforms to.
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-trace-contract`, written with this document
 **Editorial:** Per the Working Rules.
-**Landing PR:** #601
+**Landing PR:** #613
 
 ---
 
@@ -137,6 +137,38 @@ begins with an empty working structure, the program promises no resume, and what
 continuity across runs becomes, against operator-held storage or the memory round,
 is the enter cell `weaver-admin-PRD` section 10 holds.
 
+**The rendering has a name, and two contracts outside this crate draw it.** The
+`canonical-event` is one event in the form this section holds and hands, envelope
+and payload together, and it is the unit a reader of the record meets.
+`weaver-harness-state-contract` draws it for the tee's distillate and
+`weaver-analysis-state-contract` draws it for the driver's, each of those being a
+projection of this form and never a reshaping of it, so both clauses name what this
+crate spells rather than spelling it again. It is defined here because the rendering
+is this crate's.
+
+**Three nodes stand over one form, and section 3 owns the parts.** `event-envelope`
+and `payload-shapes`, declared there, are what an event is made of, the one envelope
+every event carries and the payload its kind carries beside it, and `canonical-event`
+is the whole the record hands out. The alternative this act weighed was re-pointing
+the two state contracts at those two rather than declaring a third node, and it is
+declined: each of those seams depends on the event as a unit, its distillate being a
+projection of one canonical event with the envelope whole and the elected payload
+pairs beside it, so drawing the halves would name the parts and leave the unit the
+clause rests on unnamed, and it would overload two nodes
+`weaver-harness-trace-contract` draws for the recorder's own seam. The relation is
+stated here rather than drawn, the format carrying no edge between a meaning and its
+parts, so a reader meeting any of the three learns from this paragraph which is
+which: section 2.3 owns the whole and section 3 owns the parts.
+
+```graph
+node: canonical-event
+kind: vocabulary
+
+edge: defines
+from: weaver-trace
+to: canonical-event
+```
+
 ### 2.4 Spans
 
 Spans are neither materialization and they are not stored. A span is a view over a range
@@ -237,7 +269,9 @@ to: failure-vocabulary
 ```
 
 These six are what `weaver-harness-trace-contract` draws from this crate, so the
-union check of G4 runs against this list rather than against a reading.
+union check of G4 runs against this list rather than against a reading. The
+`canonical-event` of section 2.3 is this crate's seventh definition and is not among
+them, the two state contracts drawing it and that contract drawing these.
 
 **One field is recorder-assigned, the rest harness-supplied.** The sequence is
 computed by the recorder on admission, because ordering is a property of the account

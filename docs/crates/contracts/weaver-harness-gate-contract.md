@@ -10,7 +10,7 @@ the lower. The exchanges that carry work arrive with the token workflow.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
-**Landing PR:** #371
+**Landing PR:** #613
 
 ---
 
@@ -392,8 +392,9 @@ Every contract names the vocabulary it depends on, grouped by the crate that def
 it, and a group is stated even when empty.
 
 **Drawn from `weaver-types`:** `organ-envelope`, `gate-instruction`,
-`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`, and
-`turn-frame` and `fault-report`, the last two from the token workflow's act.
+`lifecycle-directive`, `lifecycle-answer`, `lifecycle-refusal`,
+`turn-frame` and `fault-report` from the token workflow's act, and
+`tool-name` from the tool workflow's.
 `turn-frame` is one definition for both directions, a client line carried
 opaque, inward as the ask and outward as the answer, refusals riding inside
 it as content the harness authored, named for the seam's currency under the
@@ -416,7 +417,8 @@ resolves it.
 
 `lifecycle-refusal` is drawn rather than twinned, per section 5.
 
-`tool-name` is drawn as of the tool workflow's opening act: the execution
+`tool-name` is drawn as of the tool workflow's opening act, defined at
+`weaver-types-PRD` section 2.3 on this clause's demand: the execution
 exchange carries it, and it is the same definition the family parse mints
 from an emission, so the name that crosses is the name the model spoke.
 
