@@ -461,6 +461,30 @@ than to find work. Two exchanges with CodeRabbit is the ceiling. A third means t
 draft phase did not finish, so the pull request returns to draft and the seat works it
 again before it comes back out.
 
+## Police call
+
+**An act picks up the litter it walks past.** A count gone stale, a doc comment
+attached to the wrong item, a usage line printed twice, a claim the file next to
+it already disproved. These are corrected where they are found and named in the
+pull request body. They do not become issues and they do not wait for an act of
+their own, because filing one costs more than fixing it and the filing is the
+part that goes stale.
+
+**The line is whether the fix needs a decision.** A ruling, a Spec election, a
+new instrument, a test that does not exist yet - that is a construction site and
+it is not this act's to clear. It gets an issue carrying what was measured.
+Everything short of that is litter, and an act that walks past litter to file a
+ticket about it has made two pieces of work out of none.
+
+**A subagent often cannot pick it up.** Parallel acts hold files, and an agent
+editing outside its own extent is how two acts collide. So an agent reports what
+it found and where, and the coordinating seat fixes it in the same pass. A report
+is not a deferral, and the do-not-touch list an agent works under is about
+collision and never about whether the thing gets fixed.
+
+Per the operator's instruction of 2026-09-16, after a day in which six stale
+counts and misattached comments were filed as owed to acts that did not exist.
+
 ## Command output is context, and the session pays for it
 
 **On the operator's ruling of 2026-09-11.** A session can spend a fifth of a
