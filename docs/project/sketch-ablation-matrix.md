@@ -271,10 +271,9 @@ the tree. **What the list still carries and no act has closed is nothing**, whic
 it stops being read forward here.
 
 **The score has no home.** The matrix reads a verdict and a ratio from the run row,
-and the run row holds no verdict: the Spec's revision of 2026-09-05 has the scorer
-leave the run's tuple for the verdict. The task supplies the predicate and the
-denominator, and the store still has to hold the reading. Section 2.6's recorded
-query is the candidate.
+and the run row holds no verdict: the Spec has the scorer leave the run's tuple for
+the verdict. The task supplies the predicate and the denominator, and the store
+still has to hold the reading. Section 2.6's recorded query is the candidate.
 
 **The Reproduced column is a read-time pairwise derivation.** "3 of 3 byte-equal"
 compares a run against three others. Spec section 2.7 forbids a value computed at

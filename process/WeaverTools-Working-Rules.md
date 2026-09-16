@@ -1,6 +1,6 @@
 # WeaverTools Working Rules
 
-**Version:** v0.4, 2026-08-04. Companion to the Working Process, the Document Format,
+**Version:** v0.5, 2026-09-15. Companion to the Working Process, the Document Format,
 and the Handoff Format. Project documents carry a version and a date and no state, per
 Working Process section 2.
 **Parent:** WeaverTools Working Process
@@ -18,18 +18,36 @@ batch takes when it moves between seats. This says how we write.
 - Dense prose over bullet lists. Use a list only when the content is a true
   enumeration.
 - No filler openers. Open on the substance.
-- A header carries no history, and nothing accumulates there. The fields are drawn
-  from a fixed set - Status, Version, Date filed, Document ID, Parent, Editorial -
-  and each document kind carries the ones it uses: a process document carries
-  Version and Parent and no state, per Working Process section 2, a corpus
-  document carries Status with the identification fields, the apex carries no
-  Parent because it has none, and a workflow document's version and date ride its
-  Status line. The rule binds what accumulates, not which fields a kind elects.
+- A header carries no history, and nothing accumulates there. The fields are
+  drawn from a named set - Status, Version, Date filed, Document ID, Parent,
+  Editorial, Landing PR - which is what the kinds below elect from rather than
+  the whole vocabulary: a document naming a further field, as four charters
+  name their companion contract and `weaver-admin-PRD` names its external
+  boundaries, is electing and not accumulating. Each document kind carries the
+  ones it uses: a process document carries Version and Parent and no state,
+  per Working Process section 2, a corpus document carries Status with the
+  identification fields, the apex carries no Parent because it has none, and a
+  workflow document's version and date ride its Status line. The rule binds
+  what accumulates, not which fields a kind elects.
   The change narrative lives in the commit that makes the change, and git is the
   archive, which is the stub ruling of 2026-07-31 applied to headers: history is
   the archive and the tree is not. Attributions inside the body stay, because a
   sentence marking a claim as a ruling is content rather than history. Per the
-  operator's ruling of 2026-08-04, which swept the standing stacks.
+  operator's ruling of 2026-08-04, which swept the standing stacks, and the
+  ruling of 2026-09-15, which swept the stacks that grew back.
+- Landing PR names the pull request that last changed what the document says.
+  One line, one number, and an act overwrites what it finds there. It carries no
+  list, no earlier entry, no ordinal, and no date beside it, because a field that
+  can grow a second line is the stack the rule above it retired wearing a shorter
+  name. A number and never a commit sha: a number is assigned when the pull
+  request opens and never changes, so it is written on the branch and is correct
+  at the moment it lands, where a sha written into a file is stale as it is
+  committed. A pass that changes no document's content does not move the field,
+  so a mechanical sweep over every header leaves each number naming the act that
+  last said what its document says rather than writing its own into all of them.
+  Where the number cannot be recovered the field is absent rather than guessed. A
+  process document does not elect the field, carrying Version and Parent alone.
+  Per the operator's ruling of 2026-09-15.
 - Avoid visual collisions, repeated adjacent tokens or abbreviations that run
   together when read. The reader is dyslexic, so "HAH. HAH" reads as "HAHA" and is
   rewritten. Two identifiers differing by one character are the same defect in a

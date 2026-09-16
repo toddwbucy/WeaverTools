@@ -4,169 +4,10 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
-
-**Revised:** 2026-09-14, the runtime clause says why it carries no edge.
-Section 1's no-runtime-no-socket-crate record states a reason that differs from the
-one the floor Specs and `weaver-diagnostic-Spec` section 1 ground the same clause
-on, this crate dialing a socket and using it, and the clause now says that the
-difference is why there is no edge. No edge, no record and no count in this
-document changes. Per the parity ruling of this date at Document Format section 4,
-and issue #569.
-
-**Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
-under. Section 5 reports, once per run, the run identity this reader already holds and
-rendered nowhere, the effective sampling, the field election's depth and the lineage
-from the record, and the device model and code identity from the deposit beside it, with
-the task's verdict where the record carries one. **This crate reads a deposit for the
-first time here**, named by the invocation rather than found beside the record, since a
-piped sink has no sibling to look beside, and section 1's layout gains `src/deposit.rs`
-for it. It reads the deposit for the device model and for the part of the code identity
-the record does not carry, the organ binaries being the `load` event's `stack`, per the
-operator's ruling of this date. One perturbation record, and section 6's counts move by
-one. Per `weaver-analysis-web-contract` section 2.2 as revised this date and issue #532.
-
-**Revised:** 2026-09-09, second of this date, the summary carries the seated prefix's
-length. Section 5 derives it from the run's first generation, the closing count less
-the drawn tokens, the terminator and the input identifiers, present only where the
-drain began at or before the run's `load`, and reports it once per run. One
-perturbation record, and section 6's counts move by one. Per
-`weaver-analysis-web-contract` section 2.2 as revised this date and issue #527.
-
-**Revised:** 2026-09-09, the summary names the record it was read from. Section 5's
-summary gains, per generation, the record's session from the envelope and the
-record's digest, sha256 over the run's own lines as this crate drained them, each
-with its newline in drain order, computed as the bytes pass and retained no more
-than they are. **A run is whole when its `unload` landed and the drain began at or
-before its `load`**, and the digest is absent otherwise, a run that died having no
-`unload` for anyone to vouch past. Two perturbation records, and section 6's counts
-move by two. Per `weaver-analysis-web-contract` section 2.2 as revised this date
-and issue #521.
-
-**Revised:** 2026-09-07, two captures compare only under one loop and one member.
-Section 5's comparison reads the `load` event's composer and member standing from
-each record before any value, refuses where they differ naming which, and refuses a
-record naming neither, per the charter's section 3 as revised this date for
-issue #381. The clause takes a perturbation record and section 6's count carries it.
-
-**Revised:** 2026-09-06, second of this date, the election names what the harness's
-open reads. Section 3's election gains the four message kinds with `role` and
-`content`, because a session standing from a record rebuilds its conversation from
-the preloaded holdings through the `identity` and `recall` asks, per
-`weaver-harness-Spec` section 2 as revised 2026-09-04 on issue #432, and an election
-naming only what the replay loop reads would land a session whose open had nothing to
-rebuild from. Section 4's cut and rename take a perturbation record. Section 6's
-counts move by one. Found by the code act of issue #432.
-
-**Revised:** 2026-09-06, the summary carries the record's identity, and the contract
-is cited. Section 5's summary gains, per generation, the weights hash the measurement
-carries as the record spelled it, sentinel included, so the run row of
-`weaver-web-Spec` section 2.2 has a source on the wire, under one perturbation
-record. Section 0 names `weaver-analysis-web-contract` among what this document is
-written against, the citation the contract's section 8 recorded as owed since
-2026-09-05, per issue #451's second half. Section 6's counts move by one, per
-issue #465.
-
-**Revised:** 2026-09-05, second of this date, the summary carries the residency. Section
-5's summary gains, per generation, the resident count as it closed and the count of
-output tokens beside the perplexity, both read from the record and neither derived,
-so a store keyed by position converts once at ingest from facts the emitter reports.
-Section 7's election of this date closes on that answer, the operator having pointed
-the seat at issue #461, and its record moves to section 5 as a perturbation. Section
-6's counts move by it.
-
-**Revised:** 2026-09-05, the signals reader is authorized. Section 5 gains the clause
-for the class's second reader, standing in code since #408 on 2026-09-02 with no
-sentence here: the per-position series paired from every generation's measurement on
-the same drain, addressed by ordinal where the field read is addressed by position,
-absence kept, the spike a rule whose caller names `k`, gated only where the record
-has a gate, with the `signals` verb's usage. Section 1's layout gains `stream.rs`
-and `signals.rs`. Section 6's counts are retaken from the records. Section 7 names
-what the series must carry for a store keyed by position as open, the record's
-residency the source and the input count ruled out by measurement. Per issue #451.
-
-**Revised:** 2026-09-04, fourth of this date, a position's field is read from the
-record. Section 5 gains the `field` verb: the one `model.field` event at an asked turn
-and position, drained from a serving or diagnostic record, file or pipe, spliced as the
-record spelled it, holding one position and never the record, and gated on no certified
-close because the field is the record's own fact about a position rather than a reading
-over a replay. Section 1's layout gains `field.rs`. Per issue #436.
-
-**Revised:** 2026-09-04, third of this date, the preload takes a cut. Section 4's
-`preload` accepts `--through <run>:<turn>`, projecting the record through that turn's
-close, and `--as <session>`, landing the projection under another session name. Per
-issue #432.
-
-**Revised:** 2026-09-04, second of this date, the file's default spread is defined.
-Section 5 names it eight positions evenly spaced over the record's generated positions
-by index, first and last included, taken by a second read of the file, where the clause
-had named a default and defined none. Per the last open defect of issue #386.
-
-**Revised:** 2026-09-04, first of this date, the derived identity is the seed. The
-derivation's prefix member names its standing under `weaver-state-PRD` section 4 as
-revised this date: the seed of the derived declaration, the preloaded store answering
-the replayed run's identity ask from the same events. Per issue #422.
-
-**Revised:** 2026-09-03, the head is applied across the cores. Section 5 states that the
-unembedding's rows are split across scoped threads with each row summed in one order, so
-the reading is bit-identical to the single-thread one, and the claim gains its record,
-`analysis-threaded-head-is-bit-identical`. Forced by the 8B, whose control over two
-thousand positions took fifteen minutes on one core.
-
-**Revised:** 2026-09-03, the weights identity is per file. Section 3's lens manifest
-carries its weights digest in the shape the model on disk takes, a map of shard digests
-for a sharded model, and the reader follows the model's index to the shards it needs,
-verifying each under its own name. The identity refusal gains its record,
-`analysis-lens-refuses-other-weights`, which the clause had argued without one. Forced
-by the 8B, whose head and final norm sit in different shards.
-
-**Revised:** 2026-09-02, the reading drains the stream. Section 3 states that the
-analyst's sink input carries its shape, so a pipe elects the discard and a file declines
-it, and section 5 states how a reading is taken as the stream drains: one drain for the
-class with readers above it, the held state bounded by the turn in flight and the
-analyst's named positions, the named positions required where no whole record exists to
-spread over, and the reading emitted only after a certified close. One assertion, bought
-by the act that streams.
-
-**Revised:** 2026-09-01, third of this date, the reading takes its surface. Section 5
-gains what the crate-borne read needs and no more: the lens loaded and applied by the
-source's own arithmetic against the artifact's own weights, the control gating every
-reading, the by-turn pairing rule, and the exact capture comparison that performs
-certification step 3 where both records are held and licenses the discard. Section 1's
-layout gains `lens.rs` and `capture.rs`, and its dependency set gains `safetensors` and
-`sha2`, the format reader the artifact election implies and the digest its identity
-check recomputes, neither an engine. The reading-as-artifact election narrows to its
-rendered form. Two assertions, bought by the code act in the same stack.
-
-**Revised:** 2026-09-01, second of this date, the artifacts take their representation.
-Section 3 gains the lens artifact's shape - safetensors matrices, elected over the
-fitting tool's serialization so both sides of the boundary read the artifact without the
-other's runtime, beside the measured JSON manifest with its refusals - and states that
-the capture artifact has no second representation, being a certified record kept whole.
-Two open elections close. Per the charter as amended this date and the measurement acts
-of the same date.
-
-**Revised:** 2026-09-01, first of this date, the declaration derives from the record.
-Section 3 gains the third projection per the charter as amended on issue #394: every
-derived member names its record source, disagreement and absence each refuse naming the
-member, the analyst's three inputs and the two fixed spellings are enumerated, and
-section 1's layout gains `src/declare.rs` beside the invocation's composition root,
-which it had left implicit. The watch is the code act's, bought in the same stack.
-
-**Revised:** 2026-08-31, second of this date, the gate takes both members. Section 5's
-drain paragraph gates the reproducibility claim on the charter's whole licence by
-citation - the device model and the code identity, at the precisions that clause states
-- where the entry below records a single-member gate the body no longer has.
-
-**Revised:** 2026-08-31, the reading learns to drain. Section 5 gains the pipe-shaped
-sink's discipline per the charter's section 3 as amended: read once, keep the report and
-its evidence, retain nothing drained, and gate the reproducibility claim rather than the
-drain on naming the device model or stating it cannot be established. The kind-set count
-follows `weaver-diagnostic-Spec` to seventeen, and section 7 adds the lens artifacts as
-an open election beside the capture artifact.
-
 **Document ID:** `weaver-analysis-Spec`
 **Parent:** `weaver-analysis-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #587
 
 ---
 
@@ -392,9 +233,9 @@ section 2, because the loop's asks on the other door bind to the opener's sessio
 and a preload declaring anything else would land holdings no ask can reach.
 
 **The election names what the harness's open reads as well, as of 2026-09-06**, per
-`weaver-state-PRD` section 4 and `weaver-harness-Spec` section 2 as revised on
-issue #432: a session standing from a preloaded record asks the store for its seated
-prefix and its conversation, the `identity` and `recall` asks, and rebuilds each
+`weaver-state-PRD` section 4 and `weaver-harness-Spec` section 2: a session standing
+from a preloaded record asks the store for its seated prefix and its conversation, the
+`identity` and `recall` asks, and rebuilds each
 message from
 the `role` and `content` the distillate carried. So the election names the four
 message kinds the store's `recall` serves, `message.system`, `message.user`,
@@ -571,7 +412,7 @@ reason the floor's `Cut` carries one: a turn's number recurs across runs. `--as
 member rewritten as it crosses and run and sequence as recorded, which is what a branch
 needs, because the member bounds every answer to the session its opener declared. Under
 a restoring load this verb is the door's driver as it is under the diagnostic binding,
-per `weaver-analysis-state-contract` section 1 as revised 2026-09-04: admin names the
+per `weaver-analysis-state-contract` section 1: admin names the
 door and dials it never, the load's enter parks until this verb's seal, and the operator
 runs the two side by side as the diagnostic flow already does. **The cut is the named
 turn's close event**, every event through it crossing and none after, and a turn the

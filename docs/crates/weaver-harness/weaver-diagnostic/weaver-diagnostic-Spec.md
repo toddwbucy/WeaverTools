@@ -4,45 +4,10 @@
 written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-27
-
-**Revised:** 2026-09-14, the two exhaustive enums carry their edges and the
-arguments are this document's. Sections 3.2 and 6 ground in apex section 5.3
-where `weaver-trace-Spec` grounds the serving record's pair, on this seam's own
-change protocol rather than on that record's charter closure, and section 1's
-no-trace-dependency clause is named as a different claim from the
-no-internal-dependency one the floor Specs ground. Section 7's reading moves from
-one grounded and fourteen ungrounded to three and twelve, re-derived here because
-no act in issue #569 owns this document. Per the parity ruling of this date at
-Document Format section 4.
-
-**Revised:** 2026-09-09, the divergence position is the resident length at the draw.
-Section 3.3's `Divergence` carried a `position` in both variants and said nothing of
-what it counted from, and the pass indexed the turn's input-plus-output identifiers,
-a coordinate neither the measurement's ordinal nor `model.field`'s key. On the
-operator's ruling of this date at issue #519, both positions are the resident length
-at the draw, the coordinate `model.field` uses, so a divergence and the field row it
-fell in share a key and a reader holding only the close event converts nothing. The
-pass derives it from its own re-fed answer's closing count. One perturbation record,
-and section 7's counts move by one. Records written before this date carry the
-earlier coordinate and are read as such where cited.
-
-**Revised:** 2026-08-31, second of this date, the covered append. On the
-operator's ruling: a recorded tool round replays as an ordinary append and
-its prefill final is covered, replacing a sentence that claimed no tool-round
-prefill exists - false against this record's own `message.tool_result`, and
-hollow at exactly the position a diagnosis reads.
-
-**Revised:** 2026-08-31, the seventeenth kind. `residual.column` joins section
-3.2 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as
-amended, and the decode contract's third intermediate: one event per sampled
-position where the ask stood, a sampled position without one being charter
-13.10's fault, its identity members fixed, its values in the floor's
-provisional bare JSON, the efficient encoding held open in section 8 beside
-the seam's framing election with the fault's enum case owed there to the
-building act. The kind set's count and the mapping's total move with it.
 **Document ID:** `weaver-diagnostic-Spec`
 **Parent:** `weaver-diagnostic-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #587
 
 ---
 

@@ -4,225 +4,10 @@
 build order. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-01
-
-**Revised:** 2026-09-14, section 12 opens the question of whether apex section 5.1
-reaches this crate. Section 10 argues it reaches nothing here, and four other Specs
-ground in it one or other of the two manifest claims this crate states bare, one of them
-this record's mirror on the same facts. No edge, no record and no count in this document
-changes, and the entry is the disagreement stated where a later reader of this Spec
-meets it. Per the parity ruling of this date at Document Format section 4, and issue
-#569.
-
-**Revised:** 2026-09-11, four count words catch up to the charter and to this
-document's own later entries. **Nothing about the crate changes and nothing about the
-charter is in question**: `weaver-trace-PRD` section 3.1 lists twenty-one kinds by name
-and the code's `Kind` compiles the same twenty-one, so what was stale was this text.
-Section 3's variant sentence read eighteen kinds where the rest of the document reads
-twenty-one; the mapping's recount read fifteen dispositions where its own banner of a
-later act and the mapping paragraph both read sixteen; the untagged clause counted seven
-`Payload` variants against the fifteen its own enum block lists; and the mapping gave
-`elision` the `FlushCounts` that the banner of 2026-08-26 had already taken off it,
-`ElisionSpan` naming the interior span a flush does not have. **The paragraph at section
-3's mapping says why this happens** - a mapping that is stale reads exactly like a
-mapping that is total - and it happened again to the sentences beside it. Found by
-CodeRabbit on PR #556, outside that act's diff, and confirmed against the charter's list
-rather than against the count alone.
-
-**Revised:** 2026-09-06, the load's payload carries its lineage and its stack. Section
-3's `Elections` gains `lineage`, present where the session stands from a record and
-naming the parent's session, the run the cut falls in, and the turn the holdings stop
-at, and `stack`, the digests of the organ binaries admin started keyed by name, both
-copied from the enter, per `weaver-trace-PRD` section 3.1 as revised 2026-09-04 on
-issue #432, which named them on the event while this document's type did not carry
-them. Found by the code act.
-
-**Revised:** 2026-09-04, third of this date, the load names its declaration. Section
-3's `Elections` gains `declaration`, the digest of the file the load was built from as
-the enter carried it. Per `weaver-trace-PRD` section 3.1 as revised this date, per
-issue #435.
-
-**Revised:** 2026-09-04, second of this date, the seated prefix distills whole.
-Section 11's `distill` carries a turnless `message.system` line under every
-election, one pair per top-level payload member, per charter section 11 as
-revised this date and issue #422.
-
-**Revised:** 2026-09-04, the load names its store and the unload reads the
-boundary back. Section 3's `Elections` gains `state_store`, the engine and, under
-the service engine, the database and role the enter resolved, and `unload` leaves
-the payload-free set, carrying `UnloadClose` where a member stood: the grant
-surface read at the leave against the enter's reading as unchanged, varied, or
-unreadable. The mapping counts sixteen dispositions. Per `weaver-trace-PRD`
-section 3.1 as revised this date and issue #411.
-
-**Revised:** 2026-09-03, the load names its loop and its member. Section 3's
-`Elections` gains `composer`, the loop that assembled the run's prompts by
-binary and, where it is a file, path and digest at the load, and
-`state_member`, whether the member's end arrived on the enter. Each is a
-named member and never a profile, and the claim gains its record,
-`trace-load-names-its-loop-and-its-member`.
-
-**Revised:** 2026-08-26, the tee takes its Spec section. `src/tee.rs` stood as a sixth
-module with no section, no declared type, and no header to carry, the weaver-state
-defect class again, per issue 351. Section 11 now declares `Election`, `ElectedKind`,
-and `Tee` with `opener` and `distill`, restating charter section 11 and the state
-contract rather than developing either, and carries three assertions: the envelope is
-not electable, tagged perturbation and grounded in the join-key invariant, the
-projection splices and never re-renders, tagged perturbation, and the tee never blocks
-the turn path, tagged review. Open elections moves to section 12 and every citation
-moves with it, section 1's layout gains the module, and section 10's counts move to
-forty-four with the two perturbations joining its list. Section 3's no-read rationale
-is corrected rather than kept: the claim held of `Payload` while its reason
-overclaimed, the tee reading canonical lines back as raw text through no payload type.
-
-**Revised:** 2026-08-25, the tee's election joins the load payload. Section 3's
-`Elections` gains `tee`, this crate's own `Election`, emitted on every `load` this crate
-writes and an `Option` at the read so a record predating the member parses whole. It is
-named `tee` because a member differing from its container `Elections` by one letter is a
-collision the Working Rules refuse. Absence is the member's own, in records written
-before this act, and means the rule is unrecoverable rather than defaulted, so such a
-record replays its token path and cannot be certified for state. The instrument is
-perturbation, the member watched to fail when dropped from the shape. Section 3 also
-names `weaver-types-Spec` section 2 authoritative for the declared shape and
-`weaver-harness-state-contract` for what the term means on the seam, the two types
-differing on purpose because this crate links nothing. Section 10's counts move
-with the assertion the act adds, and gain the perturbation naming its removal.
-
-**Revised:** 2026-08-24, the record states its compatibility. Section 3 represents
-charter section 6's guarantee as an absence, the envelope carrying no version member,
-and represents the both-directions half as `Option` with `skip_serializing_if` on an
-added member, so a record written before the member existed and a run with nothing to
-report take one shape. The word rename is kept for the breaking change alone, a
-variant's wire spelling being what an addition carries, the two senses having stood one
-word apart in a first drafting of this entry's act, and states what growth may do and
-may not do without an apex act first: a variant added beside the ones standing is
-extension, and a rename, a retirement, a member's type changed, or a member's meaning
-changed is the breaking change. The instrument is review rather than perturbation
-because no run of this crate can fail on it, the damage landing on a reader of an older
-record, which is stated rather than left as a gap in the enforcement table.
-
-**Revised:** 2026-08-22, fourth of this date, the classify outcome loses its
-refusal. `ClassifyOutcome` becomes `ClassifyScored`, a struct rather than an
-enum, its `Refused` variant having moved to the `refusal` kind per the
-charter's clause of this date and a single-variant enum being a reserved
-slot. The counts are unchanged, one disposition retiring as another arrives.
-
-**Revised:** 2026-08-22, third of this date, pressure leaves the failure
-vocabulary. `Failure` loses `CommitPressure`, which `submit` returned after the
-event was already in the working structure and the writer's queue, so a caller
-reading that `Err` was told the opposite of what had happened. The depth is read
-from the recorder instead, a caller ignoring it being correct by default. What the
-harness does with it is unchanged and was never implemented: it authors a `fault`
-naming `RecorderCommitPressure`, per the fault-carrier ruling this clause already
-carried.
-
-**Revised:** 2026-08-22, second of this date, the refusal takes its kind.
-Section 3's `Kind` gains `Refusal` with its explicit rename and `Payload`
-gains `Refusal`, spliced on the custody rule that carries an organ's
-account opaque, the counts moving to twenty-one kinds and fifteen
-dispositions. `StopReason` gains `Refused`. Two counts that had gone stale
-ride with the recount, the variant sentence reading eighteen and the
-compiler note naming a seventeenth kind.
-
-**Revised:** 2026-08-22, second of this date, the elision records where it
-fell. `Elision` carries `ElisionSpan`, `from` and `to` beside the resident
-counts, rather than the `FlushCounts` the first draft of this act gave it.
-A flush is described by the count it leaves and an interior removal is not,
-so the counts alone could not support the replay charter section 3.2
-promises. The disposition count is unchanged at fourteen.
-
-**Revised:** 2026-08-22, the elision takes its kind. Section 3's `Kind`
-gains `Elision` with its explicit rename, the counts moving to twenty, and
-the kind-to-payload mapping gains `Elision` carrying `FlushCounts`, the
-same two facts under a different kind rather than a second struct with
-identical members.
-
-**Revised:** 2026-08-21, third of this date, the elections become three.
-Section 3's `Elections` gains `surprisal`, a plain boolean serialized even
-when false, per the charter's same-act edit on issue #258: absent, false,
-and true are three states, the first being a record older than the
-election. The field's `Option` is unchanged.
-
-**Revised:** 2026-08-21, second of this date, the prefix becomes a
-recorded contribution and the mapping is recounted. Per the charter's
-same-act edit on issue #258. `message.system` gains a second author, the
-seated identity prefix reaching the record at the run's opening with no
-turn on the classify precedent, so the accumulation rule's base sits inside the
-record rather than in the configuration. `message.system` becomes
-turn-optional, the first kind whose turn is sometimes rather than always
-present, the other three message kinds unmoved. Section 3's `Payload` and
-its kind-to-payload paragraph are recounted to nineteen kinds and thirteen
-dispositions: `ModelField`, `Elections`, and `Flush` stood in the crate and
-in neither, added by acts that recounted the kind set and not this mapping.
-
-**Revised:** 2026-08-21, the field enters the record and the load names
-its elections. Section 3's `Kind` gains `ModelField` with its explicit
-rename, the counts moving to nineteen, and the kind-to-payload mapping
-gains `ModelField` with `Candidate` beside it. The `load` event's payload
-becomes `Elections`, each diagnostic election named individually and none
-bundled, per the charter's same-act edit.
-
-**Revised:** 2026-08-20, the record holds the context position. Section
-3's `ModelOutput` gains `resident` and `capacity`, plain integers meeting
-the same shaping test its emission and finish meet, on the charter's
-same-act edit. The election stated beside them is that they land in this
-payload rather than in the measurement's splice, which the harness may not
-open without retiring the splice rule. One perturbation assertion lands.
-
-**Revised:** 2026-08-19, fourth of this date, the classify kinds take
-shape. `Kind` gains `ClassifyRequest` and `ClassifyOutput` with their
-explicit renames, the counts move to eighteen, and the kind-to-payload
-mapping gains two dispositions shaped here on the flush's precedent:
-`ClassifyAsk`, the content sent, and `ClassifyScored`, the labels the
-artifact's head returned, per the charter's same-act edit.
-
-**Revised:** 2026-08-19, third of this date, the flush reaches the record.
-`Kind` gains `Flush` with its explicit rename, the counts move to sixteen
-and the ordinals to seventeenth, and the kind-to-payload mapping gains the
-ninth disposition: `flush` carries `FlushCounts`, the resident tokens
-before and after, per the charter's same-act edit.
-
-**Revised:** 2026-08-19, second of this date, the finish tells the truth.
-`Finish` gains `Length`, mirroring the floor's same-act addition per the
-two-names-one-fact arrangement of section 1: the turn's token limit
-reached, which the record had flattened into `Completed`.
-
-**Revised:** 2026-08-19, the system role lands. `Kind` gains
-`MessageSystem` with its explicit rename, the counts move to fifteen
-throughout, the message kinds become four, and the kind-to-payload mapping
-carries it under `Message` with its siblings, per the charter's same-act
-edit.
-
-**Revised:** 2026-08-17, the trace stamps the engine where the organ is too
-coarse, per issue #103. `Subsystem` gains `spu_decoder` for the three model
-events, whose wiring landed stamping `spu` before the case existed. `Spu`
-stays for residency, admit, release, and fault attribution, which are the
-organ's. The growth rule re-keys from crates to producing parties at the
-granularity a reader needs, which is the generalization `Tool` already was,
-and `spu_encoder` is named as deliberately absent until an encoder gives it
-an emitter, per apex section 9.
-
-**Revised:** 2026-08-12, the request is the turn's contribution, per the
-operator's ruling of this date. Section 4's splice sentence follows
-`weaver-trace-PRD` section 3.2 as narrowed: the turn's delta as rendered,
-not the prompt as the model received it, splicing whole as before.
-
-**Revised:** 2026-08-11, the model events splice. `Payload::ModelRequest` and
-`Payload::ModelMeasurement` become spliced `RawValue`, the organ producing their
-content and the harness carrying it opaque per the custody model, reversing the
-earlier reading that shaped the measurement here. `ModelOutput` stays shaped, its
-emission a string the harness consumes and its finish a two-case enum, neither an
-opaque blob. The typed `ModelRequest` and `ModelMeasurement` structs retire from
-the schema, and `trace-measurement-absent-not-zero` retires with them, the
-absent-not-zero property relocating to the SPU's `spu-absent-not-empty-vector`
-where the rendering now happens. The crate becomes 38 assertions.
-
-**Revised:** 2026-08-14, the run identifies itself. `RunOrdinal` becomes
-`RunRef`, so the envelope's triple reads `SessionRef`, `RunRef`, and
-`TurnRef`, and the newtype clause drops its small integers because all three
-are now strings.
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #587
 
 ---
 
@@ -833,20 +618,18 @@ organ's own account of what it turned away. `session.closed` and `turn.started` 
 `None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
 did, the one kind with two licensed pairings. `load` carries `Elections`. The four
 message kinds carry `Message`. `turn.closed` carries `TurnClosed`. `fault` carries
-`Fault`. `flush` carries `FlushCounts`, the resident token counts
-before and after, both plain integers. **`elision` carries `ElisionSpan` and not
-those counts**: an elision names the interior span it made absent, `from` and `to`
-beside the resident counts either side, and a flush that returned the context to its
-prefix names no span. The two were one shape in the first draft of the act that added
-elision and have not been since, which the banner of 2026-08-26 records and this
-sentence carried anyway. The four model kinds carry their four own shapes,
-one each. The classify pair carries its two own shapes, `ClassifyAsk` and
-`ClassifyScored`. **A refused classify authors no output at all** and reaches the record
-under `refusal`, so a refusal the exchange met is still the record's fact and never a
-fabricated answer, carried by the kind the class gives it rather than by the outcome's
-own variant. The tool bracket's two carry `Deferred`. Three plus one plus four plus one
-plus one plus two plus four plus two plus two plus one is twenty-one, which is the whole
-of charter section 3.1's set.
+`Fault`. `flush` carries `FlushCounts`, the resident token counts before and after, both
+plain integers. **`elision` carries `ElisionSpan` and not those counts**: an elision
+names the interior span it made absent, `from` and `to` beside the resident counts
+either side, and a flush that returned the context to its prefix names no span. The two
+were one shape in the first draft of the act that added elision and have not been since.
+The four model kinds carry their four own shapes, one each. The classify pair carries
+its two own shapes, `ClassifyAsk` and `ClassifyScored`. **A refused classify authors no
+output at all** and reaches the record under `refusal`, so a refusal the exchange met is
+still the record's fact and never a fabricated answer, carried by the kind the class
+gives it rather than by the outcome's own variant. The tool bracket's two carry
+`Deferred`. Three plus one plus four plus one plus one plus two plus four plus two plus
+two plus one is twenty-one, which is the whole of charter section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
 it was wrong silently.** An earlier draft assigned thirteen and left
@@ -934,7 +717,7 @@ saying so. Naming each election is what keeps a record's posture
 recoverable from the record.
 
 **The `load` event names its loop and its member**, as of 2026-09-03, per the charter's
-section 3.1 as revised on that date. `composer` is the loop that assembles the run's
+section 3.1. `composer` is the loop that assembles the run's
 prompts: `binary` names the worker that ran it, the harness's own name for itself, and
 where the loop is a file the worker reads, `file` is the path it resolved and `sha256`
 the digest of that file as read at the load, both absent for a loop compiled into the
@@ -963,7 +746,7 @@ to: trace-load-names-its-loop-and-its-member
 ```
 
 **The `load` event names its lineage and its stack**, as of 2026-09-06, per the
-charter's section 3.1 as revised 2026-09-04 on issue #432. `lineage` is present where
+charter's section 3.1 on issue #432. `lineage` is present where
 the session stands from a record and absent otherwise, never null: `parent` is the
 record's session, `run` the run the cut falls in, and `through` the turn the holdings
 stop at, a whole record resolved to its last run's last turn, copied from the enter's
@@ -1875,7 +1658,7 @@ function takes the line and the election and returns the distillate frame or `No
 remaining complete regardless, because the tee reads the stream and never thins it. The
 frame is the contract's distillate shape, the envelope whole and the elected pairs
 beside it. **A turnless `message.system` line distills whole under every election**, per
-charter section 11 as revised 2026-09-04: `distill` matches it before the election is
+charter section 11: `distill` matches it before the election is
 consulted and carries one pair per top-level payload member, the value that member's
 canonical JSON, so the seated prefix reaches the store as the record rendered it
 whatever the operator elected, and the election's paths for the kind add nothing to it.

@@ -509,7 +509,9 @@ it.
 ## Conventions carried from the quarry
 
 - **Editorial: ASCII only, no em-dashes** (use ` - `) in docs and handoffs.
-- **Dates are absolute** (`2026-07-28`), and docs carry a dated reconciliation banner.
+- **Dates are absolute** (`2026-07-28`). A document carries no dated banner and no
+  header history, per Working Rules section 1: one `Landing PR:` field names the
+  pull request that last changed what the document says.
 - **Forbidden vocabulary:** no Id/Ego/SuperEgo/Freudian framing in prose or code. Canonical
   terms are `trace` / `reflection` / `substrate-state`.
 - **`latency is the enemy of agency`.** Prefer the shorter abstraction. Internal traffic

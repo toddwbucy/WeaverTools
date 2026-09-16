@@ -8,128 +8,11 @@ Process section 2 as amended, so this document is ratified on its own terms rath
 than waiting on the set. The set-wide act of 2026-08-04 established the pattern it
 conforms to.
 
-**Revised:** 2026-09-04, third of this date, the restored conversation is prefix.
-Section 2's prompt assembly names the recorded conversation through the cut as prefix
-material under a restoring load, seated beside the identity and permanent for the
-residency. Per issue #432.
-
-**Revised:** 2026-09-04, second of this date, the `reads` edge to the declaration
-retires. Section 4's boundary paragraph declared a read this crate does not
-perform, admin reading the file and this crate receiving the enter, the
-descriptor, and the vector, and the edge returns with the tool workflow that
-would perform it. Per issue #311.
-
-**Revised:** 2026-09-04, first of this date, the identity prefix is read from
-state. Section 2's
-prompt assembly names the prefix's source: the store where a member stands, the
-declaration's seed where the store holds none or no member stands, and a missed
-read refusing the enter rather than composing a run with no bounding. Per
-`weaver-state-PRD` section 4 as revised this date and issue #422.
-
-**Revised:** 2026-08-28, the fifth case is the hole rather than its cause.
-Section 5's fifth case covers every way a seated prefix goes unrecorded - the
-door's three refusal conditions and the recorder declining the write - on the
-custody rule's own criterion that all four mean the same thing for the turn
-and the residency. One case, the account carrying which. Per the review seat
-on PR 371.
-
-**Revised:** 2026-08-27, second of this date, the identity door's refusal
-gains its case. Section 5's enumeration of what this crate itself raises moves
-from four to five: a declaration whose seated identity carries a role the door
-does not write, dropped on the floor until now and so seated but unrecorded,
-per issue #369. The corpus-wide set closes at eleven.
-
-**Revised:** 2026-08-27, the diagnostic seam takes its paper. Section 4 declares
-the `link` seam to `weaver-diagnostic` with its contract as the `via`, the record
-that section held as owed until the contract existed to name. The seam count moves
-to six, the two record mechanisms being the two links, and the dependency surface
-reads four crates the corpus links against three the tree compiles, the graph
-moving with this act and the manifest with the act that builds the member. The socket
-table is unchanged, both new members of the count crossing no process line.
-
-**Revised:** 2026-08-26, the state seam loses its name. Section 4's socket
-census recuts one row per the operator's ruling of this date: the state
-channel is a pair admin creates and this crate receives at the enter,
-possession-authenticated like the organ pairs, and no dial at a derived name
-remains. The census still counts four crossing a process line and one link.
-
-**Revised:** 2026-08-24, the third member is named and its contract owed.
-`weaver-diagnostic` is the mechanism this crate authors a diagnostic-trace
-through, per `weaver-agents-PRD` section 6 as ruled this date, linked on the
-trace's own ground: apex section 5.1 forbids a behavior reached by path
-dependency across a process line, not a crate calling a crate inside one
-binary, and this call crosses no process line. Its seam record tagged `link`
-is not declared yet, `weaver-harness-diagnostic-contract` being owed and a
-`via` naming a document that does not exist being worse than the absence, so
-the dependency surface reads against three internal crates until the contract
-lands. The paragraph sits below the second member's so the ordinals read in
-order. **This entry was amended twice before it merged** and is one entry
-rather than three: an earlier drafting grounded the link on the mechanism not
-being asked to do anything, which unmakes the seam Document Format section 4
-defines, and a second entry describing that correction is folded in here. The
-accumulate rule keeps a reader from meeting a changed claim without notice,
-and no reader met either draft.
-
-**Revised:** 2026-08-22, the harness names the elision's span. The clause
-placing the flush decision here gains the elision beside it, per
-`weaver-spu-PRD` section 13.13: the same division of cognition from
-execution, this crate naming positions and the SPU judging nothing, and the
-cache still not held. The span is state and the record still loses nothing.
-
-**Revised:** 2026-08-20, the loop is the agent's own. Per the operator,
-on issue #243: the loop is a member of each agent's harness and unique
-to it, so which loop an agent runs is the agent's declared fact. Section
-2's composability passage moves: a worker that reads its loop from a
-file runs the one the declaration names, absence meaning the worker's
-own default, and the earlier reading of the loop as a provisioning fact
-rather than a configuration field retires where the loop is a file. The
-member lands in `weaver-types-Spec` section 2, the carriage in
-`weaver-admin-Spec` section 6, and the worker's precedence in
-`weaver-harness-Spec` section 1, all in this act.
-
-**Revised:** 2026-08-19, the serve direction takes its shape. Section 4's
-State row gains the ask and the answer riding the same channel as the
-distillate stream, per the contract's change protocol, and the asking loop
-is the context-injection loop, whose calling shape is the seat's state
-port per the Spec's section 6.
-
-**Revised:** 2026-08-18, the state seam is declared. Section 4 gains the
-socket seam to `weaver-state` under `weaver-harness-state-contract`, the
-harness declaring as the asking side, with the member reached over a wire
-rather than linked and the dependency surface unchanged.
-
 **Date filed:** 2026-07-28
-
-**Revised:** 2026-08-12, second of this date, the receipt retires. The report
-the SPU emits is owed nothing back at all, so section 2's dispatch clerks it
-to the record and answers nothing, the trace entry being the acknowledgment,
-per the decode contract's second ruling of the same date.
-
-**Revised:** 2026-08-12, what drives loop 1. Per the operator: the seat is
-granted on work that arrives owed an answer and on nothing else. The decode
-seam's dataflow rule, stated at `weaver-harness-spu-decode-contract` section
-2, has nothing interior to the agent originating work, so a turn begins at
-the gate and nowhere else, read from the shipped contracts rather than
-legislated over organs not yet chartered. Section 2 carries the criterion
-and the dispatch, and the Spec's section 6.2 carries the mechanics.
-
-**Revised:** 2026-08-05, second this date, the socket inversion and the admin recut.
-Per the operator: any socket connecting to the harness is an internal connection, so
-this crate binds the coordination socket inside the agent's sandbox and listens,
-where it adopted a handed end before, and refuses every dialing peer that is not
-root. Admin is a role and a crate the operator runs with root rather than a service
-account, so the long-lived party in an agent's lifetime is the init system. Section 2
-carries the bind, section 4 carries the seam's authentication case, and the Spec's
-section 2.3 carries the mechanism.
-
-**Revised:** 2026-08-05, loop 0 named as the running agent service. Per the operator:
-loop 0 is not a document set and not a milestone but the object itself, the sealed
-agent that boots under its unit and holds its sockets, which is why it is seated in
-this crate directly rather than in the loop container, and why a builder's drop-in
-reaches loop 1 and above and never loop 0.
 **Document ID:** `weaver-harness-PRD`
 **Parent:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #596
 
 ---
 
@@ -485,8 +368,9 @@ counterparty is the gate it already holds a seam with, and what is new is a dire
 on that seam rather than a party. The tool is the gate's peer and not this crate's,
 which is why no row is added below and why nothing here authenticates a tool. **The
 exchange that carries a tool call is owed by `weaver-harness-gate-contract`**, which
-closes its enumeration at four and is named as owed in the apex's revision entry, so
-this seam's traffic is chartered ahead of the document that must admit it.
+closes its enumeration at five and says in its section 7 that the clause is drawn
+again on the day that exchange arrives, so this seam's traffic is chartered ahead of
+the document that must admit it.
 
 Every request carrying work across these seams carries the turn context and returns
 it, per apex 5.2. Lifecycle directives on the coordination seam carry no turn context

@@ -5,119 +5,13 @@ terms under the per-charter rule of 2026-08-23, conforming to the pattern the
 2026-08-04 act established.
 
 **Date filed:** 2026-08-24
-
-**Revised:** 2026-09-07, two captures compare only under one loop and one member.
-Section 3's comparison clause gains the condition `weaver-trace-PRD` section 3.1
-stated on 2026-09-03 for issues #381 and #382 and this document did not carry: two
-records that name different loops, or one standing the state member and one not, are
-not two captures of one run, and a record that names neither cannot be compared at
-all. The comparison refuses those before it reads a value, naming which fact differs,
-so a prompt difference is never reported as the engine's divergence.
-
-**Revised:** 2026-09-01, the kept artifacts take their identity. Section 3
-gains the capture-artifact clauses - identity as the closure of the claim,
-custody the sink's existing arrangement, shape the record's own, quota the
-operator's sink election - and the lens-artifact clauses - identity by
-weights, corpus, estimator, and environment, the weights hash as the
-version, refits as new artifacts, the fit size elected at two hundred
-prompts from the saturation measurement. Section 4's cell closes. Every
-member writes from the measurement acts of this date, and the
-representation is `weaver-analysis-Spec` section 3's in the same act.
-
-**Revised:** 2026-09-01, the declaration derives from the record. Section 3
-gains the rule of issue #394 on the operator's direction: every fact of the
-source run comes from the record and the analyst declares only the
-diagnostic run's own three - device placement, the readers' elections, and
-the sink - with the record-silent-property class as the ground and the
-later random-seed case carried free. `weaver-analysis-Spec` section 3 takes
-the representation and `diagnostic-replay-loop` section 2 the walk's
-sentence, every party in the same act.
-
-**Revised:** 2026-08-31, second of this date, code identity joins the bound.
-The licence names code identity beside the device model, each identifier at
-its own precision - the commit by hash, the toolchain and driver by pinned
-version, and the engine libraries by the driver's sha256 - **the organ binaries are the
-record's since 2026-09-06**, the `load` event carrying them in its stack so a record is
-sufficient for its own conditions, and a deposit that also names them is not the
-authority for them, per `weaver-analysis-web-contract` section 2.2 - the same
-status and the same reader, the record events owed.
-
-**Revised:** 2026-08-31, the discard's licence. Section 3 gains the operator's
-ruling of 2026-08-30: a pipe-shaped sink retains nothing, the report is the
-kept artifact carrying its evidence, and the discard is licensed by the
-replay's certification at the exactness the corpus grants each payload, token
-path exact and vectors within the diagnostic charter's stated tolerance,
-bounded by the device model the deposit names, which the report names or
-states it cannot, the record event that would carry it named as owed. Nothing
-about the sink's governance moves.
-
-**Revised:** 2026-08-27, third of this date, the null replay's verb is corrected.
-Section 3 said this crate elects the null replay and section 4's cell said the same,
-which read as a control over the load this crate does not hold: the reader's
-election rides the declaration per apex section 8. Both now say what
-`weaver-analysis-Spec` section 5 settled, that this crate requires a certified null
-pass before anything downstream and elects the order it consumes outcomes in. The
-Spec had settled against this charter and the charter was open in the same act, so
-landing it here rather than leaving the two documents disagreeing.
-
-**Revised:** 2026-08-27, second of this date, the driver takes its shape.
-`weaver-analysis-Spec` landed, closing section 4's last cell: the parser, the
-election, the projection, the preload's three frames, and the reading's gate.
-Fourteen assertion records, one grounding in the floor invariant read from
-outside the agent, where a linked dependency would make a consumer a
-compile-time dependent of the interior. Section 4's other cells stand as they
-were, the instrument suite and the capture artifact being their own acts. Per
-epic 293 row 12.
-
-**Revised:** 2026-08-27, first of this date, the terminal marker this charter
-waited on landed.
-Section 4's cell on how a diagnostic-trace says it ended settles in
-`weaver-diagnostic-Spec`, the document this cell named as owed it, and the cell
-records the shape rather than restating its argument. Section 3's gate is
-therefore honourable, and what this crate still owes is its own Spec. Per epic 293
-row 12.
-
-**Revised:** 2026-08-25, third of this date, the gate names what it rests on.
-Section 3 claimed this crate reads the null replay's outcome from the record and
-gates downstream work on it, and a reader at the end of the bytes available to
-it cannot tell a certified run from a failed one, a partial one, or one still
-going. The claim now carries its condition, and the honest behaviour under the
-condition is to produce nothing rather than to read the end of available bytes
-as the end of a run. Section 4 gains the owed act with the four outcomes a
-marker has to separate, so the act has a criterion, and states why the rule is
-not written here: a terminal event belongs to the diagnostic-trace's vocabulary,
-which `weaver-diagnostic-PRD` section 6 owes to that crate's Spec, and a rule
-written per sink shape would put back the discriminant assumption section 3
-withdrew.
-
-**Revised:** 2026-08-25, second of this date, section 3 states what it sends and
-what governs the sink. The preload paragraph named distillates and a seal and
-left out the election, which `weaver-analysis-state-contract` section 2 makes
-the first traffic on every standing of the channel, carrying the replayed
-session's own name so the holdings answer to the name the loop asks against.
-All three are now named in their order. The delivery paragraph said no contract
-governs it, which overstates an absence into a licence: what is absent is a
-second contract with this crate as a party, and the sink itself is governed as
-it always was, `trace-sink` on the declaration under either kind, admin's
-custody and discriminant, and the operator contract on what crosses out.
-
-**Revised:** 2026-08-25, first of this date, the name is this crate's alone.
-`CLAUDE.md`'s scope
-guardrails listed `weaver-analysis` among the crates ruled out of the
-extraction, which the chartering act turned into one spelling naming two
-things, the defect Document Format section 2 names with the halves swapped.
-On the operator's ruling of this date the name is freed rather than
-disambiguated: the previous program's crate leaves that list and this charter
-holds the name outright. Nothing of the quarry's crosses on that account, the
-standing rule of `CLAUDE.md` being that material crosses only where a step in
-apex section 3 exercises it, which reaches every crate of the old tree whether
-or not a list names it.
 **Document ID:** `weaver-analysis-PRD`
 **Parent:** the WeaverTools suite, whose governing document is deliberately
 not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
 names the `WeaverTools` system node, and the header and the edge name the
 same thing.
 **Editorial:** Per the Working Rules.
+**Landing PR:** #503
 
 ---
 

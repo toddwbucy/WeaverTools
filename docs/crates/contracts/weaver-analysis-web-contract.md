@@ -5,50 +5,9 @@ claimed by the act that lands this text.** Whether it has cleared its gates
 is the operator's to say.
 
 **Date filed:** 2026-09-05
-
-**Revised:** 2026-09-09, third of this date, the summary names the run and what it ran
-under. Section 2.2 gains, once per run, the run identity from the envelope, the
-effective sampling the record's `model.request` carries, the field election's depth and
-the lineage the `load` event's elections carry, the device model and the code identity
-the operator's deposit holds, and the task's verdict where the record carries one.
-Section 3 asks them all of the emitter. **Without them the reader can write no run row
-at all**, seven of its eight required members having no path across this seam, which
-issue #532 found while the ingest was being written. The emitter reads a deposit the
-invocation names for what the record does not hold, on the operator's ruling of this
-date. Per issue #532.
-
-**Revised:** 2026-09-09, second of this date, the summary carries the seated
-prefix's length. Section 2.2 gains, once per run, the resident length before the
-run's first turn's input, which the emitter derives from the run's first generation
-by subtracting that generation's drawn tokens, the terminator, and its input
-identifiers from its closing count, per `weaver-spu-Spec` section 6's definition of
-the input as the turn's delta with the prefix outside it. It is present only where
-the drain began at or before the run's `load`, since a later start would name a
-later turn's floor as the prefix. Section 3 asks it of the emitter and the
-vocabulary clause names it. Per issue #527, for `weaver-web-Spec` section 5's
-whole-run arm, whose branch position it is.
-
-**Revised:** 2026-09-09, the summary names the record it was read from. Section
-2.2 gains the record's session and the record's digest per generation, once per run
-in the reader's row on the weights hash's own rule, and section 3 asks both of the
-emitter, so the reader's run row can say which record it descends from and be
-checked against it byte for byte. The emitter is the party that drains the bytes,
-so the digest is the emitter's to compute and the reader never sees the record.
-**The digest is the first noun this contract defines**, having no other authority,
-and the vocabulary clause says so, the session being drawn from the trace charter.
-`weaver-analysis-Spec` section 5 moves in the same act, as the parties' rule
-requires. Per issue #521, on the operator's ruling of 2026-09-09.
-
-**Revised:** 2026-09-06, the summary carries the record's identity, and the owed
-sentences are current. Section 2.2 gains the weights hash per generation as the
-record spelled it, section 3 asks it of the emitter beside the two counts, and the
-vocabulary draws it from `weaver-spu-Spec` section 3, so the run row's artifact
-identity has a source on this seam, per issue #465. Section 3's and section 8's
-sentences reading the two counts as owed follow their landing at PR #462 and #463,
-the token members' definitions landed there too, and section 8 records that
-`weaver-analysis-Spec` now cites this document.
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
+**Landing PR:** #535
 
 ## Parties
 
@@ -182,10 +141,10 @@ gets by reading a different record or by an act on the emitter's own
 charter.
 
 **It asks the emitter for what it does not do today**, named in section 3 and nowhere
-else in this document, each on the summary stream and each added on the date its header
-entry names: the two counts per generation, the weights hash, the record's session and
-digest, and the seated prefix's length. Every other clause states what the signals
-reader already emits as of `main` at `20b9cdf`, per `weaver-analysis-Spec` section 5.
+else in this document, each on the summary stream: the two counts per generation, the
+weights hash, the record's session and digest, and the seated prefix's length. Every
+other clause states what the signals reader already emits as of `main` at `20b9cdf`,
+per `weaver-analysis-Spec` section 5.
 
 ## 2. The traffic
 

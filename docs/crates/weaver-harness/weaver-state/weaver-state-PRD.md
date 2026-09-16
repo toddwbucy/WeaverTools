@@ -2,87 +2,13 @@
 
 **Status:** MERGED. In `main` and the source of truth.
 
-**Revised:** 2026-09-15, the floor link is declared and two cells open. Section 1
-projects the `weaver-types` dependency the manifest carries as the `floor-link`
-record the graph had no edge for, and states that it stands ahead of any consumer on
-the operator's ruling of 2026-09-14: the dependency stays, this crate not being
-finished. **The edge is declared because the ruling licenses the dependency and H2
-asks every Cargo edge to be declared, and for no reason beyond those two** - what the
-link is drawn for is section 5's first new cell, the seam's own contract answering
-"From `weaver-types`. Nothing". Section 5's second new cell is the `weaver-trace`
-dependency, which cannot be a floor link, has no contract to be a seam under, and
-stands against H2's "No dependency on a sibling" with no reading that answers it.
-That edge stays undeclared and in breach of H2 until the operator rules, which the
-cell states rather than hides. No dependency changes in this act. Per
-`docs/project/audit-2026-09-13-the-corpus-against-its-code.md` section 4 and the
-second pass of 2026-09-14, and issue #569.
-
-**Revised:** 2026-09-04, third of this date, a session may stand on another record's
-holdings. Section 4 states the restore: the door stands under a restoring load as under
-a diagnostic binding and the driver preloads the declared record through it, whole or
-through a turn, the enter's asks parking on the seal, a resume under the same session
-name and a branch under a new one, custody indifferent to which. Per issue #432.
-
-**Revised:** 2026-09-04, second of this date, the identity is the session's first
-holding. Section 4 lands the three rulings of issue #422: the declaration seeds and the
-store governs, a missed read of the identity fails the enter closed, and the seated
-prefix crosses the tee whole under every election. Within a session only, the memory leg
-untouched.
-
-**Revised:** 2026-09-04, the store is a port and the engine is the deployment's
-election. Section 4 recuts the representation ruling: the seam names asks and
-never a query language, the store holds its one opinion at the engine's port,
-the embedded engine stays as the default an absent election means with its
-2026-08-18 measurement as its ground, and the service engine joins on chapter
-six's shape argument and on who this is built for. Custody becomes the
-engine's, the service engine's wall being two gates and one identity, with the
-engine, the database, and the role members of the binding and the grant
-surface read back at the close. Section 3 states that a persisting substrate is
-not a crossing. Section 5 gains the third-engine cell and the service
-retirement cell. Per issue #411, items 1 and 2.
-
-**Revised:** 2026-08-26, the first door loses its name. Section 3's seam clause
-recuts per the operator's ruling of this date: the harness channel is a
-socketpair admin creates at the member's spawn, one end inherited and one
-crossing at the enter, authenticated by possession per the first invariant's
-rule for a channel with no name. The preload door becomes the member's one
-named socket and its name moves into this member's own territory. The door's
-judgment clause stops describing an inversion of a judgment that no longer
-exists and states its own: the operator principal admitted, every other peer
-refused.
-
-**Revised:** 2026-08-24, the second door stands. Section 3 gains the preload
-door, per the operator's ruling of this date and the taxonomy promotion:
-`weaver-analysis-state-contract`, standing only under a diagnostic binding,
-admitting the operator principal and refusing the agent, carrying the first
-door's distillate shapes drawn rather than redefined. Section 5's
-who-else-may-ask cell is unchanged, the driver never asking. The opener
-retires the declared session's prior holdings, so a retry replaces rather
-than doubles. Every party to
-the new contract merges in this act.
-
-**Revised:** 2026-08-19, second of this date, the election reaches the
-declaration. Section 5's tee-charter cell closes its remaining part: the
-election's block in the agent's file is `state-election`, shaped at
-`weaver-types-Spec` section 2, optional with its absence meaning this
-charter's ruled default, and it rides the enter directive per
-`weaver-admin-harness-contract` sections 3 and 5, every party merging in
-the act.
-
-**Revised:** 2026-08-19, the serve surface takes its shape. Section 5's
-serve cell and calling-shape cell close: the first asker arrived as the
-context-injection loop, the ask vocabulary landed in
-`weaver-harness-state-contract`, the representation landed in
-`weaver-state-Spec` section 4, and the loop's calling shape landed as the
-seat's state port at `weaver-harness-Spec` section 6. Section 1's
-build-order asymmetry is history and reads as such.
-
 **Date filed:** 2026-08-18
 **Document ID:** `weaver-state-PRD`
 **Parent:** `weaver-harness-PRD`
 **Companion contract:** `weaver-harness-state-contract`, owed by the act that opens
 the seam and named here so the seam cannot open without it.
 **Editorial:** Per the Working Rules.
+**Landing PR:** #586
 
 ---
 
@@ -307,7 +233,7 @@ the enter where the ask misses, per `weaver-harness-Spec` section 2, because a r
 no bounding is not a run this charter's custody can stand behind, and this is the one
 ask the dead-peer clause does not convert. **The identity's kind cannot be elected
 out**: the seated prefix crosses the tee whole under every election, per
-`weaver-trace-PRD` section 11 as revised this date, the one exception to the key-based
+`weaver-trace-PRD` section 11, the one exception to the key-based
 rule, so no election produces a session whose identity this crate never held. Within
 this act the store's identity is what the session's first load seated, and a mechanism
 that lands a revised prefix mid-session is a further act, taking effect at the next load

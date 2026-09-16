@@ -6,16 +6,9 @@ container entry. It argues no edges of its own: the seams it walks are declared 
 the crate charters per Document Format section 4, and a graph block here would
 duplicate a record that already has a home.
 
-**Revised:** 2026-08-24, the loop names its binding. Section 2's lifecycle walk
-is scoped to a serving binding, per `weaver-agents-PRD` section 6 as amended
-this date. The walk itself is unchanged, because a serving load is what it
-always described, and the sentence exists so the gate-last and gate-first it
-recites read as the serving sequence rather than as every load's.
-
-**Revised:** 2026-08-14, the run identifies itself. The enter directive carries the run
-reference where it carried an ordinal, per `weaver-admin-PRD` section 10.
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
+**Landing PR:** #317
 
 ## Rulings of 2026-07-31, landed by the batch of this date
 
