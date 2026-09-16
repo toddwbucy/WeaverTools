@@ -2353,8 +2353,9 @@ refusal to answer, closure, which `weaver-organ-channel` section 2 rules is
 observed as death and never synthesized into an answer, a coordination name
 that could not be bound, and a dialing peer refused at the accept before any
 byte. **The last two arrive with the socket inversion of 2026-08-05 and this
-block carried three until this act**, the bind and the credential check being
-the clauses of section 2.3 that inversion landed. Neither can be answered on
+block stood at three until it was read against the enum**, the bind and the
+credential check being the clauses of section 2.3 that inversion landed. Neither
+can be answered on
 an exchange, there being no exchange yet in either case, which is the same
 ground the first three stand on. `Outcome` names the one way service ends
 ordinarily, the leave answered, so the composition root branches on a value
@@ -2394,6 +2395,15 @@ edge: asserts
 from: weaver-harness
 to: harness-undecodable-names-its-detail
 ```
+
+**The outcome record is `harness-outcome-one-case` and was
+`harness-outcome-two-cases`.** The slug said two over an enum of one variant
+while section 3 argued the one case correctly on its own page, so the identifier
+moved, with its two source headers and the doc comment that names it, rather
+than the enum moving to meet the slug. The old spelling stands in the audit of
+2026-09-13, which is a dated record of a reading and not a citation, and in
+`process/gates/test_grounds_parity.py`, whose live-token list the rename moved
+and whose comment says why.
 
 ```graph
 node: harness-fault-below-the-exchange-layer
@@ -2575,7 +2585,7 @@ reads forty-eight as of the inversion of 2026-08-05 and did not move with the ac
 since, which is named here rather than restated. **The disclosure reaches the
 narrative below this sentence and never the paragraphs above it**, stated because
 it was read both ways: the grounded and ungrounded figures above are live counts
-and are re-derived with this act. Forty-eight as of the inversion of
+and are re-derived from the records. Forty-eight as of the inversion of
 2026-08-05, which retired the adopted end's close-on-exec, that end no longer
 existing, and added the coordination bind, the accept's credential check, and
 the bind's refusal to unlink, all three of section 2.3. Twenty come from this
