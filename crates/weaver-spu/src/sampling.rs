@@ -2,6 +2,7 @@
 //! conforms: spu-knob-set-includes-the-seed
 //! conforms: spu-frozen-values-never-cross
 //! conforms: spu-effective-values-recorded
+//! conforms: spu-seed-derives-per-generation
 //!
 //! Sampling and the dispositions, per `weaver-spu-Spec` section 8.
 //!

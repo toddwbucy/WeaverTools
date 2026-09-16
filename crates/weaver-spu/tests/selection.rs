@@ -1,3 +1,5 @@
+//! conforms: spu-family-is-architecture-and-template
+//!
 //! The two-field key of `weaver-spu-Spec` section 5, against held artifacts.
 //!
 //! **These read real artifacts**, because the claim is about what a shipped

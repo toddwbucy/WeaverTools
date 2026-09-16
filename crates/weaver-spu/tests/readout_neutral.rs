@@ -1,4 +1,5 @@
 //! conforms: spu-two-taps-one-shape
+//! conforms: spu-elected-readout-changes-no-token
 //!
 //! **Charter section 13.7's bar, taken as a measurement.** An elected
 //! readout changes no token: the same declaration and the same seed produce

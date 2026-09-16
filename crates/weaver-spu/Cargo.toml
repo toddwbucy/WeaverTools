@@ -48,6 +48,7 @@ required-features = ["cuda"]
 # tests from the workspace command and bought nothing the reason named. The
 # cost it does carry is that a workspace build compiles llama.cpp and needs
 # that toolchain.
+# conforms: spu-gguf-is-the-default-gate
 default = ["gguf"]
 # Each gate names what it buys, per Spec section 1.1. A build without cuda
 # compiles the channels, the residency bookkeeping, and the family libraries,

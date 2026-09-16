@@ -9,6 +9,7 @@
 //! conforms: spu-elision-refuses-an-unremovable-span
 //! conforms: spu-elision-removes-its-span-in-order
 //! conforms: spu-signals-pre-sampler
+//! conforms: spu-sampler-holds-nothing-between-generations
 //!
 //! The resident session and its append path, per `weaver-spu-Spec` sections 4.2
 //! to 4.4.
@@ -1906,20 +1907,6 @@ mod tests {
         );
     }
 
-    /// **The sampler holds nothing between generations, a flush included**,
-    /// per `weaver-spu-Spec` section 8.5. Two generations with a flush
-    /// between them: each is reseeded with the seed its caller derived, and
-    /// the second's penalty window is the truncated resident tail rather
-    /// than anything the sampler carried across.
-    ///
-    /// This is the case the retired coupling lived in. The GGUF chain's
-    /// reset cleared the penalty window and reseeded the draw together,
-    /// so a flush moved the stream at a point nothing in the record
-    /// explained - and two arms of a comparison differing in resident
-    /// length crossed the flush threshold at different turns.
-    ///
-    /// Perturbation: reseed once at open rather than per generation and
-    /// the second call never arrives, so the count fails.
     /// **A span describing no removable region refuses, and the session
     /// stands.** Charter 13.13 gives four such spans and the refusal is the
     /// contract's typed case rather than a fault: the ask was answerable
@@ -2075,6 +2062,20 @@ mod tests {
         }
     }
 
+    /// **The sampler holds nothing between generations, a flush included**,
+    /// per `weaver-spu-Spec` section 8.5. Two generations with a flush
+    /// between them: each is reseeded with the seed its caller derived, and
+    /// the second's penalty window is the truncated resident tail rather
+    /// than anything the sampler carried across.
+    ///
+    /// This is the case the retired coupling lived in. The GGUF chain's
+    /// reset cleared the penalty window and reseeded the draw together,
+    /// so a flush moved the stream at a point nothing in the record
+    /// explained - and two arms of a comparison differing in resident
+    /// length crossed the flush threshold at different turns.
+    ///
+    /// Perturbation: reseed once at open rather than per generation and
+    /// the second call never arrives, so the count fails.
     #[test]
     fn the_sampler_is_rebuilt_per_generation_across_a_flush() {
         let (mut session, log) = opened(vec![TokenId(7), TokenId(8)], 128);

@@ -1,4 +1,5 @@
 //! conforms: spu-device-authority-is-the-driver
+//! conforms: spu-room-refusal-carries-capacity
 //!
 //! The device queries the admission judgment reads, per `weaver-spu-Spec`
 //! section 3.
