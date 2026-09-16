@@ -330,53 +330,6 @@ fn mismatched_payload_refuses() {
     ));
 }
 
-/// The measurement's optional members are absent rather than zero.
-///
-/// Perturbation: remove the skip election and an empty array appears, saying
-/// the reading was taken and found empty. Watched under exactly that removal.
-#[test]
-fn absent_measurement_members_emit_nothing() {
-    // The measurement is a spliced payload as of the custody act, the SPU
-    // producing the absence and the trace carrying it verbatim, so a blob
-    // rendered without the unproduced members emits none of them: the record
-    // carries exactly what the organ rendered, no serde election of this
-    // crate's between them.
-    let (mut r, _path) = recorder();
-    r.submit(event(Kind::Load, None, Some(elections())))
-        .unwrap();
-    r.submit(event(Kind::TurnStarted, Some("t-1"), None))
-        .unwrap();
-    let measurement = weaver_trace::raw_payload(
-        r#"{"model":"qwen3-4b-instruct","weights_hash":"sha256:abc","input_tokens":[1,2],"output_tokens":[3],"blocks":[{"label":"turn-delta","start":0,"end":2}],"timings":{"prefill_ns":"1000","decode_ns":"2000"}}"#,
-    )
-    .expect("the measurement blob splices");
-    r.submit(event(
-        Kind::ModelMeasurement,
-        Some("t-1"),
-        Some(Payload::ModelMeasurement(measurement)),
-    ))
-    .unwrap();
-    let line = r
-        .structure()
-        .by_kind(Kind::ModelMeasurement)
-        .next()
-        .unwrap()
-        .line
-        .clone();
-    assert!(
-        !line.contains("entropies"),
-        "an unproduced reading emits no member: {line}"
-    );
-    assert!(
-        !line.contains("surprisals"),
-        "an unproduced reading emits no member: {line}"
-    );
-    assert!(
-        !line.contains("reductions"),
-        "an unproduced reading emits no member: {line}"
-    );
-}
-
 /// **The output carries the session's position**, per `weaver-trace-Spec`
 /// section 3: an analysis placing a turn inside the context has the record
 /// and nothing else once the run is over, and a member that serializes is

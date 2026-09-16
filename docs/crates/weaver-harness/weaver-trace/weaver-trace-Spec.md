@@ -7,7 +7,7 @@ build order. Code is written against it under the gates of Working Process secti
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #601
+**Landing PR:** #PRNUM
 
 ---
 
@@ -1497,14 +1497,25 @@ Spec asserts it.** The property is `weaver-spu-Spec`'s
 `spu-absent-not-empty-vector`, where the rendering happens, and section 3 argues
 why: the measurement splices, so this crate names none of its members and elects
 no `skip_serializing_if` over them. A bullet here would sort an instrument under
-a claim this document does not make. **The crate does run a test named for the
-property, and it answers to no record here**: `tests/recorder.rs`'s
-`absent_measurement_members_emit_nothing` states a perturbation that removes a
-skip election, and `event.rs` carries the measurement as
-`Payload::ModelMeasurement(Box<RawValue>)` with no such election to remove, so
-the watch cannot fail and the file's own header sorts it under this section. That
-test and that header are issue #606's, filed for the crate half this act does not
-reach.
+a claim this document does not make. **The crate ran a test named for the
+property and no longer does**, the removal landing 2026-09-16 on issue #606.
+`tests/recorder.rs`'s `absent_measurement_members_emit_nothing` stated a
+perturbation that removed a skip election, `event.rs` carries the measurement as
+`Payload::ModelMeasurement(Box<RawValue>)` with no such election to remove, and
+its three assertions passed because the blob the test built never held those
+members rather than because an election of this crate's kept them out. A watch
+that cannot fail is what apex section 11's third device calls worse than no
+test, so the test retired rather than being retagged. **The other two courses
+were shut before the choice was made.** Electing a skip here would open the
+organ's content this Spec's section 3 carries opaque, retiring the splice rule
+in the same breath that invoked it, and buying an instrument for
+`trace-splice-or-shape` would claim a doctrine over six payloads on one
+payload's reading. What the removal costs is one construction: no test of this
+crate now builds a `model.measurement` event, which is the state
+`model.request`, `model.field`, `flush` and the tool bracket's `Deferred` were
+already in, so the consistency is restored rather than a hole opened. **The
+file's header is true of its contents again** for the claim this act reaches,
+that a test sorted under this section answers to a record of it.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
 forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
