@@ -11,7 +11,7 @@ not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
 names the `WeaverTools` system node, and the header and the edge name the
 same thing.
 **Editorial:** Per the Working Rules.
-**Landing PR:** #503
+**Landing PR:** #621
 
 ---
 
@@ -230,13 +230,13 @@ would read as one. The serving device does not yet ride the run's own record:
 it reaches the deposit through the driver that took it, per the
 run-records-what-served act of 2026-08-28, and a record event carrying it is
 owed its own act, named here as owed rather than assumed present. Until it
-lands the report reads the device model from the deposit the operator holds.
-**Code identity has the same status and the same reader**: regeneration runs
+lands the device model's source is the deposit the operator holds.
+**Code identity has the same status and the same source**: regeneration runs
 the seam's code as well as the silicon, and the repository commit reaches
 the deposit by hash, the toolchain and the driver by pinned version string,
 and the engine libraries and organ binaries by the sha256 the driver takes
-of each, so the report reads them where it reads the device, and a report
-surviving a rebuild claims nothing the deposit's identifiers do not carry.
+of each, so their source is that same deposit, and a report surviving a
+rebuild claims nothing the deposit's identifiers do not carry.
 
 **It reads nothing for meaning from a replay that did not certify**, per
 `weaver-diagnostic-PRD` section 4, which carries the criterion because it
