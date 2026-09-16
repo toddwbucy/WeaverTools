@@ -79,13 +79,15 @@ standard, and a wrong one would refuse good artifacts or admit bad ones.
 
 **No `weaver-*` dependency at all, and the negative is the boundary in the
 manifest.** This crate stands outside the agent, per the charter's section 1, and
-its one seam draws its whole vocabulary from documents rather than from types:
+neither of its seams draws its vocabulary from types:
 `weaver-analysis-state-contract` draws the election and the distillate from
 `weaver-harness-state-contract` and the event names from `weaver-trace`, and every
-one of those crosses this crate's wire as JSON the record already spells. Linking
-any of them would make an outside consumer a compile-time dependent of the agent's
-interior, which is the coupling the boundary exists to prevent, and would buy
-nothing: the parse shares no code with the writer by the charter's own election.
+one of those crosses this crate's wire as JSON the record already spells.
+`weaver-analysis-web-contract` draws from `weaver-spu-Spec` and from
+`weaver-trace`'s papers the same way. Linking any of them would make an outside
+consumer a compile-time dependent of the agent's interior, which is the coupling the
+boundary exists to prevent, and would buy nothing: the parse shares no code with the
+writer by the charter's own election.
 
 ```graph
 node: analysis-no-internal-dependency

@@ -33,30 +33,6 @@ decision two of #439.
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
 **Landing PR:** #614
 
-```graph
-node: weaver-web
-kind: crate
-
-edge: parent
-from: weaver-web
-to: WeaverTools
-
-edge: seam
-from: weaver-analysis
-to: weaver-web
-via: weaver-analysis-web-contract
-tag: socket
-```
-
-**The gate reach is real and carries no seam edge**, as of 2026-09-16, and the
-absence is stated here because this block is where a record would be written. A
-seam edge runs between two crate nodes and the far end of that boundary is the
-world, which the graph carries no node for, so `weaver-gate-world-contract`
-names one crate and signs the world in prose, per its section 0. A record ran
-from this crate to `weaver-gate` until that date and named that page as its
-`via`, which asserted a signature this crate never gave. The boundary is
-unchanged and only the record went.
-
 ## 1. What this crate is
 
 WeaverTools is a diagnostic and analytic instrument. It lets an engineer
@@ -68,7 +44,26 @@ one variable at a time and reads what each loosening did.
 **The back end already takes these readings, and nobody but their author can
 operate it.** This crate is what makes them operable by an engineer who did
 not build the apparatus. That is the whole of its claim, and it is why the
-crate exists at all.
+crate exists at all. It is a crate of the suite named above and of no domain
+inside an agent, which is what its parent edge says.
+
+```graph
+node: weaver-web
+kind: crate
+
+edge: parent
+from: weaver-web
+to: WeaverTools
+```
+
+**The gate reach is real and carries no seam edge**, as of 2026-09-16, and the
+absence is stated beside this block because this charter is where a record would
+be written. A seam edge runs between two crate nodes and the far end of that
+boundary is the world, which the graph carries no node for, so
+`weaver-gate-world-contract` names one crate and signs the world in prose, per
+its section 0. A record ran from this crate to `weaver-gate` until that date and
+named that page as its `via`, which asserted a signature this crate never gave.
+The boundary is unchanged and only the record went.
 
 The one-sentence job: **compose a configuration, run it, and return behavior
 and cost together, with the configuration declared well enough that a second

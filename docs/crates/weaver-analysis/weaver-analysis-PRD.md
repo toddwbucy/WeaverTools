@@ -62,6 +62,22 @@ via: weaver-analysis-state-contract
 tag: socket
 ```
 
+**The emission to `weaver-web` is this crate's second seam, and the record for
+it is here because this crate initiates it.** `weaver-analysis-web-contract`
+names this crate the emitter and the only sender and names the reader as asking
+nothing of it, so the asker declares under Document Format section 4 and the
+reader's charter carries no record of the seam. **What crosses is not argued in
+this charter**, the contract holding the shape and `weaver-analysis-Spec`
+section 5 representing it, and section 4 names the clause this charter owes.
+
+```graph
+edge: seam
+from: weaver-analysis
+to: weaver-web
+via: weaver-analysis-web-contract
+tag: socket
+```
+
 ## 2. What it is not
 
 **Not an organ.** An organ governs a domain and holds a duplex channel with
@@ -74,9 +90,9 @@ knowledge of it, and no behavior conditioned on its presence.
 the agent boundary do not enter that roster. `weaver-diagnostic` went the
 other way in the same act and for the opposite reason.
 
-**Not the writer of anything the agent reads.** Its one seam sends a preload
-into `weaver-state`, and that is material rather than instruction: state holds
-what it is given and the agent's loops decide, per
+**Not the writer of anything the agent reads.** Its only seam into the agent
+sends a preload into `weaver-state`, and that is material rather than
+instruction: state holds what it is given and the agent's loops decide, per
 `weaver-analysis-state-contract`. Nothing this crate produces reaches a
 decoder except as tokens a loop chose to feed.
 
@@ -117,15 +133,16 @@ a re-typed declaration would be wrong by construction. The replay's own
 identity checks then guard the derivation itself - a drifted derivation
 fails certification rather than replaying a run that never was.
 
-**It preloads what the parse projects**, across the one seam, per
-`weaver-analysis-state-contract`, and it sends three things in one order. **The
-election opens the channel**, whole, as the first traffic on every standing,
-declaring the replayed session under its own name so the holdings answer to the
-name the loop later asks against. **Then a distillate per elected event**, in
-the record's sequence order, owed nothing back. **Then the seal**, one empty
-frame after the last distillate, which is the fact the harness's replay ask
-answers at and the only thing that tells a finished sender from a dying one.
-This crate sends all three and asks nothing on this seam.
+**It preloads what the parse projects**, across the seam
+`weaver-analysis-state-contract` governs, and it sends three things in one
+order. **The election opens the channel**, whole, as the first traffic on
+every standing, declaring the replayed session under its own name so the
+holdings answer to the name the loop later asks against. **Then a distillate
+per elected event**, in the record's sequence order, owed nothing back.
+**Then the seal**, one empty frame after the last distillate, which is the
+fact the harness's replay ask answers at and the only thing that tells a
+finished sender from a dying one. This crate sends all three and asks
+nothing on this seam.
 
 **It reads the diagnostic-trace off the sink.** The sink is admin's, opened for
 the binding under root by whatever discriminant the declaration named, per
@@ -353,3 +370,13 @@ a sink.
   the loop inside the run per section 3, and what this crate's Spec settles
   about it is only the order it consumes outcomes in, requiring a certified
   null pass before any reading downstream.
+- **The emission to `weaver-web` is chartered nowhere, and the clause is owed
+  here.** Section 1 carries the seam's record because this crate initiates the
+  seam, `weaver-analysis-web-contract` holds what crosses, and
+  `weaver-analysis-Spec` section 5 represents it under that section's summary
+  records, so a Spec and a contract stand over a charter that says nothing
+  about the emission at all. **Naming it is not settling it.** What this crate
+  sends a reader, and why sending it is this crate's job rather than a second
+  consumer's, is a phase one question, and the act of 2026-09-16 that moved the
+  record to the asking side declined to answer it rather than writing a charter
+  clause to hold a block up.
