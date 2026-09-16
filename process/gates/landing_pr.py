@@ -54,9 +54,26 @@ ENTRY_RE = re.compile(r"^\*\*Revised:\*\*")
 LANDING_RE = re.compile(r"^\*\*Landing PR:\*\* #(\d+)\s*$", re.M)
 
 
-def run(args):
-    """Standard output of a command, with its exit status discarded."""
-    return subprocess.run(args, capture_output=True, text=True).stdout
+class Unchecked(Exception):
+    """A command this script depends on did not run."""
+
+
+def run(args, spare=()):
+    """Standard output of a command, refusing an exit status it did not expect.
+
+    **A helper that discards the status prints a clean nothing for a command
+    that never ran**, and nothing reads like success. `git grep` exits 1 when it
+    matches nothing and 128 when the ref or the pathspec is wrong, and both give
+    an empty stdout, so a walk over a bad ref finds no documents and reports
+    every one of them sound. `spare` names the non-zero statuses that carry
+    meaning at a call site, and every other one raises.
+    """
+    done = subprocess.run(args, capture_output=True, text=True)
+    if done.returncode and done.returncode not in spare:
+        first = done.stderr.strip().splitlines()
+        raise Unchecked(f"{' '.join(args)}\n  exit {done.returncode}: "
+                        f"{first[0] if first else 'no message'}")
+    return done.stdout
 
 
 def is_field(line):
@@ -104,7 +121,9 @@ def landing_commit(path, ref):
     tip = None
     landing = None
     for commit in commits:
-        current = said(run(["git", "show", f"{commit}:{path}"]))
+        # 128 is the path being absent at that commit, which is a content
+        # difference and ends the walk on the next comparison.
+        current = said(run(["git", "show", f"{commit}:{path}"], spare=(128,)))
         if tip is None:
             tip, landing = current, commit
             continue
@@ -126,7 +145,7 @@ def pull_request(commit, repo):
     # A merge commit rather than a squash: the branch commit belongs to no pull
     # request, and the merge that brought it in does.
     merge = run(["git", "log", "--ancestry-path", "--merges", "--reverse",
-                 f"{commit}..origin/main"]).split("\n")
+                 f"{commit}..origin/main"], spare=(128,)).split("\n")
     if merge and merge[0].startswith("commit "):
         sha = merge[0].split()[1]
         found = subprocess.run(
@@ -144,8 +163,11 @@ def main():
     repo = "toddwbucy/WeaverTools"
     ref = "origin/main"
     listed = run(["git", "grep", "-l", r"^\*\*Landing PR:\*\*", "HEAD",
-                  "--", "docs", "process"]).split()
+                  "--", "docs", "process"], spare=(1,)).split()
     paths = [entry.split(":", 1)[1] for entry in listed]
+    if not paths:
+        raise Unchecked("no document carries the field, which is not a corpus "
+                        "this rule has ever described")
     mismatches = 0
     for path in sorted(paths):
         commit = landing_commit(path, ref)
@@ -164,4 +186,11 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Three-valued like process/gates/lock.sh: 0 in step, 1 a mismatch the
+    # tree owns, 2 the derivation could not run and the fields are unchecked
+    # rather than sound.
+    try:
+        sys.exit(main())
+    except Unchecked as unchecked:
+        print(f"landing_pr: unchecked: {unchecked}", file=sys.stderr)
+        sys.exit(2)
