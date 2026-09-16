@@ -5,6 +5,20 @@ agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 
+**Revised:** 2026-09-15, the counts are re-derived and the library surface takes
+the instrument that reads it. Section 1 tagged `admin-no-library-surface` as
+`review` because nothing mechanical read the absence, while
+`one_binary_and_no_library_surface` of `crates/weaver-admin/tests/manifest.rs`
+reads exactly that absence, so the tag becomes `manifest` and the clause names
+the test. Section 10's figures are measured against the file rather than
+carried: forty records, twelve of them carrying thirteen `grounds` edges and
+twenty-eight grounding in nothing, and a tag census of fourteen review, twenty
+perturbation, four manifest, and two compile pin. What stood there read
+thirty-seven records, twenty-three ungrounded, and a perturbation count of
+eighteen that its own section contradicted with twenty. The three uncounted
+perturbation arrivals are dated to the boundary act of 2026-08-28 alone, the
+doors act of 2026-08-26 having added none. Per issue #569.
+
 **Revised:** 2026-09-14, the atomic close-on-exec claim carries its edge.
 Section 6's behavioural half grounds in apex section 5.1, where
 `weaver-harness-Spec` section 2.2 grounds the same clause on the possession case,
@@ -401,15 +415,19 @@ its settler.
 **One binary, per the charter's ruled layout.** The crate builds a single
 executable, `weaver-admin`, and no library surface is published: nothing links
 admin, per the charter's section 7, and a `lib.rs` would be an API for a
-consumer the topology forbids. The instrument is review rather than the
-manifest, because a manifest carrying no `[lib]` section is indistinguishable
-from one whose library target Cargo would find by convention, so nothing
-mechanical reads the absence.
+consumer the topology forbids. **A manifest read alone cannot see the
+absence**, one carrying no `[lib]` section being indistinguishable from one
+whose library target Cargo would find by convention, so the instrument reads
+the convention's path beside the manifest.
+`one_binary_and_no_library_surface` of `crates/weaver-admin/tests/manifest.rs`
+asserts that the binary is declared, that no `[lib]` section exists, and that
+no `src/lib.rs` sits where Cargo would find one. The tag follows what that
+test reads.
 
 ```graph
 node: admin-no-library-surface
 kind: assertion
-tag: review
+tag: manifest
 
 edge: asserts
 from: weaver-admin
@@ -2094,20 +2112,23 @@ charter claims.
 floor-link under gate H2, and no direct `weaver-traits` line exists, which
 is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
-`cargo tree` assertion the floor Specs share.
+`cargo tree` assertion the floor Specs share. One binary and no library
+surface, read as a declared `[[bin]]`, an absent `[lib]` section, and no
+`src/lib.rs` at the path Cargo searches by convention, which is the half a
+manifest read cannot reach on its own and the reason the instrument reads the
+tree beside the file.
 
-**Which invariant each claim serves, and why most serve none.** Twelve of the
-thirty-seven carry a `grounds` edge and those twelve carry thirteen edges, one
-record grounding in two invariants. **All three records this act adds
-ground in none**, and the paragraph accounts for each rather than one. Section
-6's runtime directory mode is an election about a boundary this crate
-provisions, and its access rule reachability is a consistency rule between two
-locks - neither is a claim an invariant reaches. The third, the gid set the
-denial walk reads, is the same shape: it corrects the credential set of a
-walk this crate already performs, and the walk it corrects grounds in no
-axiom either. A `grounds` edge to that walk was drafted and removed - the
-notation runs from an assertion to an **axiom**, per Document Format section
-on edges, and an assertion-to-assertion edge would have been a new relation
+**Which invariant each claim serves, and why most serve none.** Twelve of the forty
+carry a `grounds` edge and those twelve carry thirteen edges, one record grounding in
+two invariants. **All three records the boundary act of 2026-08-28 added ground in
+none**, and the paragraph accounts for each rather than one. Section 6's runtime
+directory mode is an election about a boundary this crate provisions, and its access
+rule reachability is a consistency rule between two locks - neither is a claim an
+invariant reaches. The third, the gid set the denial walk reads, is the same shape: it
+corrects the credential set of a walk this crate already performs, and the walk it
+corrects grounds in no axiom either. A `grounds` edge to that walk was drafted and
+removed - the notation runs from an assertion to an **axiom**, per Document Format
+section on edges, and an assertion-to-assertion edge would have been a new relation
 smuggled in under an existing name.
 
 **The thirteen are named rather than numbered**, an ordinal in document order being the
@@ -2120,13 +2141,10 @@ crate has no reason to publish no library and no reason to hold one internal dep
 no reason for the verbs to sit behind a principal check, no envelope has to arrive whole
 or a truncation to count as a fault, and the dial's bound has nothing to bound, so those
 six ground in it. **The atomic close-on-exec of section 6 grounds in it by the second
-relation rather than the first**, on the argument that clause states. **The record total
-this paragraph reads against is stale and is `act-14`'s**, the crate carrying forty
-records rather than thirty-seven, so the ungrounded figure below is derived from it
-rather than being a fourth count this act could correct on its own. Remove it and the
+relation rather than the first**, on the argument that clause states. Remove it and the
 log is still NDJSON, the FIFO still opens nonblocking, the inventory still repairs
 nothing, and the identity is still built from the validated name, so those ground in
-nothing. **Twenty-three claims grounding in no invariant is the expected result and not
+nothing. **Twenty-eight claims grounding in no invariant is the expected result and not
 a gap**, per Document Format section 4: most of what this Spec elects is a rendering, a
 mode, an ordering, or a route, and representation is what the invariants are not about.
 
@@ -2200,19 +2218,21 @@ The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
 would sit apart from the prose that earns it. Forty records in all,
-fifteen tagged for review, twenty for perturbation, three for the manifest,
+fourteen tagged for review, twenty for perturbation, four for the manifest,
 and two for a compile pin, the restore's judgment joining on 2026-09-06. The
 residency record moved from review to
-perturbation on 2026-08-06, when the code act gave it a test. **Three of the
-perturbation records arrived without this count moving**, with the doors act
-and the boundary acts of 2026-08-26 and 2026-08-28:
+perturbation on 2026-08-06, when the code act gave it a test, and the library
+surface from review to the manifest on 2026-09-15, its test having read the
+absence the clause said nothing mechanical read. **Three of the
+perturbation records arrived without this count moving**, with the boundary
+act of 2026-08-28:
 `admin-access-rule-reaches-the-socket`,
 `admin-runtime-directory-mode-is-stated`, and
 `admin-boundary-reads-every-gid-the-worker-holds`. The fourth arrival,
 `admin-granted-permission-refused-at-inventory`, is this recount's own act,
 counted with the record it adds. Whether the three uncounted arrivals name
 their removals was not audited in this recount and is owed beside the two
-below. **Two of the eighteen perturbation records name no removal anywhere
+below. **Two of the twenty perturbation records name no removal anywhere
 in this document**:
 `admin-unload-answers-after-confirmed-stop` and
 `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
@@ -2239,13 +2259,16 @@ movements there. The lists below name eleven departures, ten retired and one
 moved, and six arrivals, so each is short by the inversion's one side.
 
 **Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
-`admin-run-reference-distinguishes` with the run's identity. Three records have been
-added since, reaching the thirty-four this section counts above: that one, then
-`admin-kind-mismatch-refused-at-inventory` on 2026-08-24 and
-`admin-preload-name-follows-the-kind` on 2026-08-25, each named so this figure is
-checkable against the file the way every other figure here is. An earlier form of this
-lead stated no endpoint at all, and stating one is what exposed that the lists did not
-reach it. Retired: the operator surface's six, its stream election, its accept-time
+`admin-run-reference-distinguishes` with the run's identity. Three records took the
+count to thirty-four: that one, then `admin-kind-mismatch-refused-at-inventory` on
+2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Six more reach the
+forty this section counts above, the boundary act's three of 2026-08-28 that the tag
+census names, then `admin-granted-permission-refused-at-inventory` on 2026-08-31,
+`admin-restore-cut-judged-at-the-inventory` on 2026-09-06, and
+`admin-missing-home-refuses-and-builds-nothing` on 2026-09-07, each named so this figure
+is checkable against the file the way every other figure here is. An earlier form of
+this lead stated no endpoint at all, and stating one is what exposed that the lists did
+not reach it. Retired: the operator surface's six, its stream election, its accept-time
 refusal, its refusal-by-closure, its serial answering, its bounded request line, and its
 bare wire shapes, each dying with the socket rather than relocating. The coordination
 channel's bind ordering, its directory's mode, its listener's closure after one accept,
@@ -2256,10 +2279,9 @@ of section 2, the dial's bound of section 7, the residency read from the init sy
 section 3, the state ask that follows a failed dial, of section 6, and the unload's wait
 on a confirmed stop, of section 3. **The twelfth departure and the seventh arrival are
 the one event the lead above argues**, the unit's declared open inverting to a declared
-absence. **A rebuild reads this movement as the recut's delta
-and not as this Spec's**, three records having been added since by acts of their own, so
-a census taken against this paragraph alone lands three short of section 10's
-thirty-four.
+absence. **A rebuild reads this movement as the recut's delta and not as this Spec's**,
+nine records having been added since by acts of their own, so a census taken against
+this paragraph alone lands nine short of section 10's forty.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live

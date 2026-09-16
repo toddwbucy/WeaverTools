@@ -106,7 +106,7 @@ fn no_runtime_no_bus_no_logging() {
 /// would be an API for a consumer the topology forbids. The manifest declares
 /// the binary explicitly and no `src/lib.rs` exists for Cargo to find by
 /// convention - which is the half a manifest read cannot see on its own, and
-/// why the Spec tags this claim review.
+/// why this test reads the tree beside the file.
 #[test]
 fn one_binary_and_no_library_surface() {
     let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"))
