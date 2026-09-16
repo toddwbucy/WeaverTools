@@ -31,6 +31,9 @@ import grounds_parity as gp
 
 # Each tuple is one word's inflections as this corpus writes them, with the node
 # that carries each spelling named beside the group in `test_corpus_tokens`.
+# One exception, stated in the docstring above: `("cases", "case")` is kept for
+# its watch on the stemmer after `cases` left the slugs 2026-09-15, so no node
+# carries that spelling and none is named for it.
 CONVERGE = [
     ("carries", "carried", "carry"),
     ("denies", "denied", "deny"),
@@ -131,8 +134,12 @@ class Corpus(unittest.TestCase):
             self.assertIn(src, self.assertions, src)
 
     def test_the_tokens_the_second_form_split_are_in_the_corpus(self):
-        # The fixtures above are corpus words. If a rename retires one, this
+        # The words below are corpus words. If a rename retires one, this
         # fails and says so rather than leaving a fixture testing nothing.
+        # It asserts over this list and not over CONVERGE, which is what lets
+        # `("cases", "case")` stay a fixture after its plural left the slugs:
+        # the pair still watches the stemmer, and `cases` is simply not listed
+        # here. A fixture retired from this list is retired from the claim.
         live = set()
         for node_id, crate in self.crates.items():
             live.update(gp.slug_of(node_id, crate).split("-"))
