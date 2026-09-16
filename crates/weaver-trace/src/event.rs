@@ -114,10 +114,10 @@ pub enum Subsystem {
     Tool,
 }
 
-/// The fourteen event kinds, exhaustive, matching the charter's section 3.1
+/// The twenty-one event kinds, exhaustive, matching the charter's section 3.1
 /// exactly. Every kind carries an explicit rename because no scheme produces
 /// the charter's dotted names, and the enum is exhaustive because the set is
-/// closed by ruling: an attribute that let a consumer absorb a fifteenth kind
+/// closed by ruling: an attribute that let a consumer absorb a further kind
 /// into a wildcard would defeat the closure the corpus keys on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum Kind {
@@ -182,12 +182,21 @@ pub enum Kind {
 /// back, the working structure holding rendered lines, and the asymmetry is a
 /// compile property pinned at the crate root.
 ///
-/// The kind-to-payload mapping is total, nineteen kinds and thirteen
-/// dispositions: `unload`, `session.closed`, and `turn.started` carry
-/// no payload, and `load` stopped being among them 2026-08-21, carrying
-/// the diagnostic elections of its load so a record declares its posture; the three message kinds carry `Message`; `turn.closed` carries
-/// `TurnClosed`; `fault` carries `Fault`; the three model kinds carry their
-/// three own shapes; and the tool bracket's two carry `Deferred`.
+/// The kind-to-payload mapping is total, twenty-one kinds and sixteen
+/// dispositions, the payload-free case counting as one of them.
+/// **`pairing_licensed` in `writer.rs` enforces the mapping and is the
+/// authority on it**, this comment naming only which variant of this enum
+/// each kind reaches. Variants throughout rather than the shapes they hold,
+/// so a row reads against the licensing match with no translation step, and
+/// because six variants hold `Box<RawValue>` and a shape cannot tell them
+/// apart: `session.closed` and `turn.started` carry nothing, `unload`
+/// carries `Unload` where a member stood and nothing where none did, `load`
+/// carries `Elections`, the four message kinds carry `Message`,
+/// `turn.closed` carries `TurnClosed`, `fault` carries `Fault`, `flush`
+/// carries `Flush`, `elision` carries `Elision`, `refusal` carries
+/// `Refusal`, the four model kinds carry their four own variants, the
+/// classify pair carries its two, and the tool bracket's two carry
+/// `Deferred`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum Payload {
