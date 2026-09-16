@@ -40,6 +40,22 @@ pub struct Boundary {
     /// The directory the store's socket stands in, from this crate's own
     /// configuration, read under the service engine alone.
     pub store_socket: std::path::PathBuf,
+    /// The state member's own account where the box carries one, per
+    /// `weaver-state-PRD` section 4: the member holds its territory by
+    /// owning it, so every election but `none` requires the account the
+    /// spawn drops to and the store admits. `None` is an unprovisioned box
+    /// and never an absent member, the same reading `member_binary` takes.
+    pub member_account: Option<MemberAccount>,
+}
+
+/// The state member's own kernel identity: the uid the spawn drops to, the
+/// uid that owns the territory, and the uid the store's first gate answers
+/// about, which are one uid because the charter's custody argument rests on
+/// their being one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MemberAccount {
+    pub uid: u32,
+    pub gid: u32,
 }
 
 /// The fleet's allow-list: the names the operator delegated, per charter
@@ -72,6 +88,20 @@ pub fn identity_for(name: &AgentName) -> String {
     format!("weaver-{}", name.0)
 }
 
+/// The state member's own account name, `weaver-<name>-state`, constructed
+/// from the same validated name and at the same one site, per
+/// `weaver-admin-Spec` section 6.
+///
+/// **It derives rather than being declared.** An account named in the
+/// agent's file would be a second place the member's identity is stated, and
+/// the store's identity map, the territory's owner, and the spawn's uid would
+/// then answer to a value the operator can move under a running agent. The
+/// derivation makes `deploy/create-agent.sh`'s `weaver-<name>-state` and this
+/// crate's lookup one fact.
+pub fn member_identity_for(name: &AgentName) -> String {
+    format!("{}-state", identity_for(name))
+}
+
 /// The report a completed inventory yields: what was read, for the caller that
 /// proceeds to a load and for the verb that stops here.
 #[derive(Debug, Clone)]
@@ -93,6 +123,10 @@ pub struct Inventory {
     /// at, a whole record resolved to its last run's last turn. The record's
     /// path never leaves this crate.
     pub lineage: Option<weaver_types::Lineage>,
+    /// The state member's account, carried from the boundary the walk
+    /// verified so the spawn takes the account the store was asked about
+    /// rather than resolving it a second time.
+    pub member_account: Option<MemberAccount>,
 }
 
 /// The one inventory function.
@@ -293,6 +327,24 @@ fn take_inventory_against(
         eprintln!("boundary unverified: no weaver-state binary beside the worker's");
         return Err(LifecycleRefusal::BoundaryUnverified);
     }
+    // **And its account**, per `weaver-state-PRD` section 4: the member holds
+    // its territory by owning it, so a member with no account of its own has
+    // no territory to hold and would run as this crate does. A box lacking
+    // the account refuses here for the reason a box lacking the binary does,
+    // the provisioning being what is missing, and refuses before the store is
+    // asked anything, because the account is what the first gate is asked
+    // about.
+    //
+    // conforms: admin-member-account-required-at-inventory
+    if store.engine != StoreEngine::None && boundary.member_account.is_none() {
+        eprintln!(
+            "boundary unverified: no {} account for the state member to run as. \
+             Run deploy/create-agent.sh, or useradd --system --no-create-home \
+             --user-group it.",
+            member_identity_for(name)
+        );
+        return Err(LifecycleRefusal::BoundaryUnverified);
+    }
     if store.engine == StoreEngine::Postgres {
         let (Some(database), Some(role)) = (store.database.as_deref(), store.role.as_deref())
         else {
@@ -309,34 +361,9 @@ fn take_inventory_against(
             );
             return Err(LifecycleRefusal::BoundaryUnverified);
         }
-        match store_admits(&boundary.store_socket, database, role) {
-            Ok(true) => {}
-            Ok(false) => {
-                eprintln!(
-                    "boundary unverified: the store does not map this account to role {role:?} \
-                     on database {database:?}"
-                );
-                return Err(LifecycleRefusal::BoundaryUnverified);
-            }
-            Err(e) => {
-                eprintln!("boundary unverified: the store could not be asked: {e}");
-                return Err(LifecycleRefusal::BoundaryUnverified);
-            }
-        }
-        match store_admits_as(boundary, database, role) {
-            Ok(false) => {}
-            Ok(true) => {
-                eprintln!(
-                    "boundary unverified: the store maps the agent's uid {} to role {role:?}",
-                    boundary.agent_uid
-                );
-                return Err(LifecycleRefusal::BoundaryUnverified);
-            }
-            Err(e) => {
-                eprintln!("boundary unverified: the store could not be asked as the agent: {e}");
-                return Err(LifecycleRefusal::BoundaryUnverified);
-            }
-        }
+        store_gate(boundary, database, role, |uid, gids| {
+            store_admits_as(&boundary.store_socket, uid, gids, database, role)
+        })?;
     }
 
     // **A restore is judged here too**, per `weaver-admin-Spec` section 4 as
@@ -422,6 +449,7 @@ fn take_inventory_against(
         declaration: declaration_digest(source),
         binding,
         lineage,
+        member_account: boundary.member_account,
     })
 }
 
@@ -634,36 +662,127 @@ pub fn store_admits(socket_dir: &Path, database: &str, role: &str) -> std::io::R
     Ok(admitted)
 }
 
-/// **Does the store admit the agent's uid as `role`?** The question the
-/// charter's second gate poses, and the one this process cannot ask as
-/// itself: peer authentication reads the connecting uid, so this binary
-/// re-executes itself under the agent's uid and primary gid with
-/// [`PROBE_STORE_VARIABLE`] set, and the child asks [`store_admits`] and
-/// exits zero for admitted and one for refused. Any other exit is the probe
-/// failing to run, which is an error and not an answer.
-pub fn store_admits_as(boundary: &Boundary, database: &str, role: &str) -> std::io::Result<bool> {
+/// **Does the store admit `uid` as `role`?** The question both of the
+/// charter's gates pose, and the one this process cannot ask as itself: peer
+/// authentication reads the connecting uid, so this binary re-executes itself
+/// under the named uid and gid with [`PROBE_STORE_VARIABLE`] set, and the
+/// child asks [`store_admits`] and exits zero for admitted and one for
+/// refused. Any other exit is the probe failing to run, which is an error and
+/// not an answer.
+///
+/// **Both gates go through here as of 2026-09-15**, per issue #545. The first
+/// gate asked [`store_admits`] from this process, so the identity the store
+/// had to admit was whichever account admin runs as - root - rather than the
+/// member's, and the charter's derivation of the object gate from the kernel
+/// fact was asserted about a process that never dials the store.
+pub fn store_admits_as(
+    socket_dir: &Path,
+    uid: u32,
+    gids: &[u32],
+    database: &str,
+    role: &str,
+) -> std::io::Result<bool> {
     use std::os::unix::process::CommandExt;
     let mut probe = std::process::Command::new(std::env::current_exe()?);
     probe
         .env_clear()
         .env(PROBE_STORE_VARIABLE, "1")
-        .arg(&boundary.store_socket)
+        .arg(socket_dir)
         .arg(database)
         .arg(role)
-        .uid(boundary.agent_uid)
+        .uid(uid)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    if let Some(gid) = boundary.agent_gids.first() {
-        probe.gid(*gid);
+    // **The probe carries the group set of the identity it stands for.**
+    // `CommandExt::gid` sets the primary group and leaves the supplementary
+    // list inherited from this crate, where the spawned member's `become_member`
+    // narrows it to exactly its own. Without this the probe reaches a store
+    // socket on a group admin holds and the identity does not, and answers
+    // about access that identity will not have: for the member that is a gate
+    // passing on a dial that will fail, and for the agent it is a refusal
+    // observed for the wrong reason.
+    if let Some(primary) = gids.first().copied() {
+        probe.gid(primary);
+        let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
+        // SAFETY: `setgroups` is async-signal-safe and touches only this forked
+        // child's credentials, before exec, while the fork still holds the
+        // privilege the call needs.
+        unsafe {
+            probe.pre_exec(move || {
+                if nix::libc::setgroups(set.len(), set.as_ptr()) < 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
     }
     match probe.status()?.code() {
         Some(0) => Ok(true),
         Some(1) => Ok(false),
         other => Err(std::io::Error::other(format!(
-            "the probe under uid {} ended with {other:?}",
-            boundary.agent_uid
+            "the probe under uid {uid} ended with {other:?}"
         ))),
+    }
+}
+
+/// **The store's two gates, asked in order and each as the uid it is about.**
+///
+/// The charter's wall is two questions of one store: the member's account
+/// maps to the declared role, and the agent's uid maps to none. Peer
+/// authentication welds the object gate to the service gate, so each question
+/// is answered by connecting as the uid it asks about - which is why the
+/// member's gate is asked by a child under the member's account and never
+/// from this process, whose account is root and is party to neither gate.
+///
+/// The asking is a parameter so the call site is watched. What a test can
+/// present is which uid each gate names and what the walk does with the
+/// answers; what it cannot present is a provisioned store, and the mechanism
+/// that carries the uid is [`store_admits_as`], already standing for the
+/// agent's gate since 2026-09-04.
+///
+/// conforms: admin-store-gate-asks-as-the-member
+fn store_gate(
+    boundary: &Boundary,
+    database: &str,
+    role: &str,
+    mut ask: impl FnMut(u32, &[u32]) -> std::io::Result<bool>,
+) -> Result<(), LifecycleRefusal> {
+    let Some(member) = boundary.member_account else {
+        // Unreachable from the walk, which requires the account above, and
+        // stated rather than unwrapped: a gate that assumed an account would
+        // be asking the store about nobody.
+        eprintln!("boundary unverified: no member account to ask the store about");
+        return Err(LifecycleRefusal::BoundaryUnverified);
+    };
+    match ask(member.uid, &[member.gid]) {
+        Ok(true) => {}
+        Ok(false) => {
+            eprintln!(
+                "boundary unverified: the store does not map the member's uid {} to role \
+                 {role:?} on database {database:?}",
+                member.uid
+            );
+            return Err(LifecycleRefusal::BoundaryUnverified);
+        }
+        Err(e) => {
+            eprintln!("boundary unverified: the store could not be asked as the member: {e}");
+            return Err(LifecycleRefusal::BoundaryUnverified);
+        }
+    }
+    match ask(boundary.agent_uid, &boundary.agent_gids) {
+        Ok(false) => Ok(()),
+        Ok(true) => {
+            eprintln!(
+                "boundary unverified: the store maps the agent's uid {} to role {role:?}",
+                boundary.agent_uid
+            );
+            Err(LifecycleRefusal::BoundaryUnverified)
+        }
+        Err(e) => {
+            eprintln!("boundary unverified: the store could not be asked as the agent: {e}");
+            Err(LifecycleRefusal::BoundaryUnverified)
+        }
     }
 }
 
@@ -1309,6 +1428,13 @@ mod tests {
             // stands in for it, present on every box the suite runs on.
             member_binary: Some(std::path::PathBuf::from("/proc/self/exe")),
             store_socket: std::path::PathBuf::from(STORE_SOCKET_DIRECTORY),
+            // And an account for the member, which the same election
+            // requires: this process's own credentials stand in for it,
+            // being the one account every box the suite runs on carries.
+            member_account: Some(MemberAccount {
+                uid: nix::unistd::getuid().as_raw(),
+                gid: nix::unistd::getgid().as_raw(),
+            }),
         }
     }
 
@@ -1438,6 +1564,126 @@ mod tests {
             "the service engine requires the store's socket under the configured directory"
         );
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// **Every election but `none` requires the member's own account**, the
+    /// way it requires the member's binary, and for the same reason: the
+    /// member holds its territory by owning it, per `weaver-state-PRD`
+    /// section 4, so a member with no account has nothing to own and would
+    /// run as this crate does. The name is derived rather than declared, so
+    /// the refusal can say which account the box is missing.
+    ///
+    /// Perturbation: remove the `member_account` arm from `take_inventory`
+    /// and the first case passes the inventory, the load then standing a
+    /// member under admin's own identity - which is the whole of what issue
+    /// #545 found. Watched failing 2026-09-15.
+    ///
+    /// conforms: admin-member-account-required-at-inventory
+    #[test]
+    fn every_election_but_none_requires_the_members_own_account() {
+        let allow = AllowList::new(["alpha".to_string()]);
+        let name = AgentName("alpha".into());
+        assert_eq!(
+            member_identity_for(&name),
+            "weaver-alpha-state",
+            "the account deploy/create-agent.sh makes, derived from the same name"
+        );
+        let root = std::env::temp_dir().join(format!("wt-member-account-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let sink_dir = root.join("sink");
+        std::fs::create_dir_all(&sink_dir).expect("sink");
+        // Admin's own, mode-locked, so the walks ahead of the store's pass
+        // and the store's own is what refuses.
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&sink_dir, std::fs::Permissions::from_mode(0o700)).expect("mode");
+
+        let mut unprovisioned = boundary(&sink_dir, 65533);
+        unprovisioned.member_account = None;
+        let embedded = config_source(&sink_dir);
+        assert!(
+            matches!(
+                take_inventory(&name, &embedded, &allow, &unprovisioned),
+                Err(LifecycleRefusal::BoundaryUnverified)
+            ),
+            "an absent election is the embedded engine and requires the account"
+        );
+        let declined = config_source_electing(&sink_dir, "  engine: none\n");
+        assert!(
+            take_inventory(&name, &declined, &allow, &unprovisioned).is_ok(),
+            "none declines the member and requires nothing"
+        );
+        assert!(
+            take_inventory(&name, &embedded, &allow, &boundary(&sink_dir, 65533)).is_ok(),
+            "and a box carrying the account passes, so the refusal is the account's"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// **Each of the store's two gates is asked as the uid it is about**, the
+    /// member's first and the agent's second, per `weaver-state-PRD` section
+    /// 4's welding of the object gate to the service gate.
+    ///
+    /// The defect issue #545 filed is exactly the first uid: the member's
+    /// gate was asked from this process, so the identity the store had to
+    /// admit was whichever account admin runs as, which is root, and no
+    /// member-specific account was resolved anywhere. The second gate is
+    /// unchanged and its property is re-asserted here, no agent's uid
+    /// reaching any store being what the walk already bought.
+    ///
+    /// Perturbation: ask the first gate with `boundary.admin_uid`, or with
+    /// an in-process `store_admits` that names no uid at all, and the walk
+    /// refuses a store this fixture maps the member on, the recorded pair no
+    /// longer opening with the member's account. Watched failing 2026-09-15
+    /// under both.
+    ///
+    /// conforms: admin-store-gate-asks-as-the-member
+    #[test]
+    fn the_store_is_asked_as_the_member_and_then_as_the_agent() {
+        let mut bound = boundary(std::path::Path::new("/nonexistent"), 65533);
+        bound.member_account = Some(MemberAccount { uid: 4242, gid: 43 });
+        bound.agent_gids = vec![65531];
+
+        // Both gates answering as the charter requires: the member admitted,
+        // the agent refused.
+        let mut asked = Vec::new();
+        let walked = store_gate(&bound, "weaver_alpha", "weaver_alpha", |uid, gids| {
+            asked.push((uid, gids.to_vec()));
+            Ok(uid == 4242)
+        });
+        assert!(walked.is_ok(), "the member admitted and the agent refused");
+        assert_eq!(
+            asked,
+            vec![(4242, vec![43]), (65533, vec![65531])],
+            "the member's account first and the agent's uid second, each with its \
+             own whole group set rather than this crate's"
+        );
+        assert!(
+            !asked.iter().any(|(uid, _)| *uid == bound.admin_uid),
+            "and neither gate is asked as the account admin runs as"
+        );
+
+        // A store that does not map the member refuses the load rather than
+        // standing a member that cannot reach its own database.
+        let refused = store_gate(&bound, "weaver_alpha", "weaver_alpha", |_, _| Ok(false));
+        assert!(
+            matches!(refused, Err(LifecycleRefusal::BoundaryUnverified)),
+            "the first gate closed is a boundary unverified"
+        );
+        // And a store that admits the agent refuses, which is the property
+        // bought on 2026-09-04 and kept here.
+        let open = store_gate(&bound, "weaver_alpha", "weaver_alpha", |_, _| Ok(true));
+        assert!(
+            matches!(open, Err(LifecycleRefusal::BoundaryUnverified)),
+            "an agent uid the store maps is a boundary unverified"
+        );
+        // A store that cannot be asked is an error and never an answer.
+        let unasked = store_gate(&bound, "weaver_alpha", "weaver_alpha", |_, _| {
+            Err(std::io::Error::other("no store"))
+        });
+        assert!(
+            matches!(unasked, Err(LifecycleRefusal::BoundaryUnverified)),
+            "a store that could not be asked answers neither gate"
+        );
     }
 
     /// **A declaration whose gate instruction disagrees with its kind is
@@ -1656,6 +1902,10 @@ mod tests {
             home: home.clone(),
             member_binary: Some(std::path::PathBuf::from("/proc/self/exe")),
             store_socket: std::path::PathBuf::from(STORE_SOCKET_DIRECTORY),
+            member_account: Some(MemberAccount {
+                uid: nix::unistd::getuid().as_raw(),
+                gid: nix::unistd::getgid().as_raw(),
+            }),
         };
         assert!(
             !agent_can_traverse(&sink_dir, &third_party),

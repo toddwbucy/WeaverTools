@@ -5,6 +5,18 @@ agent. Code is written against it under the gates of Working Process section 6.
 
 **Date filed:** 2026-08-02
 
+**Revised:** 2026-09-15, the state member takes an account of its own. Section 6's
+clause is recut: the member runs as `weaver-<name>-state`, the territory is `0700`
+and owned by it, and the spawn drops the supplementary set, the gids, and the uids
+in that order. The G5 marking that clause carried since 2026-08-25, naming
+`weaver-state-PRD` section 4's uid a requirement not yet met, retires with the gap
+it described. Section 4 requires the account of every election but `none`,
+`BoundaryUnverified` and naming it, and states that each of the store's two gates is
+asked as the uid it is about, the member's gate having been asked from this process
+and so about root. Four records join, three watched and the spawn's drop review with
+its reason named, and section 10's figures carry them. Per the operator's ruling of
+this date and issue #545.
+
 **Revised:** 2026-09-15, the counts are re-derived and the library surface takes
 the instrument that reads it. Section 1 tagged `admin-no-library-surface` as
 `review` because nothing mechanical read the absence, while
@@ -913,6 +925,52 @@ refused with `BoundaryUnverified` and never `ConfigInvalid`, for the reason the
 group case below gives. The grant surface is not judged here, only read, at the
 enter and again at the leave, per `weaver-trace-PRD` section 3.1.
 
+**Every election but `none` requires the member's own account too, as of
+2026-09-15**, per issue #545. The account is `weaver-<name>-state`, derived
+from the same validated name section 1's identity is, and read from the
+account database rather than declared, for the reason the agent's home is read
+rather than composed: the uid the spawn drops to, the uid that owns the
+territory, and the uid the store's first gate is asked about are one kernel
+fact, and a declaration naming it would be a second place that fact is stated
+and a value the operator could move under a running agent. A box lacking the
+account refuses `BoundaryUnverified` naming the account, exactly as a box
+lacking the member's binary does and for the same reason, the provisioning
+being what is absent. **The refusal stands ahead of the store's questions**,
+the account being what the first of them is about.
+
+```graph
+node: admin-member-account-required-at-inventory
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-member-account-required-at-inventory
+```
+
+**Each gate is asked as the uid it is about, and this is a correction.** Until
+2026-09-15 the member's gate was asked from this process, so what the store had
+to admit was whichever account admin runs as, which is root, while the agent's
+gate was asked by a child under the agent's uid. One question therefore
+described the member and named admin, which is the defect issue #545 filed: the
+charter derives the object gate's identity from the kernel fact, and a question
+asked by a process that never dials the store derives nothing. Both questions
+now go the same way, a child re-executing this binary under the named uid and
+primary gid and exiting with the answer, which is the mechanism the agent's
+gate has carried since 2026-09-04. **The second gate is unchanged**, no agent's
+uid reaching any store being the property already bought, and it is kept rather
+than rebuilt.
+
+```graph
+node: admin-store-gate-asks-as-the-member
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-store-gate-asks-as-the-member
+```
+
 **A restore is judged here too, as of 2026-09-04, per issue #432.** A declaration
 electing one names a record, and the walk reads it under this crate's own custody: a
 record that cannot be read refuses `BoundaryUnverified`, and a cut naming a run the
@@ -1438,18 +1496,61 @@ custody is a territory this crate prepares rather than a sandbox the template
 declares. Nothing of section 6's manager interface above reaches it, and this
 crate holds no channel to it once it runs.
 
-**The member inherits this crate's identity, and the charter's own account is
-marked pending rather than left to disagree with it.** `weaver-state-PRD`
-section 4 has the member holding "a uid of its own over one subdirectory the
-agent's uid cannot enter", and the spawn drops no privilege, so the process runs
-as this crate does and the territory is prepared by group rather than by owner.
-**This section is authoritative for what runs and that charter's sentence is a
-requirement not yet met**, per G5, so the two are one fact with a named
-authority rather than two readings a reader must pick between. What the charter
-asks for is real and unmet: an account of the member's own, an owning chown, and
-a privilege drop at the spawn. The isolation it exists to buy holds meanwhile
-by a weaker route, the territory being unreachable to the agent's uid either
-way, which is why nothing has tripped on the gap.
+**The member runs under its own account, and the charter's sentence is met as
+of 2026-09-15**, per issue #545 and the operator's ruling of that date.
+`weaver-state-PRD` section 4 has the member holding "a uid of its own over one
+subdirectory the agent's uid cannot enter", and it now does: the account is
+`weaver-<name>-state`, resolved and required at section 4's walk, the territory
+is made `0700` and chowned to it, and the spawn drops to it. The G5 marking
+this clause carried from 2026-08-25 to that date retires with the gap it
+described, there being no divergence left for an authority to settle. **The
+three parts are one act and none of them holds alone**: an account nothing runs
+as is a passwd entry, a chown under a spawn that keeps root is a room its
+occupant does not need, and a privilege drop into a room the member cannot
+write is a member that dies at its first open.
+
+```graph
+node: admin-member-spawn-drops-to-its-account
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-admin
+to: admin-member-spawn-drops-to-its-account
+```
+
+**The drop's record is review and the reason is named.** What it asserts is
+that the spawned process runs as the member and holds no group root left it -
+the supplementary set narrowed to the member's own group, then the gids, then
+the uids, in that order, because the two narrowings need the privilege the last
+one gives away. The instrument that would watch it is a box carrying a
+provisioned agent and this crate's root, and nothing in this tree stands one:
+the suite runs unprivileged, where every one of the three calls refuses, so a
+test written here would assert the refusal and not the drop. It is not bought
+rather than absent, per apex section 11, and the act that stands a provisioned
+box buys it.
+
+**The territory is the member's own room and a load closes it rather than
+opening it.** It is one subdirectory of the operator-side directory the sink
+already stands in, made if absent and repaired if present, `0700` and owned by
+the member's account. **The repair is unconditional and that is the half issue
+#545 found second**: the preparation ran on every load and rewrote the room to
+this crate's uid, the parent's group, and `0750`, so a member-owned room did not
+survive one load and the ownership could not be held by provisioning alone. The
+agent's uid is walled out twice over and neither wall rests on the other, the
+containing directory denying it the search bit, which section 4 verified before
+this runs, and this directory granting it nothing through owner, group, or
+other.
+
+```graph
+node: admin-member-territory-is-the-members-own
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-admin
+to: admin-member-territory-is-the-members-own
+```
 
 **Its vector is the territory and, under a diagnostic binding or a restoring load, the
 preload socket path, with the first door's end inherited beside it rather than named on
@@ -1542,8 +1643,8 @@ with it, which is the same route the operator's own tooling learns any path by.
 **The name's directory is the member's own territory, which this crate
 prepares before the spawn**, per the standing clause above, so the bind races
 nothing into being. This crate binds nothing itself, the member binding the
-preload name under the identity it inherited, which reaches that directory
-because this crate's identity owns it. The door's gate is its credential
+preload name under its own account, which reaches that directory because that
+account owns it, as of 2026-09-15. The door's gate is its credential
 judgment, per `weaver-analysis-state-contract`, and the directory's wall is
 what keeps the worker's identity from ever reaching the name.
 
@@ -1554,8 +1655,8 @@ cleanup no longer takes a name whose peer is the operator's. The squat defect
 closes the same way: the name stands where the agent's uid cannot write, so a
 name replaced before the operator dials it is unrepresentable rather than
 defended. The act that closed it is this ruling's and not the account act the
-earlier form of this clause predicted: the member's own account remains owed
-per the identity paragraph above, and the name no longer waits on it.
+earlier form of this clause predicted, which is why the name did not wait on
+the account and the account, landing 2026-09-15, changed nothing here.
 
 **Nothing is waited on after the start, because there is no name to watch.**
 The ruling retires the pathname wait with the pathname: the pair exists
@@ -2118,10 +2219,11 @@ surface, read as a declared `[[bin]]`, an absent `[lib]` section, and no
 manifest read cannot reach on its own and the reason the instrument reads the
 tree beside the file.
 
-**Which invariant each claim serves, and why most serve none.** Twelve of the forty
-carry a `grounds` edge and those twelve carry thirteen edges, one record grounding in
-two invariants. **All three records the boundary act of 2026-08-28 added ground in
-none**, and the paragraph accounts for each rather than one. Section 6's runtime
+**Which invariant each claim serves, and why most serve none.** Twelve of the
+forty-four carry a `grounds` edge and those twelve carry thirteen edges, one
+record grounding in two invariants. **All three records the boundary act of
+2026-08-28 added ground in none**, and the paragraph accounts for each rather
+than one. Section 6's runtime
 directory mode is an election about a boundary this crate provisions, and its access
 rule reachability is a consistency rule between two locks - neither is a claim an
 invariant reaches. The third, the gid set the denial walk reads, is the same shape: it
@@ -2144,7 +2246,7 @@ six ground in it. **The atomic close-on-exec of section 6 grounds in it by the s
 relation rather than the first**, on the argument that clause states. Remove it and the
 log is still NDJSON, the FIFO still opens nonblocking, the inventory still repairs
 nothing, and the identity is still built from the validated name, so those ground in
-nothing. **Twenty-eight claims grounding in no invariant is the expected result and not
+nothing. **Thirty-two claims grounding in no invariant is the expected result and not
 a gap**, per Document Format section 4: most of what this Spec elects is a rendering, a
 mode, an ordering, or a route, and representation is what the invariants are not about.
 
@@ -2217,9 +2319,11 @@ sentence listed it as unedged while its own record carried the edge.
 The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
-would sit apart from the prose that earns it. Forty records in all,
-fourteen tagged for review, twenty for perturbation, four for the manifest,
-and two for a compile pin, the restore's judgment joining on 2026-09-06. The
+would sit apart from the prose that earns it. Forty-four records in all,
+fifteen tagged for review, twenty-three for perturbation, four for the
+manifest, and two for a compile pin, the restore's judgment joining on
+2026-09-06 and the member's own account bringing four on 2026-09-15, three of
+them watched and the spawn's drop the review whose reason section 6 names. The
 residency record moved from review to
 perturbation on 2026-08-06, when the code act gave it a test, and the library
 surface from review to the manifest on 2026-09-15, its test having read the
@@ -2261,12 +2365,16 @@ moved, and six arrivals, so each is short by the inversion's one side.
 **Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
 `admin-run-reference-distinguishes` with the run's identity. Three records took the
 count to thirty-four: that one, then `admin-kind-mismatch-refused-at-inventory` on
-2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Six more reach the
-forty this section counts above, the boundary act's three of 2026-08-28 that the tag
-census names, then `admin-granted-permission-refused-at-inventory` on 2026-08-31,
+2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Six more reach
+forty, the boundary act's three of 2026-08-28 that the tag census names, then
+`admin-granted-permission-refused-at-inventory` on 2026-08-31,
 `admin-restore-cut-judged-at-the-inventory` on 2026-09-06, and
-`admin-missing-home-refuses-and-builds-nothing` on 2026-09-07, each named so this figure
-is checkable against the file the way every other figure here is. An earlier form of
+`admin-missing-home-refuses-and-builds-nothing` on 2026-09-07. Four more reach the
+forty-four this section counts above, all on 2026-09-15 with the member's own
+account: `admin-member-account-required-at-inventory`,
+`admin-member-territory-is-the-members-own`, `admin-store-gate-asks-as-the-member`,
+and `admin-member-spawn-drops-to-its-account`. Each is named so this figure is
+checkable against the file the way every other figure here is. An earlier form of
 this lead stated no endpoint at all, and stating one is what exposed that the lists did
 not reach it. Retired: the operator surface's six, its stream election, its accept-time
 refusal, its refusal-by-closure, its serial answering, its bounded request line, and its
@@ -2323,6 +2431,19 @@ directive is asserted where the run happens.
 - Truncation is a fault: an over-bound envelope on the coordination channel
   produces the fault and no directive, confirmed by watching a silently
   shortened answer decode when the `MSG_TRUNC` check is removed.
+- The member's own account: an inventory run against a box carrying no
+  `weaver-<name>-state` account refuses every election but `none`, confirmed
+  by watching the same declaration pass the inventory when the arm is removed,
+  a load then standing a member under this crate's identity.
+- The store's first gate names the member: the walk asks its two questions as
+  the member's uid and then as the agent's, confirmed by watching the first
+  ask carry the account admin runs as, and by watching an in-process ask that
+  names no uid at all, each leaving the pair no longer opening with the
+  member.
+- The territory is the member's: a prepared territory is `0700` and owned by
+  the member's account, and a room widened between loads is closed again,
+  confirmed by watching the mode read `0750` when the group-owned preparation
+  is restored.
 - One write is one read: two envelopes are written back to back on the
   coordination channel and both writes complete before either read, and two
   reads return exactly one envelope each, confirmed by watching the first

@@ -204,27 +204,11 @@ fn stand_state_member(
     if !binary.exists() {
         return None;
     }
+    // The member's account, which section 4 required of every election but
+    // `none` before this load reached here.
+    let member_account = inventory.member_account?;
     let territory_root = inventory::sink_directory(&inventory.config.trace_sink);
-    let territory = territory_root.join("state");
-    // The territory's custody mirrors the sink's: this uid owns it, the
-    // sink directory's group may look, and the worker's identity holds
-    // neither and cannot enter, which is the wall of `weaver-state-PRD`
-    // section 4 enforced at the filesystem. The mode rides the creation
-    // itself, so the directory never stands a moment wider than it ends.
-    use std::os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt};
-    if std::fs::DirBuilder::new()
-        .recursive(true)
-        .mode(0o750)
-        .create(&territory)
-        .is_err()
-        && !territory.is_dir()
-    {
-        return None;
-    }
-    let _ = std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o750));
-    if let Ok(parent) = std::fs::metadata(territory_root) {
-        let _ = std::os::unix::fs::chown(&territory, None, Some(parent.gid()));
-    }
+    let territory = prepare_territory(territory_root, member_account)?;
     // **The first door is a socketpair this crate creates and speaks on
     // never**, per the operator's ruling of 2026-08-26: both ends
     // close-on-exec atomically at creation like every descriptor this crate
@@ -289,7 +273,10 @@ fn stand_state_member(
     };
     unsafe {
         use std::os::unix::process::CommandExt;
-        member.pre_exec(move || arm_member_end(raw_member_end));
+        member.pre_exec(move || {
+            become_member(member_account)?;
+            arm_member_end(raw_member_end)
+        });
     }
     let spawned = member.spawn().is_ok();
     // This side's copy of the member's end closes either way: the member
@@ -300,6 +287,83 @@ fn stand_state_member(
         return None;
     }
     Some(harness_end)
+}
+
+/// **The member's territory, which the member owns.** One subdirectory of
+/// the operator-side directory the sink already stands in, made if absent and
+/// repaired if present, `0700` and owned by the member's own account, per
+/// `weaver-state-PRD` section 4 and `weaver-admin-Spec` section 6.
+///
+/// **Owned rather than shared, as of 2026-09-15**, per issue #545. It stood
+/// at `0750` with the sink directory's group and this crate's uid as owner,
+/// which made the room admin's and the member a guest in it, and rewrote both
+/// on every load - so a member-owned room did not survive one load, and the
+/// charter's "a uid of its own over one subdirectory" was a sentence no
+/// filesystem fact answered. The repair is unconditional for the same reason
+/// the mode was: a room that widened between loads is a wall that stopped
+/// being one, and this crate is the party that owns saying so.
+///
+/// The agent's uid is walled out twice over and neither wall rests on the
+/// other: the containing directory denies it the search bit, which section 4
+/// verified before this ran, and this directory grants it nothing through
+/// owner, group, or other.
+///
+/// **Absorbed rather than refused**, like every other failure on this path:
+/// a territory this crate could not make or could not hand to the member is
+/// the leg not standing, and a member spawned into a room it cannot write is
+/// worse than an absent one.
+///
+/// conforms: admin-member-territory-is-the-members-own
+fn prepare_territory(
+    root: &std::path::Path,
+    member: inventory::MemberAccount,
+) -> Option<std::path::PathBuf> {
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+    let territory = root.join("state");
+    // The mode rides the creation itself, so the directory never stands a
+    // moment wider than it ends.
+    if std::fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(&territory)
+        .is_err()
+        && !territory.is_dir()
+    {
+        return None;
+    }
+    std::os::unix::fs::chown(&territory, Some(member.uid), Some(member.gid)).ok()?;
+    std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o700)).ok()?;
+    Some(territory)
+}
+
+/// **The privilege drop at the member's spawn**, run in the pre-exec while
+/// the fork still holds this crate's root: the supplementary set becomes the
+/// member's own group alone, then the gids, then the uids, each of the three
+/// values set so no saved id survives for the member to return to.
+///
+/// **The order is not interchangeable.** `setgroups` and `setresgid` both
+/// need the privilege `setresuid` gives away, so a drop that took the uid
+/// first would leave the member holding root's group memberships under the
+/// member's name, which reads as a dropped privilege and is not one.
+///
+/// Async-signal-safe throughout, per the pre-exec contract: three syscalls
+/// and no allocation. A failure returns the error, which fails the spawn, so
+/// a member this crate could not unprivilege does not run at all.
+///
+/// conforms: admin-member-spawn-drops-to-its-account
+fn become_member(member: inventory::MemberAccount) -> std::io::Result<()> {
+    let group = member.gid as nix::libc::gid_t;
+    if unsafe { nix::libc::setgroups(1, &group) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if unsafe { nix::libc::setresgid(group, group, group) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let user = member.uid as nix::libc::uid_t;
+    if unsafe { nix::libc::setresuid(user, user, user) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
 }
 
 /// **The arming, the one deliberate gift**, per `weaver-admin-Spec` section
@@ -454,6 +518,20 @@ fn take_inventory(
                     .unwrap_or(false)
             }),
         store_socket: config.state_store_socket.clone(),
+        // **The member's own account, looked up from the derived name.** It
+        // is read here rather than constructed, for the reason the home is:
+        // the uid the spawn drops to, the uid that owns the territory, and
+        // the uid the store's first gate answers about are the account
+        // database's fact and not this crate's. An absent account is a box
+        // the provisioning has not finished, which section 4 refuses for
+        // every election but `none`.
+        member_account: nix::unistd::User::from_name(&inventory::member_identity_for(agent))
+            .ok()
+            .flatten()
+            .map(|user| inventory::MemberAccount {
+                uid: user.uid.as_raw(),
+                gid: user.gid.as_raw(),
+            }),
     };
     inventory::take_inventory(agent, &source, &config.allow_list, &boundary)
 }
@@ -1421,6 +1499,60 @@ mod tests {
             Err(LifecycleRefusal::NoSuchAgent),
             "a name the allow-list does not admit refuses as every verb does"
         );
+    }
+
+    /// **The member's territory is the member's own, and a load closes a
+    /// room that was left open rather than opening a closed one.**
+    ///
+    /// Both halves matter and the second is the one issue #545 found: the
+    /// preparation ran on every load, so whatever the operator's
+    /// provisioning made the room, one load rewrote it to this crate's uid,
+    /// the parent's group, and `0750`. A member-owned `0700` room did not
+    /// survive a single load, which is why the charter's uid could not be
+    /// held by provisioning alone.
+    ///
+    /// The account stood up is this process's own, which is what lets the
+    /// chown run without privilege: a test that named another account would
+    /// assert nothing off a root box.
+    ///
+    /// Perturbation: restore `mode(0o750)`, the `set_permissions(0o750)`,
+    /// and the chown of the parent's group, and the fresh room reads `0750`
+    /// where `0700` is asserted. Watched failing 2026-09-15, at the first
+    /// assertion, which is where the run stops.
+    ///
+    /// conforms: admin-member-territory-is-the-members-own
+    #[test]
+    fn the_territory_is_owned_by_the_member_and_closed_on_every_load() {
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        let root = std::env::temp_dir().join(format!("wt-territory-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).expect("the operator-side directory");
+        let member = inventory::MemberAccount {
+            uid: nix::unistd::getuid().as_raw(),
+            gid: nix::unistd::getgid().as_raw(),
+        };
+
+        let territory = prepare_territory(&root, member).expect("the territory is made");
+        let made = std::fs::metadata(&territory).expect("it stands");
+        assert_eq!(
+            made.mode() & 0o777,
+            0o700,
+            "the room the member is handed grants nobody else anything"
+        );
+        assert_eq!(made.uid(), member.uid, "and the member owns it");
+
+        // A room widened between loads, which is the case the repair exists
+        // for: the operator, another tool, or an earlier build of this crate.
+        std::fs::set_permissions(&territory, std::fs::Permissions::from_mode(0o755))
+            .expect("widen it");
+        let again = prepare_territory(&root, member).expect("the second load");
+        assert_eq!(again, territory, "the same room, not a second one");
+        assert_eq!(
+            std::fs::metadata(&again).expect("it stands").mode() & 0o777,
+            0o700,
+            "a load closes a room that was left open"
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
 
