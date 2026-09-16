@@ -49,20 +49,36 @@ FIELDS = (
 )
 FIELD_RE = re.compile(r"^\*\*([A-Z][A-Za-z ]*):\*\*")
 ENTRY_RE = re.compile(r"^\*\*Revised:\*\*")
-LANDING_RE = re.compile(r"^\*\*Landing PR:\*\* #(\d+)$", re.M)
+# re.M so `search` over a whole file anchors per line. `match` over a single
+# line is unaffected by it, anchoring at position zero either way.
+LANDING_RE = re.compile(r"^\*\*Landing PR:\*\* #(\d+)\s*$", re.M)
 
 
 def run(args):
+    """Standard output of a command, with its exit status discarded."""
     return subprocess.run(args, capture_output=True, text=True).stdout
 
 
 def is_field(line):
+    """Whether a line opens a header field rather than bold prose.
+
+    A bolded sentence inside an entry can end in a colon, so the name is
+    checked against FIELDS rather than the shape alone.
+    """
     match = FIELD_RE.match(line)
     return bool(match) and match.group(1) in FIELDS
 
 
 def said(text):
-    """What the document says: header entries and blank lines removed."""
+    """What the document says: header entries, the field, and blank lines gone.
+
+    **The field is removed along with the entries, and leaving it in is a
+    self-reference.** It lives in the header and records provenance rather than
+    content, so a version carrying it would differ from the version before it
+    and the walk would stop at whatever act wrote it. Every document would then
+    derive the sweep that filled the field, which is the defect this whole
+    derivation exists to avoid, arriving one level up.
+    """
     lines = text.split("\n")
     kept = []
     index = 0
@@ -73,6 +89,9 @@ def said(text):
                     and not lines[index].startswith("---"):
                 index += 1
             continue
+        if LANDING_RE.match(lines[index]):
+            index += 1
+            continue
         if lines[index].strip():
             kept.append(lines[index].rstrip())
         index += 1
@@ -80,6 +99,7 @@ def said(text):
 
 
 def landing_commit(path, ref):
+    """The oldest commit whose content still matches the tip's."""
     commits = run(["git", "log", "--format=%H", ref, "--", path]).split()
     tip = None
     landing = None
@@ -95,6 +115,7 @@ def landing_commit(path, ref):
 
 
 def pull_request(commit, repo):
+    """The pull request a commit arrived in, squashed or merged."""
     env = {**os.environ, "GITHUB_TOKEN": ""}
     direct = subprocess.run(
         ["gh", "api", f"repos/{repo}/commits/{commit}/pulls", "-q", ".[].number"],
@@ -118,6 +139,7 @@ def pull_request(commit, repo):
 
 
 def main():
+    """Print the derivation, and under --check exit 1 on any mismatch."""
     check = "--check" in sys.argv
     repo = "toddwbucy/WeaverTools"
     ref = "origin/main"
