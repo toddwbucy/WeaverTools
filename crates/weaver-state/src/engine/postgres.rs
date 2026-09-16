@@ -8,8 +8,9 @@
 //! feature. The same two-table shape as the embedded engine, in this engine's
 //! dialect, and the same port, whole.
 //!
-//! Two of the section's claims this file does not cite, and each returns
-//! under `act-27`, which is where the engine gets an instrument.
+//! Two of the section's claims this file does not cite, and neither returns
+//! here on `act-27`'s reading: a citation is earned by holding an instrument
+//! or by a reading that holds, and this engine holds neither of them yet.
 //! `state-serve-restricts-to-the-session` is tagged `perturbation` and a
 //! perturbation claim is bought by a test and cited where the test is - this
 //! file holds no test and nothing but `main.rs` ever builds a `Postgres`, so
@@ -20,6 +21,10 @@
 //! so an elected key of 25 bytes or more can collide with another under
 //! `CREATE INDEX IF NOT EXISTS` and lose its index silently. That is issue
 //! #618 and the embedded engine is unaffected, sqlite setting no such limit.
+//! `weaver-state-Spec` section 3 elects what this engine owes for it: a name
+//! derived from the key path and distinct across elected paths, and a named
+//! refusal where the identifier limit cannot hold one, the encoding being the
+//! code act's. The citation returns with the code that answers that election.
 
 use std::cell::{RefCell, RefMut};
 

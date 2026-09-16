@@ -144,7 +144,8 @@ is a reserved slot, and the cross-session return writes its own paper.
   exactly two ends.
 - **Persistence across sessions.** A second return through the same door, with
   its own paper, and nothing in this component anticipates it.
-- **The integration surface is thin.** Four conformance headers against 1,178
-  lines and no integration test directory - the crate is young, landed in the
-  same week as its charter, and its test posture has not caught up to its
+- **The integration surface is thin.** Every source file carries a conformance
+  header now, and no test here crosses the seam - the suites reach the port and
+  the crate stands no integration test directory. The crate is young, landed in
+  the same week as its charter, and its test posture has not caught up to its
   prose.
