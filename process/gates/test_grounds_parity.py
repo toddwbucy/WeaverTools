@@ -6,16 +6,18 @@ first form split on hyphens and compared words, so `dependencies` never met
 `dependency`. The second reached for lemmas and split the pairs it was written to
 unify: `carries` became `carry` while `carried` became `carri`, `cases` became `cas`
 while `case` stayed `case`, `closes` became `clos` while `close` stayed `close`, and
-`string` became `str` while `strings` became `string`. Eleven of those twelve
-tokens are live in this corpus, `cases` having been retired from it 2026-09-15,
-and a table built on that reading reports two statements of one clause as two
-clauses.
+`string` became `str` while `strings` became `string`. Those sentences name eleven
+corpus words and four stemmer outputs, and ten of the eleven are live as slug
+tokens, `cases` having left the slugs 2026-09-15. A table built on that reading
+reports two statements of one clause as two clauses.
 
-So the fixtures are not invented words. Each group below is a set of inflections
-this corpus actually writes, and the test is that they reach one string. What that
-string is does not matter and is deliberately not asserted: the stemmer truncates
-towards a common prefix rather than towards a lemma, and pinning the output would
-make a better truncation a test failure.
+So the fixtures are corpus words, with one stated exception. Each group below is a
+set of inflections this corpus writes, except `("cases", "case")`, whose plural no
+slug has spelled since the rename this file records at its foot; the pair is kept
+because the stemmer is what these fixtures watch. The test is that each group
+reaches one string. What that string is does not matter and is deliberately not
+asserted: the stemmer truncates towards a common prefix rather than towards a
+lemma, and pinning the output would make a better truncation a test failure.
 """
 
 import os

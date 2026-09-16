@@ -10,10 +10,12 @@
 /// A failure below the exchange layer: no exchange can carry it, so no refusal
 /// answers it and the service ends.
 ///
-/// `Truncated` is a read the kernel shortened, `Undecodable` is octets that do
-/// not decode to an envelope and so cannot be attributed to any exchange for a
-/// refusal to answer, and `Closed` is the far process gone, observed as death
-/// and never synthesized into an answer.
+/// The three cases that carry no doc of their own: `Truncated` is a read the
+/// kernel shortened, `Undecodable` is octets that do not decode to an envelope
+/// and so cannot be attributed to any exchange for a refusal to answer, and
+/// `Closed` is the far process gone, observed as death and never synthesized
+/// into an answer. `SocketPathUnusable` and `WrongPeer` are documented at their
+/// variants rather than restated here.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChannelFault {
     Truncated {
@@ -58,12 +60,11 @@ pub enum Outcome {
 }
 
 /// Why adoption refused. Adoption fails only when a set fails: a hygiene call
-/// that errors leaves the worker attachable or the end inheritable, so `adopt`
+/// that errors leaves the worker attachable, so `adopt`
 /// returns the fault naming the set rather than proceeding unset, and a
 /// `Harness` in hand means the hygiene held.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AdoptionFault {
-    /// The close-on-exec set on the adopted coordination end failed.
     /// The dumpable clear failed, leaving the worker attachable.
     DumpableNotCleared { errno: i32 },
 }

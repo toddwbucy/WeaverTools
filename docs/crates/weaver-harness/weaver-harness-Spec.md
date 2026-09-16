@@ -2496,9 +2496,10 @@ none of their content appears, watched to fail when the filter widens.
   prose and has no reason to admit in a graph.
 
 **Enforced by the manifest.** The internal dependency set is exactly the two
-floor links and the trace seam, read against the graph under gate H2. No async
-runtime, no logging crate, and no HTTP client in the resolved external tree,
-by the build-time `cargo tree` assertion the floor Specs share.
+floor links, the trace seam, and the diagnostic mechanism section 1 counts as the
+fourth, read against the graph under gate H2. No async runtime, no logging crate,
+and no HTTP client in the resolved external tree, by the build-time `cargo tree`
+assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Nineteen of the
 sixty-six carry a `grounds` edge and one of the nineteen carries two, so the edges
