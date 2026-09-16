@@ -32,6 +32,7 @@
     "crates/weaver-spu/src/family/gpt_oss.rs",
     "crates/weaver-spu/src/family/llama.rs",
     "crates/weaver-spu/src/family/phi.rs",
+    "crates/weaver-spu/src/family/qwen2.rs",
     "crates/weaver-spu/tests/common/mod.rs",
     "crates/weaver-spu/tests/native_loaded.rs",
     "crates/weaver-spu/tests/two_card.rs",

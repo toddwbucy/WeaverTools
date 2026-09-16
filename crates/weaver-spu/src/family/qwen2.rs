@@ -1,5 +1,3 @@
-//! conforms: spu-system-folds-where-the-template-has-no-system-turn
-//!
 //! The qwen2 family, per `weaver-spu-Spec` section 5.
 //!
 //! Everything qwen2 defines sits here: its ChatML markers, the rendering that
