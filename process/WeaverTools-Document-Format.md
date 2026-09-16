@@ -38,11 +38,15 @@ subjects, and a mapper that treats one as the other builds a graph where a file 
 own dependency.
 
 A document node carries a container and nothing else. The container comes from the
-directory, per section 2, so a document node is built by walking the tree rather than
-by reading a block, and only a document that is itself the source of an edge needs a
-`node` record. A contract is the one kind that qualifies, because `party`, `draws` and
-`defines` run from the contract rather than from either crate. A PRD states its subject
-crate's edges and is not their source.
+directory, per section 2, so a document node is built by walking the tree rather than by
+reading a block. **Only a document an edge runs from needs a `node` record, and the test
+is being that endpoint rather than being where the record is written.** A contract is
+the one kind that qualifies: `party` and `draws` run from the contract node, and so does
+a `defines` edge where the contract defines its own seam's vocabulary. A PRD writes
+`defines` records too, forty of the corpus's forty-four, and needs no node of its own
+because those edges run from the crate the charter is about. Section 4 puts the `from`
+at a crate or at a contract for that reason, and a rule reading `defines` as
+contract-sourced would be wrong about forty of them.
 
 No edge joins these two layers. A document's subject is its directory and its
 filename, which the walk already has, so a `describes` edge would carry a fact
