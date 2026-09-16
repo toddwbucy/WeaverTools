@@ -307,6 +307,20 @@ class Census(unittest.TestCase):
         self.assertEqual(len(hit), 1)
         self.assertIn("no tag", hit[0])
 
+    def test_the_kind_alone_does_not_buy_the_exemption(self):
+        # **The fourth quadrant.** Catching a kind-only exemption needs a record
+        # that is both malformed and `kind: system`: the other two fixtures pair
+        # a bad name with `kind: crate`, which tests the vocabulary side, and a
+        # kebab-valid name with `kind: system`, which NODE_OK matches whether or
+        # not the exemption fires. Without this case `exempt = kind == "system"`
+        # passes the whole suite.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("node: WeaverTools", "node: NotKebab"))
+        reading = census.take()
+
+        bad = [e for e in reading["malformed_node_ids"] if "NotKebab" in e]
+        self.assertEqual(len(bad), 1)
+
     def test_a_malformed_identifier_does_not_hide_the_rest_of_its_record(self):
         # The reject used to return before the kind and the tag were read, so
         # a record this gate could not name took its tag, its duplicate and
