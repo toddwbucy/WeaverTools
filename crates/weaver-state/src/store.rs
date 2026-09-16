@@ -217,8 +217,6 @@ pub fn render_replay_answer(events: &[RecalledEvent]) -> String {
     frame
 }
 
-/// Render the shape answer as the contract's frame, one answer frame on
-/// the channel, the runs in the order the query gave them.
 /// The grants answer: the surface's lines in the engine's order, per the
 /// contract's answer shape `{"answer":{"grants":{"surface":[...]}}}`.
 pub fn render_grants_answer(surface: &[String]) -> String {
@@ -238,6 +236,8 @@ pub fn render_identity_answer(events: &[RecalledEvent]) -> String {
     frame
 }
 
+/// Render the shape answer as the contract's frame, one answer frame on
+/// the channel, the runs in the order the query gave them.
 pub fn render_shape_answer(runs: &[RunShape]) -> String {
     let entries: Vec<serde_json::Value> = runs
         .iter()
@@ -255,15 +255,7 @@ pub fn render_shape_answer(runs: &[RunShape]) -> String {
     frame
 }
 
-/// Build the election's partial indexes on whatever holds the connection,
-/// the store itself or an open transaction, so the preload path can run the
-/// build inside the retirement's transaction while the first door's opener
-/// runs it bare. The index name is the key path itself, hex-encoded, so a
-/// name can only ever stand for one predicate: a positional name would let
-/// a later load's differing election fall silently under `IF NOT EXISTS` on
-/// an earlier load's name. The key is a bound-in literal within the WHERE,
-/// quoted through sqlite's own quoting to keep a hostile key path from
-/// becoming SQL.
+/// Read a distillate from the frame the contract carries, or refuse it.
 pub fn parse_distillate(frame: &str) -> Option<Distillate> {
     use serde_json::value::RawValue;
     let top: std::collections::BTreeMap<&str, &RawValue> = serde_json::from_str(frame).ok()?;

@@ -56,7 +56,7 @@ fn main() -> std::process::ExitCode {
         Some(("field", rest)) => run_field(rest),
         _ => refused(
             "usage: weaver-analysis derive <trace> --devices <n,..> --sink <path> \
-             [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] | preload <trace> <socket> \
+             [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] \
              | read <diagnostic-trace> | compare <capture> <capture> \
              | preload <trace> <socket> [--through <run>:<turn>] [--as <session>] \
              | signals <record> [spike-bar] \

@@ -28,9 +28,9 @@ field list here, the ordering it fixes is stated as a rule rather than a state
 machine, and how any of it is encoded is the Spec's, elected against a
 measurement because this is the hot path.
 
-**The name carries the seam's traffic, because two seams between one pair need
-two names.** The Document Format names a contract for its parties, initiator
-first, and both seams between this pair have the harness initiating, so the
+**The name carries the seam's traffic, because three seams between one pair need
+three names.** The Document Format names a contract for its parties, initiator
+first, and all three seams between this pair have the harness initiating, so the
 party rule alone cannot distinguish them. The `-decode-` infix is the
 distinguisher, naming the governed traffic the way the wire vocabulary is
 named for its loop, and the residency contract's name stands unchanged.

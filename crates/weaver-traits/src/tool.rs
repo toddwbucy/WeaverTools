@@ -19,8 +19,12 @@
 //! `weaver-types` vocabulary and that crate names this one as its one
 //! floor-link, so a trait naming that type would close a dependency cycle -
 //! and the floor invariant is the reason this crate refuses internal
-//! dependencies at all. The gate depends on both crates and is the one party
-//! that compares the drawn name against what a tool answers.
+//! dependencies at all. What compares a name that crossed against what a tool
+//! answers is the dispatching consumer this crate does not have, and no crate
+//! carries both definitions today: `weaver-gate`'s manifest names
+//! `weaver-types` as its one internal dependency, this crate having left it
+//! with the tool boundary ruling of 2026-08-18. `weaver-traits-Spec` section 5
+//! states it and this header does not carry a second copy.
 //!
 //! **No safety classification of any kind**, per `weaver-traits-PRD` section
 //! 3.1, which the workflow did not weaken: a trait method asking a tool

@@ -413,6 +413,14 @@ impl Store for Sqlite {
     }
 }
 
+/// Build the election's partial indexes on whatever holds the connection, the
+/// store itself or an open transaction, so the preload path can run the build
+/// inside the retirement's transaction while the first door's opener runs it
+/// bare. The index name is the key path itself, hex-encoded, so a name can only
+/// ever stand for one predicate: a positional name would let a later load's
+/// differing election fall silently under `IF NOT EXISTS` on an earlier load's
+/// name. The key is a bound-in literal within the WHERE, quoted through
+/// sqlite's own quoting to keep a hostile key path from becoming SQL.
 fn build_indexes(
     connection: &rusqlite::Connection,
     election: &Election,
