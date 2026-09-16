@@ -14,8 +14,8 @@
 # `node_modules`, `target` and `venv` by default and hidden directories with
 # them, so listing those here is a copy that drifts when the server's defaults
 # move rather than a rule this tree is stating. Every stanza below is
-# load-bearing - five of them at 2026-09-14 - and each says what it excludes
-# and why, so a later act can tell a live rule from filler.
+# load-bearing and each says what it excludes and why, so a later act can tell
+# a live rule from filler.
 
 # **Frozen copies of live code.** An ingest walking one puts the same symbols
 # in twice under two paths, so symbol resolution has two answers and no basis
@@ -107,3 +107,21 @@ docs/project/
 # is gitignored as of 2026-09-15 and named here so the exclusion does not rest
 # on `.json` having no handler, which is accident rather than intent.
 process/ingest/chunk-plan.json
+
+# **The agent instruction files are not authoritative and do not join the
+# graph.** `CLAUDE.md` says so on its own first page: the four process
+# documents govern everything and outrank it. So a semantic hit on its
+# restatement of the census, the clippy rule or the lock gate returns a copy
+# beside the Spec that owns the claim, with nothing marking which is
+# authoritative - the G5 duplication defect arriving through retrieval rather
+# than through a reader. The graph exists so code traces back to a Spec and a
+# PRD, and this file is neither.
+#
+# **Every spelling, and only the first exists today.** The others are named
+# because the tool reading the file decides its name, all of them are the same
+# kind of file, and an exclusion that waits for the file to arrive is one
+# nobody remembers to write. `**/` rather than an anchor: a per-crate copy is
+# the same file with a narrower audience.
+**/CLAUDE.md
+**/AGENT.md
+**/AGENTS.md
