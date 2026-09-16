@@ -1,6 +1,6 @@
 //! conforms: harness-one-constructor
 //! conforms: harness-path-shapes-pinned-by-doctest
-//! conforms: harness-outcome-two-cases
+//! conforms: harness-outcome-one-case
 //! conforms: harness-descriptors-owned-types
 //! conforms: harness-loop-mints-no-port
 //! conforms: harness-no-runtime-no-logging-no-http
@@ -72,7 +72,7 @@
 //!     OrganBinaries { spu: "/opt/weaver/bin/spu".into(), gate: "/opt/weaver/bin/gate".into() });
 //! ```
 //!
-//! The outcome enum is exhaustive (`harness-outcome-two-cases`), so a third
+//! The outcome enum is exhaustive (`harness-outcome-one-case`), so a second
 //! case reaches every caller loudly:
 //!
 //! ```
