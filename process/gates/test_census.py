@@ -132,7 +132,14 @@ class Census(unittest.TestCase):
         # **A hyphen is not a word character.** The bug that published fifty
         # four tagged assertions as untagged lives or dies here.
         self.assertEqual(reading["untagged_assertions"], ["fix-untagged"])
-        self.assertEqual(reading["unknown_tags"], ["fix-odd-tag (socket)"])
+        self.assertEqual(len(reading["unknown_tags"]), 1)
+        odd = reading["unknown_tags"][0]
+        # **The entry names its document and its kind**, there being two
+        # vocabularies now: without the kind a reader cannot tell whether the
+        # tag is wrong or the record typed itself wrong.
+        self.assertIn("docs/demo-Spec.md", odd)
+        self.assertIn("fix-odd-tag", odd)
+        self.assertIn("socket", odd)
 
         self.assertEqual(reading["dangling_citations"], ["fix-nonexistent"])
 
@@ -177,7 +184,12 @@ class Census(unittest.TestCase):
         # than a mismatch count that stays quietly at zero.
         self.assertEqual(reading["documents_without_an_enforcement_table"], [])
         self.assertEqual(len(reading["enforcement_table_mismatch"]), 1)
-        self.assertIn("(4 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
+        # **Five, because a node this gate cannot name is still a node the
+        # document declares.** The reject used to return before the assertion
+        # accounting, so a malformed identifier shrank its own document's
+        # mismatch and the count read closer to its table than the document
+        # was. The fixture declares five assertions and its table holds one.
+        self.assertIn("(5 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
 
         # **The obligation follows the unit, not a directory**, so the test
         # file owes one too and the format's rule is what this pins.
@@ -220,6 +232,96 @@ class Census(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("duplicate_node_ids", out, f"the move is named: {out}")
 
+    # **The system record, whose two halves are one exemption.** Document
+    # Format section 3 declares one node outside the kebab rule and section 5
+    # gives it a vocabulary of its own. Each case below fails if its edit is
+    # reverted, which is what the third enforcement device asks of a test: the
+    # gate shipped both paths once with no case here and the suite stayed
+    # green either way.
+
+    def test_the_system_node_is_not_a_malformed_identifier(self):
+        write(self.dir, "docs/apex.md", SYSTEM_RECORD)
+        reading = census.take()
+
+        hit = [e for e in reading["malformed_node_ids"] if "WeaverTools" in e]
+        self.assertEqual(hit, [])
+
+    def test_the_system_record_carries_its_own_tag_vocabulary(self):
+        write(self.dir, "docs/apex.md", SYSTEM_RECORD)
+        reading = census.take()
+
+        self.assertEqual([e for e in reading["unknown_tags"] if "WeaverTools" in e], [])
+
+    def test_the_system_vocabulary_does_not_reach_another_kind(self):
+        # `ratified` is the system record's and no other record's. Without the
+        # kind scoping this reads clean.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("kind: system", "kind: crate"))
+        reading = census.take()
+
+        hit = [e for e in reading["unknown_tags"] if "WeaverTools" in e]
+        self.assertEqual(len(hit), 1)
+        self.assertIn("ratified", hit[0])
+
+    def test_the_assertion_vocabulary_does_not_reach_the_system_record(self):
+        # The converse, which a single shared set would admit.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("tag: ratified", "tag: review"))
+        reading = census.take()
+
+        hit = [e for e in reading["unknown_tags"] if "WeaverTools" in e]
+        self.assertEqual(len(hit), 1)
+        self.assertIn("review", hit[0])
+
+    def test_the_name_alone_does_not_buy_the_exemption(self):
+        # The pair is the exemption. On the name alone this admits an
+        # assertion identifier no conformance header could legally cite,
+        # NODE_OK still governing the citation side.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("kind: system", "kind: assertion")
+                           .replace("tag: ratified", "tag: perturbation"))
+        reading = census.take()
+
+        hit = [e for e in reading["malformed_node_ids"] if "WeaverTools" in e]
+        self.assertEqual(len(hit), 1)
+
+    def test_the_kind_alone_does_not_buy_the_vocabulary(self):
+        # The reverse hole: a kebab-named record typing itself `system`.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("node: WeaverTools", "node: not-the-system"))
+        reading = census.take()
+
+        name = "not-the-system"
+        self.assertEqual([e for e in reading["unknown_tags"] if name in e], [])
+        self.assertEqual(
+            [e for e in reading["malformed_node_ids"] if name in e], [])
+
+    def test_a_system_record_that_drops_its_tag_is_a_finding(self):
+        # Section 5 makes `ratified` what generates the set-level mark, so its
+        # absence ungrounds the mark where a wrong value would be caught.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("tag: ratified\n", ""))
+        reading = census.take()
+
+        hit = [e for e in reading["unknown_tags"] if "WeaverTools" in e]
+        self.assertEqual(len(hit), 1)
+        self.assertIn("no tag", hit[0])
+
+    def test_a_malformed_identifier_does_not_hide_the_rest_of_its_record(self):
+        # The reject used to return before the kind and the tag were read, so
+        # a record this gate could not name took its tag, its duplicate and
+        # its enforcement row out of every other reading in silence.
+        write(self.dir, "docs/apex.md",
+              SYSTEM_RECORD.replace("node: WeaverTools", "node: NotKebab")
+                           .replace("kind: system", "kind: crate"))
+        reading = census.take()
+
+        bad = [e for e in reading["malformed_node_ids"] if "NotKebab" in e]
+        self.assertEqual(len(bad), 1)
+        hit = [e for e in reading["unknown_tags"] if "NotKebab" in e]
+        self.assertEqual(len(hit), 1)
+        self.assertIn("ratified", hit[0])
+
     def test_a_document_with_two_enforcement_tables_counts_both(self):
         """Stopping at the first counts one section's rows against the whole
         document's assertions - a loud false mismatch beside a silent omission
@@ -234,7 +336,7 @@ class Census(unittest.TestCase):
         # Four assertions against two tables of one row each: the mismatch
         # names two rows. Stopping at the first would name one.
         self.assertEqual(
-            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (4 nodes, 2 rows)"]
+            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (5 nodes, 2 rows)"]
         )
 
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
@@ -635,6 +737,16 @@ def run(*args):
 def run_git(root, *args):
     import subprocess
     subprocess.run(["git", "-C", root, *args], check=True, capture_output=True)
+
+
+SYSTEM_RECORD = """# apex
+
+```graph
+node: WeaverTools
+kind: system
+tag: ratified
+```
+"""
 
 
 def write(root, rel, text):

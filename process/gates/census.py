@@ -105,6 +105,24 @@ review passes found them; the second found as many as the first:
   folded away before `main` compared as a multiset. **The same
   set-for-multiset mistake in a third place**, after the gating path and the
   update path each carried it.
+- A node this reader could not name ended the record. The malformed branch
+  reported the identifier and returned, so the record's kind, its tag, its
+  duplicate and its enforcement row went unread, and **the one node in this
+  corpus carrying the one tag outside the assertion vocabulary was never
+  judged**: `unknown_tags` printed zero for every act of this program while
+  holding a record it had not looked at. It is the same shape as the two
+  entries above it, a defect removing a node from every metric in silence
+  rather than being reported as the one line it is. The identifier is now a
+  finding and the rest of the record is read.
+- The tag vocabulary was one set for every kind, which the format has never
+  said. Section 5 carries one vocabulary per record kind, so the assertion
+  five were being asked of a system record and the system record's own
+  `ratified` was unknown to the reader that was supposed to accept it. The
+  same edit's first form keyed the identifier exemption on the name and the
+  vocabulary on the kind, which **admitted an assertion identifier no
+  conformance header could legally cite** and handed any record that typed
+  itself `system` a vocabulary the format gives to one node. Both halves key
+  on the pair now.
 """
 
 import glob
@@ -122,12 +140,24 @@ BASELINE = os.path.join(HERE, "census-baseline.json")
 # `WeaverTools-Document-Format` fixes this vocabulary. A tag outside it is a
 # finding rather than a silent miss.
 TAGS = {"compile-pin", "compile-fail", "perturbation", "manifest", "review"}
-# The system record's own vocabulary, per Document Format section 5: `ratified`
-# is what lets the set-level mark be generated from the apex rather than
-# hand-edited. It was unreachable until the system node stopped being rejected as
-# malformed, the reject arriving before the tag was read, so this reading has
-# never seen the one node that carries it.
-SYSTEM_TAGS = {"ratified"}
+# **One vocabulary per record kind, which is how section 5 states the rule**
+# rather than how this reading used to apply it. `ratified` on the system record
+# is what lets the graph's set-level mark be generated from the apex rather than
+# hand-edited, per Working Process section 5's checklist item 6. It was
+# unreachable until the system node stopped being rejected as malformed, the
+# reject arriving before the tag was read, so this reading has never judged the
+# one node that carries it. A kind absent from this map takes TAGS.
+TAGS_BY_KIND = {"system": {"ratified"}}
+# The system node, per Document Format sections 3 and 5. It is the project's own
+# name rather than one this format invents, which is the same reason a source
+# path is a node identifier as it stands. Two classes stand outside the kebab
+# rule, this one and a code node's path identifier, so this is not the only
+# name the format exempts. **The exemption is the pair and not the name**: a
+# record is excused the kebab rule only where it is this name AND
+# types itself `system`, because the name alone admits an assertion identifier no
+# conformance header could legally cite, and the kind alone hands a second record
+# a vocabulary the format gives to exactly one node.
+SYSTEM_NODE = "WeaverTools"
 
 # **The info string is the whole word.** An unanchored `graph` also opens
 # a ```graphviz or ```graphql fence, whose contents would declare phantom
@@ -139,11 +169,6 @@ GRAPH = re.compile(r"```graph[ \t]*\r?\n(.*?)```", re.S)
 # so the line is matched loosely and judged strictly.
 NODE_LINE = re.compile(r"^[ \t]*node:(.*)$", re.M)
 NODE_OK = re.compile(r"^[a-z0-9-]+$")
-# The system node, per Document Format sections 3 and 5. It is the project's own
-# name rather than one the format invented, so the kebab rule does not reach it,
-# and it is the only name the format exempts. Named here rather than widened into
-# NODE_OK, which would admit every capitalised identifier along with it.
-SYSTEM_NODE = "WeaverTools"
 # Matched loosely and judged strictly, as `node:` is: the separator is part of
 # the record, and a reader that tolerates `kind:assertion` accepts a shape the
 # format does not admit. The node line's fix did not reach its neighbours.
@@ -418,11 +443,26 @@ def take():
                 if raw and not raw[0].isspace():
                     malformed.append(f"{rel}: node:{raw} (no space after the key)")
                     continue
-                if name != SYSTEM_NODE and not NODE_OK.match(name):
-                    malformed.append(f"{rel}: node: {name}")
-                    continue
                 kind, bad_kind = field(KIND, stanza)
                 tag, bad_tag = field(TAG, stanza)
+                # **The identifier is judged against the kind, and a bad one no
+                # longer ends the record.** The exemption is the pair: this name
+                # typed `system`, per Document Format section 3, which declares
+                # one such node and no other. The name alone would admit an
+                # assertion identifier no conformance header could cite, since
+                # NODE_OK still governs the citation side, and the kind alone
+                # would hand any record the vocabulary below.
+                exempt = name == SYSTEM_NODE and kind == "system"
+                if not exempt and not NODE_OK.match(name):
+                    malformed.append(f"{rel}: node: {name}")
+                    # **Reported and then judged on**, rather than skipped. A
+                    # reject that returns here takes the record's tag, its
+                    # duplicate and its enforcement row out of every other
+                    # reading in silence, which is how the one node carrying
+                    # `tag: ratified` went twenty-two revisions without being
+                    # judged and `unknown_tags` printed a zero it had not
+                    # earned. A name this gate cannot read is one finding and
+                    # not a licence to stop reading.
                 if bad_kind or bad_tag:
                     which = "kind" if bad_kind else "tag"
                     malformed.append(f"{rel}: {name}, {which} is not `key: value`")
@@ -435,9 +475,20 @@ def take():
                     duplicates.append(f"{name}: {declared[name]} and {rel}")
                 else:
                     declared[name] = rel
-                allowed = SYSTEM_TAGS if kind == "system" else TAGS
-                if tag is not None and tag not in allowed:
-                    odd.append(f"{name} ({tag})")
+                # One vocabulary per record kind, and the kind disambiguates,
+                # per Document Format section 5. **A record that drops the tag
+                # its kind owes is a finding too**: the system record's
+                # `ratified` is what generates the set-level mark, so its
+                # absence ungrounds the mark in silence where a wrong value
+                # would be caught.
+                allowed = TAGS_BY_KIND.get(kind, TAGS)
+                if tag is None:
+                    if kind in TAGS_BY_KIND:
+                        odd.append(f"{rel}: {name} carries no tag, "
+                                   f"{kind} owes one of {sorted(allowed)}")
+                elif tag not in allowed:
+                    odd.append(f"{rel}: {name} ({kind}) carries `{tag}`, "
+                               f"outside {sorted(allowed)}")
                 if kind != "assertion":
                     continue
                 # **The first declaration keeps the node.** Letting the last

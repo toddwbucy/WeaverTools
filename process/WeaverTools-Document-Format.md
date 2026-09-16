@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.18, 2026-09-14. Companion to the Working Process. Project
+**Version:** v0.19, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -462,17 +462,19 @@ needs to know nothing else about markdown.
     ```
 
 Identifiers are kebab-case, always, including for vocabulary that names a Rust item.
-`Tool` is `tool-trait` and `Provider` is `provider-trait`. **The rule governs names
-this format invents**, which is why a source path is a node identifier as it stands
-and why the system node is `WeaverTools`: it is the name of the thing being built,
-carried by the repository, the workspace and the graph alike, and a format that
-renamed it would be inventing a second spelling for the one name the project
-already has. The system node is the only such name, section 3 declaring it and no
-other. Two spellings of one name
+`Tool` is `tool-trait` and `Provider` is `provider-trait`. Two spellings of one name
 is how a graph acquires two nodes for one definition, and a rule that says follow the
 source spelling produces exactly that on the day a trait is renamed. Identifiers that
 differ by one character are a G1 visual collision as much as a mapping hazard, so
 `permission-modes` and `permission-mode` do not both exist.
+
+**The rule governs names this format invents.** That is section 3's reason for a
+source path being a node identifier as it stands, and it is the same reason the
+system node is `WeaverTools`: the name of the thing being built, carried by the
+repository, the workspace and the graph alike, so a format that renamed it would
+mint the second spelling this rule exists to prevent. Two classes stand outside the
+rule and section 3 declares both, the system node being one and no other and a code
+node's identifier being a path. Per the operator's ruling of 2026-09-16.
 
 **`tag` carries one vocabulary per record kind and the kind disambiguates.** On a
 seam it is `socket` or `link`. On an assertion it is the instrument that enforces the
