@@ -369,3 +369,78 @@ fn the_positions_read_stops_at_the_close() {
     );
     assert!(!held.held.is_empty(), "the bracket's own positions are");
 }
+
+/// **An absent member is omitted at the wire and never rendered null**,
+/// the wire half of the identity rule, per `weaver-analysis-Spec`
+/// section 5. The reader's `Option` is a fact about the record, and a
+/// `null` on the wire would say the record carried the member and the
+/// member carried nothing. This runs the `signals` verb through the
+/// binary because the rendering is the composition root's and no library
+/// call reaches it, which is what left this half unwatched until now.
+///
+/// Perturbation: in `main.rs`, render the option directly - insert
+/// `serde_json::json!(g.turn)` in `render_generation`'s first arm rather
+/// than inserting the string only under `Some` - and the summary carries
+/// `"turn": null`. Watched under exactly that change.
+#[test]
+fn an_absent_member_is_omitted_at_the_wire_and_never_rendered_null() {
+    let dir = std::env::temp_dir().join(format!("weaver-analysis-wire-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("temp dir");
+    let binary = env!("CARGO_BIN_EXE_weaver-analysis");
+
+    let summary = |text: &str, name: &str| -> serde_json::Value {
+        let path = dir.join(name);
+        std::fs::write(&path, text).expect("the record writes");
+        let out = std::process::Command::new(binary)
+            .args(["signals", path.to_str().unwrap()])
+            .output()
+            .expect("runs");
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let stdout = String::from_utf8(out.stdout).expect("utf8");
+        let first = stdout.lines().next().expect("a summary line");
+        serde_json::from_str(first).expect("json")
+    };
+
+    // The record as the fixture spells it: every member the summary
+    // carries is present, so the object holds all five.
+    let whole = summary(&record(Some("certified"), ""), "whole.ndjson");
+    let generation = whole["generations"][0].as_object().expect("an object");
+    let mut members: Vec<&str> = generation.keys().map(String::as_str).collect();
+    members.sort_unstable();
+    assert_eq!(
+        members,
+        vec![
+            "output_count",
+            "perplexity",
+            "resident",
+            "turn",
+            "weights_hash"
+        ]
+    );
+    assert_eq!(generation["turn"], "t-1");
+
+    // The same record with no turn on any envelope and no hash on the
+    // measurement: the two members are gone from the object rather than
+    // standing in it as null.
+    let text = record(Some("certified"), "")
+        .replace(r#""turn":"t-1","#, "")
+        .replace(r#","weights_hash":"23dd1056""#, "");
+    let bare = summary(&text, "bare.ndjson");
+    let generation = bare["generations"][0].as_object().expect("an object");
+    for absent in ["turn", "weights_hash"] {
+        assert!(
+            !generation.contains_key(absent),
+            "{absent} is omitted rather than rendered: {generation:?}"
+        );
+    }
+    assert!(
+        generation.contains_key("output_count"),
+        "what the record held still crosses: {generation:?}"
+    );
+
+    std::fs::remove_dir_all(&dir).ok();
+}

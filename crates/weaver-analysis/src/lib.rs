@@ -1,3 +1,6 @@
+//! conforms: analysis-writes-no-record
+//! conforms: analysis-one-preload-per-run
+//!
 //! The diagnostic consumer, per `weaver-analysis-PRD`: a crate outside the
 //! agent boundary that parses the operator's record, derives the diagnostic
 //! declaration from it, preloads what the parse projects, and reads the
@@ -16,6 +19,18 @@
 //! let mut sender = weaver_analysis::preload::open(Vec::new(), "s-1").unwrap();
 //! sender.send(&event);
 //! ```
+//!
+//! **One preload per standing of this driver**, per `weaver-analysis-Spec`
+//! section 4, whose instrument is a compile-fail pin on the shape that
+//! would break it. **Both of this crate's pins are written here**, each
+//! reaching the crate the way a caller reaches it, through the public
+//! path rather than through a module's internals, and a citation sits
+//! with its own doctest, so both citations sit here too. That is where
+//! these two are written and not where a compile-fail pin has to be
+//! written: rustdoc collects a doctest from any documented item, and a
+//! module holding a pin of its own cites it from its own header. The
+//! structure each rests on is its own module's, the seal consuming the
+//! sender being `preload.rs`'s.
 //!
 //! ```compile_fail
 //! // One preload per standing: the seal consumes the sender.
