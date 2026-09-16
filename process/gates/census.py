@@ -122,6 +122,12 @@ BASELINE = os.path.join(HERE, "census-baseline.json")
 # `WeaverTools-Document-Format` fixes this vocabulary. A tag outside it is a
 # finding rather than a silent miss.
 TAGS = {"compile-pin", "compile-fail", "perturbation", "manifest", "review"}
+# The system record's own vocabulary, per Document Format section 5: `ratified`
+# is what lets the set-level mark be generated from the apex rather than
+# hand-edited. It was unreachable until the system node stopped being rejected as
+# malformed, the reject arriving before the tag was read, so this reading has
+# never seen the one node that carries it.
+SYSTEM_TAGS = {"ratified"}
 
 # **The info string is the whole word.** An unanchored `graph` also opens
 # a ```graphviz or ```graphql fence, whose contents would declare phantom
@@ -133,6 +139,11 @@ GRAPH = re.compile(r"```graph[ \t]*\r?\n(.*?)```", re.S)
 # so the line is matched loosely and judged strictly.
 NODE_LINE = re.compile(r"^[ \t]*node:(.*)$", re.M)
 NODE_OK = re.compile(r"^[a-z0-9-]+$")
+# The system node, per Document Format sections 3 and 5. It is the project's own
+# name rather than one the format invented, so the kebab rule does not reach it,
+# and it is the only name the format exempts. Named here rather than widened into
+# NODE_OK, which would admit every capitalised identifier along with it.
+SYSTEM_NODE = "WeaverTools"
 # Matched loosely and judged strictly, as `node:` is: the separator is part of
 # the record, and a reader that tolerates `kind:assertion` accepts a shape the
 # format does not admit. The node line's fix did not reach its neighbours.
@@ -407,7 +418,7 @@ def take():
                 if raw and not raw[0].isspace():
                     malformed.append(f"{rel}: node:{raw} (no space after the key)")
                     continue
-                if not NODE_OK.match(name):
+                if name != SYSTEM_NODE and not NODE_OK.match(name):
                     malformed.append(f"{rel}: node: {name}")
                     continue
                 kind, bad_kind = field(KIND, stanza)
@@ -424,7 +435,8 @@ def take():
                     duplicates.append(f"{name}: {declared[name]} and {rel}")
                 else:
                     declared[name] = rel
-                if tag is not None and tag not in TAGS:
+                allowed = SYSTEM_TAGS if kind == "system" else TAGS
+                if tag is not None and tag not in allowed:
                     odd.append(f"{name} ({tag})")
                 if kind != "assertion":
                     continue
