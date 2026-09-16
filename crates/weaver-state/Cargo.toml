@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 # The custodian, per weaver-state-Spec section 1: one binary, weaver-trace
-# for the canonical event vocabulary, weaver-types for the store election's
-# shape, and the externals the Spec names, one engine's driver behind each
-# engine's feature. No async runtime of the crate's own, no logging crate,
-# no HTTP, per the corpus's standing refusals.
+# for the canonical event vocabulary the ingest parses, weaver-types as the
+# floor link weaver-state-PRD section 1 declares and the operator's ruling of
+# 2026-09-14 keeps, no unit here consuming it yet and what it will be drawn
+# for that charter's cell, and the externals the Spec names, one engine's
+# driver behind each engine's feature. No async runtime of the crate's own,
+# no logging crate, no HTTP, per the corpus's standing refusals.
 [features]
 default = ["sqlite"]
 sqlite = ["dep:rusqlite"]

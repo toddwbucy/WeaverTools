@@ -174,7 +174,7 @@ happens to want it is a cost landing mid-serve rather than at load.
 ```graph
 node: state-indexes-built-at-load
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-state
@@ -459,36 +459,48 @@ reads is a data-shaped empty joint.
 
 ## 5. What is enforced, and by which instrument
 
-**This crate holds no `tests/` target**, every test it has standing in an
-in-file `#[cfg(test)]` suite beside the unit it watches, so a citation at a
-test here is written at an item inside such a suite and never at a path under
-`tests/`, which is the scope Document Format section 5's review rule reads.
+**This crate holds no `tests/` target** and every test it has stands in an
+in-file `#[cfg(test)]` suite beside the unit it watches, so Document Format
+section 5's review rule reaches this crate at the item where an instrument sits
+rather than at a directory, which is the scope that rule states. **No claim here
+is cited at a test.** Every `conforms:` line in the crate sits at a `//!` file
+header but one, the line inside `stand_preload_name`, which is a function the
+binary runs, so none of the nine is a sighting under that rule.
 
-**Requiring a perturbation-verified test.** Five claims, each watched where
-the behaviour sits.
+**Requiring a perturbation-verified test.** Six claims, each watched where the
+behaviour sits.
 
 - The serve restricts to the opener's session, watched by dropping any of the
   three `WHERE session` predicates the reads carry, which returns an earlier
   session's runs to a shape answer and an earlier session's rows to a recall.
-- The replay answers at the seal, watched by parking the replay alone the way
-  the law did before the enter asks joined it, and by making the park ignore
-  the seal, either of which answers over a prefix.
+- The indexes are built at load, watched by naming them positionally: a later
+  load's differing election then falls under the earlier name through
+  `CREATE INDEX IF NOT EXISTS` and one index stands where the election asks
+  two. **The timing is the half no test reaches.** The build sits on the
+  binary's startup path between the opener's parse and the serve loop, and
+  every test that drives it calls the port directly, so what is watched is
+  that the election's own indexes are built and not that they are built
+  before the first distillate lands.
+- The replay answers at the seal, watched by making the park ignore the seal,
+  which answers the after-the-seal case from the wrong slot, and by making the
+  ready check ignore it, which answers a sealless close over a prefix.
 - The preload name states its mode, watched by dropping the owner-only umask
   from the bind, which leaves the name at whatever mode this process inherited.
-- The member binds no name it is not given, watched by giving the name a
-  default path where the vector carries none, which stands a door on a serving
-  load.
+- The member binds no name it is not given, watched where the name is decided
+  rather than where it is bound: default the vector's preload positional and a
+  serving load stands a door nothing should dial.
 - The preload door refuses every peer but the operator, watched by dropping
   the root arm from the accept, which admits the agent's own uid.
 
-**The first of the five is watched for one engine.** The predicates are the
-embedded engine's and nothing in this tree builds the service engine under
-test, so the session predicate could leave that engine's reads and every device
-would answer green. The claim is cited at the port and at the engine that holds
-the instrument, and the service engine cites it when it holds one of its own.
-The same reading covers the whole of that engine: it is reachable only from the
-binary's own election and no unit constructs it, so its arm of every claim
-below rests on the reading and not on a run.
+**The first two claims are watched at the embedded engine.** Nothing in this tree
+builds the service engine under test, so the session predicate could leave that
+engine's reads and every device would answer green, and its index naming is not
+merely unwatched but disproved, per issue #618 and the election of section 3.
+Each claim is cited where its instrument sits and the service engine cites
+neither until it holds one of its own. **The same reading covers the whole of
+that engine**: it is reachable only from the binary's own election and no unit
+constructs it, so its arm of every claim in this section rests on a reading and
+not on a run.
 
 **Enforced by review, and each clause names what would buy it.** Review here
 means the instrument was not bought and never that none exists, per Document
@@ -512,12 +524,6 @@ Format section 5.
   carries the claim - a landing that fails between the event row and its pairs
   leaving neither behind - has no instrument. What would buy it is an insert
   forced to fail inside the transaction with the holdings counted after.
-- **The indexes are built at load** and the embedded suite watches the naming:
-  two differing elections build two indexes rather than the second falling
-  under the first's name. What is not watched is the build happening at the
-  load rather than at the query that wants it, nor the envelope's standing
-  indexes, and the service engine contradicts the claim outright until the
-  election of section 3 is answered, per issue #618.
 
 **The walks the seam's conformance asks for are not in this tree.** The
 contract's section 8 names them and says both directions land with the acts
@@ -533,9 +539,9 @@ seam, which is the cheaper instrument and not the one the contract names, and
 territory's mode is owed the same kind of walk, the agent's uid asked to read
 the file and refused, and the service engine's second gate the same at the
 store, the agent's uid asked to connect as any role and refused by the store's
-own authentication. The `grants` ask
-reports the file's owner and mode and asserts nothing about either, so it is a
-surface for that walk rather than the walk.
+own authentication. The `grants` ask reports the file's owner and mode and
+asserts nothing about either, so it is a surface for that walk rather than the
+walk.
 
 **Where the records sit.** The assertion records are at the clauses that argue
 the claims, across sections 1 through 4 rather than gathered here, per Document

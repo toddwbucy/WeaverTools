@@ -15,8 +15,9 @@
 //! perturbation claim is bought by a test and cited where the test is - this
 //! file holds no test and nothing but `main.rs` ever builds a `Postgres`, so
 //! the session predicate could leave `shape` and every device would still
-//! answer green. `state-indexes-built-at-load` is tagged `review` and the
-//! reading disproves it here: `build_indexes` names a partial index
+//! answer green. `state-indexes-built-at-load` is tagged `perturbation` as of
+//! `act-27`, its instrument being `sqlite.rs`'s index test, and this engine has
+//! neither that nor the property: `build_indexes` names a partial index
 //! `field_elected_{hex}` and Postgres truncates an identifier at 63 bytes,
 //! so an elected key of 25 bytes or more can collide with another under
 //! `CREATE INDEX IF NOT EXISTS` and lose its index silently. That is issue

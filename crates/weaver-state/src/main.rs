@@ -1107,9 +1107,18 @@ mod tests {
     /// fact and reaches here as the name's presence alone, which is what
     /// keeps this crate from holding an opinion about the binding.
     ///
-    /// Perturbation: give `stand_preload_name` a default path when the
-    /// argument is absent and a serving load stands a door nothing should
-    /// dial.
+    /// **The perturbation is at the vector and not here.** No name reaches
+    /// this function on a serving load, so the absence is decided in
+    /// `StoreVector::parse`, and defaulting the preload positional there
+    /// stands a door nothing should dial. Watched under exactly that change,
+    /// by `the_vector_elects_the_engine_before_the_territory`, whose
+    /// `preload_socket.is_none()` fails on it.
+    ///
+    /// **This test watches the positive half**, that a named one stands. Its
+    /// first line takes a `None` through `Option::map` and is a property of
+    /// that combinator rather than of this crate, `stand_preload_name` taking
+    /// a `&str` and never an absence. It is disclosed rather than deleted
+    /// because whether it goes is a decision about the suite.
     #[test]
     fn no_preload_name_means_no_preload_door() {
         let absent: Option<String> = None;
