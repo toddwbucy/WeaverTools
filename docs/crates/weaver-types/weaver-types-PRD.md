@@ -576,8 +576,8 @@ protocol vocabulary out of this crate until a written contract needed it.
 `weaver-harness-spu-decode-contract` section 7 the second, arriving with the
 token trio on 2026-08-02, `weaver-harness-gate-contract` section 7 the
 third, arriving with `turn-frame` and `fault-report` in the same workflow's
-gate act, that same clause again the fourth, arriving with `tool-name` in the
-tool workflow's opening act of 2026-08-17, and
+gate act, that same clause again the fourth, demanding `tool-name` in the tool
+workflow's opening act of 2026-08-17 and having it land here with this act, and
 `weaver-harness-spu-classify-contract` section 7 the fifth, arriving with the
 label trio on 2026-08-19. Nothing
 else enters this subsection until another contract draws it, a definition
@@ -662,9 +662,9 @@ the tool it called, and it is named for the seam's currency under the same exten
 the turn frame is named under. It is this crate's for the reason everything in this
 subsection is this crate's: it crosses a socket, so it is a representation two
 processes must agree on, and what a tool itself is stays with `weaver-traits` by the
-floor's own division. The gate is the one party that compares a name that crossed
-against what a held tool answers, and it depends on both crates, so the comparison
-has both definitions in scope.
+floor's own division. Where the comparison of a name that crossed against what a
+tool answers lives is `weaver-traits-Spec` section 5's to state, and this charter
+cites it rather than carrying a second copy, per G5.
 
 **One of this subsection's definitions belongs to the floor and not to any loop.**
 `organ-envelope` is the

@@ -451,9 +451,21 @@ Between a contract and what it binds:
   meanings, so both are drawn, and the `election` and the `distillate` drawn by
   `weaver-analysis-state-contract` and the `diagnostic-trace` drawn by
   `weaver-harness-diagnostic-contract` are admitted where they stand rather than
-  retyped. **Nothing else is a meaning a clause can name.** An artifact is reached
-  through the field the clause draws, per the `holds` entry below, and a crate, a
-  document, an axiom and an assertion are the subjects of other edges entirely.
+  retyped. **The other seven kinds section 3 declares are each disposed of**, which
+  is what makes the rule exhaustive rather than merely stated: an artifact is
+  reached through the field the clause draws, per the `holds` entry below, and the
+  `system` node, a crate, a document, an axiom, an assertion and a code unit are the
+  subjects of other edges entirely. Two plus seven is section 3's nine, and an act
+  that adds a kind adds it to one side of that count or the other.
+  **A field of a drawn meaning is not a second endpoint.**
+  `weaver-harness-state-contract` section 7 draws the `canonical-event` and then
+  spells its five envelope fields, which says what the drawn meaning carries rather
+  than naming five more meanings, and the edge points at the node that owns them.
+  The artifact case runs the other way because an artifact is not a meaning, so a
+  clause that needs one points at the field, which is, and `holds` carries the rest.
+  Those five are declared nowhere and this rule asks for no declaration of them,
+  the format carrying no edge between a meaning and its parts and `elects` running
+  from a field to the values it selects from rather than to the whole it sits in.
   **A `draws` edge introduces no node**, exactly as a `defines` edge does not, so an
   endpoint no document declares is a dangling edge rather than an implied node.
 

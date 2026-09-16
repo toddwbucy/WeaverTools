@@ -7,7 +7,7 @@ merged charter. Code is written against it under the gates of Working Process se
 **Document ID:** `weaver-traits-Spec`
 **Parent:** `weaver-traits-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #217
+**Landing PR:** #613
 
 ---
 
@@ -439,8 +439,8 @@ always constrained:
 
 ```rust
 pub trait Tool {
-    /// The name the model calls, as the gate compares it against the drawn
-    /// `tool-name` that crossed the exchange.
+    /// The name the model calls, as the dispatching consumer compares it
+    /// against the drawn `tool-name` that crossed the exchange.
     fn name(&self) -> &str;
     /// The schema this tool advertises to the model, the charter's own
     /// vocabulary item carried by the signature.
@@ -463,9 +463,16 @@ pub struct ToolFailure {
 vocabulary and `weaver-types` already links this crate, the one floor-link
 its manifest names, so a trait naming that type would close a dependency
 cycle - and the floor invariant this Spec grounds six claims in is the
-reason this crate refuses internal dependencies at all. The gate depends on
-both crates and is the one party that compares the drawn name against what a
-tool answers, so the comparison lives where both definitions are in scope.
+reason this crate refuses internal dependencies at all. What compares a name
+that crossed against what a tool answers is the dispatching consumer this
+section's opening says the trait does not have, and no crate carries both
+definitions today: `weaver-gate`'s manifest names `weaver-types` as its one
+internal dependency, this crate having left it with the tool boundary ruling
+of 2026-08-18. So the comparison is the elected outward corner's when that
+corner arrives, and a primitive is what lets it sit in a crate this Spec
+does not name in advance. An earlier form of this paragraph said the gate
+depends on both crates and the comparison lives there, which the gate's
+manifest has not carried since that ruling.
 
 `ToolFailure` is a record like the blocks of section 3, serialized as
 content across the exchange. The schema is advertised by the trait, per the

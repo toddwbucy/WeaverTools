@@ -144,8 +144,21 @@ and payload together, and it is the unit a reader of the record meets.
 `weaver-analysis-state-contract` draws it for the driver's, each of those being a
 projection of this form and never a reshaping of it, so both clauses name what this
 crate spells rather than spelling it again. It is defined here because the rendering
-is this crate's, and a second crate defining the same form would reopen exactly the
-reconciliation this section says cannot be owed.
+is this crate's.
+
+**Three nodes stand over one form, and section 3 owns the parts.** `event-envelope`
+and `payload-shapes`, declared there, are what an event is made of, the one envelope
+every event carries and the payload its kind carries beside it, and `canonical-event`
+is the whole the record hands out. The alternative this act weighed was re-pointing
+the two state contracts at those two rather than declaring a third node, and it is
+declined: each of those seams depends on the event as a unit, its distillate being a
+projection of one canonical event with the envelope whole and the elected payload
+pairs beside it, so drawing the halves would name the parts and leave the unit the
+clause rests on unnamed, and it would overload two nodes
+`weaver-harness-trace-contract` draws for the recorder's own seam. The relation is
+stated here rather than drawn, the format carrying no edge between a meaning and its
+parts, so a reader meeting any of the three learns from this paragraph which is
+which: section 2.3 owns the whole and section 3 owns the parts.
 
 ```graph
 node: canonical-event
@@ -256,7 +269,9 @@ to: failure-vocabulary
 ```
 
 These six are what `weaver-harness-trace-contract` draws from this crate, so the
-union check of G4 runs against this list rather than against a reading.
+union check of G4 runs against this list rather than against a reading. The
+`canonical-event` of section 2.3 is this crate's seventh definition and is not among
+them, the two state contracts drawing it and that contract drawing these.
 
 **One field is recorder-assigned, the rest harness-supplied.** The sequence is
 computed by the recorder on admission, because ordering is a property of the account
