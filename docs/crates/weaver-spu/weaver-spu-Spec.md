@@ -3,21 +3,6 @@
 **Status:** MERGED. Cut 2026-08-02, seventh of the Spec pass and the last of the set.
 Code is written against it under the gates of Working Process section 6.
 
-**Revised:** 2026-09-15, the layout and section 10's counts are read from the
-source tree. Section 1's table named two paths under `decoder/` that no file
-answers to and left six modules unlisted, and its rows now come from
-`crates/weaver-spu`, with the absence of anything holding them there stated at
-the table rather than asserted away. Section 10 reads eighty-nine records against
-fourteen `grounds` edges from eleven of them and seventy-eight grounding in no
-invariant, names the third record carrying two edges, and states where each record
-is declared, sections 0 and 12 at zero, in place of a sorting split that had gone
-two counts stale. Section 1.1 stops naming `candle-flash-attn` among what
-resolves to the candle pin and says that the pin's own value is stale against the
-manifest, with issue #605 carrying the correction. Section 1 records that the
-layout's second `[[bin]]` target and `spu-one-binary` disagree, and leaves the
-record to the act that can move it. No record is added, removed, or retagged.
-Per issue #569.
-
 **Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
 Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
 where `weaver-gate-Spec` section 2 and `weaver-harness-Spec` section 2.2 already
