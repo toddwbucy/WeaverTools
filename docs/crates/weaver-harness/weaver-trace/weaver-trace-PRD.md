@@ -137,6 +137,25 @@ begins with an empty working structure, the program promises no resume, and what
 continuity across runs becomes, against operator-held storage or the memory round,
 is the enter cell `weaver-admin-PRD` section 10 holds.
 
+**The rendering has a name, and two contracts outside this crate draw it.** The
+`canonical-event` is one event in the form this section holds and hands, envelope
+and payload together, and it is the unit a reader of the record meets.
+`weaver-harness-state-contract` draws it for the tee's distillate and
+`weaver-analysis-state-contract` draws it for the driver's, each of those being a
+projection of this form and never a reshaping of it, so both clauses name what this
+crate spells rather than spelling it again. It is defined here because the rendering
+is this crate's, and a second crate defining the same form would reopen exactly the
+reconciliation this section says cannot be owed.
+
+```graph
+node: canonical-event
+kind: vocabulary
+
+edge: defines
+from: weaver-trace
+to: canonical-event
+```
+
 ### 2.4 Spans
 
 Spans are neither materialization and they are not stored. A span is a view over a range

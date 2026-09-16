@@ -53,11 +53,12 @@ Every contract names the vocabulary it depends on, grouped by the crate that
 defines it. A contract without this clause is not a valid contract, and a group
 is stated even when empty.
 
-**From `weaver-trace`.** The canonical event JSON and its envelope fields:
-`session`, `run`, `turn`, `kind`, and `sequence`, spelled as that crate's
-canonical form spells them. The distillate is a projection of the canonical
-form and never a reshaping of it, so every name that crosses this seam is a
-name the record already carries. The harness draws it.
+**From `weaver-trace`.** The `canonical-event`, defined at `weaver-trace-PRD`
+section 2.3, and its envelope fields: `session`, `run`, `turn`, `kind`, and
+`sequence`, spelled as that crate's canonical form spells them. The distillate
+is a projection of the canonical form and never a reshaping of it, so every
+name that crosses this seam is a name the record already carries. The harness
+draws it.
 
 **From `weaver-types`.** Nothing. The distillate's shape is this seam's own
 vocabulary, defined below, and the floor carries no member for it, per the

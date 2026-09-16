@@ -576,8 +576,10 @@ protocol vocabulary out of this crate until a written contract needed it.
 `weaver-harness-spu-decode-contract` section 7 the second, arriving with the
 token trio on 2026-08-02, `weaver-harness-gate-contract` section 7 the
 third, arriving with `turn-frame` and `fault-report` in the same workflow's
-gate act, and `weaver-harness-spu-classify-contract` section 7 the fourth,
-arriving with the label trio on 2026-08-19. Nothing
+gate act, that same clause again the fourth, arriving with `tool-name` in the
+tool workflow's opening act of 2026-08-17, and
+`weaver-harness-spu-classify-contract` section 7 the fifth, arriving with the
+label trio on 2026-08-19. Nothing
 else enters this subsection until another contract draws it, a definition
 arriving without a contract behind it being the reserved-slot error apex section
 9 forbids, in schema form. `harness-alert` was
@@ -653,7 +655,19 @@ own trio, which is the one-owner-many-drawers shape this subsection already
 runs on. The case set it carries is the organs' enumerations, closed on
 2026-08-02, and its shape is the trace act's to elect against them.
 
-**One of the nine belongs to the floor and not to any loop.** `organ-envelope` is the
+**The tool name arrives with the tool workflow.** `tool-name` arrives on
+`weaver-harness-gate-contract` section 7's demand with that workflow's opening act
+of 2026-08-17, carrying across the execution exchange the name the model spoke for
+the tool it called, and it is named for the seam's currency under the same extension
+the turn frame is named under. It is this crate's for the reason everything in this
+subsection is this crate's: it crosses a socket, so it is a representation two
+processes must agree on, and what a tool itself is stays with `weaver-traits` by the
+floor's own division. The gate is the one party that compares a name that crossed
+against what a held tool answers, and it depends on both crates, so the comparison
+has both definitions in scope.
+
+**One of this subsection's definitions belongs to the floor and not to any loop.**
+`organ-envelope` is the
 carrier every organ channel draws, holding the exchange a message belongs to, that
 message's position in the exchange, and the type of its payload. It is defined here
 because the coordination seam was the first channel to need it, and it is the one value
@@ -763,6 +777,13 @@ to: label-answer
 edge: defines
 from: weaver-types
 to: label-refusal
+
+node: tool-name
+kind: vocabulary
+
+edge: defines
+from: weaver-types
+to: tool-name
 ```
 
 ## 3. What it must not hold

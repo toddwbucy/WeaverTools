@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.19, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.20, 2026-09-16. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -443,14 +443,19 @@ Between a contract and what it binds:
 - `party`, from a contract to each crate it binds.
 - `draws`, from a contract to each node its clause names. This is the vocabulary
   clause in edge form and it is what makes G4 a query rather than a reading.
-  **The endpoint kind is open and is owed.** A clause names a vocabulary node in the
-  ordinary case, and three edges in the corpus today name a term instead, the
-  `election` and the `distillate` drawn by `weaver-analysis-state-contract` and the
-  `diagnostic-trace` drawn by `weaver-harness-diagnostic-contract`. Whether a term is
-  a lawful endpoint or those three want a vocabulary node to point at is not settled
-  here. It is `act-09-draws-targets` of issue #569, which resolves every draws target
-  in one pass, and admitting the `term` kind is what lets that act be asked in terms
-  the format carries.
+  **An endpoint is a `vocabulary` node or a `term` node and nothing else**, on the
+  ruling of 2026-09-16 that closes the item the format left open here. A clause names
+  a meaning the contract depends on, and section 3 types a meaning two ways: a
+  `vocabulary` node where one crate owns the definition, and a `term` where the
+  documents settle the meaning and no crate owns it as a single definition. Both are
+  meanings, so both are drawn, and the `election` and the `distillate` drawn by
+  `weaver-analysis-state-contract` and the `diagnostic-trace` drawn by
+  `weaver-harness-diagnostic-contract` are admitted where they stand rather than
+  retyped. **Nothing else is a meaning a clause can name.** An artifact is reached
+  through the field the clause draws, per the `holds` entry below, and a crate, a
+  document, an axiom and an assertion are the subjects of other edges entirely.
+  **A `draws` edge introduces no node**, exactly as a `defines` edge does not, so an
+  endpoint no document declares is a dangling edge rather than an implied node.
 
 Between a crate and what it owns or touches:
 

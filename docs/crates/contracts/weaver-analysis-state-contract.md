@@ -70,11 +70,11 @@ shift with the author: the election is the opener declaring the session and
 the elected kinds with their payload key paths, and the distillate is one
 distilled event, envelope whole and elected pairs beside it.
 
-**From `weaver-trace`.** The canonical event JSON and its envelope fields,
-spelled as that crate's canonical form spells them. The driver reads the
-record itself, outside the agent, and its distillates are projections of
-canonical events exactly as the tee's are: every name that crosses this seam
-is a name the record already carries.
+**From `weaver-trace`.** The `canonical-event`, defined at `weaver-trace-PRD`
+section 2.3, and its envelope fields, spelled as that crate's canonical form
+spells them. The driver reads the record itself, outside the agent, and its
+distillates are projections of canonical events exactly as the tee's are:
+every name that crosses this seam is a name the record already carries.
 
 **From `weaver-types`.** Nothing crosses. The binding kind conditions this
 door's existence and never rides it, the declaration having done its work at
