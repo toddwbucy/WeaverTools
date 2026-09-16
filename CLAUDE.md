@@ -408,7 +408,7 @@ indexes them, it does not replace them:
    commits, the Spec authoring an assertion that phase three would code later,
    with nothing holding the receipt.
 
-   **It has been wrong twenty-two times and its docstring lists every one**,
+   **It has been wrong twenty-four times and its docstring lists every one**,
    which is worth reading before trusting a number it prints. The shape
    repeats: a regular expression too strict about where text sits, printing a
    count that is confidently too low. Read the docstring rather than a copy of
