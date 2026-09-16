@@ -446,11 +446,6 @@ mod tests {
     use super::*;
     use crate::store::*;
 
-    /// **The embedded engine's boundary is the file's owner and mode**, per
-    /// the contract's `grants` ask of 2026-09-04, and the ask parses by its
-    /// name. Perturbation: render the mode in decimal and the second
-    /// assertion fails on its spelling, which is the whole of what a
-    /// comparison across two readings rests on.
     /// **The identity ask serves the turnless system messages and no
     /// other**, in landing order, with the prefix's pairs. Perturbation:
     /// drop `turn IS NULL` from the query and the turned system message
@@ -534,6 +529,11 @@ mod tests {
         );
     }
 
+    /// **The embedded engine's boundary is the file's owner and mode**, per
+    /// the contract's `grants` ask of 2026-09-04, and the ask parses by its
+    /// name. Perturbation: render the mode in decimal and the second
+    /// assertion fails on its spelling, which is the whole of what a
+    /// comparison across two readings rests on.
     #[test]
     fn the_grants_ask_states_the_file_boundary() {
         let path = scratch();

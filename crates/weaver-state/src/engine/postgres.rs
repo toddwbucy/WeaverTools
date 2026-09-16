@@ -1,7 +1,5 @@
 //! conforms: state-store-is-a-port
-//! conforms: state-indexes-built-at-load
 //! conforms: state-distillate-lands-whole
-//! conforms: state-serve-restricts-to-the-session
 //!
 //! The service engine, per `weaver-state-Spec` section 3 and the ruling of
 //! 2026-09-04: one database per agent, reached over the store's unix socket
@@ -9,6 +7,19 @@
 //! that account to the role the binding declares. Behind the `postgres`
 //! feature. The same two-table shape as the embedded engine, in this engine's
 //! dialect, and the same port, whole.
+//!
+//! Two of the section's claims this file does not cite, and each returns
+//! under `act-27`, which is where the engine gets an instrument.
+//! `state-serve-restricts-to-the-session` is tagged `perturbation` and a
+//! perturbation claim is bought by a test and cited where the test is - this
+//! file holds no test and nothing but `main.rs` ever builds a `Postgres`, so
+//! the session predicate could leave `shape` and every device would still
+//! answer green. `state-indexes-built-at-load` is tagged `review` and the
+//! reading disproves it here: `build_indexes` names a partial index
+//! `field_elected_{hex}` and Postgres truncates an identifier at 63 bytes,
+//! so an elected key of 25 bytes or more can collide with another under
+//! `CREATE INDEX IF NOT EXISTS` and lose its index silently. That is issue
+//! #618 and the embedded engine is unaffected, sqlite setting no such limit.
 
 use std::cell::{RefCell, RefMut};
 
