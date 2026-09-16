@@ -1,3 +1,6 @@
+//! conforms: analysis-writes-no-record
+//! conforms: analysis-one-preload-per-run
+//!
 //! The diagnostic consumer, per `weaver-analysis-PRD`: a crate outside the
 //! agent boundary that parses the operator's record, derives the diagnostic
 //! declaration from it, preloads what the parse projects, and reads the
@@ -16,6 +19,13 @@
 //! let mut sender = weaver_analysis::preload::open(Vec::new(), "s-1").unwrap();
 //! sender.send(&event);
 //! ```
+//!
+//! **One preload per standing of this driver**, per `weaver-analysis-Spec`
+//! section 4, whose instrument is a compile-fail pin on the shape that
+//! would break it. **Both of this crate's pins stand here** because a
+//! compile-fail pin is a doctest and a doctest is the root's to hold. The
+//! structure each rests on is its own module's, the seal consuming the
+//! sender being `preload.rs`'s.
 //!
 //! ```compile_fail
 //! // One preload per standing: the seal consumes the sender.

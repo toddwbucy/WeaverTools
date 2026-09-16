@@ -1,5 +1,4 @@
 //! conforms: analysis-seal-ends-the-preload
-//! conforms: analysis-one-preload-per-run
 //! conforms: analysis-dials-as-invoked
 //!
 //! The seam's sender, per `weaver-analysis-Spec` section 4: three things in
@@ -11,9 +10,13 @@
 //! **One preload per standing of this driver, by structure.** Opening
 //! consumes the sink into a sender and sealing consumes the sender, so a
 //! second opener on a channel that carried one is not expressible: a retry
-//! is a new run of this crate rather than a second preload inside one. It
-//! dials under whatever identity it was invoked with and mints none, the
-//! credential's rightness judged at the far end by the door.
+//! is a new run of this crate rather than a second preload inside one.
+//! **The shape is this module's and the pin that holds it is the root's**,
+//! per Spec section 6: the instrument the clause names is a compile-fail
+//! pin, a compile-fail pin is a doctest, and `lib.rs` carries the citation
+//! with the doctest rather than here. It dials under whatever identity it
+//! was invoked with and mints none, the credential's rightness judged at
+//! the far end by the door.
 
 use std::io::Write;
 

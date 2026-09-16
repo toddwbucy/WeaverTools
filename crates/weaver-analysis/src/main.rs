@@ -1,8 +1,22 @@
+//! conforms: analysis-dials-as-invoked
+//! conforms: analysis-summary-reports-the-record-identity
+//!
 //! The invocation's composition root, and nothing else, per
-//! `weaver-analysis-Spec` section 1: the operator's three acts, each a
-//! subcommand, each taking a byte stream from its invocation. The socket it
-//! dials is opened under whatever identity this process was invoked with,
-//! and none is minted, per Spec section 4.
+//! `weaver-analysis-Spec` section 1: the loop's three acts and the four
+//! readings beside them, each a subcommand, each taking a byte stream from
+//! its invocation. The socket it dials is opened under whatever identity
+//! this process was invoked with, and none is minted, per Spec section 4,
+//! this root holding the one call that dials.
+//!
+//! **The summary the signals verb renders is section 5's, and four of that
+//! section's claims about it stand built nowhere.** What crosses today is
+//! the turn, the perplexity, the residency, the output count and the
+//! record's identity, an absent member omitted at the wire rather than
+//! rendered null, which is the half of the identity rule this root's
+//! rendering verb holds. The record's session, the record's digest, the
+//! seated prefix's length, and the run with the conditions it ran under
+//! are declared by that section and reach no code, per issue #538, so they
+//! are named here as owed rather than cited.
 
 use std::io::Read;
 
