@@ -2219,9 +2219,9 @@ surface, read as a declared `[[bin]]`, an absent `[lib]` section, and no
 manifest read cannot reach on its own and the reason the instrument reads the
 tree beside the file.
 
-**Which invariant each claim serves, and why most serve none.** Twelve of the forty
-carry a `grounds` edge and those twelve carry thirteen edges, one record grounding in
-two invariants. **All three records the boundary act of 2026-08-28 added ground in
+**Which invariant each claim serves, and why most serve none.** Twelve of the
+forty-four carry a `grounds` edge and those twelve carry thirteen edges, one
+record grounding in two invariants. **All three records the boundary act of 2026-08-28 added ground in
 none**, and the paragraph accounts for each rather than one. Section 6's runtime
 directory mode is an election about a boundary this crate provisions, and its access
 rule reachability is a consistency rule between two locks - neither is a claim an
@@ -2245,7 +2245,7 @@ six ground in it. **The atomic close-on-exec of section 6 grounds in it by the s
 relation rather than the first**, on the argument that clause states. Remove it and the
 log is still NDJSON, the FIFO still opens nonblocking, the inventory still repairs
 nothing, and the identity is still built from the validated name, so those ground in
-nothing. **Twenty-eight claims grounding in no invariant is the expected result and not
+nothing. **Thirty-two claims grounding in no invariant is the expected result and not
 a gap**, per Document Format section 4: most of what this Spec elects is a rendering, a
 mode, an ordering, or a route, and representation is what the invariants are not about.
 
@@ -2364,12 +2364,16 @@ moved, and six arrivals, so each is short by the inversion's one side.
 **Thirty-one was this span's endpoint and thirty-two arrived at the next act**,
 `admin-run-reference-distinguishes` with the run's identity. Three records took the
 count to thirty-four: that one, then `admin-kind-mismatch-refused-at-inventory` on
-2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Six more reach the
-forty this section counts above, the boundary act's three of 2026-08-28 that the tag
-census names, then `admin-granted-permission-refused-at-inventory` on 2026-08-31,
+2026-08-24 and `admin-preload-name-follows-the-kind` on 2026-08-25. Six more reach
+forty, the boundary act's three of 2026-08-28 that the tag census names, then
+`admin-granted-permission-refused-at-inventory` on 2026-08-31,
 `admin-restore-cut-judged-at-the-inventory` on 2026-09-06, and
-`admin-missing-home-refuses-and-builds-nothing` on 2026-09-07, each named so this figure
-is checkable against the file the way every other figure here is. An earlier form of
+`admin-missing-home-refuses-and-builds-nothing` on 2026-09-07. Four more reach the
+forty-four this section counts above, all on 2026-09-15 with the member's own
+account: `admin-member-account-required-at-inventory`,
+`admin-member-territory-is-the-members-own`, `admin-store-gate-asks-as-the-member`,
+and `admin-member-spawn-drops-to-its-account`. Each is named so this figure is
+checkable against the file the way every other figure here is. An earlier form of
 this lead stated no endpoint at all, and stating one is what exposed that the lists did
 not reach it. Retired: the operator surface's six, its stream election, its accept-time
 refusal, its refusal-by-closure, its serial answering, its bounded request line, and its
