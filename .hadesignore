@@ -125,3 +125,20 @@ process/ingest/chunk-plan.json
 **/CLAUDE.md
 **/AGENT.md
 **/AGENTS.md
+
+# **The technical set is in development and is not authoritative**, per the
+# operator's ruling of 2026-09-16, and the directory belongs on a branch. Until
+# it moves it stays in the tree and out of the graph, for the reason the agent
+# instruction files are excluded above: a semantic hit on a page that describes
+# and decides nothing returns a reading beside the Spec that owns the claim, with
+# nothing marking which is authoritative.
+#
+# **This changes no census reading.** The eleven metrics count nothing under this
+# directory today, so the exclusion is about what a query answers with and not
+# about a number. The G1 width reading is a grep over the tree and is not
+# governed here either - all twelve of its current sightings are these pages, and
+# they leave when the directory does.
+#
+# `act-21` and `act-22` are withdrawn on this ruling, so no act is owed against
+# these pages while the block stands. Lift it when the set is integrated.
+docs/technical/
