@@ -53,6 +53,22 @@ if [ "$RC" -ne 0 ]; then
       printf '%s\n' "$STDERR" >&2
       exit 1
       ;;
+    *"no matching package"*|*"failed to load source"*|*"revspec"*|*"failed to get"*)
+      # **Drift reaches here too, and the reader has to be told so.** Under
+      # `--offline` a resolution needing a package or a fork rev the local cache
+      # does not hold fails before cargo reaches the `--locked` refusal, so the
+      # one act most likely to drift this tree - bumping one of the five fork
+      # revs `weaver-spu` pins - lands in this arm rather than in DRIFT. Saying
+      # only that the gate did not run would send the reader at their cache when
+      # the lock is what moved.
+      printf 'UNKNOWN the resolution could not complete offline, and drift is one\n'
+      printf '        of the reasons it cannot: a manifest naming a package or a\n'
+      printf '        fork rev the local cache does not hold reaches here rather\n'
+      printf '        than DRIFT. Warm the cache and re-run, or compare the lock\n'
+      printf '        against the manifests by hand before trusting this answer\n'
+      printf '%s\n' "$STDERR" >&2
+      exit 2
+      ;;
     *)
       printf 'UNKNOWN the gate did not run, so the lock is unchecked rather than clean\n'
       printf '%s\n' "$STDERR" >&2
@@ -68,11 +84,26 @@ fi
 # one the commit carries. This is a report rather than a refusal, an act that
 # adds a dependency having a changed lock for the whole of its life before it
 # commits.
-if ! git diff --quiet HEAD -- Cargo.lock 2>/dev/null; then
-  printf 'OK      the resolution is in step with Cargo.lock\n'
-  printf 'NOTE    Cargo.lock differs from HEAD, so this act carries a lock change\n'
-  printf '        and commits it, or a cargo run repaired it and nobody noticed\n'
-  exit 0
-fi
+# **The comparison is three-valued like the one above.** `git diff --quiet` exits
+# 0 for no difference and 1 for a difference, and 128 for no repository at all or
+# an unborn HEAD. Treating every non-zero as a difference reports a lock change
+# to a reader who has no git, from an export or a container build, and hides why.
+git diff --quiet HEAD -- Cargo.lock 2>/dev/null
+case $? in
+  0)
+    ;;
+  1)
+    printf 'OK      the resolution is in step with Cargo.lock\n'
+    printf 'NOTE    Cargo.lock differs from HEAD, so this act carries a lock change\n'
+    printf '        and commits it, or a cargo run repaired it and nobody noticed\n'
+    exit 0
+    ;;
+  *)
+    printf 'OK      the resolution is in step with Cargo.lock\n'
+    printf 'NOTE    the comparison against HEAD could not be made, so whether this\n'
+    printf '        act carries a lock change is unknown rather than no\n'
+    exit 0
+    ;;
+esac
 
 printf 'OK      the resolution is in step with Cargo.lock, which matches HEAD\n'

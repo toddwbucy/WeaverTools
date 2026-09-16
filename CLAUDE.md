@@ -180,7 +180,7 @@ own**, on issue #551's third ask and as of 2026-09-15.
 
 It runs from any directory and answers in an exit status: 0 the resolution is
 in step with the lock, 1 drift, 2 the gate could not run and the lock is
-unchecked rather than clean. It resolves and compiles nothing, so it costs a
+unchecked rather than clean. It compiles nothing, so it costs well under a
 second and it goes first, ahead of the commands above and of the census. An
 instrument that runs inside a test binary cannot do this job at all, `cargo
 test` having resolved and repaired the lock before the binary is spawned, which
