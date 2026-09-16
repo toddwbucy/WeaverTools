@@ -405,6 +405,18 @@ indexes them, it does not replace them:
    whole-tree artifact under version control is what two parallel acts collide
    on, and the collision is the lucky case.
 
+   **An act whose reading differs from the committed baseline regenerates it in
+   the same act, or names in its body why it does not.** Nothing told an act it
+   owed a regeneration when its own edits moved a counter, so a header act
+   correctly reported the movement and the baseline stayed behind. Every act
+   after it then printed a `down` it did not cause, which is the gate crying
+   wolf and is how a reading stops being read. It happened twice: #601 moved
+   `documents_without_an_enforcement_table` and #610 regenerated only while
+   fixing something else, then three header acts of 2026-09-16 moved
+   `sources_without_a_header` by nine and none regenerated. **Where several acts
+   are in flight at once the regeneration waits**, per the parallel-batch rule
+   above, and one run against settled `main` follows them.
+
    **Issue #558 is the backlog** and records how it came about: nineteen of
    the first thirty-three uncited perturbations were born in documents-only
    commits, the Spec authoring an assertion that phase three would code later,
