@@ -11,7 +11,12 @@ the table rather than asserted away. Section 10 reads eighty-nine records agains
 fourteen `grounds` edges from eleven of them and seventy-eight grounding in no
 invariant, names the third record carrying two edges, and states where each record
 is declared, sections 0 and 12 at zero, in place of a sorting split that had gone
-two counts stale. No record is added, removed, or retagged. Per issue #569.
+two counts stale. Section 1.1 stops naming `candle-flash-attn` among what
+resolves to the candle pin and says that the pin's own value is stale against the
+manifest, with issue #605 carrying the correction. Section 1 records that the
+layout's second `[[bin]]` target and `spu-one-binary` disagree, and leaves the
+record to the act that can move it. No record is added, removed, or retagged.
+Per issue #569.
 
 **Revised:** 2026-09-14, two hygiene claims carry the edge their twins carry.
 Section 2's dumpable-flag and close-on-exec records ground in apex section 5.1,
@@ -536,7 +541,24 @@ takes the walk rather than trusting them.
                                 compiled under `cuda` alone, section 3
     build.rs                    the kernel compile, gated on `cuda`
     kernels/transformer.cu      the salvaged kernels, section 10
-    kernels/PROVENANCE.md       what crossed and what has not, section 10
+    kernels/PROVENANCE.md       what crossed and what has not
+
+**`src/bin/classify.rs` is a second `[[bin]]` target, and `spu-one-binary` above
+reads as one.** The manifest declares two, and section 11 states the second in
+prose, so this table and the clause that opens this section disagree. **This act
+reads the layout and does not re-cut the record**, because which way the clause
+settles is not a layout reading: narrowed to the serving binary it leaves the
+classify arm as a declared second target, retired it takes with it whatever the
+record was buying, which on the prose beside it is that nothing links this crate
+rather than that one target exists. The second moves the record set and the
+counts section 10 states. The finding is at
+`docs/project/audit-2026-09-14-the-corpus-against-v5.md` under the heading on a
+manifest tag its own manifest falsifies. **The sharper half is that the
+instrument does not exist**: the manifest's own comment says a manifest test
+checks for exactly one `[[bin]]` target and `crates/weaver-spu/tests/manifest.rs`
+checks nothing of the kind, which is the unenforced-read-as-enforced conversion
+apex section 11 warns against. That comment and that file are the crate's to
+answer, as is `src/lib.rs`'s header, which states the claim a third time.
 
 **A later operation type is a sibling of `decoder/`, in its own process.**
 Per charter section 13.1 the encoder and the other operation types arrive as
@@ -632,11 +654,27 @@ by the split-artifact ruling: the fork gains `load_from_splits`, the
 explicit-set door llama.cpp holds for callers whose paths carry no sibling
 pattern, which is what a descriptor path is, and the build script's DLL
 relink becomes idempotent under concurrent builds. `candle-core`, `candle-nn`,
-`candle-transformers`, and `candle-flash-attn` all resolve to
-`https://github.com/toddwbucy/candle` at revision
-`d24381efff07cb2c79419369d74605f112d2cff7`. Both are full revisions rather than
+and `candle-transformers` resolve to `https://github.com/toddwbucy/candle` at
+revision `d24381efff07cb2c79419369d74605f112d2cff7`. **`candle-flash-attn` is
+not a fourth name resolving to it,** the manifest declaring it nowhere and
+`Cargo.lock` holding it nowhere: it shares the pin as a value rather than as a
+resolution, which is what the manifest states and what this clause overstated
+until 2026-09-15. Both are full revisions rather than
 abbreviations, because an abbreviation is unambiguous only until the repository
 it names grows a collision, and this Spec is the durable record.
+
+**The candle value above is stale, and it stands as a deferral rather than as a
+miss.** `crates/weaver-spu/Cargo.toml` has pinned
+`429615148582d62f285879b97cb63dbdd17b47fd` for the three declared names since
+`ab39b49` of 2026-08-19, and `Cargo.lock` agrees. For `candle-flash-attn` there
+is no second source at all: the manifest declares it nowhere and delegates its
+revision to this section by name, which is the delegation the paragraph below
+argues for, so this clause is the only place that number lives and the number is
+wrong. **Issue #605 carries the correction**, on the operator's ruling of
+2026-09-15 that this section stays the pin's home and the value moves in an act
+of its own. A wrong value standing silently in a document that calls itself the
+durable record is the failure to avoid, and one standing with its issue named is
+a decision a reader can act on.
 
 **Why the values sit in a Spec at all, which is a question worth answering.** A
 revision is representation and belongs here rather than in the charter. What
@@ -3515,7 +3553,7 @@ tag in this document states its ground at its own clause, and outside two
 cases the ground is that no instrument was bought rather than that none exists.
 The two exceptions say so where they sit: the absence of anything laid in for
 an operation type that does not exist, and the kernels' comparisons above.
-Section 7's unasked-vector watch was a third of them until the column act
+Section 7's unasked-vector watch stood third among them until the column act
 built its seam and bought it, as its ground obliged. What tag it carries since
 is recorded where that act's changes are, in the paragraph on where the records
 sit, and is not restated here.
