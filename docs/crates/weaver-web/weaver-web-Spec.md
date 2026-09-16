@@ -13,7 +13,7 @@ archive.
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-Spec`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #611
+**Landing PR:** #614
 
 ## 0. What this document is
 

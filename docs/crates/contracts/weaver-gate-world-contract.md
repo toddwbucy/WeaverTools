@@ -10,7 +10,7 @@ crate, the second instance of the category that ruling settles.
 **Document ID:** `weaver-gate-world-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
-**Landing PR:** #298
+**Landing PR:** #614
 
 ---
 
