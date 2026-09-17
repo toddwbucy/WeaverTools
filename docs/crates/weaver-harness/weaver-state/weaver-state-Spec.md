@@ -6,7 +6,7 @@
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #586
+**Landing PR:** #626
 
 ---
 
@@ -37,13 +37,19 @@ from: weaver-state
 to: state-custody-without-policy
 ```
 
-It links two internal crates. `weaver-trace` carries the canonical event
-vocabulary the ingest parses, and `weaver-types` is a `floor-link` declared at
-charter section 1. No source file here consumes either name outside this
-crate's own tests. **Neither edge's standing is settled here**: charter
-section 5 holds one cell for what the floor link is drawn for and a second
-for the `weaver-trace` dependency, and this clause restates those cells
-rather than answering them.
+**The manifest declares two internal crates and they stand differently.**
+`weaver-trace` carries the canonical event vocabulary the ingest parses, and
+the shipped ingest parses that vocabulary without naming the crate: the only
+units reaching it are this crate's own tests, where the opener and the
+distillate are built through `weaver_trace::opener` and `weaver_trace::distill`
+rather than by hand. `weaver-types` is declared and **no unit here consumes it
+at all**, this crate's tests included. Charter section 5 carries a cell for
+each and this clause restates them rather than answering either: what the
+`weaver-trace` dependency is, the graph carrying no edge for it, and which
+member of `weaver-types` this crate consumes. **The floor link itself is not
+open.** It is declared at charter section 1 and kept on the operator's ruling
+of 2026-09-14, a link held for work not yet done being an election rather than
+a leftover, and what the cell asks is what it will be drawn for.
 
 **Dependencies, external.** One per engine, each behind a feature named for
 its engine so a build compiles the integrations it deploys and no other, per
@@ -168,12 +174,26 @@ happens to want it is a cost landing mid-serve rather than at load.
 ```graph
 node: state-indexes-built-at-load
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-state
 to: state-indexes-built-at-load
 ```
+
+**An elected index is named from its key path, and a name that cannot be made
+is a refusal.** Two elected paths never share a name, so a later load's
+differing election never falls silently under `CREATE INDEX IF NOT EXISTS`
+beneath an earlier load's, which is the whole reason the name is derived from
+the path rather than from the key's position in the election. Where an engine's
+identifier limit cannot hold a path's name the load refuses the election with a
+named fault, because building the subset that fits is the same silent loss read
+from the other end. The encoding is the code act's under this election, the way
+the pragmas below are. **The service engine does not answer this election
+today and the code is owed**, per issue #618: its names truncate at the store's
+sixty-three byte identifier limit, so two elected paths sharing a long enough
+prefix collide to one name and the second index is a no-op nothing reports. The
+embedded engine is unaffected, sqlite setting no such limit.
 
 **Durability yields to speed, and the charter is the license.** The
 derivative is rebuildable from the record and the session never depends on
@@ -439,17 +459,93 @@ reads is a data-shaped empty joint.
 
 ## 5. What is enforced, and by which instrument
 
-The seam's conformance is the contract's section 8, each half landing with
-its code act: the election round trip, real events to attributable rows,
-and the dead-peer clause watched by killing the member mid-run for the
-ingest, and the shape ask answered with exactly what the record shows plus
-the ask against a dead member costing the answer and never the turn for
-the serve. The territory's mode is checkable by the same walk the trace's
-custody was checked by, the agent's uid asked to read the file and refused,
-and the service engine's second gate by the same walk at the store, the
-agent's uid asked to connect as any role and refused by the store's own
-authentication. The port is review: the ingest and serve are read for any
-engine reached past the port, and there is none.
+**This crate holds no `tests/` target** and every test it has stands in an
+in-file `#[cfg(test)]` suite beside the unit it watches, so Document Format
+section 5's review rule reaches this crate at the item where an instrument sits
+rather than at a directory, which is the scope that rule states. **No claim here
+is cited at a test.** Every `conforms:` line in the crate sits at a `//!` file
+header but one, the line inside `stand_preload_name`, which is a function the
+binary runs, so none of the nine is a sighting under that rule.
+
+**Requiring a perturbation-verified test.** Six claims, each watched where the
+behaviour sits.
+
+- The serve restricts to the opener's session, watched by dropping any of the
+  three `WHERE session` predicates the reads carry, which returns an earlier
+  session's runs to a shape answer and an earlier session's rows to a recall.
+- The indexes are built at load, watched by naming them positionally: a later
+  load's differing election then falls under the earlier name through
+  `CREATE INDEX IF NOT EXISTS` and one index stands where the election asks
+  two. **The timing is the half no test reaches.** The build sits on the
+  binary's startup path between the opener's parse and the serve loop, and
+  every test that drives it calls the port directly, so what is watched is
+  that the election's own indexes are built and not that they are built
+  before the first distillate lands.
+- The replay answers at the seal, watched by making the park ignore the seal,
+  which answers the after-the-seal case from the wrong slot, and by making the
+  ready check ignore it, which answers a sealless close over a prefix.
+- The preload name states its mode, watched by dropping the owner-only umask
+  from the bind, which leaves the name at whatever mode this process inherited.
+- The member binds no name it is not given, watched where the name is decided
+  rather than where it is bound: default the vector's preload positional and a
+  serving load stands a door nothing should dial.
+- The preload door refuses every peer but the operator, watched by dropping
+  the root arm from the accept, which admits the agent's own uid.
+
+**The first two claims are watched at the embedded engine.** Nothing in this tree
+builds the service engine under test, so the session predicate could leave that
+engine's reads and every device would answer green, and its index naming is not
+merely unwatched but disproved, per issue #618 and the election of section 3.
+Each claim is cited where its instrument sits and the service engine cites
+neither until it holds one of its own. **The same reading covers the whole of
+that engine**: it is reachable only from the binary's own election and no unit
+constructs it, so its arm of every claim in this section rests on a reading and
+not on a run.
+
+**Enforced by review, and each clause names what would buy it.** Review here
+means the instrument was not bought and never that none exists, per Document
+Format section 5.
+
+- **Custody without policy** is read off the crate's surface for any door a
+  judgment could enter by. The claim is an absence spread across a surface
+  rather than a shape, so no single compile-fail pin names it and a test can
+  only watch the doors that exist. What would buy it is a check over the
+  crate's exported items refusing any that ranks, judges or initiates, which
+  is a shape this corpus has no instance of, and naming it is what keeps the
+  claim from reading as unbuyable.
+- **The store is a port** and the nearest thing to an instrument is the
+  signature: the ingest and the serve take the port behind a reference and can
+  name no engine, so a call reaching past it would not compile as this code
+  stands. Nothing holds that signature in place, so a later act widening one of
+  them to a concrete engine compiles and this claim goes quiet. What would buy
+  it is a compile-fail pin over an ingest path that names an engine.
+- **A distillate lands whole** and the embedded suite watches a good one
+  landing and surviving a reopen, which is the persistence half. The half that
+  carries the claim - a landing that fails between the event row and its pairs
+  leaving neither behind - has no instrument. What would buy it is an insert
+  forced to fail inside the transaction with the holdings counted after.
+
+**The walks the seam's conformance asks for are not in this tree.** The
+contract's section 8 names them and says both directions land with the acts
+that open the seam and shape the surface, which have landed: the election round
+trip and real events to attributable rows against the living producer, the
+dead-peer clause watched by killing the member mid-run and by asking with the
+member gone, the replay ask observed waiting in all three unsealed states and
+its retry sequence, and the answered-against clause read in time with asks
+interleaved among distillates. The suites here reach most of those properties
+through the port or through the unit that holds them rather than across the
+seam, which is the cheaper instrument and not the one the contract names, and
+**the dead-peer clause is reached by nothing here in either direction**. The
+territory's mode is owed the same kind of walk, the agent's uid asked to read
+the file and refused, and the service engine's second gate the same at the
+store, the agent's uid asked to connect as any role and refused by the store's
+own authentication. The `grants` ask reports the file's owner and mode and
+asserts nothing about either, so it is a surface for that walk rather than the
+walk.
+
+**Where the records sit.** The assertion records are at the clauses that argue
+the claims, across sections 1 through 4 rather than gathered here, per Document
+Format section 6.
 
 ## 6. Open elections
 
