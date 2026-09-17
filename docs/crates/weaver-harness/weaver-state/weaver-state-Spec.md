@@ -190,12 +190,14 @@ identifier limit cannot hold a path's name the load refuses the election with a
 named fault, because building the subset that fits is the same silent loss read
 from the other end. The encoding is the code act's under this election, the way
 the pragmas below are. **The ceiling belongs to the engine and so does the
-encoding.** The service engine measures every name against the store's
-sixty-three byte identifier limit, which that store truncates a longer name past
-rather than refusing, so an election carrying a path it cannot name is refused
-entire rather than built in the part that fits. The embedded engine is
-unaffected, sqlite setting no such limit, and the two engines encode one path
-differently on that ground.
+encoding.** The service engine measures every name against the identifier width
+its store states at open, which that store truncates a longer name past rather
+than refusing, so an election carrying a path it cannot name is refused entire
+rather than built in the part that fits. The width is asked for rather than
+assumed, a store built to another one being the same collision read from a
+number this crate would have guessed. The embedded engine is unaffected, sqlite
+setting no such limit, and the two engines encode one path differently on that
+ground.
 
 **Durability yields to speed, and the charter is the license.** The
 derivative is rebuildable from the record and the session never depends on
@@ -478,13 +480,16 @@ behaviour sits.
 - The indexes are built at load, watched by naming them positionally: a later
   load's differing election then falls under the earlier name through
   `CREATE INDEX IF NOT EXISTS` and one index stands where the election asks
-  two. At the service engine the same perturbation is the truncation, its names
-  measured against the store's limit rather than refused, which collides two
-  elected paths of thirty bytes to one name. **The timing is the half no test
-  reaches.** The build sits on the binary's startup path between the opener's
-  parse and the serve loop, and every test that drives it calls the port
-  directly, so what is watched is that the election's own indexes are built and
-  not that they are built before the first distillate lands.
+  two. At the service engine the perturbation is the scheme that engine carried
+  before its names were derived as they are, the key's hex under a prefix and
+  the store's truncation in place of a refusal, which the two together collide
+  to one name for two elected paths of thirty bytes. Truncation alone collides
+  nothing under the naming that stands, those two paths naming indexes well
+  inside the width. **The timing is the half no test reaches.** The build sits
+  on the binary's startup path between the opener's parse and the serve loop,
+  and every test that drives it calls the port directly, so what is watched is
+  that the election's own indexes are built and not that they are built before
+  the first distillate lands.
 - The replay answers at the seal, watched by making the park ignore the seal,
   which answers the after-the-seal case from the wrong slot, and by making the
   ready check ignore it, which answers a sealless close over a prefix.
@@ -501,13 +506,17 @@ tree builds the service engine under test, so the session predicate could leave
 that engine's reads and every device would answer green, and that engine cites
 the claim nowhere. **The index naming is watched at both.** The service engine
 holds a suite over the derivation section 3's election asks it for, a name made
-from the key path and a refusal where the store's identifier limit cannot hold
-one, and it cites the claim where that suite sits. The suite reaches the
-derivation and not the store, no unit here constructing a service engine, so
-what it reads is the statement a build would issue rather than the index the
-store then holds. **The reading covers the rest of that engine**: it is
-reachable only from the binary's own election, so its arm of every other claim
-in this section rests on a reading and not on a run.
+from the key path, carried into the statement the build would issue, and a
+refusal where the store's identifier limit cannot hold one, and it cites the
+claim where that suite sits. **That arm holds under one flag and not under the
+crate's default.** The service engine is behind a feature the crate does not
+default to, so a suite run without it compiles none of that engine and answers
+nothing about it, and the arm is watched by the run that passes the flag alone.
+The suite reaches the derivation and not the store, no unit here constructing a
+service engine, so what it reads is the statement a build would issue rather
+than the index the store then holds. **The reading covers the rest of that
+engine**: it is reachable only from the binary's own election, so its arm of
+every other claim in this section rests on a reading and not on a run.
 
 **Enforced by review, and each clause names what would buy it.** Review here
 means the instrument was not bought and never that none exists, per Document
