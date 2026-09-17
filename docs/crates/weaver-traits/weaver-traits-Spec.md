@@ -701,19 +701,21 @@ restated here.
 - An unknown tag on deserialization refuses rather than defaulting, confirmed by
   feeding a role this crate does not define.
 - `Role` serializes as a plain renamed string, per section 3, confirmed by
-  watching `rename_all` dropped from the enum and `ToolResult` cross as its Rust
-  spelling.
+  watching `rename_all` dropped from the enum and `User` cross as `"User"` at
+  the test's first assertion.
 - `ContentBlock` is internally tagged on `type`, per section 3, confirmed by
-  watching the tag dropped and serde's external tagging make the variant name a
-  key.
+  watching the tag dropped and serde's external tagging render a text block as
+  `{"text":{"text":"hello"}}`.
 
 **The last two moved here from `review` with this act**, per Document Format
 section 5's rule of v0.22 that `review` means an instrument was not bought and
 never that none exists. Both were cited at `tests/message_model.rs` while their
 tags said no instrument stood, which is that rule's sighting, and the file's own
-header already called all four of its tests the perturbation-verified tests of
-this section. What the act bought is the `Perturbation:` line each now carries:
-the tags were the clauses' error and the watches were owed rather than run.
+header already called its tests the perturbation-verified tests of this section.
+What the act bought is the `Perturbation:` line each now carries: the tags were
+the clauses' error and the watches were owed rather than run. **That file holds
+five tests under four citations**, the fifth reading the role claim at the arm
+the identity door writes, and it now names its watch too.
 
 **This crate has no threat walk of its own, and the absence is stated rather than
 left blank.** The security mechanisms this program relies on live where processes

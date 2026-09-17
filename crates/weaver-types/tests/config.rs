@@ -42,9 +42,12 @@ fn full_config() -> String {
 ///
 /// Perturbation: drop `rename_all = "kebab-case"` from `AgentConfig` and the
 /// operator's spellings stop reaching the Rust field names, so
-/// `deny_unknown_fields` refuses `spu-instruction` and the parse fails.
-/// Verified by removing that attribute and watching this test fail at
-/// `expect("parses")`.
+/// `deny_unknown_fields` refuses the first of them. Verified by removing that
+/// attribute and watching this test fail at its `expect("parses")` with
+/// `ConfigError { field: Some(FieldName("spu-instruction")), kind:
+/// UnknownField }`. This target is behind the `config` feature, which is not
+/// default, so the run that watches it is
+/// `cargo test -p weaver-types --locked --features config --test config`.
 #[test]
 fn a_complete_config_parses() {
     let config = parse(&full_config()).expect("parses");

@@ -38,9 +38,9 @@ fn message_round_trips_unchanged() {
 /// so `"user"` and not `{"type": "user"}`.
 ///
 /// Perturbation: drop `#[serde(rename_all = "snake_case")]` from `Role` and the
-/// rename stops happening, so `ToolResult` crosses as `"ToolResult"`. Verified
-/// by removing that attribute and watching this test fail on the second
-/// assertion.
+/// rename stops happening. Verified by removing that attribute and watching
+/// this test fail at its first assertion, `"User"` against `"user"`, so the
+/// `ToolResult` assertion below is never reached.
 #[test]
 fn role_is_a_plain_string() {
     assert_eq!(serde_json::to_string(&Role::User).unwrap(), "\"user\"");
@@ -53,9 +53,9 @@ fn role_is_a_plain_string() {
 /// A content block is internally tagged on a stable member name.
 ///
 /// Perturbation: drop `tag = "type"` from `ContentBlock` and serde's default
-/// external tagging makes the variant name a key, so `Text` renders as
-/// `{"text":{"text":"hello"}}`. Verified by removing the tag and watching this
-/// test fail against exactly that shape.
+/// external tagging makes the variant name a key. Verified by removing the tag
+/// and watching this test fail at its one assertion,
+/// `{"text":{"text":"hello"}}` against `{"type":"text","text":"hello"}`.
 #[test]
 fn content_block_is_internally_tagged() {
     let block = ContentBlock::Text {
@@ -82,6 +82,15 @@ fn unknown_tag_refuses() {
 
 /// The system role is real since its act: it round-trips as "system" and
 /// its licensed content is text alone, per the Spec's combinations.
+///
+/// This reads `traits-role-plain-string` at the arm the identity door writes
+/// and declares no claim of its own, which is why the header above carries
+/// four citations over five tests.
+///
+/// Perturbation: the same one the role test names, dropping
+/// `#[serde(rename_all = "snake_case")]` from `Role`. Verified by removing that
+/// attribute and watching this test fail at its `from_str`, serde refusing
+/// `"system"` for a variant now spelled `System`.
 #[test]
 fn the_system_role_round_trips() {
     let role: Role = serde_json::from_str("\"system\"").expect("real since its act");

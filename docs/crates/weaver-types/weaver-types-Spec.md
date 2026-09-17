@@ -1347,6 +1347,19 @@ charter's criterion.** `weaver-types-PRD` section 2.3 states the ground: this
 traffic is low in volume, so compactness buys nothing measurable, and diagnostic
 in audience, read from a capture when a load refuses unexpectedly.
 
+**The instrument is review and the non-purchase is named rather than assumed.**
+A perturbation wants a mutation that removes the property, and this crate holds
+nothing to mutate: it defines the types and encodes nothing, the write and the
+read belonging to the pair-creating crates per section 5, and no derive or
+attribute here carries the encoder's identity. `serde_json` enters this crate's
+source as a type, `RawValue` at three members, and never as a call. So there is
+no one change here that leaves loop 0's traffic being something other than
+JSON. What was taken in its place is the layout pin of
+`envelope_layout_is_the_stated_shape`, which holds the envelope's octets exactly
+as this subsection states them and goes red on any change to them, so the
+election's consequence is watched while the election itself stays review's.
+Whether that split should become two records is section 6's election.
+
 ```graph
 node: types-loop0-encoding-json
 kind: assertion
@@ -2091,7 +2104,9 @@ already discharged.
   `AgentConfig` and `deny_unknown_fields` refuse the operator's own spellings.
 - In this crate and in `weaver-traits`, one claim with an edge from each: the
   tagging test of section 4.3 yields the shapes it states, confirmed by watching
-  `LabelAnswer` tagged internally and the fault's spliced account fail to return.
+  `LabelAnswer` tagged internally and the answer's members flatten out of the
+  adjacent body the test reads them from, which the `Scored` arm meets before
+  the fault arm reaches the splice at all.
 - In each organ's crate: a directive case belonging to another seam is refused as
   `OutOfOrder` rather than acted on, confirmed per seam by watching a wildcard arm
   swallow it.
@@ -2103,14 +2118,16 @@ already discharged.
   type is changed to `SOCK_STREAM`.
 - In the gate's crate: the accept-time refusal of section 3.
 
-**The first two of these moved from `review` with this act**, per Document
-Format section 5's rule of v0.22 that `review` means an instrument was not
-bought and never that none exists. Both were cited from a file under `tests/`
-while their tags said no instrument stood, which is that rule's sighting, and
-what the act bought is the `Perturbation:` line each test now carries: the tags
-were the clauses' error and the watches were owed rather than run. **A third
-sighting of the same shape stands unresolved**, `types-loop0-encoding-json`,
-and section 6 carries it as an election rather than this section as a tag.
+**The kebab-case bullet and the tagging bullet moved from `review` with this
+act**, per Document Format section 5's rule of v0.22 that `review` means an
+instrument was not bought and never that none exists. Both were cited from a
+file under `tests/` while their tags said no instrument stood, which is that
+rule's sighting, and what the act bought is the `Perturbation:` line each test
+now carries: the tags were the clauses' error and the watches were owed rather
+than run. **A third claim of that shape keeps `review` and its clause now names
+the non-purchase**, `types-loop0-encoding-json`, which is Document Format
+section 5's fourth disposition rather than a retag declined, and what the clause
+leaves open section 6 carries as an election.
 
 ## 6. Open elections
 
@@ -2191,15 +2208,14 @@ and section 6 carries it as an election rather than this section as a tag.
 - **`EnterPayload`'s field list**, which follows what admin supplies in the enter
   directive, per `weaver-admin-harness-contract` sections 3 and 5, and moves when
   that contract does.
-- **The tag `types-loop0-encoding-json` carries, and whether the claim splits.**
-  The clause at section 4.3 elects JSON for loop 0 against the charter's
-  criterion and names no non-purchase, so `review` is the inverse overclaim
-  Document Format section 5's rule of v0.22 retires. What the cited test holds
-  is narrower than the clause: `envelope_layout_is_the_stated_shape` pins the
-  envelope byte for byte under JSON and watches no perturbation of the election
-  itself, there being no mutation of one attribute that stops the traffic being
-  JSON. So the claim either splits, the layout half taking `perturbation` and
-  the format half keeping `review` with the non-purchase named, or the tag moves
-  whole on the reading that the layout is what the election means in octets.
-  **This act read the instrument and declined to decide**, a retag taken over
-  the reading being the same overclaim run the other way.
+- **Whether `types-loop0-encoding-json` splits in two.** Section 4.3 now names
+  what was declined and what was taken in its place, which is Document Format
+  section 5's fourth disposition and closes the sighting: the tag stands and
+  the clause says why. What it does not settle is the representation. One node
+  covers an election no mutation can remove and a layout
+  `envelope_layout_is_the_stated_shape` watches byte for byte, and those are
+  two properties under one identifier. So the claim either divides, the layout
+  half taking `perturbation` and the format half keeping `review`, or it stays
+  one on the reading that the layout is what the election means in octets.
+  **This act read the instrument and declined to decide**, a split taken over
+  the reading being as much a guess as a retag would have been.

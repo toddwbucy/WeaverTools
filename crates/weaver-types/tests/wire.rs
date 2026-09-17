@@ -355,9 +355,11 @@ fn the_decode_refuses_the_noncanonical_forms() {
 /// spliced-member arm and would fail internal tagging at deserialization.
 ///
 /// Perturbation: drop `content = "body"` from `LabelAnswer` and the answer
-/// tags internally, which buffers on the read side and cannot represent the
-/// spliced account, so the fault arm serializes and will not come back.
-/// Verified by removing that member and watching this test fail at the
+/// tags internally, which flattens the members the adjacent body nests and,
+/// at the fault arm further down, cannot represent the spliced account on the
+/// read side. Verified by removing that member and watching this test fail at
+/// the `Scored` arm's adjacent-body assertion, `the labels nest in the
+/// adjacent body`, which is reached before the fault arm and so before the
 /// splice's return.
 #[test]
 fn the_label_trio_round_trips_through_bytes() {
