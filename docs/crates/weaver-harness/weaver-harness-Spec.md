@@ -111,6 +111,19 @@ landed without it moving - `spawn.rs`, `record.rs`, `failure.rs` and
 `replay.rs` - and `src/tools.rs` having been listed as blocked while the
 granted tool result of section 6 fills it.
 
+**The three loop files under `dev_python/` owe conformance headers and carry
+none**, Python being a supported unit since the operator's ruling of 2026-09-17.
+**None was written, because no assertion this corpus declares has its instrument
+in a loop file.** The blade is a compile pin held in `engine.rs`, the crossing is
+loop 0's and cited at `lifecycle.rs`, and the filesystem boundary this section
+argues is cited from the framework side at `src/bin/worker/main.rs`, which is
+where a reader establishes a claim about what sits outside the developer's
+directories. A loop file is the builder's own code arriving by the same path any
+builder's does, so what it shows is the seat it composes against rather than a
+claim it holds. Minting an assertion to close the count would convert an honest
+absence into a documented enforcement, so the three absences stand and the
+reading carries them.
+
 **`src/classify.rs` leaves the listing, and the disagreement that leaves behind
 is named rather than settled here.** No such file exists and the label seam's
 ask end is in the tree all the same: the arm stands on the run in
