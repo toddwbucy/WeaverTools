@@ -22,7 +22,7 @@ decision two of #439.
 **Document ID:** `weaver-web-PRD`
 **Parent:** the WeaverTools suite, per `weaver-agents-PRD` section 0.
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #634
+**Landing PR:** #632
 
 ## 1. What this crate is
 

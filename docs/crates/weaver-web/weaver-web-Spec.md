@@ -14,7 +14,7 @@ archive.
 **Document ID:** `weaver-web-Spec`
 **Parent:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #634
+**Landing PR:** #628
 
 ## 0. What this document is
 
