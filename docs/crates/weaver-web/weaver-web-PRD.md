@@ -652,12 +652,13 @@ afterward, so the member is written now and the act decides what fills it.
 
 ## 7. What the rewrite keeps, and what it retires
 
-**The individuated-agent direction is not retired here.** The charter this text
-replaces described a web surface over the suite's agents serving a user who
-converses and an operator who drives lifecycle and reads the record, which was
-written for an interface to an individuated agent. That remains the program's
-research direction, held open rather than closed by anything this section
-retires, and it is not what this crate is for.
+**The individuated-agent direction is not retired here.** The archived charter this
+text replaces, the one of 2026-08-04 as amended through 2026-08-25 and the referent
+everywhere this document says "the archived charter", described a web surface over
+the suite's agents serving a user who converses and an operator who drives lifecycle
+and reads the record, which was written for an interface to an individuated agent.
+That remains the program's research direction, held open rather than closed by
+anything this section retires, and it is not what this crate is for.
 
 **Nothing survives because the prior charter had it.** The crate is the
 same crate and its code is where it was, so no boundary is being crossed
@@ -678,10 +679,9 @@ is ruled on its own:
   from this charter.** The Live surface of section 3.2 is a different
   construct that resembles it. A channel belongs to the individuated-agent
   direction this section opens on, so what is retired is this charter's
-  cover of it and never the direction itself. The
-  built channel code remains in the crate and is unchartered until a later
-  act rules on it, which is a state this document names rather than
-  resolving.
+  cover of it and never the direction itself. The built channel code remains
+  in the crate and is unchartered until a later act rules on it, which is a
+  state this document names rather than resolving.
 
 ## 8. Asks upstream
 

@@ -826,9 +826,7 @@ tag: perturbation
 edge: asserts
 from: weaver-analysis
 to: analysis-signals-keep-absence
-```
 
-```graph
 node: analysis-summary-reports-residency
 kind: assertion
 tag: perturbation
