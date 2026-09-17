@@ -63,6 +63,27 @@ in the subject layer, which is apex section 11's chain in graph form. The no-edg
 rule between the document and subject layers stands unchanged: code cites a claim,
 and nothing cites a file.
 
+**That layer is every supported unit, and Rust is not alone in it.** A conformance
+header exists so the `cites` edge can be drawn, and a unit the ingest never reads has
+no edge for a header to carry, so the regime governs the kinds the ingest supports
+rather than every file the tree tracks. Rust is primary in this workspace and the
+supported set is `.rs`, `.cu` and `.py`, on the operator's ruling of 2026-09-17.
+**A language outside that set is deferred rather than excused**, its units entering
+the layer in the act that lands their support, which is why the set is written here
+and a list of what stays out is not: such a list goes stale from the day support
+moves, and it reads to a later seat as a ruling nobody made. One kind is excluded
+outright rather than deferred, and `.hadesignore` carries that exclusion with the
+argument for it, which is the one place either is stated.
+
+**Exempt from a count is not outside the regime**, and the distance between those
+is why the boundary falls at the ingest rather than inside the reading. A supported
+unit carrying no header is an absence the count returns and the corpus answers,
+which is what a count is for. Carving a kind out of the count instead leaves its
+units under a rule nothing measures, which is the state this clause replaces: the
+reading walked Rust alone while section 3's rule read every tracked unit, so a
+kernel and three loop files stood inside the crates that rule names and nothing
+ever asked them for a header.
+
 State is not a graph property. It answers no query the phase two checklist names, it
 lives in the status header where the merge process reads it, and a second copy in a
 block would be a G5 duplication with nothing gained. Section 5's key set closes
