@@ -203,10 +203,12 @@ def read_corpus():
 
     crates = {}
     for node_id in assertions:
-        # **A node may be asserted by more than one crate and one is.**
-        # `types-tagging-test` is asserted by both floor crates, per Working
-        # Process section 6, which is why the check is that the identifier
-        # carries one of its crates' prefixes rather than a named crate's.
+        # **A node may be asserted by more than one crate and several are.**
+        # `types-tagging-test` is asserted by both floor crates and the four
+        # replay claims of `weaver-diagnostic-Spec` section 7 by the recorder
+        # and its author, per Working Process section 7, which is why the
+        # check is that the identifier carries one of its crates' prefixes
+        # rather than a named crate's.
         owners = sorted(asserted_by.get(node_id, ()))
         if not owners:
             faults.append(f"`{node_id}` is asserted by no crate, so its crate is unknown")

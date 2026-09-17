@@ -311,6 +311,10 @@ tag: perturbation
 edge: asserts
 from: weaver-diagnostic
 to: diagnostic-identity-absent-not-invented
+
+edge: asserts
+from: weaver-harness
+to: diagnostic-identity-absent-not-invented
 ```
 
 **Splitting them is what lets the record carry the loop's first named failure.**
@@ -375,6 +379,10 @@ tag: perturbation
 edge: asserts
 from: weaver-diagnostic
 to: diagnostic-divergence-position-is-the-resident-length
+
+edge: asserts
+from: weaver-harness
+to: diagnostic-divergence-position-is-the-resident-length
 ```
 
 **No outcome is authored for a pass that died.** The contract's section 5 forbids
@@ -391,6 +399,10 @@ tag: perturbation
 
 edge: asserts
 from: weaver-diagnostic
+to: diagnostic-outcome-absent-not-manufactured
+
+edge: asserts
+from: weaver-harness
 to: diagnostic-outcome-absent-not-manufactured
 ```
 
@@ -452,6 +464,10 @@ tag: perturbation
 
 edge: asserts
 from: weaver-diagnostic
+to: diagnostic-record-identifies-itself-at-the-open
+
+edge: asserts
+from: weaver-harness
 to: diagnostic-record-identifies-itself-at-the-open
 ```
 
@@ -643,6 +659,31 @@ sibling crate's participation and is not this document's to elect.
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
 section 6. Fifteen sit there and none sits here.
+
+**Four of the fifteen take a second `asserts` edge, and it runs from
+`weaver-harness`.** That the record identifies itself at the open, that an absent
+identity is not invented, that an outcome is not manufactured, and that a divergence
+position is the resident length at the draw are four claims about this record which
+only a pass can satisfy, and this crate does not author:
+`weaver-diagnostic-PRD` section 1 has the harness author and has this crate be the
+mechanism it authors through. Nothing under this crate can falsify one of the four,
+the recorder validating shape and never content per
+`weaver-harness-diagnostic-contract` section 4, so the instruments sit in
+`crates/weaver-harness/src/replay.rs` and the second edge is what lets apex section
+11's chain close on the crate that holds them. The prose at each of the four clauses
+already names the pass as the party that must satisfy the claim, so the block is
+catching up with its own paragraph rather than widening it.
+
+**The records stay at those clauses and the count above does not move**, on the rule
+the floor Specs settled for their shared tagging test: one claim is one node with an
+`asserts` edge per crate bound by it, and the node lives at the statement, per
+`weaver-types-Spec` section 0. Both crates are bound here. The subject of each of the
+four is this record, which is this crate's, and the party that must produce a record
+satisfying them is the harness, so the claim would be misplaced in either document
+alone. A record moved to the crate that performs it would leave its grounds behind as
+well, per Document Format section 6, the shape being argued where the shape is argued.
+`weaver-harness-Spec` section 8 states this crossing from the side that holds the
+instruments, which is the other half that rule asks for.
 
 **Which invariant each claim serves.** Three carry a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no

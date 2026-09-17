@@ -904,11 +904,14 @@ as a delta so a rebuild can detect a change nobody intended: **242 assertion
 nodes carried by 243 `asserts` edges at the last statement**, which the state
 leg's three review assertions of 2026-08-19 have since outgrown, the fresh
 figures landing with the pre-rebuild pass named above. The two figures differ
-by one on purpose, and the difference is a finding rather than an error: the assertion
-`types-tagging-test` is asserted by both floor crates, so one node takes two
-edges. Which figure a check reads therefore matters, and the closing checklist's
-item 5 reads nodes. A rebuild returning any other figure has found either an
-unlanded edit or an assertion an act changed without recording.
+on purpose, and the difference is a finding rather than an error: a node takes one
+`asserts` edge per crate that holds the claim, and more than one crate does.
+`types-tagging-test` is asserted by both floor crates, and the four replay claims
+`weaver-diagnostic-Spec` section 7 names are asserted by the crate whose record
+they describe and by the harness that authors it. Which figure a check reads
+therefore matters, and the closing checklist's item 5 reads nodes. A rebuild
+returning any other figure has found either an unlanded edit or an assertion an
+act changed without recording.
 
 **Code is ingested into the graph, and the position that it should not be is
 retired as of 2026-09-14.** The v4 build named in

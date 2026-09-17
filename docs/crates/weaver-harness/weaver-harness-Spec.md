@@ -2625,6 +2625,26 @@ combinations that `weaver-traits-Spec` section 7 owes, at section 4, and the
 second walk's descriptor placement with the fork discipline that
 `weaver-gate-Spec` section 0 cites as this document's, at section 2.2.
 
+**Four claims this crate asserts are declared by another document, and
+`src/replay.rs` is where they are held.** `weaver-diagnostic-Spec` sections 3.3
+and 4 argue that the record identifies itself at the open, that an absent
+identity is not invented, that an outcome is not manufactured, and that a
+divergence position is the resident length at the draw. Each is a claim about
+what a pass authors, and the pass is this crate's: `weaver-diagnostic-PRD`
+section 1 has that crate be the mechanism and this one the author, so each of
+the four carries an `asserts` edge from here beside the one from the crate whose
+record it describes. The instruments are the in-file suite of `src/replay.rs`,
+five tests carrying six citations across the four, and the file's own header
+cites all four for the module. **The sixty-six above does not move**, no record
+landing here, and that document's section 7 is the authority on the four claims'
+wording and their sorting by instrument.
+
+**It is the one citation in this tree that crosses a crate line**, read at this
+act against every `conforms:` under `crates`. It crosses because the mechanism
+and its author are two crates by the charter's own division rather than because
+a header reached for the wrong slug, which is what the second edge says and what
+makes the crossing checkable from the graph rather than by noticing a prefix.
+
 **`weaver-types-Spec` section 5 files three owings against this document, and
 all three now carry a record.** The truncation half of the pair test has been
 this crate's since the Spec was cut, argued and recorded at section 2.1. The
