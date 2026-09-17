@@ -62,9 +62,9 @@ which the graph carries no node for, so `weaver-gate-world-contract` names one
 crate and signs the world in prose, per its section 0. A record ran from this
 crate to `weaver-gate` until that date and named that page as its `via`, which
 asserted a signature this crate never gave. The boundary is unchanged and only
-the record went. **The reach itself is argued in `weaver-web-Spec` section 7.1
-and not here**, which is the authority on it under G5, so the absence is stated
-once in this charter and developed in neither.
+the record went. **The reach itself is argued in `weaver-web-Spec` section 7.1,
+which is the authority on it under G5**, and this charter states the absence
+rather than arguing the reach.
 
 The one-sentence job: **compose a configuration, run it, and return behavior
 and cost together, with the configuration declared well enough that a second
