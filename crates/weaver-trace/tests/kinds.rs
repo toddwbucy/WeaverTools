@@ -9,16 +9,23 @@
 //! mapping that is total.
 //!
 //! **What this reaches is the kind set and not the mapping.** The array's
-//! length fixes the number and the exhaustive match fixes the membership. A
-//! twenty-second kind already stops the build at the lib's own matches, which
-//! is section 10's compiler claim and not this file's: what this adds is that
-//! the count cannot stay behind a kind the lib has absorbed, since an act that
-//! answers every match and leaves the number alone stops here.
+//! declared length fixes the number, and `ordinal`'s match, exhaustive and
+//! wildcard-free, fixes which kinds exist for the array to be checked against.
+//! The array is written out rather than derived, so the two assertions below
+//! are what close the distance between the two. A twenty-second kind already
+//! stops the build at the lib's own matches, which is section 10's compiler
+//! claim and not this file's: what this adds is that the count cannot stay
+//! behind a kind the lib has absorbed, since an act that answers every match
+//! and leaves the number alone stops here.
 //!
-//! Neither the disposition count nor the mapping's totality is reached: both
-//! are properties of `pairing_licensed`, which is private to the crate and
-//! outside an integration test's reach, so they stay where section 10 has them
-//! and the cited record keeps its tag.
+//! Neither the disposition count nor the mapping's totality is reached, both
+//! being properties of `pairing_licensed`, which is crate-private and which
+//! this file cannot see from outside the crate. **That is this act's placement
+//! and not a property of the crate**: `writer.rs` carries no test module today
+//! and a unit test there would see the function and reach all three claims. The
+//! cited record keeps its tag because this file reaches one of the three, and
+//! the split that would let the tag move is issue #633 rather than an
+//! assumption left in prose.
 
 use weaver_trace::Kind;
 
@@ -55,10 +62,21 @@ fn ordinal(kind: Kind) -> usize {
 /// once**, per `weaver-trace-Spec` section 3.
 ///
 /// The array's declared length is the count and the compiler checks it. The
-/// ordinals come from an exhaustive match, so membership is the enum's own and
-/// not this file's reading of it. The two assertions close the one gap a
-/// length and a match leave open between them, an array of the right length
-/// naming one kind twice and another not at all.
+/// two assertions read different objects, which is why each can fail with the
+/// other passing.
+///
+/// The first is about `ALL` alone and reaches no match: no kind is named
+/// twice. Perturbation: name `Kind::ClassifyRequest` in place of
+/// `Kind::ClassifyOutput` and it fails, the twenty-one entries no longer
+/// naming twenty-one kinds.
+///
+/// The second is about `ordinal` against `ALL`: every ordinal the exhaustive
+/// match produces is reached. **Marking happens without asserting**, so a
+/// collision leaves a slot unset for this assertion to find rather than
+/// stopping the walk where the pigeonhole would make the second unreachable.
+/// Perturbation: return 19 from the `Kind::ClassifyOutput` arm of `ordinal`
+/// and it fails while the first passes, `ALL` being untouched and its
+/// twenty-one kinds still distinct.
 #[test]
 fn the_kind_set_is_twenty_one() {
     const ALL: [Kind; 21] = [
@@ -85,11 +103,16 @@ fn the_kind_set_is_twenty_one() {
         Kind::ClassifyOutput,
     ];
 
-    let mut reached = [false; 21];
+    for (at, kind) in ALL.iter().enumerate() {
+        assert!(
+            !ALL[..at].contains(kind),
+            "the twenty-one entries name one kind twice: {kind:?}"
+        );
+    }
+
+    let mut reached = [false; ALL.len()];
     for kind in ALL {
-        let at = ordinal(kind);
-        assert!(!reached[at], "one kind stands in the set twice: {kind:?}");
-        reached[at] = true;
+        reached[ordinal(kind)] = true;
     }
     assert!(
         reached.iter().all(|seen| *seen),

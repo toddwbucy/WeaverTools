@@ -119,7 +119,7 @@ pub enum Subsystem {
 /// the charter's dotted names, and the enum is exhaustive because the set is
 /// closed by ruling: an attribute that let a consumer absorb a further kind
 /// into a wildcard would defeat the closure the corpus keys on. **The count
-/// is pinned in `tests/kinds.rs`**, an array of twenty-one filled through an
+/// is pinned in `tests/kinds.rs`**, an array of twenty-one checked against an
 /// exhaustive match over this enum, so a kind the crate's matches absorb
 /// cannot leave the number behind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
