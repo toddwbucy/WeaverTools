@@ -146,8 +146,19 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
   planning workspace.
 - `.hades/` is gitignored and absent, so `gate-check.py` cannot run here. The quarry's
   mandatory merge-gate sequence is not executable from this machine.
-- `nvidia-smi` is present but there is no `nvcc` on PATH, so `--features cuda` will not
-  compile here.
+- **`nvcc` is present and this bullet said otherwise until 2026-09-17.** The box
+  carries `/opt/cuda/bin/nvcc`, CUDA 13.3.73, and an RTX PRO 5000 Blackwell, so
+  `--features cuda` is not refused for want of a compiler. What is unmeasured is
+  whether it finishes: the device gate ran under a nine-minute bound and timed out
+  mid-flight, zero errors, past `candle-kernels` and into `Checking candle-core`.
+  **That is not a pass and it is specifically not a failure**, and a later reader
+  owes the run rather than either verdict.
+- **A box that can compile the feature is not a box that should gate the device.**
+  The lane ruling of 2026-09-15 stands untouched by the correction above: the
+  device is the olympus lane, `weaver-spu`'s gate carries `--features cuda,gguf`
+  there, and `kernels/PROVENANCE.md` records this hardware as never having run
+  device-side. The earlier bullet argued the lane from a missing compiler, which
+  made a standing ruling rest on a fact about one box that turned out to be wrong.
 - The pinned toolchain (`nightly-2026-02-13`, rustc `47611e160`) is installed and matches
   `rust-toolchain.toml`.
 
