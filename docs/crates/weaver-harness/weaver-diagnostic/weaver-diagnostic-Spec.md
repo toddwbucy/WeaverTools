@@ -681,15 +681,15 @@ edge is what lets apex section 11's chain close on the crate that holds them.
 `diagnostic-session-is-the-replays-own` is written the same way and takes no second
 edge, correctly, its instrument standing in this crate's own `tests/recorder.rs`.
 
-**Neither of the corpus's two rules for this shape reaches it, and the general rule
-is owed to `WeaverTools-Document-Format`.** `weaver-types-Spec` section 0 has one
-claim be one node with an `asserts` edge per crate bound by it, the node living at
-"the statement both floor Specs share", and that qualifier is the load-bearing half:
-it is what makes the tagging test a case where neither Spec owns the node. There is
-no shared statement here, `weaver-harness-Spec` stating none of the four.
-`weaver-traits-Spec` section 7 runs the other way, moving a record to the crate whose
-suite holds its test because "an assertion belongs where its test lives", which is
-how the licensed combinations and the close-on-exec test came to be declared in
+**Neither of the corpus's two rules for this shape reaches it, and the general rule is
+owed to `WeaverTools-Document-Format` under issue #631.** `weaver-types-Spec` section
+0 has one claim be one node with an `asserts` edge per crate bound by it, the node
+living at "the statement both floor Specs share", and that qualifier is the
+load-bearing half: it is what makes the tagging test a case where neither Spec owns
+the node. There is no shared statement here, `weaver-harness-Spec` stating none of the
+four. `weaver-traits-Spec` section 7 runs the other way, moving a record to the crate
+whose suite holds its test because "an assertion belongs where its test lives", which
+is how the licensed combinations and the close-on-exec test came to be declared in
 `weaver-harness-Spec`, at its section 4 and its section 2.3 and discharged at its
 section 8's sorting. **What moved there was the crate and never the placement.** Each
 of the two landed at the clause arguing it, which is where this rule puts a record

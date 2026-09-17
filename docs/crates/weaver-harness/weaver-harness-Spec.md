@@ -42,14 +42,14 @@ their nodes nor their edges, and declaring them here would be the duplicate the 
 forbids while dropping them silently would leave part of this crate's assertion set
 with nothing recording where it went. **The rule admitting a second `asserts` edge is
 owed to `WeaverTools-Document-Format`**, whose section 4 states no cardinality for
-that edge, and the disposition is argued at that Spec's section 7 rather than here.
-The charter stays the source of this crate's node, its parent edge, its two floor
-links, its one declared seam, and its artifact edges, and a Spec that restated any of
-them would give the mapper two sources for one record, per that format's section 1.
-What this document sources is the claims code must conform to, declared at
-the clauses that argue them rather than gathered in one place, per that format's
-section 6, and `asserts` runs from the crate rather than from this document, which is
-why the document needs no node of its own.
+that edge, and issue #631 carries the debt. The disposition is argued at that Spec's
+section 7 rather than here. The charter stays the source of this crate's node, its
+parent edge, its two floor links, its one declared seam, and its artifact edges, and a
+Spec that restated any of them would give the mapper two sources for one record, per
+that format's section 1. What this document sources is the claims code must conform
+to, declared at the clauses that argue them rather than gathered in one place, per
+that format's section 6, and `asserts` runs from the crate rather than from this
+document, which is why the document needs no node of its own.
 
 **A claim this Spec leans on and another Spec argues carries no record here,** and
 there are ten of them. Four are `weaver-types-Spec`'s: the `SOCK_SEQPACKET`
