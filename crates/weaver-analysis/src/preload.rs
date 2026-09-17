@@ -1,9 +1,9 @@
 //! conforms: analysis-seal-ends-the-preload
 //!
-//! The seam's sender, per `weaver-analysis-Spec` section 4: three things in
-//! one order - the election opens the channel, a distillate per elected
-//! event follows in sequence order, and the seal ends it - and the seam is
-//! owed nothing back. This crate asks nothing on this seam and reads
+//! The preload seam's sender, per `weaver-analysis-Spec` section 4: three
+//! things in one order - the election opens the channel, a distillate per
+//! elected event follows in sequence order, and the seal ends it - and the
+//! seam is owed nothing back. This crate asks nothing on this seam and reads
 //! nothing from it.
 //!
 //! **One preload per standing of this driver, by structure.** Opening

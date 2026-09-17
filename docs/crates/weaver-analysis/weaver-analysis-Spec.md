@@ -7,7 +7,7 @@ written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-analysis-Spec`
 **Parent:** `weaver-analysis-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #621
+**Landing PR:** #628
 
 ---
 
@@ -40,7 +40,7 @@ finished record from a truncated one could hold this shape and not use it.
     src/record.rs     the parse of a serving record, section 2
     src/project.rs    the election and the projection, section 3
     src/declare.rs    the declaration derived from the record, section 3
-    src/preload.rs    the seam's sender, section 4
+    src/preload.rs    the preload seam's sender, section 4
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
     src/lens.rs       the lens artifact, loaded and applied, section 5
     src/capture.rs    a capture's columns and their comparison, section 5
@@ -79,13 +79,18 @@ standard, and a wrong one would refuse good artifacts or admit bad ones.
 
 **No `weaver-*` dependency at all, and the negative is the boundary in the
 manifest.** This crate stands outside the agent, per the charter's section 1, and
-its one seam draws its whole vocabulary from documents rather than from types:
-`weaver-analysis-state-contract` draws the election and the distillate from
+both of its seams draw their whole vocabulary from documents rather than from
+types: `weaver-analysis-state-contract` draws the election and the distillate from
 `weaver-harness-state-contract` and the event names from `weaver-trace`, and every
-one of those crosses this crate's wire as JSON the record already spells. Linking
-any of them would make an outside consumer a compile-time dependent of the agent's
-interior, which is the coupling the boundary exists to prevent, and would buy
-nothing: the parse shares no code with the writer by the charter's own election.
+one of those crosses this crate's wire as JSON the record already spells.
+`weaver-analysis-web-contract` draws the same way from papers of its own, one of
+them `weaver-types-Spec` section 4.4 for the resident count, and **a draw from a
+floor crate's paper is a draw from a document**: what crosses is the number the
+record spells and never that crate's type, which is why the floor draw is an
+instance of this claim rather than the exception to it. Linking any of them would
+make an outside consumer a compile-time dependent of the agent's interior, which is
+the coupling the boundary exists to prevent, and would buy nothing: the parse shares
+no code with the writer by the charter's own election.
 
 ```graph
 node: analysis-no-internal-dependency
@@ -558,11 +563,11 @@ to: analysis-null-replay-gates-the-rest
 ```
 
 **It writes no record and nothing it produces reaches a decoder.** What this crate
-makes is a reading, held or written wherever the operator directs it, and its one
-seam sends material rather than instruction, per the charter's section 2. The
-instrument is the compile-fail absence of any write surface toward either record:
-no call constructs a trace writer, and the preload's sender takes distillates and
-never events.
+makes is a reading, held or written wherever the operator directs it, and its only
+seam into the agent sends material rather than instruction, per the charter's
+section 2. The instrument is the compile-fail absence of any write surface toward
+either record: no call constructs a trace writer, and the preload's sender takes
+distillates and never events.
 
 ```graph
 node: analysis-writes-no-record
@@ -967,8 +972,9 @@ and never events, the no-writer half being bought already by the absent dependen
 below. No second opener on one channel, the sender consumed by the seal.
 
 **Enforced by the manifest.** No `weaver-*` dependency at all, read against the
-graph under gate H2, this crate declaring one `seam` tagged `socket` and no
-`floor-link`. No async runtime and no socket crate in the resolved tree.
+graph under gate H2, this crate declaring two `seam` records, both tagged
+`socket`, and no `floor-link`. No async runtime and no socket crate in the
+resolved tree.
 
 **Requiring a perturbation-verified test.**
 
