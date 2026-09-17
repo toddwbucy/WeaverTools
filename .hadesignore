@@ -142,3 +142,28 @@ process/ingest/chunk-plan.json
 # `act-21` and `act-22` are withdrawn on this ruling, so no act is owed against
 # these pages while the block stands. Lift it when the set is integrated.
 docs/technical/
+
+# **SQL is not a supported unit and does not enter the graph**, per the
+# operator's ruling of 2026-09-17. Nine migrations stand under
+# `crates/weaver-web/migrations/` and nothing excluded them, so they would have
+# routed on the next ingest.
+#
+# **A migration is DDL and answers the domain's own questions with storage.**
+# `0005_three_members_leave_the_tuple.sql` names the tuple, the record and the
+# prefix, so a query about any of them returns a schema change beside the Spec
+# clause that governs it, with nothing marking which is authoritative. That is
+# the same G5-through-retrieval defect this file already excludes `CLAUDE.md`
+# and `docs/technical/` for, arriving through a third door. A dump is worse:
+# table and column names collide with Rust item names in symbol resolution, so
+# the graph holds two answers and no basis for choosing, which is the archive
+# stanza's reasoning about frozen copies reaching the same end by a different
+# route, and the rows themselves are unbounded content nobody wrote for a
+# reader.
+#
+# **This is the ingest half of a boundary the census states too.** A
+# conformance header exists so the graph can carry `code -> assertion -> doc`,
+# and a unit the ingest never reads has no edge for a header to carry, which is
+# why `census.py` asks a header of the supported set rather than of every
+# tracked file. Issue #592 asked for `.sql` and `.sh` ingest and is closed on
+# this ruling; shell is deferred rather than refused.
+**/*.sql
