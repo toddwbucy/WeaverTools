@@ -63,12 +63,16 @@ tag: socket
 ```
 
 **The emission to `weaver-web` is this crate's second seam, and the record for
-it is here because this crate initiates it.** `weaver-analysis-web-contract`
-names this crate the emitter and the only sender and names the reader as asking
-nothing of it, so the asker declares under Document Format section 4 and the
-reader's charter carries no record of the seam. **What crosses is not argued in
-this charter**, the contract holding the shape and `weaver-analysis-Spec`
-section 5 representing it, and section 4 names the clause this charter owes.
+it is here because this crate initiates it.** Neither party asks on this seam,
+`weaver-analysis-web-contract` naming this crate the emitter that asks nothing
+of the reader and naming the reader as never asking the emitter for anything,
+so the Document Format's one-asking-party branch has no answer here. **That
+page settles it where the silence is**, in its Parties clause, on the
+initiating side, which is where the corpus already puts this crate's other
+seam, per `weaver-agents-PRD` section 6 and `weaver-diagnostic-PRD` section 6.
+**What crosses is not argued in this charter**, the contract holding the shape
+and `weaver-analysis-Spec` section 5 representing it, and section 4 names the
+clause this charter owes.
 
 ```graph
 edge: seam
@@ -369,13 +373,13 @@ a sink.
   that comparison belonging to the loop inside the run per section 3, and what
   this crate's Spec settles about it is only the order it consumes outcomes in,
   requiring a certified null pass before any reading downstream.
-- **The emission to `weaver-web` is chartered nowhere, and the clause is owed
-  here.** Section 1 carries the seam's record because this crate initiates the
-  seam, `weaver-analysis-web-contract` holds what crosses, and
+- **What the emission to `weaver-web` is for is argued nowhere, and the clause
+  is owed here.** Section 1 carries the seam's record because this crate
+  initiates the seam, `weaver-analysis-web-contract` holds what crosses, and
   `weaver-analysis-Spec` section 5 represents it under that section's summary
-  records, so a Spec and a contract stand over a charter that says nothing
-  about the emission at all. **Naming it is not settling it.** What this crate
-  sends a reader, and why sending it is this crate's job rather than a second
-  consumer's, is a phase one question, and the act of 2026-09-16 that moved the
-  record to the asking side declined to answer it rather than writing a charter
-  clause to hold a block up.
+  records, so a Spec and a contract stand over a charter that names the seam
+  and argues nothing about it. **Naming it is not settling it.** What this
+  crate sends a reader, and why sending it is this crate's job rather than a
+  second consumer's, is a phase one question, and the act of 2026-09-16 that
+  moved the record to the initiating side declined to answer it rather than
+  writing a charter clause to hold a block up.

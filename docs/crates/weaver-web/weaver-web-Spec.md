@@ -2127,6 +2127,6 @@ a `web-` assertion beside `weaver-admin`'s.
   edge, per `weaver-gate-world-contract` section 0 and `weaver-admin-PRD`
   section 6, so the gate reach is still one of the two the heading names
   correctly and only its record went. **The act that moved 7.3's record to
-  the emitter's charter leaves it the same way**, a reach the asking side
+  the emitter's charter leaves it the same way**, a reach the initiating side
   declares being no less a seam for being declared elsewhere, and what it
   does change is that this crate's charter now records none of the three.

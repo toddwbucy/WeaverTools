@@ -7,7 +7,7 @@ is the operator's to say.
 **Date filed:** 2026-09-05
 **Document ID:** `weaver-analysis-web-contract`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #614
+**Landing PR:** #628
 
 ## Parties
 
@@ -39,12 +39,22 @@ page names one crate and signs the world in prose, the graph carrying no
 node for a principal outside the program, so as of 2026-09-16 it is the
 `via` of no seam record and that boundary is a seam holding no seam edge.
 
-**The emitter initiates and the reader never asks**, so the charter's seam
-record runs `from: weaver-analysis`, which the act that lands this text
-corrects: it had run from the reader, disagreeing with this contract's own
-name under the Document Format's rule that the initiator is named first. Its
-tag was `stream`, which is outside that document's seam vocabulary of
-`socket` and `link`.
+**The emitter initiates and the reader never asks**, so this seam's record
+runs `from: weaver-analysis`, corrected on 2026-09-05: it had run from the
+reader, disagreeing with this contract's own name under the Document Format's
+rule that the initiator is named first. Its tag was `stream`, which is
+outside that document's seam vocabulary of `socket` and `link`.
+
+**Neither party asks, so this page says which charter declares the seam.** The
+Document Format's branch for a seam with one asking party has no unique answer
+where there is none, exactly as it has none on an organ channel, and a question
+its branches do not reach is settled here rather than reasoned around in a
+charter, per that document's section 7. **The initiating side declares**, which
+is where the corpus already puts the other seam this emitter holds, per
+`weaver-agents-PRD` section 6 and `weaver-diagnostic-PRD` section 6. So the
+record is `weaver-analysis-PRD` section 1's as of 2026-09-16, and the reader's
+charter carries none. Nothing about the boundary moves with it: the parties,
+the direction and the socket are what the sections below state.
 
 ```graph
 node: weaver-analysis-web-contract
