@@ -86,6 +86,18 @@ node: fix-cited-in-the-body
 kind: assertion
 tag: perturbation
 
+node: fix-cited-only-in-a-string
+kind: assertion
+tag: perturbation
+
+node: fix-cited-beside-a-string
+kind: assertion
+tag: perturbation
+
+node: fix-cited-trailing-a-statement
+kind: assertion
+tag: perturbation
+
 node: fix-cited-pin
 kind: assertion
 tag: compile-pin
@@ -173,6 +185,31 @@ def drive(seat, text):
     return os.getcwd()
 """
 
+# **One unit holding both directions, because neither holds alone.** A fixture
+# carrying only the string case passes identically if Python citations stop
+# being read at all, which is the watch that cannot fail. So the comment
+# citation below must resolve in the same run the two inside the docstring do
+# not. `fix-never-declared-in-a-string` is declared nowhere, so reading the
+# string puts it in `dangling_citations` as well.
+STRING_LOOP = '''"""A module docstring that quotes the header form.
+
+# conforms: fix-cited-only-in-a-string
+# conforms: fix-never-declared-in-a-string
+"""
+
+# conforms: fix-cited-beside-a-string
+def drive(seat, text):
+    return 1  # conforms: fix-cited-trailing-a-statement
+'''
+
+# **A unit the tokenizer refuses**, the triple quote never closing, so every
+# line below it is inside a string that has no end. It reads as no citations
+# and is named, which is the branch that must not pass at a quiet zero.
+BROKEN_LOOP = '''x = """
+
+# conforms: fix-cited-pin
+'''
+
 MANIFEST = """[package]
 name = "demo"
 # conforms: fix-cited-by-the-manifest
@@ -213,6 +250,8 @@ class Census(unittest.TestCase):
         write(self.dir, "crates/demo/dev_python/bare_loop.py", BARE_LOOP)
         write(self.dir, "crates/demo/dev_python/inline_loop.py", INLINE_LOOP)
         write(self.dir, "crates/demo/dev_python/below_head_loop.py", BELOW_HEAD_LOOP)
+        write(self.dir, "crates/demo/dev_python/string_loop.py", STRING_LOOP)
+        write(self.dir, "crates/demo/dev_python/broken.py", BROKEN_LOOP)
         write(self.dir, "crates/demo/Cargo.toml", MANIFEST)
         write(self.dir, "crates/demo/migrations/0001_demo.sql", MIGRATION)
         # **Each restore is registered as its global is mutated.** A failure
@@ -260,7 +299,12 @@ class Census(unittest.TestCase):
         # a bad identifier, a trailing word after a sound one, and a missing
         # separator. The prose mentions the form and must not be a finding.
         bad = " ".join(reading["malformed_citations"])
-        self.assertEqual(len(reading["malformed_citations"]), 3, bad)
+        # **Four: three broken headers and one unit this reader cannot open.**
+        # A `.py` file the tokenizer refuses reads as no citations, which is
+        # the safe direction, and is named here so the run fails rather than
+        # passing at a quiet zero on the files nobody can check by eye.
+        self.assertEqual(len(reading["malformed_citations"]), 4, bad)
+        self.assertIn("broken.py: will not tokenize", bad)
         self.assertIn("Fix_Broken.Citation", bad)
         self.assertIn("trailing words", bad)
         self.assertIn("conforms:fix-cited-pin", bad)
@@ -268,7 +312,18 @@ class Census(unittest.TestCase):
         self.assertNotIn(
             "Fix_Broken.Citation", " ".join(reading["malformed_node_ids"])
         )
-        self.assertEqual(reading["uncited_perturbations"], ["fix-uncited-perturbation"])
+        # **`fix-cited-only-in-a-string` is cited nowhere a reader would call a
+        # citation**, its one sighting sitting inside a docstring, so it stands
+        # in the backlog. Reading the raw text takes it out and clears a
+        # backlog entry no instrument bought.
+        self.assertEqual(
+            reading["uncited_perturbations"],
+            [
+                "fix-cited-only-in-a-string",
+                "fix-cited-trailing-a-statement",
+                "fix-uncited-perturbation",
+            ],
+        )
 
         # **A block declares several nodes**, so a reader taking the first
         # per block sees one of six and calls the rest uncited.
@@ -299,8 +354,8 @@ class Census(unittest.TestCase):
         # declares.** The reject used to return before the assertion
         # accounting, so a malformed identifier shrank its own document's
         # mismatch and the count read closer to its table than the document
-        # was. The fixture declares ten assertions and its table holds one.
-        self.assertIn("(10 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
+        # was. The fixture declares thirteen assertions and its table holds one.
+        self.assertIn("(13 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
 
         # **The obligation follows the unit, not a directory**, so the test
         # file owes one too and the format's rule is what this pins.
@@ -309,7 +364,9 @@ class Census(unittest.TestCase):
             [
                 "crates/demo/dev_python/bare_loop.py",
                 "crates/demo/dev_python/below_head_loop.py",
+                "crates/demo/dev_python/broken.py",
                 "crates/demo/dev_python/inline_loop.py",
+                "crates/demo/dev_python/string_loop.py",
                 "crates/demo/kernels/bare_kernel.cu",
                 "crates/demo/src/bare.rs",
                 "crates/demo/tests/it.rs",
@@ -362,6 +419,18 @@ class Census(unittest.TestCase):
         self.assertIn("crates/demo/dev_python/below_head_loop.py", bare)
         self.assertNotIn("fix-cited-in-the-body", cited)
         self.assertNotIn("fix-cited-below-the-head", cited)
+        # **A `#` line inside a string is the string's and not a citation**,
+        # and the comment in the same unit must resolve in the same run, so
+        # neither direction passes on its own.
+        self.assertNotIn("fix-cited-beside-a-string", cited)
+        self.assertIn("fix-cited-only-in-a-string", cited)
+        # **And a marker trailing other code carries none**, per Document
+        # Format section 4, which the tokenized path has to carry across
+        # because a `COMMENT` token has no idea what precedes it.
+        self.assertIn("fix-cited-trailing-a-statement", cited)
+        self.assertNotIn(
+            "fix-never-declared-in-a-string", reading["dangling_citations"]
+        )
         # Reads a citation and owes nothing, having no module to head.
         self.assertNotIn("crates/demo/Cargo.toml", bare)
         self.assertNotIn("fix-cited-by-the-manifest", cited)
@@ -565,7 +634,7 @@ class Census(unittest.TestCase):
         # Four assertions against two tables of one row each: the mismatch
         # names two rows. Stopping at the first would name one.
         self.assertEqual(
-            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (10 nodes, 2 rows)"]
+            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (13 nodes, 2 rows)"]
         )
 
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
@@ -612,9 +681,12 @@ class Census(unittest.TestCase):
 
         self.assertIn("crates/demo/archive/old.rs",
                       reading["sources_without_a_header"])
-        # Its citation counts, so the corpus's one uncited perturbation is
-        # now cited and the backlog is empty.
-        self.assertEqual(reading["uncited_perturbations"], [])
+        # Its citation counts, so the perturbation an archived file cites
+        # leaves the backlog. The one whose only sighting sits inside a
+        # docstring stays, no archive reaching it.
+        self.assertEqual(reading["uncited_perturbations"],
+                         ["fix-cited-only-in-a-string",
+                          "fix-cited-trailing-a-statement"])
 
     def test_the_archive_assertions_are_not_vacuous(self):
         """The watch on the test above.
@@ -630,7 +702,9 @@ class Census(unittest.TestCase):
         self.assertIn("crates/demo/src/bare.rs",
                       reading["sources_without_a_header"])
         self.assertEqual(reading["uncited_perturbations"],
-                         ["fix-uncited-perturbation"])
+                         ["fix-cited-only-in-a-string",
+                          "fix-cited-trailing-a-statement",
+                          "fix-uncited-perturbation"])
 
     def test_a_deleted_archive_stops_being_reported_before_it_is_staged(self):
         """The mid-act state, which the first form of this gate failed.

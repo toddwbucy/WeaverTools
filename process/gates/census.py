@@ -141,13 +141,28 @@ review passes found them; the second found as many as the first:
   unit's header. It made the obligation weaker for the one kind the act was
   admitting. The leaders are read apart now, `//!` against the whole text and
   `#` against the unit's opening block.
+- **And the same exposure stood one function over in the citation reader,
+  which did not move with the header fix.** `ANY_CITE` ran over raw source, so
+  a `# conforms:` line inside a triple-quoted Python string entered the
+  citation set: dangling where the node does not exist, and worse where it
+  does, taking a perturbation **out** of the backlog on the strength of a line
+  in a docstring. This file's own fixture strings hold four such lines, which
+  is how naturally the shape occurs. Found by CodeRabbit on PR #636, in the
+  act that admits the language, after the header half of it had been fixed
+  and answered. **Answering a finding where the reviewer pointed rather than
+  where the exposure lives is its own entry in this list now.** Python
+  citations are read from `COMMENT` tokens, every other kind is matched as
+  before, and a unit the tokenizer refuses reads as no citations and is named
+  in `malformed_citations` rather than passing at a quiet zero.
 """
 
 import glob
+import io
 import json
 import os
 import re
 import subprocess
+import tokenize
 import sys
 from collections import Counter
 
@@ -237,6 +252,17 @@ HASH_HEADER = re.compile(r"^#[ \t]*conforms:[ \t]*([a-z0-9-]+)[ \t]*$", re.M)
 # citation's own defects are their own metric, a broken header and a broken
 # declaration being two things a reader must tell apart.
 ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
+# **The same line read from a comment token rather than from the text.** In a
+# `.py` unit a `# conforms:` line inside a triple-quoted string is text and not
+# a comment, and reading it puts an identifier into the citation set that no
+# reader of that file would call a citation. It lands in `dangling_citations`
+# where the node does not exist and, worse, it takes a perturbation **out** of
+# `uncited_perturbations` where it does, so a unit masks a backlog entry with a
+# line in a docstring. This file's own fixture strings hold four `# conforms:`
+# lines, which is how naturally the shape occurs. Rust and TOML are not exposed:
+# `//` and `#` inside their strings open no comment, so `ANY_CITE` over the raw
+# text is right for them and is left alone.
+COMMENT_CITE = re.compile(r"^#[ \t]*conforms:(.*)$")
 
 # A build script is cargo's unit and not the crate's, and conforms to nothing,
 # so counting it gives the metric a floor nobody can reach - the shape that
@@ -277,6 +303,44 @@ def head_block(text):
             break
         out.append(line)
     return "\n".join(out)
+
+
+def cites(text, rel):
+    """Every `conforms:` line a unit carries, as the text after the separator.
+
+    **Python is tokenized and every other kind is matched.** `#` opens a
+    comment in Python only where Python says it does, so the citations of a
+    `.py` unit are read from its `COMMENT` tokens and a `#` inside a string is
+    the string's. The leading-position rule is carried across unchanged: a
+    token whose line holds anything but whitespace before it is a marker
+    trailing other code, which Document Format section 4 says carries no
+    citation.
+
+    **A unit that will not tokenize reads as no citations and says so.** The
+    alternative directions are both worse. Falling back to the raw text reads
+    the strings the tokenizer exists to exclude, and it does so on exactly the
+    files nobody can check by eye. Raising kills the gate where it owes a
+    reading, which is a defect this file's docstring already lists. Reading
+    none is the safe direction, an unread citation showing up as a
+    perturbation nobody cited rather than as a backlog entry quietly cleared,
+    and the file is named in `malformed_citations` so the run fails rather
+    than passing at a quiet zero.
+    """
+    if not rel.endswith(".py"):
+        return ANY_CITE.findall(text), None
+    found = []
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(text).readline):
+            if tok.type != tokenize.COMMENT:
+                continue
+            if tok.line[: tok.start[1]].strip():
+                continue
+            hit = COMMENT_CITE.match(tok.string)
+            if hit:
+                found.append(hit.group(1))
+    except (tokenize.TokenError, SyntaxError, UnicodeDecodeError) as err:
+        return [], f"{rel}: will not tokenize, citations unread ({err.__class__.__name__})"
+    return found, None
 
 
 def heads_the_unit(text, rel):
@@ -615,15 +679,18 @@ def take():
     cited, headerless, bad_cites = [], [], []
     for path, owes in sources():
         text = read(path)
-        for raw in ANY_CITE.findall(text):
+        rel = os.path.relpath(path, ROOT)
+        raws, unreadable = cites(text, rel)
+        if unreadable:
+            bad_cites.append(unreadable)
+        for raw in raws:
             value = raw.strip()
             if raw and not raw[0].isspace():
-                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms:{raw}")
+                bad_cites.append(f"{rel}: conforms:{raw}")
             elif NODE_OK.match(value):
                 cited.append(value)
             else:
-                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {value}")
-        rel = os.path.relpath(path, ROOT)
+                bad_cites.append(f"{rel}: conforms: {value}")
         if owes and not heads_the_unit(text, rel):
             headerless.append(rel)
 
