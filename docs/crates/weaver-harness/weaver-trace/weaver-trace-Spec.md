@@ -641,6 +641,17 @@ while the crate compiled thirteen. **A mapping that is stale reads exactly
 like a mapping that is total**, which is why the recount lands as prose here
 and as a member list above rather than as a claim about totality alone.
 
+**The kind count stopped being prose alone on 2026-09-16**, `tests/kinds.rs`
+filling an array of twenty-one from an exhaustive match over the kind set, so
+an act that answers every match in the crate and leaves the number where it
+found it stops at that test. **The record below keeps its `review` tag even
+so**, because the pin reaches the count and the membership and reaches neither
+the disposition count nor totality, both being properties of
+`pairing_licensed` that no test outside this crate can see. A tag moved for
+one of the clause's three claims would claim the instrument for the other two,
+which is the overclaim section 10 refuses where it splits a divided claim into
+two records. That split is the shape this record needs and it is owed.
+
 ```graph
 node: trace-kind-payload-mapping-total
 kind: assertion
