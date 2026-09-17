@@ -8,7 +8,7 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 **Document ID:** `weaver-types-Spec`
 **Parent:** `weaver-types-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #476
+**Landing PR:** #627
 
 ---
 
@@ -17,11 +17,16 @@ one's Spec pass. Code is written against it under the gates of Working Process s
 Build instructions for `weaver-types`: the module layout, the item signatures, the
 file format the operator writes, the wire encoding the organ channels carry, and
 the elections a builder would otherwise invent. It is derived from
-`weaver-types-PRD` and from every contract that draws this crate, which is six:
-the coordination, residency, gate, and trace agreements, and the two external
-boundaries, `weaver-admin-operator-contract` drawing the identity pair with the
-refusal and `weaver-gate-world-contract` drawing the identity pair with the gate
-instruction.
+`weaver-types-PRD` and from every contract that draws this crate, which is
+eight: the coordination agreement, the residency agreement with its decode and
+classify siblings, the gate agreement, and the three outward boundaries,
+`weaver-admin-operator-contract` and `weaver-admin-systemd-contract` each
+drawing the refusal alone and `weaver-gate-world-contract` drawing the identity
+pair with the gate instruction. **The trace agreement is not among them and an
+earlier wording counted it.** Its vocabulary clause answers `weaver-types` with
+nothing in as many words, so the count stood at six while naming a contract that
+draws none of this crate and omitting three that do, and the identity pair it
+credited to the operator boundary left that clause on 2026-08-05.
 
 Level discipline. The charter says what the crate holds and why. This document
 says how it is represented, which for this crate means two representation
@@ -39,8 +44,8 @@ records except that edge,** and says so, which is the other half of the same
 rule: without both halves the traits act either redeclares an edge already
 declared here, which is the duplicate the format forbids, or drops part of its
 crate's assertion set with nothing recording where it went. The charter
-stays the source of the crate node, the `agent-config` artifact, its six
-`holds` edges, and the seventeen vocabulary definitions. What this document
+stays the source of the crate node, the `agent-config` artifact, its eight
+`holds` edges, and the twenty-six vocabulary definitions. What this document
 sources is the claims code must conform to, declared at the clauses that argue
 them rather than gathered in one place, per that format's section 6, and
 `asserts` runs from the crate rather than from this document, which is why the
@@ -51,7 +56,7 @@ document needs no node of its own.
 **Layout.** One module per charter subsection, re-exported at the root.
 
     src/lib.rs        re-exports, and nothing else
-    src/config.rs     the agent config and its six fields, section 2
+    src/config.rs     the agent config and its eleven fields, section 2
     src/identity.rs   peer identity and the authorization predicate, section 3
     src/wire.rs       the organ wire vocabulary and the envelope, section 4
 
@@ -429,7 +434,7 @@ which reads the same way on a page.
 ```graph
 node: types-config-names-kebab
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-types
@@ -812,9 +817,12 @@ carries is the decode contract's determination and this crate holds it, because
 this crate holds types rather than creating them. A later workflow reads that
 boundary and knows which side its vocabulary lands on before it asks.
 
-Four of the charter's nine definitions, then: the envelope every organ channel
-carries, and loop 0's trio named for the loop whose traffic it carries rather than
-for a sender, per the naming ruling of 2026-08-01.
+Four of the charter's thirteen definitions, then: the envelope every organ
+channel carries, and loop 0's trio named for the loop whose traffic it carries
+rather than for a sender, per the naming ruling of 2026-08-01. The nine that
+stood when this sentence was written became thirteen with the label trio of
+2026-08-19 and `tool-name` of the tool workflow, neither of which moves the
+four.
 
 ### 4.1 The envelope
 
@@ -849,6 +857,8 @@ pub enum Payload {
     Refusal(LifecycleRefusal),
     Frame(TurnFrame),
     Fault(FaultReport),
+    Tool(ToolExecution),
+    ToolAnswer(ToolOutcome),
 }
 
 pub enum RefusingOrgan {
@@ -945,6 +955,56 @@ definitions that would drift.
 **A later loop's vocabulary enters this enum in the act that charters that loop,**
 which is the same loudness the trio's own case sets carry: one owner, contracts
 drawing rather than growing, and a floor edit every consumer's match then sees.
+
+**`Tool` and `ToolAnswer` are that rule's second exercise, from the tool
+workflow's opening act of 2026-08-17.** The execution exchange that
+`weaver-harness-gate-contract` section 2 opens crosses the same organ channel
+the raise and the lower cross, so the ask and the answer enter this enum rather
+than taking a carrier of their own. Two cases rather than one carrying
+a discriminant, on this Spec's standing rule that a name earns its own variant
+where a reader would otherwise infer which direction ran, which is the shape
+the trio's directive and answer already take.
+
+```rust
+pub struct ToolExecution {
+    pub name: ToolName,
+    pub arguments: String,
+    pub clock_ms: u64,
+}
+
+pub enum ToolOutcome {
+    Result { content: String },
+    Refused { reason: String },
+    Errored { detail: String },
+    Killed { partial: Option<String> },
+}
+```
+
+**The ask carries what the family parse recovered and the harness interprets
+none of it**, per that contract's section 2: the tool's name as the model
+spoke it, the arguments as the emission held them, and the caller's clock.
+`ToolName` is the definition the parse mints, drawn by that contract's
+vocabulary clause and defined at `weaver-types-PRD` section 2.3. The clock is
+counted in milliseconds, which is this definition's election, the contract
+fixing the rule that one clock governs and not the unit it is read in.
+
+**The answer's four contents are the contract's and no case is this
+document's**, told apart by tag alone, the rule beneath the four being who
+speaks in the return: a result is the tool's own words, a refusal is the
+gate's voice with nothing run, an error is the machinery's, and a kill carries
+no tool voice by construction, the output drained before the kill riding as an
+attachment rather than as a result. Every one of them is content rather than a
+channel fault, because each is a fact the model must learn.
+
+**The two definitions are owed to the charter and no act has carried them.**
+`weaver-types-PRD` section 2.3 admits a wire definition when a contract draws
+it, and `weaver-harness-gate-contract` section 7 draws `tool-name` and nothing
+else of this exchange, so the ask and the answer are represented here while
+the vocabulary nodes they would map to do not exist. Declaring them in the
+charter on this document's demand would invert the direction the corpus runs
+in, so the owing is a contract act reaching both parties to that seam rather
+than this one, and it is named here so a reader does not read the silence as a
+ruling.
 
 ### 4.2 The trio
 
@@ -1067,6 +1127,7 @@ pub enum FaultCase {
     StreamWriteFailed,
     OrganDeathObserved,
     MessageRecordUndecodable,
+    IdentityPrefixUnrecorded,
 }
 ```
 
@@ -1164,10 +1225,12 @@ document's.** Three from `weaver-spu-PRD` section 13.10, three from
 `weaver-gate-PRD` section 13.4, five from `weaver-harness-PRD` section 5,
 which closed the corpus-wide set across all three organs for the seams that
 exist. A twelfth case is a charter act before it is a code change, and the
-code act that typed these found the charter one short of its own crate's
-standing practice, the assembly fault, which is the further-case rule
-exercised in the act that stated it rather than a rule waiting for its first
-test. And the
+charter has widened twice under that rule rather than the enum widening
+first: the code act that typed these found the harness one short of its own
+crate's standing practice, the assembly fault, and the act answering issue
+#369 found it one short again, the seated prefix the record cannot account
+for, which is the further-case rule exercised in the acts that stated it
+rather than a rule waiting for its first test. And the
 harness's own five ride the same shape although they cross no socket, because
 the same shape serves the wire and the `fault` event's payload and electing it
 twice would be two shapes for one fact.
@@ -1284,6 +1347,19 @@ charter's criterion.** `weaver-types-PRD` section 2.3 states the ground: this
 traffic is low in volume, so compactness buys nothing measurable, and diagnostic
 in audience, read from a capture when a load refuses unexpectedly.
 
+**The instrument is review and the non-purchase is named rather than assumed.**
+A perturbation wants a mutation that removes the property, and this crate holds
+nothing to mutate: it defines the types and encodes nothing, the write and the
+read belonging to the pair-creating crates per section 5, and no derive or
+attribute here carries the encoder's identity. `serde_json` enters this crate's
+source as a type, `RawValue` at three members, and never as a call. So there is
+no one change here that leaves loop 0's traffic being something other than
+JSON. What was taken in its place is the layout pin of
+`envelope_layout_is_the_stated_shape`, which holds the envelope's octets exactly
+as this subsection states them and goes red on any change to them, so the
+election's consequence is watched while the election itself stays review's.
+Whether that split should become two records is section 6's election.
+
 ```graph
 node: types-loop0-encoding-json
 kind: assertion
@@ -1312,7 +1388,7 @@ extends to the read side's failures rather than the write side's alone.
 ```graph
 node: types-tagging-test
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-types
@@ -1337,7 +1413,11 @@ cases struct-shaped, `Finish` is fieldless and a plain renamed string, and
 `TokenAnswer` is adjacently tagged under the spliced-member arm, two of its
 cases wrapping the vocabulary's two `RawValue` carriers: `Generation`, whose
 `request` and `measurement` are both spliced, and `FaultReport`, whose
-`account` is.
+`account` is. **`ToolOutcome` divides the same way and is internally tagged**,
+every variant struct-shaped and none wrapping a primitive, a sequence, or a
+tagged enum, so the second case holds. Its tag member is `outcome` rather than
+the `kind` the trio carries, an election naming what the tag tells apart: the
+body is one execution's outcome rather than a case of a loop's set.
 
 **The envelope's layout is stated rather than left to a reader.** Nothing is
 flattened. `exchange`, `position`, and `payload` are three members of one object,
@@ -1616,6 +1696,7 @@ owning it, so it moves when the contract moved.
 pub struct Generation {
     pub emission: String,
     pub finish: Finish,
+    pub content: Vec<weaver_traits::ContentBlock>,
     pub request: Box<serde_json::value::RawValue>,
     pub measurement: Box<serde_json::value::RawValue>,
     pub resident: u64,
@@ -1636,9 +1717,11 @@ pub enum Finish {
 
 **The split is between what the harness consumes and what it carries through, and
 `weaver-trace` states the rule it follows:** what is shaped in a crate is what no
-other crate defines. The emission and the finish are consumed here, the first
-entering the working structure as the assistant's message and the second closing
-the turn, so both are shaped. The measurement and the rendered prompt are
+other crate defines. The emission, the content, and the finish are consumed
+here: the emission is the verbatim the record holds, the content is the
+canonical parse the working structure takes as the assistant's message and the
+harness dispatches from, and the finish closes the turn, so all three are
+shaped. The measurement and the rendered prompt are
 consumed by nothing on the way past and are two members rather than one: each
 is forwarded whole into its own box, the measurement into the measurement
 event and the rendered prompt into the request event's `rendered`, because one
@@ -1650,6 +1733,21 @@ satellites are `weaver-trace`'s** and one is `weaver-spu`'s, against a crate tha
 links one internal dependency, so shaping it here would restate seven types that
 already exist with no named authority over either copy, which is the duplication
 G5 files as a defect rather than resolves by picking.
+
+**`content` is the canonical parse and it crosses beside the verbatim
+emission**, from the tool workflow's opening act. It is the family module's
+bridge from what the model spoke to the conversation's blocks, text as text and
+every recovered call as a `ToolCall` block, in emission order. The decode
+contract's section 4 has the harness author both the verbatim emission and the
+canonical parse into the record, so both are members here rather than the
+harness re-parsing what the family module already read, and family knowledge
+stays in that module, which is what lets the harness dispatch a call it never
+parsed for. **The element type is `weaver-traits`' `ContentBlock` and is drawn
+rather than restated**, on the rule the `Message` clause above states and
+against the one internal dependency this crate already links, so it is not a
+ninth satellite. A fragment that opened a call and could not be recovered is
+the SPU's report on its operator channel and is deliberately not a member
+here: a failed call arriving as prose would reach the model as content.
 
 **`request` is the model.request content whole, not the rendered prompt alone.**
 The custody act of 2026-08-11 makes `model.request` a spliced payload the SPU
@@ -2001,6 +2099,14 @@ already discharged.
   experimental reason the instrument was withheld. It is recorded rather than
   quietly overwritten: an unenforced rule that no section admits is
   indistinguishable from an enforced one.
+- In this crate: the config's field names are kebab-case on disk and snake_case
+  in Rust, per section 2, confirmed by watching `rename_all` dropped from
+  `AgentConfig` and `deny_unknown_fields` refuse the operator's own spellings.
+- In this crate and in `weaver-traits`, one claim with an edge from each: the
+  tagging test of section 4.3 yields the shapes it states, confirmed by watching
+  `LabelAnswer` tagged internally and the answer's members flatten out of the
+  adjacent body the test reads them from, which the `Scored` arm meets before
+  the fault arm reaches the splice at all.
 - In each organ's crate: a directive case belonging to another seam is refused as
   `OutOfOrder` rather than acted on, confirmed per seam by watching a wildcard arm
   swallow it.
@@ -2012,19 +2118,33 @@ already discharged.
   type is changed to `SOCK_STREAM`.
 - In the gate's crate: the accept-time refusal of section 3.
 
+**The kebab-case bullet and the tagging bullet moved from `review` with this
+act**, per Document Format section 5's rule of v0.22 that `review` means an
+instrument was not bought and never that none exists. Both were cited from a
+file under `tests/` while their tags said no instrument stood, which is that
+rule's sighting, and what the act bought is the `Perturbation:` line each test
+now carries: the tags were the clauses' error and the watches were owed rather
+than run. **A third claim of that shape keeps `review` and its clause now names
+the non-purchase**, `types-loop0-encoding-json`, which is Document Format
+section 5's fourth disposition rather than a retag declined. **That answers the
+sighting's first question and not its second**, per the same section: a clause
+settles the tag and never the citation. Where the citation belongs and whether
+the claim divides are both open and section 6 carries them together.
+
 ## 6. Open elections
 
 - **`Generation`'s shape settled at section 4.4 and this bullet retires with it.**
-  The emission and the finish are shaped in the floor because the harness consumes
-  them, and the measurement splices because nothing consumes it on the way to the
-  trace's model events. The seven satellites stay `weaver-trace`'s, neither
-  restated nor drawn, and the floor's dependency set is unchanged. **What does not
-  retire is the block partition's own question**, which party labels a block's
-  spans. Splicing decides where that answer is owed rather than what it is: the
-  renderer of a shape the trace accepts is the SPU, so the label is written there,
-  and the question is answered before the first measurement crosses rather than
-  carried as an open election. It is filed against `weaver-spu` rather than here,
-  this crate no longer having a stake in it.
+  The emission, the canonical content, and the finish are shaped in the floor
+  because the harness consumes them, and the measurement splices because nothing
+  consumes it on the way to the trace's model events. The seven satellites stay
+  `weaver-trace`'s, neither restated nor drawn, and the floor's dependency set is
+  unchanged. **What does not retire is the block partition's own question**,
+  which party labels a block's spans. Splicing decides where that answer is
+  owed rather than what it is: the renderer of a shape the trace accepts is the
+  SPU, so the label is written there, and the question is answered before the
+  first measurement crosses rather than carried as an open election. It is filed
+  against `weaver-spu` rather than here, this crate no longer having a stake in
+  it.
 - **The config file's directory and naming convention.** Operator provisioning,
   outside what this program governs, per section 2. What this Spec fixes is that
   admin resolves one file or refuses.
@@ -2090,3 +2210,23 @@ already discharged.
 - **`EnterPayload`'s field list**, which follows what admin supplies in the enter
   directive, per `weaver-admin-harness-contract` sections 3 and 5, and moves when
   that contract does.
+- **Whether `types-loop0-encoding-json` divides, and where its citation
+  belongs.** Section 4.3 now names what was declined and what was taken in its
+  place, which is Document Format section 5's fourth disposition and settles
+  the tag: `review` is right and the clause says why. **That section grants no
+  more than the tag**, a clause settling the tag and never the citation, so two
+  questions stay open and they are halves of one. The first is representation:
+  one node covers an election no mutation can remove and a layout
+  `envelope_layout_is_the_stated_shape` watches byte for byte, which are two
+  properties under one identifier. The second is placement:
+  `crates/weaver-types/tests/wire.rs` carries the citation at its header while
+  the clause above says that file watches the election's consequence rather
+  than the election, so it sits at the unit holding what was taken in place of
+  an instrument rather than at one holding the claim. **They answer together.**
+  Divide the claim and the layout half takes the citation while the format half
+  carries none, which is the honest shape of a claim no unit holds. Keep it one
+  and the citation has nowhere to move to and is either deleted, leaving the
+  claim uncited and invisible to every census reading because the tag is not
+  `perturbation`, or kept with this paragraph as its reason. **This act read
+  the instrument and declined to decide**, a split taken over the reading being
+  as much a guess as a retag would have been.
