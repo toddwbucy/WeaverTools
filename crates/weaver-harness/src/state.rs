@@ -19,11 +19,11 @@ use std::os::unix::net::UnixStream;
 pub(crate) const ANSWER_BOUND_MS: u64 = 2_000;
 
 /// The bound on an ask that parks at the member until the driver seals,
-/// per `weaver-harness-state-contract` section 2 as revised 2026-09-04 on
-/// issue #432: the enter's identity and recall asks under a diagnostic
-/// binding or a restoring load wait on a preload the operator runs beside
-/// the load, so the bound is the replay ask's generous one and not the two
-/// seconds a member answering from holdings at rest takes.
+/// per `weaver-harness-state-contract` section 2: the enter's identity and
+/// recall asks under a diagnostic binding or a restoring load wait on a
+/// preload the operator runs beside the load, so the bound is the replay
+/// ask's generous one and not the two seconds a member answering from
+/// holdings at rest takes.
 pub(crate) const PARKED_ASK_BOUND_MS: u64 = 600_000;
 
 /// The bound on the answer's size, matched by the member's own cap on
@@ -369,12 +369,12 @@ pub(crate) fn identity_material(
 }
 
 /// **The restored conversation, rebuilt from the recall answer**, per
-/// `weaver-harness-Spec` section 2 as revised 2026-09-04 on issue #432.
-/// `None` for the answer is the ask missed and refuses the enter. The
-/// turned message events rebuild as canonical messages in landing order,
-/// and the turnless rows are the identity ask's, seated once by it and
-/// skipped here, so a prefix does not reach the open twice. A message that
-/// does not rebuild refuses the same way a miss does.
+/// `weaver-harness-Spec` section 6.1. `None` for the answer is the ask
+/// missed and refuses the enter. The turned message events rebuild as
+/// canonical messages in landing order, and the turnless rows are the
+/// identity ask's, seated once by it and skipped here, so a prefix does
+/// not reach the open twice. A message that does not rebuild refuses the
+/// same way a miss does.
 pub(crate) fn restored_conversation(
     answer: Option<Vec<Recalled>>,
 ) -> Option<Vec<weaver_traits::Message>> {
@@ -559,10 +559,9 @@ mod tests {
     }
 
     /// **The restored conversation is the turned messages and the prefix is
-    /// seated once**, per `weaver-harness-Spec` section 2 as revised
-    /// 2026-09-04 on issue #432: the turnless system row is the identity
-    /// ask's and is skipped, the turned user and assistant rows rebuild in
-    /// landing order, and a miss refuses.
+    /// seated once**, per `weaver-harness-Spec` section 6.1: the turnless
+    /// system row is the identity ask's and is skipped, the turned user and
+    /// assistant rows rebuild in landing order, and a miss refuses.
     ///
     /// Perturbation: drop the turn filter and the system row is seated a
     /// second time, the first assertion failing on the count. Watched under
