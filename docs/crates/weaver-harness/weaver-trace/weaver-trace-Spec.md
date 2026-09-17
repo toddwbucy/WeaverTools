@@ -643,8 +643,14 @@ and as a member list above rather than as a claim about totality alone.
 
 **The kind count stopped being prose alone on 2026-09-16**, `tests/kinds.rs` checking
 an array of twenty-one against an exhaustive match over the kind set, so an act that
-answers every match in the crate and leaves the number where it found it stops at that
-test. **The record below keeps its `review` tag even so**, because the pin reaches the
+adds a kind and answers the crate's own matches stops at that test's match. **It does
+not reach an act that writes the new arm there too and leaves the array alone**, both
+of the test's assertions walking the array and so never reaching a kind the array does
+not name, which means the count can still drift by one act. Closing that wants the
+array written against the match rather than beside it, a representation election issue
+#633 carries beside the rest.
+
+**The record below keeps its `review` tag even so**, because the pin reaches the
 count and the membership and reaches neither the disposition count nor totality. Those
 two are properties of `pairing_licensed`, and what puts them out of the pin's reach is
 where the pin was placed rather than anything about this crate: `writer.rs` carries no

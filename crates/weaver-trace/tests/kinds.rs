@@ -10,13 +10,18 @@
 //!
 //! **What this reaches is the kind set and not the mapping.** The array's
 //! declared length fixes the number, and `ordinal`'s match, exhaustive and
-//! wildcard-free, fixes which kinds exist for the array to be checked against.
+//! wildcard-free, is what a kind added to the enum has to be written into.
 //! The array is written out rather than derived, so the two assertions below
-//! are what close the distance between the two. A twenty-second kind already
-//! stops the build at the lib's own matches, which is section 10's compiler
-//! claim and not this file's: what this adds is that the count cannot stay
-//! behind a kind the lib has absorbed, since an act that answers every match
-//! and leaves the number alone stops here.
+//! are what close the distance between the two.
+//!
+//! **What a grown kind set stops on here is `ordinal`, and nothing else.** An
+//! act that adds a kind and answers the lib's own matches stops at this file,
+//! whose match no longer covers the enum. **An act that also writes the new
+//! arm here and leaves `ALL` alone passes**, whatever that arm returns, both
+//! assertions walking `ALL` and so never reaching a kind the array does not
+//! name. The number can still drift by one act. Closing that wants the array
+//! written against the match rather than beside it, which is a representation
+//! election and issue #633's rather than this file's.
 //!
 //! Neither the disposition count nor the mapping's totality is reached, both
 //! being properties of `pairing_licensed`, which is crate-private and which

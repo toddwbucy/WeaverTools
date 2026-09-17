@@ -653,7 +653,7 @@ afterward, so the member is written now and the act decides what fills it.
 ## 7. What the rewrite keeps, and what it retires
 
 **The individuated-agent direction is not retired here.** The archived charter this
-text replaces, the one of 2026-08-04 as amended through 2026-08-25 and the referent
+text replaces, the one filed 2026-08-19 and amended through 2026-08-25, the referent
 everywhere this document says "the archived charter", described a web surface over
 the suite's agents serving a user who converses and an operator who drives lifecycle
 and reads the record, which was written for an interface to an individuated agent.

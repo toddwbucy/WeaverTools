@@ -1419,7 +1419,7 @@ impl Harness {
         }
 
         // **The seated prefix reaches the record beside the load**, per
-        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
+        // `weaver-harness-Spec` section 6.1 and `weaver-trace-PRD` section 5.
         // The accumulation rule of the trace charter's section 3.2 bases the
         // effective context on the identity prefix, and before this the
         // prefix lived in the configuration alone, so a consumer holding the
@@ -1442,7 +1442,7 @@ impl Harness {
         // Since 2026-09-04 the write happens below, once the open's material
         // is known: the prefix door authors what the open carries, the
         // store's answer or the declaration's seed, and never the seed
-        // alone, per `weaver-harness-Spec` section 6.
+        // alone, per `weaver-harness-Spec` section 6.1.
 
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
