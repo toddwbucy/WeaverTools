@@ -175,7 +175,7 @@ impl Author {
 
     /// Authors one seated identity message as `message.system`, the door for
     /// the prefix and the only turnless message door, per
-    /// `weaver-harness-Spec` section 6. The prefix is seated at open through
+    /// `weaver-harness-Spec` section 6.1. The prefix is seated at open through
     /// the declaration and passes `author_message` at no point, so before
     /// this door the accumulation rule of `weaver-trace-PRD` section 3.2
     /// based the effective context on a fact the record did not hold.
@@ -219,13 +219,13 @@ impl Author {
         ))
     }
 
-    /// The restored prefix's door, per `weaver-harness-Spec` section 6 as
-    /// revised 2026-09-04 on issue #432: under a restoring load the door
-    /// admits the roles the restored conversation carries, user, assistant,
-    /// and tool result beside system, each authored turnless as the identity
-    /// is, so the record of a branch is complete without its parent. The
-    /// system-only rule stands for the declaration's own field at
-    /// `author_identity`, still the only prefix a declaration can write.
+    /// The restored prefix's door, per `weaver-harness-Spec` section 6.1:
+    /// under a restoring load the door admits the roles the restored
+    /// conversation carries, user, assistant, and tool result beside system,
+    /// each authored turnless as the identity is, so the record of a branch
+    /// is complete without its parent. The system-only rule stands for the
+    /// declaration's own field at `author_identity`, still the only prefix a
+    /// declaration can write.
     pub fn author_restored(
         &self,
         recorder: &mut Record,

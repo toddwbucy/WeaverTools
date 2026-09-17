@@ -118,7 +118,12 @@ pub enum Subsystem {
 /// exactly. Every kind carries an explicit rename because no scheme produces
 /// the charter's dotted names, and the enum is exhaustive because the set is
 /// closed by ruling: an attribute that let a consumer absorb a further kind
-/// into a wildcard would defeat the closure the corpus keys on.
+/// into a wildcard would defeat the closure the corpus keys on. **The count
+/// is pinned in `tests/kinds.rs`**, an array of twenty-one checked against an
+/// exhaustive match over this enum, so a kind added here and answered in the
+/// crate's own matches stops at that file's match. An act that writes the new
+/// arm there too and leaves the array alone still passes, which is issue
+/// #633's to close.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum Kind {
     #[serde(rename = "load")]

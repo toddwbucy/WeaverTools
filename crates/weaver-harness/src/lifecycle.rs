@@ -1419,7 +1419,7 @@ impl Harness {
         }
 
         // **The seated prefix reaches the record beside the load**, per
-        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5.
+        // `weaver-harness-Spec` section 6.1 and `weaver-trace-PRD` section 5.
         // The accumulation rule of the trace charter's section 3.2 bases the
         // effective context on the identity prefix, and before this the
         // prefix lived in the configuration alone, so a consumer holding the
@@ -1442,7 +1442,7 @@ impl Harness {
         // Since 2026-09-04 the write happens below, once the open's material
         // is known: the prefix door authors what the open carries, the
         // store's answer or the declaration's seed, and never the seed
-        // alone, per `weaver-harness-Spec` section 6.
+        // alone, per `weaver-harness-Spec` section 6.1.
 
         // **Past this line the bracket stands**, so every refusal below
         // carries the partial run back rather than dropping it: the leave that
@@ -1509,9 +1509,9 @@ impl Harness {
             gate_ordinal: 0,
             held_frames: std::collections::VecDeque::new(),
             // **The turn ordinal starts at the cut**, per
-            // `weaver-harness-Spec` section 2 as revised 2026-09-04: the
-            // first turn of a restoring run is numbered one past the turn
-            // the lineage names, so the derived seeds continue the parent's.
+            // `weaver-harness-Spec` section 6.1: the first turn of a
+            // restoring run is numbered one past the turn the lineage
+            // names, so the derived seeds continue the parent's.
             turn_ordinal: initial_turn_ordinal(payload.restore.as_ref()),
             diagnostic: diagnostic.then(|| DiagnosticSeat {
                 reader_elected: payload.spu_instruction.decoder.residual_readout_election,
@@ -1533,7 +1533,7 @@ impl Harness {
         }
 
         // **The identity material has two sources and one rule**, per
-        // `weaver-harness-Spec` section 2 as of 2026-09-04. Where the
+        // `weaver-harness-Spec` section 6.1 as of 2026-09-04. Where the
         // member's end arrived, the store is asked for the session's
         // seated prefix once the seam stands and before the open: a prefix
         // answered is the open's messages, an empty answer is the first
@@ -1545,12 +1545,12 @@ impl Harness {
         // descriptor for the member having proved unusable for the one ask
         // the enter owes it, the refusal vocabulary naming no member.
         // **The enter's asks wait on the seal where the door stands**, per
-        // `weaver-harness-state-contract` section 2 as revised 2026-09-04
-        // on issue #432: a diagnostic binding or a restoring load names the
-        // member's preload door, the identity and recall asks park there
-        // until the driver seals, and the bound is the parked ask's rather
-        // than the two seconds a member answering from holdings at rest
-        // takes. A serving load electing no restore keeps the short bound.
+        // `weaver-harness-state-contract` section 2: a diagnostic binding
+        // or a restoring load names the member's preload door, the identity
+        // and recall asks park there until the driver seals, and the bound
+        // is the parked ask's rather than the two seconds a member
+        // answering from holdings at rest takes. A serving load electing no
+        // restore keeps the short bound.
         let restoring = payload.restore.is_some();
         let ask_bound = if diagnostic || restoring {
             crate::state::PARKED_ASK_BOUND_MS
@@ -1558,7 +1558,7 @@ impl Harness {
             crate::state::ANSWER_BOUND_MS
         };
         // **What is waited on is named before the wait**, per
-        // `weaver-harness-Spec` section 2 as of 2026-09-06: an operator who
+        // `weaver-harness-Spec` section 6.1 as of 2026-09-06: an operator who
         // has not started the driver reads why the load stands still rather
         // than meeting a refusal ten minutes on. This crate knows which load
         // it holds where the member does not, and spends the bound on the
@@ -1589,13 +1589,13 @@ impl Harness {
         };
         // **Under a restoring load the open carries the restored
         // conversation beside the identity**, per `weaver-harness-Spec`
-        // section 2 as revised 2026-09-04 on issue #432: the recall ask with
-        // no bound, parked until the driver's seal like the identity ask,
-        // its turned message events rebuilt as canonical messages in
-        // landing order, the turnless rows being the identity's and never
-        // seated twice. A miss refuses the enter on the identity ask's
-        // ground, a run whose prefix cannot be read being no run with none,
-        // and a restore with no member to ask is that miss too.
+        // section 6.1: the recall ask with no bound, parked until the
+        // driver's seal like the identity ask, its turned message events
+        // rebuilt as canonical messages in landing order, the turnless rows
+        // being the identity's and never seated twice. A miss refuses the
+        // enter on the identity ask's ground, a run whose prefix cannot be
+        // read being no run with none, and a restore with no member to ask
+        // is that miss too.
         let restored: Vec<weaver_traits::Message> = if restoring {
             match run.state.as_mut() {
                 None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
@@ -1610,7 +1610,7 @@ impl Harness {
             Vec::new()
         };
         // **The seated prefix reaches the record beside the load**, per
-        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5,
+        // `weaver-harness-Spec` section 6.1 and `weaver-trace-PRD` section 5,
         // authored from what the open carries, whichever source it came
         // from, so the record names the prefix the session ran under.
         //
@@ -1620,12 +1620,12 @@ impl Harness {
             // The restored conversation reaches the record turnless beside
             // the identity, through the door that admits its roles under a
             // restoring load, so the record of a branch is complete without
-            // its parent, per `weaver-harness-Spec` section 6.
+            // its parent, per `weaver-harness-Spec` section 6.1.
             seat_restored_prefix(&run.author, &mut run.recorder, &restored);
         }
         // The open's messages: the identity first and the restored
         // conversation after it, prefix material permanent for the
-        // residency, per Spec section 2.
+        // residency, per Spec section 6.1.
         let opening = {
             let mut messages = identity.clone();
             messages.extend(restored.iter().cloned());
@@ -2269,7 +2269,7 @@ fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
 }
 
 /// The typed line that names what the enter waits on where the door
-/// stands, per `weaver-harness-Spec` section 2 as of 2026-09-06, and
+/// stands, per `weaver-harness-Spec` section 6.1 as of 2026-09-06, and
 /// nothing where no door stands and the asks answer at once.
 fn parked_ask_notice(diagnostic: bool, restoring: bool, bound_ms: u64) -> Option<String> {
     if !diagnostic && !restoring {
@@ -2287,18 +2287,17 @@ fn parked_ask_notice(diagnostic: bool, restoring: bool, bound_ms: u64) -> Option
 }
 
 /// **The turn ordinal a run starts from**, per `weaver-harness-Spec` section
-/// 2 as revised 2026-09-04 on issue #432: zero where the load stands from
-/// nothing, and the turn the lineage names where the session stands from a
-/// record, so the first minted turn is one past the cut and the derived
-/// seeds continue the parent's streams.
+/// 6.1: zero where the load stands from nothing, and the turn the lineage
+/// names where the session stands from a record, so the first minted turn is
+/// one past the cut and the derived seeds continue the parent's streams.
 fn initial_turn_ordinal(restore: Option<&weaver_types::Lineage>) -> u64 {
     restore.map_or(0, |lineage| lineage.through)
 }
 
 /// The restored conversation reaches the record through the door that
-/// admits its roles, per `weaver-harness-Spec` section 6 as revised
-/// 2026-09-04: the same miss accounting as the identity's, a message the
-/// door refuses being named in a fault rather than dropped.
+/// admits its roles, per `weaver-harness-Spec` section 6.1: the same miss
+/// accounting as the identity's, a message the door refuses being named in
+/// a fault rather than dropped.
 fn seat_restored_prefix(
     author: &crate::authorship::Author,
     recorder: &mut crate::record::Record,
@@ -2382,15 +2381,15 @@ mod tests {
     use super::*;
 
     /// **The turn ordinal starts at the cut**, per `weaver-harness-Spec`
-    /// section 2 as revised 2026-09-04 on issue #432: zero where the load
-    /// stands from nothing, the lineage's turn where it stands from a
-    /// record, so the first minted turn is one past the cut.
+    /// section 6.1: zero where the load stands from nothing, the lineage's
+    /// turn where it stands from a record, so the first minted turn is one
+    /// past the cut.
     ///
     /// Perturbation: return zero from `initial_turn_ordinal` whatever the
     /// lineage and the second assertion fails. Watched under exactly that
     /// change.
     /// **What the enter waits on is named where the door stands and not
-    /// otherwise**, per `weaver-harness-Spec` section 2 as of 2026-09-06.
+    /// otherwise**, per `weaver-harness-Spec` section 6.1 as of 2026-09-06.
     ///
     /// Perturbation: return the line for every load and the first
     /// assertion fails, a serving load electing no restore announcing a
