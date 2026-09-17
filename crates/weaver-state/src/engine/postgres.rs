@@ -192,10 +192,9 @@ fn elected_index_name(key: &str, limit: usize) -> Result<String, CustodyFault> {
 /// predicate are functions of the path alone, so the second statement would
 /// be byte-identical and a round trip spent on an `IF NOT EXISTS` no-op.
 ///
-/// The key is a bound-in literal within the WHERE, single quotes doubled.
-/// That is what keeps an elected path carrying a quote from closing the
-/// literal, and it is sufficient while the store's `standard_conforming_strings`
-/// is on, which is its default and which this code does not read.
+/// The key is a bound-in literal within the WHERE, an index predicate taking
+/// no parameter, and it is written as an escape string constant so the path
+/// reads the same whatever the store's `standard_conforming_strings` says.
 fn elected_index_statements(
     election: &Election,
     limit: usize,
@@ -233,8 +232,30 @@ fn build_indexes(
     Ok(())
 }
 
+/// A key path as an escape string constant, `E'...'`, with the backslash and
+/// the single quote both escaped.
+///
+/// The plain literal doubles the quote and leaves the backslash alone, which
+/// holds only while the store's `standard_conforming_strings` is on. With it
+/// off the store reads a backslash in an ordinary literal as an escape, so a
+/// path carrying one before a quote closes the predicate early and the tail
+/// of the path is parsed as statement text. An escape string constant reads
+/// the backslash the same way in either setting, so the statement stops
+/// depending on a server default this code does not read. The exposure is
+/// not reachable from outside today, an elected path arriving in the agent's
+/// own declaration rather than from a peer.
 fn quoted(text: &str) -> String {
-    format!("'{}'", text.replace('\'', "''"))
+    let mut out = String::with_capacity(text.len() + 3);
+    out.push_str("E'");
+    for character in text.chars() {
+        match character {
+            '\\' => out.push_str("\\\\"),
+            '\'' => out.push_str("\\'"),
+            _ => out.push(character),
+        }
+    }
+    out.push('\'');
+    out
 }
 
 /// The events of one query with their pairs, in the query's order.
@@ -513,7 +534,7 @@ mod tests {
         assert_eq!(
             built[0],
             "CREATE INDEX IF NOT EXISTS field_key_message_2eassistant_2econtent_2etext \
-             ON field (key, value) WHERE key = 'message.assistant.content.text'",
+             ON field (key, value) WHERE key = E'message.assistant.content.text'",
             "the statement names the index from the path and filters to it"
         );
     }
@@ -613,17 +634,37 @@ mod tests {
         assert_eq!(built.len(), 1, "one statement per elected key path");
     }
 
-    /// A quote in an elected path is doubled inside the predicate rather
-    /// than closing the literal. This is what `quoted` guarantees, and it
-    /// guarantees it while the store's `standard_conforming_strings` is on.
+    /// A quote in an elected path is escaped inside the predicate rather than
+    /// closing the literal.
     #[test]
-    fn a_quote_in_a_path_is_doubled_in_the_predicate() {
+    fn a_quote_in_a_path_is_escaped_in_the_predicate() {
         let built = elected_index_statements(&elect(&["a'b"]), STATED).expect("builds");
         assert_eq!(built.len(), 1);
         assert!(
-            built[0].ends_with("WHERE key = 'a''b'"),
-            "the predicate carries the path with its quote doubled, and this reads {}",
+            built[0].ends_with(r"WHERE key = E'a\'b'"),
+            "the predicate carries the path with its quote escaped, and this reads {}",
             built[0]
+        );
+    }
+
+    /// **A backslash before a quote does not close the predicate.** The plain
+    /// literal this engine wrote before escaped nothing but the quote, so a
+    /// store running `standard_conforming_strings` off read the backslash as
+    /// an escape, the doubled quote closed the literal early and the tail of
+    /// the elected path was parsed as statement text. The predicate is an
+    /// escape string constant, which reads the backslash the same way under
+    /// either setting.
+    #[test]
+    fn a_backslash_before_a_quote_does_not_close_the_predicate() {
+        let built = elected_index_statements(&elect(&[r"a\'b"]), STATED).expect("builds");
+        assert_eq!(built.len(), 1);
+        assert_eq!(
+            built[0],
+            concat!(
+                "CREATE INDEX IF NOT EXISTS field_key_a_5c_27b ON field (key, value) ",
+                r"WHERE key = E'a\\\'b'"
+            ),
+            "the statement escapes both the backslash and the quote"
         );
     }
 }
