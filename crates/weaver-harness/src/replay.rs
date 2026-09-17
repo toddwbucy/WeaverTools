@@ -23,7 +23,7 @@
 //! an `asserts` edge from this crate beside the one from the crate whose
 //! record it describes, and the instruments are the suite below.
 //! `weaver-harness-Spec` section 8 carries the custody from this side and
-//! that Spec's section 7 carries the claims.
+//! `weaver-diagnostic-Spec` section 7 carries the four claims.
 
 use weaver_diagnostic::{
     AbandonReason, Divergence, Kind, ModelId, Payload, ReplayClosed, ReplayIdentity, ReplayOpened,

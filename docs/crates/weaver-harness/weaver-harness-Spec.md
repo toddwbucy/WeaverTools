@@ -32,12 +32,18 @@ says how it is represented, and per gate G2 it elects against grounds the charte
 and the contracts state rather than developing grounds of its own. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares its crate's assertion records and no other record,** per
-Document Format sections 3 and 4 as of the notation of 2026-08-03, which retired
-the no-records sentence this paragraph replaces. The charter stays the source of
-this crate's node, its parent edge, its two floor links, its one declared seam,
-and its artifact edges, and a Spec that restated any of them would give the mapper
-two sources for one record, per that format's section 1. What this document
+**This document declares its crate's assertion records, less four edges stated
+elsewhere, and no other record,** per Document Format sections 3 and 4 as of the
+notation of 2026-08-03, which retired the no-records sentence this paragraph
+replaces. The exception is the four replay claims `weaver-diagnostic-Spec` declares
+at its sections 3.3 and 4 and sorts at its section 7: one claim is one node with an
+`asserts` edge per crate bound by it, the node lives at the statement, and this
+crate's edge is declared there beside the recorder's. Declaring them again here
+would be the duplicate the format forbids, and dropping them silently would leave
+part of this crate's assertion set with nothing recording where it went. The charter
+stays the source of this crate's node, its parent edge, its two floor links, its one
+declared seam, and its artifact edges, and a Spec that restated any of them would give
+the mapper two sources for one record, per that format's section 1. What this document
 sources is the claims code must conform to, declared at the clauses that argue
 them rather than gathered in one place, per that format's section 6, and `asserts`
 runs from the crate rather than from this document, which is why the document
@@ -2636,8 +2642,8 @@ the four carries an `asserts` edge from here beside the one from the crate whose
 record it describes. The instruments are the in-file suite of `src/replay.rs`,
 five tests carrying six citations across the four, and the file's own header
 cites all four for the module. **The sixty-six above does not move**, no record
-landing here, and that document's section 7 is the authority on the four claims'
-wording and their sorting by instrument.
+landing here, and `weaver-diagnostic-Spec` section 7 is the authority on the four
+claims' wording and their sorting by instrument.
 
 **It is the one citation in this tree that crosses a crate line**, read at this
 act against every `conforms:` under `crates`. It crosses because the mechanism

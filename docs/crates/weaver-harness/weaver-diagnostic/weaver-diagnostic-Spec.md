@@ -666,8 +666,8 @@ identity is not invented, that an outcome is not manufactured, and that a diverg
 position is the resident length at the draw are four claims about this record which
 only a pass can satisfy, and this crate does not author:
 `weaver-diagnostic-PRD` section 1 has the harness author and has this crate be the
-mechanism it authors through. Nothing under this crate can falsify one of the four,
-the recorder validating shape and never content per
+mechanism it authors through. This crate holds no instrument that can falsify one of
+the four, the recorder validating shape and never content per
 `weaver-harness-diagnostic-contract` section 4, so the instruments sit in
 `crates/weaver-harness/src/replay.rs` and the second edge is what lets apex section
 11's chain close on the crate that holds them. The prose at each of the four clauses
