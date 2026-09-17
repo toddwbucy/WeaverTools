@@ -442,7 +442,7 @@ against the graph after it exists, and the per-binary registration of section 2.
 already makes the config surface honest at every stage: a binary that does not
 register a field does not carry it. The ten field records above are the ten fields
 this section lists, so a clause naming an eleventh has no target and the mapping says
-so. The block above carries twelve records and not ten, the two that are not fields
+so. The block above carries twelve node records and not ten, the two that are not fields
 being `agent-config`, the artifact the fields are held by, and `refusal-record`,
 which is wire vocabulary this section argues beside them.
 

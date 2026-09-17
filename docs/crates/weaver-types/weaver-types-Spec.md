@@ -2126,8 +2126,10 @@ rule's sighting, and what the act bought is the `Perturbation:` line each test
 now carries: the tags were the clauses' error and the watches were owed rather
 than run. **A third claim of that shape keeps `review` and its clause now names
 the non-purchase**, `types-loop0-encoding-json`, which is Document Format
-section 5's fourth disposition rather than a retag declined, and what the clause
-leaves open section 6 carries as an election.
+section 5's fourth disposition rather than a retag declined. **That answers the
+sighting's first question and not its second**, per the same section: a clause
+settles the tag and never the citation. Where the citation belongs and whether
+the claim divides are both open and section 6 carries them together.
 
 ## 6. Open elections
 
@@ -2208,14 +2210,23 @@ leaves open section 6 carries as an election.
 - **`EnterPayload`'s field list**, which follows what admin supplies in the enter
   directive, per `weaver-admin-harness-contract` sections 3 and 5, and moves when
   that contract does.
-- **Whether `types-loop0-encoding-json` splits in two.** Section 4.3 now names
-  what was declined and what was taken in its place, which is Document Format
-  section 5's fourth disposition and closes the sighting: the tag stands and
-  the clause says why. What it does not settle is the representation. One node
-  covers an election no mutation can remove and a layout
-  `envelope_layout_is_the_stated_shape` watches byte for byte, and those are
-  two properties under one identifier. So the claim either divides, the layout
-  half taking `perturbation` and the format half keeping `review`, or it stays
-  one on the reading that the layout is what the election means in octets.
-  **This act read the instrument and declined to decide**, a split taken over
-  the reading being as much a guess as a retag would have been.
+- **Whether `types-loop0-encoding-json` divides, and where its citation
+  belongs.** Section 4.3 now names what was declined and what was taken in its
+  place, which is Document Format section 5's fourth disposition and settles
+  the tag: `review` is right and the clause says why. **That section grants no
+  more than the tag**, a clause settling the tag and never the citation, so two
+  questions stay open and they are halves of one. The first is representation:
+  one node covers an election no mutation can remove and a layout
+  `envelope_layout_is_the_stated_shape` watches byte for byte, which are two
+  properties under one identifier. The second is placement:
+  `crates/weaver-types/tests/wire.rs` carries the citation at its header while
+  the clause above says that file watches the election's consequence rather
+  than the election, so it sits at the unit holding what was taken in place of
+  an instrument rather than at one holding the claim. **They answer together.**
+  Divide the claim and the layout half takes the citation while the format half
+  carries none, which is the honest shape of a claim no unit holds. Keep it one
+  and the citation has nowhere to move to and is either deleted, leaving the
+  claim uncited and invisible to every census reading because the tag is not
+  `perturbation`, or kept with this paragraph as its reason. **This act read
+  the instrument and declined to decide**, a split taken over the reading being
+  as much a guess as a retag would have been.
