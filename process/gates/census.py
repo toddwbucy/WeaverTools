@@ -123,13 +123,46 @@ review passes found them; the second found as many as the first:
   conformance header could legally cite** and handed any record that typed
   itself `system` a vocabulary the format gives to one node. Both halves key
   on the pair now.
+- The selector read `.rs` and `.toml` while the regime governs every supported
+  unit, so a CUDA kernel and three Python loop files stood inside workspace
+  members and were never asked for a header at all. `sources_without_a_header`
+  answered about the Rust subset of the set it names, which is this list's
+  oldest shape wearing a fourth suit: a selector too narrow, printing a count
+  confidently too low. The baseline carries the figures and this entry does
+  not, a count copied into prose being a defect of its own.
+  **The obligation was put on the unit rather than a directory some entries
+  above and the kinds it walks stayed Rust**, so the rule was general and its
+  reader was not. `HEADER_CITE` read `//!` alone, and a Python unit made to
+  owe a header against it owes one no Python file can legally carry, which is
+  a gate nobody can pass rather than a count that is merely wrong. **The first
+  fix widened one pattern to both markers and was wrong in the other
+  direction**, `#` opening every Python comment there is, so an inline
+  citation in a function body and one inside a string literal each read as the
+  unit's header. It made the obligation weaker for the one kind the act was
+  admitting. The leaders are read apart now, `//!` against the whole text and
+  `#` against the unit's opening block.
+- **And the same exposure stood one function over in the citation reader,
+  which did not move with the header fix.** `ANY_CITE` ran over raw source, so
+  a `# conforms:` line inside a triple-quoted Python string entered the
+  citation set: dangling where the node does not exist, and worse where it
+  does, taking a perturbation **out** of the backlog on the strength of a line
+  in a docstring. This file's own fixture strings hold four such lines, which
+  is how naturally the shape occurs. Found by CodeRabbit on PR #636, in the
+  act that admits the language, after the header half of it had been fixed
+  and answered. **Answering a finding where the reviewer pointed rather than
+  where the exposure lives is its own entry in this list now.** Python
+  citations are read from `COMMENT` tokens, every other kind is matched as
+  before, and a unit the tokenizer refuses reads as no citations and is named
+  in `malformed_citations` rather than passing at a quiet zero.
 """
 
 import glob
+import io
 import json
 import os
 import re
 import subprocess
+import tokenize
 import sys
 from collections import Counter
 
@@ -159,6 +192,27 @@ TAGS_BY_KIND = {"system": {"ratified"}}
 # a vocabulary the format gives to exactly one node.
 SYSTEM_NODE = "WeaverTools"
 
+# **Every supported unit and not every tracked file**, per the operator's
+# ruling of 2026-09-17. A conformance header exists so the graph can carry
+# `code -> assertion -> doc`, and a unit the ingest never reads has no edge
+# for a header to carry, so the regime governs the units the ingest supports
+# and this reading follows that set. Rust is primary in this workspace and it
+# is not alone. **Exempt from the count is not outside the regime**: a
+# language absent here is one whose support has not landed, and its units
+# enter the count in the act that lands it. Java, JS/TS, GoLang, HTML and CSS
+# are issue #635 and shell is deferred rather than refused under #592, the way
+# `.hadesignore` names #592 for the ask it closes. SQL is excluded outright
+# and is not a deferral, on the same ruling, and `.hadesignore` carries that
+# argument rather than this file.
+#
+# **Reading a citation and owing a header are two questions and the sets
+# differ.** A manifest cites - three `tag: manifest` assertions are cited only
+# from a `Cargo.toml` - and owes no header, having no module of its own to
+# head. One walk answering both questions is already an entry in this file's
+# list of its own wrong numbers, so the two sets are named apart.
+READS_CITATIONS = ("*.rs", "*.toml", "*.cu", "*.py")
+OWES_A_HEADER = (".rs", ".cu", ".py")
+
 # **The info string is the whole word.** An unanchored `graph` also opens
 # a ```graphviz or ```graphql fence, whose contents would declare phantom
 # nodes that mask the dangling citations this gate exists to catch.
@@ -175,6 +229,22 @@ NODE_OK = re.compile(r"^[a-z0-9-]+$")
 KIND = re.compile(r"^[ \t]*kind:(.*)$", re.M)
 TAG = re.compile(r"^[ \t]*tag:(.*)$", re.M)
 HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
+# **Python's file-level leader is `#`, and position is what makes it one.**
+# `//!` is a marker Rust and CUDA give to the file alone, so it heads a unit
+# wherever it sits and `HEADER_CITE` reads the whole text. Python has no such
+# marker: `#` opens every comment it has, so a reader matching it anywhere
+# makes an inline citation in a function body the unit's header, and a `#`
+# citation inside a string literal one too. That is strictly weaker than the
+# obligation on Rust, where a `///` or `//` citation resolves and leaves the
+# file headerless, and it would weaken the rule for the one kind this widening
+# admits. So the leader is anchored where `//!` is anchored by its own
+# meaning: the head of the unit. **`head_block` is that anchor and this
+# pattern carries no second copy of it.** The block yields only blank lines
+# and lines beginning at column zero with `#`, so a `^[ \t]*#` here would
+# match exactly what `^#` matches and a perturbation of the one into the
+# other is a no-op. Two spellings of one guard read as two guards, and the
+# one that cannot fail is the one a later act deletes as dead.
+HASH_HEADER = re.compile(r"^#[ \t]*conforms:[ \t]*([a-z0-9-]+)[ \t]*$", re.M)
 # **The whole rest of the line, and only from a comment.** Capturing one token
 # credits `conforms: valid-node trailing` as a sound citation and says nothing
 # about the trailing text; capturing the bare word anywhere makes prose that
@@ -182,12 +252,34 @@ HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
 # citation's own defects are their own metric, a broken header and a broken
 # declaration being two things a reader must tell apart.
 ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
+# **The same line read from a comment token rather than from the text.** In a
+# `.py` unit a `# conforms:` line inside a triple-quoted string is text and not
+# a comment, and reading it puts an identifier into the citation set that no
+# reader of that file would call a citation. It lands in `dangling_citations`
+# where the node does not exist and, worse, it takes a perturbation **out** of
+# `uncited_perturbations` where it does, so a unit masks a backlog entry with a
+# line in a docstring. This file's own fixture strings hold four `# conforms:`
+# lines, which is how naturally the shape occurs. Rust and TOML are not exposed:
+# `//` and `#` inside their strings open no comment, so `ANY_CITE` over the raw
+# text is right for them and is left alone.
+COMMENT_CITE = re.compile(r"^#[ \t]*conforms:(.*)$")
 
 # A build script is cargo's unit and not the crate's, and conforms to nothing,
 # so counting it gives the metric a floor nobody can reach - the shape that
 # teaches people to stop reading a number. **`archive/` used to sit here and
 # does not**, per 2026-09-13: no archive directory may stand in the tree, so
 # exempting one would hide the violation rather than measure it.
+# **No sibling for the units that are not Rust**, a question the widening
+# above had to answer: neither the kernel nor a loop file is the toolchain's
+# unit the way a build script is, so nothing here earns the exemption.
+# **`transformer.cu` is an entry that cannot clear while the verbatim carry
+# stands, and that is not the floor this comment refuses.** A build script
+# conforms to nothing, so counting it asks for a header no act could ever
+# write and the metric never reaches zero however much work lands. The kernel
+# conforms to something and the absence has a named condition - an act cutting
+# the carry - so it is a backlog entry with a price rather than a floor, and
+# H6's rule that the baseline is a backlog holds for it. An exemption would
+# instead delete the one place a reader meets the cost of the carry.
 NO_HEADER_OWED = ("build.rs",)
 HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 
@@ -195,6 +287,74 @@ HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 def read(path):
     with open(path, encoding="utf-8") as fh:
         return fh.read()
+
+
+def head_block(text):
+    """The lines that open a unit before anything that is not a comment.
+
+    **A shebang, blank lines and `#` comments and nothing else.** The scan
+    stops at the first line that is neither, so a docstring, an import or an
+    indented comment ends it, and a citation below that point is an item's
+    rather than the file's.
+    """
+    out = []
+    for line in text.splitlines():
+        if line.strip() and not line.startswith("#"):
+            break
+        out.append(line)
+    return "\n".join(out)
+
+
+def cites(text, rel):
+    """Every `conforms:` line a unit carries, as the text after the separator.
+
+    **Python is tokenized and every other kind is matched.** `#` opens a
+    comment in Python only where Python says it does, so the citations of a
+    `.py` unit are read from its `COMMENT` tokens and a `#` inside a string is
+    the string's. The leading-position rule is carried across unchanged: a
+    token whose line holds anything but whitespace before it is a marker
+    trailing other code, which Document Format section 4 says carries no
+    citation.
+
+    **A unit that will not tokenize reads as no citations and says so.** The
+    alternative directions are both worse. Falling back to the raw text reads
+    the strings the tokenizer exists to exclude, and it does so on exactly the
+    files nobody can check by eye. Raising kills the gate where it owes a
+    reading, which is a defect this file's docstring already lists. Reading
+    none is the safe direction, an unread citation showing up as a
+    perturbation nobody cited rather than as a backlog entry quietly cleared,
+    and the file is named in `malformed_citations` so the run fails rather
+    than passing at a quiet zero.
+    """
+    if not rel.endswith(".py"):
+        return ANY_CITE.findall(text), None
+    found = []
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(text).readline):
+            if tok.type != tokenize.COMMENT:
+                continue
+            if tok.line[: tok.start[1]].strip():
+                continue
+            hit = COMMENT_CITE.match(tok.string)
+            if hit:
+                found.append(hit.group(1))
+    except (tokenize.TokenError, SyntaxError, UnicodeDecodeError) as err:
+        return [], f"{rel}: will not tokenize, citations unread ({err.__class__.__name__})"
+    return found, None
+
+
+def heads_the_unit(text, rel):
+    """Whether the unit carries a file-level header citation.
+
+    **The marker is the language's and so is what anchors it.** `//!` heads a
+    file by its own meaning, so it is read against the whole text the way it
+    always was. `#` heads nothing by itself, so it is read against the opening
+    block alone, which is what keeps the obligation on a Python unit the same
+    strength as the obligation on a Rust one.
+    """
+    if rel.endswith(".py"):
+        return HASH_HEADER.search(head_block(text)) is not None
+    return HEADER_CITE.search(text) is not None
 
 
 def members():
@@ -342,8 +502,10 @@ def sources():
     so a generated or scratch file left under a crate is not the corpus's and
     must not fail a gate. **A manifest cites too**: three `tag: manifest`
     assertions are cited only from a `Cargo.toml`, and a walk over `.rs` alone
-    reported them uncited - the same miss as declining to read a crate's tests,
-    unfixed for the half that is not Rust.
+    reported them uncited - the same miss as declining to read a crate's tests.
+    **The half that is not Rust was the last standing form of it**, closed on
+    the ruling of 2026-09-17: the sets above are the supported kinds and the
+    subset of them that owes.
 
     **The obligation follows the unit and never a directory.**
     `WeaverTools-Document-Format` states it and names this exact
@@ -353,7 +515,7 @@ def sources():
     gate scoped by `/src/` and inherited the defect it was told about.
     """
     def git(*flags):
-        return ls_files(*flags, "--", "*.rs", "*.toml")
+        return ls_files(*flags, "--", *READS_CITATIONS)
 
     # **Tracked, plus work that is not staged yet.** The format's rule is over
     # the tracked unit to exclude what is generated or scratch, not to make an
@@ -371,7 +533,8 @@ def sources():
         # traceback where the gate owes a reading.
         if not os.path.isfile(path):
             continue
-        owes = rel.endswith(".rs") and os.path.basename(rel) not in NO_HEADER_OWED
+        owes = (rel.endswith(OWES_A_HEADER)
+                and os.path.basename(rel) not in NO_HEADER_OWED)
         yield path, owes
 
 
@@ -516,16 +679,20 @@ def take():
     cited, headerless, bad_cites = [], [], []
     for path, owes in sources():
         text = read(path)
-        for raw in ANY_CITE.findall(text):
+        rel = os.path.relpath(path, ROOT)
+        raws, unreadable = cites(text, rel)
+        if unreadable:
+            bad_cites.append(unreadable)
+        for raw in raws:
             value = raw.strip()
             if raw and not raw[0].isspace():
-                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms:{raw}")
+                bad_cites.append(f"{rel}: conforms:{raw}")
             elif NODE_OK.match(value):
                 cited.append(value)
             else:
-                bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {value}")
-        if owes and not HEADER_CITE.search(text):
-            headerless.append(os.path.relpath(path, ROOT))
+                bad_cites.append(f"{rel}: conforms: {value}")
+        if owes and not heads_the_unit(text, rel):
+            headerless.append(rel)
 
     # **The documents without a table are the metric, not the ones with.** A
     # count of mismatches over the one document that has a table reads as

@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.23, 2026-09-17. Companion to the Working Process. Project
+**Version:** v0.24, 2026-09-17. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -62,6 +62,40 @@ is the one relation that leaves the layer, running from a code node to an assert
 in the subject layer, which is apex section 11's chain in graph form. The no-edge
 rule between the document and subject layers stands unchanged: code cites a claim,
 and nothing cites a file.
+
+**That layer is every supported unit, and Rust is not alone in it.** A conformance
+header exists so the `cites` edge can be drawn, and a unit the ingest never reads has
+no edge for a header to carry, so the kind a unit is decides whether the layer
+reaches it at all. Rust is primary in this workspace and the supported kinds are
+`.rs`, `.toml`, `.cu` and `.py`, on the operator's ruling of 2026-09-17. **A
+language outside that set is deferred rather than excused**, its units entering the
+layer in the act that lands their support, which is why the set is written here and
+a list of what stays out is not: such a list goes stale from the day support moves,
+and it reads to a later seat as a ruling nobody made. One kind is excluded outright
+rather than deferred, and `.hadesignore` carries that exclusion with the argument
+for it, which is the one place either is stated.
+
+**Reading a citation and owing a header are two questions and the sets differ.** The
+manifest reads and owes nothing, having no module of its own to head, which is why
+the three `tag: manifest` citations resolve at all. Section 3 carries which kinds owe
+and this section carries which are read, and a seat narrowing one to match the other
+loses those three.
+
+**Kind is half the bound and ownership is the other half**, per section 3, which
+reads the unit as a tracked file a workspace member owns. The ingest is negated back
+over `process/gates/` and `process/ingest/`, so five `.py` files under them are read
+by it and owe no header, correctly: they are this project's instruments and not a
+crate's source. **An argument from the ingest alone would pull them into the layer**,
+which is the shape to check for whenever this clause is applied to a new kind.
+
+**Exempt from a count is not outside the regime**, and the distance between those
+is why the boundary falls at the kind rather than inside the reading. A supported
+unit carrying no header is an absence the count returns and the corpus answers,
+which is what a count is for. Carving a kind out of the count instead leaves its
+units under a rule nothing measures, which is the state this clause replaces: the
+reading walked Rust alone while section 3's rule read every tracked unit, so a
+kernel and three loop files stood inside the crates that rule names and nothing
+ever asked them for a header.
 
 State is not a graph property. It answers no query the phase two checklist names, it
 lives in the status header where the merge process reads it, and a second copy in a
@@ -444,16 +478,33 @@ reaching code.
 moved was this document.** A citation is what binds a unit to an assertion, and
 `census.py` has resolved one from any of the four since before the question was put,
 so a rule admitting one form alone was a rule the reading gate did not run under.
+That act moved no count, which is the shape of a format catching up with a reading
+rather than changing one.
 
-**The module header is a second obligation and it is still `//!` alone.** Admitting a
-form as a citation says nothing about where a file owes a header, and phase three's
-rule that every source unit carries one is read by H6 through the file-level marker by
-itself. A file citing only at item level resolves each of its citations and is counted
-headerless all the same, and four such files stand inside today's forty-eight:
-`replay.rs` in the harness, and `native.rs`, `gemma4.rs` and `mistral3.rs` in the SPU.
-`act-04-inline-citations-get-a-header` of issue #569 is the act that gives those four
-their header. This act moves no count, which is the shape of a format catching up with
-a reading rather than changing one. The alternative was to hoist every citation into
+**The module header is a second obligation and the marker that carries it is the
+unit's own file-level leader.** Admitting a form as a citation says nothing about
+where a file owes a header, and phase three's rule that every source unit carries one
+is read by H6 through that marker by itself. A file citing only at item level resolves
+each of its citations and is counted headerless all the same. **For Rust and CUDA the
+leader is `//!`**, which the language gives to the file rather than to an item, so it
+heads a unit wherever in the unit it sits. **For Python it is `#` at the head of the
+unit**, on the ruling of 2026-09-17 that admitted the kind: `#` opens every comment
+Python has, so position is what makes one a header, and a reader matching it anywhere
+would make an item's citation the file's and leave the obligation weaker for Python
+than for Rust. The head is the shebang, the blank lines and the `#` comments that open
+the unit, and it ends at the first line that is none of those.
+
+**The count and the four files this passage carried are deleted rather than
+corrected.** It read "four such files stand inside today's forty-eight" and named
+`replay.rs`, `native.rs`, `gemma4.rs` and `mistral3.rs`. Measured 2026-09-17: all four
+carry `//!` headers, no headerless unit in the tree cites at item level, and the
+reading is not forty-eight. A count in a governing document argues with the command
+the first time the command is run, so the rule stands here and the reading is taken
+from `census.py`. `act-04-inline-citations-get-a-header` of issue #569 is filed
+against the set this passage listed, and what that measurement leaves it is the
+register's to settle rather than this document's.
+
+The alternative the 2026-09-15 ruling weighed was to hoist every citation into
 a file header, which a manifest cannot hold at all, and the manifest citations are the
 ones that let H2 be asked of the graph: it carries `crates/weaver-analysis/Cargo.toml`
 citing `analysis-no-internal-dependency`, which is a claim about a dependency list that

@@ -7,7 +7,7 @@ floor. Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #630
+**Landing PR:** #636
 
 ---
 
@@ -110,6 +110,20 @@ listing is re-derived from the tree rather than amended**, four modules having
 landed without it moving - `spawn.rs`, `record.rs`, `failure.rs` and
 `replay.rs` - and `src/tools.rs` having been listed as blocked while the
 granted tool result of section 6 fills it.
+
+**The loop files under `dev_python/` owe conformance headers**, Python being a
+supported unit since the operator's ruling of 2026-09-17, **and a header here
+would have no assertion to cite.** The blade is a compile pin held in
+`engine.rs`, the crossing is loop 0's and cited at `lifecycle.rs`, and the
+filesystem boundary this section argues is cited from the framework side at
+`src/bin/worker/main.rs`, which is where a reader establishes a claim about what
+sits outside the developer's directories. A loop file is the builder's own code
+arriving by the same path any builder's does, so what it shows is the seat it
+composes against rather than a claim it holds. Minting an assertion to close the
+reading would convert an honest absence into a documented enforcement. The
+condition on which a header lands here is an assertion whose instrument is a
+loop file, and `census.py` is where the standing reading is taken rather than
+here.
 
 **`src/classify.rs` leaves the listing, and the disagreement that leaves behind
 is named rather than settled here.** No such file exists and the label seam's
