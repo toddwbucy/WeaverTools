@@ -123,6 +123,17 @@ review passes found them; the second found as many as the first:
   conformance header could legally cite** and handed any record that typed
   itself `system` a vocabulary the format gives to one node. Both halves key
   on the pair now.
+- The selector read `.rs` and `.toml` while the regime governs every supported
+  unit, so a CUDA kernel and three Python loop files stood inside workspace
+  members and were never asked for a header at all. The reading printed 38
+  where the supported set holds 42, which is this list's oldest shape wearing
+  a fourth suit: a selector too narrow, printing a count confidently too low.
+  **The obligation was put on the unit rather than a directory some entries
+  above and the kinds it walks stayed Rust**, so the rule was general and its
+  reader was not. `HEADER_CITE` read `//!` alone and had to widen with it: a
+  Python unit made to owe a header against that reader owes one no Python file
+  can legally carry, which is a gate nobody can pass rather than a count that
+  is merely wrong.
 """
 
 import glob
@@ -159,6 +170,26 @@ TAGS_BY_KIND = {"system": {"ratified"}}
 # a vocabulary the format gives to exactly one node.
 SYSTEM_NODE = "WeaverTools"
 
+# **Every supported unit and not every tracked file**, per the operator's
+# ruling of 2026-09-17. A conformance header exists so the graph can carry
+# `code -> assertion -> doc`, and a unit the ingest never reads has no edge
+# for a header to carry, so the regime governs the units the ingest supports
+# and this reading follows that set. Rust is primary in this workspace and it
+# is not alone. **Exempt from the count is not outside the regime**: a
+# language absent here is one whose support has not landed, and its units
+# enter the count in the act that lands it. Java, JS/TS, GoLang, HTML and CSS
+# are a filed feature request and shell is deferred rather than refused. SQL
+# is excluded outright and is not a deferral, on the same ruling, and
+# `.hadesignore` carries that argument rather than this file.
+#
+# **Reading a citation and owing a header are two questions and the sets
+# differ.** A manifest cites - three `tag: manifest` assertions are cited only
+# from a `Cargo.toml` - and owes no header, having no module of its own to
+# head. One walk answering both questions is already an entry in this file's
+# list of its own wrong numbers, so the two sets are named apart.
+READS_CITATIONS = ("*.rs", "*.toml", "*.cu", "*.py")
+OWES_A_HEADER = (".rs", ".cu", ".py")
+
 # **The info string is the whole word.** An unanchored `graph` also opens
 # a ```graphviz or ```graphql fence, whose contents would declare phantom
 # nodes that mask the dangling citations this gate exists to catch.
@@ -174,7 +205,17 @@ NODE_OK = re.compile(r"^[a-z0-9-]+$")
 # format does not admit. The node line's fix did not reach its neighbours.
 KIND = re.compile(r"^[ \t]*kind:(.*)$", re.M)
 TAG = re.compile(r"^[ \t]*tag:(.*)$", re.M)
-HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
+# **The file-level leader is the language's, and one pattern admits both
+# without crediting a unit that could not carry it.** Rust and CUDA head a
+# file with `//!` and Python with `#`, and neither leader is legal in the
+# other's language: `# conforms:` in a `.rs` file is a malformed attribute and
+# `//!` in a `.py` file is a syntax error, so no unit satisfies this reader
+# with a marker its own compiler would reject. It widened with the obligation
+# above and had to: a Python unit made to owe a header against a `//!`-only
+# reader owes one no Python file can legally carry, which is a gate nobody
+# can pass. It is read only where a unit owes, so a manifest's `#` citation
+# never reaches it.
+HEADER_CITE = re.compile(r"^\s*(?://!|#)\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
 # **The whole rest of the line, and only from a comment.** Capturing one token
 # credits `conforms: valid-node trailing` as a sound citation and says nothing
 # about the trailing text; capturing the bare word anywhere makes prose that
@@ -188,6 +229,11 @@ ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
 # teaches people to stop reading a number. **`archive/` used to sit here and
 # does not**, per 2026-09-13: no archive directory may stand in the tree, so
 # exempting one would hide the violation rather than measure it.
+# **No sibling for the units that are not Rust**, a question the widening
+# above had to answer: neither the kernel nor a loop file is the toolchain's
+# unit the way a build script is, so nothing here earns the exemption. An
+# exemption is a hole and a reported absence is a reading, which is the whole
+# of why the regime asks of the supported set rather than carving within it.
 NO_HEADER_OWED = ("build.rs",)
 HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 
@@ -342,8 +388,10 @@ def sources():
     so a generated or scratch file left under a crate is not the corpus's and
     must not fail a gate. **A manifest cites too**: three `tag: manifest`
     assertions are cited only from a `Cargo.toml`, and a walk over `.rs` alone
-    reported them uncited - the same miss as declining to read a crate's tests,
-    unfixed for the half that is not Rust.
+    reported them uncited - the same miss as declining to read a crate's tests.
+    **The half that is not Rust was the last standing form of it**, closed on
+    the ruling of 2026-09-17: the sets above are the supported kinds and the
+    subset of them that owes.
 
     **The obligation follows the unit and never a directory.**
     `WeaverTools-Document-Format` states it and names this exact
@@ -353,7 +401,7 @@ def sources():
     gate scoped by `/src/` and inherited the defect it was told about.
     """
     def git(*flags):
-        return ls_files(*flags, "--", "*.rs", "*.toml")
+        return ls_files(*flags, "--", *READS_CITATIONS)
 
     # **Tracked, plus work that is not staged yet.** The format's rule is over
     # the tracked unit to exclude what is generated or scratch, not to make an
@@ -371,7 +419,8 @@ def sources():
         # traceback where the gate owes a reading.
         if not os.path.isfile(path):
             continue
-        owes = rel.endswith(".rs") and os.path.basename(rel) not in NO_HEADER_OWED
+        owes = (rel.endswith(OWES_A_HEADER)
+                and os.path.basename(rel) not in NO_HEADER_OWED)
         yield path, owes
 
 

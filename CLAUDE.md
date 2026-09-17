@@ -422,11 +422,14 @@ indexes them, it does not replace them:
    commits, the Spec authoring an assertion that phase three would code later,
    with nothing holding the receipt.
 
-   **It has been wrong twenty-four times and its docstring lists every one**,
-   which is worth reading before trusting a number it prints. The shape
-   repeats: a regular expression too strict about where text sits, printing a
-   count that is confidently too low. Read the docstring rather than a copy of
-   it here. There are no untagged assertions in this corpus.
+   **Its docstring lists every time this gate has been wrong**, which is
+   worth reading before trusting a number it prints. **The count that stood
+   in this sentence is gone rather than corrected**: it read twenty-four
+   against a list of twenty-seven, and a length copied out of a list argues
+   with the list the first time the list grows. The shape repeats: a regular
+   expression too strict about where text sits, printing a count that is
+   confidently too low. Read the docstring rather than a copy of it here.
+   There are no untagged assertions in this corpus.
 
 Every real defect found in the quarry's final week came from items 2-4, while
 `gate-check.py` returned 0 findings on four consecutive PRs and the graph returned zero

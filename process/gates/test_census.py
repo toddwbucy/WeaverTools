@@ -91,18 +91,70 @@ fn f() {}
 """
 
 
+KERNEL = """//! conforms: fix-cited-pin
+//
+// A CUDA unit owes a header and heads a file the way Rust does, `//!` being a
+// comment in both languages.
+
+__global__ void k() {}
+"""
+
+LOOP = """# conforms: fix-cited-pin
+#
+# A Python unit owes a header too, and its file-level leader is `#`, there
+# being no `//!` a Python file could legally carry.
+
+
+def drive(seat, text):
+    pass
+"""
+
+BARE_LOOP = """# A Python unit with no header citation, which is the finding.
+
+
+def drive(seat, text):
+    pass
+"""
+
+MANIFEST = """[package]
+name = "demo"
+# conforms: fix-cited-pin
+"""
+
+# **A leader the reader would match, so the exclusion is what is being
+# watched and not the comment syntax.** Were `.sql` ever walked, this line
+# resolves to nothing and the migration lands in `dangling_citations`, which
+# the assertions below pin as empty of it.
+MIGRATION = """-- a migration
+# conforms: fix-sql-is-never-read
+CREATE TABLE demo (id INTEGER PRIMARY KEY);
+"""
+
+
 class Census(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
         os.makedirs(os.path.join(self.dir, "docs"))
         os.makedirs(os.path.join(self.dir, "crates/demo/src"))
         os.makedirs(os.path.join(self.dir, "crates/demo/tests"))
+        os.makedirs(os.path.join(self.dir, "crates/demo/kernels"))
+        os.makedirs(os.path.join(self.dir, "crates/demo/dev_python"))
+        os.makedirs(os.path.join(self.dir, "crates/demo/migrations"))
         write(self.dir, "Cargo.toml", 'members = [\n  "crates/demo",\n]\n')
         write(self.dir, "docs/demo-Spec.md", CORPUS)
         write(self.dir, "crates/demo/src/lib.rs", SOURCE)
         write(self.dir, "crates/demo/src/bare.rs", BARE)
         # A test directory cites and does not owe a header.
         write(self.dir, "crates/demo/tests/it.rs", "// conforms: fix-untagged\n")
+        # **One unit of every supported kind, and one of a kind excluded
+        # outright**, per the ruling of 2026-09-17. The four dispositions the
+        # regime produces are each held by a file here, so a later narrowing
+        # of either set fails rather than printing a smaller number.
+        write(self.dir, "crates/demo/kernels/demo.cu", KERNEL)
+        write(self.dir, "crates/demo/dev_python/loop.py", LOOP)
+        write(self.dir, "crates/demo/dev_python/bare_loop.py", BARE_LOOP)
+        write(self.dir, "crates/demo/Cargo.toml", MANIFEST)
+        write(self.dir, "crates/demo/migrations/0001_demo.sql", MIGRATION)
         # **Each restore is registered as its global is mutated.** A failure
         # in the git calls below would otherwise skip tearDown and leave
         # `census.ROOT` pointed at a temp directory for the rest of the suite,
@@ -195,8 +247,67 @@ class Census(unittest.TestCase):
         # file owes one too and the format's rule is what this pins.
         self.assertEqual(
             reading["sources_without_a_header"],
-            ["crates/demo/src/bare.rs", "crates/demo/tests/it.rs"],
+            [
+                "crates/demo/dev_python/bare_loop.py",
+                "crates/demo/src/bare.rs",
+                "crates/demo/tests/it.rs",
+            ],
         )
+
+    def test_the_count_asks_a_header_of_every_supported_unit(self):
+        """The ruling of 2026-09-17, held as the four dispositions it produces.
+
+        **Reading a citation and owing a header are two sets and they widen
+        differently**, so both are pinned here rather than one standing for
+        the other. The manifest is the one supported kind that reads and does
+        not owe. A kind the ingest never reads is counted by neither, because
+        a header exists so the graph can carry `code -> assertion -> doc` and
+        a unit with no edge has nothing for a header to carry.
+
+        **Each assertion names the file it is about**, so a narrowing of
+        either set fails on the unit it dropped rather than on a total.
+        """
+        reading = census.take()
+        bare = reading["sources_without_a_header"]
+
+        # Owes, and carries one. The CUDA unit heads with `//!` and the Python
+        # unit with `#`, each its own language's file-level leader.
+        self.assertNotIn("crates/demo/kernels/demo.cu", bare)
+        self.assertNotIn("crates/demo/dev_python/loop.py", bare)
+        # Owes, and carries none. This is the finding the widening buys.
+        self.assertIn("crates/demo/dev_python/bare_loop.py", bare)
+        # Reads a citation and owes nothing, having no module to head.
+        self.assertNotIn("crates/demo/Cargo.toml", bare)
+        self.assertIn("fix-cited-pin", census.take()["duplicate_node_ids"][0])
+        # Counted by neither, and the citation inside it proves the read half:
+        # were `.sql` walked, this identifier would stand in the dangling list.
+        self.assertNotIn("crates/demo/migrations/0001_demo.sql", bare)
+        self.assertNotIn("fix-sql-is-never-read", reading["dangling_citations"])
+        self.assertNotIn(
+            "fix-sql-is-never-read", " ".join(reading["malformed_citations"])
+        )
+
+    def test_the_hadesignore_and_the_census_draw_one_boundary(self):
+        """The ingest half and the reading half answer about the same set.
+
+        **`.hadesignore` excludes SQL outright and the census counts it
+        never**, which is one ruling in two instruments, so a later act
+        lifting one without the other is what this fails on. The supported
+        kinds must reach neither exclusion: a `.cu` or `.py` unit the ingest
+        skipped would owe a header for an edge that could not exist.
+        """
+        ignored = ignore_probe(self.dir, "boundaryprobe")
+        self.assertTrue(ignored("crates/weaver-web/migrations/0001.sql", False),
+                        "SQL is not excluded from the ingest")
+        for rel in ("crates/weaver-spu/kernels/transformer.cu",
+                    "crates/weaver-harness/src/bin/pyworker/dev_python/a.py"):
+            self.assertFalse(ignored(rel, False),
+                             f"{rel} owes a header and is excluded from the "
+                             "graph, so the edge it owes cannot be drawn")
+        # And the reading agrees, on the repository's own tree.
+        self.assertEqual(
+            [p for p in census.READS_CITATIONS if p.endswith(".sql")], [])
+        self.assertNotIn(".sql", census.OWES_A_HEADER)
 
     def test_main_fails_on_a_swapped_defect_whose_count_stands_still(self):
         """**Through `main`**, so the exit code and the comparison are what is
@@ -631,32 +742,7 @@ class Census(unittest.TestCase):
         count**, and the same shape the olympus seat found in `--exclude-standard`
         on 2026-09-13.
         """
-        import subprocess
-
-        with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
-            manifest = fh.read()
-
-        probe = os.path.join(self.dir, "ignoreprobe")
-        os.makedirs(probe)
-        subprocess.run(["git", "-C", probe, "init", "-q"], check=True,
-                       capture_output=True)
-        with open(os.path.join(probe, ".gitignore"), "w", encoding="utf-8") as fh:
-            fh.write(manifest)
-        # An init template can seed info/exclude, so it is emptied rather than
-        # assumed absent.
-        with open(os.path.join(probe, ".git", "info", "exclude"), "w") as fh:
-            fh.write("")
-
-        def ignored(rel, is_dir):
-            full = os.path.join(probe, rel)
-            os.makedirs(full if is_dir else os.path.dirname(full), exist_ok=True)
-            if not is_dir:
-                open(full, "w").close()
-            return subprocess.run(
-                ["git", "-C", probe, "-c", "core.excludesFile=",
-                 "check-ignore", "--no-index", rel],
-                capture_output=True,
-            ).returncode == 0
+        ignored = ignore_probe(self.dir, "ignoreprobe")
 
         # **The process rule, as git reads it.** `process/*` excludes the four
         # documents and the two negations name the instruments back in. Order
@@ -742,6 +828,46 @@ class Census(unittest.TestCase):
         write(self.dir, "Cargo.toml", 'members = [\n  "crates/gone",\n]\n')
         with self.assertRaises(SystemExit):
             census.take()
+
+
+def ignore_probe(parent, name):
+    """`.hadesignore` read by git, in a repository of its own.
+
+    **The repository under test cannot answer this.** `check-ignore` there
+    reads `.gitignore` and never `.hadesignore`, so it answers a question
+    nobody asked and answers it confidently. The manifest is copied into a
+    fresh repository as its `.gitignore`, which is the only engine that
+    settles gitignore syntax, and the reasoning for each guard below is in
+    the caller that first needed them.
+    """
+    import subprocess
+
+    with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
+        manifest = fh.read()
+
+    probe = os.path.join(parent, name)
+    os.makedirs(probe)
+    subprocess.run(["git", "-C", probe, "init", "-q"], check=True,
+                   capture_output=True)
+    with open(os.path.join(probe, ".gitignore"), "w", encoding="utf-8") as fh:
+        fh.write(manifest)
+    # An init template can seed info/exclude, so it is emptied rather than
+    # assumed absent.
+    with open(os.path.join(probe, ".git", "info", "exclude"), "w") as fh:
+        fh.write("")
+
+    def ignored(rel, is_dir):
+        full = os.path.join(probe, rel)
+        os.makedirs(full if is_dir else os.path.dirname(full), exist_ok=True)
+        if not is_dir:
+            open(full, "w").close()
+        return subprocess.run(
+            ["git", "-C", probe, "-c", "core.excludesFile=",
+             "check-ignore", "--no-index", rel],
+            capture_output=True,
+        ).returncode == 0
+
+    return ignored
 
 
 def run_out(*args):
