@@ -20,6 +20,10 @@ decision two of #439.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
+**Parent:** the WeaverTools suite, whose governing document is deliberately
+not yet written, per `weaver-agents-PRD` section 0. The graph parent edge of
+section 1 names the `WeaverTools` system node, and the header and the edge
+name the same thing.
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
 **Landing PR:** #632
 

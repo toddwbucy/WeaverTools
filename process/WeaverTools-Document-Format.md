@@ -1,6 +1,6 @@
 # WeaverTools Document Format
 
-**Version:** v0.22, 2026-09-16. Companion to the Working Process. Project
+**Version:** v0.23, 2026-09-17. Companion to the Working Process. Project
 documents carry a version and a date and no state, per Working Process section 2.
 **Parent:** WeaverTools Working Process
 
@@ -100,13 +100,13 @@ the absent `weaver-` prefix, the same exclusion `contracts/` takes. Loops file u
 organ that holds them, and the holder is decided by the human's ruling of 2026-08-01:
 loops belong to the harness unless specific to one domain and no other, a loop confined
 to one domain filing under that domain's own root. The first such directory is
-`docs/crates/weaver-harness/Loops/`, holding the basic inference loop alone. Loop 0's
-composition is not a loop and does not file under a `Loops/` directory, which is what
-the ruling settles. It was written as `load-unload-path`, archived 2026-08-23 once
-`weaver-harness-Spec` carried its rules directly. Per the operator's ruling of
-2026-08-05: the loop taxonomy reaches loop 1 and above, and
-the bracket the loops run inside is the harness's mechanism rather than a member of
-the taxonomy.
+`docs/crates/weaver-harness/Loops/`, holding the basic inference loop and the
+diagnostic replay loop. Loop 0's composition is not a loop and does not file under a
+`Loops/` directory, which is what the ruling settles. It was written as
+`load-unload-path`, archived 2026-08-23 once `weaver-harness-Spec` carried its rules
+directly. Per the operator's ruling of 2026-08-05: the loop taxonomy reaches loop 1
+and above, and the bracket the loops run inside is the harness's mechanism rather than
+a member of the taxonomy.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the
@@ -181,6 +181,12 @@ member. The header is a reader's convenience and the edge governs, so a disagree
 between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
 hand.
+
+**The apex carries no `Parent:` header and the absence is the rule.**
+`weaver-agents-PRD` declares the `WeaverTools` system node, nothing stands above that
+node, and there is no charter above it for a header to carry. A reading that finds
+this one document without the field has found the rule rather than a defect, and an
+act that supplied a value would be writing a belonging no edge holds.
 
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One

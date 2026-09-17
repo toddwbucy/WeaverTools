@@ -6,6 +6,7 @@ entry. It argues no edges of its own: the seams it walks are declared in the cra
 charters, and a graph block here would duplicate a record that already has a home.
 
 **Document ID:** `diagnostic-replay-loop`
+**Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 **Landing PR:** #530
 
