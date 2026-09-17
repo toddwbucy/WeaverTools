@@ -182,11 +182,12 @@ between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
 hand.
 
-**The apex carries no `Parent:` header and the absence is the rule.**
-`weaver-agents-PRD` declares the `WeaverTools` system node, nothing stands above that
-node, and there is no charter above it for a header to carry. A reading that finds
-this one document without the field has found the rule rather than a defect, and an
-act that supplied a value would be writing a belonging no edge holds.
+**The apex carries no `Parent:` header and the absence is the rule.** Working Rules
+section 1 elects which fields each kind carries and already says the apex carries none
+because it has none, and it is authoritative on the election. What this section adds is
+the reading against the edge: `weaver-agents-PRD` declares the `WeaverTools` system
+node, no node stands above that one, and a value supplied here would name a belonging
+no edge holds.
 
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One
