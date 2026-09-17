@@ -912,13 +912,17 @@ asserting crate moved the edge count by four and is the case in point. The absol
 pair is owed to the pre-rebuild pass named above, and no figure stands here in the
 meantime, a wrong number being worse for a detector than none.
 
-**What replaces it is a check that does not go stale: the two censuses differ by the
-number of claims bound by more than one crate, and by nothing else.** A node takes one
+**What replaces it is a check that does not go stale: the edge census exceeds the node
+census by one for each crate beyond the first that holds a claim, which is the sum
+over claims of the asserting crates less one, and by nothing else.** A node takes one
 `asserts` edge per crate that holds the claim, so a rebuild derives the delta from the
 corpus in the same pass that counts it rather than reading a roll kept by hand here.
-Which figure a check reads still matters, and the closing checklist's item 5 reads
-nodes. A rebuild whose delta disagrees with that derivation has found either an
-unlanded edit or an assertion an act changed without recording.
+**The count is of edges beyond the first and never of claims**, the two coinciding
+only while no claim is held by three crates, which is a property of the tree at a
+moment rather than of the rule. Which figure a check reads still matters, and the
+closing checklist's item 5 reads nodes. A rebuild whose delta disagrees with that
+derivation has found either an unlanded edit or an assertion an act changed without
+recording.
 
 **Code is ingested into the graph, and the position that it should not be is
 retired as of 2026-09-14.** The v4 build named in
