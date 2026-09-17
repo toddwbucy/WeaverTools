@@ -7,7 +7,7 @@ floor. Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-harness-Spec`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #623
+**Landing PR:** #630
 
 ---
 
@@ -32,16 +32,24 @@ says how it is represented, and per gate G2 it elects against grounds the charte
 and the contracts state rather than developing grounds of its own. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares its crate's assertion records and no other record,** per
-Document Format sections 3 and 4 as of the notation of 2026-08-03, which retired
-the no-records sentence this paragraph replaces. The charter stays the source of
-this crate's node, its parent edge, its two floor links, its one declared seam,
-and its artifact edges, and a Spec that restated any of them would give the mapper
-two sources for one record, per that format's section 1. What this document
-sources is the claims code must conform to, declared at the clauses that argue
-them rather than gathered in one place, per that format's section 6, and `asserts`
-runs from the crate rather than from this document, which is why the document
-needs no node of its own.
+**This document declares its crate's assertion records, less four claims stated and
+declared elsewhere, and no other record,** per Document Format sections 3 and 4 as of
+the notation of 2026-08-03, which retired the no-records sentence this paragraph
+replaces. The exception is the four replay claims this crate asserts and
+`weaver-diagnostic-Spec` both states and declares, at its sections 3.3 and 4 and
+sorted at its section 7. This document states none of the four, so it declares neither
+their nodes nor their edges, and declaring them here would be the duplicate the format
+forbids while dropping them silently would leave part of this crate's assertion set
+with nothing recording where it went. **The rule admitting a second `asserts` edge is
+owed to `WeaverTools-Document-Format`**, whose section 4 states no cardinality for
+that edge, and issue #631 carries the debt. The disposition is argued at that Spec's
+section 7 rather than here. The charter stays the source of this crate's node, its
+parent edge, its two floor links, its one declared seam, and its artifact edges, and a
+Spec that restated any of them would give the mapper two sources for one record, per
+that format's section 1. What this document sources is the claims code must conform
+to, declared at the clauses that argue them rather than gathered in one place, per
+that format's section 6, and `asserts` runs from the crate rather than from this
+document, which is why the document needs no node of its own.
 
 **A claim this Spec leans on and another Spec argues carries no record here,** and
 there are ten of them. Four are `weaver-types-Spec`'s: the `SOCK_SEQPACKET`
@@ -2624,6 +2632,31 @@ that `weaver-trace-Spec` section 10 owes, at section 2.3, the licensed
 combinations that `weaver-traits-Spec` section 7 owes, at section 4, and the
 second walk's descriptor placement with the fork discipline that
 `weaver-gate-Spec` section 0 cites as this document's, at section 2.2.
+
+**Four claims this crate asserts are declared by another document, and
+`src/replay.rs` is where they are held.** `weaver-diagnostic-Spec` sections 3.3
+and 4 argue that the record identifies itself at the open, that an absent
+identity is not invented, that an outcome is not manufactured, and that a
+divergence position is the resident length at the draw. This crate is the author
+and that one the mechanism, per `weaver-diagnostic-PRD` section 1, and the
+instrument for each stands in this crate's suite, so each of the four carries an
+`asserts` edge from here beside the one from the crate whose record it describes.
+The instruments are the in-file suite of `src/replay.rs`, five tests carrying six
+citations across the four, and the file's own header cites all four for the
+module. **The sixty-six above does not move**, no record landing here, and
+`weaver-diagnostic-Spec` section 7 is the authority on the four claims' wording,
+on their sorting by instrument, and on why the edge crosses at all.
+
+**`src/replay.rs` carries ten citation lines and every one of them names a slug
+this crate does not prefix**, which is why the file is named here rather than
+left to section 1's layout. They cross because the mechanism and its author are
+two crates by the charter's own division rather than because a header reached for
+the wrong slug, and the second edge is what makes that checkable from the graph
+rather than by noticing a prefix. **No instrument compares a citation's slug
+against the crate of the file carrying it**, `grounds_parity.py` reading the
+asserting crates and not the citing one, so a later crossing is found by a reader
+and not by a gate. The reading that would close that is owed to
+`act-20-census-readings` of issue #569.
 
 **`weaver-types-Spec` section 5 files three owings against this document, and
 all three now carry a record.** The truncation half of the pair test has been

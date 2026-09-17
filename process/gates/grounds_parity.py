@@ -203,10 +203,13 @@ def read_corpus():
 
     crates = {}
     for node_id in assertions:
-        # **A node may be asserted by more than one crate and one is.**
-        # `types-tagging-test` is asserted by both floor crates, per Working
-        # Process section 6, which is why the check is that the identifier
-        # carries one of its crates' prefixes rather than a named crate's.
+        # **A node may be asserted by more than one crate**, which is why the
+        # check is that the identifier carries one of its crates' prefixes
+        # rather than a named crate's. **No roll of the instances is kept
+        # here**, a hand-maintained list of a fact derivable in one pass being
+        # what the next act adding an instance has nothing telling it to edit.
+        # The rule is Working Process section 7's and the instances are the
+        # `asserted_by` entries above with more than one member.
         owners = sorted(asserted_by.get(node_id, ()))
         if not owners:
             faults.append(f"`{node_id}` is asserted by no crate, so its crate is unknown")

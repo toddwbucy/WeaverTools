@@ -16,6 +16,14 @@
 //! certification fails naming the first divergent position. Every outcome
 //! lands in the diagnostic-trace and nothing is answered outward, there
 //! being no one on this seam to answer.
+//!
+//! **The four claims cited above are `weaver-diagnostic-Spec`'s records and
+//! this crate's to hold.** That crate is the mechanism and this one is the
+//! author, per `weaver-diagnostic-PRD` section 1, so each of the four carries
+//! an `asserts` edge from this crate beside the one from the crate whose
+//! record it describes, and the instruments are the suite below.
+//! `weaver-harness-Spec` section 8 carries the custody from this side and
+//! `weaver-diagnostic-Spec` section 7 carries the four claims.
 
 use weaver_diagnostic::{
     AbandonReason, Divergence, Kind, ModelId, Payload, ReplayClosed, ReplayIdentity, ReplayOpened,
