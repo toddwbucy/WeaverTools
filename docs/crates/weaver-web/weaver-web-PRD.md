@@ -21,7 +21,7 @@ decision two of #439.
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
-**Landing PR:** #628
+**Landing PR:** #632
 
 ## 1. What this crate is
 
