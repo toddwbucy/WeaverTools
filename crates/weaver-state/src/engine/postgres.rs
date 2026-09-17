@@ -1,5 +1,6 @@
 //! conforms: state-store-is-a-port
 //! conforms: state-distillate-lands-whole
+//! conforms: state-indexes-built-at-load
 //!
 //! The service engine, per `weaver-state-Spec` section 3 and the ruling of
 //! 2026-09-04: one database per agent, reached over the store's unix socket
@@ -8,24 +9,30 @@
 //! feature. The same two-table shape as the embedded engine, in this engine's
 //! dialect, and the same port, whole.
 //!
-//! Two of the section's claims this file does not cite, and neither returns
-//! here on `act-27`'s reading: a citation is earned by holding an instrument
-//! or by a reading that holds, and this engine holds neither of them yet.
+//! One of the section's claims this file does not cite, and it does not
+//! return here on this reading: a citation is earned by holding an instrument
+//! or by a reading that holds, and this engine holds neither for it.
 //! `state-serve-restricts-to-the-session` is tagged `perturbation` and a
-//! perturbation claim is bought by a test and cited where the test is - this
-//! file holds no test and nothing but `main.rs` ever builds a `Postgres`, so
-//! the session predicate could leave `shape` and every device would still
-//! answer green. `state-indexes-built-at-load` is tagged `perturbation` as of
-//! `act-27`, its instrument being `sqlite.rs`'s index test, and this engine has
-//! neither that nor the property: `build_indexes` names a partial index
-//! `field_elected_{hex}` and Postgres truncates an identifier at 63 bytes,
-//! so an elected key of 25 bytes or more can collide with another under
-//! `CREATE INDEX IF NOT EXISTS` and lose its index silently. That is issue
-//! #618 and the embedded engine is unaffected, sqlite setting no such limit.
-//! `weaver-state-Spec` section 3 elects what this engine owes for it: a name
-//! derived from the key path and distinct across elected paths, and a named
-//! refusal where the identifier limit cannot hold one, the encoding being the
-//! code act's. The citation returns with the code that answers that election.
+//! perturbation claim is bought by a test, and no unit here constructs a
+//! `Postgres`, so the session predicate could leave `shape` and every device
+//! would still answer green.
+//!
+//! `state-indexes-built-at-load` is cited above and its instrument is the
+//! suite over `elected_index_name` and `elected_index_statements`, which
+//! buys what the Spec's section 5 names for that claim: a name derived from
+//! the key path rather than from the key's position, so a later load's
+//! differing election cannot fall under an earlier load's name through
+//! `CREATE INDEX IF NOT EXISTS`. Two halves of it stand on a reading and not
+//! on a run, and section 5 carries both. The timing is reached by no test in
+//! either engine. The catalog is reached by no test here, no unit
+//! constructing a `Postgres`, so what the suite reads is the statement the
+//! build would issue rather than the index the store then holds.
+//!
+//! The naming answers `weaver-state-Spec` section 3's election and the
+//! encoding is this act's under it, per that clause. The store holds an
+//! identifier to 63 bytes and truncates a longer one rather than refusing
+//! it, which is the path issue #618 measured to a collision, so a name is
+//! made whole here or the election is refused.
 
 use std::cell::{RefCell, RefMut};
 
@@ -90,25 +97,81 @@ fn landing(e: postgres::Error) -> CustodyFault {
     CustodyFault::LandingFailed(e.to_string())
 }
 
-/// The elected keys' partial indexes, named by the key's hex so any elected
-/// key names a legal identifier, as the embedded engine names them.
+/// The width the store holds an identifier to, `NAMEDATALEN - 1` at every
+/// build this crate meets. A name over it is truncated by the store rather
+/// than refused, so measuring against it is the whole of what stands between
+/// two elected paths and one index.
+const IDENTIFIER_LIMIT: usize = 63;
+
+/// The prefix every elected index's name carries.
+const ELECTED_PREFIX: &str = "field_elected_";
+
+/// One elected key path's index name, or the refusal `weaver-state-Spec`
+/// section 3 asks for where the store's identifier limit cannot hold it.
+///
+/// The encoding keeps a lowercase letter or a digit as itself and writes
+/// every other byte as an underscore and two hex digits, so an underscore
+/// never appears but as an escape and one name reads back to one key path.
+/// Two properties come of that. The name is derived from the path rather
+/// than from the key's position in the election, which is what keeps a later
+/// load's differing election from falling under an earlier load's name. And
+/// the name carries nothing the store folds, where passing an uppercase byte
+/// through would let two paths differing only in case name one index, an
+/// unquoted identifier being folded to lowercase before it is stored.
+fn elected_index_name(key: &str) -> Result<String, CustodyFault> {
+    use std::fmt::Write;
+    let mut name = String::with_capacity(ELECTED_PREFIX.len() + key.len() * 3);
+    name.push_str(ELECTED_PREFIX);
+    for byte in key.bytes() {
+        match byte {
+            b'a'..=b'z' | b'0'..=b'9' => name.push(char::from(byte)),
+            _ => {
+                let _ = write!(name, "_{byte:02x}");
+            }
+        }
+    }
+    if name.len() > IDENTIFIER_LIMIT {
+        return Err(CustodyFault::StoreUnavailable(format!(
+            "the elected key path {key:?} names an index of {} bytes and this \
+             store holds an identifier to {IDENTIFIER_LIMIT}, so the election \
+             is refused rather than built in the part that fits",
+            name.len()
+        )));
+    }
+    Ok(name)
+}
+
+/// The statements one election's partial indexes are built by, every name
+/// made before the first statement is issued.
+///
+/// The naming is its own pass because the refusal is the whole election's. A
+/// name refused in the middle of the build would leave the indexes named
+/// before it standing, and a subset of the election is the silent loss the
+/// refusal exists to prevent, read from the other end. The key is a bound-in
+/// literal within the WHERE, quoted through the store's own doubling rule to
+/// keep a hostile key path from becoming SQL.
+fn elected_index_statements(election: &Election) -> Result<Vec<String>, CustodyFault> {
+    let mut statements = Vec::with_capacity(election.keys.len());
+    for (_kind, keys) in &election.keys {
+        for key in keys {
+            let name = elected_index_name(key)?;
+            statements.push(format!(
+                "CREATE INDEX IF NOT EXISTS {name} ON field (key, value) WHERE key = {}",
+                quoted(key)
+            ));
+        }
+    }
+    Ok(statements)
+}
+
+/// The elected keys' partial indexes, one per elected key path, built at
+/// load and never mid-serve.
 fn build_indexes(
     executor: &mut impl GenericClient,
     election: &Election,
 ) -> Result<(), CustodyFault> {
-    use std::fmt::Write;
-    for (_kind, keys) in &election.keys {
-        for key in keys {
-            let mut name = String::with_capacity(key.len() * 2);
-            for byte in key.bytes() {
-                let _ = write!(name, "{byte:02x}");
-            }
-            let statement = format!(
-                "CREATE INDEX IF NOT EXISTS field_elected_{name} ON field (key, value) WHERE key = {}",
-                quoted(key)
-            );
-            executor.batch_execute(&statement).map_err(unavailable)?;
-        }
+    for statement in elected_index_statements(election)? {
+        executor.batch_execute(&statement).map_err(unavailable)?;
     }
     Ok(())
 }
@@ -338,5 +401,89 @@ impl Store for Postgres {
             )
             .map_err(unavailable)?;
         with_pairs(&mut client, rows)
+    }
+}
+
+/// The naming suite, which is this engine's instrument for
+/// `state-indexes-built-at-load` and reaches the store not at all: what a
+/// name is made of and when a name is refused are properties of the
+/// derivation, so they are watched where the derivation is and no unit here
+/// stands a server to watch them.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// An election carrying the given key paths under one kind.
+    fn elect(keys: &[&str]) -> Election {
+        Election {
+            all_kinds: true,
+            keys: vec![(
+                "message.assistant".into(),
+                keys.iter().map(|key| (*key).to_string()).collect(),
+            )],
+        }
+    }
+
+    /// Issue #618's own case, which the hex encoding collided: two elected
+    /// paths of thirty bytes sharing their first twenty-six, each owning its
+    /// name here and each name short enough that the store stores it whole.
+    #[test]
+    fn two_elected_paths_never_share_a_name() {
+        let text = elected_index_name("message.assistant.content.text").expect("names the path");
+        let kind = elected_index_name("message.assistant.content.type").expect("names the path");
+        assert_ne!(text, kind, "each elected path owns its index name");
+        assert!(
+            text.len() <= IDENTIFIER_LIMIT && kind.len() <= IDENTIFIER_LIMIT,
+            "a name the store would truncate is a name two paths can share"
+        );
+    }
+
+    /// The store folds an unquoted identifier to lowercase before it stores
+    /// it, so a path's uppercase byte owes an escape rather than the byte.
+    #[test]
+    fn two_paths_differing_only_in_case_name_two_indexes() {
+        let lower = elected_index_name("turn.closed").expect("names the path");
+        let upper = elected_index_name("turn.Closed").expect("names the path");
+        assert_ne!(
+            lower, upper,
+            "case is part of the path and part of the name"
+        );
+        assert_eq!(
+            upper,
+            upper.to_lowercase(),
+            "the store folds nothing this name carries"
+        );
+    }
+
+    /// A path the identifier limit cannot hold is refused with a named
+    /// fault, rather than standing an index under a name the store truncated.
+    #[test]
+    fn a_name_that_cannot_be_made_is_a_refusal() {
+        let long = "message.assistant.content.text.rendered.for.the.operator";
+        match elected_index_name(long) {
+            Err(CustodyFault::StoreUnavailable(said)) => {
+                assert!(said.contains(long), "the fault names the path it refused");
+            }
+            other => panic!("a path over the limit is a refusal, and this answered {other:?}"),
+        }
+    }
+
+    /// The refusal is the election's and not one key's: an election carrying
+    /// a path the limit cannot hold builds none of its indexes rather than
+    /// the subset that fits.
+    #[test]
+    fn an_election_that_cannot_be_named_builds_nothing() {
+        let held = "message.assistant.content.text";
+        let over = "message.assistant.content.text.rendered.for.the.operator";
+        let alone = elected_index_statements(&elect(&[held])).expect("a nameable election builds");
+        assert_eq!(alone.len(), 1, "one statement per elected key path");
+        assert!(
+            alone[0].contains("WHERE key = 'message.assistant.content.text'"),
+            "the index is filtered to the path it is named for"
+        );
+        assert!(
+            elected_index_statements(&elect(&[held, over])).is_err(),
+            "an election holding a path the limit cannot name is refused whole"
+        );
     }
 }
