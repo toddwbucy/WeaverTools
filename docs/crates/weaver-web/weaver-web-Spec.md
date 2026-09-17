@@ -1770,9 +1770,10 @@ each of those reaches. The gate is section 7.1 and the charter carries no seam
 record for it, and `validate`, the lifecycle verbs and the observation
 exchange are section 7.2's, the operator's own program run as a
 subprocess and carrying no record either. Section 7's third is the analysis
-stream, which no surface reaches and section 3.1's ingest does, and it is the
-one seam the charter records, a reach into this crate rather than one of its
-own. **Stage submits a registered
+stream, which no surface reaches and section 3.1's ingest does, and the
+charter records no seam for it either: the reach is into this crate rather
+than one of its own, so the record is the emitter's and sits in
+`weaver-analysis-PRD` section 1, as of 2026-09-16. **Stage submits a registered
 experiment to the queue, and section 7 names no queue exchange**, the
 queue being the harness's per the charter's section 3.5 and this crate's
 part in it a write the runner drains rather than an exchange it holds
@@ -2125,4 +2126,7 @@ a `web-` assertion beside `weaver-admin`'s.
   where it stood.** A world-facing boundary is a seam that carries no seam
   edge, per `weaver-gate-world-contract` section 0 and `weaver-admin-PRD`
   section 6, so the gate reach is still one of the two the heading names
-  correctly and only its record went.
+  correctly and only its record went. **The act that moved 7.3's record to
+  the emitter's charter leaves it the same way**, a reach the asking side
+  declares being no less a seam for being declared elsewhere, and what it
+  does change is that this crate's charter now records none of the three.

@@ -560,11 +560,11 @@ to: analysis-null-replay-gates-the-rest
 ```
 
 **It writes no record and nothing it produces reaches a decoder.** What this crate
-makes is a reading, held or written wherever the operator directs it, and its one
-seam sends material rather than instruction, per the charter's section 2. The
-instrument is the compile-fail absence of any write surface toward either record:
-no call constructs a trace writer, and the preload's sender takes distillates and
-never events.
+makes is a reading, held or written wherever the operator directs it, and its only
+seam into the agent sends material rather than instruction, per the charter's
+section 2. The instrument is the compile-fail absence of any write surface toward
+either record: no call constructs a trace writer, and the preload's sender takes
+distillates and never events.
 
 ```graph
 node: analysis-writes-no-record
@@ -969,8 +969,9 @@ and never events, the no-writer half being bought already by the absent dependen
 below. No second opener on one channel, the sender consumed by the seal.
 
 **Enforced by the manifest.** No `weaver-*` dependency at all, read against the
-graph under gate H2, this crate declaring one `seam` tagged `socket` and no
-`floor-link`. No async runtime and no socket crate in the resolved tree.
+graph under gate H2, this crate declaring two `seam` records, both tagged
+`socket`, and no `floor-link`. No async runtime and no socket crate in the
+resolved tree.
 
 **Requiring a perturbation-verified test.**
 

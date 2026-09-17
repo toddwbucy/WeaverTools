@@ -366,10 +366,9 @@ a sink.
   operator, the projection splicing raw payload text so a holding cannot say by
   its own bytes which side landed it, and the gate on the outcome this
   charter's section 3 now rests on. **The certification's mechanics do not**,
-  that comparison belonging to
-  the loop inside the run per section 3, and what this crate's Spec settles
-  about it is only the order it consumes outcomes in, requiring a certified
-  null pass before any reading downstream.
+  that comparison belonging to the loop inside the run per section 3, and what
+  this crate's Spec settles about it is only the order it consumes outcomes in,
+  requiring a certified null pass before any reading downstream.
 - **The emission to `weaver-web` is chartered nowhere, and the clause is owed
   here.** Section 1 carries the seam's record because this crate initiates the
   seam, `weaver-analysis-web-contract` holds what crosses, and
