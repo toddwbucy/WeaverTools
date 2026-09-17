@@ -20,6 +20,7 @@ decision two of #439.
 
 **Date filed:** 2026-09-04
 **Document ID:** `weaver-web-PRD`
+**Parent:** the WeaverTools suite, per `weaver-agents-PRD` section 0.
 **Editorial:** Per the Working Rules. ASCII, absolute dates.
 **Landing PR:** #632
 

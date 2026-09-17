@@ -6,6 +6,7 @@ container entry. It argues no edges of its own: the seams it walks are declared 
 the crate charters per Document Format section 4, and a graph block here would
 duplicate a record that already has a home.
 
+**Document ID:** `basic-inference-loop`
 **Parent:** `weaver-harness-PRD`
 **Editorial:** Per the Working Rules.
 **Landing PR:** #317

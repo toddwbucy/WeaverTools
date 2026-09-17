@@ -15,7 +15,7 @@ nothing yet existed to be consistent with, rather than a standing obligation.
 **Date filed:** 2026-07-28
 **Document ID:** `weaver-agents-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #623
+**Landing PR:** #634
 
 ---
 
@@ -92,8 +92,9 @@ this document answers the newer one. A reader meeting both should trust the grap
 about edges and this document about scope.
 
 **Two different parents are in play and the words for them have collided.** Every
-crate PRD in the domain declares this document as its **document parent**, in the
-`Parent:` header it carries. That is a fact about the corpus and it is true today.
+crate PRD in the domain declares a **document parent** in the `Parent:` header it
+carries, the domain roots naming this document and the members naming their root's
+charter. That is a fact about the corpus and it is true today.
 
 **The graph parent edge is a different relation and it is unchanged**, pointing at
 the `WeaverTools` system node exactly as described above. Nothing in this document
