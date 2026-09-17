@@ -12,16 +12,6 @@ rather than amended, per the operator's ruling of 2026-09-04, because the
 purpose clause is what changed and every section below it was that clause's
 consequence.
 
-**Prior version:** the charter of 2026-08-04 as amended through 2026-08-25,
-replaced whole by this text. **Git is the archive and the tree is not**, per
-the Working Rules, so the prior charter is in this file's history rather
-than beside it. It described a web surface over the suite's
-agents serving two roles, a user who converses and an operator who drives
-lifecycle and reads the record. That description was written for an
-interface to an individuated agent, which remains the program's research
-direction and is not retired by this act. It is not what this crate is for
-now.
-
 **Placement is held.** The deployment topology is ruled: this crate and its
 store run on one machine, the agents on another, and the only crossing is
 store traffic and a queue. Whether these papers eventually move to a
@@ -662,6 +652,13 @@ afterward, so the member is written now and the act decides what fills it.
 
 ## 7. What the rewrite keeps, and what it retires
 
+**The individuated-agent direction is not retired here.** The charter this text
+replaces described a web surface over the suite's agents serving a user who
+converses and an operator who drives lifecycle and reads the record, which was
+written for an interface to an individuated agent. That remains the program's
+research direction, held open rather than closed by anything this section
+retires, and it is not what this crate is for.
+
 **Nothing survives because the prior charter had it.** The crate is the
 same crate and its code is where it was, so no boundary is being crossed
 here - what is being decided is what this charter still charters. Each item
@@ -680,8 +677,8 @@ is ruled on its own:
 - **The multi-party channel**, with upstream models as guests. **Retired
   from this charter.** The Live surface of section 3.2 is a different
   construct that resembles it. A channel belongs to the individuated-agent
-  direction the prior text was written for, and that direction is not
-  retired by this act - it simply is not what this charter now covers. The
+  direction this section opens on, so what is retired is this charter's
+  cover of it and never the direction itself. The
   built channel code remains in the crate and is unchartered until a later
   act rules on it, which is a state this document names rather than
   resolving.
