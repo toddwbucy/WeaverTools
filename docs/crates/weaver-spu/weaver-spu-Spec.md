@@ -132,17 +132,18 @@ takes the walk rather than trusting them.
     kernels/transformer.cu      the salvaged kernels, section 10
     kernels/PROVENANCE.md       what crossed and what has not
 
-**`kernels/transformer.cu` owes a conformance header and carries none**, CUDA
-being a supported unit since the operator's ruling of 2026-09-17 and the census
-asking a header of every supported unit. **The absence cannot be closed while the
-carry stands**, which is what this row now says rather than a defect in it: the
-file crosses verbatim under section 10's claim, `kernels/PROVENANCE.md` records
-the hash that makes the claim checkable, and an edit adding a header falsifies the
-very assertion the header would cite. That file carries the rest of it. The header
-the kernel does carry is the previous program's and resolves to nothing here, and
-which assertion the kernel should cite is a question for this Spec at the act that
-takes the kernels off the verbatim carry. So the absence is reported rather than
-exempted, an exemption being a hole where a reading is an answer.
+**`kernels/transformer.cu` owes a conformance header and the verbatim carry is
+what it owes it under**, CUDA being a supported unit since the operator's ruling
+of 2026-09-17. **No act may write that header while the carry stands**, and the
+reason rather than the reading is what this row states: the file crosses verbatim
+under section 10's claim, `kernels/PROVENANCE.md` records the hash that makes the
+claim checkable, and an edit adding a header falsifies the very assertion the
+header would cite. That file carries the rest of it. The header the kernel does
+carry is the previous program's and resolves to nothing here, and which assertion
+the kernel should cite is a question for this Spec at the act that takes the
+kernels off the verbatim carry. The obligation is therefore reported rather than
+exempted, an exemption being a hole where a reading is an answer, and `census.py`
+is where its standing is read rather than here.
 
 **`src/bin/classify.rs` is a second `[[bin]]` target, and `spu-one-binary` above
 reads as one.** The manifest declares two, and section 11 states the second in
