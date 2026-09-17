@@ -3,11 +3,12 @@
 //! conforms: state-serve-restricts-to-the-session
 //!
 //! `state-indexes-built-at-load` is not cited here. This file is the port, a
-//! `trait Store` declaring what an engine must do, and it builds no index: each
-//! engine's `build_indexes` does. Citing it from the declaration asserts it of
-//! every engine that implements the trait, which is the claim `postgres.rs`
-//! dropped on the same reading and issue #618 disproves for that engine.
-//! `sqlite.rs` holds it where the code and its instrument are.
+//! `trait Store` declaring what an engine must do, and it builds no index:
+//! each engine's `build_indexes` does, under its own naming and against its
+//! own store's limits. Citing it from the declaration would assert it of
+//! every engine that implements the trait, including one written later and
+//! watched by nothing. Each engine holds it where its code and its
+//! instrument are.
 //!
 //! The custody, per `weaver-state-Spec` section 3: sqlite behind the seam,
 //! never reached as a file, the distillate landing whole or not at all.

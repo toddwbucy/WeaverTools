@@ -342,7 +342,16 @@ fn serve(
                             continue;
                         };
                         let election = parse_election(&line).unwrap_or_default();
-                        if store.retire_and_index(&preload_session, &election).is_err() {
+                        // **A refused election says which path refused it.**
+                        // This door can fail on an election the operator
+                        // wrote, per the service engine's naming, and a bare
+                        // non-zero exit leaves the diagnosis nowhere. The
+                        // first door prints the same line.
+                        if let Err(fault) = store.retire_and_index(&preload_session, &election) {
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({"state_fault": format!("{fault:?}")})
+                            );
                             return std::process::ExitCode::FAILURE;
                         }
                         preload_opened = true;
