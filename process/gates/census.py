@@ -125,15 +125,22 @@ review passes found them; the second found as many as the first:
   on the pair now.
 - The selector read `.rs` and `.toml` while the regime governs every supported
   unit, so a CUDA kernel and three Python loop files stood inside workspace
-  members and were never asked for a header at all. The reading printed 38
-  where the supported set holds 42, which is this list's oldest shape wearing
-  a fourth suit: a selector too narrow, printing a count confidently too low.
+  members and were never asked for a header at all. `sources_without_a_header`
+  answered about the Rust subset of the set it names, which is this list's
+  oldest shape wearing a fourth suit: a selector too narrow, printing a count
+  confidently too low. The baseline carries the figures and this entry does
+  not, a count copied into prose being a defect of its own.
   **The obligation was put on the unit rather than a directory some entries
   above and the kinds it walks stayed Rust**, so the rule was general and its
-  reader was not. `HEADER_CITE` read `//!` alone and had to widen with it: a
-  Python unit made to owe a header against that reader owes one no Python file
-  can legally carry, which is a gate nobody can pass rather than a count that
-  is merely wrong.
+  reader was not. `HEADER_CITE` read `//!` alone, and a Python unit made to
+  owe a header against it owes one no Python file can legally carry, which is
+  a gate nobody can pass rather than a count that is merely wrong. **The first
+  fix widened one pattern to both markers and was wrong in the other
+  direction**, `#` opening every Python comment there is, so an inline
+  citation in a function body and one inside a string literal each read as the
+  unit's header. It made the obligation weaker for the one kind the act was
+  admitting. The leaders are read apart now, `//!` against the whole text and
+  `#` against the unit's opening block.
 """
 
 import glob
@@ -178,9 +185,10 @@ SYSTEM_NODE = "WeaverTools"
 # is not alone. **Exempt from the count is not outside the regime**: a
 # language absent here is one whose support has not landed, and its units
 # enter the count in the act that lands it. Java, JS/TS, GoLang, HTML and CSS
-# are a filed feature request and shell is deferred rather than refused. SQL
-# is excluded outright and is not a deferral, on the same ruling, and
-# `.hadesignore` carries that argument rather than this file.
+# are issue #635 and shell is deferred rather than refused under #592, the way
+# `.hadesignore` names #592 for the ask it closes. SQL is excluded outright
+# and is not a deferral, on the same ruling, and `.hadesignore` carries that
+# argument rather than this file.
 #
 # **Reading a citation and owing a header are two questions and the sets
 # differ.** A manifest cites - three `tag: manifest` assertions are cited only
@@ -205,17 +213,23 @@ NODE_OK = re.compile(r"^[a-z0-9-]+$")
 # format does not admit. The node line's fix did not reach its neighbours.
 KIND = re.compile(r"^[ \t]*kind:(.*)$", re.M)
 TAG = re.compile(r"^[ \t]*tag:(.*)$", re.M)
-# **The file-level leader is the language's, and one pattern admits both
-# without crediting a unit that could not carry it.** Rust and CUDA head a
-# file with `//!` and Python with `#`, and neither leader is legal in the
-# other's language: `# conforms:` in a `.rs` file is a malformed attribute and
-# `//!` in a `.py` file is a syntax error, so no unit satisfies this reader
-# with a marker its own compiler would reject. It widened with the obligation
-# above and had to: a Python unit made to owe a header against a `//!`-only
-# reader owes one no Python file can legally carry, which is a gate nobody
-# can pass. It is read only where a unit owes, so a manifest's `#` citation
-# never reaches it.
-HEADER_CITE = re.compile(r"^\s*(?://!|#)\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
+HEADER_CITE = re.compile(r"^\s*//!\s*conforms:\s*([a-z0-9-]+)\s*$", re.M)
+# **Python's file-level leader is `#`, and position is what makes it one.**
+# `//!` is a marker Rust and CUDA give to the file alone, so it heads a unit
+# wherever it sits and `HEADER_CITE` reads the whole text. Python has no such
+# marker: `#` opens every comment it has, so a reader matching it anywhere
+# makes an inline citation in a function body the unit's header, and a `#`
+# citation inside a string literal one too. That is strictly weaker than the
+# obligation on Rust, where a `///` or `//` citation resolves and leaves the
+# file headerless, and it would weaken the rule for the one kind this widening
+# admits. So the leader is anchored where `//!` is anchored by its own
+# meaning: the head of the unit. **`head_block` is that anchor and this
+# pattern carries no second copy of it.** The block yields only blank lines
+# and lines beginning at column zero with `#`, so a `^[ \t]*#` here would
+# match exactly what `^#` matches and a perturbation of the one into the
+# other is a no-op. Two spellings of one guard read as two guards, and the
+# one that cannot fail is the one a later act deletes as dead.
+HASH_HEADER = re.compile(r"^#[ \t]*conforms:[ \t]*([a-z0-9-]+)[ \t]*$", re.M)
 # **The whole rest of the line, and only from a comment.** Capturing one token
 # credits `conforms: valid-node trailing` as a sound citation and says nothing
 # about the trailing text; capturing the bare word anywhere makes prose that
@@ -231,9 +245,15 @@ ANY_CITE = re.compile(r"^[ \t]*(?://[/!]?|#)[ \t]*conforms:(.*)$", re.M)
 # exempting one would hide the violation rather than measure it.
 # **No sibling for the units that are not Rust**, a question the widening
 # above had to answer: neither the kernel nor a loop file is the toolchain's
-# unit the way a build script is, so nothing here earns the exemption. An
-# exemption is a hole and a reported absence is a reading, which is the whole
-# of why the regime asks of the supported set rather than carving within it.
+# unit the way a build script is, so nothing here earns the exemption.
+# **`transformer.cu` is an entry that cannot clear while the verbatim carry
+# stands, and that is not the floor this comment refuses.** A build script
+# conforms to nothing, so counting it asks for a header no act could ever
+# write and the metric never reaches zero however much work lands. The kernel
+# conforms to something and the absence has a named condition - an act cutting
+# the carry - so it is a backlog entry with a price rather than a floor, and
+# H6's rule that the baseline is a backlog holds for it. An exemption would
+# instead delete the one place a reader meets the cost of the carry.
 NO_HEADER_OWED = ("build.rs",)
 HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 
@@ -241,6 +261,36 @@ HEADER_ROW = re.compile(r"^\|\s*claim\s*\|\s*instrument\s*\|", re.I)
 def read(path):
     with open(path, encoding="utf-8") as fh:
         return fh.read()
+
+
+def head_block(text):
+    """The lines that open a unit before anything that is not a comment.
+
+    **A shebang, blank lines and `#` comments and nothing else.** The scan
+    stops at the first line that is neither, so a docstring, an import or an
+    indented comment ends it, and a citation below that point is an item's
+    rather than the file's.
+    """
+    out = []
+    for line in text.splitlines():
+        if line.strip() and not line.startswith("#"):
+            break
+        out.append(line)
+    return "\n".join(out)
+
+
+def heads_the_unit(text, rel):
+    """Whether the unit carries a file-level header citation.
+
+    **The marker is the language's and so is what anchors it.** `//!` heads a
+    file by its own meaning, so it is read against the whole text the way it
+    always was. `#` heads nothing by itself, so it is read against the opening
+    block alone, which is what keeps the obligation on a Python unit the same
+    strength as the obligation on a Rust one.
+    """
+    if rel.endswith(".py"):
+        return HASH_HEADER.search(head_block(text)) is not None
+    return HEADER_CITE.search(text) is not None
 
 
 def members():
@@ -573,8 +623,9 @@ def take():
                 cited.append(value)
             else:
                 bad_cites.append(f"{os.path.relpath(path, ROOT)}: conforms: {value}")
-        if owes and not HEADER_CITE.search(text):
-            headerless.append(os.path.relpath(path, ROOT))
+        rel = os.path.relpath(path, ROOT)
+        if owes and not heads_the_unit(text, rel):
+            headerless.append(rel)
 
     # **The documents without a table are the metric, not the ones with.** A
     # count of mismatches over the one document that has a table reads as

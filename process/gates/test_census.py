@@ -21,6 +21,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -65,6 +66,26 @@ node: fix-empty-tag
 kind: assertion
 tag:
 
+node: fix-cited-by-the-kernel
+kind: assertion
+tag: perturbation
+
+node: fix-cited-by-the-loop
+kind: assertion
+tag: perturbation
+
+node: fix-cited-by-the-manifest
+kind: assertion
+tag: perturbation
+
+node: fix-cited-below-the-head
+kind: assertion
+tag: perturbation
+
+node: fix-cited-in-the-body
+kind: assertion
+tag: perturbation
+
 node: fix-cited-pin
 kind: assertion
 tag: compile-pin
@@ -92,14 +113,29 @@ fn f() {}
 
 
 KERNEL = """//! conforms: fix-cited-pin
+//! conforms: fix-cited-by-the-kernel
 //
 // A CUDA unit owes a header and heads a file the way Rust does, `//!` being a
-// comment in both languages.
+// comment in both languages. **Its second citation is reachable through the
+// CUDA kind and no other**, so dropping `*.cu` from the selector moves that
+// perturbation into the uncited column and the suite says which kind left.
+
+__global__ void k() {}
+"""
+
+BARE_KERNEL = """// A CUDA unit with no header citation, which is the finding.
+//
+// **The headed kernel above cannot hold the obligation by itself.** It is
+// absent from `sources_without_a_header` when the walk reads it and finds a
+// header and equally absent when the walk never reaches it, so the assertion
+// about it passes under the widening and under its absence alike. This file
+// is what tells the two apart.
 
 __global__ void k() {}
 """
 
 LOOP = """# conforms: fix-cited-pin
+# conforms: fix-cited-by-the-loop
 #
 # A Python unit owes a header too, and its file-level leader is `#`, there
 # being no `//!` a Python file could legally carry.
@@ -116,9 +152,30 @@ def drive(seat, text):
     pass
 """
 
+INLINE_LOOP = """import os
+
+
+def drive(seat, text):
+    # conforms: fix-cited-in-the-body
+    return os.getcwd()
+"""
+
+# **Column zero and still not the header**, which is the half `INLINE_LOOP`
+# cannot hold. An indented citation is out of the opening block by the block's
+# own rule, so a reader matching `#` over the whole text would still miss it
+# and the position anchor would read as held while doing nothing. This one
+# differs from a header in position alone.
+BELOW_HEAD_LOOP = """import os
+
+
+# conforms: fix-cited-below-the-head
+def drive(seat, text):
+    return os.getcwd()
+"""
+
 MANIFEST = """[package]
 name = "demo"
-# conforms: fix-cited-pin
+# conforms: fix-cited-by-the-manifest
 """
 
 # **A leader the reader would match, so the exclusion is what is being
@@ -151,8 +208,11 @@ class Census(unittest.TestCase):
         # regime produces are each held by a file here, so a later narrowing
         # of either set fails rather than printing a smaller number.
         write(self.dir, "crates/demo/kernels/demo.cu", KERNEL)
+        write(self.dir, "crates/demo/kernels/bare_kernel.cu", BARE_KERNEL)
         write(self.dir, "crates/demo/dev_python/loop.py", LOOP)
         write(self.dir, "crates/demo/dev_python/bare_loop.py", BARE_LOOP)
+        write(self.dir, "crates/demo/dev_python/inline_loop.py", INLINE_LOOP)
+        write(self.dir, "crates/demo/dev_python/below_head_loop.py", BELOW_HEAD_LOOP)
         write(self.dir, "crates/demo/Cargo.toml", MANIFEST)
         write(self.dir, "crates/demo/migrations/0001_demo.sql", MIGRATION)
         # **Each restore is registered as its global is mutated.** A failure
@@ -166,7 +226,6 @@ class Census(unittest.TestCase):
         # **The fixture is a repository**, because the gate reads the tracked
         # set rather than walking, which is the format's own rule and the one
         # thing a walk cannot honour.
-        import subprocess
         for cmd in (["init", "-q"], ["add", "-A"]):
             subprocess.run(["git", "-C", self.dir] + cmd, check=True,
                            capture_output=True)
@@ -236,12 +295,12 @@ class Census(unittest.TestCase):
         # than a mismatch count that stays quietly at zero.
         self.assertEqual(reading["documents_without_an_enforcement_table"], [])
         self.assertEqual(len(reading["enforcement_table_mismatch"]), 1)
-        # **Five, because a node this gate cannot name is still a node the
-        # document declares.** The reject used to return before the assertion
+        # **A node this gate cannot name is still a node the document
+        # declares.** The reject used to return before the assertion
         # accounting, so a malformed identifier shrank its own document's
         # mismatch and the count read closer to its table than the document
-        # was. The fixture declares five assertions and its table holds one.
-        self.assertIn("(5 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
+        # was. The fixture declares ten assertions and its table holds one.
+        self.assertIn("(10 nodes, 1 rows)", reading["enforcement_table_mismatch"][0])
 
         # **The obligation follows the unit, not a directory**, so the test
         # file owes one too and the format's rule is what this pins.
@@ -249,6 +308,9 @@ class Census(unittest.TestCase):
             reading["sources_without_a_header"],
             [
                 "crates/demo/dev_python/bare_loop.py",
+                "crates/demo/dev_python/below_head_loop.py",
+                "crates/demo/dev_python/inline_loop.py",
+                "crates/demo/kernels/bare_kernel.cu",
                 "crates/demo/src/bare.rs",
                 "crates/demo/tests/it.rs",
             ],
@@ -258,27 +320,51 @@ class Census(unittest.TestCase):
         """The ruling of 2026-09-17, held as the four dispositions it produces.
 
         **Reading a citation and owing a header are two sets and they widen
-        differently**, so both are pinned here rather than one standing for
-        the other. The manifest is the one supported kind that reads and does
-        not owe. A kind the ingest never reads is counted by neither, because
-        a header exists so the graph can carry `code -> assertion -> doc` and
-        a unit with no edge has nothing for a header to carry.
+        differently**, so each is held by an assertion of its own rather than
+        one standing for the other. The manifest is the one supported kind
+        that reads and does not owe. A kind the ingest never reads is counted
+        by neither, because a header exists so the graph can carry
+        `code -> assertion -> doc` and a unit with no edge has nothing for a
+        header to carry.
 
-        **Each assertion names the file it is about**, so a narrowing of
-        either set fails on the unit it dropped rather than on a total.
+        **A headed unit alone holds nothing.** It is absent from the
+        headerless list when the walk reads it and finds a header and equally
+        absent when the walk never reaches it, which is a watch that cannot
+        fail. So every supported kind carries a bare unit for the owing half
+        and a perturbation cited from it and nowhere else for the read half,
+        and a narrowing of either set fails on the kind it dropped.
         """
         reading = census.take()
         bare = reading["sources_without_a_header"]
+        # **The read half is held by a perturbation reachable through one kind
+        # and no other**, because an absence from the headerless list is the
+        # same absence whether the unit was read and headed or never walked.
+        # Each is `perturbation`, so a kind leaving the selector moves its own
+        # identifier into `uncited_perturbations` and names itself.
+        cited = reading["uncited_perturbations"]
 
         # Owes, and carries one. The CUDA unit heads with `//!` and the Python
         # unit with `#`, each its own language's file-level leader.
         self.assertNotIn("crates/demo/kernels/demo.cu", bare)
         self.assertNotIn("crates/demo/dev_python/loop.py", bare)
-        # Owes, and carries none. This is the finding the widening buys.
+        self.assertNotIn("fix-cited-by-the-kernel", cited)
+        self.assertNotIn("fix-cited-by-the-loop", cited)
+        # Owes, and carries none. These are the findings the widening buys,
+        # and the bare kernel is what holds the CUDA half in both directions.
+        self.assertIn("crates/demo/kernels/bare_kernel.cu", bare)
         self.assertIn("crates/demo/dev_python/bare_loop.py", bare)
+        # **Owes, cites, and is headerless all the same.** `#` opens every
+        # Python comment, so a citation below the unit's opening block is an
+        # item's and heads nothing. The citation still resolves, which is the
+        # distinction the Format draws for `///` and `//` and which a reader
+        # matching `#` anywhere would erase for Python alone.
+        self.assertIn("crates/demo/dev_python/inline_loop.py", bare)
+        self.assertIn("crates/demo/dev_python/below_head_loop.py", bare)
+        self.assertNotIn("fix-cited-in-the-body", cited)
+        self.assertNotIn("fix-cited-below-the-head", cited)
         # Reads a citation and owes nothing, having no module to head.
         self.assertNotIn("crates/demo/Cargo.toml", bare)
-        self.assertIn("fix-cited-pin", census.take()["duplicate_node_ids"][0])
+        self.assertNotIn("fix-cited-by-the-manifest", cited)
         # Counted by neither, and the citation inside it proves the read half:
         # were `.sql` walked, this identifier would stand in the dangling list.
         self.assertNotIn("crates/demo/migrations/0001_demo.sql", bare)
@@ -479,7 +565,7 @@ class Census(unittest.TestCase):
         # Four assertions against two tables of one row each: the mismatch
         # names two rows. Stopping at the first would name one.
         self.assertEqual(
-            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (5 nodes, 2 rows)"]
+            reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (10 nodes, 2 rows)"]
         )
 
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
@@ -719,28 +805,16 @@ class Census(unittest.TestCase):
         graph again - the state f8c8618 fixed. And `**/tests/fixtures/` had no
         watch at all: delete it and nothing moved.
 
-        **Everything here is matched with git's own engine.** `fnmatch` lets
-        `*` cross a `/`, so it accepted `*/tests/fixtures/` for a path three
-        segments deep where gitignore does not, and a line-membership check
-        accepts any order where gitignore is last-match-wins. Both forms passed
-        on manifests that exclude the wrong things. `.hadesignore` follows
-        gitignore syntax, so gitignore decides. Both found by CodeRabbit on
-        PR #575, the second refuting this test's own earlier claim that the
-        negations had no behaviour to match against.
-
-        **The path is created before the check.** A trailing `/` means
-        directory-only, and `check-ignore --no-index` cannot tell that a path
-        absent from disk is a directory, so the right pattern and the wrong one
-        both read as no-match without it.
-
-        **And the probe answers from this manifest and nothing else.** git reads
-        `core.excludesFile` and the repository's `info/exclude` alongside a
-        `.gitignore`, so a seat with a global `*.py` rule would see
-        `census.py` reported as excluded and this test fail for a reason that
-        is not in `.hadesignore` at all. Both are emptied. **A gate whose answer
+        **Everything here is matched with git's own engine**, which is
+        `ignore_probe`'s doing and argued there rather than twice. Both forms
+        this test carried before - `fnmatch` for `*/tests/fixtures/` three
+        segments deep, and a membership check over lines - passed on manifests
+        that exclude the wrong things. Both were found by CodeRabbit on PR
+        #575, the second refuting this test's own earlier claim that the
+        negations had no behaviour to match against. **A gate whose answer
         depends on the box is the hazard `CLAUDE.md` records for the clippy
-        count**, and the same shape the olympus seat found in `--exclude-standard`
-        on 2026-09-13.
+        count**, and the same shape the olympus seat found in
+        `--exclude-standard` on 2026-09-13.
         """
         ignored = ignore_probe(self.dir, "ignoreprobe")
 
@@ -836,11 +910,19 @@ def ignore_probe(parent, name):
     **The repository under test cannot answer this.** `check-ignore` there
     reads `.gitignore` and never `.hadesignore`, so it answers a question
     nobody asked and answers it confidently. The manifest is copied into a
-    fresh repository as its `.gitignore`, which is the only engine that
-    settles gitignore syntax, and the reasoning for each guard below is in
-    the caller that first needed them.
+    fresh repository as its `.gitignore`, because gitignore syntax is settled
+    by nothing but gitignore: `fnmatch` lets `*` cross a `/` and a membership
+    check over lines accepts any order, where the rule is last-match-wins.
+
+    **Three guards, each holding a way the answer stops being the manifest's.**
+    `core.excludesFile=` empties the box's global rules and the truncation
+    empties `info/exclude`, which an init template can seed, so a seat with a
+    global `*.py` rule does not read `census.py` as excluded and fail a test
+    for a reason no manifest holds. And the path is created before the check,
+    a trailing `/` meaning directory-only and `--no-index` having no way to
+    tell that an absent path is a directory, so without it the right pattern
+    and the wrong one both read as no-match.
     """
-    import subprocess
 
     with open(os.path.join(REPO, ".hadesignore"), encoding="utf-8") as fh:
         manifest = fh.read()
@@ -893,7 +975,6 @@ def run(*args):
 
 
 def run_git(root, *args):
-    import subprocess
     subprocess.run(["git", "-C", root, *args], check=True, capture_output=True)
 
 
@@ -910,7 +991,6 @@ tag: ratified
 def write(root, rel, text):
     with open(os.path.join(root, rel), "w", encoding="utf-8") as fh:
         fh.write(text)
-    import subprocess
     if os.path.isdir(os.path.join(root, ".git")):
         subprocess.run(["git", "-C", root, "add", "-A"], check=True, capture_output=True)
 
