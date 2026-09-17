@@ -31,6 +31,14 @@ ended and how it says what happened, owed to this document by
 and states that the crate paying for its absence is not the crate that can supply
 it.
 
+**This document declares its crate's assertion records, and four `asserts` edges that
+are `weaver-harness`'s.** The four are the replay claims of sections 3.3 and 4, each
+carrying an edge from that crate beside this one's because the instruments stand in
+its suite and none stands here. Section 7 argues it and is the authority, this
+paragraph answering only the question a reader asks here, which is whether this
+document declares anything that is not this crate's. `weaver-harness-Spec` section 0
+carries the other half and says it declares those four nowhere.
+
 ## 1. The crate
 
 **Layout.** One module per obligation, re-exported at the root.
@@ -663,27 +671,33 @@ section 6. Fifteen sit there and none sits here.
 **Four of the fifteen take a second `asserts` edge, and it runs from
 `weaver-harness`.** That the record identifies itself at the open, that an absent
 identity is not invented, that an outcome is not manufactured, and that a divergence
-position is the resident length at the draw are four claims about this record which
-only a pass can satisfy, and this crate does not author:
-`weaver-diagnostic-PRD` section 1 has the harness author and has this crate be the
-mechanism it authors through. This crate holds no instrument that can falsify one of
-the four, the recorder validating shape and never content per
-`weaver-harness-diagnostic-contract` section 4, so the instruments sit in
-`crates/weaver-harness/src/replay.rs` and the second edge is what lets apex section
-11's chain close on the crate that holds them. The prose at each of the four clauses
-already names the pass as the party that must satisfy the claim, so the block is
-catching up with its own paragraph rather than widening it.
+position is the resident length at the draw are four claims **this crate holds no
+instrument that can falsify**: the recorder validates shape and never meaning, per
+`weaver-harness-diagnostic-contract` section 4, and `weaver-diagnostic-PRD` section 1
+has the harness author while this crate is the mechanism it authors through. The
+instruments for all four sit in `crates/weaver-harness/src/replay.rs`, so the second
+edge is what lets apex section 11's chain close on the crate that holds them.
+**The instrument is the discriminating test and the wording is not.**
+`diagnostic-session-is-the-replays-own` is written the same way and takes no second
+edge, correctly, its instrument standing in this crate's own `tests/recorder.rs`.
 
-**The records stay at those clauses and the count above does not move**, on the rule
-the floor Specs settled for their shared tagging test: one claim is one node with an
-`asserts` edge per crate bound by it, and the node lives at the statement, per
-`weaver-types-Spec` section 0. Both crates are bound here. The subject of each of the
-four is this record, which is this crate's, and the party that must produce a record
-satisfying them is the harness, so the claim would be misplaced in either document
-alone. A record moved to the crate that performs it would leave its grounds behind as
-well, per Document Format section 6, the shape being argued where the shape is argued.
-`weaver-harness-Spec` section 8 states this crossing from the side that holds the
-instruments, which is the other half that rule asks for.
+**Neither of the corpus's two rules for this shape reaches it, and the general rule
+is owed to `WeaverTools-Document-Format`.** `weaver-types-Spec` section 0 has one
+claim be one node with an `asserts` edge per crate bound by it, the node living at
+"the statement both floor Specs share", and that qualifier is the load-bearing half:
+it is what makes the tagging test a case where neither Spec owns the node. There is
+no shared statement here, `weaver-harness-Spec` stating none of the four.
+`weaver-traits-Spec` section 7 runs the other way, moving a record to the crate whose
+suite holds its test because "an assertion belongs where its test lives", which is
+how the licensed combinations and the close-on-exec test came to be declared at
+`weaver-harness-Spec` section 8. Those two moved because the subject moved with them,
+a claim about the harness's own refusal being the harness's to state. The subject of
+these four is this record, which is this crate's, so the record stays at the clause
+that argues it and the edge crosses instead. **That is a third case, and the Format
+does not carry it**, its section 4 stating no cardinality for `asserts` and no
+cross-document case, so until it does this disposition is argued here and not ruled.
+`weaver-harness-Spec` section 8 states the crossing from the side that holds the
+instruments, which is the half both rules ask for either way.
 
 **Which invariant each claim serves.** Three carry a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no

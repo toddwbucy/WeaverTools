@@ -899,19 +899,26 @@ nor the field, so an experiment directory is all-or-nothing until that
 reporting is sharpened.
 
 What remains from the phase behind: G6 and then item 7, and the G2 and G5
-phase-close sweeps. The graph's expected census is stated as a number rather than
-as a delta so a rebuild can detect a change nobody intended: **242 assertion
-nodes carried by 243 `asserts` edges at the last statement**, which the state
-leg's three review assertions of 2026-08-19 have since outgrown, the fresh
-figures landing with the pre-rebuild pass named above. The two figures differ
-on purpose, and the difference is a finding rather than an error: a node takes one
-`asserts` edge per crate that holds the claim, and more than one crate does.
-`types-tagging-test` is asserted by both floor crates, and the four replay claims
-`weaver-diagnostic-Spec` section 7 names are asserted by the crate whose record
-they describe and by the harness that authors it. Which figure a check reads
-therefore matters, and the closing checklist's item 5 reads nodes. A rebuild
-returning any other figure has found either an unlanded edit or an assertion an
-act changed without recording.
+phase-close sweeps.
+
+**The graph's expected census stood at 242 assertion nodes carried by 243 `asserts`
+edges, and that pair is withdrawn as stale in both terms**, on the same discipline
+section 5 applies to the 293 nodes and 429 edges it withdrew. It existed so a rebuild
+could detect a change nobody intended, and it can no longer do that job: the corpus
+has grown past it and the disclosure that stood here named only the state leg's three
+review assertions of 2026-08-19, which is node growth and cannot account for an edge
+moving at all. The act of 2026-09-16 that gave the four replay claims a second
+asserting crate moved the edge count by four and is the case in point. The absolute
+pair is owed to the pre-rebuild pass named above, and no figure stands here in the
+meantime, a wrong number being worse for a detector than none.
+
+**What replaces it is a check that does not go stale: the two censuses differ by the
+number of claims bound by more than one crate, and by nothing else.** A node takes one
+`asserts` edge per crate that holds the claim, so a rebuild derives the delta from the
+corpus in the same pass that counts it rather than reading a roll kept by hand here.
+Which figure a check reads still matters, and the closing checklist's item 5 reads
+nodes. A rebuild whose delta disagrees with that derivation has found either an
+unlanded edit or an assertion an act changed without recording.
 
 **Code is ingested into the graph, and the position that it should not be is
 retired as of 2026-09-14.** The v4 build named in
