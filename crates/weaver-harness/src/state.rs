@@ -350,7 +350,7 @@ fn parse_identity_answer(line: &str) -> Option<Vec<Recalled>> {
 }
 
 /// **The open's identity material, two sources and one rule**, per
-/// `weaver-harness-Spec` section 2 as of 2026-09-04. `None` for the answer
+/// `weaver-harness-Spec` section 6.1 as of 2026-09-04. `None` for the answer
 /// is the ask missed: the enter refuses rather than opening a run with no
 /// bounding. An empty answer is the first load of the session, so the
 /// declaration's field seeds the open. A prefix answered is the open's
@@ -594,7 +594,7 @@ mod tests {
     }
 
     /// **The identity ask's three arms**, per `weaver-harness-Spec` section
-    /// 2 as of 2026-09-04: a miss is `None` and refuses, an empty answer
+    /// 6.1 as of 2026-09-04: a miss is `None` and refuses, an empty answer
     /// seeds, and a prefix rebuilds from its pairs. Perturbation: return
     /// the seed on a miss and the first assertion fails; skip the rebuild's
     /// `content` and the third.

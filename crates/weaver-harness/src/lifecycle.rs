@@ -1533,7 +1533,7 @@ impl Harness {
         }
 
         // **The identity material has two sources and one rule**, per
-        // `weaver-harness-Spec` section 2 as of 2026-09-04. Where the
+        // `weaver-harness-Spec` section 6.1 as of 2026-09-04. Where the
         // member's end arrived, the store is asked for the session's
         // seated prefix once the seam stands and before the open: a prefix
         // answered is the open's messages, an empty answer is the first
@@ -1558,7 +1558,7 @@ impl Harness {
             crate::state::ANSWER_BOUND_MS
         };
         // **What is waited on is named before the wait**, per
-        // `weaver-harness-Spec` section 2 as of 2026-09-06: an operator who
+        // `weaver-harness-Spec` section 6.1 as of 2026-09-06: an operator who
         // has not started the driver reads why the load stands still rather
         // than meeting a refusal ten minutes on. This crate knows which load
         // it holds where the member does not, and spends the bound on the
@@ -1610,7 +1610,7 @@ impl Harness {
             Vec::new()
         };
         // **The seated prefix reaches the record beside the load**, per
-        // `weaver-harness-Spec` section 6 and `weaver-trace-PRD` section 5,
+        // `weaver-harness-Spec` section 6.1 and `weaver-trace-PRD` section 5,
         // authored from what the open carries, whichever source it came
         // from, so the record names the prefix the session ran under.
         //
@@ -1620,12 +1620,12 @@ impl Harness {
             // The restored conversation reaches the record turnless beside
             // the identity, through the door that admits its roles under a
             // restoring load, so the record of a branch is complete without
-            // its parent, per `weaver-harness-Spec` section 6.
+            // its parent, per `weaver-harness-Spec` section 6.1.
             seat_restored_prefix(&run.author, &mut run.recorder, &restored);
         }
         // The open's messages: the identity first and the restored
         // conversation after it, prefix material permanent for the
-        // residency, per Spec section 2.
+        // residency, per Spec section 6.1.
         let opening = {
             let mut messages = identity.clone();
             messages.extend(restored.iter().cloned());
@@ -2269,7 +2269,7 @@ fn column_ask_for(diagnostic: bool, readout_elected: bool) -> bool {
 }
 
 /// The typed line that names what the enter waits on where the door
-/// stands, per `weaver-harness-Spec` section 2 as of 2026-09-06, and
+/// stands, per `weaver-harness-Spec` section 6.1 as of 2026-09-06, and
 /// nothing where no door stands and the asks answer at once.
 fn parked_ask_notice(diagnostic: bool, restoring: bool, bound_ms: u64) -> Option<String> {
     if !diagnostic && !restoring {
@@ -2389,7 +2389,7 @@ mod tests {
     /// lineage and the second assertion fails. Watched under exactly that
     /// change.
     /// **What the enter waits on is named where the door stands and not
-    /// otherwise**, per `weaver-harness-Spec` section 2 as of 2026-09-06.
+    /// otherwise**, per `weaver-harness-Spec` section 6.1 as of 2026-09-06.
     ///
     /// Perturbation: return the line for every load and the first
     /// assertion fails, a serving load electing no restore announcing a
