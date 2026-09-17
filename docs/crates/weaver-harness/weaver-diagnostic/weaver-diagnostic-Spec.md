@@ -689,15 +689,18 @@ it is what makes the tagging test a case where neither Spec owns the node. There
 no shared statement here, `weaver-harness-Spec` stating none of the four.
 `weaver-traits-Spec` section 7 runs the other way, moving a record to the crate whose
 suite holds its test because "an assertion belongs where its test lives", which is
-how the licensed combinations and the close-on-exec test came to be declared at
-`weaver-harness-Spec` section 8. Those two moved because the subject moved with them,
-a claim about the harness's own refusal being the harness's to state. The subject of
-these four is this record, which is this crate's, so the record stays at the clause
-that argues it and the edge crosses instead. **That is a third case, and the Format
-does not carry it**, its section 4 stating no cardinality for `asserts` and no
-cross-document case, so until it does this disposition is argued here and not ruled.
-`weaver-harness-Spec` section 8 states the crossing from the side that holds the
-instruments, which is the half both rules ask for either way.
+how the licensed combinations and the close-on-exec test came to be declared in
+`weaver-harness-Spec`, at its section 4 and its section 2.3 and discharged at its
+section 8's sorting. **What moved there was the crate and never the placement.** Each
+of the two landed at the clause arguing it, which is where this rule puts a record
+either way, and the crate moved because the subject moved with it, a claim about the
+harness's own refusal being the harness's to state. The subject of these four is this
+record, which is this crate's, so the clause that argues them is here and only the
+edge crosses. **That is a third case, and the Format does not carry it**, its section
+4 stating no cardinality for `asserts` and no cross-document case, so until it does
+this disposition is argued here and not ruled. `weaver-harness-Spec` section 8 states
+the crossing from the side that holds the instruments, which is the half both rules
+ask for either way.
 
 **Which invariant each claim serves.** Three carry a `grounds` edge.
 `axiom-floor-is-vocabulary-behavior-is-socket` is why this crate's manifest holds no
