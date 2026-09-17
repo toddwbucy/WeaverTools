@@ -100,13 +100,12 @@ the absent `weaver-` prefix, the same exclusion `contracts/` takes. Loops file u
 organ that holds them, and the holder is decided by the human's ruling of 2026-08-01:
 loops belong to the harness unless specific to one domain and no other, a loop confined
 to one domain filing under that domain's own root. The first such directory is
-`docs/crates/weaver-harness/Loops/`, holding the basic inference loop and the
-diagnostic replay loop. Loop 0's composition is not a loop and does not file under a
-`Loops/` directory, which is what the ruling settles. It was written as
-`load-unload-path`, archived 2026-08-23 once `weaver-harness-Spec` carried its rules
-directly. Per the operator's ruling of 2026-08-05: the loop taxonomy reaches loop 1
-and above, and the bracket the loops run inside is the harness's mechanism rather than
-a member of the taxonomy.
+`docs/crates/weaver-harness/Loops/`. The composition of loop 0 is not a loop and does
+not file under a `Loops/` directory, which is what the ruling settles. It was written
+as `load-unload-path`, archived 2026-08-23 once `weaver-harness-Spec` carried its
+rules directly. Per the operator's ruling of 2026-08-05: the loop taxonomy reaches
+loop 1 and above, and the bracket the loops run inside is the harness's mechanism
+rather than a member of the taxonomy.
 
 **A contract is named for its parties, initiator first.** The name records which of the
 two nodes initiates the signal the contract governs, so `weaver-admin` asking the
@@ -182,12 +181,27 @@ between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
 hand.
 
-**The apex carries no `Parent:` header and the absence is the rule.** Working Rules
-section 1 elects which fields each kind carries and already says the apex carries none
-because it has none, and it is authoritative on the election. What this section adds is
-the reading against the edge: `weaver-agents-PRD` declares the `WeaverTools` system
-node, no node stands above that one, and a value supplied here would name a belonging
-no edge holds.
+**A crate outside the agent boundary names the suite.** `weaver-agents-PRD` section 0
+rules that such a crate does not refine that document and parents to the suite, and that
+what governs outside crates at the suite level is not yet written. So the value is the
+suite rather than a charter, and the graph parent edge still names the `WeaverTools`
+system node, which is the same belonging under the name the graph has for it.
+`weaver-analysis-PRD` and `weaver-web-PRD` are the two documents that take it.
+
+**What the apex's absent header reads against.** Working Rules section 1 elects which
+fields each kind carries and is authoritative for `weaver-agents-PRD` carrying none.
+What this section owes is the reading against the edge, and the edge is missing rather
+than impossible: that document charters the weaver-agents domain and not the suite, per
+its own section 0, which records that the graph carries no `weaver-agents` node and that
+the level lands either as a Format act adding a kind or with the crate tree gaining the
+directory. Until one of those happens there is nothing for a value in that header to
+agree with, and the act that builds the level is the act that says what the header then
+carries.
+
+**What the field means on a contract is unsettled.** A contract declares `party` edges
+and no `parent` edge, so the derivation above reaches it with nothing to read, and the
+contracts carrying the field name an apex invariant, which is an axiom citation rather
+than a parent. Issue #637 carries the measurement and the question.
 
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One
