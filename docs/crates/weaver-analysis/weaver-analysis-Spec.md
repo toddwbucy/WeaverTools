@@ -818,6 +818,34 @@ rendered null**, on the record's own absent-not-empty rule, so a reader tells a
 member this verb did not send from one it sent, and the sentinel is sent. A record
 holding no measured generation refuses, typed as the others are.
 
+```graph
+node: analysis-signals-keep-absence
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-signals-keep-absence
+```
+
+```graph
+node: analysis-summary-reports-residency
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-residency
+
+node: analysis-summary-reports-the-record-identity
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-identity
+```
+
 **The summary names the record it was read from, twice**, as of 2026-09-09 per
 `weaver-analysis-web-contract` section 2.2 and issue #521, per generation on the
 wire and once per run in the reader's row on the weights hash's own rule. **The
@@ -836,6 +864,24 @@ run's first line saw a suffix, and a digest of a suffix would read as a digest o
 whole. **Absent says this crate could not vouch for the bytes, and never that it
 vouched for the bytes it happened to see.**
 
+```graph
+node: analysis-summary-reports-the-record-session
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-session
+
+node: analysis-summary-reports-the-record-digest
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-record-digest
+```
+
 **The summary carries the seated prefix's length on every generation's entry, the reader
 holding it once per run**, as of 2026-09-09 per `weaver-analysis-web-contract` section
 2.2 and issue #527: the resident length before the run's first turn's input, which this
@@ -849,6 +895,16 @@ measurement. This crate derives it because no event carries it and the SPU's own
 of it, per its section 4.2, does not leave the SPU, and a reader with only the summary
 could not form it, the first draw's position being the earliest the two counts alone
 reach.
+
+```graph
+node: analysis-summary-reports-the-prefix-length
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-summary-reports-the-prefix-length
+```
 
 **The summary names the run and what it ran under, once per run**, as of 2026-09-09 per
 `weaver-analysis-web-contract` section 2.2 and issue #532. The run identity is the
@@ -897,62 +953,6 @@ tag: perturbation
 edge: asserts
 from: weaver-analysis
 to: analysis-summary-reports-the-run-and-its-conditions
-```
-
-```graph
-node: analysis-summary-reports-the-prefix-length
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-summary-reports-the-prefix-length
-```
-
-```graph
-node: analysis-summary-reports-the-record-session
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-summary-reports-the-record-session
-
-node: analysis-summary-reports-the-record-digest
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-summary-reports-the-record-digest
-```
-
-```graph
-node: analysis-summary-reports-residency
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-summary-reports-residency
-
-node: analysis-summary-reports-the-record-identity
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-summary-reports-the-record-identity
-```
-
-```graph
-node: analysis-signals-keep-absence
-kind: assertion
-tag: perturbation
-
-edge: asserts
-from: weaver-analysis
-to: analysis-signals-keep-absence
 ```
 
 **How this crate reaches the sink follows the operator's declaration and not this
