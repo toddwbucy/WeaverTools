@@ -35,7 +35,8 @@ path = "src/main.rs"
 # The feature set is this file's to hold, each one earning its place: `poll` so
 # the serve loop can wait on the channel and the hook's listener at once, the
 # boundary having to judge a dialing peer during the raised window and a loop
-# blocked on the channel alone never accepting one.
+# blocked on the channel alone never accepting one. The shell readers also poll
+# so an inherited pipe cannot hold cleanup open after group termination.
 # No `uio`: this crate sends and receives whole
 # datagrams and passes no control message, so the scatter-gather surface the
 # harness needs for descriptor passing is weight it does not carry. No async
