@@ -119,7 +119,7 @@ fn run_in_home(
     use std::process::{Command, Stdio};
 
     // The child leads its own process group, so the kill below reaches
-    // `bash -c`'s descendants too: a background child would otherwise
+    // descendants still in `bash -c`'s group: a background child would otherwise
     // inherit the pipe's write end and hold the readers open after the
     // shell itself exited.
     let mut child = Command::new("bash")
@@ -139,88 +139,63 @@ fn run_in_home(
         })?;
     let group = nix::unistd::Pid::from_raw(child.id() as i32);
 
-    // Both pipes drain concurrently with the run, each on its own thread:
-    // a pipe left unread to the exit fills at the kernel's buffer and
-    // blocks the child's writes, which would convert a chatty command into
-    // a false deadline failure. The drain keeps the bound and discards the
-    // rest, so the capture is bounded while the pipe still empties.
+    // Each pipe drains concurrently so a chatty command cannot block on
+    // a full pipe. After group termination, readers stop waiting for writers
+    // and take a bounded final drain of bytes already available.
+    let finished = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let stdout = child.stdout.take().expect("stdout is piped");
     let stderr = child.stderr.take().expect("stderr is piped");
-    let out_reader = std::thread::spawn(move || drain_bounded(stdout, SHELL_OUTPUT_BOUND));
-    let err_reader = std::thread::spawn(move || drain_bounded(stderr, SHELL_OUTPUT_BOUND));
+    let out_finished = finished.clone();
+    let err_finished = finished.clone();
+    let out_reader =
+        std::thread::spawn(move || drain_bounded(stdout, SHELL_OUTPUT_BOUND, &out_finished));
+    let err_reader =
+        std::thread::spawn(move || drain_bounded(stderr, SHELL_OUTPUT_BOUND, &err_finished));
 
-    // Supervision: poll to the deadline, kill the group past it. `std`
-    // carries no bounded wait, so the poll sleeps in small steps - coarse
-    // and sufficient for a bound whose unit is seconds.
-    //
-    // **The exit is observed with `WNOWAIT` and the leader reaped only
-    // after the group is signaled.** A reaping poll would free the leader's
-    // pid at the moment of exit, and the group kill that follows would
-    // signal an id the kernel may already have reissued; unreaped, the
-    // leader holds the group id reserved until the `wait` below.
-    let started = std::time::Instant::now();
-    let status = loop {
+    // Preserve main's clock origin: supervision starts after the shell and
+    // readers are spawned. WNOWAIT holds the leader's pid until the group is
+    // signaled, so the kill cannot target a reissued process-group id.
+    let until = std::time::Instant::now() + deadline;
+    let ending = loop {
         use nix::sys::wait::{Id, WaitPidFlag, WaitStatus, waitid};
         match waitid(
             Id::Pid(group),
             WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG | WaitPidFlag::WNOWAIT,
         ) {
             Ok(WaitStatus::StillAlive) => {
-                if started.elapsed() > deadline {
-                    let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
-                    let _ = child.wait();
-                    let out_drained = out_reader.join().unwrap_or((Vec::new(), false)).0;
-                    let err_drained = err_reader.join().unwrap_or((Vec::new(), false)).0;
-                    let mut partial = String::from_utf8_lossy(&out_drained).into_owned();
-                    let errors = String::from_utf8_lossy(&err_drained);
-                    if !errors.is_empty() {
-                        if !partial.is_empty() {
-                            partial.push('\n');
-                        }
-                        partial.push_str("stderr: ");
-                        partial.push_str(&errors);
-                    }
-                    return Err(ShellEnd::Killed {
-                        partial: (!partial.is_empty()).then_some(partial),
-                    });
+                let remaining = until.saturating_duration_since(std::time::Instant::now());
+                if remaining.is_zero() {
+                    break Ok(true);
                 }
-                std::thread::sleep(std::time::Duration::from_millis(25));
+                std::thread::sleep(remaining.min(std::time::Duration::from_millis(25)));
             }
-            Ok(_) => {
-                // The command has exited; the group dies with it. A
-                // background child the command left behind still holds the
-                // pipes' write ends, and the joins below would wait on it -
-                // so the answer is what the foreground command produced,
-                // and stragglers are ended, not adopted.
-                let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
-                break child.wait().map_err(|error| ShellEnd::Errored {
-                    detail: format!("the supervision failed: {error}"),
-                })?;
-            }
-            Err(error) => {
-                let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
-                let _ = child.wait();
-                let _ = out_reader.join();
-                let _ = err_reader.join();
-                return Err(ShellEnd::Errored {
-                    detail: format!("the supervision failed: {error}"),
-                });
-            }
+            Ok(_) => break Ok(false),
+            Err(error) => break Err(error),
         }
     };
-
-    let (out_bytes, out_cut) = out_reader.join().unwrap_or((Vec::new(), false));
-    let (err_bytes, err_cut) = err_reader.join().unwrap_or((Vec::new(), false));
-
-    let mut output = String::from_utf8_lossy(&out_bytes).into_owned();
-    let errors = String::from_utf8_lossy(&err_bytes);
-    if !errors.is_empty() {
-        if !output.is_empty() {
-            output.push('\n');
-        }
-        output.push_str("stderr: ");
-        output.push_str(&errors);
+    // All endings kill the same group before reaping and release both
+    // readers, including a failed waitid or wait. Cleanup has no tool outcome
+    // election: only the supervisor decides whether the clock killed the run.
+    let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
+    // Also signal the unreaped leader in case it left the original group.
+    let _ = nix::sys::signal::kill(group, nix::sys::signal::Signal::SIGKILL);
+    let reaped = child.wait();
+    let drained = finish_draining(&finished, out_reader, err_reader);
+    let expired = ending.map_err(|error| ShellEnd::Errored {
+        detail: format!("the supervision failed: {error}"),
+    })?;
+    let status = reaped.map_err(|error| ShellEnd::Errored {
+        detail: format!("the supervision failed: {error}"),
+    })?;
+    let (out, err) = drained?;
+    let mut output = joined(&out, &err);
+    if expired {
+        return Err(ShellEnd::Killed {
+            partial: (!output.is_empty()).then_some(output),
+        });
     }
+    // The exit account is metadata, appended after capture truncation so
+    // even a noisy command cannot lose its nonzero status.
     if !status.success() {
         let code = status
             .code()
@@ -231,7 +206,59 @@ fn run_in_home(
         }
         output.push_str(&format!("exit status: {code}"));
     }
-    if out_cut || err_cut || output.len() > SHELL_OUTPUT_BOUND {
+    if output.is_empty() {
+        output.push_str("(no output)");
+    }
+    Ok(output)
+}
+
+/// Captured bytes from one pipe. I/O failure travels as an error, never as
+/// an apparently complete capture.
+#[derive(Default)]
+struct Drained {
+    /// At most the requested capture bound, while excess bytes are discarded.
+    bytes: Vec<u8>,
+    /// At least one byte was discarded because the capture bound was reached.
+    truncated: bool,
+}
+
+/// A reader owns its pipe until it returns its capture or an I/O error.
+type DrainReader = std::thread::JoinHandle<std::io::Result<Drained>>;
+
+/// Release both readers after every supervision outcome and join both even
+/// when one failed. A panic or a pipe failure is the machinery's account.
+fn finish_draining(
+    finished: &std::sync::atomic::AtomicBool,
+    out: DrainReader,
+    err: DrainReader,
+) -> Result<(Drained, Drained), ShellEnd> {
+    finished.store(true, std::sync::atomic::Ordering::Relaxed);
+    let out = out.join();
+    let err = err.join();
+    let capture = |name, result: std::thread::Result<std::io::Result<Drained>>| {
+        result
+            .map_err(|_| ShellEnd::Errored {
+                detail: format!("the {name} reader panicked"),
+            })?
+            .map_err(|error| ShellEnd::Errored {
+                detail: format!("the {name} capture failed: {error}"),
+            })
+    };
+    Ok((capture("stdout", out)?, capture("stderr", err)?))
+}
+
+/// Assemble stdout and stderr once for both results and killed partials.
+/// The marker describes discarded capture bytes, independently of the exit.
+fn joined(out: &Drained, err: &Drained) -> String {
+    let mut output = String::from_utf8_lossy(&out.bytes).into_owned();
+    if !err.bytes.is_empty() {
+        if !output.is_empty() {
+            output.push('\n');
+        }
+        output.push_str("stderr: ");
+        output.push_str(&String::from_utf8_lossy(&err.bytes));
+    }
+    if out.truncated || err.truncated || output.len() > SHELL_OUTPUT_BOUND {
         let mut cut = output.len().min(SHELL_OUTPUT_BOUND);
         while !output.is_char_boundary(cut) {
             cut -= 1;
@@ -239,39 +266,60 @@ fn run_in_home(
         output.truncate(cut);
         output.push_str("\n[output truncated at 32 KiB]");
     }
-    if output.is_empty() {
-        output.push_str("(no output)");
-    }
-    Ok(output)
+    output
 }
 
-/// Reads a pipe to its end, keeping at most `bound` octets and reporting
-/// whether anything past the bound was discarded. The read continues past
-/// the bound on purpose: stopping would refill the pipe and block the
-/// writer, which is the deadlock the bound exists to avoid.
-fn drain_bounded(mut pipe: impl std::io::Read, bound: usize) -> (Vec<u8>, bool) {
-    let mut kept = Vec::new();
-    let mut truncated = false;
+/// Drain concurrently until EOF or supervision finishes. Poll in 10 ms
+/// steps so a writer holding a silent pipe cannot delay cleanup for the
+/// caller's remaining budget. After the stop, poll without waiting and take
+/// at most one capture's worth of reads plus one overflow read. This keeps
+/// buffered partial output without adopting a continuously writing descendant.
+fn drain_bounded(
+    mut pipe: impl std::io::Read + std::os::fd::AsFd,
+    bound: usize,
+    finished: &std::sync::atomic::AtomicBool,
+) -> std::io::Result<Drained> {
+    use nix::poll::{PollFd, PollFlags, poll};
+    use std::sync::atomic::Ordering;
+
+    const DRAIN_POLL_MS: u16 = 10;
+    let mut drained = Drained::default();
     let mut buffer = [0u8; 8192];
+    let mut final_reads = None;
     loop {
+        if finished.load(Ordering::Relaxed) && final_reads.is_none() {
+            final_reads = Some(bound.div_ceil(buffer.len()) + 1);
+        }
+        let timeout = if let Some(left) = &mut final_reads {
+            if *left == 0 {
+                break;
+            }
+            *left -= 1;
+            0
+        } else {
+            DRAIN_POLL_MS
+        };
+        let mut waiting = [PollFd::new(pipe.as_fd(), PollFlags::POLLIN)];
+        match poll(&mut waiting, timeout) {
+            Ok(0) if final_reads.is_some() => break,
+            Ok(0) | Err(nix::errno::Errno::EINTR) => continue,
+            Err(error) => return Err(std::io::Error::from_raw_os_error(error as i32)),
+            Ok(_) => {}
+        }
+        // This is the pipe's sole reader: readiness means a read can take
+        // available bytes or EOF without waiting for another write.
         match pipe.read(&mut buffer) {
             Ok(0) => break,
             Ok(read) => {
-                if kept.len() < bound {
-                    let take = (bound - kept.len()).min(read);
-                    kept.extend_from_slice(&buffer[..take]);
-                    if take < read {
-                        truncated = true;
-                    }
-                } else {
-                    truncated = true;
-                }
+                let take = (bound - drained.bytes.len()).min(read);
+                drained.bytes.extend_from_slice(&buffer[..take]);
+                drained.truncated |= take < read;
             }
             Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
-            Err(_) => break,
+            Err(error) => return Err(error),
         }
     }
-    (kept, truncated)
+    Ok(drained)
 }
 
 #[cfg(test)]
@@ -407,6 +455,282 @@ mod tests {
             started.elapsed() < std::time::Duration::from_secs(5),
             "the straggler did not hold the answer open"
         );
+    }
+
+    /// Fail clearly if the fixture's util-linux command is unavailable.
+    fn require_setsid() {
+        assert!(
+            std::process::Command::new("setsid")
+                .arg("true")
+                .status()
+                .expect("these tests require the util-linux setsid executable on PATH")
+                .success(),
+            "the setsid fixture could not start a new session"
+        );
+    }
+
+    /// Wait for the detached child to announce readiness before the leader
+    /// exits. FD 3 then puts its stdout back on the executor's pipe, and its
+    /// stderr was inherited throughout. Neither pipe can reach EOF for 2 s.
+    fn with_detached_descendant(command: &str) -> String {
+        format!(
+            "exec 3>&1; read -r ready < <(setsid sh -c 'echo ready; exec 1>&3 3>&-; sleep 2'); exec 3>&-; {command}"
+        )
+    }
+
+    /// The handoff's 50 ms clock checks latency alone. Output capture has a
+    /// separate 500 ms test, so process startup need not win a 50 ms echo race.
+    #[test]
+    fn a_detached_descendant_cannot_hold_the_answer_past_the_clock() {
+        require_setsid();
+        const CLOCK_MS: u64 = 50;
+        const SCHEDULING_TOLERANCE: std::time::Duration = std::time::Duration::from_millis(200);
+        let started = std::time::Instant::now();
+        let outcome = shell(r#"{"command":"setsid sleep 2 & wait"}"#, CLOCK_MS);
+        let elapsed = started.elapsed();
+        assert!(
+            matches!(outcome, ToolOutcome::Killed { .. }),
+            "the waiting leader should time out, fixture requires setsid: {outcome:?}"
+        );
+        assert!(
+            elapsed < std::time::Duration::from_millis(CLOCK_MS) + SCHEDULING_TOLERANCE,
+            "the caller's {CLOCK_MS}ms clock governs, elapsed: {elapsed:?}"
+        );
+    }
+
+    /// A completed leader keeps its account and does not spend the remaining
+    /// caller budget waiting for a detached descendant's inherited pipes.
+    #[test]
+    fn a_detached_descendant_cannot_hold_the_answer_after_the_leader_exits() {
+        require_setsid();
+        for code in [0, 7] {
+            let command =
+                with_detached_descendant(&format!("echo done; echo err >&2; exit {code}"));
+            let started = std::time::Instant::now();
+            let outcome = shell(&serde_json::json!({"command": command}).to_string(), 3_000);
+            let elapsed = started.elapsed();
+            let ToolOutcome::Result { content } = outcome else {
+                panic!("a completed leader retains its account: {outcome:?}");
+            };
+            assert!(
+                content.contains("done") && content.contains("stderr: err"),
+                "{content}"
+            );
+            if code != 0 {
+                assert!(content.contains("exit status: 7"), "{content}");
+            }
+            assert!(
+                elapsed < std::time::Duration::from_millis(500),
+                "cleanup must not spend the 3000 ms clock: {elapsed:?}"
+            );
+        }
+    }
+
+    /// A short clock does not turn an already observed exit into a kill.
+    #[test]
+    fn a_completed_nonzero_exit_keeps_its_account_with_a_short_clock() {
+        require_setsid();
+        let command = with_detached_descendant("echo done; exit 7");
+        let outcome = shell(&serde_json::json!({"command": command}).to_string(), 500);
+        let ToolOutcome::Result { content } = outcome else {
+            panic!("the leader's exit must survive capture cleanup: {outcome:?}");
+        };
+        assert!(
+            content.contains("done") && content.contains("exit status: 7"),
+            "{content}"
+        );
+    }
+
+    /// Capture truncation is visible on both timeout and normal-exit paths,
+    /// and an exit status is not part of the output that gets truncated.
+    #[test]
+    fn a_detached_descendant_does_not_hide_truncation_or_exit_status() {
+        require_setsid();
+        for redirect in ["", " >&2"] {
+            let command = with_detached_descendant(&format!(
+                "head -c 200000 /dev/zero | tr '\\0' x{redirect}; sleep 5"
+            ));
+            let outcome = shell(&serde_json::json!({"command": command}).to_string(), 500);
+            let ToolOutcome::Killed {
+                partial: Some(partial),
+            } = outcome
+            else {
+                panic!("expected captured output before the 500 ms timeout: {outcome:?}");
+            };
+            assert!(
+                partial.contains("[output truncated at 32 KiB]"),
+                "discarded output must be marked, got {} bytes",
+                partial.len()
+            );
+        }
+        let command = with_detached_descendant("head -c 200000 /dev/zero | tr '\\0' x; exit 7");
+        let started = std::time::Instant::now();
+        let outcome = shell(&serde_json::json!({"command": command}).to_string(), 3_000);
+        let ToolOutcome::Result { content } = outcome else {
+            panic!("a completed noisy command keeps its account: {outcome:?}");
+        };
+        assert!(
+            content.contains("[output truncated at 32 KiB]"),
+            "capture must mark truncation"
+        );
+        assert!(
+            content.contains("exit status: 7"),
+            "capture must retain the exit account"
+        );
+        assert!(started.elapsed() < std::time::Duration::from_millis(500));
+    }
+
+    /// A held write end must not hide bytes already buffered at shutdown.
+    #[test]
+    fn a_stopped_reader_keeps_ready_bytes_without_waiting_for_eof() {
+        use std::io::Write;
+        let (read, write) = nix::unistd::pipe().expect("pipe");
+        let mut writer = std::fs::File::from(write);
+        writer.write_all(b"buffered before stop").expect("write");
+        let finished = std::sync::atomic::AtomicBool::new(true);
+        let capture =
+            drain_bounded(std::fs::File::from(read), SHELL_OUTPUT_BOUND, &finished).expect("drain");
+        assert_eq!(capture.bytes, b"buffered before stop");
+        assert!(!capture.truncated);
+        drop(writer);
+    }
+
+    /// The descriptor stays readable while reads emulate a continuous
+    /// writer, or an I/O failure. The read cap makes a broken test fail
+    /// instead of hanging if the final-drain budget is accidentally removed.
+    struct ReadProbe {
+        ready: std::fs::File,
+        reads: usize,
+        fail: bool,
+    }
+
+    impl std::os::fd::AsFd for ReadProbe {
+        fn as_fd(&self) -> std::os::fd::BorrowedFd<'_> {
+            self.ready.as_fd()
+        }
+    }
+
+    impl std::io::Read for ReadProbe {
+        fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+            self.reads += 1;
+            if self.fail {
+                return Err(std::io::Error::other("injected read failure"));
+            }
+            if self.reads > 8 {
+                return Err(std::io::Error::other("adopted continuous output"));
+            }
+            buffer.fill(b'x');
+            Ok(buffer.len())
+        }
+    }
+
+    /// Shutdown is bounded even if a detached writer never becomes quiet.
+    #[test]
+    fn a_stopped_reader_does_not_adopt_a_continuous_writer() {
+        use std::io::Write;
+        let (read, write) = nix::unistd::pipe().expect("pipe");
+        let mut writer = std::fs::File::from(write);
+        writer.write_all(b"ready").expect("write");
+        let reader = ReadProbe {
+            ready: read.into(),
+            reads: 0,
+            fail: false,
+        };
+        let capture = drain_bounded(
+            reader,
+            SHELL_OUTPUT_BOUND,
+            &std::sync::atomic::AtomicBool::new(true),
+        )
+        .expect("the final drain must stop adopting output");
+        assert_eq!(capture.bytes.len(), SHELL_OUTPUT_BOUND);
+        assert!(capture.truncated);
+    }
+
+    /// A real readable descriptor paired with a failing Read must propagate
+    /// the I/O failure instead of returning an apparently complete capture.
+    #[test]
+    fn a_read_failure_is_not_a_complete_capture() {
+        use std::io::Write;
+        let (read, write) = nix::unistd::pipe().expect("pipe");
+        let mut writer = std::fs::File::from(write);
+        writer.write_all(b"ready").expect("write");
+        let reader = ReadProbe {
+            ready: read.into(),
+            reads: 0,
+            fail: true,
+        };
+        let capture = drain_bounded(
+            reader,
+            SHELL_OUTPUT_BOUND,
+            &std::sync::atomic::AtomicBool::new(false),
+        );
+        assert!(matches!(capture, Err(error) if error.to_string() == "injected read failure"));
+    }
+
+    /// Exercise the shared cleanup used after a supervision error with both
+    /// writers still open. The guard releases them after 2 s if stop is broken,
+    /// making the regression fail on latency instead of hanging the test.
+    #[test]
+    fn cleanup_of_held_pipes_does_not_wait_for_writers() {
+        use std::sync::{Arc, atomic::AtomicBool, mpsc};
+        let (out_read, out_write) = nix::unistd::pipe().expect("stdout pipe");
+        let (err_read, err_write) = nix::unistd::pipe().expect("stderr pipe");
+        let (release, released) = mpsc::channel::<()>();
+        let writers = std::thread::spawn(move || {
+            let _ = released.recv_timeout(std::time::Duration::from_secs(2));
+            drop((out_write, err_write));
+        });
+        let finished = Arc::new(AtomicBool::new(false));
+        let out_finished = finished.clone();
+        let err_finished = finished.clone();
+        let out = std::thread::spawn(move || {
+            drain_bounded(
+                std::fs::File::from(out_read),
+                SHELL_OUTPUT_BOUND,
+                &out_finished,
+            )
+        });
+        let err = std::thread::spawn(move || {
+            drain_bounded(
+                std::fs::File::from(err_read),
+                SHELL_OUTPUT_BOUND,
+                &err_finished,
+            )
+        });
+        let started = std::time::Instant::now();
+        let capture = finish_draining(&finished, out, err);
+        let elapsed = started.elapsed();
+        let _ = release.send(());
+        writers.join().expect("writer guard");
+        assert!(capture.is_ok(), "normal shutdown must capture both pipes");
+        assert!(
+            elapsed < std::time::Duration::from_millis(250),
+            "cleanup waited for a writer: {elapsed:?}"
+        );
+    }
+
+    /// A capture failure reaches the machinery outcome only after both
+    /// readers have been joined, and shutdown is signaled even on failure.
+    #[test]
+    fn failed_capture_cleanup_stops_and_joins_both_readers() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        };
+        let finished = AtomicBool::new(false);
+        let other_finished = Arc::new(AtomicBool::new(false));
+        let observed = other_finished.clone();
+        let out = std::thread::spawn(|| Err(std::io::Error::other("injected pipe failure")));
+        let err = std::thread::spawn(move || {
+            observed.store(true, Ordering::Relaxed);
+            Ok(Drained::default())
+        });
+        let result = finish_draining(&finished, out, err);
+        assert!(
+            matches!(result, Err(ShellEnd::Errored { detail }) if detail.contains("stdout") && detail.contains("injected pipe failure"))
+        );
+        assert!(finished.load(Ordering::Relaxed));
+        assert!(other_finished.load(Ordering::Relaxed));
     }
 
     /// **A command past the caller's clock is killed as its own case,
