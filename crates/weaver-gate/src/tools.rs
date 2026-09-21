@@ -177,6 +177,8 @@ fn run_in_home(
     // readers, including a failed waitid or wait. Cleanup has no tool outcome
     // election: only the supervisor decides whether the clock killed the run.
     let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
+    // Also signal the unreaped leader in case it left the original group.
+    let _ = nix::sys::signal::kill(group, nix::sys::signal::Signal::SIGKILL);
     let reaped = child.wait();
     let drained = finish_draining(&finished, out_reader, err_reader);
     let expired = ending.map_err(|error| ShellEnd::Errored {
