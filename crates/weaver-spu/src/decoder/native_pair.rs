@@ -74,6 +74,14 @@ pub struct ShardedModel {
     eps: f64,
 }
 
+/// The inverse frequencies used by the pair's rotary table construction.
+pub(super) fn rotary_inverse_frequencies(head_dim: usize, theta: f64) -> Vec<f32> {
+    (0..head_dim)
+        .step_by(2)
+        .map(|i| 1f32 / theta.powf(i as f64 / head_dim as f64) as f32)
+        .collect()
+}
+
 /// The pair's replicated rotary tables. Keep the angle in fp32 and cast
 /// each trigonometric result to BF16 before transferring it to the device.
 /// This is the construction consumed by `ShardedModel::load` and `attend`.
@@ -84,7 +92,7 @@ pub(super) fn rotary_tables(
     cpu: &Device,
     device: &Device,
 ) -> candle_core::Result<(Tensor, Tensor)> {
-    let inv = super::rotary_inverse_frequencies(head_dim, rope_theta);
+    let inv = rotary_inverse_frequencies(head_dim, rope_theta);
     let inv_len = inv.len();
     let inv = Tensor::from_vec(inv, (1, inv_len), cpu)?;
     let t = Tensor::arange(0u32, max as u32, cpu)?

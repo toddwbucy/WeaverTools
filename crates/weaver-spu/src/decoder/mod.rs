@@ -41,31 +41,25 @@ pub mod native;
 #[cfg(feature = "cuda")]
 pub mod native_pair;
 
-/// The inverse frequencies used by the pair's rotary table construction.
-#[cfg(any(test, feature = "cuda"))]
-fn rotary_inverse_frequencies(head_dim: usize, theta: f64) -> Vec<f32> {
-    (0..head_dim)
-        .step_by(2)
-        .map(|i| 1f32 / theta.powf(i as f64 / head_dim as f64) as f32)
-        .collect()
-}
-
 /// Host arithmetic diagnostics for both rotary functions. The angle stays
 /// fp32 until after sine or cosine, matching the pinned qwen2 fork's fix
 /// proposed in upstream candle PR 3520. BF16-first ordering rounds integer
 /// positions above 256: 15962 rounds to 15936, whose cosine is -0.267950,
-/// or -0.267578 after rounding the output to BF16.
+/// or -0.267578 after rounding the output to BF16, instead of
+/// cos(15962) = -0.908015. Each table must approximate cos(position * inv[j])
+/// or sin(position * inv[j]), with the angle evaluated before BF16 rounding.
 ///
 /// These scalar diagnostics do not call Candle's private RotaryEmbedding
 /// constructor. Changing only that constructor's ordering leaves them green.
-/// The CUDA-gated tests below watch this crate's production pair builder.
+/// The CUDA-gated table test below watches this crate's production pair builder.
 #[cfg(test)]
 mod rotary_precision {
     use half::bf16;
 
-    // One frequency lane suffices to expose position rounding. The builder
-    // uses its ordinary head_dim / 2 shape without allocating 64 unused lanes.
-    pub(super) const HEAD_DIM: usize = 2;
+    // Exercise the production builder at a served head dimension (64 lanes).
+    #[cfg(feature = "cuda")]
+    pub(super) const HEAD_DIM: usize = 128;
+    #[cfg(feature = "cuda")]
     pub(super) const ROPE_THETA: f64 = 1_000_000.0;
     // Include the first inexact BF16 position, the 1024/4096 fixture edges,
     // and a larger context position available to artifacts with that capacity.
@@ -92,7 +86,9 @@ mod rotary_precision {
             ("cosine", watched[0], stock[0], angle.cos()),
             ("sine", watched[1], stock[1], angle.sin()),
         ] {
-            // Each gap must exceed forty times the accuracy tolerance.
+            // The 0.4 threshold includes sine at 257 and 4095, whose
+            // BF16-first gaps are below 0.5. The weakest is 4095 (~0.4041).
+            // This checks the reference discriminator, not production accuracy.
             assert!(
                 (rounded - truth).abs() > 0.4,
                 "{name} does not discriminate at {position}: stock {rounded}, true {truth}"
@@ -104,31 +100,27 @@ mod rotary_precision {
         }
     }
 
-    /// Exercise both trig functions at the first rounding boundary and larger positions.
+    /// Check scalar reference arithmetic only; this does not watch production ordering.
     #[test]
-    fn the_rotary_angle_survives_context_boundaries() {
-        let inv = super::rotary_inverse_frequencies(HEAD_DIM, ROPE_THETA);
-        assert_eq!(
-            inv[0], 1.0,
-            "the zero frequency lane has unit inverse frequency"
-        );
+    fn scalar_references_show_bf16_first_rounding_loss() {
         for position in POSITIONS {
             check(
                 position,
-                inv[0],
-                entries(position, inv[0]).map(bf16::to_f64),
-                stock_entries(position, inv[0]).map(bf16::to_f64),
+                1.0,
+                entries(position, 1.0).map(bf16::to_f64),
+                stock_entries(position, 1.0).map(bf16::to_f64),
             );
         }
     }
 }
 
 /// Watch the production pair builder through Candle operators on Device::Cpu.
-/// Both sine and cosine feed ShardedModel::load and attend's rope operation.
+/// Both tables reach attend's rope operation through ShardedModel::load.
 /// This detects changes to that builder or Candle operator numerics, but not
 /// changes confined to the fork's private single-device RotaryEmbedding.
 /// The cuda feature requires a CUDA toolkit at build time even though these
-/// tests use only the CPU. They provide no device-execution evidence.
+/// tests use only the CPU. Transfers are identity operations here, so neither
+/// placement on a GPU nor device execution is covered.
 #[cfg(all(test, feature = "cuda"))]
 mod rotary_precision_through_candle {
     use super::rotary_precision::{HEAD_DIM, POSITIONS, ROPE_THETA, check, stock_entries};
@@ -142,12 +134,27 @@ mod rotary_precision_through_candle {
             .to_scalar::<f64>()
     }
 
+    /// Pin nonzero frequency lanes independently of the production power expression.
+    #[test]
+    fn production_rotary_frequency_ladder_matches_reference() {
+        let inv = super::native_pair::rotary_inverse_frequencies(HEAD_DIM, ROPE_THETA);
+        assert_eq!(inv.len(), 64);
+        // j=16: (10^6)^(-32/128) = 10^-1.5; j=32: 10^-3.
+        for (lane, expected) in [(16, 0.031_622_776_601_683_79_f64), (32, 0.001)] {
+            assert!(
+                (f64::from(inv[lane]) - expected).abs() < expected * 1e-6,
+                "inverse frequency lane {lane}: got {}, expected {expected}",
+                inv[lane]
+            );
+        }
+    }
+
     /// Read the pair loader's production tables and cross-check both stock references.
     #[test]
     fn the_production_rotary_tables_hold_their_angles() -> candle_core::Result<()> {
         let dev = Device::Cpu;
-        let max = POSITIONS[POSITIONS.len() - 1] + 1;
-        let inv = super::rotary_inverse_frequencies(HEAD_DIM, ROPE_THETA);
+        let max = POSITIONS.iter().max().expect("at least one position") + 1;
+        let inv = super::native_pair::rotary_inverse_frequencies(HEAD_DIM, ROPE_THETA);
         assert_eq!(
             inv[0], 1.0,
             "the truth uses the builder's unit inverse frequency"
