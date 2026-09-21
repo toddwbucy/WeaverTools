@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use weaver_web::config::ServerConfig;
 use weaver_web::traceview::TraceViews;
-use weaver_web::{queue, registry, store, web, wire};
+use weaver_web::{store, web, wire};
 
 #[derive(Parser)]
 #[command(
@@ -34,34 +34,27 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("config loaded: {} provider(s)", cfg.providers.len());
 
     let store = store::Store::connect(&cfg.database).await?;
-    registry::reconcile_providers(&store, &cfg.providers).await?;
-    store.reconcile_roles(cfg.admins.clone()).await?;
-    tracing::info!("store connected, migrations applied, providers and roles reconciled");
+    tracing::info!("store connected, migrations applied");
 
     let link = wire::Link::new();
     let traces = TraceViews::new();
-    let queues = queue::Queues::new(store.clone(), link.clone(), cfg.agent_hop_budget);
 
     let link_listener = tokio::net::TcpListener::bind(&cfg.link_listen).await?;
     tracing::info!("link listening on {}", cfg.link_listen);
     let (ev_tx, mut ev_rx) = tokio::sync::mpsc::channel(1024);
     tokio::spawn(wire::serve(link.clone(), link_listener, ev_tx));
 
-    // The link event pump: each box's hello reconciles the registry
-    // and starts queues and views for its agents (roster-by-hello,
-    // Spec section 8), trace frames feed the rings, and a box's
+    // The link event pump: each box's hello starts trace views
+    // for its agents (roster-by-hello, Spec section 8),
+    // trace frames feed the rings, and a box's
     // link loss marks exactly its own agents' views.
     {
-        let (store, queues, traces) = (store.clone(), queues.clone(), traces.clone());
+        let traces = traces.clone();
         tokio::spawn(async move {
             while let Some(ev) = ev_rx.recv().await {
                 match ev {
                     wire::LinkEvent::Hello(agents) => {
-                        if let Err(e) = registry::reconcile_agents(&store, &agents).await {
-                            tracing::error!("agent reconciliation failed: {e}");
-                        }
                         for a in &agents {
-                            queues.ensure_agent(a);
                             // A view that already holds events is
                             // getting a fresh backfill: bracket it.
                             if traces.has_events(a) {
@@ -87,14 +80,11 @@ async fn main() -> anyhow::Result<()> {
     // **The instrument's surfaces are mounted on the store alone**, per
     // Spec section 6: a surface that renders what is kept reads the store
     // and nothing else. They carry their own state rather than the
-    // conversation half's `AppState`, so the retirement of that half lifts
-    // it out without reaching into `surfaces/`.
+    // legacy admin `AppState`, keeping record reads independent of the link.
     let instrument = weaver_web::surfaces::routes().with_state(store.clone());
 
     let state = web::AppState {
         cfg: cfg.clone(),
-        store,
-        queues,
         traces,
         link,
     };
@@ -108,9 +98,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 /// SIGTERM or ctrl-c stops accepting requests and lets in-flight ones
-/// finish. Draining agent queues so every turn-open gets a close is a
-/// named follow-up; a turn cut by shutdown lands as the link's
-/// delivery-lost error today.
+/// finish.
 async fn shutdown_signal() {
     use tokio::signal::unix::{SignalKind, signal};
     let mut term = signal(SignalKind::terminate()).expect("SIGTERM handler");

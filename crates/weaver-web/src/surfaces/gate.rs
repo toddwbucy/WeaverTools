@@ -35,9 +35,8 @@ impl Claim {
     }
 }
 
-/// The bearer a browser sent, if it sent one. The cookie's name is the
-/// conversation half's, so the two can stand together while that half
-/// retires.
+/// The bearer a browser sent, if it sent one. The instrument uses
+/// `weaver_session`; the retired conversation routes used `ww_session`.
 fn bearer(headers: &HeaderMap) -> Option<String> {
     let cookies = headers.get(axum::http::header::COOKIE)?.to_str().ok()?;
     cookies.split(';').find_map(|pair| {

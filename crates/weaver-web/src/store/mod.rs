@@ -11,19 +11,12 @@
 //! whose files carry conformance headers. The register at
 //! `docs/project/inventory-weaver-web-code.md` records the rest of the crate
 //! as written to the retired text.
-//!
-//! `conversation` holds what the prior `store.rs` held for the conversation
-//! half: the writer task and its commands against tables the schema no
-//! longer creates. It stands so the modules the register retires still
-//! build, and it goes with them.
 
-pub mod conversation;
 pub mod experiment;
 pub mod key;
 pub mod plan;
 pub mod read;
 
-pub use conversation::{ChannelEvent, KindConflict, NewEvent};
 pub use experiment::{Arm, Experiment, ExperimentState, Registered, StagedExperiment, Sweep};
 pub use key::{ArmId, PlanId, PositionKey, RunId, TurnId};
 // **`plan::Arm` is not re-exported and `experiment::Arm` is**, and the path
@@ -38,13 +31,10 @@ pub use read::{Alternatives, Chip, Cursor, PositionPoint, RunPage, RunTuple};
 
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
-use tokio::sync::{broadcast, mpsc};
 
 #[derive(Clone)]
 pub struct Store {
     pub pool: PgPool,
-    write_tx: mpsc::Sender<conversation::WriteCmd>,
-    events_tx: broadcast::Sender<ChannelEvent>,
 }
 
 impl Store {
@@ -60,18 +50,6 @@ impl Store {
             .await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
 
-        let (write_tx, write_rx) = mpsc::channel(256);
-        let (events_tx, _) = broadcast::channel(1024);
-        tokio::spawn(conversation::writer_task(
-            pool.clone(),
-            write_rx,
-            events_tx.clone(),
-        ));
-
-        Ok(Self {
-            pool,
-            write_tx,
-            events_tx,
-        })
+        Ok(Self { pool })
     }
 }

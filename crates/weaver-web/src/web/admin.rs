@@ -1,10 +1,9 @@
 //! The admin surface: everything that crosses the operator boundary -
 //! lifecycle verbs (sudo weaver-admin) and trace views. Every route
-//! here sits behind the role gate: the participant must hold the
-//! admin role. v1 role assignment is the config's admin list; IAM
-//! later changes how a session proves who it is, not this gate.
+//! here is unavailable until the session/IAM act, per the operator
+//! ruling of 2026-09-21. The handlers remain compiled behind that gate.
 
-use super::{AppResult, AppState, nav_agents, session_participant, sse_cursor};
+use super::{AppResult, AppState, nav_agents, sse_cursor};
 use crate::lifecycle;
 use crate::registry::Participant;
 use crate::traceview::TraceEvent;
@@ -22,6 +21,7 @@ use tokio_stream::wrappers::ReceiverStream;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
+        .route("/", get(unavailable))
         .route("/lifecycle", get(lifecycle_page))
         .route("/lifecycle/{agent}/{verb}", post(run_verb))
         .route("/agents/{agent}/config", get(agent_config))
@@ -29,24 +29,21 @@ pub fn routes() -> Router<AppState> {
         .route("/trace/{agent}/stream", get(trace_stream))
 }
 
-/// The role gate. Ok(participant) for an admin; Err(response) is the
-/// refusal, honest about which boundary was met.
+/// The temporary legacy-admin refusal, per the W2 operator ruling.
+async fn unavailable() -> Response {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        "the legacy admin surface is unavailable until the session/IAM act.",
+    )
+        .into_response()
+}
+
+/// Keep the legacy handlers compiled without consulting retired sessions.
 async fn require_admin(
-    state: &AppState,
-    headers: &HeaderMap,
+    _state: &AppState,
+    _headers: &HeaderMap,
 ) -> anyhow::Result<Result<Participant, Response>> {
-    match session_participant(state, headers).await? {
-        Some(p) if p.is_admin() => Ok(Ok(p)),
-        Some(p) => Ok(Err((
-            StatusCode::FORBIDDEN,
-            format!(
-                "the operator surface requires the admin role; '{}' holds '{}'",
-                p.name, p.role
-            ),
-        )
-            .into_response())),
-        None => Ok(Err(axum::response::Redirect::to("/").into_response())),
-    }
+    Ok(Err(unavailable().await))
 }
 
 // ---------- lifecycle ----------

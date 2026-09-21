@@ -1,13 +1,12 @@
 //! The upstream model adapter (Spec section 10). Not implemented in
-//! the first scaffold: the adapter seam exists so the router can name
-//! it, and the first provider (Anthropic Messages) lands as its own
-//! act.
+//! the first scaffold. Its conversation router retired under W2;
+//! implementing a provider remains a separate act.
 
 use crate::config::ProviderConfig;
 
 // The seam is declared ahead of its first implementation on purpose
-// (Spec sections 10 and 15); the router names model participants today
-// and ignores their mentions until this adapter is real.
+// (Spec sections 10 and 15 of the retired Spec). The conversation
+// router that named model participants retired under W2.
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct UpstreamAdapter {

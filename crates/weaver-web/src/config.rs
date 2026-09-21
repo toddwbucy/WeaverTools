@@ -21,11 +21,8 @@ pub struct ServerConfig {
     /// proves it is a participant, not where roles live.
     #[serde(default)]
     pub admins: Vec<String>,
-    /// How many consecutive agent-to-agent hops the router serves after
-    /// the last human message in a channel, before it pauses the volley
-    /// visibly. The hello-loop counter, added 2026-08-20 after the first
-    /// open volley greeted itself in circles: coordination stays open,
-    /// and a human word resets the budget.
+    /// The retired conversation router's agent-hop budget. Retained for
+    /// config compatibility; W2 removed its consumer.
     #[serde(default = "default_agent_hop_budget")]
     pub agent_hop_budget: u32,
     #[serde(default)]

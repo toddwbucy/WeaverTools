@@ -1,12 +1,9 @@
 //! The instrument's surfaces, one module per surface of the charter's
 //! section 3, per `weaver-web-Spec` section 1.
 //!
-//! **These stand apart from `web/`, which is the conversation half.** That
-//! module and its layout retire with the modules the register at
-//! `docs/project/inventory-weaver-web-code.md` names, and a surface written
-//! against its `base.html` would retire with it. So this tree carries its
-//! own layout and its own routes, and the retirement lifts `web/` out
-//! without reaching in here.
+//! These stand apart from the legacy admin routes in `web/`. The
+//! conversation modules named by `docs/project/inventory-weaver-web-code.md`
+//! retired under W2; this tree retains its own layout and routes.
 //!
 //! **None of them writes the recorded half**, per Spec section 6: a position
 //! and a run land by the ingest of section 3.1 alone.
@@ -32,11 +29,8 @@ pub fn routes() -> Router<Store> {
         .route("/assets/surfaces/instrument.css", get(stylesheet))
 }
 
-/// **This tree serves its own stylesheet.** The conversation half's is
-/// served by `web/`'s router, which retires with that half, so a surface
-/// linking it would lose its styling the day the register's retirement
-/// lands - the coupling this tree's own layout exists to avoid, which
-/// duplicating the layout alone would not have broken.
+/// The instrument keeps its own stylesheet, independent of the legacy
+/// assets retained by `web/` after the conversation routes retired.
 async fn stylesheet() -> impl IntoResponse {
     (
         StatusCode::OK,

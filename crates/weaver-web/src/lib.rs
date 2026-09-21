@@ -6,13 +6,10 @@
 //! names the dial where the charter names only the placement).
 
 pub mod adapters;
-pub mod channel;
 pub mod config;
 pub mod fault;
 pub mod lifecycle;
-pub mod queue;
 pub mod registry;
-pub mod router;
 pub mod store;
 pub mod surfaces;
 pub mod traceview;
