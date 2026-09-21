@@ -11,11 +11,10 @@
 //! if candle runs the forward, so serving through candle is what keeps the
 //! readout election honorable when its act arrives.
 //!
-//! **Stage one serves one family on one device.** The registry's qwen2 entry
-//! is the family, `candle_transformers::models::qwen2` is the forward, and a
-//! binding naming more than one device refuses by name: the salvaged
-//! two-device path is its own act, entering with the all-reduce it needs, and
-//! a width this file cannot serve must refuse rather than serve it wrong.
+//! **The native path serves qwen2 on one device or a pair.** The single-device
+//! forward is `candle_transformers::models::qwen2`, and the pair uses
+//! `native_pair::ShardedModel` with its host-staged reductions. A binding
+//! naming any other width refuses by name.
 //!
 //! **The resident model is pristine and the engine decodes against a clone.**
 //! Candle's model holds its KV cache inside the model value, so a session's

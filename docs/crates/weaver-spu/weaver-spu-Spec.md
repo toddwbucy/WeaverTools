@@ -7,7 +7,7 @@ Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #636
+**Landing PR:** #640
 
 ---
 
@@ -243,9 +243,13 @@ which is the only route to per-layer activations from a GGUF model without
 replacing the engine, and section 7 makes that seam a compile-time pin rather
 than a comment. `candle-core`, `candle-nn`, and `candle-transformers` come from
 their own pinned fork for `forward_with_intermediates`, the readout's working
-path. `cudarc` is caret-pinned rather than exact, so Cargo unifies this crate's
-device handles with candle's inside one minor line, exactness coming from the
-lock file rather than from a requirement that becomes unsatisfiable the day
+path, and the qwen2 rotary precision fix: the angle is computed in fp32 and
+the sine and cosine are cast to the model dtype afterwards. This describes
+manifest revision `429615148582d62f285879b97cb63dbdd17b47fd`; the stale
+revision recorded below remains subject to its explicit deferral. `cudarc`
+is caret-pinned rather than exact, so Cargo unifies this crate's device
+handles with candle's inside one minor line, exactness coming from the lock
+file rather than from a requirement that becomes unsatisfiable the day
 candle raises its floor.
 
 **The pins, recorded here because no document of this corpus carried them

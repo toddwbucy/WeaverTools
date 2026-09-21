@@ -74,6 +74,36 @@ pub struct ShardedModel {
     eps: f64,
 }
 
+/// The inverse frequencies used by the pair's rotary table construction.
+pub(super) fn rotary_inverse_frequencies(head_dim: usize, theta: f64) -> Vec<f32> {
+    (0..head_dim)
+        .step_by(2)
+        .map(|i| 1f32 / theta.powf(i as f64 / head_dim as f64) as f32)
+        .collect()
+}
+
+/// The pair's replicated rotary tables. Keep the angle in fp32 and cast
+/// each trigonometric result to BF16 before transferring it to the device.
+/// This is the construction consumed by `ShardedModel::load` and `attend`.
+pub(super) fn rotary_tables(
+    head_dim: usize,
+    rope_theta: f64,
+    max: usize,
+    cpu: &Device,
+    device: &Device,
+) -> candle_core::Result<(Tensor, Tensor)> {
+    let inv = rotary_inverse_frequencies(head_dim, rope_theta);
+    let inv_len = inv.len();
+    let inv = Tensor::from_vec(inv, (1, inv_len), cpu)?;
+    let t = Tensor::arange(0u32, max as u32, cpu)?
+        .to_dtype(DType::F32)?
+        .reshape((max, 1))?;
+    let freqs = t.matmul(&inv)?;
+    let cos = freqs.cos()?.to_dtype(DType::BF16)?.to_device(device)?;
+    let sin = freqs.sin()?.to_dtype(DType::BF16)?.to_device(device)?;
+    Ok((cos, sin))
+}
+
 impl ShardedModel {
     /// Load the artifact's weights, each device receiving its shard and the
     /// replicated smalls. The slice happens on the mmap'd host side, so only
@@ -231,33 +261,16 @@ impl ShardedModel {
             layers.push([a, b]);
         }
 
-        // The rotary tables, replicated: fp32 through the angle per the
-        // upstream model's own precision note, cast at the end.
-        let max = config.max_position_embeddings;
-        let inv: Vec<f32> = (0..head_dim)
-            .step_by(2)
-            .map(|i| 1f32 / config.rope_theta.powf(i as f64 / head_dim as f64) as f32)
-            .collect();
-        let inv_len = inv.len();
-        let table = |device: &Device| -> Result<(Tensor, Tensor), AdmitRefusal> {
-            let inv = Tensor::from_vec(inv.clone(), (1, inv_len), &cpu)
-                .map_err(|e| fail(format!("rope: {e}")))?;
-            let t = Tensor::arange(0u32, max as u32, &cpu)
-                .and_then(|t| t.to_dtype(DType::F32))
-                .and_then(|t| t.reshape((max, 1)))
-                .map_err(|e| fail(format!("rope: {e}")))?;
-            let freqs = t.matmul(&inv).map_err(|e| fail(format!("rope: {e}")))?;
-            let cos = freqs
-                .cos()
-                .and_then(|t| t.to_dtype(DType::BF16))
-                .and_then(|t| t.to_device(device))
-                .map_err(|e| fail(format!("rope: {e}")))?;
-            let sin = freqs
-                .sin()
-                .and_then(|t| t.to_dtype(DType::BF16))
-                .and_then(|t| t.to_device(device))
-                .map_err(|e| fail(format!("rope: {e}")))?;
-            Ok((cos, sin))
+        // The same builder is exercised directly by the rotary precision tests.
+        let table = |device: &Device| {
+            rotary_tables(
+                head_dim,
+                config.rope_theta,
+                config.max_position_embeddings,
+                &cpu,
+                device,
+            )
+            .map_err(|e| fail(format!("rope: {e}")))
         };
         let (cos0, sin0) = table(&devices[0])?;
         let (cos1, sin1) = table(&devices[1])?;
