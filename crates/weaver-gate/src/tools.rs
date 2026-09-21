@@ -118,8 +118,9 @@ fn run_in_home(
     use std::os::unix::process::CommandExt;
     use std::process::{Command, Stdio};
 
+    let until = std::time::Instant::now() + deadline;
     // The child leads its own process group, so the kill below reaches
-    // `bash -c`'s descendants too: a background child would otherwise
+    // descendants still in `bash -c`'s group: a background child would otherwise
     // inherit the pipe's write end and hold the readers open after the
     // shell itself exited.
     let mut child = Command::new("bash")
@@ -143,22 +144,23 @@ fn run_in_home(
     // a pipe left unread to the exit fills at the kernel's buffer and
     // blocks the child's writes, which would convert a chatty command into
     // a false deadline failure. The drain keeps the bound and discards the
-    // rest, so the capture is bounded while the pipe still empties.
+    // rest, so the capture is bounded while the pipe still empties. Both
+    // readers share the caller's deadline: a descendant can leave the group
+    // and keep a write end after the kill, so EOF alone cannot bound a join.
     let stdout = child.stdout.take().expect("stdout is piped");
     let stderr = child.stderr.take().expect("stderr is piped");
-    let out_reader = std::thread::spawn(move || drain_bounded(stdout, SHELL_OUTPUT_BOUND));
-    let err_reader = std::thread::spawn(move || drain_bounded(stderr, SHELL_OUTPUT_BOUND));
+    let out_reader = std::thread::spawn(move || drain_bounded(stdout, SHELL_OUTPUT_BOUND, until));
+    let err_reader = std::thread::spawn(move || drain_bounded(stderr, SHELL_OUTPUT_BOUND, until));
 
     // Supervision: poll to the deadline, kill the group past it. `std`
-    // carries no bounded wait, so the poll sleeps in small steps - coarse
-    // and sufficient for a bound whose unit is seconds.
+    // carries no bounded wait, so the poll sleeps in small steps, capped by
+    // the time remaining on the caller's millisecond clock.
     //
     // **The exit is observed with `WNOWAIT` and the leader reaped only
     // after the group is signaled.** A reaping poll would free the leader's
     // pid at the moment of exit, and the group kill that follows would
     // signal an id the kernel may already have reissued; unreaped, the
     // leader holds the group id reserved until the `wait` below.
-    let started = std::time::Instant::now();
     let status = loop {
         use nix::sys::wait::{Id, WaitPidFlag, WaitStatus, waitid};
         match waitid(
@@ -166,11 +168,12 @@ fn run_in_home(
             WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG | WaitPidFlag::WNOWAIT,
         ) {
             Ok(WaitStatus::StillAlive) => {
-                if started.elapsed() > deadline {
+                let remaining = until.saturating_duration_since(std::time::Instant::now());
+                if remaining.is_zero() {
                     let _ = nix::sys::signal::killpg(group, nix::sys::signal::Signal::SIGKILL);
                     let _ = child.wait();
-                    let out_drained = out_reader.join().unwrap_or((Vec::new(), false)).0;
-                    let err_drained = err_reader.join().unwrap_or((Vec::new(), false)).0;
+                    let out_drained = out_reader.join().unwrap_or_default().bytes;
+                    let err_drained = err_reader.join().unwrap_or_default().bytes;
                     let mut partial = String::from_utf8_lossy(&out_drained).into_owned();
                     let errors = String::from_utf8_lossy(&err_drained);
                     if !errors.is_empty() {
@@ -184,7 +187,7 @@ fn run_in_home(
                         partial: (!partial.is_empty()).then_some(partial),
                     });
                 }
-                std::thread::sleep(std::time::Duration::from_millis(25));
+                std::thread::sleep(remaining.min(std::time::Duration::from_millis(25)));
             }
             Ok(_) => {
                 // The command has exited; the group dies with it. A
@@ -209,17 +212,24 @@ fn run_in_home(
         }
     };
 
-    let (out_bytes, out_cut) = out_reader.join().unwrap_or((Vec::new(), false));
-    let (err_bytes, err_cut) = err_reader.join().unwrap_or((Vec::new(), false));
+    let out = out_reader.join().unwrap_or_default();
+    let err = err_reader.join().unwrap_or_default();
 
-    let mut output = String::from_utf8_lossy(&out_bytes).into_owned();
-    let errors = String::from_utf8_lossy(&err_bytes);
+    let mut output = String::from_utf8_lossy(&out.bytes).into_owned();
+    let errors = String::from_utf8_lossy(&err.bytes);
     if !errors.is_empty() {
         if !output.is_empty() {
             output.push('\n');
         }
         output.push_str("stderr: ");
         output.push_str(&errors);
+    }
+    // The leader may exit before its detached descendant closes the pipes.
+    // An unfinished drain at the clock is still a kill, never a tool result.
+    if out.clock_expired || err.clock_expired {
+        return Err(ShellEnd::Killed {
+            partial: (!output.is_empty()).then_some(output),
+        });
     }
     if !status.success() {
         let code = status
@@ -231,7 +241,7 @@ fn run_in_home(
         }
         output.push_str(&format!("exit status: {code}"));
     }
-    if out_cut || err_cut || output.len() > SHELL_OUTPUT_BOUND {
+    if out.truncated || err.truncated || output.len() > SHELL_OUTPUT_BOUND {
         let mut cut = output.len().min(SHELL_OUTPUT_BOUND);
         while !output.is_char_boundary(cut) {
             cut -= 1;
@@ -245,33 +255,61 @@ fn run_in_home(
     Ok(output)
 }
 
-/// Reads a pipe to its end, keeping at most `bound` octets and reporting
-/// whether anything past the bound was discarded. The read continues past
-/// the bound on purpose: stopping would refill the pipe and block the
+#[derive(Default)]
+struct Drained {
+    bytes: Vec<u8>,
+    truncated: bool,
+    clock_expired: bool,
+}
+
+/// Reads a pipe to its end or the caller's deadline, keeping at most `bound`
+/// octets and reporting whether anything past the bound was discarded. The
+/// read continues past the bound on purpose: stopping would refill the pipe and block the
 /// writer, which is the deadlock the bound exists to avoid.
-fn drain_bounded(mut pipe: impl std::io::Read, bound: usize) -> (Vec<u8>, bool) {
-    let mut kept = Vec::new();
-    let mut truncated = false;
+fn drain_bounded(
+    mut pipe: impl std::io::Read + std::os::fd::AsFd,
+    bound: usize,
+    until: std::time::Instant,
+) -> Drained {
+    use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
+
+    let mut drained = Drained::default();
     let mut buffer = [0u8; 8192];
     loop {
+        let remaining = until.saturating_duration_since(std::time::Instant::now());
+        if remaining.is_zero() {
+            drained.clock_expired = true;
+            break;
+        }
+        let mut waiting = [PollFd::new(pipe.as_fd(), PollFlags::POLLIN)];
+        match poll(
+            &mut waiting,
+            PollTimeout::try_from(remaining).unwrap_or(PollTimeout::MAX),
+        ) {
+            Ok(0) | Err(nix::errno::Errno::EINTR) => continue,
+            Err(_) => break,
+            Ok(_) => {}
+        }
+        // This thread is the pipe's only reader. Readiness therefore means
+        // a read can take available bytes or EOF without waiting on a writer.
         match pipe.read(&mut buffer) {
             Ok(0) => break,
             Ok(read) => {
-                if kept.len() < bound {
-                    let take = (bound - kept.len()).min(read);
-                    kept.extend_from_slice(&buffer[..take]);
+                if drained.bytes.len() < bound {
+                    let take = (bound - drained.bytes.len()).min(read);
+                    drained.bytes.extend_from_slice(&buffer[..take]);
                     if take < read {
-                        truncated = true;
+                        drained.truncated = true;
                     }
                 } else {
-                    truncated = true;
+                    drained.truncated = true;
                 }
             }
             Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
             Err(_) => break,
         }
     }
-    (kept, truncated)
+    drained
 }
 
 #[cfg(test)]
@@ -406,6 +444,53 @@ mod tests {
         assert!(
             started.elapsed() < std::time::Duration::from_secs(5),
             "the straggler did not hold the answer open"
+        );
+    }
+
+    /// A descendant that leaves the group can keep both pipes open, but
+    /// cannot make the caller wait for its lifetime after the group kill.
+    #[test]
+    fn a_detached_descendant_cannot_hold_the_answer_past_the_clock() {
+        assert_detached_descendant_clock(
+            "setsid sh -c 'echo early; echo early-error >&2; sleep 2' & wait",
+        );
+    }
+
+    /// Even an exited leader cannot complete the call while a detached
+    /// descendant holds the pipes. The drain still owes the same clock.
+    #[test]
+    fn a_detached_descendant_cannot_hold_the_answer_after_the_leader_exits() {
+        assert_detached_descendant_clock(
+            "setsid sh -c 'echo early; echo early-error >&2; sleep 2' &",
+        );
+    }
+
+    fn assert_detached_descendant_clock(command: &str) {
+        use std::time::{Duration, Instant};
+
+        const CLOCK_MS: u64 = 50;
+        // Allow scheduling and process reaping, well below the descendant's
+        // two-second lifetime. Both inherited pipes must stop holding the call.
+        const SCHEDULING_TOLERANCE: Duration = Duration::from_millis(200);
+        let started = Instant::now();
+        let outcome = shell(
+            &serde_json::json!({ "command": command }).to_string(),
+            CLOCK_MS,
+        );
+        let elapsed = started.elapsed();
+        eprintln!("detached descendant: {CLOCK_MS}ms clock, elapsed: {elapsed:?}");
+        let ToolOutcome::Killed { partial } = outcome else {
+            panic!("the expired clock answers as a kill: {outcome:?}");
+        };
+        let partial = partial.expect("both pipes drained before the clock expired");
+        assert!(partial.starts_with("early\n"), "stdout crosses: {partial}");
+        assert!(
+            partial.contains("stderr: early-error"),
+            "stderr crosses: {partial}"
+        );
+        assert!(
+            elapsed < Duration::from_millis(CLOCK_MS) + SCHEDULING_TOLERANCE,
+            "the caller's {CLOCK_MS}ms clock governs, elapsed: {elapsed:?}"
         );
     }
 
