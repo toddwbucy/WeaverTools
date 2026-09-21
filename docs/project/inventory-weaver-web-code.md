@@ -314,6 +314,7 @@ act that comes first.
    the conversation half reachable to whoever writes the chat interface the
    vision still names. Git holds them either way, so the choice is about
    what a reader of the tree meets rather than about loss.
+   The live conversation-code deletion landed at PR #643.
 2. **Whether the schema is migrated or replaced. Ruled 2026-09-07:
    replaced, and git is the archive. Landed the same date at PR #499.**
    The five conversation tables are gone and the Spec's section 2 seven
@@ -333,7 +334,8 @@ act that comes first.
    order against the surfaces. **Three are answered as of 2026-09-07** and
    needed no ruling once read against the charter: `repro.rs` and `queue.rs`
    retire and `traceview.rs` keeps with one end rewritten, per the register
-   above. `repro.rs` is out at PR #498. **The two that remain are
+   above. The `queue.rs` deletion landed at PR #643.
+   `repro.rs` is out at PR #498. **The two that remain are
    `web/admin.rs` and `web/mod.rs`**, and as of 2026-09-07 they wait on one
    condition rather than two: the schema landed at PR #499 and the charter's
    section 6 named its act and its two triggers at PR #493, so what they
