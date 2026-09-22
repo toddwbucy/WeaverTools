@@ -120,15 +120,18 @@ analyst declares only the diagnostic run's own facts.** Per the operator's
 direction of 2026-08-31 on issue #394. Every fact of the source run comes
 from the record - the artifact, the seated identity prefix, the declared
 seed and every tunable the effective sampling and its bounds name, the
-session's own name - because every value an analyst re-types into a
+source session's own name - because every value an analyst re-types into a
 declaration is a chance to be correct to memory instead of to the run,
 which is the record-silent-property defect class entering through the
-config file. Three facts stay the analyst's to declare, each for its own
+config file. Four facts stay the analyst's to declare, each for its own
 reason. **Device placement**, because the record deliberately names no
 silicon and a replay on other silicon is a legitimate act the record must
 not forbid. **The readers' elections**, riding the declaration per apex
 section 8, the analyst's question and never the source's property. **The
-diagnostic sink**, the new record's home. A member the record does
+diagnostic sink**, the new record's home. **The diagnostic destination session**,
+a name distinct from the source because a new selection creates different holdings.
+The derived declaration and the diagnostic preload name that same destination. A member
+the record does
 not carry and the run under this binding does not read takes the fixed
 spelling the Spec names rather than a guess. The rule is also what makes a
 later randomly drawn seed free: a value that lands in the record's
@@ -137,16 +140,22 @@ a re-typed declaration would be wrong by construction. The replay's own
 identity checks then guard the derivation itself - a drifted derivation
 fails certification rather than replaying a run that never was.
 
-**It preloads what the parse projects**, across the seam
-`weaver-analysis-state-contract` governs, and it sends three things in one
-order. **The election opens the channel**, whole, as the first traffic on
-every standing, declaring the replayed session under its own name so the
-holdings answer to the name the loop later asks against. **Then a distillate
-per elected event**, in the record's sequence order, owed nothing back.
-**Then the seal**, one empty frame after the last distillate, which is the
-fact the harness's replay ask answers at and the only thing that tells a
-finished sender from a dying one. This crate sends all three and asks
-nothing on this seam.
+**Reconstruction follows the recorded election, and diagnostic projection is an explicit
+different session**, per the operator's ruling of 2026-09-22 after PR #649's three-way
+measurement. Ordinary reconstruction selects what the record says its live tee selected.
+A diagnostic projection selects what the replay reads under this crate's own election
+and requires an explicitly named destination different from the source session. A richer
+diagnostic projection cannot silently replace the source session's holdings under its
+old name. The record remains the authority for source-run facts in either case.
+
+**It preloads what the selected rule projects**, across the seam
+`weaver-analysis-state-contract` governs. The election opens the channel whole,
+declaring the destination session the receiving load also names. Then one distillate per
+elected event follows in record order, owed nothing back. Then the seal tells custody
+that the driver finished. The driver checks its selection and required evidence before
+the opener can retire any holdings. Missing evidence refuses the claim that needs it,
+never selecting a different rule by default. This crate sends all three and asks nothing
+on this seam.
 
 **It reads the diagnostic-trace off the sink.** The sink is admin's, opened for
 the binding under root by whatever discriminant the declaration named, per
@@ -366,8 +375,9 @@ a sink.
 - **This charter names no Rust item and elects no representation.** **Its Spec
   landed 2026-08-27** and the driver's shape and the parser's are there: the
   parse's own read types answering to `weaver-trace-Spec` section 3 under G5,
-  the election composed from what the replay reads rather than declared by an
-  operator, the projection splicing raw payload text so a holding cannot say by
+  ordinary reconstruction under the recorded election and explicit diagnostic
+  projection under an election composed from what the replay reads, the projection
+  splicing raw payload text so a holding cannot say by
   its own bytes which side landed it, and the gate on the outcome this
   charter's section 3 now rests on. **The certification's mechanics do not**,
   that comparison belonging to the loop inside the run per section 3, and what

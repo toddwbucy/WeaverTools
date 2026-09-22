@@ -68,9 +68,11 @@ The operator sequences three acts, and the loop is the third:
    derives the declaration step one loads**, per `weaver-analysis-PRD`
    section 3 as amended 2026-09-01 on issue #394: every source-run fact
    from the record, the analyst declaring only device placement, the
-   readers' elections, and the sink, so the derivation runs before step
+   readers' elections, the sink, and a distinct diagnostic destination. The
+   derived declaration and the explicitly diagnostic preload name that same
+   destination, while the source facts stay record-derived. Derivation runs before step
    one and the preload after it - one act of the driver's, bracketing the
-   load. **What the election
+   load. **What the diagnostic election
    holds is `weaver-analysis-Spec` section 3's**, composed from what this
    loop reads, and what follows sketches its shape rather than fixing the
    set: the message kinds, `model.request` for each turn's rendered
@@ -132,7 +134,10 @@ The charter's section 4 procedure, as this loop performs it:
    about the state rests on one fact beyond that list, and it is claim-relative the same
    way**, per the charter's section 4 and `weaver-agents-PRD` section 8: the tee's
    election. It is the rule that decided what the original agent's state held, so a
-   replay preloaded under a different one rebuilds a session that never ran. **The
+   projection under a different one builds different holdings. This workflow
+   explicitly names that projection as a different diagnostic session, and token-path
+   certification does not certify those holdings as the original state. A claim of
+   reconstructed state requires a separate comparison under the recorded rule. **The
    loop reads it from the record's `load` event and never from the holdings**, which
    is why the record carries it at all: the holdings are what that rule produced, so
    recovering the rule from them would be

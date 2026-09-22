@@ -208,15 +208,23 @@ to: analysis-derives-no-absent-member
 
 ## 3. The election and the projection
 
-**The election this crate declares is composed from what the replay reads, not
-declared by an operator.** A serving load's election is the operator's, per
-`weaver-harness-state-contract`, that contract's `election` term making it a
-load-declared fact the operator states. A preload's is this crate's, because this
-crate knows what the loop it is feeding will ask for: `diagnostic-replay-loop`
-walks by run and turn from the envelope, pairs request to measurement in landing
-order, and establishes input identity before any forward pass. **So the election
-names the kinds those steps read and the payload key paths they read out of them,
-and nothing further.**
+**Ordinary preload reconstructs under the recorded election.** It reads the `tee` rule
+from each included run's governing `load` event and independently applies that rule to
+the canonical record. The rule carries `all_kinds` and each named kind's payload paths.
+The recorded rule requires a boolean `all_kinds` and a `keys` list, each entry
+naming a string `kind` and a list of string `paths`. Missing members are not
+default values. Missing or malformed evidence refuses rather than substituting the
+deployment template
+or this crate's diagnostic election. The projection includes the trace Spec section 11
+exception for turnless system messages, independently of the tee implementation. No new
+dependency on the writer is introduced.
+
+**Diagnostic preload explicitly selects this crate's election.** Its election is
+composed from what `diagnostic-replay-loop` reads: run and turn envelopes, each rendered
+contribution and its identity, and the recorded measurements that certification
+compares. The paragraphs below define that diagnostic election alone. It is not the
+default reconstruction rule, and selecting it requires a different destination session
+under section 4.
 
 **The ceiling is the loop's reading and not this crate's judgment of size.** What
 bounds the election from above is that a kind `diagnostic-replay-loop` never reads,
@@ -240,9 +248,11 @@ failure `weaver-agents-PRD` section 8 added the criterion to prevent.
 three acts rather than fixing it. A divergence there is a defect against this
 section.
 
-**The declared session is the replayed session's own name**, per the contract's
-section 2, because the loop's asks on the other door bind to the opener's session
-and a preload declaring anything else would land holdings no ask can reach.
+**The declared session is the destination the receiving load names**, per the
+contract's section 2. Ordinary reconstruction retains the source name unless the
+operator names a branch. Diagnostic projection requires a nonempty distinct
+destination, and declaration derivation uses that same explicit name. Source run,
+turn, and sequence remain recorded facts.
 
 **The election names what the harness's open reads as well, as of 2026-09-06**, per
 `weaver-state-PRD` section 4 and `weaver-harness-Spec` section 2: a session standing
@@ -255,13 +265,15 @@ message kinds the store's `recall` serves, `message.system`, `message.user`,
 the three the replay reads. The ceiling widens with the asker rather than moving from
 the rule: what bounds the election from above is what any party asks of the preloaded
 holdings, and the harness's open is the second such party after the replay loop. The
-same projection serves a diagnostic preload, whose loop reads past the four kinds
-untouched, so the verb elects one election and the driver need not know which load
-it feeds.
+diagnostic loop reads past those four kinds untouched. Ordinary reconstruction
+uses the recorded rule even when that rule does not carry the same conversation
+pairs. The driver never enriches a reconstruction to make it resemble a diagnostic
+projection.
 
-**What the opener declares is what the stream delivers.** Kinds outside the
-election do not cross, which is the contract's owing in section 3 and is checkable
-against the opener the same channel carried.
+**What the opener declares is what the stream delivers.** Selection follows the
+effective election, including the standing turnless-system rule drawn from trace
+Spec section 11. Other kinds outside that selection do not cross. This is the
+contract's owing in section 3, checked against the opener and that drawn rule.
 
 ```graph
 node: analysis-election-declares-what-follows
@@ -311,7 +323,7 @@ to: analysis-sequence-order-preserved
 source-run fact**, per the charter's section 3 as amended on issue #394. The derivation
 reads members the record already spells and writes the declaration the operator loads,
 so the diagnostic run is correct to the run and never to the analyst's memory. Each
-derived member names its source: the session from the envelope, the artifact from
+derived member names its source: the source session from the envelope, the artifact from
 `model.measurement`'s `model`, the seated identity prefix from the turnless
 `message.system` events at the run's opening in landing order with each payload carried
 verbatim, which since the ruling of 2026-09-04 is the seed the derived declaration
@@ -326,9 +338,10 @@ claim-relative here exactly as it is at input identity, and the claim is the who
 declaration. The rule reaches the derived members alone - the fixed and analyst-supplied
 members below come from no record and refuse on no absence.
 
-**Three members are the analyst's inputs and three take fixed values.**
-Device placement, the readers' elections, and the diagnostic sink arrive
-from the invocation, per the charter's three exceptions. **The sink's
+**Four members are the analyst's inputs and three take fixed values.**
+Device placement, the readers' elections, the diagnostic sink, and the distinct
+diagnostic destination arrive from the invocation, per the charter's four exceptions.
+**The sink's
 input carries its shape and not only its name**: the charter has this
 crate assume no discriminant, so the analyst who elects a pipe is electing
 that the run retains nothing and the reading is taken as the stream
@@ -339,6 +352,13 @@ make that election the crate's rather than the operator's. `binding-kind` is
 `permission-mode` takes `ask` - the fixed values for members the record
 does not carry and a run under this binding never reads, stated here so
 the derivation writes a spelling rather than a guess.
+
+**`derive` requires `--as <session>` for the diagnostic destination.** The name is
+nonempty and differs from the one source session whose evidence is being derived. The
+declaration's session is this destination, while every source-run input retains its
+record-derived value. The same destination must be passed to diagnostic preload. Neither
+command defaults the destination to the source name. Invalid names refuse before a
+declaration is written or a preload is opened.
 
 ```graph
 node: analysis-declaration-derives-from-the-record
@@ -410,6 +430,29 @@ seam and reads nothing from it.
 crate writes that spelling. A blank line is framing residue and not a seal, per the
 contract, so a driver that emitted one would have closed without sealing and the
 parked replay ask on the other door would never answer.
+
+**The command selects its mode before opening the door.** `preload <trace> <socket>`
+reconstructs under the recorded election. `--as <session>` optionally names a branch
+without changing that election. `--diagnostic` instead selects section 3's diagnostic
+election and requires `--as <session>` naming a nonempty destination different from the
+source session. A selected prefix with multiple source sessions refuses rather than
+merging their identities. Mode, destination, cut, and election evidence are validated
+before connecting or sending any opener.
+
+**The cut bounds the evidence used to choose the rule.** In ordinary mode, each included
+run needs a valid governing `load.tee` before its projected events. An absent rule,
+malformed rule, conflicting duplicate load, or event without its run's governing load
+refuses naming the missing or conflicting evidence. A false `all_kinds` with no named
+kinds is an explicit rule, not missing evidence. One preload has one opener, so included
+runs with different effective rules refuse. Equivalent rules compare by admitted kinds
+and paths, independent of list order. A rule change after the cut does not invalidate
+the earlier prefix. Diagnostic mode can use its own election across source runs, but
+never fills in absent source evidence or waives the certification that requires it.
+
+**The completed preload reports what it selected.** The report names mode, source
+session, destination session, effective election, projected count, and seal. It reports
+the rule used rather than claiming the destination was unused. The wire still carries
+only the existing opener, distillates, and seal, with no policy added to state.
 
 **The preload takes a cut, as of 2026-09-04.** `preload` accepts `--through
 <run>:<turn>`, a run of the record by its reference and a turn within it, and projects
@@ -984,7 +1027,10 @@ resolved tree.
   an unknown layer count, watched to fail when a derivation from the norm array's
   length is put back.
 - The election declares what follows: the stream carries no kind the opener did not
-  name, watched to fail when a kind is projected past the election.
+  name, watched to fail when a kind is projected past the election. Ordinary
+  reconstruction is compared to the record and an independent live tee under its
+  recorded rule. Restoring the fixed diagnostic default or defaulting absent
+  election evidence must fail that comparison or its preflight refusal check.
 - The projection splices verbatim: a value the record spelled in a way a
   re-encoding would change crosses byte-identical, watched to fail when the
   projection re-encodes a parsed value.
@@ -1003,7 +1049,10 @@ resolved tree.
 - The preload cuts and renames: a `--through` projects every event through the named
   turn's last event and none after, watched to fail when the cut is dropped, and a
   `--as` rewrites every envelope's session, watched to fail when the rewrite is
-  dropped and a distillate keeps the record's name.
+  dropped and a distillate keeps the record's name. Diagnostic mode without a
+  distinct destination refuses, and moving any preflight validation past the opener
+  must fail a check that existing holdings survive refusal. Declaration derivation
+  and diagnostic preload use the same destination, independently of source identity.
 - The summary reports the record's identity as spelled: a measurement carrying the
   sentinel crosses as the empty string and one carrying no member crosses absent,
   watched to fail when the reader folds the sentinel into absence, and an absent
