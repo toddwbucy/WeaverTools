@@ -3283,6 +3283,307 @@ mod tests {
         );
     }
 
+    /// Characterization only: this records today's deaf interval inside a
+    /// tool invocation, not a promised stop latency. A stop heard before the
+    /// gate answers must fail this test and return the question to authoring.
+    #[test]
+    fn a_stop_during_an_invocation_waits_for_the_gate() {
+        use nix::poll::{PollFd, PollFlags, poll};
+        use std::os::fd::AsFd;
+        use std::time::{Duration, Instant};
+        const GATE_DELAY: Duration = Duration::from_secs(2);
+        const PEER_BOUND_MS: u16 = 5_000;
+
+        let listener = test_listener();
+        for invocation in [false, true] {
+            let (near, far) = socketpair(
+                AddressFamily::Unix,
+                SockType::SeqPacket,
+                None,
+                SockFlag::SOCK_CLOEXEC,
+            )
+            .expect("decode pair");
+            let decode = crate::channel::decode_from_owned(near);
+            let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("admin pair");
+            let admin = admin_end.into_channel();
+            let (gate_near, gate_child) = crate::channel::OrganChannel::pair().expect("gate pair");
+            let raw = |text: &str| serde_json::value::RawValue::from_string(text.into()).unwrap();
+            let generated = |content, finish| {
+                weaver_types::TokenAnswer::Generated(Generation {
+                    content,
+                    emission: "measurement".into(),
+                    finish,
+                    resident: 64,
+                    capacity: 4096,
+                    request: raw(r#"{"rendered":"measurement","template":"test","sampling":{}}"#),
+                    measurement: raw(
+                        r#"{"model":"fake","weights_hash":"fake","input_tokens":[1],"output_tokens":[2],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
+                    ),
+                })
+            };
+            // Fix the readiness order, not a scheduler race. Both the initial
+            // generated answer and the stop are queued before turn(). The
+            // stream poll checks decode first. Without the queued answer the
+            // preloaded stop can cancel the first decode before any invocation.
+            if invocation {
+                let first = generated(
+                    vec![ContentBlock::ToolCall(weaver_traits::ToolCall {
+                        name: "calculator".into(),
+                        arguments: r#"{"expression":"37 * 43"}"#.into(),
+                    })],
+                    Finish::Completed,
+                );
+                send(
+                    far.as_raw_fd(),
+                    &serde_json::to_vec(&first).unwrap(),
+                    MsgFlags::empty(),
+                )
+                .expect("queue initial tool call");
+            }
+            let stopped = generated(vec![], Finish::Stopped);
+            let peer = std::thread::spawn(move || {
+                let receive = || {
+                    let mut fds = [PollFd::new(far.as_fd(), PollFlags::POLLIN)];
+                    assert!(
+                        poll(&mut fds, PEER_BOUND_MS).expect("decode poll") > 0,
+                        "decode peer timed out"
+                    );
+                    let mut buf = vec![0u8; 65536];
+                    let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("directive");
+                    serde_json::from_slice::<weaver_types::TokenDirective>(&buf[..n])
+                        .expect("parse directive")
+                };
+                assert!(matches!(
+                    receive(),
+                    weaver_types::TokenDirective::AppendAndGenerate { .. }
+                ));
+                let mut appends = 1;
+                if invocation {
+                    let weaver_types::TokenDirective::AppendAndGenerate { delta, .. } = receive()
+                    else {
+                        panic!("characterization changed: stop heard before result re-feed");
+                    };
+                    appends += 1;
+                    assert_eq!(delta.len(), 1);
+                    assert!(
+                        matches!(&delta[0].content[0], ContentBlock::ToolResult(block) if block.content == "1591")
+                    );
+                }
+                assert!(matches!(
+                    receive(),
+                    weaver_types::TokenDirective::Cancel { .. }
+                ));
+                send(
+                    far.as_raw_fd(),
+                    &serde_json::to_vec(&stopped).unwrap(),
+                    MsgFlags::empty(),
+                )
+                .expect("stopped generation");
+                appends
+            });
+            let gate_peer = invocation.then(|| {
+                std::thread::spawn(move || {
+                    let gate = gate_child.into_channel();
+                    let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
+                    assert!(
+                        poll(&mut fds, PEER_BOUND_MS).expect("gate open poll") > 0,
+                        "gate never opened"
+                    );
+                    let open = gate.recv().expect("gate Open");
+                    let opened = Instant::now();
+                    assert_eq!(open.position, weaver_types::Position::Open);
+                    let weaver_types::Payload::Tool(execution) = &open.payload else {
+                        panic!("tool payload")
+                    };
+                    assert_eq!(execution.clock_ms, TOOL_CALL_CLOCK_MS);
+                    // Watch throughout the delay, not only a snapshot at its end.
+                    while opened.elapsed() < GATE_DELAY {
+                        let remaining = GATE_DELAY.saturating_sub(opened.elapsed());
+                        let timeout = u16::try_from(remaining.as_millis().max(1)).unwrap();
+                        let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
+                        assert_eq!(
+                            poll(&mut fds, timeout).expect("gate observation"),
+                            0,
+                            "characterization changed: another envelope or closure before answer"
+                        );
+                    }
+                    let answered = Instant::now();
+                    gate.send(&weaver_types::OrganEnvelope {
+                        exchange: open.exchange,
+                        position: weaver_types::Position::Close,
+                        payload: weaver_types::Payload::ToolAnswer(weaver_gate_execute_stub(
+                            execution,
+                        )),
+                    })
+                    .expect("gate answer");
+                    (opened, answered)
+                })
+            });
+
+            let session = SessionId("s-stop-measurement".into());
+            let mut recorder = crate::record::Record::Serving(
+                Recorder::receive(
+                    tempfile(),
+                    RunRef("r-1".into()),
+                    SessionRef(session.0.clone()),
+                )
+                .expect("recorder"),
+            );
+            // Author owns its origin. Bracket its construction so trace
+            // monotonic timestamps map to intervals on this test's clock
+            // without changing production code or treating return as close.
+            let origin_before = Instant::now();
+            let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+            let origin_after = Instant::now();
+            author
+                .author(
+                    &mut recorder,
+                    Kind::Load,
+                    Subsystem::Harness,
+                    None,
+                    Some(Payload::Elections(weaver_trace::Elections {
+                        residual_readout: false,
+                        field: None,
+                        surprisal: false,
+                        tee: Some(weaver_trace::Election::default()),
+                        state_member: false,
+                        declaration: Default::default(),
+                        lineage: None,
+                        stack: Default::default(),
+                        state_store: Default::default(),
+                        composer: weaver_trace::LoopIdentity::compiled("test"),
+                    })),
+                )
+                .expect("load");
+            let mut turn_ordinal = 0;
+            let mut turn_in_flight = None;
+            let mut slot = Some(verb_end);
+            let mut gate_ordinal = 0;
+            let mut held = std::collections::VecDeque::new();
+            let mut fullness = None;
+            let mut pressure_reported = false;
+            let load_facts = test_load_facts();
+            let stop_before = Instant::now();
+            admin
+                .send(&weaver_types::OrganEnvelope {
+                    exchange: weaver_types::ExchangeId {
+                        opener: weaver_types::Opener::Admin,
+                        ordinal: 9,
+                    },
+                    position: weaver_types::Position::Open,
+                    payload: weaver_types::Payload::Directive(
+                        weaver_types::LifecycleDirective::Stop,
+                    ),
+                })
+                .expect("preload stop");
+            let stop_available = Instant::now();
+            let outcome = {
+                let mut ports = Ports::grant(
+                    &decode,
+                    &author,
+                    &mut recorder,
+                    &mut turn_ordinal,
+                    &mut turn_in_flight,
+                    &load_facts,
+                    None,
+                    &listener,
+                    Some(&mut slot),
+                    invocation.then_some(GatePort {
+                        channel: &gate_near,
+                        ordinal: &mut gate_ordinal,
+                        held: &mut held,
+                    }),
+                    None,
+                    None,
+                    &mut fullness,
+                    &mut pressure_reported,
+                );
+                ports
+                    .turn(vec![Message {
+                        role: Role::User,
+                        content: vec![ContentBlock::Text {
+                            text: "measure stop".into(),
+                        }],
+                    }])
+                    .expect("turn returns")
+            };
+            let mut fds = [PollFd::new(admin.as_fd(), PollFlags::POLLIN)];
+            assert!(
+                poll(&mut fds, PEER_BOUND_MS).expect("admin answer poll") > 0,
+                "stop unanswered"
+            );
+            assert!(matches!(
+                admin.recv().expect("stop answer").payload,
+                weaver_types::Payload::Answer(weaver_types::LifecycleAnswer::TurnAborted { .. })
+            ));
+            let acknowledged = Instant::now();
+            let appends = peer.join().expect("decode peer");
+            let gate_times = gate_peer.map(|peer| peer.join().expect("gate peer"));
+            assert!(outcome.aborted);
+            let trace = recorder.structure().expect("serving structure");
+            let event = |kind| {
+                let line = &trace.by_kind(kind).next().expect("trace event").line;
+                serde_json::from_str::<serde_json::Value>(line).expect("trace JSON")
+            };
+            let close = event(Kind::TurnClosed);
+            let close_ns = close["monotonic_ns"]
+                .as_str()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            let close_lower = origin_before + Duration::from_nanos(close_ns);
+            let close_upper = origin_after + Duration::from_nanos(close_ns);
+            let latency_min = close_lower.duration_since(stop_available);
+            let latency_max = close_upper.duration_since(stop_before);
+            let close_text = close.to_string();
+            assert!(
+                close_text.contains(r#""close":"stopped""#)
+                    && close_text.contains(r#""reason":"directive""#),
+                "{close}"
+            );
+            assert!(acknowledged >= close_lower, "announce follows record");
+            let timing = if let Some((opened, answered)) = gate_times {
+                assert!(
+                    close_lower >= answered,
+                    "close preceded gate answer: latency={latency_min:?}..{latency_max:?}"
+                );
+                assert!(
+                    latency_min >= GATE_DELAY,
+                    "stop latency={latency_min:?}..{latency_max:?}, delay={GATE_DELAY:?}"
+                );
+                assert_eq!(appends, 2, "result is fed back before stop is heard");
+                let started = event(Kind::ToolCallStarted);
+                let started_ns = started["monotonic_ns"]
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap();
+                assert!(origin_before + Duration::from_nanos(started_ns) <= opened);
+                serde_json::json!({
+                    "tool_call_started_monotonic_ns": started_ns,
+                    "gate_open_ms_after_stop": opened.duration_since(stop_available).as_secs_f64() * 1000.0,
+                    "gate_answer_ms_after_stop": answered.duration_since(stop_available).as_secs_f64() * 1000.0,
+                    "gate_envelopes_before_answer": 1,
+                })
+            } else {
+                assert_eq!(appends, 1);
+                serde_json::Value::Null
+            };
+            println!(
+                "W1c {}",
+                serde_json::json!({
+                    "case": if invocation { "invocation" } else { "decode" },
+                    "stop_to_close_ms_min": latency_min.as_secs_f64() * 1000.0,
+                    "stop_to_close_ms_max": latency_max.as_secs_f64() * 1000.0,
+                    "stop_to_admin_answer_observed_ms": acknowledged.duration_since(stop_available).as_secs_f64() * 1000.0,
+                    "turn_closed_monotonic_ns": close_ns,
+                    "close_reason": "directive", "appends_after_stop": appends,
+                    "gate": timing,
+                })
+            );
+        }
+    }
+
     #[test]
     fn a_stop_dialed_mid_stream_cancels_the_turn() {
         let (near, far) = socketpair(
