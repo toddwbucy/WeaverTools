@@ -58,12 +58,18 @@ cut and rename spellings rather than introducing another driver or wire form.
 | Invocation | Election | Destination |
 | --- | --- | --- |
 | `preload <trace> <socket>` | Recorded rule | Source session |
-| `preload <trace> <socket> --as <branch>` | Recorded rule | Named branch |
+| `preload <trace> <socket> --as <branch>` | Recorded rule | Named branch, whole record |
+| `preload <trace> <socket> --through <run>:<turn> --as <branch>` | Recorded rule | Named nonempty source-distinct branch |
+| Ordinary cut with missing, empty, or source-equal `--as` | Refused | No traffic |
 | `preload <trace> <socket> --diagnostic --as <diagnostic>` | Analysis rule | Named distinct session |
 | `preload <trace> <socket> --diagnostic` | Refused | No traffic |
 | Diagnostic mode with an empty or source-equal destination | Refused | No traffic |
 
-`--through <run>:<turn>` applies in either mode. It selects the prefix ending
+`--through <run>:<turn>` applies in either mode only with a nonempty destination
+different from the source. Ordinary mode therefore requires `--as` when cut, and
+a bare or source-named cut refuses at the driver before connecting or sending an
+opener. The whole record under its own name is a resume, per `weaver-state-PRD`
+section 4 and `weaver-admin-Spec` section 4. The cut selects the prefix ending
 at the named close event before election validation and projection. The existing
 refusals for a missing run, missing turn, and unclosed turn remain. Every
 preload accepts one source session, and a selected prefix containing multiple
@@ -176,7 +182,8 @@ future kind with an elected unknown path, an all-kinds rule with no named kinds,
 and a restrictive empty rule retaining only the turnless-system exception.
 An ordinary excluded event must remain absent.
 
-Refusal tests must establish that invalid mode, destination, cut, source
+Refusal tests must establish that a bare or source-named cut, invalid mode,
+destination, cut, source
 session, or required election evidence sends no opener. A pre-existing
 destination's holdings must survive each refusal. Missing and conflicting rules
 must not fall back to the fixed analysis election. Conflicting duplicate-kind
@@ -193,6 +200,27 @@ and move validation after the opener. Each must fail at the property it removes.
 Dead-driver retry must still replace only its declared destination and release
 parked asks only at the seal. The dependency graph, raw-value independence, and
 operator ownership of merge remain unchanged.
+
+## Related claims retained and enforcement owed
+
+The state-claim sentences in `weaver-agents-PRD` section 8 and
+`weaver-diagnostic-PRD` section 4 remain unchanged: both constrain a claim to
+reproduce the source state, while an explicitly renamed diagnostic projection
+makes no such claim. The loop document now distinguishes that diagnostic
+operation from a faithful state reconstruction. This act does not change the
+apex's certification boundary or waive the diagnostic charter's input-evidence
+requirements. A new name alone cannot certify source-state equivalence.
+
+Five new perturbation nodes name the unimplemented behavior: recorded-rule
+reconstruction, validation before the opener, a distinct diagnostic destination,
+explicit declaration destination, and the effective-selection report. Existing
+nodes retain their previous scope. All five new enforcement rows are marked
+owed and remain uncited until their implementation and perturbations land.
+The census baseline deliberately records five additional uncited perturbations,
+from 28 to 33, and one fewer tableless document, from 11 to 10, because the
+analysis Spec now has a complete enforcement inventory. Every other counter is
+unchanged. The code act must add real instruments and remove those five owed
+entries from the uncited baseline, not merely add citations to old tests.
 
 ## Landing sequence
 

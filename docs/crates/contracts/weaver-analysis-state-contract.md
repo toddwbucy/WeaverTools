@@ -117,8 +117,10 @@ section 3, and none of the three is complete without the others.
 declares the effective election and destination session whole. Ordinary reconstruction
 uses the rule recorded for the source holdings. A diagnostic projection uses the
 driver's own rule only by explicit election of that behavior, and declares a nonempty
-destination different from the source session. An ordinary reconstruction may also name
-a destination branch while retaining the recorded rule. The receiving load, opener, and
+destination different from the source session. A whole ordinary reconstruction may
+retain the source name or name a branch
+while retaining the recorded rule. A cut requires a nonempty destination
+different from the source. The receiving load, opener, and
 projected envelopes name the same destination, because every answer on the other door is
 bounded to the session that load declared.
 
@@ -135,7 +137,10 @@ projection may apply its own rule across source
 runs, without manufacturing missing source evidence or certifying a claim whose evidence
 is absent.
 
-**Validation precedes retirement.** Selection, destination, cut, and required election
+**Validation precedes retirement.** A cut under the source session name refuses
+at the driver before any opener, even if the receiving load has already validated
+its own declaration. This preserves the resume/branch boundary in
+`weaver-state-PRD` section 4. Selection, destination, cut, and required election
 evidence are checked before an opener crosses. A refusal leaves existing destination
 holdings untouched. After the opener the driver sends one distillate per elected event
 in the record's order and is owed nothing back. The fact has one home, and a

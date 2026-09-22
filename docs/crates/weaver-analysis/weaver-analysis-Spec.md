@@ -168,15 +168,10 @@ cross this crate byte-identical to what the record spelled, per section 3, and i
 is the same reason `weaver-trace`'s tee holds a payload as raw text on the other
 side of the same wire.
 
-**Semantic readers skip unknown kinds and members, while raw projection retains
-them.** The record carries no version marker, per `weaver-trace-PRD` section 6.
-An unknown kind cannot become a request or measurement or decide diagnostic
-pairing, and an unknown member cannot influence an interpretation that does not
-read it. The envelope-first parse still retains each canonical event and its raw
-payload for election-driven reconstruction. An all-kinds rule admits an unknown
-kind's envelope, and an elected path crosses verbatim even when no semantic
-reader knows that path. The semantic skip is never a license to discard raw
-projection material. The charter's section 4 makes the same distinction.
+**Semantic readers skip unknown kinds and members.** Unknown content cannot
+become a request or measurement, decide diagnostic pairing, or influence an
+interpretation that does not read it. The record carries no version marker,
+per `weaver-trace-PRD` section 6. This is the existing semantic-skip claim.
 
 ```graph
 node: analysis-parse-skips-the-unknown
@@ -187,6 +182,14 @@ edge: asserts
 from: weaver-analysis
 to: analysis-parse-skips-the-unknown
 ```
+
+**Raw reconstruction retains unknown material.** The envelope-first parse keeps
+each canonical event and its raw payload for election-driven reconstruction.
+An all-kinds rule admits a future kind's envelope, and an elected unknown path
+crosses verbatim. This new obligation belongs to
+`analysis-reconstruction-follows-recorded-election` in section 3, not to the
+existing semantic-skip instrument. The charter's section 4 makes the same
+distinction.
 
 **A member a record does not carry is absent and is never derived from the members
 beside it.** That is the harder direction of the same rule, per the charter's
@@ -209,16 +212,25 @@ to: analysis-derives-no-absent-member
 
 ## 3. The election and the projection
 
-**Ordinary preload reconstructs under the recorded election.** It reads the `tee` rule
-from each included run's governing `load` event and independently applies that rule to
-the canonical record. The rule carries `all_kinds` and each named kind's payload paths.
-The recorded rule requires a boolean `all_kinds` and a `keys` list, each entry
-naming a string `kind` and a list of string `paths`. Missing members are not
-default values. Missing or malformed evidence refuses rather than substituting the
-deployment template
-or this crate's diagnostic election. The projection includes the trace Spec section 11
-exception for turnless system messages, independently of the tee implementation. No new
-dependency on the writer is introduced.
+**Ordinary preload reconstructs under the recorded election.** It reads each
+included run's governing `load.tee` under the representation defined by
+`weaver-trace-Spec` section 3 and independently applies that rule to the canonical
+record. Required members are not supplied by defaults. Missing or malformed
+evidence refuses before the opener, as section 4 requires. Projection includes
+unknown elected kinds and paths and the standing turnless-system exception from
+`weaver-trace-Spec` section 11, independently of the tee implementation. No new
+writer dependency is introduced. Recorded-rule selection, including the effective
+rule comparison of section 4, is a new obligation whose instrument is owed.
+
+```graph
+node: analysis-reconstruction-follows-recorded-election
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-reconstruction-follows-recorded-election
+```
 
 **Diagnostic preload explicitly selects this crate's election.** Its election is
 composed from what `diagnostic-replay-loop` reads: run and turn envelopes, each rendered
@@ -250,8 +262,9 @@ three acts rather than fixing it. A divergence there is a defect against this
 section.
 
 **The declared session is the destination the receiving load names**, per the
-contract's section 2. Ordinary reconstruction retains the source name unless the
-operator names a branch. Diagnostic projection requires a nonempty distinct
+contract's section 2. Whole-record reconstruction retains the source name unless the
+operator names a branch. A cut requires a nonempty source-distinct destination
+before the opener, per section 4. Diagnostic projection requires a nonempty distinct
 destination, and declaration derivation uses that same explicit name. Source run,
 turn, and sequence remain recorded facts.
 
@@ -271,10 +284,10 @@ uses the recorded rule even when that rule does not carry the same conversation
 pairs. The driver never enriches a reconstruction to make it resemble a diagnostic
 projection.
 
-**What the opener declares is what the stream delivers.** Selection follows the
-effective election, including the standing turnless-system rule drawn from trace
-Spec section 11. Other kinds outside that selection do not cross. This is the
-contract's owing in section 3, checked against the opener and that drawn rule.
+**The existing fixed-election instrument checks that the stream follows the
+analysis election.** It watches the diagnostic projection's selected kinds and
+paths, not the new recorded-rule mode, turnless-system exception, or preflight
+refusals. Those obligations have their own records and owed instruments here.
 
 ```graph
 node: analysis-election-declares-what-follows
@@ -339,6 +352,16 @@ claim-relative here exactly as it is at input identity, and the claim is the who
 declaration. The rule reaches the derived members alone - the fixed and analyst-supplied
 members below come from no record and refuse on no absence.
 
+```graph
+node: analysis-declaration-derives-from-the-record
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-declaration-derives-from-the-record
+```
+
 **Four members are the analyst's inputs and three take fixed values.**
 Device placement, the readers' elections, the diagnostic sink, and the distinct
 diagnostic destination arrive from the invocation, per the charter's four exceptions.
@@ -362,13 +385,13 @@ command defaults the destination to the source name. Invalid names refuse before
 declaration is written or a preload is opened.
 
 ```graph
-node: analysis-declaration-derives-from-the-record
+node: analysis-derive-uses-explicit-destination
 kind: assertion
 tag: perturbation
 
 edge: asserts
 from: weaver-analysis
-to: analysis-declaration-derives-from-the-record
+to: analysis-derive-uses-explicit-destination
 ```
 
 **The lens artifact's representation, per the charter's clauses of this
@@ -433,12 +456,28 @@ contract, so a driver that emitted one would have closed without sealing and the
 parked replay ask on the other door would never answer.
 
 **The command selects its mode before opening the door.** `preload <trace> <socket>`
-reconstructs under the recorded election. `--as <session>` optionally names a branch
-without changing that election. `--diagnostic` instead selects section 3's diagnostic
+reconstructs under the recorded election. For a whole record, `--as <session>`
+optionally names a branch without changing that election. With `--through`,
+`--as` is required and must name a nonempty destination different from the source.
+The driver refuses a bare cut or a source-equal destination before connecting or
+sending an opener, even if admin has already checked its declaration. This is the
+resume/branch boundary of `weaver-state-PRD` section 4 and `weaver-admin-Spec`
+section 4: the whole record under its own name is a resume, never a rewind.
+`--diagnostic` instead selects section 3's diagnostic
 election and requires `--as <session>` naming a nonempty destination different from the
 source session. A selected prefix with multiple source sessions refuses rather than
 merging their identities. Mode, destination, cut, and election evidence are validated
 before connecting or sending any opener.
+
+```graph
+node: analysis-diagnostic-requires-distinct-destination
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-diagnostic-requires-distinct-destination
+```
 
 **The cut bounds the evidence used to choose the rule.** In ordinary mode, each included
 run needs a valid governing `load.tee` before its projected events. An absent rule,
@@ -458,16 +497,37 @@ cut does not invalidate
 the earlier prefix. Diagnostic mode can use its own election across source runs, but
 never fills in absent source evidence or waives the certification that requires it.
 
+```graph
+node: analysis-preload-validates-before-opener
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-preload-validates-before-opener
+```
+
 **The completed preload reports what it selected.** The report names mode, source
 session, destination session, effective election, projected count, and seal. It reports
 the rule used rather than claiming the destination was unused. The wire still carries
 only the existing opener, distillates, and seal, with no policy added to state.
 
+```graph
+node: analysis-preload-reports-effective-selection
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-analysis
+to: analysis-preload-reports-effective-selection
+```
+
 **The preload takes a cut, as of 2026-09-04.** `preload` accepts `--through
 <run>:<turn>`, a run of the record by its reference and a turn within it, and projects
 every event of the record through that turn's close and none after it, the seal
 following as before, so a session can stand on a prefix of a record rather than the
-whole, per `weaver-state-PRD` section 4 and issue #432. The cut is by turn because the
+whole, under the distinct destination required above, per `weaver-state-PRD`
+section 4 and issue #432. The cut is by turn because the
 turn is the record's own unit and a cut inside one would land a generation without its
 close. A run the record does not hold, or a turn that run does not hold, refuses before
 anything is sent, naming it, and a turn named without its run is refused for the same
@@ -1029,24 +1089,13 @@ resolved tree.
 
 **Requiring a perturbation-verified test.**
 
-- Semantic interpretation skips unknown kinds and members: invented content leaves
-  diagnostic grouping unchanged and does not refuse merely for being unknown.
-  Recorded-rule projection still carries an invented kind and an elected unknown
-  path verbatim. Dropping that raw material or interpreting it as a known diagnostic
-  event must fail the respective projection or grouping check.
+- The existing semantic-skip test keeps diagnostic grouping unchanged when
+  invented kinds and members appear. It does not watch raw reconstruction.
 - No absent member is derived: a record without the layer and forward counts yields
   an unknown layer count, watched to fail when a derivation from the norm array's
   length is put back.
-- The election declares the effective selection: an all-kinds rule with no named
-  kinds carries every envelope, and a restrictive empty rule still carries turnless
-  system messages under the standing exception. An excluded ordinary event
-  stays out, watched to fail when it is projected anyway. Ordinary reconstruction is
-  compared to the record and an independent tee under the recorded rule. Repeated
-  kind entries preserve first-match precedence, watched to fail when they are merged
-  or sorted before selection. Reversing conflicting entries across runs refuses
-  before the opener, while reordering distinct kinds or effective paths does not.
-  Restoring the fixed diagnostic default or defaulting absent election evidence must
-  fail the comparison or its preflight refusal check.
+- The existing election instrument checks that the fixed diagnostic projection
+  admits only its elected kinds and paths. It does not watch default mode selection.
 - The projection splices verbatim: a value the record spelled in a way a
   re-encoding would change crosses byte-identical, watched to fail when the
   projection re-encodes a parsed value.
@@ -1065,10 +1114,8 @@ resolved tree.
 - The preload cuts and renames: a `--through` projects every event through the named
   turn's last event and none after, watched to fail when the cut is dropped, and a
   `--as` rewrites every envelope's session, watched to fail when the rewrite is
-  dropped and a distillate keeps the record's name. Diagnostic mode without a
-  distinct destination refuses, and moving any preflight validation past the opener
-  must fail a check that existing holdings survive refusal. Declaration derivation
-  and diagnostic preload use the same destination, independently of source identity.
+  dropped and a distillate keeps the record's name. These existing cut and rename
+  mechanics do not watch the new mode, destination, or preflight refusals.
 - The summary reports the record's identity as spelled: a measurement carrying the
   sentinel crosses as the empty string and one carrying no member crosses absent,
   watched to fail when the reader folds the sentinel into absence, and an absent
@@ -1100,6 +1147,30 @@ generation, watched to fail when it is derived from a later generation or sent f
 drain that opened after the run's `load`, and watched to fail when the input identifiers
 are not subtracted, which names the first draw and not the prefix.
 
+**New instruments owed by the implementation act.** The following obligations
+are unimplemented, uncited `perturbation` records. Their rows below say owed,
+not enforced by tests written against the previous behavior.
+
+- Recorded reconstruction: compare the record, an independent tee, and ordinary
+  reconstruction. Include unknown elected kinds and paths, all-kinds with no named
+  kinds, a restrictive empty rule retaining turnless system messages, and an excluded
+  ordinary event. Preserve first-match precedence for duplicate-kind entries.
+  Restoring the fixed default, dropping unknown material, suppressing the system
+  exception, or merging or sorting duplicates before selection must fail.
+- Preflight: absent or conflicting evidence, mixed source sessions, invalid cuts,
+  and source-named cuts refuse without an opener and leave existing holdings intact.
+  Reversing conflicting duplicate-kind entries across runs refuses, while reordering
+  distinct kinds or effective paths does not. Moving validation after the opener or
+  accepting a source-named cut must fail the preservation check.
+- Diagnostic destination: missing, empty, or source-equal destinations refuse before
+  the opener. Removing any of those checks must fail the refusal fixture.
+- Declaration destination: `derive --as` writes the requested distinct destination
+  while keeping source evidence unchanged. Dropping the rename or accepting an invalid
+  destination must fail, and derive/preload destination agreement is checked.
+- Selection report: mode, source and destination, effective rule, count, and seal
+  match the invocation and sent projection. Removing or falsifying any member must
+  fail its report comparison. This report does not yet exist in the required form.
+
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
 per section 4: what a suite can confirm is that this crate mints no identity and
@@ -1109,23 +1180,56 @@ is the residue section 1 names: the manifest reaches the dependency and no
 instrument here reaches the absence of a call `std` offers every crate, so the
 claim is review's and says so rather than borrowing the manifest's coverage.
 
-**Where the records sit.** The assertion records are at the clauses that argue the
-claims, across sections 1 through 5, rather than gathered here, per Document Format
-section 6. Twenty-nine sit there and none sits here, retaken from the records on
-2026-09-07, the count having read fourteen while acts since 2026-09-01 added six
-without moving it, the two acts of 2026-09-05 adding two, the act of 2026-09-07
-for issue #381 adding one, the act of 2026-09-09 for issue #521 adding two, and the
-second act of that date for issue #527 adding one, and the third for issue #532
-adding one.
+**Enforcement inventory.** Existing rows name their declared instrument and
+citation locations, not fresh execution evidence. New behavior is explicitly owed.
+The four previously uncited summary claims remain owed under issue #538.
 
-**Which invariant each claim serves.** One carries a `grounds` edge.
-`axiom-floor-is-vocabulary-behavior-is-socket` is why this crate links no internal
-crate: its whole vocabulary crosses a socket as drawn names rather than as shared
-types, which is that invariant read from outside the agent, where a linked
-dependency would have made a consumer a compile-time dependent of the interior.
-The other four axioms reach none of these claims. **Twenty-eight claims grounding in no
-invariant is the expected result and not a gap**, per Document Format section 4:
-most of this document is representation.
+| Claim | Instrument |
+| --- | --- |
+| `analysis-no-internal-dependency` | manifest: `Cargo.toml`, `tests/manifest.rs` |
+| `analysis-no-runtime-no-socket-crate` | manifest: `Cargo.toml`, `tests/manifest.rs` |
+| `analysis-binds-no-port` | review: section 1 review of binding calls |
+| `analysis-parse-skips-the-unknown` | perturbation: `src/record.rs`, `tests/driver.rs` |
+| `analysis-derives-no-absent-member` | perturbation: `src/record.rs`, `tests/driver.rs` |
+| `analysis-reconstruction-follows-recorded-election` | perturbation, **owed**: implementation of #650 |
+| `analysis-election-declares-what-follows` | perturbation: `src/project.rs`, `tests/driver.rs` |
+| `analysis-projection-splices-verbatim` | perturbation: `src/project.rs`, `tests/driver.rs` |
+| `analysis-sequence-order-preserved` | perturbation: `src/project.rs`, `tests/driver.rs` |
+| `analysis-declaration-derives-from-the-record` | perturbation: `src/declare.rs`, `tests/driver.rs` |
+| `analysis-derive-uses-explicit-destination` | perturbation, **owed**: implementation of #650 |
+| `analysis-lens-refuses-other-weights` | perturbation: `src/lens.rs`, `tests/lens.rs` |
+| `analysis-diagnostic-requires-distinct-destination` | perturbation, **owed**: implementation of #650 |
+| `analysis-preload-validates-before-opener` | perturbation, **owed**: implementation of #650 |
+| `analysis-preload-reports-effective-selection` | perturbation, **owed**: implementation of #650 |
+| `analysis-preload-cuts-and-renames` | perturbation: `src/project.rs` |
+| `analysis-seal-ends-the-preload` | perturbation: `src/preload.rs`, `tests/driver.rs` |
+| `analysis-dials-as-invoked` | review: `src/main.rs` |
+| `analysis-one-preload-per-run` | compile-fail: `src/lib.rs` |
+| `analysis-gates-on-the-stated-outcome` | perturbation: `src/reading.rs`, `tests/reading.rs` |
+| `analysis-null-replay-gates-the-rest` | perturbation: `src/reading.rs`, `tests/reading.rs` |
+| `analysis-writes-no-record` | compile-fail: `src/lib.rs` |
+| `analysis-threaded-head-is-bit-identical` | perturbation: `src/lens.rs`, `tests/lens.rs` |
+| `analysis-control-gates-the-reading` | perturbation: `src/lens.rs`, `tests/lens.rs` |
+| `analysis-captures-compare-exactly` | perturbation: `src/capture.rs`, `tests/lens.rs` |
+| `analysis-compare-refuses-across-loops-and-members` | perturbation: `src/capture.rs`, `tests/lens.rs` |
+| `analysis-reading-drains-within-a-turn` | perturbation: `tests/stream.rs` |
+| `analysis-signals-keep-absence` | perturbation: `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-residency` | perturbation: `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-record-identity` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-record-session` | perturbation, **owed**: issue #538 |
+| `analysis-summary-reports-the-record-digest` | perturbation, **owed**: issue #538 |
+| `analysis-summary-reports-the-prefix-length` | perturbation, **owed**: issue #538 |
+| `analysis-summary-reports-the-run-and-its-conditions` | perturbation, **owed**: issue #538 |
+
+**Where the records sit.** Records remain beside their clauses in sections 1
+through 5. Existing records retain their prior instrument scope. Five new records
+name the unimplemented selection, preflight, destination, and report obligations.
+They remain uncited until the code act adds their failing perturbations.
+
+**Which invariant each claim serves.** The internal-dependency claim carries the
+standing `grounds` edge to `axiom-floor-is-vocabulary-behavior-is-socket`. The other
+claims are representation and carry no new grounds edge, per Document Format
+section 4.
 
 ## 7. Open elections
 
