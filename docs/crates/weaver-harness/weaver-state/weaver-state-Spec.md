@@ -510,17 +510,27 @@ behaviour sits.
   surviving a reopen.
 
 **The session claim is watched at both engines, as of PR #644.** The service
-engine's in-file suite stands a scratch PostgreSQL per test and drops each of the
-five `WHERE session` predicates its reads carry, one at a time, and the shape and
-recall answers widen to an earlier session's rows; `postgres.rs` cites the claim
-where that suite sits. **The index naming is watched at both.** The service engine
+engine's in-file suite stands a scratch PostgreSQL per test, lands two sessions
+and asks about one, and `postgres.rs` cites the claim where that suite sits. The
+perturbation is recorded rather than performed by the suite: PR #644's body and
+both review seats removed each of the five `WHERE session` predicates the reads
+carry, one at a time. Four removals widen an answer to the other session's rows,
+a shape holding two runs or a count of two. The fifth, on the turn selection,
+fails the other way: the bound is spent on the other session's newest turn while
+the outer predicate still excludes that turn's rows, and the requested session's
+bounded recall comes back empty. The suite catches both shapes. **The index naming is watched at both.** The service engine
 holds a suite over the derivation section 3's election asks it for, a name made
 from the key path, carried into the statement the build would issue, and a
 refusal where the store's identifier limit cannot hold one, and it cites the
 claim where that suite sits. **That arm holds under one flag and not under the
 crate's default.** The service engine is behind a feature the crate does not
 default to, so a suite run without it compiles none of that engine and answers
-nothing about it, and the arm is watched by the run that passes the flag alone.
+nothing about it. The flag alone reaches the statement suite. The live
+instruments of PR #644 are ignored by default, a loud skip that the ordinary run
+reports as fourteen ignored rather than passes, and they run under a scratch
+instance with `WEAVER_STATE_TEST_PG` naming its socket directory and
+`cargo test -p weaver-state --features postgres --locked -- --ignored`, which is
+the invocation that reproduces every arm this section claims for that engine.
 As of PR #644 the suite reaches the store as well: the live tests construct a
 service engine on a scratch database and read `pg_indexes` for the indexes the
 store then holds, and the arms of the session, lands-whole, retirement and
