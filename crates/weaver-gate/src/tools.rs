@@ -1,3 +1,5 @@
+//! conforms: gate-execution-cancel-brings-the-clock-forward
+//! conforms: gate-execution-exit-heard-within-a-slice
 //! conforms: gate-shell-the-one-held-tool
 //! conforms: gate-execution-one-clock
 //! conforms: gate-execution-four-contents
@@ -21,7 +23,11 @@
 //! crate's voice with nothing run, an error is the machinery's, and a kill
 //! carries no tool voice by construction.
 
-use weaver_types::{ToolExecution, ToolOutcome};
+use crate::channel::{Channel, ChannelFault};
+use weaver_types::{
+    ExchangeId, KillCause, LifecycleRefusal, OrganEnvelope, Payload, Position, ToolExecution,
+    ToolOutcome,
+};
 
 /// The one held tool's name. The model calls the shell by the name the
 /// shell answers to everywhere else.
@@ -36,36 +42,51 @@ pub const SHELL_MAX_CLOCK_MS: u64 = 60_000;
 const SHELL_OUTPUT_BOUND: usize = 32 * 1024;
 
 /// Execute one call, answering one of the exchange's four contents.
-pub fn execute(execution: &ToolExecution) -> ToolOutcome {
+pub fn execute(
+    execution: &ToolExecution,
+    channel: &Channel,
+    exchange: &ExchangeId,
+) -> Result<ToolOutcome, ChannelFault> {
+    execute_inner(execution, channel, exchange).or_else(|end| match end {
+        ShellEnd::Channel(fault) => Err(fault),
+        other => Ok(other.into_outcome()),
+    })
+}
+
+fn execute_inner(
+    execution: &ToolExecution,
+    channel: &Channel,
+    exchange: &ExchangeId,
+) -> Result<ToolOutcome, ShellEnd> {
     if execution.name.0 != SHELL_NAME {
-        return ToolOutcome::Refused {
+        return Ok(ToolOutcome::Refused {
             reason: format!(
                 "no tool named {} is held - the shell, {SHELL_NAME}, is the one tool",
                 execution.name.0
             ),
-        };
+        });
     }
     if execution.clock_ms == 0 || execution.clock_ms > SHELL_MAX_CLOCK_MS {
-        return ToolOutcome::Refused {
+        return Ok(ToolOutcome::Refused {
             reason: format!(
                 "the caller's clock of {}ms is outside the shell's declared maximum of \
                  {SHELL_MAX_CLOCK_MS}ms",
                 execution.clock_ms
             ),
-        };
+        });
     }
     let parsed: serde_json::Value = match serde_json::from_str(&execution.arguments) {
         Ok(value) => value,
         Err(_) => {
-            return ToolOutcome::Refused {
+            return Ok(ToolOutcome::Refused {
                 reason: "the arguments are not one JSON object".to_string(),
-            };
+            });
         }
     };
     let Some(command) = parsed.get("command").and_then(|value| value.as_str()) else {
-        return ToolOutcome::Refused {
+        return Ok(ToolOutcome::Refused {
             reason: "the arguments carry no command string".to_string(),
-        };
+        });
     };
     // The home comes from the account database rather than from the
     // environment: the organ fan-out execs with an empty environment on
@@ -76,34 +97,43 @@ pub fn execute(execution: &ToolExecution) -> ToolOutcome {
         .flatten()
         .map(|user| user.dir)
     else {
-        return ToolOutcome::Errored {
+        return Ok(ToolOutcome::Errored {
             detail: "this uid has no home in the account database".to_string(),
-        };
+        });
     };
     match run_in_home(
         command,
         &home.to_string_lossy(),
         std::time::Duration::from_millis(execution.clock_ms),
+        channel,
+        exchange,
     ) {
-        Ok(content) => ToolOutcome::Result { content },
-        Err(end) => end.into_outcome(),
+        Ok(content) => Ok(ToolOutcome::Result { content }),
+        Err(end) => Err(end),
     }
 }
 
 /// How the shell's run ended when it did not answer: the machinery failed,
-/// or the caller's clock expired and the group was killed. The split is the
+/// or the clock/cancel killed the group, or the channel failed. The split is the
 /// contract's - the speaker differs - and the conversion to the wire's
 /// contents happens here so `run_in_home` stays a plain function.
 enum ShellEnd {
-    Errored { detail: String },
-    Killed { partial: Option<String> },
+    Errored {
+        detail: String,
+    },
+    Killed {
+        partial: Option<String>,
+        by: KillCause,
+    },
+    Channel(ChannelFault),
 }
 
 impl ShellEnd {
     fn into_outcome(self) -> ToolOutcome {
         match self {
             ShellEnd::Errored { detail } => ToolOutcome::Errored { detail },
-            ShellEnd::Killed { partial } => ToolOutcome::Killed { partial },
+            ShellEnd::Killed { partial, by } => ToolOutcome::Killed { partial, by },
+            ShellEnd::Channel(_) => unreachable!("channel faults stay below the exchange"),
         }
     }
 }
@@ -114,6 +144,8 @@ fn run_in_home(
     command: &str,
     home: &str,
     deadline: std::time::Duration,
+    channel: &Channel,
+    exchange: &ExchangeId,
 ) -> Result<String, ShellEnd> {
     use std::os::unix::process::CommandExt;
     use std::process::{Command, Stdio};
@@ -165,12 +197,21 @@ fn run_in_home(
             Ok(WaitStatus::StillAlive) => {
                 let remaining = until.saturating_duration_since(std::time::Instant::now());
                 if remaining.is_zero() {
-                    break Ok(true);
+                    break Ok(Some(KillCause::Clock));
                 }
-                std::thread::sleep(remaining.min(std::time::Duration::from_millis(25)));
+                let slice = remaining.min(std::time::Duration::from_millis(25));
+                match supervision_wait(channel, exchange, slice) {
+                    Ok(true) => break Ok(Some(KillCause::Cancel)),
+                    Ok(false) => {}
+                    Err(fault) => break Err(ShellEnd::Channel(fault)),
+                }
             }
-            Ok(_) => break Ok(false),
-            Err(error) => break Err(error),
+            Ok(_) => break Ok(None),
+            Err(error) => {
+                break Err(ShellEnd::Errored {
+                    detail: format!("the supervision failed: {error}"),
+                });
+            }
         }
     };
     // All endings kill the same group before reaping and release both
@@ -181,17 +222,16 @@ fn run_in_home(
     let _ = nix::sys::signal::kill(group, nix::sys::signal::Signal::SIGKILL);
     let reaped = child.wait();
     let drained = finish_draining(&finished, out_reader, err_reader);
-    let expired = ending.map_err(|error| ShellEnd::Errored {
-        detail: format!("the supervision failed: {error}"),
-    })?;
+    let killed_by = ending?;
     let status = reaped.map_err(|error| ShellEnd::Errored {
         detail: format!("the supervision failed: {error}"),
     })?;
     let (out, err) = drained?;
     let mut output = joined(&out, &err);
-    if expired {
+    if let Some(by) = killed_by {
         return Err(ShellEnd::Killed {
             partial: (!output.is_empty()).then_some(output),
+            by,
         });
     }
     // The exit account is metadata, appended after capture truncation so
@@ -210,6 +250,39 @@ fn run_in_home(
         output.push_str("(no output)");
     }
     Ok(output)
+}
+
+/// Wait for a cancel without postponing the next unreaped exit check.
+fn supervision_wait(
+    channel: &Channel,
+    exchange: &ExchangeId,
+    slice: std::time::Duration,
+) -> Result<bool, ChannelFault> {
+    use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
+    let mut fds = [PollFd::new(channel.as_fd(), PollFlags::POLLIN)];
+    let timeout = PollTimeout::try_from(slice).expect("the supervision slice fits poll");
+    #[cfg(test)]
+    tests::wait_entered();
+    match poll(&mut fds, timeout) {
+        Ok(0) | Err(nix::errno::Errno::EINTR) => return Ok(false),
+        Err(_) => return Err(ChannelFault::Closed),
+        Ok(_) => {}
+    }
+    let envelope = channel.recv()?;
+    if envelope.exchange == *exchange
+        && envelope.position == Position::Continue
+        && matches!(envelope.payload, Payload::ToolCancel)
+    {
+        return Ok(true);
+    }
+    // A misplaced message is refused as at rest. Continue supervising the
+    // live group regardless, and never let a bad sender bypass cleanup.
+    channel.send(&OrganEnvelope {
+        exchange: envelope.exchange,
+        position: Position::Close,
+        payload: Payload::Refusal(LifecycleRefusal::OutOfOrder),
+    })?;
+    Ok(false)
 }
 
 /// Captured bytes from one pipe. I/O failure travels as an error, never as
@@ -326,6 +399,134 @@ fn drain_bounded(
 mod tests {
     use super::*;
     use weaver_types::ToolName;
+
+    fn execute(execution: &ToolExecution) -> ToolOutcome {
+        let (near, _far) = pair();
+        super::execute(execution, &near, &exchange()).expect("execution channel")
+    }
+
+    fn pair() -> (Channel, Channel) {
+        use nix::sys::socket::{AddressFamily, SockFlag, SockType, socketpair};
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .unwrap();
+        (
+            crate::channel::from_owned(near),
+            crate::channel::from_owned(far),
+        )
+    }
+
+    fn exchange() -> ExchangeId {
+        ExchangeId {
+            opener: weaver_types::Opener::Harness,
+            ordinal: 1,
+        }
+    }
+
+    std::thread_local! {
+        static WAIT_ENTERED: std::cell::RefCell<Option<std::sync::mpsc::SyncSender<()>>> = const { std::cell::RefCell::new(None) };
+    }
+
+    pub(super) fn wait_entered() {
+        WAIT_ENTERED.with(|slot| {
+            if let Some(sender) = slot.borrow_mut().take() {
+                sender.send(()).unwrap();
+            }
+        });
+    }
+
+    /// conforms: gate-execution-cancel-brings-the-clock-forward
+    /// Removing the channel from supervision makes this reach the clock.
+    #[test]
+    fn a_cancel_brings_the_clock_forward() {
+        use std::time::{Duration, Instant};
+        let (gate, harness) = pair();
+        let (entered, waiting) = std::sync::mpsc::sync_channel(1);
+        WAIT_ENTERED.with(|slot| *slot.borrow_mut() = Some(entered));
+        let peer = std::thread::spawn(move || {
+            waiting
+                .recv_timeout(Duration::from_secs(2))
+                .expect("supervision entered");
+            std::thread::sleep(Duration::from_millis(50));
+            harness
+                .send(&OrganEnvelope {
+                    exchange: exchange(),
+                    position: Position::Continue,
+                    payload: Payload::ToolCancel,
+                })
+                .unwrap();
+            // Keep the channel open until the result returns.
+            harness
+        });
+        let started = Instant::now();
+        let outcome = super::execute(
+            &ToolExecution {
+                name: ToolName(SHELL_NAME.into()),
+                arguments: r#"{"command":"echo partial; sleep 5"}"#.into(),
+                clock_ms: 2_000,
+            },
+            &gate,
+            &exchange(),
+        )
+        .unwrap();
+        let _harness = peer.join().unwrap();
+        assert!(
+            matches!(outcome, ToolOutcome::Killed { by: KillCause::Cancel, ref partial } if partial.as_deref().is_some_and(|text| text.contains("partial"))),
+            "{outcome:?}"
+        );
+        assert!(
+            started.elapsed() < Duration::from_millis(800),
+            "cancel spent the clock: {:?}",
+            started.elapsed()
+        );
+    }
+
+    /// conforms: gate-execution-exit-heard-within-a-slice
+    /// The child cannot exit before the first wait. Replacing the slice
+    /// with the remaining clock therefore fails even on a fast machine.
+    #[test]
+    fn an_exit_is_heard_within_a_slice() {
+        use std::time::{Duration, Instant};
+        let path = std::env::temp_dir().join(format!("weaver-exit-release-{}", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let (entered, waiting) = std::sync::mpsc::sync_channel(1);
+        WAIT_ENTERED.with(|slot| *slot.borrow_mut() = Some(entered));
+        let release = path.clone();
+        let peer = std::thread::spawn(move || {
+            waiting
+                .recv_timeout(Duration::from_secs(2))
+                .expect("supervisor reached poll with live child");
+            std::fs::write(release, "exit").unwrap();
+        });
+        let (gate, _harness) = pair();
+        let started = Instant::now();
+        let arguments = serde_json::json!({"command": format!("while [ ! -f '{}' ]; do sleep 0.01; done; echo finished", path.display())}).to_string();
+        let outcome = super::execute(
+            &ToolExecution {
+                name: ToolName(SHELL_NAME.into()),
+                arguments,
+                clock_ms: 2_000,
+            },
+            &gate,
+            &exchange(),
+        )
+        .unwrap();
+        peer.join().unwrap();
+        std::fs::remove_file(path).unwrap();
+        assert!(
+            matches!(outcome, ToolOutcome::Result { ref content } if content.contains("finished")),
+            "{outcome:?}"
+        );
+        assert!(
+            started.elapsed() < Duration::from_millis(300),
+            "exit waited {:?}",
+            started.elapsed()
+        );
+    }
 
     fn shell(arguments: &str, clock_ms: u64) -> ToolOutcome {
         execute(&ToolExecution {
@@ -552,6 +753,7 @@ mod tests {
             ));
             let outcome = shell(&serde_json::json!({"command": command}).to_string(), 500);
             let ToolOutcome::Killed {
+                by: KillCause::Clock,
                 partial: Some(partial),
             } = outcome
             else {
@@ -740,7 +942,11 @@ mod tests {
     #[test]
     fn a_command_past_the_clock_is_killed_with_its_partial_attached() {
         let outcome = shell(r#"{"command":"echo early; sleep 5"}"#, 200);
-        let ToolOutcome::Killed { partial } = outcome else {
+        let ToolOutcome::Killed {
+            partial,
+            by: KillCause::Clock,
+        } = outcome
+        else {
             panic!("the kill is its own case: {outcome:?}");
         };
         let partial = partial.expect("the drained output rides the kill");
@@ -750,7 +956,11 @@ mod tests {
         );
 
         let outcome = shell(r#"{"command":"sleep 5"}"#, 200);
-        let ToolOutcome::Killed { partial } = outcome else {
+        let ToolOutcome::Killed {
+            partial,
+            by: KillCause::Clock,
+        } = outcome
+        else {
             panic!("the kill is its own case: {outcome:?}");
         };
         assert!(

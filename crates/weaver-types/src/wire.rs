@@ -128,6 +128,8 @@ pub enum Payload {
     /// The execution exchange's answer, closing it, one of the four contents
     /// `weaver-harness-gate-contract` section 2 names.
     ToolAnswer(ToolOutcome),
+    /// Cancel the open execution at the continue position.
+    ToolCancel,
 }
 
 /// One tool call as it crosses the gate seam: the name and arguments exactly
@@ -166,12 +168,23 @@ pub enum ToolOutcome {
     /// The invocation machinery failed - the fork, a pipe, the supervisor -
     /// and the account's speaker is the infrastructure, never the tool.
     Errored { detail: String },
-    /// The caller's clock expired and the gate killed the invocation's
+    /// The caller's clock expired or the caller cancelled, and the gate killed the invocation's
     /// whole process group. No account from the tool exists by
     /// construction - the absence of the tool's words is the fact - and
     /// output drained before the kill rides as an attachment, never a
     /// result.
-    Killed { partial: Option<String> },
+    Killed {
+        partial: Option<String>,
+        by: KillCause,
+    },
+}
+
+/// What ended a killed execution, per the gate contract's one-clock rule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum KillCause {
+    Clock,
+    Cancel,
 }
 
 /// The organs that refuse inside a fan-out: only the SPU and the gate. Admin

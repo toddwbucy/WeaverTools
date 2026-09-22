@@ -1,3 +1,5 @@
+//! conforms: harness-stop-polled-during-the-invocation
+//! conforms: harness-stopped-invocation-feeds-no-generation
 //! conforms: harness-loop-mints-no-port
 //! conforms: harness-extension-seam-at-loaded-and-idle
 //! conforms: harness-turn-authors-the-model-events
@@ -846,8 +848,8 @@ impl<'a> Ports<'a> {
         // model still wanted.
         let mut delta = delta;
         let mut rounds = 0usize;
-        let generation = loop {
-            let generation = self.generate_once(turn, delta, stop)?;
+        let generation = 'rounds: loop {
+            let mut generation = self.generate_once(turn, delta, stop)?;
             let calls: Vec<weaver_traits::ToolCall> = generation
                 .content
                 .iter()
@@ -856,13 +858,21 @@ impl<'a> Ports<'a> {
                     _ => None,
                 })
                 .collect();
-            if calls.is_empty() || self.gate.is_none() || rounds >= crate::tools::MAX_TOOL_ROUNDS {
+            if calls.is_empty()
+                || stop.is_some()
+                || self.gate.is_none()
+                || rounds >= crate::tools::MAX_TOOL_ROUNDS
+            {
                 break generation;
             }
             rounds += 1;
             let mut next_delta = Vec::with_capacity(calls.len());
             for call in calls {
-                let grant = self.execute_call(turn, &call)?;
+                let grant = self.execute_call(turn, &call, stop)?;
+                if stop.is_some() {
+                    generation.finish = weaver_types::Finish::Stopped;
+                    break 'rounds generation;
+                }
                 // The record and the seam read one construction: the grant
                 // authors the tool-result event at its one door, and the
                 // same content crosses to the SPU as the next delta.
@@ -891,7 +901,7 @@ impl<'a> Ports<'a> {
 
     /// **One execution through the gate**, per `weaver-harness-gate-contract`
     /// section 2: the exchange opens with the call as the parse recovered it,
-    /// and completes with one of the three contents, the grant constructed
+    /// and completes with one of the four contents, the grant constructed
     /// from the completion whichever arrived - the one construction site.
     /// The tool bracket's events ride the exchange: started as the harness's
     /// dispatch, completed as the gate's answer, the deferred payloads
@@ -900,6 +910,7 @@ impl<'a> Ports<'a> {
         &mut self,
         turn: &TurnKey,
         call: &weaver_traits::ToolCall,
+        stop: &mut Option<weaver_types::ExchangeId>,
     ) -> Result<crate::tools::ToolResult, TurnError> {
         let started = serde_json::json!({
             "name": call.name,
@@ -944,6 +955,14 @@ impl<'a> Ports<'a> {
         // exchange identity is the correlation, per the contract: nothing
         // else closes this ordinal.
         let outcome = loop {
+            use std::os::fd::AsFd;
+            let wake =
+                self.exchange_wake(self.gate.as_ref().expect("invocation gate").channel.as_fd())?;
+            if !matches!(wake, ExchangeWake::Work) {
+                self.handle_turn_control(wake, turn, stop, Some(&exchange))?;
+                continue;
+            }
+            let gate = self.gate.as_mut().expect("invocation gate");
             let envelope = gate.channel.recv().map_err(|_| TurnError::ChannelLost)?;
             if envelope.exchange == exchange && envelope.position == weaver_types::Position::Close {
                 match envelope.payload {
@@ -988,6 +1007,124 @@ impl<'a> Ports<'a> {
         Ok(crate::tools::ToolResult::granted(&outcome))
     }
 
+    /// Coordination during either kind of live exchange shares the same
+    /// credential checks, observations, refusals, and stop acknowledgment.
+    fn handle_turn_control(
+        &mut self,
+        wake: ExchangeWake,
+        turn: &TurnKey,
+        stop: &mut Option<weaver_types::ExchangeId>,
+        execution: Option<&weaver_types::ExchangeId>,
+    ) -> Result<(), TurnError> {
+        match wake {
+            ExchangeWake::Dial => {
+                let Some(slot) = self.pending.as_deref_mut() else {
+                    return Ok(());
+                };
+                match self.coordination.accept_root() {
+                    Ok(connection) => *slot = Some(connection),
+                    // A refused peer never reaches an exchange, and the
+                    // stream continues.
+                    Err(crate::failure::ChannelFault::WrongPeer { .. }) => {}
+                    Err(_) => return Err(TurnError::ChannelLost),
+                }
+            }
+            ExchangeWake::Directive => {
+                let Some(slot) = self.pending.as_deref_mut() else {
+                    return Ok(());
+                };
+                let Some(connection) = slot.as_ref() else {
+                    return Ok(());
+                };
+                match connection.recv() {
+                    Ok(envelope) => {
+                        let exchange = envelope.exchange.clone();
+                        match envelope.payload {
+                            weaver_types::Payload::Directive(
+                                weaver_types::LifecycleDirective::Stop,
+                            ) if stop.is_none() => {
+                                // The cancel crosses at once, and the
+                                // stream is consumed to the close it
+                                // will produce, the answer owed after
+                                // the record, not here.
+                                if let Some(execution) = execution {
+                                    self.gate
+                                        .as_ref()
+                                        .expect("invocation gate")
+                                        .channel
+                                        .send(&weaver_types::OrganEnvelope {
+                                            exchange: execution.clone(),
+                                            position: weaver_types::Position::Continue,
+                                            payload: weaver_types::Payload::ToolCancel,
+                                        })
+                                        .map_err(|_| TurnError::ChannelLost)?;
+                                } else {
+                                    self.decode
+                                        .send_directive(&TokenDirective::Cancel {
+                                            turn: turn.clone(),
+                                        })
+                                        .map_err(|_| TurnError::ChannelLost)?;
+                                }
+                                *stop = Some(exchange);
+                            }
+                            // **An observation is answered from inside
+                            // the turn**, per `weaver-admin-harness-contract`
+                            // section 3: the state is `Active` for exactly
+                            // the turn's extent and the facts are the run's,
+                            // lent to this seat, so the seam reaches what
+                            // the watch reaches. It touches no bracket.
+                            weaver_types::Payload::Directive(
+                                weaver_types::LifecycleDirective::Observe,
+                            ) => {
+                                let _ = connection.send(&weaver_types::OrganEnvelope {
+                                    exchange,
+                                    position: weaver_types::Position::Close,
+                                    payload: weaver_types::Payload::Answer(
+                                        weaver_types::LifecycleAnswer::State {
+                                            state: weaver_types::AgentState::Active,
+                                            load: Some(Box::new(self.load.clone())),
+                                        },
+                                    ),
+                                });
+                            }
+                            // A second stop, a leave, and everything
+                            // else are out of order for a turn in
+                            // flight, refused and not queued.
+                            weaver_types::Payload::Directive(
+                                weaver_types::LifecycleDirective::Leave,
+                            ) => {
+                                let _ = connection.send(&weaver_types::OrganEnvelope {
+                                    exchange,
+                                    position: weaver_types::Position::Close,
+                                    payload: weaver_types::Payload::Refusal(
+                                        weaver_types::LifecycleRefusal::ActivityNotAtRest,
+                                    ),
+                                });
+                            }
+                            weaver_types::Payload::Directive(_) => {
+                                let _ = connection.send(&weaver_types::OrganEnvelope {
+                                    exchange,
+                                    position: weaver_types::Position::Close,
+                                    payload: weaver_types::Payload::Refusal(
+                                        weaver_types::LifecycleRefusal::OutOfOrder,
+                                    ),
+                                });
+                            }
+                            _ => return Err(TurnError::ChannelLost),
+                        }
+                    }
+                    Err(crate::failure::ChannelFault::Closed) => {
+                        // The dialer left, and the stream continues.
+                        *slot = None;
+                    }
+                    Err(_) => return Err(TurnError::ChannelLost),
+                }
+            }
+            ExchangeWake::Work => unreachable!("work is consumed by the exchange"),
+        }
+        Ok(())
+    }
+
     /// One append-and-generate round: the delta crosses, the stream is
     /// consumed to the close, and the three model events author at engine
     /// grain.
@@ -1016,7 +1153,7 @@ impl<'a> Ports<'a> {
         // only its own connection, never the streaming turn.
         let generation = loop {
             match self.stream_wake()? {
-                StreamWake::Decode => match self
+                ExchangeWake::Work => match self
                     .decode
                     .recv_reply()
                     .map_err(|_| TurnError::ChannelLost)?
@@ -1105,96 +1242,7 @@ impl<'a> Ports<'a> {
                     }
                     crate::channel::DecodeReply::Answer(_) => return Err(TurnError::ChannelLost),
                 },
-                StreamWake::Dial => {
-                    let Some(slot) = self.pending.as_deref_mut() else {
-                        continue;
-                    };
-                    match self.coordination.accept_root() {
-                        Ok(connection) => *slot = Some(connection),
-                        // A refused peer never reaches an exchange, and the
-                        // stream continues.
-                        Err(crate::failure::ChannelFault::WrongPeer { .. }) => {}
-                        Err(_) => return Err(TurnError::ChannelLost),
-                    }
-                }
-                StreamWake::Directive => {
-                    let Some(slot) = self.pending.as_deref_mut() else {
-                        continue;
-                    };
-                    let Some(connection) = slot.as_ref() else {
-                        continue;
-                    };
-                    match connection.recv() {
-                        Ok(envelope) => {
-                            let exchange = envelope.exchange.clone();
-                            match envelope.payload {
-                                weaver_types::Payload::Directive(
-                                    weaver_types::LifecycleDirective::Stop,
-                                ) if stop.is_none() => {
-                                    // The cancel crosses at once, and the
-                                    // stream is consumed to the close it
-                                    // will produce, the answer owed after
-                                    // the record, not here.
-                                    self.decode
-                                        .send_directive(&TokenDirective::Cancel {
-                                            turn: turn.clone(),
-                                        })
-                                        .map_err(|_| TurnError::ChannelLost)?;
-                                    *stop = Some(exchange);
-                                }
-                                // **An observation is answered from inside
-                                // the turn**, per `weaver-admin-harness-contract`
-                                // section 3: the state is `Active` for exactly
-                                // the turn's extent and the facts are the run's,
-                                // lent to this seat, so the seam reaches what
-                                // the watch reaches. It touches no bracket.
-                                weaver_types::Payload::Directive(
-                                    weaver_types::LifecycleDirective::Observe,
-                                ) => {
-                                    let _ = connection.send(&weaver_types::OrganEnvelope {
-                                        exchange,
-                                        position: weaver_types::Position::Close,
-                                        payload: weaver_types::Payload::Answer(
-                                            weaver_types::LifecycleAnswer::State {
-                                                state: weaver_types::AgentState::Active,
-                                                load: Some(Box::new(self.load.clone())),
-                                            },
-                                        ),
-                                    });
-                                }
-                                // A second stop, a leave, and everything
-                                // else are out of order for a turn in
-                                // flight, refused and not queued.
-                                weaver_types::Payload::Directive(
-                                    weaver_types::LifecycleDirective::Leave,
-                                ) => {
-                                    let _ = connection.send(&weaver_types::OrganEnvelope {
-                                        exchange,
-                                        position: weaver_types::Position::Close,
-                                        payload: weaver_types::Payload::Refusal(
-                                            weaver_types::LifecycleRefusal::ActivityNotAtRest,
-                                        ),
-                                    });
-                                }
-                                weaver_types::Payload::Directive(_) => {
-                                    let _ = connection.send(&weaver_types::OrganEnvelope {
-                                        exchange,
-                                        position: weaver_types::Position::Close,
-                                        payload: weaver_types::Payload::Refusal(
-                                            weaver_types::LifecycleRefusal::OutOfOrder,
-                                        ),
-                                    });
-                                }
-                                _ => return Err(TurnError::ChannelLost),
-                            }
-                        }
-                        Err(crate::failure::ChannelFault::Closed) => {
-                            // The dialer left, and the stream continues.
-                            *slot = None;
-                        }
-                        Err(_) => return Err(TurnError::ChannelLost),
-                    }
-                }
+                wake => self.handle_turn_control(wake, turn, stop, None)?,
             }
         };
 
@@ -1350,7 +1398,7 @@ impl<'a> Ports<'a> {
 
         let generation = loop {
             match self.stream_wake()? {
-                StreamWake::Decode => match self
+                ExchangeWake::Work => match self
                     .decode
                     .recv_reply()
                     .map_err(|_| TurnError::ChannelLost)?
@@ -1422,7 +1470,7 @@ impl<'a> Ports<'a> {
                 // streams, exactly as a generation hears it, and everything
                 // but a channel loss is refused: the replay has no stop
                 // semantics of its own in this act, the run being the work.
-                StreamWake::Dial => {
+                ExchangeWake::Dial => {
                     let Some(slot) = self.pending.as_deref_mut() else {
                         continue;
                     };
@@ -1432,7 +1480,7 @@ impl<'a> Ports<'a> {
                         Err(_) => return Err(TurnError::ChannelLost),
                     }
                 }
-                StreamWake::Directive => {
+                ExchangeWake::Directive => {
                     let Some(slot) = self.pending.as_deref_mut() else {
                         continue;
                     };
@@ -1575,7 +1623,9 @@ impl<'a> Ports<'a> {
         // bracket closes clean. A turn the operator's stop cancelled closes
         // with the directive's reason, the partial standing. The cancel
         // losing the race to a natural completion is the first case: the
-        // turn completed, and the stop is answered at rest.
+        // turn completed, and the stop is answered at rest. An invocation
+        // stop sets the local finish to Stopped even when its answer is a
+        // Result, because the turn stops before the next generation.
         let aborted = stop.is_some() && stopped;
         self.author
             .author(
@@ -1620,23 +1670,27 @@ impl<'a> Ports<'a> {
     /// One wake from the streaming wait, per Spec 6.1: the decode channel
     /// first, then the verb connection if one stands, then the listener
     /// while none does, the same serial discipline as the idle wait's.
-    fn stream_wake(&self) -> Result<StreamWake, TurnError> {
+    fn stream_wake(&self) -> Result<ExchangeWake, TurnError> {
         use std::os::fd::AsFd;
+        self.exchange_wake(self.decode.as_fd())
+    }
 
+    fn exchange_wake(&self, work: std::os::fd::BorrowedFd<'_>) -> Result<ExchangeWake, TurnError> {
         use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
+        use std::os::fd::AsFd;
         loop {
             let mut fds: Vec<PollFd<'_>> = Vec::with_capacity(3);
-            let mut wakes: Vec<StreamWake> = Vec::with_capacity(3);
-            fds.push(PollFd::new(self.decode.as_fd(), PollFlags::POLLIN));
-            wakes.push(StreamWake::Decode);
+            let mut wakes: Vec<ExchangeWake> = Vec::with_capacity(3);
+            fds.push(PollFd::new(work, PollFlags::POLLIN));
+            wakes.push(ExchangeWake::Work);
             match self.pending.as_ref().map(|slot| slot.as_ref()) {
                 Some(Some(connection)) => {
                     fds.push(PollFd::new(connection.as_fd(), PollFlags::POLLIN));
-                    wakes.push(StreamWake::Directive);
+                    wakes.push(ExchangeWake::Directive);
                 }
                 Some(None) => {
                     fds.push(PollFd::new(self.coordination.as_fd(), PollFlags::POLLIN));
-                    wakes.push(StreamWake::Dial);
+                    wakes.push(ExchangeWake::Dial);
                 }
                 // A seat granted outside the serve loop streams without the
                 // ear, the slot being the loop's own.
@@ -1661,10 +1715,10 @@ impl<'a> Ports<'a> {
     }
 }
 
-/// What the streaming wait woke on.
+/// What the current exchange wait woke on.
 #[derive(Clone, Copy)]
-enum StreamWake {
-    Decode,
+enum ExchangeWake {
+    Work,
     Dial,
     Directive,
 }
@@ -3283,303 +3337,331 @@ mod tests {
         );
     }
 
-    /// Characterization only: this records today's deaf interval inside a
-    /// tool invocation, not a promised stop latency. A stop heard before the
-    /// gate answers must fail this test and return the question to authoring.
+    /// conforms: harness-stop-polled-during-the-invocation
+    /// The gate releases its delay only for a correlated cancel. Removing
+    /// coordination from the wait fails the delay and completion assertions.
     #[test]
-    fn a_stop_during_an_invocation_waits_for_the_gate() {
+    fn a_stop_during_an_invocation_cancels_and_records_before_acknowledging() {
+        stopped_invocation(false, 1);
+        stopped_invocation(true, 1);
+    }
+
+    /// conforms: harness-stopped-invocation-feeds-no-generation
+    /// Removing the stopped check after completion opens the second call
+    /// and feeds the result to decode, both observed on the real pairs.
+    #[test]
+    fn a_stopped_invocation_feeds_nothing_and_opens_no_further_call() {
+        stopped_invocation(false, 2);
+    }
+
+    fn stopped_invocation(crossing: bool, call_count: usize) {
         use nix::poll::{PollFd, PollFlags, poll};
         use std::os::fd::AsFd;
+        use std::sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        };
         use std::time::{Duration, Instant};
-        const GATE_DELAY: Duration = Duration::from_secs(2);
-        const PEER_BOUND_MS: u16 = 5_000;
-
+        const DELAY_MS: u16 = 2_000;
         let listener = test_listener();
-        for invocation in [false, true] {
-            let (near, far) = socketpair(
-                AddressFamily::Unix,
-                SockType::SeqPacket,
-                None,
-                SockFlag::SOCK_CLOEXEC,
-            )
-            .expect("decode pair");
-            let decode = crate::channel::decode_from_owned(near);
-            let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("admin pair");
-            let admin = admin_end.into_channel();
-            let (gate_near, gate_child) = crate::channel::OrganChannel::pair().expect("gate pair");
-            let raw = |text: &str| serde_json::value::RawValue::from_string(text.into()).unwrap();
-            let generated = |content, finish| {
-                weaver_types::TokenAnswer::Generated(Generation {
-                    content,
-                    emission: "measurement".into(),
-                    finish,
-                    resident: 64,
-                    capacity: 4096,
-                    request: raw(r#"{"rendered":"measurement","template":"test","sampling":{}}"#),
-                    measurement: raw(
-                        r#"{"model":"fake","weights_hash":"fake","input_tokens":[1],"output_tokens":[2],"blocks":[],"timings":{"prefill_ns":"1","decode_ns":"2"}}"#,
-                    ),
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .unwrap();
+        let decode = crate::channel::decode_from_owned(near);
+        let (verb_end, admin_end) = crate::channel::OrganChannel::pair().unwrap();
+        let admin = admin_end.into_channel();
+        let (gate_near, gate_child) = crate::channel::OrganChannel::pair().unwrap();
+        let generated = |content, finish| {
+            weaver_types::TokenAnswer::Generated(Generation {
+                content,
+                emission: "tool emission".into(),
+                finish,
+                resident: 64,
+                capacity: 4096,
+                request: serde_json::value::RawValue::from_string(
+                    r#"{"rendered":"fixture"}"#.into(),
+                )
+                .unwrap(),
+                measurement: serde_json::value::RawValue::from_string(r#"{}"#.into()).unwrap(),
+            })
+        };
+        let calls = (0..call_count)
+            .map(|_| {
+                ContentBlock::ToolCall(weaver_traits::ToolCall {
+                    name: "bash".into(),
+                    arguments: r#"{"command":"sleep 5"}"#.into(),
                 })
-            };
-            // Fix the readiness order, not a scheduler race. Both the initial
-            // generated answer and the stop are queued before turn(). The
-            // stream poll checks decode first. Without the queued answer the
-            // preloaded stop can cancel the first decode before any invocation.
-            if invocation {
-                let first = generated(
-                    vec![ContentBlock::ToolCall(weaver_traits::ToolCall {
-                        name: "calculator".into(),
-                        arguments: r#"{"expression":"37 * 43"}"#.into(),
-                    })],
-                    Finish::Completed,
-                );
-                send(
-                    far.as_raw_fd(),
-                    &serde_json::to_vec(&first).unwrap(),
-                    MsgFlags::empty(),
-                )
-                .expect("queue initial tool call");
-            }
-            let stopped = generated(vec![], Finish::Stopped);
-            let peer = std::thread::spawn(move || {
-                let receive = || {
-                    let mut fds = [PollFd::new(far.as_fd(), PollFlags::POLLIN)];
-                    assert!(
-                        poll(&mut fds, PEER_BOUND_MS).expect("decode poll") > 0,
-                        "decode peer timed out"
-                    );
-                    let mut buf = vec![0u8; 65536];
-                    let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("directive");
-                    serde_json::from_slice::<weaver_types::TokenDirective>(&buf[..n])
-                        .expect("parse directive")
-                };
-                assert!(matches!(
-                    receive(),
-                    weaver_types::TokenDirective::AppendAndGenerate { .. }
-                ));
-                let mut appends = 1;
-                if invocation {
-                    let weaver_types::TokenDirective::AppendAndGenerate { delta, .. } = receive()
-                    else {
-                        panic!("characterization changed: stop heard before result re-feed");
-                    };
-                    appends += 1;
-                    assert_eq!(delta.len(), 1);
-                    assert!(
-                        matches!(&delta[0].content[0], ContentBlock::ToolResult(block) if block.content == "1591")
-                    );
-                }
-                assert!(matches!(
-                    receive(),
-                    weaver_types::TokenDirective::Cancel { .. }
-                ));
-                send(
-                    far.as_raw_fd(),
-                    &serde_json::to_vec(&stopped).unwrap(),
-                    MsgFlags::empty(),
-                )
-                .expect("stopped generation");
-                appends
-            });
-            let gate_peer = invocation.then(|| {
-                std::thread::spawn(move || {
-                    let gate = gate_child.into_channel();
-                    let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
-                    assert!(
-                        poll(&mut fds, PEER_BOUND_MS).expect("gate open poll") > 0,
-                        "gate never opened"
-                    );
-                    let open = gate.recv().expect("gate Open");
-                    let opened = Instant::now();
-                    assert_eq!(open.position, weaver_types::Position::Open);
-                    let weaver_types::Payload::Tool(execution) = &open.payload else {
-                        panic!("tool payload")
-                    };
-                    assert_eq!(execution.clock_ms, TOOL_CALL_CLOCK_MS);
-                    // Watch throughout the delay, not only a snapshot at its end.
-                    while opened.elapsed() < GATE_DELAY {
-                        let remaining = GATE_DELAY.saturating_sub(opened.elapsed());
-                        let timeout = u16::try_from(remaining.as_millis().max(1)).unwrap();
-                        let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
-                        assert_eq!(
-                            poll(&mut fds, timeout).expect("gate observation"),
-                            0,
-                            "characterization changed: another envelope or closure before answer"
-                        );
+            })
+            .collect();
+        // Both are ready before the turn: decode's initial answer wins, then
+        // the invocation wait must hear coordination while gate holds its answer.
+        send(
+            far.as_raw_fd(),
+            &serde_json::to_vec(&generated(calls, Finish::Completed)).unwrap(),
+            MsgFlags::empty(),
+        )
+        .unwrap();
+        let finished = Arc::new(AtomicBool::new(false));
+        let decode_finished = finished.clone();
+        let stopped = generated(vec![], Finish::Stopped);
+        let peer = std::thread::spawn(move || {
+            let mut appends = 0;
+            let until = Instant::now() + Duration::from_secs(6);
+            loop {
+                let mut fds = [PollFd::new(far.as_fd(), PollFlags::POLLIN)];
+                let ready = poll(&mut fds, 25u16).unwrap();
+                if ready > 0 {
+                    let mut buf = vec![0; 65536];
+                    let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).unwrap();
+                    if n == 0 {
+                        break;
                     }
-                    let answered = Instant::now();
-                    gate.send(&weaver_types::OrganEnvelope {
-                        exchange: open.exchange,
-                        position: weaver_types::Position::Close,
-                        payload: weaver_types::Payload::ToolAnswer(weaver_gate_execute_stub(
-                            execution,
-                        )),
-                    })
-                    .expect("gate answer");
-                    (opened, answered)
+                    let request: weaver_types::TokenDirective =
+                        serde_json::from_slice(&buf[..n]).unwrap();
+                    if matches!(request, TokenDirective::AppendAndGenerate { .. }) {
+                        appends += 1;
+                    }
+                    if appends > 1 || matches!(request, TokenDirective::Cancel { .. }) {
+                        send(
+                            far.as_raw_fd(),
+                            &serde_json::to_vec(&stopped).unwrap(),
+                            MsgFlags::empty(),
+                        )
+                        .unwrap();
+                    }
+                } else if decode_finished.load(Ordering::Acquire) {
+                    break;
+                }
+                assert!(Instant::now() < until, "decode fixture did not finish");
+            }
+            appends
+        });
+        let gate_finished = finished.clone();
+        let gate_peer = std::thread::spawn(move || {
+            let gate = gate_child.into_channel();
+            let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
+            assert!(poll(&mut fds, 5_000u16).unwrap() > 0);
+            let open = gate.recv().unwrap();
+            assert_eq!(open.position, weaver_types::Position::Open);
+            assert!(matches!(open.payload, weaver_types::Payload::Tool(_)));
+            let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
+            let ready = poll(&mut fds, DELAY_MS).unwrap() > 0;
+            let answer = |outcome| {
+                gate.send(&weaver_types::OrganEnvelope {
+                    exchange: open.exchange.clone(),
+                    position: weaver_types::Position::Close,
+                    payload: weaver_types::Payload::ToolAnswer(outcome),
                 })
-            });
+                .unwrap();
+            };
+            // In the crossing arm the result leaves before the gate reads
+            // the queued cancel, as on a naturally completed invocation.
+            if crossing {
+                answer(weaver_types::ToolOutcome::Result {
+                    content: "finished as cancel crossed".into(),
+                });
+            }
+            let mut cancels = 0;
+            if ready {
+                let cancel = gate.recv().unwrap();
+                assert_eq!(cancel.exchange, open.exchange);
+                assert_eq!(cancel.position, weaver_types::Position::Continue);
+                assert_eq!(cancel.payload, weaver_types::Payload::ToolCancel);
+                cancels += 1;
+            }
+            if !crossing {
+                answer(if ready {
+                    weaver_types::ToolOutcome::Killed {
+                        partial: Some("partial".into()),
+                        by: weaver_types::KillCause::Cancel,
+                    }
+                } else {
+                    weaver_types::ToolOutcome::Result {
+                        content: "finished at fixture delay".into(),
+                    }
+                });
+            }
+            let mut executions = 1;
+            let until = Instant::now() + Duration::from_secs(6);
+            loop {
+                let mut fds = [PollFd::new(gate.as_fd(), PollFlags::POLLIN)];
+                if poll(&mut fds, 25u16).unwrap() > 0 {
+                    let Ok(envelope) = gate.recv() else {
+                        break;
+                    };
+                    match envelope.payload {
+                        weaver_types::Payload::ToolCancel => cancels += 1,
+                        weaver_types::Payload::Tool(_) => {
+                            executions += 1;
+                            gate.send(&weaver_types::OrganEnvelope {
+                                exchange: envelope.exchange,
+                                position: weaver_types::Position::Close,
+                                payload: weaver_types::Payload::ToolAnswer(
+                                    weaver_types::ToolOutcome::Result {
+                                        content: "unwanted second execution".into(),
+                                    },
+                                ),
+                            })
+                            .unwrap();
+                        }
+                        _ => panic!("unexpected gate traffic"),
+                    }
+                } else if gate_finished.load(Ordering::Acquire) {
+                    break;
+                }
+                assert!(Instant::now() < until, "gate fixture did not finish");
+            }
+            (cancels, executions)
+        });
+        let session = SessionId("s-stop-invocation".into());
+        let mut recorder = crate::record::Record::Serving(
+            Recorder::receive(
+                tempfile(),
+                RunRef("r-1".into()),
+                SessionRef(session.0.clone()),
+            )
+            .expect("recorder"),
+        );
+        // Author owns its origin. Bracket its construction so trace
+        // monotonic timestamps map to intervals on this test's clock
+        // without changing production code or treating return as close.
+        let origin_before = Instant::now();
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        let origin_after = Instant::now();
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
+                    state_member: false,
+                    declaration: Default::default(),
+                    lineage: None,
+                    stack: Default::default(),
+                    state_store: Default::default(),
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
+                })),
+            )
+            .expect("load");
+        let mut turn_ordinal = 0;
+        let mut turn_in_flight = None;
+        let mut slot = Some(verb_end);
+        let mut gate_ordinal = 0;
+        let mut held = std::collections::VecDeque::new();
+        let mut fullness = None;
+        let mut pressure_reported = false;
+        let load_facts = test_load_facts();
 
-            let session = SessionId("s-stop-measurement".into());
-            let mut recorder = crate::record::Record::Serving(
-                Recorder::receive(
-                    tempfile(),
-                    RunRef("r-1".into()),
-                    SessionRef(session.0.clone()),
-                )
-                .expect("recorder"),
-            );
-            // Author owns its origin. Bracket its construction so trace
-            // monotonic timestamps map to intervals on this test's clock
-            // without changing production code or treating return as close.
-            let origin_before = Instant::now();
-            let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
-            let origin_after = Instant::now();
-            author
-                .author(
-                    &mut recorder,
-                    Kind::Load,
-                    Subsystem::Harness,
-                    None,
-                    Some(Payload::Elections(weaver_trace::Elections {
-                        residual_readout: false,
-                        field: None,
-                        surprisal: false,
-                        tee: Some(weaver_trace::Election::default()),
-                        state_member: false,
-                        declaration: Default::default(),
-                        lineage: None,
-                        stack: Default::default(),
-                        state_store: Default::default(),
-                        composer: weaver_trace::LoopIdentity::compiled("test"),
-                    })),
-                )
-                .expect("load");
-            let mut turn_ordinal = 0;
-            let mut turn_in_flight = None;
-            let mut slot = Some(verb_end);
-            let mut gate_ordinal = 0;
-            let mut held = std::collections::VecDeque::new();
-            let mut fullness = None;
-            let mut pressure_reported = false;
-            let load_facts = test_load_facts();
-            let stop_before = Instant::now();
-            admin
-                .send(&weaver_types::OrganEnvelope {
-                    exchange: weaver_types::ExchangeId {
-                        opener: weaver_types::Opener::Admin,
-                        ordinal: 9,
-                    },
-                    position: weaver_types::Position::Open,
-                    payload: weaver_types::Payload::Directive(
-                        weaver_types::LifecycleDirective::Stop,
-                    ),
-                })
-                .expect("preload stop");
-            let stop_available = Instant::now();
-            let outcome = {
-                let mut ports = Ports::grant(
-                    &decode,
-                    &author,
-                    &mut recorder,
-                    &mut turn_ordinal,
-                    &mut turn_in_flight,
-                    &load_facts,
-                    None,
-                    &listener,
-                    Some(&mut slot),
-                    invocation.then_some(GatePort {
-                        channel: &gate_near,
-                        ordinal: &mut gate_ordinal,
-                        held: &mut held,
-                    }),
-                    None,
-                    None,
-                    &mut fullness,
-                    &mut pressure_reported,
-                );
-                ports
-                    .turn(vec![Message {
-                        role: Role::User,
-                        content: vec![ContentBlock::Text {
-                            text: "measure stop".into(),
-                        }],
-                    }])
-                    .expect("turn returns")
-            };
+        let stop_before = Instant::now();
+        let stop_exchange = weaver_types::ExchangeId {
+            opener: weaver_types::Opener::Admin,
+            ordinal: 9,
+        };
+        admin
+            .send(&weaver_types::OrganEnvelope {
+                exchange: stop_exchange.clone(),
+                position: weaver_types::Position::Open,
+                payload: weaver_types::Payload::Directive(weaver_types::LifecycleDirective::Stop),
+            })
+            .unwrap();
+        // Observe acknowledgment on its own thread, so an early send cannot
+        // hide in the socket buffer until after turn() has returned.
+        let acknowledgment = std::thread::spawn(move || {
             let mut fds = [PollFd::new(admin.as_fd(), PollFlags::POLLIN)];
-            assert!(
-                poll(&mut fds, PEER_BOUND_MS).expect("admin answer poll") > 0,
-                "stop unanswered"
+            assert!(poll(&mut fds, 5_000u16).unwrap() > 0, "stop unanswered");
+            let answer = admin.recv().unwrap();
+            (answer, Instant::now())
+        });
+        let result = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                Some(&mut slot),
+                Some(GatePort {
+                    channel: &gate_near,
+                    ordinal: &mut gate_ordinal,
+                    held: &mut held,
+                }),
+                None,
+                None,
+                &mut fullness,
+                &mut pressure_reported,
             );
-            assert!(matches!(
-                admin.recv().expect("stop answer").payload,
-                weaver_types::Payload::Answer(weaver_types::LifecycleAnswer::TurnAborted { .. })
-            ));
-            let acknowledged = Instant::now();
-            let appends = peer.join().expect("decode peer");
-            let gate_times = gate_peer.map(|peer| peer.join().expect("gate peer"));
-            assert!(outcome.aborted);
-            let trace = recorder.structure().expect("serving structure");
-            let event = |kind| {
-                let line = &trace.by_kind(kind).next().expect("trace event").line;
-                serde_json::from_str::<serde_json::Value>(line).expect("trace JSON")
-            };
-            let close = event(Kind::TurnClosed);
-            let close_ns = close["monotonic_ns"]
+            ports.turn(vec![Message {
+                role: Role::User,
+                content: vec![ContentBlock::Text {
+                    text: "stop invocation".into(),
+                }],
+            }])
+        };
+        finished.store(true, Ordering::Release);
+        let appends = peer.join().unwrap();
+        let (cancels, executions) = gate_peer.join().unwrap();
+        let (answer, acknowledged) = acknowledgment.join().unwrap();
+        let outcome = result.expect("turn returns");
+        assert!(outcome.aborted && outcome.stopped);
+        assert_eq!(answer.exchange, stop_exchange);
+        assert!(matches!(
+            answer.payload,
+            weaver_types::Payload::Answer(weaver_types::LifecycleAnswer::TurnAborted { .. })
+        ));
+        assert_eq!(cancels, 1, "exactly one cancel");
+        assert_eq!(executions, 1, "no second execution");
+        assert_eq!(appends, 1, "no result re-feed");
+        let trace = recorder.structure().unwrap();
+        let event = |kind| {
+            serde_json::from_str::<serde_json::Value>(
+                &trace.by_kind(kind).next().expect("trace event").line,
+            )
+            .unwrap()
+        };
+        let completed = event(Kind::ToolCallCompleted);
+        let close = event(Kind::TurnClosed);
+        let ns = |event: &serde_json::Value| {
+            event["monotonic_ns"]
                 .as_str()
                 .unwrap()
                 .parse::<u64>()
-                .unwrap();
-            let close_lower = origin_before + Duration::from_nanos(close_ns);
-            let close_upper = origin_after + Duration::from_nanos(close_ns);
-            let latency_min = close_lower.duration_since(stop_available);
-            let latency_max = close_upper.duration_since(stop_before);
-            let close_text = close.to_string();
+                .unwrap()
+        };
+        assert!(ns(&completed) < ns(&close), "completion precedes close");
+        assert!(
+            origin_after + Duration::from_nanos(ns(&close)) <= acknowledged,
+            "record precedes acknowledgment"
+        );
+        assert!(
+            origin_before + Duration::from_nanos(ns(&close))
+                < stop_before + Duration::from_millis(800),
+            "stop spent fixture delay"
+        );
+        assert!(
+            close.to_string().contains(r#""reason":"directive""#),
+            "{close}"
+        );
+        if crossing {
             assert!(
-                close_text.contains(r#""close":"stopped""#)
-                    && close_text.contains(r#""reason":"directive""#),
-                "{close}"
+                completed.to_string().contains("finished as cancel crossed"),
+                "{completed}"
             );
-            assert!(acknowledged >= close_lower, "announce follows record");
-            let timing = if let Some((opened, answered)) = gate_times {
-                assert!(
-                    close_upper >= answered,
-                    "close preceded gate answer: latency={latency_min:?}..{latency_max:?}"
-                );
-                assert!(
-                    latency_max >= GATE_DELAY,
-                    "stop latency={latency_min:?}..{latency_max:?}, delay={GATE_DELAY:?}"
-                );
-                assert_eq!(appends, 2, "result is fed back before stop is heard");
-                let started = event(Kind::ToolCallStarted);
-                let started_ns = started["monotonic_ns"]
-                    .as_str()
-                    .unwrap()
-                    .parse::<u64>()
-                    .unwrap();
-                assert!(origin_before + Duration::from_nanos(started_ns) <= opened);
-                serde_json::json!({
-                    "tool_call_started_monotonic_ns": started_ns,
-                    "gate_open_ms_after_stop": opened.duration_since(stop_available).as_secs_f64() * 1000.0,
-                    "gate_answer_ms_after_stop": answered.duration_since(stop_available).as_secs_f64() * 1000.0,
-                    "gate_envelopes_before_answer": 1,
-                })
-            } else {
-                assert_eq!(appends, 1);
-                serde_json::Value::Null
-            };
-            println!(
-                "W1c {}",
-                serde_json::json!({
-                    "case": if invocation { "invocation" } else { "decode" },
-                    "stop_to_close_ms_min": latency_min.as_secs_f64() * 1000.0,
-                    "stop_to_close_ms_max": latency_max.as_secs_f64() * 1000.0,
-                    "stop_to_admin_answer_observed_ms": acknowledged.duration_since(stop_available).as_secs_f64() * 1000.0,
-                    "turn_closed_monotonic_ns": close_ns,
-                    "close_reason": "directive", "appends_after_stop": appends,
-                    "gate": timing,
-                })
+        } else {
+            assert!(
+                completed.to_string().contains(r#""by":"cancel""#),
+                "{completed}"
             );
         }
     }

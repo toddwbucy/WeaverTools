@@ -1,3 +1,4 @@
+//! conforms: gate-cancel-past-the-answer-is-dropped
 //! conforms: gate-out-of-order-refused
 //! conforms: gate-channel-state-three-positions
 //! conforms: gate-closure-is-death
@@ -313,7 +314,29 @@ fn serve_channel_event(channel: &Channel, state: &mut HookState) -> Result<(), E
         return Ok(());
     }
 
-    let payload = dispatch(state, &envelope);
+    // A cancel may cross the answer in flight. It has no answer of its own.
+    if envelope.exchange.opener == Opener::Harness
+        && envelope.position == Position::Continue
+        && matches!(envelope.payload, Payload::ToolCancel)
+    {
+        return Ok(());
+    }
+    let payload = if let Payload::Tool(execution) = &envelope.payload
+        && envelope.exchange.opener == Opener::Harness
+        && envelope.position == Position::Open
+        && matches!(state, HookState::Raised(_, _))
+    {
+        match weaver_gate::tools::execute(execution, channel, &envelope.exchange) {
+            Ok(outcome) => Payload::ToolAnswer(outcome),
+            Err(ChannelFault::Closed) => return Err(ExitCode::SUCCESS),
+            Err(fault) => {
+                eprintln!("{}", fault_line(&fault));
+                return Err(ExitCode::FAILURE);
+            }
+        }
+    } else {
+        dispatch(state, &envelope)
+    };
     match channel.send(&OrganEnvelope {
         exchange: envelope.exchange,
         position: Position::Close,
@@ -488,16 +511,6 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
     if envelope.position != Position::Open || envelope.exchange.opener != Opener::Harness {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     }
-    // The execution exchange, per `weaver-harness-gate-contract` section 2:
-    // valid only inside the raised window like the turn, and every opened
-    // execution completes with an answer carrying one of the three contents,
-    // the resolution living in `tools` where both floor crates are in scope.
-    if let Payload::Tool(execution) = &envelope.payload {
-        return match state {
-            HookState::Raised(_, _) => Payload::ToolAnswer(weaver_gate::tools::execute(execution)),
-            _ => Payload::Refusal(LifecycleRefusal::OutOfOrder),
-        };
-    }
     let Payload::Directive(directive) = &envelope.payload else {
         return Payload::Refusal(LifecycleRefusal::OutOfOrder);
     };
@@ -573,10 +586,117 @@ fn dispatch(state: &mut HookState, envelope: &OrganEnvelope) -> Payload {
 }
 
 #[cfg(test)]
+#[path = "../tests/common/mod.rs"]
+mod test_common;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::BTreeSet;
     use weaver_types::{AccessRule, AgentName, ExchangeId, GateInstruction};
+
+    /// conforms: gate-cancel-past-the-answer-is-dropped
+    /// The real served channel must not insert a refusal before the next
+    /// execution's answer. Removing only the late-cancel drop fails this.
+    #[test]
+    fn a_cancel_past_the_answer_is_dropped() {
+        use nix::sys::socket::{MsgFlags, recv, send};
+        use std::os::fd::AsRawFd;
+        if std::env::var_os("WEAVER_LATE_CANCEL_CHILD").is_some() {
+            let channel = channel::adopt().expect("inherited channel");
+            assert_eq!(serve(channel), ExitCode::SUCCESS);
+            return;
+        }
+        let (harness, child_end) = test_common::seqpacket_pair();
+        test_common::bound_receives(&harness, 5);
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .args([
+                "--exact",
+                "tests::a_cancel_past_the_answer_is_dropped",
+                "--nocapture",
+            ])
+            .env("WEAVER_LATE_CANCEL_CHILD", "1");
+        test_common::place_inherited(&mut command, &[child_end.as_raw_fd()]);
+        let mut child = command.spawn().unwrap();
+        drop(child_end);
+        let ready = test_common::ask(
+            &harness,
+            1,
+            LifecycleDirective::Raise {
+                instruction: instruction(),
+                socket: scratch("late-cancel"),
+            },
+        );
+        assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
+        let write = |envelope: &OrganEnvelope| {
+            send(
+                harness.as_raw_fd(),
+                &serde_json::to_vec(envelope).unwrap(),
+                MsgFlags::empty(),
+            )
+            .unwrap();
+        };
+        let read = || {
+            let mut buffer = vec![0; weaver_types::MAX_ENVELOPE_BYTES];
+            let n = recv(harness.as_raw_fd(), &mut buffer, MsgFlags::empty()).unwrap();
+            serde_json::from_slice::<OrganEnvelope>(&buffer[..n]).unwrap()
+        };
+        for ordinal in [2, 3] {
+            let exchange = weaver_types::ExchangeId {
+                opener: Opener::Harness,
+                ordinal,
+            };
+            write(&OrganEnvelope {
+                exchange: exchange.clone(),
+                position: Position::Open,
+                payload: Payload::Tool(weaver_types::ToolExecution {
+                    name: weaver_types::ToolName("bash".into()),
+                    arguments: r#"{"command":"echo completed"}"#.into(),
+                    clock_ms: 1_000,
+                }),
+            });
+            let answer = read();
+            assert_eq!(answer.exchange, exchange);
+            assert!(
+                matches!(
+                    answer.payload,
+                    Payload::ToolAnswer(weaver_types::ToolOutcome::Result { .. })
+                ),
+                "{answer:?}"
+            );
+            if ordinal == 2 {
+                write(&OrganEnvelope {
+                    exchange,
+                    position: Position::Continue,
+                    payload: Payload::ToolCancel,
+                });
+            }
+        }
+        // Other misplaced payloads and positions still refuse.
+        for (position, payload) in [
+            (
+                Position::Continue,
+                Payload::Directive(LifecycleDirective::Stop),
+            ),
+            (Position::Open, Payload::ToolCancel),
+        ] {
+            write(&OrganEnvelope {
+                exchange: weaver_types::ExchangeId {
+                    opener: Opener::Harness,
+                    ordinal: 4,
+                },
+                position,
+                payload,
+            });
+            assert_eq!(
+                read().payload,
+                Payload::Refusal(LifecycleRefusal::OutOfOrder)
+            );
+        }
+        drop(harness);
+        assert!(test_common::wait_bounded(&mut child, 5, "late-cancel child").success());
+    }
 
     fn opened(directive: LifecycleDirective) -> OrganEnvelope {
         OrganEnvelope {
