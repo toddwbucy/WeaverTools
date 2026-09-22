@@ -70,6 +70,10 @@ const SELECTION: &[Selection] = &[
     },
 ];
 const SESSION: &str = "s-w5b";
+const DESTINATION: &str = "s-e1-diagnostic";
+const BRANCH: &str = "s-e1-branch";
+const FUTURE: &str = "future.observation";
+const FUTURE_PATH: &str = "opaque.unrecognised";
 const FOREIGN_SESSION: &str = "s-w5b-foreign";
 const CUT: &str = "r-one:2";
 const EXCLUDED: &str = "tool.call.started";
@@ -119,34 +123,53 @@ fn raw_tree(prefix: &str, raw: &RawValue, out: &mut BTreeMap<String, String>) {
     }
 }
 
-fn expected(lines: &[String]) -> Vec<Event> {
+fn expected(lines: &[String], rule: &Election, destination: &str) -> Vec<Event> {
     lines
         .iter()
         .filter_map(|line| {
             let members = object(line);
             let kind = text(&members["kind"]);
-            let selected = SELECTION.iter().find(|s| s.kind == kind)?;
+            let system = SELECTION.iter().any(|s| s.identity && s.kind == kind)
+                && !members.contains_key("turn");
+            let selected = rule.keys.iter().find(|s| s.kind == kind);
+            if !system && !rule.all_kinds && selected.is_none() {
+                return None;
+            }
             let mut envelope = BTreeMap::new();
             for name in ["session", "run", "turn", "kind", "sequence"] {
                 if let Some(value) = members.get(name) {
                     envelope.insert(name.into(), text(value));
                 }
             }
-            let mut tree = BTreeMap::new();
-            if let Some(payload) = members.get("payload") {
-                raw_tree("", payload, &mut tree);
-            }
-            let pairs = selected
-                .paths
-                .iter()
-                .filter_map(|path| match tree.get(*path) {
-                    Some(value) => Some(((*path).into(), value.clone())),
-                    None => {
-                        println!("W5B MISSING sequence={} path={path}", envelope["sequence"]);
-                        None
-                    }
-                })
-                .collect();
+            envelope.insert("session".into(), destination.into());
+            let pairs = if system {
+                // Enumerate the whole top level, not elected dotted paths.
+                members
+                    .get("payload")
+                    .map(|raw| {
+                        object(raw.get())
+                            .into_iter()
+                            .map(|(key, raw)| (key, raw.get().to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            } else {
+                let mut tree = BTreeMap::new();
+                if let Some(payload) = members.get("payload") {
+                    raw_tree("", payload, &mut tree);
+                }
+                selected
+                    .into_iter()
+                    .flat_map(|entry| &entry.paths)
+                    .filter_map(|path| match tree.get(path) {
+                        Some(value) => Some((path.clone(), value.clone())),
+                        None => {
+                            println!("E1 MISSING sequence={} path={path}", envelope["sequence"]);
+                            None
+                        }
+                    })
+                    .collect()
+            };
             Some(Event { envelope, pairs })
         })
         .collect()
@@ -299,7 +322,53 @@ impl Record {
             .collect()
     }
 
+    // Only the live input's envelope is renamed. Raw payload values remain
+    // the recorded bytes; reconstruction reads the unchanged source record.
+    fn destination_lines(&self, destination: &str) -> Vec<String> {
+        self.lines
+            .iter()
+            .map(|line| {
+                let mut row = object(line);
+                row.insert(
+                    "session".into(),
+                    serde_json::value::to_raw_value(destination).unwrap(),
+                );
+                serde_json::to_string(&row).unwrap() + "\n"
+            })
+            .collect()
+    }
+
+    // Read what the canonical record names, independently of the binary.
+    fn rule(&self) -> Election {
+        let load = object(&self.lines[0]);
+        let payload = object(load["payload"].get());
+        let rule = object(payload[SELECTION[0].paths[0]].get());
+        let keys: Vec<Value> = serde_json::from_str(rule["keys"].get()).unwrap();
+        Election {
+            all_kinds: serde_json::from_str(rule["all_kinds"].get()).unwrap(),
+            keys: keys
+                .into_iter()
+                .map(|key| ElectedKind {
+                    kind: key["kind"].as_str().unwrap().into(),
+                    paths: key["paths"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|p| p.as_str().unwrap().into())
+                        .collect(),
+                })
+                .collect(),
+        }
+    }
+
     fn new() -> Self {
+        Self::under(&Election::default())
+    }
+
+    fn under(rule: &Election) -> Self {
+        let rule = json!({"all_kinds":rule.all_kinds,"keys":rule.keys.iter()
+            .map(|entry| json!({"kind":entry.kind,"paths":entry.paths})).collect::<Vec<_>>()});
+        let load = json!({"tee":rule}).to_string();
         let mut lines = Vec::new();
         let mut add = |run: &str, turn: Option<&str>, kind: &str, payload: &str| {
             let n = lines.len();
@@ -309,18 +378,13 @@ impl Record {
             lines.push(format!("{{\"session\":{},\"run\":{}{turn},\"kind\":{},\"sequence\":\"{n}\",\"subsystem\":\"harness\",\"wall_ms\":1,\"monotonic_ns\":\"{n}\",\"payload\":{payload}}}\n",json!(SESSION),json!(run),json!(kind)));
         };
         for (run, turns) in [("r-one", 2), ("r-two", 1)] {
-            add(
-                run,
-                None,
-                SELECTION[0].kind,
-                r#"{"tee":{"all_kinds":true,"keys":[]}}"#,
-            );
+            add(run, None, SELECTION[0].kind, &load);
             add(
                 run,
                 None,
                 SELECTION[3].kind,
                 &format!(
-                    r#"{{"content":[{{"text":"prefix {run}","type":"text"}}],"role":"system"}}"#
+                    r#"{{"content":[{{"text":"prefix {run}","type":"text"}}],"role":"system","unknown":{{"z":1.00, "a":1e3}},"null":null,"empty":""}}"#
                 ),
             );
             for index in 1..=turns {
@@ -370,6 +434,12 @@ impl Record {
                         r#"{"content":"tool answer","role":"tool_result"}"#,
                     );
                 }
+                add(
+                    run,
+                    Some(&turn),
+                    FUTURE,
+                    r#"{"opaque":{"unrecognised":{"z":1.00, "a":1e3}}}"#,
+                );
                 add(run, Some(&turn), "turn.closed", r#"{"close":"clean"}"#);
             }
         }
@@ -494,7 +564,7 @@ struct Member {
     _scratch: Scratch,
 }
 impl Member {
-    fn new(election: Election, diagnostic: bool) -> Self {
+    fn new(election: Election, diagnostic: bool, destination: &str) -> Self {
         let thread = std::thread::current();
         let test = thread.name().expect("named test thread");
         let scratch = Scratch::new();
@@ -542,7 +612,7 @@ impl Member {
         }
         let process = Process(command.spawn().unwrap());
         drop(child);
-        let tee = Tee::open(wire.try_clone().unwrap(), SESSION.into(), election).unwrap();
+        let tee = Tee::open(wire.try_clone().unwrap(), destination.into(), election).unwrap();
         let mut member = Self {
             process,
             tee: Some(tee),
@@ -646,7 +716,13 @@ impl Member {
             assert!(self.tee.as_mut().unwrap().feed(line), "live tee detached");
         }
     }
-    fn reconstruct(&mut self, record: &Record, cut: Option<&str>) -> usize {
+    fn reconstruct(
+        &mut self,
+        record: &Record,
+        cut: Option<&str>,
+        diagnostic: bool,
+        destination: &str,
+    ) -> usize {
         let trace = self.directory.0.join("record.ndjson");
         std::fs::write(&trace, record.lines.concat()).unwrap();
         let stdout = self.directory.0.join("analysis.json");
@@ -654,6 +730,12 @@ impl Member {
         let binary = analysis_binary();
         let mut command = Command::new(&binary);
         command.arg("preload").arg(trace).arg(self.door());
+        if diagnostic {
+            command.arg("--diagnostic");
+        }
+        if diagnostic || cut.is_some() || destination != SESSION {
+            command.args(["--as", destination]);
+        }
         if let Some(cut) = cut {
             command.args(["--through", cut]);
         }
@@ -684,6 +766,12 @@ impl Member {
         let report: Value =
             serde_json::from_str(&std::fs::read_to_string(stdout).unwrap()).unwrap();
         assert_eq!(report["sealed"], true);
+        assert_eq!(report["source_session"], SESSION);
+        assert_eq!(report["destination_session"], destination);
+        assert_eq!(
+            report["mode"],
+            if diagnostic { "diagnostic" } else { "recorded" }
+        );
         println!(
             "W5B analysis={} preloaded={}",
             binary.display(),
@@ -746,20 +834,32 @@ fn compare(cut: &str, live: &mut Member, rebuilt: &mut Member, expected: &[Event
     }
 }
 
-#[test]
-#[ignore = "needs WEAVER_STATE_TEST_PG scratch PostgreSQL and prebuilt weaver-analysis; run in unshare -Ur for the preload credential"]
-fn three_way_at_matched_cuts() {
-    child_entry();
-    let record = Record::new();
+// Each cell has its own live and reconstructed process/database pair. Whole
+// ordinary reconstruction is a bare resume; every cut and diagnostic cell
+// stands under a source-distinct destination on BOTH paths and in expectation.
+fn matched_cuts(record: &Record, rule: &Election, diagnostic: bool, label: &str) {
     for (cut, length) in [(Some(CUT), record.cut), (None, record.lines.len())] {
-        let expected = expected(&record.lines[..length]);
-        let mut live = Member::new(election(), false);
-        live.feed(&record.lines[..length]);
+        let destination = if diagnostic {
+            DESTINATION
+        } else if cut.is_some() {
+            BRANCH
+        } else {
+            SESSION
+        };
+        let expected = expected(&record.lines[..length], rule, destination);
+        let primary = record.destination_lines(destination);
+        let mut live = Member::new(rule.clone(), false, destination);
+        live.feed(&primary[..length]);
         live.feed(&record.foreign_lines());
-        let mut rebuilt = Member::new(election(), true);
-        let preloaded = rebuilt.reconstruct(&record, cut);
+        let mut rebuilt = Member::new(rule.clone(), true, destination);
+        let preloaded = rebuilt.reconstruct(record, cut, diagnostic, destination);
         rebuilt.feed(&record.foreign_lines());
-        compare(cut.unwrap_or("whole"), &mut live, &mut rebuilt, &expected);
+        compare(
+            &format!("{label}/{}", cut.unwrap_or("whole")),
+            &mut live,
+            &mut rebuilt,
+            &expected,
+        );
         assert_eq!(
             preloaded,
             expected.len(),
@@ -770,26 +870,33 @@ fn three_way_at_matched_cuts() {
 
 #[test]
 #[ignore = "needs WEAVER_STATE_TEST_PG scratch PostgreSQL and prebuilt weaver-analysis; run in unshare -Ur for the preload credential"]
+fn three_way_at_matched_cuts() {
+    child_entry();
+    matched_cuts(&Record::new(), &election(), true, "diagnostic");
+}
+
+#[test]
+#[ignore = "needs WEAVER_STATE_TEST_PG scratch PostgreSQL and prebuilt weaver-analysis; run in unshare -Ur for the preload credential"]
 fn dead_driver_retry_replaces_the_prefix() {
     child_entry();
     let record = Record::new();
-    let expected = expected(&record.lines);
-    let mut live = Member::new(election(), false);
-    live.feed(&record.lines);
+    let expected = expected(&record.lines, &election(), DESTINATION);
+    let primary = record.destination_lines(DESTINATION);
+    let mut live = Member::new(election(), false, DESTINATION);
+    live.feed(&primary);
     live.feed(&record.foreign_lines());
-    let mut rebuilt = Member::new(election(), true);
+    let mut rebuilt = Member::new(election(), true, DESTINATION);
     rebuilt.feed(&record.foreign_lines());
     let mut driver = rebuilt.connect_preload();
     driver
-        .write_all(weaver_trace::opener(SESSION, &election()).as_bytes())
+        .write_all(weaver_trace::opener(DESTINATION, &election()).as_bytes())
         .unwrap();
-    for line in &record.lines[..2] {
+    for line in &primary[..2] {
         if let Some(frame) = weaver_trace::distill(line, &election()) {
             driver.write_all(frame.as_bytes()).unwrap();
         }
     }
     drop(driver);
-    // Wait until the process has consumed the dead prefix, then park the ask.
     let prefix = shape(&expected[..2]);
     let until = Instant::now() + WAIT;
     while answer_shape(&rebuilt.ask("shape", None)) != prefix {
@@ -801,58 +908,50 @@ fn dead_driver_retry_replaces_the_prefix() {
         rebuilt.receive(Duration::from_millis(150)).is_none(),
         "unsealed prefix answered replay"
     );
-    rebuilt.reconstruct(&record, None);
+    rebuilt.reconstruct(&record, None, true, DESTINATION);
     let answer = rebuilt
         .receive(WAIT)
         .expect("retry must release the parked replay at its seal");
     let left = answer_events(&live.ask("replay", None), "replay");
     let right = answer_events(&answer, "replay");
-    println!("W5B retry expected={expected:?} live={left:?} reconstructed={right:?}");
+    println!("E1 retry expected={expected:?} live={left:?} reconstructed={right:?}");
     assert_eq!(
         (&left, &right),
         (&expected, &expected),
         "retry must replace, not append to, the prefix"
     );
+    compare("diagnostic/retry", &mut live, &mut rebuilt, &expected);
 }
 
-/// Reports two elections; their reconciliation is the operator's ruling, not an equality assertion.
+/// Replaces W5b's measurement with the comparison the recorded-rule ruling
+/// authorizes. The empty and all-kinds cases protect the system exception;
+/// the restrictive case elects unknown material and the absent/null/empty
+/// fixtures, while excluding the ordinary event under both preload modes.
 #[test]
 #[ignore = "needs WEAVER_STATE_TEST_PG scratch PostgreSQL and prebuilt weaver-analysis; run in unshare -Ur for the preload credential"]
-fn record_rule_shape_measurement() {
+fn recorded_rule_three_way_at_matched_cuts() {
     child_entry();
-    let record = Record::new();
-    let load = object(&record.lines[0]);
-    let payload = object(load["payload"].get());
-    let rule = object(payload[SELECTION[0].paths[0]].get());
-    let all_kinds = serde_json::from_str(rule["all_kinds"].get()).unwrap();
-    let keys: Vec<Value> = serde_json::from_str(rule["keys"].get()).unwrap();
-    let declared = Election {
-        all_kinds,
-        keys: keys
-            .into_iter()
-            .map(|key| ElectedKind {
-                kind: key["kind"].as_str().unwrap().into(),
-                paths: key["paths"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(|p| p.as_str().unwrap().into())
-                    .collect(),
-            })
-            .collect(),
-    };
-    let mut actual = Member::new(declared, false);
-    actual.feed(&record.lines);
-    let mut comparison = Member::new(election(), false);
-    comparison.feed(&record.lines);
-    // Deliberately a measurement, not an equality assertion: these elections
-    // describe different holdings. Their reconciliation is the operator's.
-    println!(
-        "W5B record-rule {:?}",
-        answer_shape(&actual.ask("shape", None))
+    let original = Record::new();
+    matched_cuts(&original, &original.rule(), false, "recorded-all");
+    let mut restricted = election();
+    // Leave system out of the rule entirely: its whole payload still crosses.
+    restricted
+        .keys
+        .retain(|entry| !SELECTION.iter().any(|s| s.identity && s.kind == entry.kind));
+    restricted.keys.push(ElectedKind {
+        kind: FUTURE.into(),
+        paths: vec![FUTURE_PATH.into()],
+    });
+    let restricted = Record::under(&restricted);
+    matched_cuts(
+        &restricted,
+        &restricted.rule(),
+        false,
+        "recorded-restrictive",
     );
-    println!(
-        "W5B analysis-election {:?}",
-        answer_shape(&comparison.ask("shape", None))
-    );
+    let empty = Record::under(&Election {
+        all_kinds: false,
+        keys: vec![],
+    });
+    matched_cuts(&empty, &empty.rule(), false, "recorded-empty");
 }
