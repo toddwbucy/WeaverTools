@@ -82,12 +82,14 @@ import sys
 
 packages = [p for p in json.load(sys.stdin)["packages"]
             if p["name"] == "weaver-internal"]
-assert len(packages) == 1, "metadata must name exactly one weaver-internal package"
+if len(packages) != 1:
+    sys.exit("metadata must name exactly one weaver-internal package")
 targets = sorted((t["name"], t["kind"], t["crate_types"])
                  for t in packages[0]["targets"])
 expected = [("manifest", ["test"], ["bin"]),
             ("weaver_internal", ["lib"], ["lib"])]
-assert targets == expected, f"expected library plus manifest test only; got {targets!r}"
+if targets != expected:
+    sys.exit(f"expected library plus manifest test only; got {targets!r}")
 "#,
         ])
         .stdin(Stdio::piped())
