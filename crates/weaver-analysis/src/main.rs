@@ -55,10 +55,10 @@ fn main() -> std::process::ExitCode {
         Some(("lens", rest)) => run_lens(rest),
         Some(("field", rest)) => run_field(rest),
         _ => refused(
-            "usage: weaver-analysis derive <trace> --devices <n,..> --sink <path> \
+            "usage: weaver-analysis derive <trace> --as <session> --devices <n,..> --sink <path> \
              [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] \
              | read <diagnostic-trace> | compare <capture> <capture> \
-             | preload <trace> <socket> [--through <run>:<turn>] [--as <session>] \
+             | preload <trace> <socket> [--through <run>:<turn>] [--as <session>] [--diagnostic] \
              | signals <record> [spike-bar] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
              [--positions p,.. (a file defaults to a spread of eight)] [--topk 5] \
@@ -81,6 +81,7 @@ fn read_stream(path: &str) -> std::io::Result<String> {
 fn run_derive(rest: &[String]) -> std::process::ExitCode {
     let mut trace = None;
     let mut inputs = AnalystInputs {
+        destination: String::new(),
         devices: Vec::new(),
         readout: false,
         field_depth: None,
@@ -117,6 +118,12 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
                     }
                 }
                 inputs.devices = devices;
+            }
+            "--as" => {
+                let Some(value) = it.next().filter(|v| !v.starts_with("--")) else {
+                    return refused("--as takes a destination".to_string());
+                };
+                inputs.destination = value.clone();
             }
             "--sink" => {
                 let Some(value) = it.next().filter(|v| !v.starts_with("--")) else {
@@ -210,7 +217,7 @@ fn run_derive(rest: &[String]) -> std::process::ExitCode {
 }
 
 /// The preload, per `weaver-analysis-Spec` section 4: `preload <trace>
-/// <socket> [--through <run>:<turn>] [--as <session>]`, the cut projecting
+/// <socket> [--through <run>:<turn>] [--as <session>] [--diagnostic]`, the cut projecting
 /// the record through the named turn's close and the rename landing it
 /// under another session name, both refusing before anything is sent.
 fn run_preload(rest: &[String]) -> std::process::ExitCode {
@@ -219,12 +226,14 @@ fn run_preload(rest: &[String]) -> std::process::ExitCode {
         std::process::ExitCode::FAILURE
     };
     let mut positionals: Vec<&str> = Vec::new();
+    let mut diagnostic = false;
     let mut through: Option<(String, u64)> = None;
     let mut as_session: Option<String> = None;
     let mut it = rest.iter();
     while let Some(argument) = it.next() {
         match argument.as_str() {
-            "--through" => {
+            "--diagnostic" if !diagnostic => diagnostic = true,
+            "--through" if through.is_none() => {
                 let Some(cut) = it.next() else {
                     return refused("--through takes <run>:<turn>".to_string());
                 };
@@ -238,18 +247,21 @@ fn run_preload(rest: &[String]) -> std::process::ExitCode {
                 };
                 through = Some((run.to_string(), turn));
             }
-            "--as" => {
+            "--as" if as_session.is_none() => {
                 let Some(name) = it.next() else {
                     return refused("--as takes <session>".to_string());
                 };
                 as_session = Some(name.clone());
+            }
+            other if other.starts_with("--") => {
+                return refused(format!("unknown or repeated preload option {other}"));
             }
             other => positionals.push(other),
         }
     }
     let [trace, socket] = positionals[..] else {
         return refused(
-            "preload takes <trace> <socket> [--through <run>:<turn>] [--as <session>]".to_string(),
+            "preload takes <trace> <socket> [--through <run>:<turn>] [--as <session>] [--diagnostic]".to_string(),
         );
     };
     let Ok(text) = read_stream(trace) else {
@@ -260,27 +272,20 @@ fn run_preload(rest: &[String]) -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     };
     let events = parse_record(&text);
-    let Some(session) = events.first().map(|e| e.envelope.session.clone()) else {
-        eprintln!(
-            "{}",
-            serde_json::json!({"analysis_refusal": "the record holds no event"})
-        );
-        return std::process::ExitCode::FAILURE;
+    let plan = match weaver_analysis::selection::preflight(
+        &events,
+        diagnostic,
+        as_session.as_deref(),
+        through.as_ref().map(|(run, turn)| (run.as_str(), *turn)),
+    ) {
+        Ok(plan) => plan,
+        Err(why) => return refused(why),
     };
-    // **The cut refuses before anything is sent**, per Spec section 4.
-    let projected: &[weaver_analysis::Event] = match through.as_ref() {
-        None => &events,
-        Some((run, turn)) => match weaver_analysis::cut_through(&events, run, *turn) {
-            Ok(through) => through,
-            Err(why) => return refused(why.to_string()),
-        },
-    };
-    // The rename is the `--as` name alone, per Spec section 4: absent, every
-    // distillate keeps the session the record spelled.
-    let distillates = weaver_analysis::project_as(projected, as_session.as_deref());
-    let session = as_session.unwrap_or(session);
+    let distillates =
+        weaver_analysis::project::project_with(plan.events, Some(plan.destination), &plan.election);
     let outcome = std::os::unix::net::UnixStream::connect(socket).and_then(|stream| {
-        let mut sender = weaver_analysis::preload::open(stream, &session)?;
+        let mut sender =
+            weaver_analysis::preload::open_with(stream, plan.destination, &plan.election)?;
         for distillate in &distillates {
             sender.send(distillate)?;
         }
@@ -292,7 +297,11 @@ fn run_preload(rest: &[String]) -> std::process::ExitCode {
                 "{}",
                 serde_json::json!({
                     "preloaded": distillates.len(),
-                    "session": session,
+                    "session": plan.destination,
+                    "source_session": plan.source,
+                    "destination_session": plan.destination,
+                    "mode": if diagnostic { "diagnostic" } else { "recorded" },
+                    "election": plan.election,
                     "sealed": true,
                 })
             );

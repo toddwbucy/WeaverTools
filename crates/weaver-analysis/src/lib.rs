@@ -47,6 +47,7 @@ pub mod preload;
 pub mod project;
 pub mod reading;
 pub mod record;
+pub mod selection;
 pub mod signals;
 pub mod stream;
 

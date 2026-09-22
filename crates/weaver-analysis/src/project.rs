@@ -3,16 +3,13 @@
 //! conforms: analysis-sequence-order-preserved
 //! conforms: analysis-preload-cuts-and-renames
 //!
-//! The election and the projection, per `weaver-analysis-Spec` section 3:
-//! the election this crate declares is composed from what the replay reads,
-//! not declared by an operator, and this document names the kinds those
-//! steps read and the payload key paths they read out of them, and nothing
-//! further. A distillate is the envelope whole and the elected pairs beside
-//! it, each value as the record spelled it, reached by splicing raw payload
-//! text rather than re-encoding a parsed value - which is what makes the
-//! preload's indistinguishability claim true rather than approximate.
+//! Both preload modes share the raw selector below. Ordinary reconstruction
+//! receives the record's rule from preflight; the diagnostic convenience
+//! functions retain this crate's fixed election. Neither path re-encodes a
+//! selected payload value, and both carry turnless system payloads whole.
 
 use crate::record::{Event, value_at};
+use crate::selection::Election;
 
 /// One elected kind and the payload key paths read out of it.
 #[derive(Debug, Clone)]
@@ -134,20 +131,12 @@ pub fn cut_through<'a>(
 /// The opener's frame: the election whole, with the session it declares
 /// being the replayed session's own name, per the contract's section 2.
 pub fn render_opener(session: &str) -> String {
-    let keys: Vec<serde_json::Value> = ELECTION
-        .iter()
-        .map(|entry| {
-            serde_json::json!({
-                "kind": entry.kind,
-                "paths": entry.paths,
-            })
-        })
-        .collect();
-    let mut frame = serde_json::json!({
-        "session": session,
-        "election": { "all_kinds": false, "keys": keys },
-    })
-    .to_string();
+    render_opener_for(session, &Election::diagnostic())
+}
+
+/// Render the rule actually used by the projection.
+pub fn render_opener_for(session: &str, election: &Election) -> String {
+    let mut frame = serde_json::json!({"session": session, "election": election}).to_string();
     frame.push('\n');
     frame
 }
@@ -183,26 +172,41 @@ pub fn project(events: &[Event]) -> Vec<Distillate> {
 /// member bounds every answer to the session its opener declared. `None`
 /// keeps the record's own name.
 pub fn project_as(events: &[Event], session: Option<&str>) -> Vec<Distillate> {
+    project_with(events, session, &Election::diagnostic())
+}
+
+/// Both modes use this selector. Unknown elected material remains raw.
+pub fn project_with(
+    events: &[Event],
+    session: Option<&str>,
+    election: &Election,
+) -> Vec<Distillate> {
     let mut out = Vec::new();
     for event in events {
-        let Some(entry) = ELECTION.iter().find(|e| e.kind == event.envelope.kind) else {
-            continue;
-        };
-        let mut pairs = String::new();
-        if let Some(payload) = &event.payload {
-            for path in entry.paths {
-                if let Some(value) = value_at(payload, path) {
-                    if !pairs.is_empty() {
-                        pairs.push(',');
+        let mut selected = std::collections::BTreeMap::new();
+        if event.envelope.kind == "message.system" && event.envelope.turn.is_none() {
+            if let Some(payload) = &event.payload {
+                let Ok(members) = serde_json::from_str::<
+                    std::collections::BTreeMap<String, &serde_json::value::RawValue>,
+                >(payload.get()) else {
+                    continue;
+                };
+                selected = members;
+            }
+        } else {
+            let entry = election.keys.iter().find(|e| e.kind == event.envelope.kind);
+            if !election.all_kinds && entry.is_none() {
+                continue;
+            }
+            if let (Some(entry), Some(payload)) = (entry, &event.payload) {
+                for path in &entry.paths {
+                    if let Some(value) = value_at(payload, path) {
+                        selected.insert(path.clone(), value);
                     }
-                    // The key is this crate's rendering and the value is the
-                    // record's bytes, spliced.
-                    pairs.push_str(&serde_json::json!(path).to_string());
-                    pairs.push(':');
-                    pairs.push_str(value.get());
                 }
             }
         }
+        let pairs = serde_json::to_string(&selected).expect("raw pairs render");
         let mut envelope = format!(
             "{{\"session\":{},\"run\":{},",
             serde_json::json!(session.unwrap_or(event.envelope.session.as_str())),
@@ -216,7 +220,7 @@ pub fn project_as(events: &[Event], session: Option<&str>) -> Vec<Distillate> {
             serde_json::json!(event.envelope.kind),
             serde_json::json!(event.envelope.sequence),
         ));
-        let frame = format!("{{\"envelope\":{envelope}}},\"pairs\":{{{pairs}}}}}\n");
+        let frame = format!("{{\"envelope\":{envelope}}},\"pairs\":{pairs}}}\n");
         out.push(Distillate { frame });
     }
     out

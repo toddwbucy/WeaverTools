@@ -34,11 +34,19 @@ pub struct Sender<W: Write> {
     sink: W,
 }
 
-/// Open the preload: the election crosses whole as the channel's first
-/// traffic, declaring the replayed session under its own name so the
-/// holdings answer to the name the loop asks against.
-pub fn open<W: Write>(mut sink: W, session: &str) -> std::io::Result<Sender<W>> {
-    sink.write_all(crate::project::render_opener(session).as_bytes())?;
+/// Open with the diagnostic election. The CLI uses `open_with` after
+/// validating the destination and effective rule.
+pub fn open<W: Write>(sink: W, session: &str) -> std::io::Result<Sender<W>> {
+    open_with(sink, session, &crate::selection::Election::diagnostic())
+}
+
+/// Open with the preflight's effective rule, for either mode.
+pub fn open_with<W: Write>(
+    mut sink: W,
+    session: &str,
+    election: &crate::selection::Election,
+) -> std::io::Result<Sender<W>> {
+    sink.write_all(crate::project::render_opener_for(session, election).as_bytes())?;
     Ok(Sender { sink })
 }
 
