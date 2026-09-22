@@ -126,8 +126,12 @@ bounded to the session that load declared.
 driver refuses ambiguous source identity before opening the preload. Ordinary
 reconstruction refuses absent or malformed governing election evidence and a selected
 history requiring different rules within that one standing. It never invents a union or
-chooses one run's rule for another. Equivalent rules are one election regardless of
-their list order. An explicit diagnostic projection may apply its own rule across source
+chooses one run's rule for another. Equivalent effective rules are one election. The
+driver preserves the source
+rule's priority when multiple entries name the same kind, and resolves that
+priority before comparing selections. Reordering entries is not evidence of
+equivalence when it changes which entry governs a kind. An explicit diagnostic
+projection may apply its own rule across source
 runs, without manufacturing missing source evidence or certifying a claim whose evidence
 is absent.
 

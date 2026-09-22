@@ -79,8 +79,13 @@ the deployment template, analysis's constant, or another run. A false
 A preload sends one opener with one election. The proposed first implementation
 therefore refuses ordinary reconstruction when included runs declare different
 elections. It does not choose the first or last rule, union their paths, or send
-multiple retiring openers. Equivalent elections compare by admitted kinds and
-paths, independent of list order. Support for faithfully restoring a history
+multiple retiring openers. Recorded elections retain the tee's first-matching-kind rule.
+When multiple
+entries name one kind, only the first elects its paths. Resolve that precedence
+before comparing effective rules. Reordering distinct kinds or paths within an
+effective entry is harmless, but reversing conflicting entries for one kind can
+change selection. The all-kinds bit is never inferred from the events present. Support
+for faithfully restoring a history
 whose election changes is a separate representation decision. A cut excluding
 the change can still reconstruct the earlier prefix.
 
@@ -89,6 +94,11 @@ recorded elections because the destination explicitly represents that new
 selection. It preserves available source election evidence verbatim. Missing
 source evidence cannot be manufactured or certified by choosing diagnostic
 mode. The diagnostic loop's evidence and certification refusals still apply.
+
+Semantic readers continue to ignore kinds and members they do not understand.
+The raw projection retains them: an all-kinds rule carries a future kind's
+envelope, and an elected unknown path crosses verbatim. Unknown content does
+not become diagnostic evidence merely because custody retains it.
 
 Both modes keep landing order, splice elected payload values verbatim, and
 preserve absent, null, and empty-string distinctions. Recorded-rule projection
@@ -161,12 +171,18 @@ and the real tee under the recorded election at both cuts, including the
 all-kinds record and the turnless-system exception. Explicit diagnostic
 projection must be checked under analysis's election with both comparison paths
 using the same distinct destination. Both modes must preserve raw pair values
-and absent/null/empty distinctions through the real member's asks.
+and absent/null/empty distinctions through the real member's asks. Include a
+future kind with an elected unknown path, an all-kinds rule with no named kinds,
+and a restrictive empty rule retaining only the turnless-system exception.
+An ordinary excluded event must remain absent.
 
 Refusal tests must establish that invalid mode, destination, cut, source
 session, or required election evidence sends no opener. A pre-existing
 destination's holdings must survive each refusal. Missing and conflicting rules
-must not fall back to the fixed analysis election. Multiple runs with equivalent
+must not fall back to the fixed analysis election. Conflicting duplicate-kind
+entries must retain first-match behavior, and reversing those entries across
+runs must trigger the differing-rule refusal. Reordering distinct kinds or the
+effective entry's paths must not change that selection. Multiple runs with equivalent
 rules must work, and a recorded-rule change within the selected prefix must
 refuse under the proposed one-opener limit. A change after the cut must not
 invalidate the earlier prefix.

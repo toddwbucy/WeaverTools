@@ -168,14 +168,15 @@ cross this crate byte-identical to what the record spelled, per section 3, and i
 is the same reason `weaver-trace`'s tee holds a payload as raw text on the other
 side of the same wire.
 
-**A kind this crate does not know is skipped, and a payload member it does not know
-is ignored.** The record carries no version marker and needs none, per
-`weaver-trace-PRD` section 6, so a reader keys on nothing and every vintage is the
-one schema. **Neither may decide a grouping**: the walk runs on run and turn from
-the envelope and on request-to-measurement pairing in landing order, none of which
-an unrecognised record can move, which is what makes the rule satisfiable here
-rather than merely stated. The charter's section 4 argues this at length and this
-clause represents it.
+**Semantic readers skip unknown kinds and members, while raw projection retains
+them.** The record carries no version marker, per `weaver-trace-PRD` section 6.
+An unknown kind cannot become a request or measurement or decide diagnostic
+pairing, and an unknown member cannot influence an interpretation that does not
+read it. The envelope-first parse still retains each canonical event and its raw
+payload for election-driven reconstruction. An all-kinds rule admits an unknown
+kind's envelope, and an elected path crosses verbatim even when no semantic
+reader knows that path. The semantic skip is never a license to discard raw
+projection material. The charter's section 4 makes the same distinction.
 
 ```graph
 node: analysis-parse-skips-the-unknown
@@ -444,8 +445,16 @@ run needs a valid governing `load.tee` before its projected events. An absent ru
 malformed rule, conflicting duplicate load, or event without its run's governing load
 refuses naming the missing or conflicting evidence. A false `all_kinds` with no named
 kinds is an explicit rule, not missing evidence. One preload has one opener, so included
-runs with different effective rules refuse. Equivalent rules compare by admitted kinds
-and paths, independent of list order. A rule change after the cut does not invalidate
+runs with different effective rules refuse. The recorded list retains the tee's
+first-matching-kind semantics: for repeated
+`keys` entries naming one kind, only the first entry elects that kind's paths.
+Later entries are shadowed, never merged into a union. Resolve that precedence
+before comparing effective rules. Afterward, order of distinct kinds and order
+or repetition of paths within the effective entry do not change selection.
+`all_kinds` remains a distinct fact, never inferred from the events observed in
+the selected prefix. Reversing conflicting duplicate-kind entries can therefore
+change the rule and make an ordinary multi-run preload refuse. A rule change after the
+cut does not invalidate
 the earlier prefix. Diagnostic mode can use its own election across source runs, but
 never fills in absent source evidence or waives the certification that requires it.
 
@@ -540,8 +549,9 @@ to: analysis-one-preload-per-run
 **The diagnostic-trace's parse is the serving parse's sibling and answers to a
 different authority.** The line is the same line and the envelope the same
 envelope, per `weaver-diagnostic-Spec` sections 2 and 3.1, so section 2's rules
-above bind here unchanged: skip the unknown, derive nothing absent, hold payloads
-raw. **What differs is the kind set**, seventeen rather than twenty-one, and
+above bind here unchanged: skip unknown content in semantic interpretation,
+derive nothing absent, and retain raw projection material. **What differs is the kind
+set**, seventeen rather than twenty-one, and
 `weaver-diagnostic-Spec` section 3.2 is authoritative for it, a divergence being a
 defect against that document rather than this one.
 
@@ -1019,18 +1029,24 @@ resolved tree.
 
 **Requiring a perturbation-verified test.**
 
-- The parse skips a kind and a payload member it does not know, confirmed by
-  feeding a record carrying an invented kind and an invented member and watching
-  the grouping stay identical, and by watching a rejection appear when the skip is
-  removed.
+- Semantic interpretation skips unknown kinds and members: invented content leaves
+  diagnostic grouping unchanged and does not refuse merely for being unknown.
+  Recorded-rule projection still carries an invented kind and an elected unknown
+  path verbatim. Dropping that raw material or interpreting it as a known diagnostic
+  event must fail the respective projection or grouping check.
 - No absent member is derived: a record without the layer and forward counts yields
   an unknown layer count, watched to fail when a derivation from the norm array's
   length is put back.
-- The election declares what follows: the stream carries no kind the opener did not
-  name, watched to fail when a kind is projected past the election. Ordinary
-  reconstruction is compared to the record and an independent live tee under its
-  recorded rule. Restoring the fixed diagnostic default or defaulting absent
-  election evidence must fail that comparison or its preflight refusal check.
+- The election declares the effective selection: an all-kinds rule with no named
+  kinds carries every envelope, and a restrictive empty rule still carries turnless
+  system messages under the standing exception. An excluded ordinary event
+  stays out, watched to fail when it is projected anyway. Ordinary reconstruction is
+  compared to the record and an independent tee under the recorded rule. Repeated
+  kind entries preserve first-match precedence, watched to fail when they are merged
+  or sorted before selection. Reversing conflicting entries across runs refuses
+  before the opener, while reordering distinct kinds or effective paths does not.
+  Restoring the fixed diagnostic default or defaulting absent election evidence must
+  fail the comparison or its preflight refusal check.
 - The projection splices verbatim: a value the record spelled in a way a
   re-encoding would change crosses byte-identical, watched to fail when the
   projection re-encodes a parsed value.

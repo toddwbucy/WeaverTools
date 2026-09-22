@@ -318,12 +318,13 @@ a sink.
   needs none, per `weaver-trace-PRD` section 6: the schema extends and does
   not change, so every vintage is the one schema and a reader keys on nothing.
   What that costs this crate is a rule its parser owes rather than a question
-  it was owed. **The parser skips a kind it does not know and ignores a
-  payload member it does not know, and lets neither decide a grouping.** The
-  replay's grouping runs on run and turn from the envelope and on
-  request-to-measurement pairing in landing order, none of which an
-  unrecognised record can move, so the rule is satisfiable here rather than
-  merely stated. **The other direction binds this parser harder**: a record
+  it was owed. **Semantic interpretation ignores unknown kinds and members,
+  while reconstruction retains their raw material when the recorded rule elects
+  it.** Unknown content cannot acquire the meaning of a known diagnostic event
+  or change its request-to-measurement grouping. That does not permit dropping
+  an unknown event's envelope under an all-kinds rule or dropping an elected
+  payload path because the diagnostic reader does not use it. **The other direction
+  binds this parser harder**: a record
   written before a member existed omits it, and the parser reads that record
   without rejecting it and without deriving the missing member from the
   members beside it, per the same section. This crate is the place that rule
