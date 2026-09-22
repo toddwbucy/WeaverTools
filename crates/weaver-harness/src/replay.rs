@@ -514,12 +514,12 @@ mod tests {
         (OwnedFd::from(file), path)
     }
 
-    fn diagnostic_record(sink: OwnedFd) -> Record {
+    fn diagnostic_record(sink: OwnedFd, session: &str) -> Record {
         Record::Diagnostic(
             weaver_diagnostic::Recorder::receive(
                 sink,
                 weaver_diagnostic::RunRef("r-d".into()),
-                weaver_diagnostic::SessionRef("s-d".into()),
+                weaver_diagnostic::SessionRef(session.into()),
             )
             .expect("the recorder receives"),
         )
@@ -568,9 +568,17 @@ mod tests {
         custodian: Option<String>,
         decode_script: fn(std::os::fd::OwnedFd),
     ) -> (Result<(), crate::engine::TurnError>, Vec<serde_json::Value>) {
+        run_drive_as(custodian, decode_script, "s-d")
+    }
+
+    fn run_drive_as(
+        custodian: Option<String>,
+        decode_script: fn(std::os::fd::OwnedFd),
+        destination: &str,
+    ) -> (Result<(), crate::engine::TurnError>, Vec<serde_json::Value>) {
         let (sink_fd, path) = sink();
-        let mut record = diagnostic_record(sink_fd);
-        let session = SessionId("s-d".into());
+        let mut record = diagnostic_record(sink_fd, destination);
+        let session = SessionId(destination.into());
         let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
 
         let (ours, theirs) = UnixStream::pair().expect("state pair");
@@ -747,6 +755,26 @@ mod tests {
         assert_eq!(close["payload"]["close"], "stopped");
     }
 
+    fn answers_refed(far: std::os::fd::OwnedFd) {
+        let mut buf = vec![0u8; 65536];
+        let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
+        let directive: serde_json::Value =
+            serde_json::from_slice(&buf[..n]).expect("the directive parses");
+        assert_eq!(
+            directive["kind"], "re_feed",
+            "the drive crossed: {directive}"
+        );
+        let refed = concat!(
+            r#"{"kind":"re_fed","body":{"emission":"hi","finish":"completed","#,
+            r#""content":[{"type":"text","text":"hi"}],"#,
+            r#""request":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}},"#,
+            r#""measurement":{"input_tokens":[1,2],"output_tokens":[3],"#,
+            r#""model":"art","weights_hash":"h"},"#,
+            r#""resident":6,"capacity":64}}"#
+        );
+        send(far.as_raw_fd(), refed.as_bytes(), MsgFlags::empty()).expect("answers");
+    }
+
     /// **A matching replay certifies, the bracket mirrored whole, under
     /// the run's own session.** The decode peer answers the re-feed with
     /// the recorded path recomputed, the pass closes certified, and the
@@ -762,25 +790,6 @@ mod tests {
     /// fails. Watched under exactly that change.
     #[test]
     fn a_matching_replay_certifies_under_the_runs_own_session() {
-        fn answers_refed(far: std::os::fd::OwnedFd) {
-            let mut buf = vec![0u8; 65536];
-            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("takes the re-feed");
-            let directive: serde_json::Value =
-                serde_json::from_slice(&buf[..n]).expect("the directive parses");
-            assert_eq!(
-                directive["kind"], "re_feed",
-                "the drive crossed: {directive}"
-            );
-            let refed = concat!(
-                r#"{"kind":"re_fed","body":{"emission":"hi","finish":"completed","#,
-                r#""content":[{"type":"text","text":"hi"}],"#,
-                r#""request":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}},"#,
-                r#""measurement":{"input_tokens":[1,2],"output_tokens":[3],"#,
-                r#""model":"art","weights_hash":"h"},"#,
-                r#""resident":6,"capacity":64}}"#
-            );
-            send(far.as_raw_fd(), refed.as_bytes(), MsgFlags::empty()).expect("answers");
-        }
         let (outcome, lines) = run_drive(Some(sealed_answer()), answers_refed);
         assert!(outcome.is_ok());
         let close = lines.last().expect("the close stands");
@@ -819,6 +828,73 @@ mod tests {
             ],
             "the certified pass authors the mirrored bracket whole"
         );
+    }
+
+    /// E1: the destination names the seat, holdings, and diagnostic identity;
+    /// the unchanged operator-held record identifies the source. Its digest
+    /// belongs to the analysis artifact, not a field invented by this loop.
+    /// Perturbation: replace `seat.session_name()` with the source name; the
+    /// identity assertions fail although the recomputed token path matches.
+    #[test]
+    fn a_diagnostic_destination_certifies_without_renaming_source_evidence() {
+        const SOURCE: &str = concat!(
+            r#"{"session":"s-source","run":"r-source","turn":"t-1","sequence":"4","kind":"model.request","payload":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}}}"#,
+            "\n",
+            r#"{"session":"s-source","run":"r-source","turn":"t-1","sequence":"6","kind":"model.measurement","payload":{"input_tokens":[1,2],"output_tokens":[3],"model":"art","weights_hash":"h"}}"#,
+            "\n",
+        );
+        let source: Vec<serde_json::Value> = SOURCE
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        let source_before = source.clone();
+        // Exercise two destinations so the seat's name cannot be replaced
+        // by a fixed diagnostic spelling that happens to fit one fixture.
+        for destination in ["s-diagnostic-one", "s-diagnostic-two"] {
+            assert_ne!(destination, source[0]["session"].as_str().unwrap());
+            let events: Vec<serde_json::Value> = source
+                .iter()
+                .map(|event| {
+                    serde_json::json!({
+                        "envelope": {
+                            "session": destination,
+                            "run": event["run"], "turn": event["turn"],
+                            "sequence": event["sequence"], "kind": event["kind"],
+                        },
+                        "pairs": event["payload"],
+                    })
+                })
+                .collect();
+            for (held, original) in events.iter().zip(&source) {
+                assert_eq!(held["envelope"]["session"], destination);
+                for field in ["run", "turn", "sequence", "kind"] {
+                    assert_eq!(held["envelope"][field], original[field]);
+                }
+                assert_eq!(held["pairs"], original["payload"]);
+            }
+            let answer = format!(
+                "{}\n",
+                serde_json::json!({"answer":{"replay":{"events":events}}})
+            );
+            let (outcome, lines) = run_drive_as(Some(answer), answers_refed, destination);
+            assert!(outcome.is_ok());
+            let close = lines.last().expect("the pass closes");
+            assert_eq!(close["kind"], "replay.closed");
+            assert_eq!(close["payload"]["outcome"]["kind"], "certified");
+            assert!(lines.iter().all(|line| line["session"] == destination));
+            let identity = lines
+                .iter()
+                .find(|line| line["kind"] == "replay.identity")
+                .expect("the input identity was established");
+            assert_eq!(identity["payload"]["replayed_session"], destination);
+            assert_eq!(identity["payload"]["model"], "art");
+            assert_eq!(identity["payload"]["weights_hash"], "h");
+            assert_eq!(identity["payload"]["template"], "tmpl");
+            assert_eq!(
+                source, source_before,
+                "destination assignment never rewrites source evidence"
+            );
+        }
     }
 
     /// A drive whose scripted peer answers one re-feed with the given
