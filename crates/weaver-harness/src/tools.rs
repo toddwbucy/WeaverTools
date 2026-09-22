@@ -83,7 +83,7 @@ impl ToolResult {
     /// Every outcome becomes renderable content, in words the model reasons
     /// over, whichever of the exchange's four contents arrived: a result is
     /// itself, a refusal and an error each name their speaker, and a kill
-    /// names the clock and carries what drained before it - marked as
+    /// names its cause and carries what drained before it - marked as
     /// partial, so a fragment cannot read as an answer.
     pub(crate) fn granted(outcome: &ToolOutcome) -> ToolResult {
         let content = match outcome {
@@ -94,15 +94,22 @@ impl ToolResult {
             ToolOutcome::Errored { detail } => {
                 format!("the tool machinery failed: {detail}")
             }
-            ToolOutcome::Killed { partial } => match partial {
-                Some(partial) => format!(
-                    "the command ran past the clock and was killed. Partial \
-                     output before the kill:\n{partial}"
-                ),
-                None => "the command ran past the clock and was killed, with \
-                         no output before the kill"
-                    .to_string(),
-            },
+            ToolOutcome::Killed { partial, by } => {
+                let ending = match by {
+                    weaver_types::KillCause::Clock => {
+                        "the command ran past the clock and was killed"
+                    }
+                    weaver_types::KillCause::Cancel => {
+                        "the command was killed by the operator's stop"
+                    }
+                };
+                match partial {
+                    Some(partial) => {
+                        format!("{ending}. Partial output before the kill:\n{partial}")
+                    }
+                    None => format!("{ending}, with no output before the kill"),
+                }
+            }
         };
         ToolResult { content }
     }

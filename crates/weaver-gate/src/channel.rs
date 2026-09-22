@@ -224,7 +224,7 @@ fn render(envelope: &OrganEnvelope) -> Result<Vec<u8>, ChannelFault> {
 /// Test builds only: [`adopt`] is the one ownership path a shipped binary has,
 /// and a constructor beside it that took any descriptor would be a second one.
 #[cfg(test)]
-fn from_owned(end: OwnedFd) -> Channel {
+pub(crate) fn from_owned(end: OwnedFd) -> Channel {
     Channel { end }
 }
 
