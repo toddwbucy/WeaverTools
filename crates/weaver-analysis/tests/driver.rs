@@ -1,3 +1,8 @@
+//! conforms: analysis-reconstruction-follows-recorded-election
+//! conforms: analysis-preload-validates-before-opener
+//! conforms: analysis-diagnostic-requires-distinct-destination
+//! conforms: analysis-derive-uses-explicit-destination
+//! conforms: analysis-preload-reports-effective-selection
 //! conforms: analysis-parse-skips-the-unknown
 //! conforms: analysis-derives-no-absent-member
 //! conforms: analysis-election-declares-what-follows
@@ -17,6 +22,7 @@ const SOURCE: &str = include_str!("fixtures/serving-source.ndjson");
 
 fn inputs() -> AnalystInputs {
     AnalystInputs {
+        destination: "s-diagnostic".to_string(),
         devices: vec![0],
         readout: false,
         field_depth: None,
@@ -300,7 +306,7 @@ fn the_declaration_derives_every_source_run_fact() {
         !declaration.contains("gate-instruction"),
         "a diagnostic declaration carries no gate"
     );
-    assert!(declaration.contains("session: \"s-karl-1\""));
+
     // A sink path holding YAML-significant characters crosses as the value
     // it is rather than as markup.
     let hostile = AnalystInputs {
@@ -313,4 +319,362 @@ fn the_declaration_derives_every_source_run_fact() {
         declaration.contains("  path: \"/tmp/x: {y}\""),
         "a YAML-significant path stays a value: {declaration}"
     );
+}
+
+// A real CLI process and a listening preload door. Refusals must not even
+// connect: a custodian's prior holdings therefore cannot meet a new opener.
+struct Door {
+    dir: std::path::PathBuf,
+    listener: std::os::unix::net::UnixListener,
+}
+
+impl Door {
+    fn new() -> Self {
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "e1-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        std::fs::create_dir(&dir).unwrap();
+        let listener = std::os::unix::net::UnixListener::bind(dir.join("door")).unwrap();
+        listener.set_nonblocking(true).unwrap();
+        Self { dir, listener }
+    }
+
+    fn invoke(&self, record: &str, args: &[&str]) -> std::process::Output {
+        std::fs::write(self.dir.join("record"), record).unwrap();
+        std::process::Command::new(env!("CARGO_BIN_EXE_weaver-analysis"))
+            .arg("preload")
+            .arg(self.dir.join("record"))
+            .arg(self.dir.join("door"))
+            .args(args)
+            .output()
+            .unwrap()
+    }
+
+    fn loaded(record: &str, args: &[&str]) -> (Vec<String>, serde_json::Value) {
+        use std::io::Read;
+        let door = Self::new();
+        let result = door.invoke(record, args);
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let (mut stream, _) = door.listener.accept().expect("the validated driver dials");
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(2)))
+            .unwrap();
+        let mut wire = String::new();
+        stream.read_to_string(&mut wire).unwrap();
+        (
+            wire.lines().map(str::to_string).collect(),
+            serde_json::from_slice(&result.stdout).unwrap(),
+        )
+    }
+
+    fn refuses(record: &str, args: &[&str], reason: &str) {
+        let door = Self::new();
+        let result = door.invoke(record, args);
+        assert!(!result.status.success(), "refusal required: {args:?}");
+        let error = String::from_utf8_lossy(&result.stderr);
+        assert!(
+            error.contains(reason),
+            "{args:?}: {error}, expected {reason}"
+        );
+        assert!(
+            matches!(door.listener.accept(), Err(error) if error.kind() == std::io::ErrorKind::WouldBlock),
+            "a refusal connected to the custodian; existing holdings could be retired: {args:?}"
+        );
+    }
+}
+
+impl Drop for Door {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+fn line(run: &str, sequence: u64, kind: &str, turn: Option<&str>, payload: &str) -> String {
+    format!(
+        "{{\"session\":\"source\",\"run\":{run:?},\"sequence\":\"{sequence}\",\"kind\":{kind:?},\"turn\":{},\"subsystem\":\"harness\",\"wall_ms\":0,\"monotonic_ns\":0,\"payload\":{payload}}}\n",
+        serde_json::json!(turn)
+    )
+}
+
+fn selection_record(rule: &str, run: &str) -> String {
+    [
+        line(run, 0, "load", None, &format!("{{\"tee\":{rule}}}")),
+        line(
+            run,
+            1,
+            "message.system",
+            None,
+            r#"{"role":"system","future":{"z":1.00, "a":1e3},"content":"identity"}"#,
+        ),
+        line(
+            run,
+            2,
+            "future.kind",
+            Some("t-1"),
+            r#"{"future":{"raw":{"z":1.00, "a":1e3},"null":null,"empty":""},"other":42}"#,
+        ),
+        line(
+            run,
+            3,
+            "message.user",
+            Some("t-1"),
+            r#"{"role":"user","content":"hello"}"#,
+        ),
+        line(run, 4, "turn.closed", Some("t-1"), "{}"),
+    ]
+    .concat()
+}
+
+const RAW_RULE: &str = r#"{"all_kinds":false,"keys":[{"kind":"future.kind","paths":["future.raw","future.null","future.empty","future.absent"]},{"kind":"future.kind","paths":["other"]}]}"#;
+
+/// Perturbations: restore the fixed default, drop unknown elected material,
+/// suppress the system exception, or merge/sort duplicate-kind entries.
+/// Each changes a separately asserted reading of the actual CLI wire.
+#[test]
+fn recorded_selection_preserves_unknown_raw_values_and_first_match() {
+    let record = selection_record(RAW_RULE, "r-one");
+    let (wire, _) = Door::loaded(&record, &[]);
+    assert_eq!(wire.len(), 4, "opener, turnless system, future kind, seal");
+    let opener: serde_json::Value = serde_json::from_str(&wire[0]).unwrap();
+    assert_eq!(
+        opener["election"],
+        serde_json::from_str::<serde_json::Value>(RAW_RULE).unwrap()
+    );
+    let system: serde_json::Value = serde_json::from_str(&wire[1]).unwrap();
+    assert_eq!(system["envelope"]["kind"], "message.system");
+    assert!(
+        wire[1].contains(r#""future":{"z":1.00, "a":1e3}"#),
+        "whole system payload crosses under every rule"
+    );
+    let future: serde_json::Value = serde_json::from_str(&wire[2]).unwrap();
+    assert_eq!(future["envelope"]["kind"], "future.kind");
+    assert_eq!(future["envelope"]["session"], "source");
+    let pairs = future["pairs"].as_object().unwrap();
+    assert_eq!(pairs.len(), 3);
+    assert!(!pairs.contains_key("future.absent"));
+    assert_eq!(pairs.get("future.null"), Some(&serde_json::Value::Null));
+    assert_eq!(pairs.get("future.empty"), Some(&serde_json::json!("")));
+    assert!(
+        !pairs.contains_key("other"),
+        "later duplicate kind is shadowed"
+    );
+    assert!(wire[2].contains(r#""future.raw":{"z":1.00, "a":1e3}"#));
+    assert_eq!(wire[3], "{}");
+
+    // Reverse conflicting duplicate kinds: first-match must reverse too.
+    let reversed = r#"{"all_kinds":false,"keys":[{"kind":"future.kind","paths":["other"]},{"kind":"future.kind","paths":["future.raw"]}]}"#;
+    let (wire, _) = Door::loaded(&selection_record(reversed, "r-one"), &[]);
+    let future: serde_json::Value = serde_json::from_str(&wire[2]).unwrap();
+    assert_eq!(future["pairs"], serde_json::json!({"other":42}));
+}
+
+#[test]
+fn all_kinds_and_empty_restrictive_rules_keep_the_system_exception() {
+    for (all, expected) in [(true, 5), (false, 1)] {
+        let rule = format!(r#"{{"all_kinds":{all},"keys":[]}}"#);
+        let (wire, report) = Door::loaded(&selection_record(&rule, "r-one"), &[]);
+        assert_eq!(wire.len(), expected + 2);
+        assert_eq!(report["preloaded"], expected);
+        let mut systems = 0;
+        for frame in &wire[1..wire.len() - 1] {
+            let frame: serde_json::Value = serde_json::from_str(frame).unwrap();
+            if frame["envelope"]["kind"] == "message.system" {
+                systems += 1;
+                assert_eq!(frame["pairs"].as_object().unwrap().len(), 3);
+            } else {
+                assert_eq!(frame["pairs"], serde_json::json!({}));
+            }
+        }
+        assert_eq!(systems, 1);
+    }
+}
+
+/// Refusal coverage is against a live listening socket, including every
+/// evidence class, not an unavailable pathname that could hide an early dial.
+/// Perturbations: validate after opening, default missing evidence, or accept
+/// a source-named cut / diagnostic destination.
+#[test]
+fn every_preflight_refusal_leaves_the_door_untouched() {
+    let good = selection_record(RAW_RULE, "r-one");
+    for (args, reason) in [
+        (vec!["--unknown"], "unknown"),
+        (vec!["--diagnostic", "--diagnostic"], "repeated"),
+        (vec!["--as", ""], "nonempty"),
+        (vec!["--as"], "takes"),
+        (vec!["--through"], "takes"),
+        (vec!["--through", "bad"], "colon"),
+        (vec!["--through", "r-one:bad"], "number"),
+        (vec!["--through", "absent:1", "--as", "branch"], "no run"),
+        (vec!["--through", "r-one:9", "--as", "branch"], "no turn"),
+        (vec!["--through", "r-one:1"], "distinct"),
+        (vec!["--through", "r-one:1", "--as", "source"], "distinct"),
+        (vec!["--diagnostic"], "distinct"),
+        (vec!["--diagnostic", "--as", "source"], "distinct"),
+        (vec!["--diagnostic", "--as", ""], "nonempty"),
+    ] {
+        Door::refuses(&good, &args, reason);
+    }
+    Door::refuses("", &[], "no event");
+    Door::refuses(
+        &good.replace("turn.closed", "turn.started"),
+        &["--through", "r-one:1", "--as", "branch"],
+        "without its close",
+    );
+    Door::refuses(
+        &good.replacen("source", "another", 1),
+        &[],
+        "one nonempty source",
+    );
+    Door::refuses(&good.replace("source", ""), &[], "one nonempty source");
+    Door::refuses(
+        &good.lines().skip(1).collect::<Vec<_>>().join("\n"),
+        &[],
+        "governing load",
+    );
+    for bad in [
+        "null",
+        "{}",
+        r#"{"all_kinds":false}"#,
+        r#"{"keys":[]}"#,
+        r#"{"all_kinds":"true","keys":[]}"#,
+        r#"{"all_kinds":false,"keys":[{"kind":"x"}]}"#,
+        r#"{"all_kinds":false,"keys":[{"paths":[]}]}"#,
+        r#"{"all_kinds":false,"keys":[{"kind":"x","paths":[1]}]}"#,
+    ] {
+        Door::refuses(&selection_record(bad, "r-one"), &[], "malformed");
+    }
+    Door::refuses(
+        &good.replacen(&format!(r#""tee":{RAW_RULE}"#), "", 1),
+        &[],
+        "lacks tee",
+    );
+    let changed = selection_record(r#"{"all_kinds":true,"keys":[]}"#, "r-two");
+    Door::refuses(&format!("{good}{changed}"), &[], "different effective");
+    Door::refuses(
+        &format!("{good}{}", changed.replace("r-two", "r-one")),
+        &[],
+        "conflicting duplicate",
+    );
+    let reversed = r#"{"all_kinds":false,"keys":[{"kind":"future.kind","paths":["other"]},{"kind":"future.kind","paths":["future.raw","future.null","future.empty","future.absent"]}]}"#;
+    Door::refuses(
+        &format!("{good}{}", selection_record(reversed, "r-two")),
+        &[],
+        "different effective",
+    );
+}
+
+#[test]
+fn effective_rules_ignore_only_irrelevant_order_and_the_cut_bounds_evidence() {
+    let rule = r#"{"all_kinds":false,"keys":[{"kind":"future.kind","paths":["future.raw","future.null"]},{"kind":"message.user","paths":["content","role"]}]}"#;
+    let equivalent = r#"{"all_kinds":false,"keys":[{"kind":"message.user","paths":["role","content","role"]},{"kind":"future.kind","paths":["future.null","future.raw"]},{"kind":"future.kind","paths":["shadow"]}]}"#;
+    let first = selection_record(rule, "r-one");
+    let (wire, _) = Door::loaded(
+        &format!("{first}{}", selection_record(equivalent, "r-two")),
+        &[],
+    );
+    assert_eq!(wire.len(), 8, "three events per run");
+    let changed = selection_record(r#"{"all_kinds":true,"keys":[]}"#, "r-two");
+    let (wire, _) = Door::loaded(
+        &format!("{first}{changed}"),
+        &["--through", "r-one:1", "--as", "branch"],
+    );
+    assert_eq!(wire.len(), 5);
+    for frame in &wire[1..wire.len() - 1] {
+        let value: serde_json::Value = serde_json::from_str(frame).unwrap();
+        assert_eq!(value["envelope"]["session"], "branch");
+        assert_eq!(value["envelope"]["run"], "r-one");
+    }
+    // Diagnostic selection can cross differing source elections, without
+    // claiming those holdings reproduce the original session's state.
+    let (_, report) = Door::loaded(
+        &format!("{first}{changed}"),
+        &["--diagnostic", "--as", "diagnostic"],
+    );
+    assert_eq!(report["preloaded"], 6);
+}
+
+/// Report assertions use independently stated expectations for BOTH modes;
+/// falsifying any member fails here even if the wire is otherwise valid.
+#[test]
+fn the_report_names_the_selection_that_crossed() {
+    let recorded: serde_json::Value = serde_json::from_str(RAW_RULE).unwrap();
+    let diagnostic = serde_json::json!({"all_kinds":false,"keys":[
+        {"kind":"load","paths":["tee"]},
+        {"kind":"model.request","paths":["rendered","template","sampling"]},
+        {"kind":"model.measurement","paths":["input_tokens","output_tokens","model","weights_hash"]},
+        {"kind":"message.system","paths":["role","content"]},
+        {"kind":"message.user","paths":["role","content"]},
+        {"kind":"message.assistant","paths":["role","content"]},
+        {"kind":"message.tool_result","paths":["role","content"]}
+    ]});
+    for (args, mode, destination, election, count) in [
+        (vec![], "recorded", "source", recorded.clone(), 2),
+        (vec!["--as", "branch"], "recorded", "branch", recorded, 2),
+        (
+            vec!["--diagnostic", "--as", "diagnostic"],
+            "diagnostic",
+            "diagnostic",
+            diagnostic,
+            3,
+        ),
+    ] {
+        let (wire, report) = Door::loaded(&selection_record(RAW_RULE, "r-one"), &args);
+        assert_eq!(
+            report,
+            serde_json::json!({"mode":mode,"source_session":"source","destination_session":destination,"session":destination,"election":election,"preloaded":count,"sealed":true})
+        );
+        let opener: serde_json::Value = serde_json::from_str(&wire[0]).unwrap();
+        assert_eq!(
+            opener,
+            serde_json::json!({"session":destination,"election":election})
+        );
+        assert_eq!(wire.len(), count + 2);
+        for frame in &wire[1..wire.len() - 1] {
+            let event: serde_json::Value = serde_json::from_str(frame).unwrap();
+            assert_eq!(event["envelope"]["session"], destination);
+        }
+        assert_eq!(wire.last().unwrap(), "{}");
+    }
+}
+
+/// The CLI must require and render the analyst's destination. Source facts
+/// remain watched by the existing declaration test, not redefined here.
+#[test]
+fn derive_requires_and_renders_a_distinct_destination() {
+    let door = Door::new();
+    std::fs::write(door.dir.join("record"), SOURCE).unwrap();
+    for (as_args, succeeds) in [
+        (vec![], false),
+        (vec!["--as", ""], false),
+        (vec!["--as", "s-karl-1"], false),
+        (vec!["--as", "diagnostic"], true),
+    ] {
+        let result = std::process::Command::new(env!("CARGO_BIN_EXE_weaver-analysis"))
+            .arg("derive")
+            .arg(door.dir.join("record"))
+            .args(["--devices", "0", "--sink", "/tmp/diagnostic.ndjson"])
+            .args(as_args)
+            .output()
+            .unwrap();
+        assert_eq!(
+            result.status.success(),
+            succeeds,
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        if succeeds {
+            assert!(
+                String::from_utf8_lossy(&result.stdout).starts_with("session: \"diagnostic\"\n")
+            );
+        } else {
+            assert!(String::from_utf8_lossy(&result.stderr).contains("destination"));
+        }
+    }
 }

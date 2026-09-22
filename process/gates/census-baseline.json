@@ -58,11 +58,6 @@
     "crates/weaver-web/tests/startup.rs"
   ],
   "uncited_perturbations": [
-    "analysis-derive-uses-explicit-destination",
-    "analysis-diagnostic-requires-distinct-destination",
-    "analysis-preload-reports-effective-selection",
-    "analysis-preload-validates-before-opener",
-    "analysis-reconstruction-follows-recorded-election",
     "analysis-summary-reports-the-prefix-length",
     "analysis-summary-reports-the-record-digest",
     "analysis-summary-reports-the-record-session",

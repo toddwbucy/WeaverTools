@@ -4,18 +4,20 @@
 //! section 3's third projection and the charter's section 3 as amended on
 //! issue #394: every fact of the source run comes from the record, so the
 //! diagnostic run is correct to the run and never to the analyst's memory.
-//! Three members are the analyst's inputs - device placement, the readers'
-//! elections, and the diagnostic sink - and two take the fixed spellings
+//! Four members are the analyst's inputs - device placement, the readers'
+//! elections, the diagnostic sink, and destination - and two take the fixed spellings
 //! the Spec names for members the record does not carry and a run under
 //! this binding never reads.
 
 use crate::record::{Event, value_at};
 
-/// The analyst's three inputs, the charter's exceptions each for its own
+/// The analyst's four inputs, the charter's exceptions each for its own
 /// reason: the record deliberately names no silicon, the readers are the
-/// analyst's question, and the sink is the new record's home.
+/// analyst's question, the sink is the new record's home, and the destination
+/// names the diagnostic session separately from the source evidence.
 #[derive(Debug, Clone)]
 pub struct AnalystInputs {
+    pub destination: String,
     pub devices: Vec<u32>,
     pub readout: bool,
     pub field_depth: Option<u32>,
@@ -133,6 +135,18 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
             });
         }
     }
+    if inputs.destination.is_empty() {
+        return Err(DeriveRefusal::MemberAbsent {
+            member: "destination",
+        });
+    }
+    if inputs.destination == session {
+        return Err(DeriveRefusal::MemberDisagrees {
+            member: "destination",
+            held: session,
+            met: inputs.destination.clone(),
+        });
+    }
     let artifact: String = serde_json::from_str(&one_value(
         events,
         "model.measurement",
@@ -176,7 +190,10 @@ pub fn derive(events: &[Event], inputs: &AnalystInputs) -> Result<String, Derive
     // colon, a quote, or any other YAML-significant character crosses as
     // the value it is rather than as markup.
     let mut declaration = String::new();
-    declaration.push_str(&format!("session: {}\n", serde_json::json!(session)));
+    declaration.push_str(&format!(
+        "session: {}\n",
+        serde_json::json!(inputs.destination)
+    ));
     declaration.push_str("binding-kind: diagnostic\n");
     declaration.push_str("spu-instruction:\n  decoder:\n");
     declaration.push_str("    model-binding:\n");
