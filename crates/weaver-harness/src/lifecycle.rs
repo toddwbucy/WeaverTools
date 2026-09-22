@@ -1,3 +1,4 @@
+//! conforms: harness-idle-report-authors-without-a-turn
 //! conforms: harness-one-constructor
 //! conforms: harness-failed-set-refuses-construction
 //! conforms: harness-channel-state-three-positions
@@ -3994,6 +3995,136 @@ mod tests {
         );
         assert!(!refused.contains("turn"), "no turn opened: {refused}");
         assert!(!refused.contains("run"), "no turn opened: {refused}");
+    }
+
+    /// conforms: harness-idle-report-authors-without-a-turn
+    /// An idle gate report is clerked once, without a turn, seat, or answer.
+    /// Every gate-owned case uses this dispatch arm; its account crosses as
+    /// handed over the real gate pair. The next coordination wake observes Idle.
+    /// Perturbations: open a turn in the Fault arm; send an answer there.
+    /// Each is detected independently, after the actual entered-state wait.
+    #[test]
+    fn an_idle_gate_report_authors_without_a_turn_or_answer() {
+        use nix::poll::{PollFd, PollFlags, poll};
+        use std::os::fd::AsFd;
+
+        for case in [
+            weaver_types::FaultCase::ListenerLost,
+            weaver_types::FaultCase::ClientConnectionFailedMidTurn,
+            weaver_types::FaultCase::AdmissionFailingSystematically,
+        ] {
+            let (mut run, _spare, sink) = entered_run(None);
+            // Keep the decode peer alive so the real idle poll sees the
+            // report, not the fixture's otherwise closed decode channel.
+            let (decode, _decode_peer) = DecodeChannel::pair().expect("decode pair");
+            run.spu.as_mut().unwrap().decode = decode;
+            let (gate, gate_peer) = OrganChannel::pair().expect("gate pair");
+            run.gate = Some(GateChannel {
+                channel: gate,
+                pid: nix::unistd::Pid::from_raw(1),
+                last_word: crate::spawn::LastWord::quiet(),
+            });
+            let gate_peer = gate_peer.into_channel();
+            let mut harness = Harness {
+                coordination: test_listener(),
+                organs: OrganBinaries {
+                    classify: None,
+                    spu: "/nonexistent".into(),
+                    gate: "/nonexistent".into(),
+                },
+                parameters: OrganParameters::default(),
+                state: ChannelState::Entered(Box::new(run)),
+                composer: Some(weaver_trace::LoopIdentity::compiled("test")),
+            };
+            let report = weaver_types::FaultReport {
+                case,
+                account: serde_json::value::RawValue::from_string(
+                    r#"{"z":1.00, "reason":"reported at rest","a":null}"#.into(),
+                )
+                .unwrap(),
+            };
+            gate_peer
+                .send(&OrganEnvelope {
+                    exchange: ExchangeId {
+                        opener: Opener::Gate,
+                        ordinal: 7,
+                    },
+                    position: Position::Open,
+                    payload: weaver_types::Payload::Fault(report.clone()),
+                })
+                .expect("the fault-report sends");
+            assert!(matches!(harness.wait(None), Ok(Wake::Gate)));
+            harness
+                .serve_gate_wake(
+                    "",
+                    &[],
+                    &mut |_, _| panic!("an idle report must not grant the seat"),
+                    &mut None,
+                )
+                .expect("the report is clerked");
+
+            let ChannelState::Entered(run) = &harness.state else {
+                panic!("report must leave the run standing");
+            };
+            let rows: Vec<_> = run.recorder.structure().unwrap().iter().collect();
+            assert_eq!(
+                rows.iter().map(|row| row.kind).collect::<Vec<_>>(),
+                vec![Kind::Load, Kind::Fault],
+                "exactly one fault, no turn.started or other work"
+            );
+            assert!(rows[1].turn.is_none(), "fault has no turn");
+            let fault: std::collections::BTreeMap<String, Box<serde_json::value::RawValue>> =
+                serde_json::from_str(&rows[1].line).unwrap();
+            assert!(!fault.contains_key("turn"), "turn is absent at the wire");
+            assert_eq!(fault["subsystem"].get(), r#""gate""#);
+            let carried: weaver_types::FaultReport =
+                serde_json::from_str(fault["payload"].get()).unwrap();
+            assert_eq!(
+                carried, report,
+                "the gate's case and raw account cross unchanged"
+            );
+            assert_eq!(run.turn_ordinal, 0);
+            assert!(run.turn_in_flight.is_none());
+            let mut fds = [PollFd::new(gate_peer.as_fd(), PollFlags::POLLIN)];
+            assert_eq!(
+                poll(&mut fds, 0u16).unwrap(),
+                0,
+                "a report is owed no gate answer"
+            );
+
+            let (connection, admin_peer) = OrganChannel::pair().expect("observe pair");
+            let admin_peer = admin_peer.into_channel();
+            admin_peer
+                .send(&OrganEnvelope {
+                    exchange: test_exchange(),
+                    position: Position::Open,
+                    payload: weaver_types::Payload::Directive(LifecycleDirective::Observe),
+                })
+                .unwrap();
+            assert!(matches!(
+                harness.wait(Some(&connection)),
+                Ok(Wake::Connection)
+            ));
+            let observe = connection.recv().unwrap();
+            let weaver_types::Payload::Directive(directive) = observe.payload else {
+                panic!("observe is a directive");
+            };
+            harness
+                .dispatch_on(&connection, observe.exchange, directive, None, None)
+                .unwrap();
+            assert!(
+                matches!(
+                    admin_peer.recv().unwrap().payload,
+                    weaver_types::Payload::Answer(LifecycleAnswer::State {
+                        state: weaver_types::AgentState::Idle,
+                        load: Some(_),
+                    })
+                ),
+                "the next observe answers Idle with the standing load"
+            );
+            drop(harness);
+            std::fs::remove_file(sink).unwrap();
+        }
     }
 
     /// **A frame grants the seat and the whole bracket authors**, per Spec
