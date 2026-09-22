@@ -512,9 +512,10 @@ behaviour sits.
 **The session claim is watched at both engines, as of PR #644.** The service
 engine's in-file suite stands a scratch PostgreSQL per test, lands two sessions
 and asks about one, and `postgres.rs` cites the claim where that suite sits. The
-perturbation is recorded rather than performed by the suite: PR #644's body and
-both review seats removed each of the five `WHERE session` predicates the reads
-carry, one at a time. Four removals widen an answer to the other session's rows,
+perturbation is recorded rather than performed by the suite: PR #644's body
+records the removal of each of the five `WHERE session` predicates the reads
+carry, one at a time, and the review seats independently reproduced selected
+removals. Four removals widen an answer to the other session's rows,
 a shape holding two runs or a count of two. The fifth, on the turn selection,
 fails the other way: the bound is spent on the other session's newest turn while
 the outer predicate still excludes that turn's rows, and the requested session's
@@ -530,8 +531,10 @@ nothing about it. The flag alone reaches the statement suite. The live
 instruments of PR #644 are ignored by default, a loud skip that the ordinary run
 reports as fourteen ignored rather than passes, and they run under a scratch
 instance with `WEAVER_STATE_TEST_PG` naming its socket directory and
-`cargo test -p weaver-state --features postgres --locked -- --ignored`, which is
-the invocation that reproduces every arm this section claims for that engine.
+`cargo test -p weaver-state --features postgres --locked -- --ignored`, which runs
+the live suite alongside the separately invoked statement suite; the ordinary
+featured run and the ignored run together supply this section's test evidence
+for that engine.
 As of PR #644 the suite reaches the store as well: the live tests construct a
 service engine on a scratch database and read `pg_indexes` for the indexes the
 store then holds, and the arms of the session, lands-whole, retirement and
