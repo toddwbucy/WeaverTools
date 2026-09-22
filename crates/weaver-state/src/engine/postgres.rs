@@ -477,12 +477,12 @@ impl Store for Postgres {
     }
 }
 
-/// Statement tests run without a server. The ignored port tests require the
-/// scratch instance described by `WEAVER_STATE_TEST_PG` and fail if it is absent.
 #[cfg(test)]
 #[path = "postgres_scratch.rs"]
 mod scratch;
 
+/// Statement tests run without a server. The ignored port tests require the
+/// scratch instance described by `WEAVER_STATE_TEST_PG` and fail if it is absent.
 #[cfg(test)]
 mod tests {
     use super::scratch::Scratch;

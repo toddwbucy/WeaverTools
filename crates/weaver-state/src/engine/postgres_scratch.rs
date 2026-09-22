@@ -51,7 +51,7 @@ impl Drop for Scratch {
     fn drop(&mut self) {
         let result = self
             .maintenance
-            .batch_execute(&format!("DROP DATABASE \"{}\"", self.database));
+            .batch_execute(&format!("DROP DATABASE \"{}\" WITH (FORCE)", self.database));
         if std::thread::panicking() {
             if let Err(error) = result {
                 eprintln!("scratch database cleanup failed: {error}");

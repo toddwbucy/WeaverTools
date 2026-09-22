@@ -9,7 +9,7 @@ use std::os::fd::{AsFd, AsRawFd};
 use std::os::unix::net::UnixStream;
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
-use std::process::{Child, Command, ExitCode, Stdio};
+use std::process::{Child, Command, ExitCode};
 use std::time::{Duration, Instant};
 
 use serde_json::{Value, json, value::RawValue};
@@ -442,6 +442,7 @@ fn child_entry() {
         let result = super::member_entry(args.into_iter(), fd);
         std::process::exit(if result == ExitCode::SUCCESS { 0 } else { 1 });
     }
+    analysis_binary(); // Refuse missing/stale analysis before any child or database stands.
     assert!(
         nix::unistd::getuid().is_root(),
         "preload requires the operator credential; run these scratch tests with unshare -Ur (no sudo)"
@@ -460,25 +461,48 @@ fn analysis_binary() -> PathBuf {
         "missing {}: run cargo build -p weaver-analysis --locked before this suite",
         path.display()
     );
+    fn newest_source(directory: &std::path::Path) -> std::time::SystemTime {
+        std::fs::read_dir(directory)
+            .expect("analysis source directory")
+            .map(|entry| {
+                let entry = entry.unwrap();
+                if entry.file_type().unwrap().is_dir() {
+                    newest_source(&entry.path())
+                } else {
+                    entry.metadata().unwrap().modified().unwrap()
+                }
+            })
+            .max()
+            .expect("analysis sources")
+    }
+    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../weaver-analysis/src");
+    assert!(
+        std::fs::metadata(&path).unwrap().modified().unwrap() >= newest_source(&source),
+        "stale {}: run cargo build -p weaver-analysis --locked before this suite",
+        path.display()
+    );
     path
 }
 struct Member {
     process: Process,
     tee: Option<Tee>,
-    election: Election,
     wire: UnixStream,
     buffer: Vec<u8>,
     directory: Directory,
-    scratch: Scratch,
+    // Fields drop in declaration order, after Drop stops/reaps the member.
+    // Keep database custody last, after process and socket handles.
+    _scratch: Scratch,
 }
 impl Member {
-    fn new(test: &str, election: Election) -> Self {
+    fn new(election: Election, diagnostic: bool) -> Self {
+        let thread = std::thread::current();
+        let test = thread.name().expect("named test thread");
         let scratch = Scratch::new();
         let directory = Directory::new();
         let door = directory.0.join("preload.sock");
         let (wire, child) = UnixStream::pair().unwrap();
         let fd = child.as_raw_fd();
-        let args = vec![
+        let mut args = vec![
             "--engine".into(),
             "postgres".into(),
             "--store-socket".into(),
@@ -488,8 +512,10 @@ impl Member {
             "--role".into(),
             scratch.role.clone(),
             directory.0.to_str().unwrap().into(),
-            door.to_str().unwrap().into(),
         ];
+        if diagnostic {
+            args.push(door.to_str().unwrap().into());
+        }
         let log = std::fs::File::create(directory.0.join("member.log")).unwrap();
         let mut command = Command::new(std::env::current_exe().unwrap());
         command
@@ -499,7 +525,7 @@ impl Member {
                 serde_json::to_string(&args).unwrap(),
             )
             .env("WEAVER_W5B_MEMBER_FD", fd.to_string())
-            .stdout(Stdio::null())
+            .stdout(log.try_clone().unwrap())
             .stderr(log);
         // SAFETY: the child owns this socket. Only a descriptor flag is set
         // between fork and exec, and the test entry adopts it exactly once.
@@ -516,30 +542,19 @@ impl Member {
         }
         let process = Process(command.spawn().unwrap());
         drop(child);
-        let tee = Tee::open(wire.try_clone().unwrap(), SESSION.into(), election.clone()).unwrap();
+        let tee = Tee::open(wire.try_clone().unwrap(), SESSION.into(), election).unwrap();
         let mut member = Self {
             process,
             tee: Some(tee),
-            election,
             wire,
             buffer: Vec::new(),
             directory,
-            scratch,
+            _scratch: scratch,
         };
-        let until = Instant::now() + WAIT;
-        while !door.exists() {
-            assert!(
-                member.process.0.try_wait().unwrap().is_none(),
-                "member died: {}",
-                member.log()
-            );
-            assert!(
-                Instant::now() < until,
-                "preload door did not stand: {}",
-                member.log()
-            );
-            std::thread::sleep(Duration::from_millis(5));
-        }
+        // A shape answer proves the production entry reached serve. A
+        // serving load answers without ever creating or sealing a second door.
+        assert!(answer_shape(&member.ask("shape", None)).is_empty());
+        assert_eq!(door.exists(), diagnostic, "door follows the load's mode");
         member
     }
     fn log(&self) -> String {
@@ -549,9 +564,48 @@ impl Member {
         self.directory.0.join("preload.sock")
     }
     fn send(&mut self, frame: &str) {
-        self.wire
-            .write_all(frame.as_bytes())
-            .expect("harness frame");
+        let until = Instant::now() + WAIT;
+        let mut bytes = frame.as_bytes();
+        while !bytes.is_empty() {
+            assert!(Instant::now() < until, "harness write exceeded {WAIT:?}");
+            match self.wire.write(bytes) {
+                Ok(0) => panic!("member closed during harness write"),
+                Ok(n) => bytes = &bytes[n..],
+                Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    let mut fds = [nix::poll::PollFd::new(
+                        self.wire.as_fd(),
+                        nix::poll::PollFlags::POLLOUT,
+                    )];
+                    let bound = nix::poll::PollTimeout::try_from(
+                        until.saturating_duration_since(Instant::now()),
+                    )
+                    .unwrap();
+                    match nix::poll::poll(&mut fds, bound) {
+                        Ok(_) | Err(nix::errno::Errno::EINTR) => {}
+                        Err(e) => panic!("harness write poll: {e}"),
+                    }
+                }
+                Err(e) => panic!("harness write: {e}"),
+            }
+        }
+    }
+    fn connect_preload(&self) -> UnixStream {
+        let until = Instant::now() + WAIT;
+        loop {
+            match UnixStream::connect(self.door()) {
+                Ok(stream) => return stream,
+                Err(e)
+                    if matches!(
+                        e.kind(),
+                        std::io::ErrorKind::NotFound | std::io::ErrorKind::ConnectionRefused
+                    ) && Instant::now() < until =>
+                {
+                    std::thread::sleep(Duration::from_millis(5))
+                }
+                Err(e) => panic!("preload connect: {e}; {}", self.log()),
+            }
+        }
     }
     fn receive(&mut self, timeout: Duration) -> Option<String> {
         let until = Instant::now() + timeout;
@@ -587,17 +641,6 @@ impl Member {
         self.receive(WAIT)
             .unwrap_or_else(|| panic!("missing {ask} answer: {}", self.log()))
     }
-    fn bootstrap_live(&mut self) {
-        // Empty preload first: opens the replay/identity/recall seal gate but
-        // contributes no event to the live holdings. No live row can be retired.
-        let mut preload = UnixStream::connect(self.door()).unwrap();
-        preload
-            .write_all(weaver_trace::opener(SESSION, &self.election).as_bytes())
-            .unwrap();
-        preload.write_all(b"{}\n").unwrap();
-        drop(preload);
-        assert!(answer_events(&self.ask("replay", None), "replay").is_empty());
-    }
     fn feed(&mut self, lines: &[String]) {
         for line in lines {
             assert!(self.tee.as_mut().unwrap().feed(line), "live tee detached");
@@ -614,15 +657,30 @@ impl Member {
         if let Some(cut) = cut {
             command.args(["--through", cut]);
         }
-        command
-            .stdout(std::fs::File::create(&stdout).unwrap())
-            .stderr(std::fs::File::create(&stderr).unwrap());
-        let mut process = Process(command.spawn().unwrap());
-        assert!(
-            process.wait().success(),
-            "analysis refused: {}",
-            std::fs::read_to_string(stderr).unwrap()
-        );
+        let until = Instant::now() + WAIT;
+        loop {
+            command
+                .stdout(std::fs::File::create(&stdout).unwrap())
+                .stderr(std::fs::File::create(&stderr).unwrap());
+            let mut process = Process(command.spawn().unwrap());
+            if process.wait().success() {
+                break;
+            }
+            let refusal = std::fs::read_to_string(&stderr).unwrap();
+            // Only retry a dial that could not have sent an opener. Every
+            // parse, projection or post-connect failure remains a refusal.
+            let dial_unavailable = [
+                "No such file or directory (os error 2)",
+                "Connection refused (os error 111)",
+            ]
+            .iter()
+            .any(|error| refusal.contains(&format!("the preload died: {error}")));
+            assert!(
+                dial_unavailable && Instant::now() < until,
+                "analysis refused: {refusal}"
+            );
+            std::thread::sleep(Duration::from_millis(5));
+        }
         let report: Value =
             serde_json::from_str(&std::fs::read_to_string(stdout).unwrap()).unwrap();
         assert_eq!(report["sealed"], true);
@@ -648,7 +706,6 @@ impl Drop for Member {
         let _ = self.process.0.wait();
         // The process and all its PostgreSQL connections end before Scratch
         // drops, on both the ordinary path and assertion unwinding.
-        let _ = &self.scratch;
     }
 }
 
@@ -696,11 +753,10 @@ fn three_way_at_matched_cuts() {
     let record = Record::new();
     for (cut, length) in [(Some(CUT), record.cut), (None, record.lines.len())] {
         let expected = expected(&record.lines[..length]);
-        let mut live = Member::new("comparison::three_way_at_matched_cuts", election());
-        live.bootstrap_live();
+        let mut live = Member::new(election(), false);
         live.feed(&record.lines[..length]);
         live.feed(&record.foreign_lines());
-        let mut rebuilt = Member::new("comparison::three_way_at_matched_cuts", election());
+        let mut rebuilt = Member::new(election(), true);
         let preloaded = rebuilt.reconstruct(&record, cut);
         rebuilt.feed(&record.foreign_lines());
         compare(cut.unwrap_or("whole"), &mut live, &mut rebuilt, &expected);
@@ -718,19 +774,12 @@ fn dead_driver_retry_replaces_the_prefix() {
     child_entry();
     let record = Record::new();
     let expected = expected(&record.lines);
-    let mut live = Member::new(
-        "comparison::dead_driver_retry_replaces_the_prefix",
-        election(),
-    );
-    live.bootstrap_live();
+    let mut live = Member::new(election(), false);
     live.feed(&record.lines);
     live.feed(&record.foreign_lines());
-    let mut rebuilt = Member::new(
-        "comparison::dead_driver_retry_replaces_the_prefix",
-        election(),
-    );
+    let mut rebuilt = Member::new(election(), true);
     rebuilt.feed(&record.foreign_lines());
-    let mut driver = UnixStream::connect(rebuilt.door()).unwrap();
+    let mut driver = rebuilt.connect_preload();
     driver
         .write_all(weaver_trace::opener(SESSION, &election()).as_bytes())
         .unwrap();
@@ -766,6 +815,7 @@ fn dead_driver_retry_replaces_the_prefix() {
     );
 }
 
+/// Reports two elections; their reconciliation is the operator's ruling, not an equality assertion.
 #[test]
 #[ignore = "needs WEAVER_STATE_TEST_PG scratch PostgreSQL and prebuilt weaver-analysis; run in unshare -Ur for the preload credential"]
 fn record_rule_shape_measurement() {
@@ -791,11 +841,9 @@ fn record_rule_shape_measurement() {
             })
             .collect(),
     };
-    let mut actual = Member::new("comparison::record_rule_shape_measurement", declared);
-    actual.bootstrap_live();
+    let mut actual = Member::new(declared, false);
     actual.feed(&record.lines);
-    let mut comparison = Member::new("comparison::record_rule_shape_measurement", election());
-    comparison.bootstrap_live();
+    let mut comparison = Member::new(election(), false);
     comparison.feed(&record.lines);
     // Deliberately a measurement, not an equality assertion: these elections
     // describe different holdings. Their reconciliation is the operator's.
