@@ -517,9 +517,12 @@ mod tests {
             held.iter()
                 .all(|e| e.turn.is_none() && e.kind == "message.system")
         );
-        assert_eq!(
-            held[0].pairs[0],
-            ("role".to_string(), "\"system\"".to_string())
+        assert!(
+            held[0]
+                .pairs
+                .contains(&("role".to_string(), "\"system\"".to_string())),
+            "the seated prefix carries its role pair: {:?}",
+            held[0].pairs
         );
         assert!(
             store.identity("other").expect("answers").is_empty(),

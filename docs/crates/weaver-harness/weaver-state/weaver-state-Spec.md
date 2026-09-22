@@ -227,7 +227,7 @@ of what happened, and custody keeps what arrives.
 ```graph
 node: state-distillate-lands-whole
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-state
@@ -471,7 +471,7 @@ is cited at a test.** Every `conforms:` line in the crate sits at a `//!` file
 header but one, the line inside `stand_preload_name`, which is a function the
 binary runs, so none of the nine is a sighting under that rule.
 
-**Requiring a perturbation-verified test.** Six claims, each watched where the
+**Requiring a perturbation-verified test.** Seven claims, each watched where the
 behaviour sits.
 
 - The serve restricts to the opener's session, watched by dropping any of the
@@ -500,11 +500,20 @@ behaviour sits.
   serving load stands a door nothing should dial.
 - The preload door refuses every peer but the operator, watched by dropping
   the root arm from the accept, which admits the agent's own uid.
+- A distillate lands whole, watched at the service engine as of PR #644 by an
+  insert forced to fail inside the landing's transaction with the holdings
+  counted after: `a_failed_pair_insert_leaves_no_partial_distillate` lands a
+  good event, then one whose second pair carries a NUL that `TEXT` refuses, and
+  requires the refusal, an unchanged `held()`, an unchanged replay and one field
+  row. The perturbation commits the event before its pairs, and the count moves
+  by one. The embedded suite still watches the persistence half, a good landing
+  surviving a reopen.
 
-**The session claim is watched at the embedded engine alone.** Nothing in this
-tree builds the service engine under test, so the session predicate could leave
-that engine's reads and every device would answer green, and that engine cites
-the claim nowhere. **The index naming is watched at both.** The service engine
+**The session claim is watched at both engines, as of PR #644.** The service
+engine's in-file suite stands a scratch PostgreSQL per test and drops each of the
+five `WHERE session` predicates its reads carry, one at a time, and the shape and
+recall answers widen to an earlier session's rows; `postgres.rs` cites the claim
+where that suite sits. **The index naming is watched at both.** The service engine
 holds a suite over the derivation section 3's election asks it for, a name made
 from the key path, carried into the statement the build would issue, and a
 refusal where the store's identifier limit cannot hold one, and it cites the
@@ -512,11 +521,12 @@ claim where that suite sits. **That arm holds under one flag and not under the
 crate's default.** The service engine is behind a feature the crate does not
 default to, so a suite run without it compiles none of that engine and answers
 nothing about it, and the arm is watched by the run that passes the flag alone.
-The suite reaches the derivation and not the store, no unit here constructing a
-service engine, so what it reads is the statement a build would issue rather
-than the index the store then holds. **The reading covers the rest of that
-engine**: it is reachable only from the binary's own election, so its arm of
-every other claim in this section rests on a reading and not on a run.
+As of PR #644 the suite reaches the store as well: the live tests construct a
+service engine on a scratch database and read `pg_indexes` for the indexes the
+store then holds, and the arms of the session, lands-whole, retirement and
+ask-vocabulary claims at that engine rest on runs. **What still rests on a
+reading at that engine** is the timing half of indexes-at-load, the build
+sitting on the binary's startup path where no port-level test reaches it.
 
 **Enforced by review, and each clause names what would buy it.** Review here
 means the instrument was not bought and never that none exists, per Document
@@ -535,11 +545,6 @@ Format section 5.
   stands. Nothing holds that signature in place, so a later act widening one of
   them to a concrete engine compiles and this claim goes quiet. What would buy
   it is a compile-fail pin over an ingest path that names an engine.
-- **A distillate lands whole** and the embedded suite watches a good one
-  landing and surviving a reopen, which is the persistence half. The half that
-  carries the claim - a landing that fails between the event row and its pairs
-  leaving neither behind - has no instrument. What would buy it is an insert
-  forced to fail inside the transaction with the holdings counted after.
 
 **The walks the seam's conformance asks for are not in this tree.** The
 contract's section 8 names them and says both directions land with the acts
