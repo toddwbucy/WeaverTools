@@ -41,6 +41,7 @@
 
 pub mod capture;
 pub mod declare;
+pub mod deposit;
 pub mod field;
 pub mod lens;
 pub mod preload;

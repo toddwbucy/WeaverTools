@@ -1,3 +1,7 @@
+//! conforms: analysis-summary-reports-the-record-session
+//! conforms: analysis-summary-reports-the-record-digest
+//! conforms: analysis-summary-reports-the-prefix-length
+//! conforms: analysis-summary-reports-the-run-and-its-conditions
 //! conforms: analysis-dials-as-invoked
 //! conforms: analysis-summary-reports-the-record-identity
 //!
@@ -8,17 +12,8 @@
 //! this process was invoked with, and none is minted, per Spec section 4,
 //! this root holding the one call that dials.
 //!
-//! **The summary the signals verb renders is section 5's, and four of that
-//! section's claims about it stand built nowhere.** What crosses today is
-//! the turn, the perplexity, the residency, the output count and the
-//! record's identity, an absent member omitted at the wire rather than
-//! rendered null, which is the half of the identity rule this root's
-//! rendering verb holds and the half `tests/stream.rs` watches by running
-//! the verb, no library call reaching the rendering. The record's
-//! session, the record's digest, the seated prefix's length, and the run
-//! with the conditions it ran under are declared by that section and
-//! reach no code, per issue #538, so they are named here as owed rather
-//! than cited.
+//! The signals summary carries recorded run conditions and an explicitly
+//! named deposit, with absent members omitted and raw values spliced.
 
 use std::io::Read;
 
@@ -35,23 +30,7 @@ fn main() -> std::process::ExitCode {
         Some(("preload", rest)) => run_preload(rest),
         Some(("read", [trace])) => run_read(trace),
         Some(("compare", [left, right])) => run_compare(left, right),
-        Some(("signals", [record])) => run_signals(record, 2.0),
-        Some(("signals", [record, k])) => match k.parse::<f32>() {
-            // A bar that parses is not yet a bar: an infinity clears
-            // nothing and a NaN compares false against everything, so
-            // either would answer "no spikes" about a series that has
-            // them.
-            Ok(k) if k.is_finite() => run_signals(record, k),
-            _ => {
-                eprintln!(
-                    "{}",
-                    serde_json::json!({
-                        "analysis_refusal": format!("the spike bar is not a finite number: {k}")
-                    })
-                );
-                std::process::ExitCode::FAILURE
-            }
-        },
+        Some(("signals", rest)) => signals_arguments(rest),
         Some(("lens", rest)) => run_lens(rest),
         Some(("field", rest)) => run_field(rest),
         _ => refused(
@@ -59,7 +38,7 @@ fn main() -> std::process::ExitCode {
              [--sink-kind file|pipe] [--readout] [--field-depth <n>] [--surprisal] \
              | read <diagnostic-trace> | compare <capture> <capture> \
              | preload <trace> <socket> [--through <run>:<turn>] [--as <session>] [--diagnostic] \
-             | signals <record> [spike-bar] \
+             | signals <record> [spike-bar] [--deposit <path>] \
              | lens <capture> --lens <path> --weights <path> [--layers 2,6,..] \
              [--positions p,.. (a file defaults to a spread of eight)] [--topk 5] \
              [--min-top5 0.9] [--rms-epsilon 1e-6] \
@@ -737,7 +716,40 @@ fn run_lens(rest: &[String]) -> std::process::ExitCode {
 /// diagnostic, file or pipe - per `weaver-analysis-Spec` section 5's
 /// class. Needs no lens, no weights, and no tap: the entropies ride every
 /// generation and the surprisals ride their election.
-fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
+fn signals_arguments(arguments: &[String]) -> std::process::ExitCode {
+    let refuse = |why: &str| {
+        eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+        std::process::ExitCode::FAILURE
+    };
+    let Some((record, mut rest)) = arguments.split_first() else {
+        return refuse("signals requires a record path or -");
+    };
+    let mut bar = None;
+    let mut deposit = None;
+    while let Some((argument, tail)) = rest.split_first() {
+        rest = tail;
+        if argument == "--deposit" {
+            let Some((path, tail)) = rest.split_first() else {
+                return refuse("--deposit requires a path");
+            };
+            if deposit.replace(path.as_str()).is_some() {
+                return refuse("--deposit was named twice");
+            }
+            rest = tail;
+        } else {
+            if bar.is_some() {
+                return refuse("signals accepts one spike bar");
+            }
+            match argument.parse::<f32>() {
+                Ok(value) if value.is_finite() => bar = Some(value),
+                _ => return refuse(&format!("the spike bar is not a finite number: {argument}")),
+            }
+        }
+    }
+    run_signals(record, bar.unwrap_or(2.0), deposit)
+}
+
+fn run_signals(record: &str, spike_bar: f32, deposit: Option<&str>) -> std::process::ExitCode {
     let source = match weaver_analysis::stream::open(record) {
         Ok(source) => source,
         Err(error) => {
@@ -748,7 +760,17 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
             return std::process::ExitCode::FAILURE;
         }
     };
-    let mut reader = weaver_analysis::Signals::default();
+    let deposit = match deposit
+        .map(weaver_analysis::deposit::Deposit::read)
+        .transpose()
+    {
+        Ok(deposit) => deposit.unwrap_or_default(),
+        Err(why) => {
+            eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
+            return std::process::ExitCode::FAILURE;
+        }
+    };
+    let mut reader = weaver_analysis::Signals::with_deposit(deposit);
     if let weaver_analysis::Drained::Refused(why) = weaver_analysis::drain(source, &mut reader) {
         eprintln!("{}", serde_json::json!({"analysis_refusal": why}));
         return std::process::ExitCode::FAILURE;
@@ -772,7 +794,7 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
         return std::process::ExitCode::FAILURE;
     }
     let series = &reader.series;
-    if series.points.is_empty() {
+    if series.generations.is_empty() {
         eprintln!(
             "{}",
             serde_json::json!({"analysis_refusal": "the record holds no measured generation"})
@@ -785,19 +807,24 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
         .iter()
         .filter(|p| p.surprisal.is_some())
         .count();
+    #[derive(serde::Serialize)]
+    struct Summary<'a> {
+        positions: usize,
+        with_entropy: usize,
+        with_surprisal: usize,
+        generations: &'a [weaver_analysis::signals::GenerationSummary],
+    }
+    // Serialize the typed report directly: a JSON Value in between would
+    // parse and re-encode the raw sampling and load members.
     println!(
         "{}",
-        serde_json::json!({
-            "positions": series.points.len(),
-            "with_entropy": with_entropy,
-            "with_surprisal": with_surprisal,
-            // **The summary carries what a store keyed by position converts
-            // from**, per Spec section 5: the closing count and the output
-            // count, reported and derived from nothing.
-            "generations": series.generations.iter()
-                .map(render_generation)
-                .collect::<Vec<_>>(),
+        serde_json::to_string(&Summary {
+            positions: series.points.len(),
+            with_entropy,
+            with_surprisal,
+            generations: &series.generations,
         })
+        .expect("summary serializes")
     );
     for point in &series.points {
         println!("{}", render_point(point));
@@ -817,32 +844,6 @@ fn run_signals(record: &str, spike_bar: f32) -> std::process::ExitCode {
         })
     );
     std::process::ExitCode::SUCCESS
-}
-
-/// One summary entry as the wire carries it, per `weaver-analysis-Spec`
-/// section 5 and `weaver-analysis-web-contract` section 2.2. **An absent
-/// member is omitted and never rendered null**, on the record's own
-/// absent-not-empty rule: a reader tells a member the emitter did not send
-/// from one it sent, and the sentinel is sent, as the empty string it is.
-fn render_generation(g: &weaver_analysis::signals::GenerationSummary) -> serde_json::Value {
-    let mut object = serde_json::Map::new();
-    if let Some(turn) = &g.turn {
-        object.insert("turn".into(), serde_json::Value::String(turn.clone()));
-    }
-    if let Some(perplexity) = g.perplexity {
-        object.insert("perplexity".into(), serde_json::json!(perplexity));
-    }
-    if let Some(resident) = g.resident {
-        object.insert("resident".into(), serde_json::json!(resident));
-    }
-    object.insert("output_count".into(), serde_json::json!(g.output_count));
-    if let Some(hash) = &g.weights_hash {
-        object.insert(
-            "weights_hash".into(),
-            serde_json::Value::String(hash.clone()),
-        );
-    }
-    serde_json::Value::Object(object)
 }
 
 /// One point as the wire carries it, on the same rule: an entropy the
@@ -983,24 +984,28 @@ mod tests {
     /// and the omission assertions fail. Watched under exactly that change.
     #[test]
     fn absent_members_are_omitted_and_the_sentinel_is_sent() {
-        let sent = super::render_generation(&GenerationSummary {
+        let sent = serde_json::to_value(&GenerationSummary {
             turn: Some("t-1".into()),
             perplexity: None,
             resident: Some(107),
             output_count: 11,
             weights_hash: Some(String::new()),
-        });
+            ..GenerationSummary::default()
+        })
+        .unwrap();
         assert_eq!(sent["weights_hash"], "", "the sentinel crosses as sent");
         assert!(sent.get("perplexity").is_none(), "no perplexity, no member");
         assert_eq!(sent["resident"], 107);
 
-        let older = super::render_generation(&GenerationSummary {
+        let older = serde_json::to_value(&GenerationSummary {
             turn: None,
             perplexity: Some(2.0),
             resident: None,
             output_count: 2,
             weights_hash: None,
-        });
+            ..GenerationSummary::default()
+        })
+        .unwrap();
         assert!(older.get("weights_hash").is_none(), "never sent, no member");
         assert!(older.get("resident").is_none());
         assert!(older.get("turn").is_none());

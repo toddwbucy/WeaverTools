@@ -58,10 +58,6 @@
     "crates/weaver-web/tests/startup.rs"
   ],
   "uncited_perturbations": [
-    "analysis-summary-reports-the-prefix-length",
-    "analysis-summary-reports-the-record-digest",
-    "analysis-summary-reports-the-record-session",
-    "analysis-summary-reports-the-run-and-its-conditions",
     "spu-field-changes-no-token",
     "spu-field-depth-refused-below-the-cutoff",
     "spu-reduction-renders-its-shape",
