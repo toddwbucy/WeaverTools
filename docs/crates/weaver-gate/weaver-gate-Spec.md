@@ -971,8 +971,8 @@ target, and equally with the target kept and its doctests disabled, cargo
 collects no doctest and the two pinned bind shapes go unenforced with this
 section still claiming them.
 
-**Which invariant each claim serves, and why twenty-one serve none.** Seventeen
-`grounds` edges run from sixteen of the thirty-seven, nine to
+**Which invariant each claim serves, and why twenty-two serve none.** Seventeen
+`grounds` edges run from sixteen of the thirty-eight, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
@@ -1084,12 +1084,12 @@ from the prose that earns it. One record is the exception and sits at the end
 of this section, the doctest pinning of the two bind-site shapes, whose
 argument is nowhere else and whose general prohibition is section 3's.
 
-**Thirty-seven records in all, and the split is where they are declared,
+**Thirty-eight records in all, and the split is where they are declared,
 which a reader can count.** Four in section 1, eight in section 2, eleven in
-section 3, five in section 4, one in section 5, seven in section 8, and this
-section's one. **Every one of the thirty-seven is sorted above** under the
+section 3, five in section 4, one in section 5, eight in section 8, and this
+section's one. **Every one of the thirty-eight is sorted above** under the
 instrument that holds it, and the instruments divide them four to the
-manifest, two to the compiler, one to compile-fail, twenty-one to a
+manifest, two to the compiler, one to compile-fail, twenty-two to a
 perturbation-verified test, and nine to review. The three walks carry five of
 those across two instruments, four perturbations and the parent-death
 signal's backing, which is why the walks are not a sixth column. **The
@@ -1164,10 +1164,11 @@ that format forbids.
 - The socket mode is the boundary's election: `0o770` is elected in the
   creating call rather than inherited, confirmed by watching the umask guard
   removed and the socket bind at the runner's own umask, per section 3.
-- The shell execution's six watches are section 8's and are argued there:
+- The shell execution's seven watches are section 8's and are argued there:
   the one held tool, the one clock, the group kill, the drain riding the
-  run, the cancel bringing the clock forward, and the late cancel dropped,
-  each with the removal that makes it fail named at the clause. They
+  run, the cancel bringing the clock forward, the late cancel dropped, and
+  the exit heard within a slice, each with the removal that makes it fail
+  named at the clause. They
   are named here because this sorting reaches every record and not only the
   records that predate the tool boundary ruling of 2026-08-18, and the
   argument stays where the instrument is rather than being restated, per
@@ -1285,9 +1286,16 @@ a result.
 
 **The supervisor hears the seam while it waits, and a cancel is the caller's
 clock brought forward, per the contract's section 2 as amended 2026-09-22.**
-The supervision wait sleeps against the channel end rather than against a
-timer alone, by `poll` with the clock's remainder as its bound, so a cancel
-for the open exchange wakes it as the exit does. On a cancel the group is
+The supervision wait is a loop of bounded slices, each an unreaped exit
+check and then a sleep of at most the slice or the clock's remainder,
+whichever is shorter, and the change is to the sleep alone: it becomes a
+`poll` on the channel end bounded the same way, so a cancel wakes the slice
+early and an exit is seen at the next check as it is today. The exit does
+not wake the poll, a child's death making no descriptor of this crate's
+readable, which is why the slice stays and does not stretch to the clock: a
+supervisor that polled the channel for the whole remainder would hold a
+command that exited in its first millisecond until the caller's clock ran
+out. On a cancel the group is
 signaled at once by the same path every ending takes, the drain finishes
 bounded as it does at the clock, and the answer is a kill naming the cancel
 as its cause, the partial riding as it rides at the clock. Nothing the
@@ -1365,6 +1373,14 @@ tag: perturbation
 edge: asserts
 from: weaver-gate
 to: gate-cancel-past-the-answer-is-dropped
+
+node: gate-execution-exit-heard-within-a-slice
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-exit-heard-within-a-slice
 ```
 
 The perturbation obligations are apex section 11's: the unheld-name watch
@@ -1376,7 +1392,14 @@ long clock and fails when the channel end leaves the supervision wait, the
 answer then arriving at the clock. The late-cancel watch sends a cancel
 after an answer and opens a second execution, and fails when the cancel
 takes the out-of-order arm, a refusal then standing where the second answer
-is read. Both were authored ahead of their code on 2026-09-22 and stand
-uncited until the act that buys them cites them, per Working Process section
-6. The four-contents claim is review's because the enumeration is a shape
-fact the compiler holds once the answer type carries the cases.
+is read. The slice watch runs a command that exits at once under a clock of
+seconds, sends nothing, and asserts the answer inside a few slices, failing
+when the poll's bound stretches to the clock's remainder, the answer then
+arriving at the clock with the tool long dead. The chatty-command watch of
+the drain claim bounds the same regression loosely, at half the clock, and
+the slice watch is the one that names it. The three were authored ahead of
+their code on 2026-09-22, the slice claim on the review seat's finding that
+a channel poll is deaf to an exit, and stand uncited until the act that buys
+them cites them, per Working Process section 6. The four-contents claim is
+review's because the enumeration is a shape fact the compiler holds once
+the answer type carries the cases.

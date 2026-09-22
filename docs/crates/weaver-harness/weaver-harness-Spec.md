@@ -2351,16 +2351,25 @@ from: weaver-harness
 to: harness-stopped-invocation-feeds-no-generation
 ```
 
-The first claim's watch is #646's measurement inverted: a stop queued before
-a tool call whose gate answers after a delay closes the turn well inside the
-delay, and the watch fails when the coordination descriptors leave the wait,
-the close then following the gate's answer. The second's watch counts the
-decode seam's asks after the stop and finds no append-and-generate, and
-fails when the stopped check after the completion is removed and the result
-feeds back. Both are authored ahead of their code and stand uncited until
-the act that buys them cites them, per Working Process section 6, and that
-act retires the characterization test of #646, which asserts the deaf
-interval and must fail once the interval is closed.
+The first claim's watch is #646's measurement inverted, and it is built so
+that the route the ruling declined cannot pass it: the fixture gate holds
+its answer for a delay it gives up only on a cancel correlated to the open
+exchange, answering a kill by cancel then and its result at the delay's end
+otherwise, so a harness that abandoned the exchange would close early with
+the fixture still waiting and the completion never recorded. The watch
+asserts one cancel and no second, the completion event placed before the
+turn's close and the close before the stop's answer, the close well inside
+the delay, and, in a second arm where the fixture answers a result as the
+cancel crosses, that result recorded and the turn still closed stopped. It
+fails when the coordination descriptors leave the wait, the close then
+following the delay. The second claim's watch drives a two-call emission,
+stops during the first, and asserts no append-and-generate after the stop
+and no second execution opened, failing when the stopped check after the
+completion is removed and the result feeds back. Both are authored ahead of
+their code and stand uncited until the act that buys them cites them, per
+Working Process section 6, and that act retires the characterization test of
+#646, which asserts the deaf interval and must fail once the interval is
+closed.
 
 **The frame's parse is loop 0's, at the seat's threshold, and it refuses
 rather than faults.** A frame's member decodes per the election of
