@@ -480,7 +480,12 @@ impl Store for Postgres {
 /// Statement tests run without a server. The ignored port tests require the
 /// scratch instance described by `WEAVER_STATE_TEST_PG` and fail if it is absent.
 #[cfg(test)]
+#[path = "postgres_scratch.rs"]
+mod scratch;
+
+#[cfg(test)]
 mod tests {
+    use super::scratch::Scratch;
     use super::*;
     use crate::store::*;
 
@@ -646,62 +651,6 @@ mod tests {
             ),
             "the statement escapes both the backslash and the quote"
         );
-    }
-
-    /// Each test owns a database. Declared before its engine, this guard drops
-    /// after the connection, including when an assertion unwinds.
-    struct Scratch {
-        maintenance: Client,
-        socket: String,
-        role: String,
-        database: String,
-    }
-
-    impl Scratch {
-        fn new() -> Self {
-            let socket = std::env::var("WEAVER_STATE_TEST_PG")
-                .expect("WEAVER_STATE_TEST_PG must name a scratch PostgreSQL socket directory");
-            let role = std::env::var("USER").expect("the scratch instance's own user");
-            let database = format!(
-                "w5a_{}_{:?}",
-                std::process::id(),
-                std::thread::current().id()
-            );
-            let mut maintenance = postgres::Config::new()
-                .host_path(&socket)
-                .user(&role)
-                .dbname("postgres")
-                .connect(NoTls)
-                .expect("connect to scratch maintenance database");
-            maintenance
-                .batch_execute(&format!("CREATE DATABASE \"{database}\""))
-                .expect("create per-test database");
-            Self {
-                maintenance,
-                socket,
-                role,
-                database,
-            }
-        }
-
-        fn open(&self) -> Postgres {
-            Postgres::open(&self.socket, &self.database, &self.role).expect("open test engine")
-        }
-    }
-
-    impl Drop for Scratch {
-        fn drop(&mut self) {
-            let result = self
-                .maintenance
-                .batch_execute(&format!("DROP DATABASE \"{}\"", self.database));
-            if std::thread::panicking() {
-                if let Err(error) = result {
-                    eprintln!("scratch database cleanup failed: {error}");
-                }
-            } else {
-                result.expect("drop per-test database");
-            }
-        }
     }
 
     fn elected_indexes(store: &Postgres) -> i64 {

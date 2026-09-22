@@ -1,3 +1,4 @@
+//! conforms: state-serve-restricts-to-the-session
 //! conforms: state-preload-door-stands-only-diagnostic
 //! conforms: state-replay-answers-at-the-seal
 //! conforms: state-preload-door-refuses-the-agent
@@ -45,6 +46,13 @@ const ANSWER_BOUND: usize = 1024 * 1024;
 const RESPOND_WAIT_MS: u16 = 2_000;
 
 fn main() -> std::process::ExitCode {
+    member_entry(std::env::args().skip(1), FIRST_DOOR_FD)
+}
+
+fn member_entry(
+    arguments: impl Iterator<Item = String>,
+    first_door: std::os::fd::RawFd,
+) -> std::process::ExitCode {
     // **The preload name is a second argument and its absence is a serving
     // load**, per `weaver-state-Spec` section 4: the name reaches the
     // member on the vector because no exchange this member holds carries a
@@ -55,7 +63,7 @@ fn main() -> std::process::ExitCode {
     // service engine `--store-socket`, `--database`, and `--role` name where
     // and as whom the member connects. Absent flags mean the embedded
     // engine, which is what an absent election means in the declaration.
-    let Some(vector) = StoreVector::parse(std::env::args().skip(1)) else {
+    let Some(vector) = StoreVector::parse(arguments) else {
         eprintln!(
             "{}",
             serde_json::json!({
@@ -85,7 +93,7 @@ fn main() -> std::process::ExitCode {
     // is not this process's to close.
     {
         // SAFETY: the borrow reads one socket option and adopts nothing.
-        let probe = unsafe { std::os::fd::BorrowedFd::borrow_raw(FIRST_DOOR_FD) };
+        let probe = unsafe { std::os::fd::BorrowedFd::borrow_raw(first_door) };
         match nix::sys::socket::getsockopt(&probe, nix::sys::socket::sockopt::SockType) {
             Ok(nix::sys::socket::SockType::Stream) => {}
             _ => {
@@ -105,7 +113,7 @@ fn main() -> std::process::ExitCode {
     // once.
     let mut channel = unsafe {
         use std::os::fd::FromRawFd;
-        std::os::unix::net::UnixStream::from_raw_fd(FIRST_DOOR_FD)
+        std::os::unix::net::UnixStream::from_raw_fd(first_door)
     };
 
     let mut store: Box<dyn Store> = match open_store(&engine, &territory, socket, database, role) {
@@ -1224,3 +1232,14 @@ mod tests {
         );
     }
 }
+
+#[cfg(all(test, feature = "postgres"))]
+use weaver_state::engine;
+
+#[cfg(all(test, feature = "postgres"))]
+#[allow(dead_code)]
+#[path = "engine/postgres_scratch.rs"]
+mod postgres_scratch;
+
+#[cfg(all(test, feature = "postgres"))]
+mod comparison;
