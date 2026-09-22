@@ -454,6 +454,12 @@ mod tests {
     use super::*;
     use crate::store::*;
 
+    #[test]
+    fn raw_objects_survive_the_engine_and_answers() {
+        let mut store = Sqlite::open(std::path::Path::new(":memory:")).expect("opens");
+        super::super::raw_objects_survive_the_engine_and_answers(&mut store);
+    }
+
     /// **The identity ask serves the turnless system messages and no
     /// other**, in landing order, with the prefix's pairs. Perturbation:
     /// drop `turn IS NULL` from the query and the turned system message

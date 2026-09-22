@@ -489,6 +489,14 @@ mod tests {
     use super::*;
     use crate::store::*;
 
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn raw_objects_survive_the_engine_and_answers() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        super::super::raw_objects_survive_the_engine_and_answers(&mut store);
+    }
+
     /// The width this store states, which the suite pins explicitly so a
     /// refusal is measured against a number rather than against whatever the
     /// box the suite runs on happens to have been built with.

@@ -435,6 +435,7 @@ fn analysis_binary() -> PathBuf {
 struct Member {
     process: Process,
     tee: Option<Tee>,
+    election: Election,
     wire: UnixStream,
     buffer: Vec<u8>,
     directory: Directory,
@@ -485,10 +486,11 @@ impl Member {
         }
         let process = Process(command.spawn().unwrap());
         drop(child);
-        let tee = Tee::open(wire.try_clone().unwrap(), SESSION.into(), election).unwrap();
+        let tee = Tee::open(wire.try_clone().unwrap(), SESSION.into(), election.clone()).unwrap();
         let mut member = Self {
             process,
             tee: Some(tee),
+            election,
             wire,
             buffer: Vec::new(),
             directory,
@@ -560,7 +562,7 @@ impl Member {
         // contributes no event to the live holdings. No live row can be retired.
         let mut preload = UnixStream::connect(self.door()).unwrap();
         preload
-            .write_all(weaver_trace::opener(SESSION, &election()).as_bytes())
+            .write_all(weaver_trace::opener(SESSION, &self.election).as_bytes())
             .unwrap();
         preload.write_all(b"{}\n").unwrap();
         drop(preload);
@@ -668,12 +670,13 @@ fn three_way_at_matched_cuts() {
         live.bootstrap_live();
         live.feed(&record.lines[..length]);
         let mut rebuilt = Member::new("comparison::three_way_at_matched_cuts", election());
+        let preloaded = rebuilt.reconstruct(&record, cut);
+        compare(cut.unwrap_or("whole"), &mut live, &mut rebuilt, &expected);
         assert_eq!(
-            rebuilt.reconstruct(&record, cut),
+            preloaded,
             expected.len(),
             "every elected canonical line parsed and projected"
         );
-        compare(cut.unwrap_or("whole"), &mut live, &mut rebuilt, &expected);
     }
 }
 

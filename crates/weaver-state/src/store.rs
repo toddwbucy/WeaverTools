@@ -172,17 +172,20 @@ pub struct RecalledEvent {
 /// distillate's own shape, envelope and pairs, because custody serves what
 /// it kept in the form it kept it.
 pub fn render_recall_answer(events: &[RecalledEvent]) -> String {
-    let rendered = rendered_events(events);
-    let mut frame = serde_json::json!({"answer": {"recall": {"events": rendered}}}).to_string();
-    frame.push('\n');
-    frame
+    format!(
+        r#"{{"answer":{{"recall":{{"events":{}}}}}}}"#,
+        rendered_events(events)
+    ) + "\n"
 }
 
 /// One event's rendering, envelope and pairs, shared by the recall and the
 /// replay answers because both serve an event as the distillate's own
 /// shape and a second rendering would be a second spelling of one form.
-fn rendered_events(events: &[RecalledEvent]) -> Vec<serde_json::Value> {
-    events
+fn rendered_events(events: &[RecalledEvent]) -> String {
+    use serde_json::value::{RawValue, to_raw_value};
+    use std::collections::BTreeMap;
+
+    let rendered: Vec<_> = events
         .iter()
         .map(|event| {
             let mut envelope = serde_json::Map::new();
@@ -193,18 +196,27 @@ fn rendered_events(events: &[RecalledEvent]) -> Vec<serde_json::Value> {
             }
             envelope.insert("kind".into(), event.kind.clone().into());
             envelope.insert("sequence".into(), event.sequence.to_string().into());
-            let pairs: serde_json::Map<String, serde_json::Value> = event
+            let pairs: BTreeMap<String, Box<RawValue>> = event
                 .pairs
                 .iter()
                 .map(|(key, value)| {
-                    let parsed = serde_json::from_str(value)
-                        .unwrap_or_else(|_| serde_json::Value::String(value.clone()));
+                    // Splice the stored JSON without interpreting its object order,
+                    // number spelling, escapes, or interior whitespace.
+                    let parsed = RawValue::from_string(value.clone())
+                        .unwrap_or_else(|_| to_raw_value(value).expect("string serializes"));
                     (key.clone(), parsed)
                 })
                 .collect();
-            serde_json::json!({"envelope": envelope, "pairs": pairs})
+            BTreeMap::from([
+                (
+                    "envelope",
+                    to_raw_value(&envelope).expect("envelope serializes"),
+                ),
+                ("pairs", to_raw_value(&pairs).expect("raw pairs serialize")),
+            ])
         })
-        .collect()
+        .collect();
+    serde_json::to_string(&rendered).expect("raw events serialize")
 }
 
 /// Render the replay answer as the contract's frame: every event whole, in
@@ -212,10 +224,10 @@ fn rendered_events(events: &[RecalledEvent]) -> Vec<serde_json::Value> {
 /// ask it answers, which is what pairs it without a correlation member, per
 /// `weaver-harness-state-contract` section 2.
 pub fn render_replay_answer(events: &[RecalledEvent]) -> String {
-    let rendered = rendered_events(events);
-    let mut frame = serde_json::json!({"answer": {"replay": {"events": rendered}}}).to_string();
-    frame.push('\n');
-    frame
+    format!(
+        r#"{{"answer":{{"replay":{{"events":{}}}}}}}"#,
+        rendered_events(events)
+    ) + "\n"
 }
 
 /// The grants answer: the surface's lines in the engine's order, per the
@@ -230,11 +242,10 @@ pub fn render_grants_answer(surface: &[String]) -> String {
 /// own shape, per the contract's `{"answer":{"identity":{"messages":[...]}}}`.
 /// An empty list is an answer, the first load of the session.
 pub fn render_identity_answer(events: &[RecalledEvent]) -> String {
-    let mut frame =
-        serde_json::json!({"answer": {"identity": {"messages": rendered_events(events)}}})
-            .to_string();
-    frame.push('\n');
-    frame
+    format!(
+        r#"{{"answer":{{"identity":{{"messages":{}}}}}}}"#,
+        rendered_events(events)
+    ) + "\n"
 }
 
 /// Render the shape answer as the contract's frame, one answer frame on
