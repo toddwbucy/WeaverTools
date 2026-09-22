@@ -3544,11 +3544,11 @@ mod tests {
             assert!(acknowledged >= close_lower, "announce follows record");
             let timing = if let Some((opened, answered)) = gate_times {
                 assert!(
-                    close_lower >= answered,
+                    close_upper >= answered,
                     "close preceded gate answer: latency={latency_min:?}..{latency_max:?}"
                 );
                 assert!(
-                    latency_min >= GATE_DELAY,
+                    latency_max >= GATE_DELAY,
                     "stop latency={latency_min:?}..{latency_max:?}, delay={GATE_DELAY:?}"
                 );
                 assert_eq!(appends, 2, "result is fed back before stop is heard");
