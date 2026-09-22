@@ -5,7 +5,7 @@
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #613
+**Landing PR:** #650
 
 ---
 

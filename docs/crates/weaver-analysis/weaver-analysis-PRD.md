@@ -11,7 +11,7 @@ not yet written, per `weaver-agents-PRD` section 0. The graph parent edge
 names the `WeaverTools` system node, and the header and the edge name the
 same thing.
 **Editorial:** Per the Working Rules.
-**Landing PR:** #628
+**Landing PR:** #650
 
 ---
 

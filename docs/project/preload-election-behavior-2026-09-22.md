@@ -19,7 +19,8 @@ The harness-state contract already states the distinction in its election
 vocabulary: replay uses the recorded rule or preloads a different session under
 a rule of its own. Analysis's current Spec instead requires one fixed election
 for every preload and derives the diagnostic declaration's session from the
-source envelope. The accompanying corpus edits change those clauses together before the code does.
+source envelope. The accompanying corpus edits change those clauses together before
+the code does.
 
 ## The evidence
 
