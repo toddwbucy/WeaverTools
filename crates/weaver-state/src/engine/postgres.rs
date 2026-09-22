@@ -1,6 +1,7 @@
 //! conforms: state-store-is-a-port
 //! conforms: state-distillate-lands-whole
 //! conforms: state-indexes-built-at-load
+//! conforms: state-serve-restricts-to-the-session
 //!
 //! The service engine, per `weaver-state-Spec` section 3 and the ruling of
 //! 2026-09-04: one database per agent, reached over the store's unix socket
@@ -9,30 +10,13 @@
 //! feature. The same two-table shape as the embedded engine, in this engine's
 //! dialect, and the same port, whole.
 //!
-//! One of the section's claims this file does not cite, and it does not
-//! return here on this reading: a citation is earned by holding an instrument
-//! or by a reading that holds, and this engine holds neither for it.
-//! `state-serve-restricts-to-the-session` is tagged `perturbation` and a
-//! perturbation claim is bought by a test, and no unit here constructs a
-//! `Postgres`, so the session predicate could leave `shape` and every device
-//! would still answer green.
-//!
-//! `state-indexes-built-at-load` is cited above and its instrument is the
-//! suite at the foot of this file, which buys what the Spec's section 5
-//! names for that claim: the statement a build would issue carries a name
-//! derived from the key path rather than from the key's position, so a later
-//! load's differing election cannot fall under an earlier load's name
-//! through `CREATE INDEX IF NOT EXISTS`. **The suite compiles only under
-//! `--features postgres`**, the crate defaulting to sqlite, so a run without
-//! that flag runs none of it and answers nothing about this engine.
-//!
-//! Three halves of the claim stand on a reading rather than on a run, and
-//! section 5 carries all three. The timing is reached by no test in either
-//! engine. The catalog is reached by no test here, no unit constructing a
-//! `Postgres`, so what the suite reads is the statement rather than the index
-//! the store then holds. The width the statements are measured against is
-//! the store's own, read at open, and no test stands a server to watch that
-//! reading.
+//! The live suite exercises the port against a scratch PostgreSQL database per
+//! test. It is ignored by default with an explicit reason. Run it with
+//! `WEAVER_STATE_TEST_PG` naming a scratch socket directory and
+//! `cargo test -p weaver-state --features postgres --locked -- --ignored`.
+//! The session predicates and both transaction boundaries are watched by
+//! perturbation. The catalog is read live for the elected indexes. The
+//! startup timing half of indexes-at-load remains outside this port suite.
 //!
 //! The naming answers `weaver-state-Spec` section 3's election and the
 //! encoding is this act's under it, per that clause. The store truncates an
@@ -493,16 +477,12 @@ impl Store for Postgres {
     }
 }
 
-/// The naming suite, which is this engine's instrument for
-/// `state-indexes-built-at-load` and reaches the store not at all: what a
-/// name is made of, what statement carries it and when a name is refused are
-/// properties of the derivation, so they are watched where the derivation is
-/// and no unit here stands a server to watch them. **The suite compiles only
-/// under `--features postgres`**, sqlite being the crate's default, so a run
-/// without that flag runs none of it.
+/// Statement tests run without a server. The ignored port tests require the
+/// scratch instance described by `WEAVER_STATE_TEST_PG` and fail if it is absent.
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::store::*;
 
     /// The width this store states, which the suite pins explicitly so a
     /// refusal is measured against a number rather than against whatever the
@@ -665,6 +645,736 @@ mod tests {
                 r"WHERE key = E'a\\\'b'"
             ),
             "the statement escapes both the backslash and the quote"
+        );
+    }
+
+    /// Each test owns a database. Declared before its engine, this guard drops
+    /// after the connection, including when an assertion unwinds.
+    struct Scratch {
+        maintenance: Client,
+        socket: String,
+        role: String,
+        database: String,
+    }
+
+    impl Scratch {
+        fn new() -> Self {
+            let socket = std::env::var("WEAVER_STATE_TEST_PG")
+                .expect("WEAVER_STATE_TEST_PG must name a scratch PostgreSQL socket directory");
+            let role = std::env::var("USER").expect("the scratch instance's own user");
+            let database = format!(
+                "w5a_{}_{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            );
+            let mut maintenance = postgres::Config::new()
+                .host_path(&socket)
+                .user(&role)
+                .dbname("postgres")
+                .connect(NoTls)
+                .expect("connect to scratch maintenance database");
+            maintenance
+                .batch_execute(&format!("CREATE DATABASE \"{database}\""))
+                .expect("create per-test database");
+            Self {
+                maintenance,
+                socket,
+                role,
+                database,
+            }
+        }
+
+        fn open(&self) -> Postgres {
+            Postgres::open(&self.socket, &self.database, &self.role).expect("open test engine")
+        }
+    }
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let result = self
+                .maintenance
+                .batch_execute(&format!("DROP DATABASE \"{}\"", self.database));
+            if std::thread::panicking() {
+                if let Err(error) = result {
+                    eprintln!("scratch database cleanup failed: {error}");
+                }
+            } else {
+                result.expect("drop per-test database");
+            }
+        }
+    }
+
+    fn elected_indexes(store: &Postgres) -> i64 {
+        store.client().query_one(
+            "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE 'field_key_%'",
+            &[],
+        ).expect("catalog indexes").get(0)
+    }
+
+    /// **The identity ask serves the turnless system messages and no
+    /// other**, in landing order, with the prefix's pairs. Perturbation:
+    /// drop `turn IS NULL` from the query and the turned system message
+    /// joins the answer; drop the kind and the user message does.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_identity_ask_serves_the_seated_prefix_alone() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let land = |store: &mut Postgres, turn: Option<&str>, kind: &str, seq: i64, text: &str| {
+            store
+                .land(&Distillate {
+                    session: "s".into(),
+                    run: "r-1".into(),
+                    turn: turn.map(str::to_string),
+                    kind: kind.into(),
+                    sequence: seq,
+                    pairs: vec![
+                        ("role".into(), "\"system\"".into()),
+                        (
+                            "content".into(),
+                            format!("[{{\"type\":\"text\",\"text\":\"{text}\"}}]"),
+                        ),
+                    ],
+                })
+                .expect("lands");
+        };
+        land(&mut store, None, "message.system", 1, "You are Karl.");
+        land(&mut store, None, "message.system", 2, "Answer briefly.");
+        land(
+            &mut store,
+            Some("t-1"),
+            "message.system",
+            3,
+            "inside a turn",
+        );
+        land(&mut store, Some("t-1"), "message.user", 4, "hello");
+        let held = store.identity("s").expect("answers");
+        assert_eq!(held.len(), 2);
+        assert_eq!(held[0].sequence, 1);
+        assert_eq!(held[1].sequence, 2);
+        // A second load records the prefix it seated under its own run, and
+        // the answer is that run's alone. Perturbation: drop the run
+        // subquery and the answer holds three.
+        store
+            .land(&Distillate {
+                session: "s".into(),
+                run: "r-2".into(),
+                turn: None,
+                kind: "message.system".into(),
+                sequence: 1,
+                pairs: vec![
+                    ("role".into(), "\"system\"".into()),
+                    ("content".into(), "[]".into()),
+                ],
+            })
+            .expect("lands");
+        let newest = store.identity("s").expect("answers");
+        assert_eq!(newest.len(), 1, "the newest run's prefix alone");
+        assert_eq!(newest[0].run, "r-2");
+        assert!(
+            held.iter()
+                .all(|e| e.turn.is_none() && e.kind == "message.system")
+        );
+        assert_eq!(
+            held[0].pairs[0],
+            ("role".to_string(), "\"system\"".to_string())
+        );
+        assert!(
+            store.identity("other").expect("answers").is_empty(),
+            "an empty list is an answer"
+        );
+        assert!(matches!(
+            parse_ask("{\"ask\":{\"identity\":{}}}"),
+            Some(Ask::Identity)
+        ));
+        let frame = render_identity_answer(&held);
+        assert!(frame.starts_with("{\"answer\":{\"identity\":{\"messages\":[{\"envelope\":"));
+        assert!(
+            frame.contains("\"role\":\"system\""),
+            "pairs render as JSON, not as strings"
+        );
+    }
+
+    /// A good distillate lands whole, and the store
+    /// reopened from disk still holds it, which is the persistence the
+    /// charter rules for runs within a session.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_distillate_lands_whole_and_survives_reopen() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        store
+            .index_election(&Election::default())
+            .expect("default election indexes");
+        let distillate = Distillate {
+            session: "alpha-1".into(),
+            run: "2026-08-18T19:03:31.198Z-alpha-7d53a936e".into(),
+            turn: Some("t-1".into()),
+            kind: "turn.started".into(),
+            sequence: 4,
+            pairs: vec![("payload.close".into(), "\"clean\"".into())],
+        };
+        store.land(&distillate).expect("lands");
+        assert_eq!(store.held().expect("held"), 1);
+        drop(store);
+        let store = scratch.open();
+        assert_eq!(
+            store.held().expect("held"),
+            1,
+            "holdings survive the process, per the charter"
+        );
+        assert_eq!(
+            store.replay("alpha-1").expect("whole reopened holding"),
+            vec![RecalledEvent {
+                session: "alpha-1".into(),
+                run: "2026-08-18T19:03:31.198Z-alpha-7d53a936e".into(),
+                turn: Some("t-1".into()),
+                kind: "turn.started".into(),
+                sequence: 4,
+                pairs: vec![("payload.close".into(), "\"clean\"".into())],
+            }]
+        );
+    }
+
+    /// A later load's differing election builds its own index rather than
+    /// falling silently under an earlier load's name, which is what a
+    /// positional index name would allow under `IF NOT EXISTS`.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_changed_election_builds_its_own_indexes() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let elect = |key: &str| Election {
+            all_kinds: true,
+            keys: vec![("turn.closed".into(), vec![key.into()])],
+        };
+        store.index_election(&elect("close")).expect("first");
+        store.index_election(&elect("tokens")).expect("second");
+        let elected = elected_indexes(&store);
+        assert_eq!(elected, 2, "each key path owns its index");
+    }
+
+    fn landed(session: &str, run: &str, kind: &str, sequence: i64) -> Distillate {
+        Distillate {
+            session: session.into(),
+            run: run.into(),
+            turn: None,
+            kind: kind.into(),
+            sequence,
+            pairs: Vec::new(),
+        }
+    }
+
+    /// **Custody answers within its session and not across it**, per
+    /// `weaver-state-Spec` section 4 and `weaver-state-PRD` section 4's
+    /// boundary. A database holding more than one session is the normal
+    /// case: sessions outlive runs and the file outlives sessions, so both
+    /// serve queries bound to the session the opener declared.
+    ///
+    /// The defect this pins was invisible in exactly the way that matters.
+    /// Unbounded, both queries answered over every session the file held
+    /// and every answer looked well formed - a shape ask reporting a
+    /// lifetime's runs as this session's, and a recall reaching a fact the
+    /// operator believed a session cut had retired.
+    ///
+    /// Perturbation: drop any of the three `WHERE session` predicates and
+    /// this fails. Dropping the shape's or the recall's event predicate
+    /// surfaces the older session's run and message in the newer session's
+    /// answers. Dropping the turn-selection subquery's spends the
+    /// `last-turns` bound on an older session's turn and leaves the bounded
+    /// recall empty - fail-closed, because the event predicate still holds,
+    /// but the answer is wrong either way.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_answers_stay_inside_the_running_session() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        store.index_election(&Election::default()).expect("indexes");
+
+        // An earlier session's holdings, still on disk where a session cut
+        // left them, and a message it may not serve into the new session.
+        store
+            .land(&landed("old", "r-old", "load", 0))
+            .expect("lands");
+        let mut stale = landed("old", "r-old", "message.user", 1);
+        stale.turn = Some("t-1".into());
+        stale.pairs = vec![("payload.content".into(), "\"the vault code\"".into())];
+        store.land(&stale).expect("lands");
+
+        store
+            .land(&landed("new", "r-new", "load", 0))
+            .expect("lands");
+        let mut fresh = landed("new", "r-new", "message.user", 1);
+        fresh.turn = Some("t-1".into());
+        fresh.pairs = vec![("payload.content".into(), "\"hello\"".into())];
+        store.land(&fresh).expect("lands");
+
+        assert_eq!(store.held().expect("held"), 4, "the database holds both");
+
+        let shape = store.shape("new").expect("shapes");
+        assert_eq!(
+            shape.len(),
+            1,
+            "the shape holds the running session's runs alone: {shape:?}"
+        );
+        assert_eq!(shape[0].run, "r-new");
+
+        let recalled = store.recall("new", None).expect("recalls");
+        assert_eq!(
+            recalled.len(),
+            1,
+            "the recall reads the running session's messages alone: {recalled:?}"
+        );
+        assert_eq!(recalled[0].run, "r-new");
+        assert!(
+            !recalled[0].pairs.iter().any(|(_, v)| v.contains("vault")),
+            "and never the retired session's content"
+        );
+
+        // A bounded recall reads the turn-selection subquery, which the
+        // unbounded ask above never touches. The older session's second
+        // turn lands last so it holds the highest id: unbounded by session,
+        // `LIMIT 1` would elect it, and the event query - still bounded -
+        // would then find no row of it to read.
+        let mut later_stale = landed("old", "r-old", "message.user", 2);
+        later_stale.turn = Some("t-2".into());
+        later_stale.pairs = vec![("payload.content".into(), "\"the vault code again\"".into())];
+        store.land(&later_stale).expect("lands");
+
+        let bounded = store.recall("new", Some(1)).expect("recalls");
+        assert_eq!(
+            bounded.len(),
+            1,
+            "the bound selects the running session's turn, not the newest \
+             turn in the database: {bounded:?}"
+        );
+        assert_eq!(bounded[0].run, "r-new");
+        assert_eq!(bounded[0].turn.as_deref(), Some("t-1"));
+
+        // Runs as well as turns may collide across sessions. Exercise the
+        // shape's per-run count and the bounded recall's outer predicate.
+        let mut collision = landed("old", "r-new", "message.user", 9);
+        collision.turn = Some("t-1".into());
+        collision.pairs = vec![("payload.content".into(), "\"excluded session\"".into())];
+        store.land(&collision).expect("colliding session lands");
+        assert_eq!(store.shape("new").expect("isolated counts"), shape);
+        assert_eq!(
+            store.recall("new", Some(1)).expect("isolated bounded rows"),
+            bounded
+        );
+
+        // The older session is not destroyed, only unreachable: removal is
+        // section 6's open question, deliberately not this act's.
+        let old_shape = store.shape("old").expect("shapes");
+        assert_eq!(old_shape.len(), 2, "the older session's rows stand");
+    }
+
+    /// The shape holds the runs in first-landed order by the id column,
+    /// interleaved landings included, each with its counts by kind, and
+    /// the answer frame renders the contract's spelling.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_shape_orders_runs_by_first_landing() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        for (run, kind, sequence) in [
+            ("r-1", "load", 0),
+            ("r-1", "turn.closed", 1),
+            ("r-2", "load", 0),
+            ("r-1", "turn.closed", 2),
+            ("r-2", "turn.closed", 1),
+        ] {
+            store
+                .land(&landed("s", run, kind, sequence))
+                .expect("lands");
+        }
+        let shape = store.shape("s").expect("shapes");
+        assert_eq!(shape.len(), 2);
+        assert_eq!(shape[0].run, "r-1", "first landed leads");
+        assert_eq!(
+            shape[0].kinds,
+            vec![("load".to_string(), 1), ("turn.closed".to_string(), 2)]
+        );
+        assert_eq!(shape[1].run, "r-2");
+        let frame = render_shape_answer(&shape);
+        assert!(
+            frame.starts_with(r#"{"answer":{"shape":{"runs":["#),
+            "{frame}"
+        );
+        assert!(frame.ends_with("}\n"), "{frame}");
+    }
+
+    /// The answered-against clause, in time: an ask sees every landing
+    /// before it and nothing after, because the shape reads the holdings
+    /// at its own position in the stream.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn an_ask_sees_the_holdings_at_its_position_and_no_more() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        store.land(&landed("s", "r-1", "load", 0)).expect("lands");
+        assert_eq!(
+            store.replay("s").expect("envelope-only cut"),
+            vec![RecalledEvent {
+                session: "s".into(),
+                run: "r-1".into(),
+                turn: None,
+                kind: "load".into(),
+                sequence: 0,
+                pairs: vec![],
+            }]
+        );
+        let before = store.shape("s").expect("shapes");
+        assert_eq!(before[0].kinds, vec![("load".to_string(), 1)]);
+        store
+            .land(&landed("s", "r-1", "turn.closed", 1))
+            .expect("lands");
+        let after = store.shape("s").expect("shapes");
+        assert_eq!(
+            after[0].kinds,
+            vec![("load".to_string(), 1), ("turn.closed".to_string(), 1)]
+        );
+        let mut elected = landed("s", "r-1", "message.user", 2);
+        elected.turn = Some("t-1".into());
+        elected.pairs = vec![("content".into(), "\"elected text\"".into())];
+        store.land(&elected).expect("elected projection");
+        assert_eq!(
+            store.recall("s", None).expect("payload cut"),
+            vec![RecalledEvent {
+                session: "s".into(),
+                run: "r-1".into(),
+                turn: Some("t-1".into()),
+                kind: "message.user".into(),
+                sequence: 2,
+                pairs: vec![("content".into(), "\"elected text\"".into())],
+            }],
+            "only the supplied election projection is recallable"
+        );
+        assert_eq!(before[0].kinds.len(), 1, "the earlier answer never grew");
+    }
+
+    /// **A replay reads what a recall does not**, which is the whole reason
+    /// the ask exists: `recall` serves the four message kinds and a replay
+    /// walks the rendered contributions and the recorded measurements too.
+    /// Perturbation: give `replay` the kind filter `recall` carries and this
+    /// fails on the two events it would drop.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_replay_reads_every_kind_and_a_recall_reads_four() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        for (kind, sequence) in [
+            ("message.user", 1),
+            ("model.request", 2),
+            ("model.measurement", 3),
+            ("message.assistant", 4),
+            ("message.system", 5),
+            ("message.tool_result", 6),
+        ] {
+            let mut event = landed("s", "r", kind, sequence);
+            event.turn = Some("t1".into());
+            store.land(&event).expect("lands");
+        }
+        let replayed = store.replay("s").expect("replay");
+        assert_eq!(replayed.len(), 6, "a replay serves every held event");
+        let kinds: Vec<&str> = replayed.iter().map(|e| e.kind.as_str()).collect();
+        assert_eq!(
+            kinds,
+            [
+                "message.user",
+                "model.request",
+                "model.measurement",
+                "message.assistant",
+                "message.system",
+                "message.tool_result"
+            ],
+            "and in landing order"
+        );
+        let recalled = store.recall("s", None).expect("recall");
+        assert_eq!(recalled.len(), 4, "where a recall serves the message kinds");
+        let frame = render_replay_answer(&replayed);
+        assert!(
+            frame.starts_with(r#"{"answer":{"replay":{"events":["#),
+            "{frame}"
+        );
+        assert!(frame.ends_with("}\n"), "{frame}");
+    }
+
+    /// **The retirement and the opener's indexes commit together**, per the
+    /// contract's same-transaction claim as the audit of 2026-08-26 read
+    /// it: a retire under a non-empty election leaves the election's index
+    /// standing over the replaced holdings, and a retire whose index build
+    /// fails leaves the holdings exactly as they stood, the delete rolled
+    /// back with it. The failing build is bought with an election key
+    /// carrying an interior NUL, which PostgreSQL refuses as a statement.
+    ///
+    /// Perturbation: commit the delete before the build runs and the
+    /// atomicity half fails, the holdings gone under a build that never
+    /// happened.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_retirement_and_its_index_commit_together() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        store
+            .land(&landed("replayed", "r", "message.user", 1))
+            .expect("lands");
+
+        // The index half: a non-empty election's index stands after the
+        // retire that carried it.
+        let election = Election {
+            all_kinds: true,
+            keys: vec![("message.user".into(), vec!["content".into()])],
+        };
+        store
+            .retire_and_index("replayed", &election)
+            .expect("retires and indexes");
+        let indexed = elected_indexes(&store);
+        assert!(indexed >= 1, "the election's index stands");
+
+        // The atomicity half: a build PostgreSQL refuses rolls the delete back
+        // with it.
+        store
+            .land(&landed("replayed", "r", "message.user", 2))
+            .expect("lands again");
+        let poisoned = Election {
+            all_kinds: true,
+            keys: vec![("message.user".into(), vec!["a\u{0}b".into()])],
+        };
+        assert!(
+            store.retire_and_index("replayed", &poisoned).is_err(),
+            "the poisoned build fails"
+        );
+        let held = store.held().expect("counts holdings");
+        assert_eq!(held, 1, "the holdings survive the failed build whole");
+    }
+
+    /// **The retirement is bounded to the declared session**, per the Spec:
+    /// re-running a preload replaces that session's holdings and reaches no
+    /// other session's rows. Perturbation: drop the `WHERE session` from
+    /// either delete and the untouched session loses its events.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_preload_opener_retires_its_own_session_alone() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let mut original = landed("replayed", "r", "message.user", 1);
+        original.turn = Some("t-1".into());
+        original.pairs = vec![("content".into(), "\"old preload\"".into())];
+        let mut other = original.clone();
+        other.session = "other".into();
+        other.pairs = vec![("content".into(), "\"other session\"".into())];
+        store.land(&original).expect("old preload");
+        store.land(&other).expect("other session");
+        let untouched = store.replay("other").expect("other before");
+        for text in ["first replacement", "second replacement"] {
+            store
+                .retire_and_index("replayed", &Election::default())
+                .expect("retire");
+            assert!(store.replay("replayed").expect("retired").is_empty());
+            assert_eq!(store.held().expect("held after retire"), 1);
+            original.pairs = vec![("content".into(), format!("\"{text}\""))];
+            store.land(&original).expect("replacement lands");
+            let replaced = store.replay("replayed").expect("replacement");
+            assert_eq!(replaced.len(), 1, "a retry replaces rather than appends");
+            assert_eq!(replaced[0].pairs, original.pairs);
+            assert_eq!(store.replay("other").expect("other after"), untouched);
+            assert_eq!(store.held().expect("total"), 2);
+            let fields: i64 = store
+                .client()
+                .query_one("SELECT COUNT(*) FROM field", &[])
+                .expect("field count")
+                .get(0);
+            assert_eq!(fields, 2, "retirement removes the retired pairs too");
+        }
+    }
+
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_ask_vocabulary_is_closed() {
+        let scratch = Scratch::new();
+        let store = scratch.open();
+        assert!(store.shape("s").expect("empty shape").is_empty());
+        assert_eq!(parse_ask(r#"{"ask":{"grants":{}}}"#), Some(Ask::Grants));
+        assert_eq!(parse_ask(r#"{"ask":{"identity":{}}}"#), Some(Ask::Identity));
+        assert_eq!(parse_ask(r#"{"ask":{"shape":{}}}"#), Some(Ask::Shape));
+        assert_eq!(
+            parse_ask(r#"{"ask":{"recall":{}}}"#),
+            Some(Ask::Recall { last_turns: None })
+        );
+        assert_eq!(
+            parse_ask(r#"{"ask":{"recall":{"last-turns":3}}}"#),
+            Some(Ask::Recall {
+                last_turns: Some(3)
+            })
+        );
+        // The third name, added 2026-08-24. It carries no members, so a
+        // members object and a bare one parse alike and neither carries a
+        // bound the way `recall` does.
+        assert_eq!(parse_ask(r#"{"ask":{"replay":{}}}"#), Some(Ask::Replay));
+        for not_an_ask in [
+            r#"{"ask":{"summarize":{}}}"#,
+            r#"{"ask":{"recall":{"last-turns":-3}}}"#,
+            r#"{"ask":{"recall":{"last-turns":"three"}}}"#,
+            r#"{"ask":{"recall":{"last-turns":2.5}}}"#,
+            r#"{"envelope":{}}"#,
+            "not json",
+        ] {
+            assert!(parse_ask(not_an_ask).is_none(), "{not_an_ask}");
+        }
+    }
+
+    /// The bounded recall keys its turns by session, run, and turn
+    /// together: a turn label recurring across runs names two different
+    /// turns, and the bound must not recall the older run's events beside
+    /// its namesake's.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_bounded_recall_keeps_colliding_turn_labels_apart() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let message = |run: &str, turn: &str, text: &str, sequence: i64| Distillate {
+            session: "s".into(),
+            run: run.into(),
+            turn: Some(turn.into()),
+            kind: "message.user".into(),
+            sequence,
+            pairs: vec![("content".into(), format!("\"{text}\""))],
+        };
+        for landing in [
+            message("r-1", "t-1", "old one", 1),
+            message("r-1", "t-2", "old two", 2),
+            message("r-2", "t-1", "new one", 1),
+            message("r-2", "t-2", "new two", 2),
+        ] {
+            store.land(&landing).expect("lands");
+        }
+        let bounded = store.recall("s", Some(2)).expect("recalls");
+        let quoted: Vec<&str> = bounded
+            .iter()
+            .map(|event| event.pairs[0].1.as_str())
+            .collect();
+        assert_eq!(
+            quoted,
+            vec!["\"new one\"", "\"new two\""],
+            "the bound keeps the newer run's turns and no namesakes"
+        );
+        let whole = store.recall("s", None).expect("recalls");
+        assert_eq!(whole.len(), 4, "the unbounded recall reads every message");
+    }
+
+    /// The parse demands the envelope whole: a frame missing any envelope
+    /// member is nobody's row.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn an_unattributable_frame_is_refused() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let good = parse_distillate(
+            r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#,
+        )
+        .expect("attributable");
+        store.land(&good).expect("lands");
+        assert!(
+            parse_distillate(
+                r#"{"envelope":{"session":"s","run":"r","kind":"load","sequence":"0"}}"#
+            )
+            .is_some()
+        );
+        for missing in [
+            r#"{"envelope":{"run":"r","kind":"load","sequence":"0"}}"#,
+            r#"{"envelope":{"session":"s","kind":"load","sequence":"0"}}"#,
+            r#"{"envelope":{"session":"s","run":"r","sequence":"0"}}"#,
+            r#"{"envelope":{"session":"s","run":"r","kind":"load"}}"#,
+            r#"{"pairs":{}}"#,
+            "not json",
+        ] {
+            let parsed = parse_distillate(missing);
+            if let Some(event) = &parsed {
+                store.land(event).expect("would land an accepted frame");
+            }
+            assert!(parsed.is_none(), "{missing} must refuse");
+            assert_eq!(store.held().expect("held"), 1);
+        }
+    }
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_failed_pair_insert_leaves_no_partial_distillate() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        let mut good = landed("s", "r", "message.user", 1);
+        good.pairs = vec![("content".into(), "\"kept\"".into())];
+        store.land(&good).expect("initial holding");
+        let before = store.replay("s").expect("before");
+        // The event and first pair are valid. PostgreSQL TEXT rejects the
+        // NUL in the second pair, after those writes have been attempted.
+        let mut poisoned = landed("s", "r", "message.user", 2);
+        poisoned.pairs = vec![
+            ("content".into(), "\"valid first pair\"".into()),
+            ("refused".into(), "a\0b".into()),
+        ];
+        assert!(matches!(
+            store.land(&poisoned),
+            Err(CustodyFault::LandingFailed(_))
+        ));
+        assert_eq!(
+            store.held().expect("held after refusal"),
+            1,
+            "a failed pair insert must roll back its event"
+        );
+        assert_eq!(store.replay("s").expect("after"), before);
+        let fields: i64 = store
+            .client()
+            .query_one("SELECT COUNT(*) FROM field", &[])
+            .expect("field count")
+            .get(0);
+        assert_eq!(fields, 1, "the first pair also rolls back");
+    }
+
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn the_grants_ask_states_the_catalog_boundary() {
+        let scratch = Scratch::new();
+        let store = scratch.open();
+        let surface = store.grants().expect("catalog surface");
+        assert_eq!(surface, store.grants().expect("repeat reading"));
+        assert!(surface.windows(2).all(|lines| lines[0] <= lines[1]));
+        assert!(surface.contains(&format!(
+            "role {} super=true createrole=true createdb=true",
+            scratch.role
+        )));
+        assert!(surface.contains(&format!("database {} acl=", scratch.database)));
+        assert!(
+            !surface.iter().any(|line| line.starts_with("member ")),
+            "the initdb role has no memberships"
+        );
+        for table in ["event", "field"] {
+            for privilege in [
+                "SELECT",
+                "INSERT",
+                "UPDATE",
+                "DELETE",
+                "TRUNCATE",
+                "REFERENCES",
+                "TRIGGER",
+            ] {
+                assert!(surface.contains(&format!("table public.{table} {privilege}")));
+            }
+        }
+        store
+            .client()
+            .batch_execute("REVOKE SELECT ON field FROM CURRENT_USER")
+            .expect("change scratch table grant");
+        let changed = store.grants().expect("changed surface");
+        let mut expected = surface.clone();
+        expected.retain(|line| line != "table public.field SELECT");
+        assert_eq!(changed, expected, "the surface observes the catalog change");
+        assert_eq!(parse_ask(r#"{"ask":{"grants":{}}}"#), Some(Ask::Grants));
+        let frame: serde_json::Value =
+            serde_json::from_str(&render_grants_answer(&surface)).expect("frame");
+        assert_eq!(
+            frame["answer"]["grants"]["surface"],
+            serde_json::json!(surface)
         );
     }
 }
