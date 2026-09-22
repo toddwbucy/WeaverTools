@@ -1,3 +1,4 @@
+//! conforms: analysis-summary-reports-the-run-and-its-conditions
 //! conforms: analysis-reconstruction-follows-recorded-election
 //! conforms: analysis-preload-validates-before-opener
 //! conforms: analysis-diagnostic-requires-distinct-destination
@@ -676,5 +677,149 @@ fn derive_requires_and_renders_a_distinct_destination() {
         } else {
             assert!(String::from_utf8_lossy(&result.stderr).contains("destination"));
         }
+    }
+}
+
+struct SignalsFiles(std::path::PathBuf);
+
+impl SignalsFiles {
+    fn new() -> Self {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static NEXT: AtomicUsize = AtomicUsize::new(0);
+        let path = std::env::temp_dir().join(format!(
+            "weaver-signals-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::create_dir(&path).unwrap();
+        Self(path)
+    }
+
+    fn run(&self, deposit: Option<&str>, pipe: bool) -> std::process::Output {
+        use std::io::Write;
+        use std::process::{Command, Stdio};
+        let path = self.0.join("a-path-that-is-not-the-record-run.ndjson");
+        std::fs::write(&path, SIGNALS_RECORD).unwrap();
+        let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-analysis"));
+        command.args(["signals", if pipe { "-" } else { path.to_str().unwrap() }]);
+        if let Some(path) = deposit {
+            command.args(["--deposit", path]);
+        }
+        let mut child = command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut input = child.stdin.take().unwrap();
+        if pipe {
+            input.write_all(SIGNALS_RECORD.as_bytes()).unwrap();
+        }
+        drop(input);
+        child.wait_with_output().unwrap()
+    }
+}
+
+impl Drop for SignalsFiles {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+const SIGNALS_RECORD: &str = concat!(
+    "{\"session\":\"record-session\",\"run\":\"record-run\",\"sequence\":\"0\",\"kind\":\"load\",\"payload\":{\"stack\":{\"gate\":\"record-sha\"}}}\n",
+    "{\"session\":\"record-session\",\"run\":\"record-run\",\"turn\":\"one\",\"sequence\":\"1\",\"kind\":\"model.measurement\",\"payload\":{\"output_tokens\":[3],\"weights_hash\":\"\"}}\n",
+    "{\"session\":\"record-session\",\"run\":\"record-run\",\"sequence\":\"2\",\"kind\":\"unload\",\"payload\":{}}\n",
+);
+
+fn signal_entry(out: std::process::Output) -> serde_json::Value {
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let summary: serde_json::Value =
+        serde_json::from_slice(out.stdout.split(|b| *b == b'\n').next().unwrap()).unwrap();
+    summary["generations"][0].clone()
+}
+
+/// The explicit deposit reaches the same members for a file and a pipe;
+/// source binary identity wins, and each deposit member is independently absent.
+#[test]
+fn the_deposit_is_explicit_and_its_members_are_never_inferred() {
+    let files = SignalsFiles::new();
+    let deposit = serde_json::json!({
+        "device_model":"observed GPU", "commit":"commit-hash", "toolchain":"pinned-rust",
+        "driver":"pinned-driver", "engine_libraries":{"engine.so":"library-sha"},
+        "stack":{"gate":"deposit-must-not-win"}
+    });
+    let path = files.0.join("named.json");
+    std::fs::write(&path, deposit.to_string()).unwrap();
+    let mut expected = signal_entry(files.run(Some(path.to_str().unwrap()), false));
+    assert_eq!(
+        signal_entry(files.run(Some(path.to_str().unwrap()), true)),
+        expected
+    );
+    assert_eq!(expected["run"], "record-run");
+    assert_eq!(expected["session"], "record-session");
+    assert_eq!(expected["device_model"], "observed GPU");
+    assert_eq!(expected["weights_hash"], "");
+    assert_eq!(
+        expected["code_identity"],
+        serde_json::json!({
+            "stack":{"gate":"record-sha"}, "commit":"commit-hash", "toolchain":"pinned-rust",
+            "driver":"pinned-driver", "engine_libraries":{"engine.so":"library-sha"}
+        })
+    );
+    assert!(expected.get("verdict").is_none());
+    for member in [
+        "device_model",
+        "commit",
+        "toolchain",
+        "driver",
+        "engine_libraries",
+    ] {
+        let mut missing = deposit.clone();
+        missing.as_object_mut().unwrap().remove(member);
+        std::fs::write(&path, missing.to_string()).unwrap();
+        let actual = signal_entry(files.run(Some(path.to_str().unwrap()), true));
+        let mut wanted = expected.clone();
+        if member == "device_model" {
+            wanted.as_object_mut().unwrap().remove(member);
+        } else {
+            wanted["code_identity"]
+                .as_object_mut()
+                .unwrap()
+                .remove(member);
+        }
+        assert_eq!(actual, wanted, "only {member} is omitted");
+    }
+    // Candidate sibling names must not supply a deposit without an argument.
+    for name in [
+        "deposit.json",
+        "a-path-that-is-not-the-record-run.json",
+        "a-path-that-is-not-the-record-run.deposit.json",
+    ] {
+        std::fs::write(files.0.join(name), deposit.to_string()).unwrap();
+    }
+    expected.as_object_mut().unwrap().remove("device_model");
+    expected["code_identity"] = serde_json::json!({"stack":{"gate":"record-sha"}});
+    for pipe in [false, true] {
+        assert_eq!(signal_entry(files.run(None, pipe)), expected);
+    }
+}
+
+#[test]
+fn named_missing_or_unreadable_deposits_refuse_instead_of_becoming_absent() {
+    let files = SignalsFiles::new();
+    let path = files.0.join("bad.json");
+    for contents in [None, Some("{broken"), Some(r#"{"device_model":4}"#)] {
+        if let Some(contents) = contents {
+            std::fs::write(&path, contents).unwrap();
+        }
+        let out = files.run(Some(path.to_str().unwrap()), true);
+        assert!(!out.status.success());
+        assert!(out.stdout.is_empty());
+        assert!(String::from_utf8_lossy(&out.stderr).contains("deposit"));
     }
 }

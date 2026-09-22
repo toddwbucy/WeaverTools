@@ -1,3 +1,7 @@
+//! conforms: analysis-summary-reports-the-record-session
+//! conforms: analysis-summary-reports-the-record-digest
+//! conforms: analysis-summary-reports-the-prefix-length
+//! conforms: analysis-summary-reports-the-run-and-its-conditions
 //! conforms: analysis-reading-drains-within-a-turn
 //! conforms: analysis-signals-keep-absence
 //! conforms: analysis-summary-reports-residency
@@ -406,7 +410,7 @@ fn an_absent_member_is_omitted_at_the_wire_and_never_rendered_null() {
     };
 
     // The record as the fixture spells it: every member the summary
-    // carries is present, so the object holds all five.
+    // carries is present, together with its run and session.
     let whole = summary(&record(Some("certified"), ""), "whole.ndjson");
     let generation = whole["generations"][0].as_object().expect("an object");
     let mut members: Vec<&str> = generation.keys().map(String::as_str).collect();
@@ -417,6 +421,8 @@ fn an_absent_member_is_omitted_at_the_wire_and_never_rendered_null() {
             "output_count",
             "perplexity",
             "resident",
+            "run",
+            "session",
             "turn",
             "weights_hash"
         ]
@@ -443,4 +449,304 @@ fn an_absent_member_is_omitted_at_the_wire_and_never_rendered_null() {
     );
 
     std::fs::remove_dir_all(&dir).ok();
+}
+
+// The first E2 watch: neither a later generation nor a suffix can stand in
+// for the first generation of a whole run.
+#[test]
+fn the_prefix_comes_only_from_the_first_generation_of_a_whole_run() {
+    let full = prefix_record();
+    for (record, expected) in [
+        (full.clone(), Some(100)),
+        (
+            full.lines().skip(1).collect::<Vec<_>>().join("\n") + "\n",
+            None,
+        ),
+        (full.replace("\"resident\":107", "\"unrelated\":107"), None),
+        (
+            full.lines()
+                .filter(|l| !l.contains("unload"))
+                .collect::<Vec<_>>()
+                .join("\n")
+                + "\n",
+            None,
+        ),
+        (
+            full.lines()
+                .filter(|l| !(l.contains("model.measurement") && l.contains("t1")))
+                .collect::<Vec<_>>()
+                .join("\n")
+                + "\n",
+            None,
+        ),
+    ] {
+        let out = signals_from_pipe(&record, &[]);
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let summary: serde_json::Value =
+            serde_json::from_slice(out.stdout.split(|b| *b == b'\n').next().unwrap()).unwrap();
+        let generations = summary["generations"].as_array().unwrap();
+        assert!(!generations.is_empty());
+        for generation in generations {
+            assert_eq!(
+                generation.get("prefix_length").and_then(|v| v.as_u64()),
+                expected,
+                "only the first generation after load can supply the prefix: {generation}"
+            );
+        }
+    }
+}
+
+fn prefix_record() -> String {
+    [
+        r#"{"session":"source","run":"r","sequence":"0","kind":"load","payload":{}}"#,
+        r#"{"session":"source","run":"r","turn":"t1","sequence":"1","kind":"model.request","payload":{"sampling":{"generation_seed":11,"seed":7,"temperature":0.50}}}"#,
+        r#"{"session":"source","run":"r","turn":"t1","sequence":"2","kind":"model.output","payload":{"resident":107}}"#,
+        r#"{"session":"source","run":"r","turn":"t1","sequence":"3","kind":"model.measurement","payload":{"input_tokens":[1,2,3,4],"output_tokens":[8,9]}}"#,
+        r#"{"session":"source","run":"r","turn":"t2","sequence":"4","kind":"model.request","payload":{"sampling":{"generation_seed":22,"seed":7,"temperature":0.50}}}"#,
+        r#"{"session":"source","run":"r","turn":"t2","sequence":"5","kind":"model.output","payload":{"resident":215}}"#,
+        r#"{"session":"source","run":"r","turn":"t2","sequence":"6","kind":"model.measurement","payload":{"input_tokens":[5,6],"output_tokens":[10,11,12]}}"#,
+        r#"{"session":"source","run":"r","sequence":"7","kind":"unload","payload":{}}"#,
+    ].join("\n") + "\n"
+}
+
+fn signals_from_pipe(record: &str, arguments: &[&str]) -> std::process::Output {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut child = Command::new(env!("CARGO_BIN_EXE_weaver-analysis"))
+        .args(["signals", "-"])
+        .args(arguments)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(record.as_bytes())
+        .unwrap();
+    child.wait_with_output().unwrap()
+}
+
+fn summary_value(text: &str, arguments: &[&str]) -> serde_json::Value {
+    let out = signals_from_pipe(text, arguments);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    serde_json::from_slice(out.stdout.split(|b| *b == b'\n').next().unwrap()).unwrap()
+}
+
+/// Each run hashes its own raw lines, unknown kinds included, without
+/// re-encoding, borrowing another run's bytes, or normalizing delimiters.
+#[test]
+fn the_digest_is_independently_recomputed_per_run_over_drained_bytes() {
+    use sha2::{Digest, Sha256};
+    for ending in ["\n", "\r\n"] {
+        let first = prefix_record().replace("\n", ending).replace(
+            "\"sequence\":\"7\",\"kind\":\"unload\"",
+            "\"sequence\":\"8\",\"kind\":\"unload\"",
+        );
+        let unknown = format!(
+            "  {{\"session\":\"source\",\"run\":\"r\",\"sequence\":\"7\",\"kind\":\"future.kind\",\"payload\":{{\"z\":1.00, \"a\":null}}}}{ending}"
+        );
+        let mut lines: Vec<_> = first.split_inclusive('\n').map(str::to_string).collect();
+        lines.insert(lines.len() - 1, unknown);
+        let first = lines.concat();
+        let second = first
+            .replace("\"run\":\"r\"", "\"run\":\"other\"")
+            .replace("\"session\":\"source\"", "\"session\":\"second\"")
+            .replace("\"resident\":107", "\"resident\":57");
+        let mixed: String = first
+            .split_inclusive('\n')
+            .zip(second.split_inclusive('\n'))
+            .flat_map(|(a, b)| [a, b])
+            .collect();
+        let summary = summary_value(&mixed, &[]);
+        let entries = summary["generations"].as_array().unwrap();
+        assert_eq!(entries.len(), 4);
+        for (entry, (run, session, prefix, bytes)) in entries.iter().zip([
+            ("r", "source", 100, &first),
+            ("other", "second", 50, &second),
+            ("r", "source", 100, &first),
+            ("other", "second", 50, &second),
+        ]) {
+            assert_eq!(entry["run"], run);
+            assert_eq!(entry["session"], session);
+            assert_eq!(entry["prefix_length"], prefix);
+            assert_eq!(
+                entry["digest"],
+                format!("{:x}", Sha256::digest(bytes.as_bytes()))
+            );
+        }
+    }
+}
+
+#[test]
+fn incomplete_runs_never_vouch_for_a_digest_or_a_prefix() {
+    let full = prefix_record();
+    for text in [
+        full.lines().skip(1).collect::<Vec<_>>().join("\n") + "\n",
+        full.lines()
+            .filter(|l| !l.contains("unload"))
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n",
+    ] {
+        let summary = summary_value(&text, &[]);
+        for entry in summary["generations"].as_array().unwrap() {
+            assert!(entry.get("digest").is_none());
+            assert!(entry.get("prefix_length").is_none());
+            assert_eq!(entry["run"], "r");
+        }
+    }
+}
+
+#[test]
+fn missing_first_inputs_or_unreadable_measurements_never_borrow_a_later_prefix() {
+    let full = prefix_record();
+    for text in [
+        full.replace("\"input_tokens\":[1,2,3,4]", "\"unrelated\":[1,2,3,4]"),
+        full.replace("\"output_tokens\":[8,9]", "\"output_tokens\":null"),
+        full.replace("\"resident\":107", "\"resident\":1"),
+    ] {
+        let summary = summary_value(&text, &[]);
+        for entry in summary["generations"].as_array().unwrap() {
+            assert!(entry.get("prefix_length").is_none());
+            assert!(
+                entry.get("digest").is_some(),
+                "prefix absence does not cost a whole run its digest"
+            );
+        }
+    }
+}
+
+#[test]
+fn summaries_keep_run_conditions_raw_and_each_absence_independent() {
+    let full = prefix_record().replacen("\"payload\":{}", r#""payload":{"field":4,"lineage":{"through":7, "run":"parent-run","parent":"parent-session"},"stack":{"z":"sha-z", "a":"sha-a"}}"#, 1);
+    let out = signals_from_pipe(&full, &[]);
+    assert!(out.status.success());
+    let raw = String::from_utf8(out.stdout).unwrap();
+    assert!(
+        raw.contains(r#""effective_sampling":{"generation_seed":11,"seed":7,"temperature":0.50}"#)
+    );
+    assert!(
+        raw.contains(r#""lineage":{"through":7, "run":"parent-run","parent":"parent-session"}"#)
+    );
+    assert!(raw.contains(r#""stack":{"z":"sha-z", "a":"sha-a"}"#));
+    let complete = summary_value(&full, &[]);
+    for entry in complete["generations"].as_array().unwrap() {
+        assert_eq!(entry["run"], "r");
+        assert_eq!(entry["session"], "source");
+        assert_eq!(entry["field_depth"], 4);
+        assert_eq!(entry["lineage"]["through"], 7);
+        assert_eq!(entry["code_identity"]["stack"]["z"], "sha-z");
+        for absent in ["device_model", "verdict", "weights_hash", "perplexity"] {
+            assert!(
+                entry.get(absent).is_none(),
+                "{absent} must not be defaulted"
+            );
+        }
+    }
+    for (before, after, absent) in [
+        ("\"session\":\"source\",", "", "session"),
+        ("\"field\":4,", "", "field_depth"),
+        ("\"lineage\":", "\"unrelated\":", "lineage"),
+        ("\"stack\":", "\"unrelated\":", "code_identity"),
+        ("\"sampling\":", "\"unrelated\":", "effective_sampling"),
+    ] {
+        let summary = summary_value(&full.replace(before, after), &[]);
+        for (index, entry) in summary["generations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .enumerate()
+        {
+            assert!(entry.get(absent).is_none(), "{absent}: {entry}");
+            let mut expected = complete["generations"][index].clone();
+            expected.as_object_mut().unwrap().remove(absent);
+            expected.as_object_mut().unwrap().remove("digest");
+            let mut actual = entry.clone();
+            actual.as_object_mut().unwrap().remove("digest");
+            assert_eq!(actual, expected, "every other member stays independent");
+        }
+    }
+}
+
+#[test]
+fn sampling_agrees_on_declared_members_and_not_the_generation_seed() {
+    let full = prefix_record();
+    assert!(signals_from_pipe(&full, &[]).status.success());
+    for text in [
+        full.replacen("\"seed\":7", "\"seed\":8", 1),
+        full.replacen("\"temperature\":0.50", "\"temperature\":0.75", 1),
+    ] {
+        let out = signals_from_pipe(&text, &[]);
+        assert!(!out.status.success());
+        assert!(String::from_utf8_lossy(&out.stderr).contains("disagrees on declared sampling"));
+    }
+}
+
+#[test]
+fn a_summary_without_a_run_names_the_older_emitter() {
+    use weaver_analysis::signals::GenerationSummary;
+    let summary = summary_value(&prefix_record(), &[]);
+    for entry in summary["generations"].as_array().unwrap() {
+        let valid = serde_json::to_string(entry).unwrap();
+        assert_eq!(GenerationSummary::read(&valid).unwrap().run, "r");
+        let mut older = entry.clone();
+        older.as_object_mut().unwrap().remove("run");
+        let refused = GenerationSummary::read(&older.to_string()).unwrap_err();
+        assert!(refused.contains("emitter older than 2026-09-09"));
+        assert!(refused.contains("run identity absent"));
+    }
+}
+
+#[test]
+fn a_measured_generation_with_no_draws_still_has_a_summary() {
+    let text = prefix_record()
+        .replace("\"output_tokens\":[8,9]", "\"output_tokens\":[]")
+        .replace("\"resident\":107", "\"resident\":5");
+    let summary = summary_value(&text, &[]);
+    assert_eq!(summary["generations"][0]["output_count"], 0);
+    assert_eq!(summary["generations"][0]["prefix_length"], 0);
+    let only_empty = text
+        .lines()
+        .filter(|l| !l.contains("t2"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    let summary = summary_value(&only_empty, &[]);
+    assert_eq!(summary["positions"], 0);
+    assert_eq!(summary["generations"].as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn repeated_turn_keys_do_not_make_a_later_generation_the_first() {
+    let summary = summary_value(&prefix_record().replace("t2", "t1"), &[]);
+    for entry in summary["generations"].as_array().unwrap() {
+        assert_eq!(entry["prefix_length"], 100);
+    }
+}
+
+#[test]
+fn malformed_envelopes_cannot_close_a_whole_run() {
+    let incomplete = prefix_record()
+        .lines()
+        .filter(|l| !l.contains("unload"))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    let text = incomplete + "{\"session\":\"source\",\"run\":\"r\",\"kind\":\"unload\"}\n";
+    let summary = summary_value(&text, &[]);
+    for entry in summary["generations"].as_array().unwrap() {
+        assert!(entry.get("digest").is_none());
+        assert!(entry.get("prefix_length").is_none());
+    }
 }

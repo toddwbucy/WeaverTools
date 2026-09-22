@@ -29,9 +29,14 @@ pub enum Step {
 }
 
 /// A reader over a drained record. One method, called per event in
-/// landing order, so a reader that holds nothing holds nothing.
+/// landing order. The raw-line hook lets readers account for exact bytes
+/// without retaining them; its default keeps the ordinary event parse.
 pub trait Reader {
     fn event(&mut self, event: &Event) -> Step;
+
+    fn line(&mut self, line: &str) -> Step {
+        Event::parse(line).map_or(Step::Continue, |event| self.event(&event))
+    }
 }
 
 /// Why a drain ended.
@@ -49,22 +54,21 @@ pub enum Drained {
 /// rather than fatal**, per section 2's reader rules: what a reader does
 /// not know it does not read, and a line that is not an event is exactly
 /// that.
-pub fn drain<R: BufRead>(source: R, reader: &mut dyn Reader) -> Drained {
-    for line in source.lines() {
-        let line = match line {
-            Ok(line) => line,
+pub fn drain<R: BufRead>(mut source: R, reader: &mut dyn Reader) -> Drained {
+    let mut line = String::new();
+    loop {
+        line.clear();
+        match source.read_line(&mut line) {
+            Ok(0) => return Drained::Exhausted,
+            Ok(_) => {}
             Err(error) => return Drained::Refused(format!("the stream failed: {error}")),
-        };
-        let Some(event) = Event::parse(&line) else {
-            continue;
-        };
-        match reader.event(&event) {
+        }
+        match reader.line(&line) {
             Step::Continue => {}
             Step::Done => return Drained::Stopped,
             Step::Refuse(why) => return Drained::Refused(why),
         }
     }
-    Drained::Exhausted
 }
 
 /// Open a record for draining: a path, or `-` for the standard input. A
