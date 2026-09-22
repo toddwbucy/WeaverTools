@@ -8,7 +8,7 @@ human's ruling of 2026-07-31.
 **Document ID:** `weaver-admin-harness-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
-**Landing PR:** #448
+**Landing PR:** #647
 
 ---
 
@@ -219,7 +219,11 @@ given only after the close event is placed, which is the announce-after-record
 discipline. Stop touches no run bracket. It is the channel
 the operator interrupt of `weaver-harness-PRD` section 2 arrives on, and it exists on
 this seam because the operator holds no other crossing. How the abort lands at the
-decoder is the harness's interior and crosses nowhere.
+decoder is the harness's interior and crosses nowhere on this seam, and since
+2026-09-22 the same holds of a tool running when the stop arrives: the harness
+cancels the execution through `weaver-harness-gate-contract` section 2 and
+answers here after the turn's close is placed, the promise above carrying no
+invocation exception.
 
 **Observe the run.** Opened by admin, added 2026-09-04 per issue #435 as the observation
 exchange this contract's parties named as owed on 2026-08-06. Admin asks what stands and

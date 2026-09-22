@@ -10,7 +10,7 @@ the lower. The exchanges that carry work arrive with the token workflow.
 **Document ID:** `weaver-harness-gate-contract`
 **Parent:** `weaver-agents-PRD`, invariant 5.3
 **Editorial:** Per the Working Rules.
-**Landing PR:** #613
+**Landing PR:** #647
 
 ---
 
@@ -193,6 +193,31 @@ two-clock disagreement returns by the back door. The tool cannot outlive the
 wait, so no orphaned process survives the exchange and no stale return
 arrives at a decision point that is already gone.
 
+**Cancel the execution, on the operator's ruling of 2026-09-22.** Sent by
+the harness inside an open execution exchange, at the continue position the
+channel has carried unused until this act, and carrying nothing beyond its
+kind: the operator's stop reached the harness while the tool ran, and the
+harness wants the exchange closed now rather than at the clock. The gate on
+receipt kills the invocation's whole process group exactly as the clock
+would, descendants included, and the exchange completes with its one answer
+as every execution does. The cancel is the caller's clock brought forward on
+the caller's word, so it adds no second clock: the number that crossed at
+the open still bounds the exchange whether or not the cancel is heard, and a
+gate that never reads the cancel still answers by the clock. **A cancel that
+crosses the answer in flight is dropped by the gate**, neither refused nor
+queued, because the exchange it names is already closed from the gate's side
+and the harness learns what became of the invocation from the answer it is
+about to read. The harness accepts any of the four contents after a cancel
+for the same reason: the supervisor answers with whatever it observed first,
+the exit or the kill, and a tool that finished as the cancel arrived answers
+in its own words. The stop that causes a cancel is
+`weaver-admin-harness-contract` section 3's, and what the harness does with
+the turn it has stopped is `weaver-harness-Spec` section 6.2's. The ruling
+took this route over two others, closing the turn and abandoning the
+exchange, which makes an orphaned process the common case, and narrowing the
+stop promise to the next point the harness listens, which contradicts the
+charters' unconditional wording, per the W1c characterization of #646.
+
 **Every opened execution completes with an answer, and the answer carries
 one of four contents**, told apart by tag alone, the rule beneath the four
 being who speaks in the return:
@@ -208,13 +233,16 @@ being who speaks in the return:
 - **Errored.** The invocation machinery failed - the fork, a pipe, the
   supervisor - and the account's speaker is the infrastructure, never the
   tool.
-- **Killed.** The caller's clock expired and the gate killed the invocation's
-  whole process group, descendants included, because a kill that reaped only
-  the leader would leave the pipes held open and the promise above false.
-  The case carries no account from the tool by construction - the absence of
-  the tool's words is the fact - and output drained before the kill rides
-  the case as an attachment, never folded into a result, so a partial cannot
-  masquerade as an answer.
+- **Killed.** The caller's clock expired, or the caller cancelled, and the
+  gate killed the invocation's whole process group, descendants included,
+  because a kill that reaped only the leader would leave the pipes held open
+  and the promise above false. The case carries no account from the tool by
+  construction - the absence of the tool's words is the fact - and output
+  drained before the kill rides the case as an attachment, never folded into
+  a result, so a partial cannot masquerade as an answer. The case names
+  which of the two ended it, the clock or the cancel, because the record
+  holding the answer cannot otherwise tell a tool that ran out of time from
+  one the operator stopped, the two being alike in every other field.
 
 All four are content rather than channel faults, per the layer split every
 seam of this program runs, because each is a fact the model must learn: a
@@ -262,6 +290,10 @@ that exchange.
 - More than one turn exchange may be open at once, the harness serving them
   one at a time in arrival order, per section 2.
 - Messages within one exchange are ordered.
+- A cancel is valid only inside an open execution exchange, after its open and
+  before its answer, and at most one crosses per exchange. One that crosses the
+  answer is dropped rather than refused, per section 2, the two directions
+  crossing being the channel's ordinary case and not an ordering fault.
 - A directive that arrives out of this order is refused and is not queued.
 - An answer to raise arrives only after the bind has returned, and an answer to
   lower only after the close has returned, so each answer is a fact about the
@@ -279,17 +311,23 @@ this list.
 **The harness supplies** the gate instruction it was handed in the enter directive,
 the directive to lower, and, per call, the tool execution's name, arguments
 as the family parse recovered them, and the caller's clock, uninterpreted,
-opened serially in emission order.
+opened serially in emission order, and at most one cancel per execution while
+its exchange stands open from the harness's side.
 
 **The gate guarantees** an answer to every execution opened inside the raised
 window, carrying one of the four contents of section 2, so the harness's
 grant construction site fires exactly once per opened call and a call never
 dangles. It guarantees the kill clock is the caller's number and the kill
-reaches the invocation's whole process group.
+reaches the invocation's whole process group. It guarantees that a cancel it
+reads brings that same kill forward, that the exchange still completes with
+exactly one answer, and that a cancel arriving past the answer changes
+nothing.
 
 **The harness guarantees** that the instruction it sends is the instruction admin
 sent it, unaltered and uninterpreted. It guarantees that it opens no exchange this
-document does not enumerate. It guarantees that it creates this seam's channel and
+document does not enumerate, and that a turn it has stopped opens no further
+execution, the calls the emission still held going unopened rather than
+cancelled one by one. It guarantees that it creates this seam's channel and
 passes that end to the child it creates and no other, **every other handle it holds
 being withheld from that child at the moment it is created**, per section 1. It
 guarantees that it raises the
@@ -421,6 +459,12 @@ resolves it.
 `weaver-types-PRD` section 2.3 on this clause's demand: the execution
 exchange carries it, and it is the same definition the family parse mints
 from an emission, so the name that crosses is the name the model spoke.
+
+The cancel takes no vocabulary node here, and neither do the ask and the
+answer it sits between. `weaver-types-Spec` section 4.1 represents all three
+and records that the ask's and the answer's nodes are owed to the charter by
+a contract act, and this act extends the representation without settling
+that owing.
 
 **Drawn from `weaver-traits`:** nothing, as of the tool boundary ruling of
 2026-08-18. The act of 2026-08-17 drew `tool-trait` here on the reading that
