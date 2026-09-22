@@ -518,7 +518,8 @@ carry, one at a time. Four removals widen an answer to the other session's rows,
 a shape holding two runs or a count of two. The fifth, on the turn selection,
 fails the other way: the bound is spent on the other session's newest turn while
 the outer predicate still excludes that turn's rows, and the requested session's
-bounded recall comes back empty. The suite catches both shapes. **The index naming is watched at both.** The service engine
+bounded recall comes back empty. The suite catches both shapes. **The index
+naming is watched at both.** The service engine
 holds a suite over the derivation section 3's election asks it for, a name made
 from the key path, carried into the statement the build would issue, and a
 refusal where the store's identifier limit cannot hold one, and it cites the
