@@ -3,7 +3,6 @@
   "dangling_citations": [],
   "documents_without_an_enforcement_table": [
     "docs/crates/weaver-admin/weaver-admin-Spec.md",
-    "docs/crates/weaver-analysis/weaver-analysis-Spec.md",
     "docs/crates/weaver-gate/weaver-gate-Spec.md",
     "docs/crates/weaver-harness/weaver-diagnostic/weaver-diagnostic-Spec.md",
     "docs/crates/weaver-harness/weaver-harness-Spec.md",
@@ -59,6 +58,11 @@
     "crates/weaver-web/tests/startup.rs"
   ],
   "uncited_perturbations": [
+    "analysis-derive-uses-explicit-destination",
+    "analysis-diagnostic-requires-distinct-destination",
+    "analysis-preload-reports-effective-selection",
+    "analysis-preload-validates-before-opener",
+    "analysis-reconstruction-follows-recorded-election",
     "analysis-summary-reports-the-prefix-length",
     "analysis-summary-reports-the-record-digest",
     "analysis-summary-reports-the-record-session",

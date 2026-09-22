@@ -5,7 +5,7 @@
 **Date filed:** 2026-08-24
 **Document ID:** `weaver-analysis-state-contract`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #613
+**Landing PR:** #650
 
 ---
 
@@ -74,7 +74,8 @@ distilled event, envelope whole and elected pairs beside it.
 section 2.3, and its envelope fields, spelled as that crate's canonical form
 spells them. The driver reads the record itself, outside the agent, and its
 distillates are projections of canonical events exactly as the tee's are:
-every name that crosses this seam is a name the record already carries.
+the source facts crossing this seam are facts the record carries. An explicit
+destination rewrite changes the session name alone, as section 2 governs.
 
 **From `weaver-types`.** Nothing crosses. The binding kind conditions this
 door's existence and never rides it, the declaration having done its work at
@@ -82,7 +83,8 @@ the load, per `weaver-agents-PRD` section 6.
 
 **This seam's own.** Nothing. A seam whose whole vocabulary is drawn is the
 point rather than an omission: the preload's claim is that what it lands is
-indistinguishable in the holdings from what a live tee would have landed,
+indistinguishable in the holdings from what a live tee under the same election
+and destination session would have landed,
 and a term of its own would be a place for that claim to quietly fail.
 
 ```graph
@@ -111,16 +113,38 @@ section 3, and none of the three is complete without the others.
 
 ## 2. The traffic
 
-**Preload, flowing, one direction, and the election opens it.** The first
-traffic on every standing of the channel is the election itself, whole, with
-the session it declares being the replayed session's own name: the holdings
-the loop later asks against must answer as that session, and the serve
-restriction on the other door binds to the opener's session, so a preload
-declaring anything else would land holdings no ask can reach. After the
-opener, the driver sends a `distillate` per event it elects, in the record's
-sequence order, and is owed nothing back: the fact has one home and a
-confirmation whose one reader would discard it is the retired receipt's
-error, the same on this door as on the first.
+**Preload, flowing, one direction, and the election opens it.** The first traffic
+declares the effective election and destination session whole. Ordinary reconstruction
+uses the rule recorded for the source holdings. A diagnostic projection uses the
+driver's own rule only by explicit election of that behavior, and declares a nonempty
+destination different from the source session. A whole ordinary reconstruction may
+retain the source name or name a branch
+while retaining the recorded rule. A cut requires a nonempty destination
+different from the source. The receiving load, opener, and
+projected envelopes name the same destination, because every answer on the other door is
+bounded to the session that load declared.
+
+**A selected record has one source session, and one standing carries one election.** The
+driver refuses ambiguous source identity before opening the preload. Ordinary
+reconstruction refuses absent or malformed governing election evidence and a selected
+history requiring different rules within that one standing. It never invents a union or
+chooses one run's rule for another. Equivalent effective rules are one election. The
+driver preserves the source
+rule's priority when multiple entries name the same kind, and resolves that
+priority before comparing selections. Reordering entries is not evidence of
+equivalence when it changes which entry governs a kind. An explicit diagnostic
+projection may apply its own rule across source
+runs, without manufacturing missing source evidence or certifying a claim whose evidence
+is absent.
+
+**Validation precedes retirement.** A cut under the source session name refuses
+at the driver before any opener, even if the receiving load has already validated
+its own declaration. This preserves the resume/branch boundary in
+`weaver-state-PRD` section 4. Selection, destination, cut, and required election
+evidence are checked before an opener crosses. A refusal leaves existing destination
+holdings untouched. After the opener the driver sends one distillate per elected event
+in the record's order and is owed nothing back. The fact has one home, and a
+confirmation discarded by its only reader would be the retired receipt's error.
 
 **The seal ends the preload, and the close alone does not.** After the last
 distillate the driver sends the seal, one frame carrying nothing, and then
@@ -177,8 +201,10 @@ direction still has exactly the two ends it had.
   unattributable distillate is a defect in the sender, on this door as on
   the first.
 - **The election faithful to what follows.** What the opener declares is what
-  the stream delivers: kinds outside the election do not cross, and the
-  declared session is the replayed session's name.
+  the stream delivers under that rule and the standing turnless-system exception
+  drawn from trace Spec section 11. Other unelected kinds do not cross, and the
+  declared session is the explicit destination or the source name retained by
+  ordinary reconstruction. The receiving load names that same session.
 - **Its own credential.** The driver dials as an operator principal and never
   as the agent, and a driver that cannot present that credential has no
   business this contract recognizes.
