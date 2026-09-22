@@ -70,6 +70,7 @@ const SELECTION: &[Selection] = &[
     },
 ];
 const SESSION: &str = "s-w5b";
+const FOREIGN_SESSION: &str = "s-w5b-foreign";
 const CUT: &str = "r-one:2";
 const EXCLUDED: &str = "tool.call.started";
 const WAIT: Duration = Duration::from_secs(5);
@@ -269,6 +270,35 @@ struct Record {
     cut: usize,
 }
 impl Record {
+    // Both collisions and a later distinct run/turn matter: the outer row
+    // filters and the identity/last-turn selectors must each stay in session.
+    fn foreign_lines(&self) -> Vec<String> {
+        [false, true]
+            .into_iter()
+            .flat_map(|distinct| {
+                self.lines.iter().map(move |line| {
+                    let mut row = object(line);
+                    row.insert(
+                        "session".into(),
+                        serde_json::value::to_raw_value(FOREIGN_SESSION).unwrap(),
+                    );
+                    if distinct {
+                        for name in ["run", "turn"] {
+                            if let Some(value) = row.get_mut(name) {
+                                *value = serde_json::value::to_raw_value(&format!(
+                                    "{}-foreign",
+                                    text(value)
+                                ))
+                                .unwrap();
+                            }
+                        }
+                    }
+                    serde_json::to_string(&row).unwrap() + "\n"
+                })
+            })
+            .collect()
+    }
+
     fn new() -> Self {
         let mut lines = Vec::new();
         let mut add = |run: &str, turn: Option<&str>, kind: &str, payload: &str| {
@@ -669,8 +699,10 @@ fn three_way_at_matched_cuts() {
         let mut live = Member::new("comparison::three_way_at_matched_cuts", election());
         live.bootstrap_live();
         live.feed(&record.lines[..length]);
+        live.feed(&record.foreign_lines());
         let mut rebuilt = Member::new("comparison::three_way_at_matched_cuts", election());
         let preloaded = rebuilt.reconstruct(&record, cut);
+        rebuilt.feed(&record.foreign_lines());
         compare(cut.unwrap_or("whole"), &mut live, &mut rebuilt, &expected);
         assert_eq!(
             preloaded,
@@ -692,10 +724,12 @@ fn dead_driver_retry_replaces_the_prefix() {
     );
     live.bootstrap_live();
     live.feed(&record.lines);
+    live.feed(&record.foreign_lines());
     let mut rebuilt = Member::new(
         "comparison::dead_driver_retry_replaces_the_prefix",
         election(),
     );
+    rebuilt.feed(&record.foreign_lines());
     let mut driver = UnixStream::connect(rebuilt.door()).unwrap();
     driver
         .write_all(weaver_trace::opener(SESSION, &election()).as_bytes())
