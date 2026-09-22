@@ -5,7 +5,8 @@
 //! dependency set is empty, the manifest form of the charter's pure bar, and
 //! the crate declares exactly one library target and no other kind.
 
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 /// **The dependency set is empty.** Read from the lockfile's view of this
 /// package rather than the manifest's text, so a dependency arriving by any
@@ -48,25 +49,64 @@ fn the_dependency_set_is_empty() {
     );
 }
 
-/// **Exactly one library target and no target of any other kind.** The
-/// manifest text and the source tree are both read: a `[[bin]]` section and
-/// a `src/main.rs` are two routes to a process, and a member holds none.
+/// **One library and this instrument are the complete target set.** Cargo's
+/// metadata sees every implicit and explicit target, including build scripts.
+/// Python's standard JSON parser keeps this dependency-free crate's Cargo
+/// edges empty; Python3 is already required by the repository's census gate.
+/// Perturbations: add build.rs or src/bin/x.rs; either adds a forbidden target.
 #[test]
 fn the_one_target_is_a_library() {
-    let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"))
-        .expect("the manifest reads");
-    for forbidden in ["[[bin]]", "[[bench]]", "[[example]]"] {
-        assert!(
-            !manifest.contains(forbidden),
-            "the manifest declares a {forbidden} target"
-        );
-    }
+    let out = Command::new(env!("CARGO"))
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .args([
+            "metadata",
+            "--no-deps",
+            "--format-version",
+            "1",
+            "--locked",
+            "--offline",
+        ])
+        .output()
+        .expect("cargo metadata runs");
     assert!(
-        std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/lib.rs")).exists(),
-        "the library target exists"
+        out.status.success(),
+        "cargo metadata failed: {}",
+        String::from_utf8_lossy(&out.stderr)
     );
+    let mut check = Command::new("python3")
+        .args([
+            "-c",
+            r#"
+import json
+import sys
+
+packages = [p for p in json.load(sys.stdin)["packages"]
+            if p["name"] == "weaver-internal"]
+if len(packages) != 1:
+    sys.exit("metadata must name exactly one weaver-internal package")
+targets = sorted((t["name"], t["kind"], t["crate_types"])
+                 for t in packages[0]["targets"])
+expected = [("manifest", ["test"], ["bin"]),
+            ("weaver_internal", ["lib"], ["lib"])]
+if targets != expected:
+    sys.exit(f"expected library plus manifest test only; got {targets!r}")
+"#,
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("python3 (the census gate prerequisite) runs");
+    check
+        .stdin
+        .take()
+        .expect("parser stdin")
+        .write_all(&out.stdout)
+        .expect("metadata reaches the JSON parser");
+    let checked = check.wait_with_output().expect("target check completes");
     assert!(
-        !std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/main.rs")).exists(),
-        "no implicit binary target exists"
+        checked.status.success(),
+        "cargo's target set violates the one-library claim: {}",
+        String::from_utf8_lossy(&checked.stderr)
     );
 }
