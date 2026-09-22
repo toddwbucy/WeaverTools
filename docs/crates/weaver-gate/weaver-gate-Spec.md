@@ -971,8 +971,8 @@ target, and equally with the target kept and its doctests disabled, cargo
 collects no doctest and the two pinned bind shapes go unenforced with this
 section still claiming them.
 
-**Which invariant each claim serves, and why nineteen serve none.** Seventeen
-`grounds` edges run from sixteen of the thirty-five, nine to
+**Which invariant each claim serves, and why twenty-one serve none.** Seventeen
+`grounds` edges run from sixteen of the thirty-seven, nine to
 `axiom-floor-is-vocabulary-behavior-is-socket`, five to
 `axiom-contract-is-a-complete-interface`, and three to
 `axiom-harness-integrates-by-the-loop`, with one claim carrying two edges because two
@@ -1084,12 +1084,12 @@ from the prose that earns it. One record is the exception and sits at the end
 of this section, the doctest pinning of the two bind-site shapes, whose
 argument is nowhere else and whose general prohibition is section 3's.
 
-**Thirty-five records in all, and the split is where they are declared,
+**Thirty-seven records in all, and the split is where they are declared,
 which a reader can count.** Four in section 1, eight in section 2, eleven in
-section 3, five in section 4, one in section 5, five in section 8, and this
-section's one. **Every one of the thirty-five is sorted above** under the
+section 3, five in section 4, one in section 5, seven in section 8, and this
+section's one. **Every one of the thirty-seven is sorted above** under the
 instrument that holds it, and the instruments divide them four to the
-manifest, two to the compiler, one to compile-fail, nineteen to a
+manifest, two to the compiler, one to compile-fail, twenty-one to a
 perturbation-verified test, and nine to review. The three walks carry five of
 those across two instruments, four perturbations and the parent-death
 signal's backing, which is why the walks are not a sixth column. **The
@@ -1164,9 +1164,10 @@ that format forbids.
 - The socket mode is the boundary's election: `0o770` is elected in the
   creating call rather than inherited, confirmed by watching the umask guard
   removed and the socket bind at the runner's own umask, per section 3.
-- The shell execution's four watches are section 8's and are argued there:
-  the one held tool, the one clock, the group kill, and the drain riding the
-  run, each with the removal that makes it fail named at the clause. They
+- The shell execution's six watches are section 8's and are argued there:
+  the one held tool, the one clock, the group kill, the drain riding the
+  run, the cancel bringing the clock forward, and the late cancel dropped,
+  each with the removal that makes it fail named at the clause. They
   are named here because this sorting reaches every record and not only the
   records that predate the tool boundary ruling of 2026-08-18, and the
   argument stays where the instrument is rather than being restated, per
@@ -1232,13 +1233,16 @@ Each names what settles it, and none is this Spec's to settle alone.
   output they carry, the connection the hook holds open while the interior
   generates, and the backpressure that rides them, all arriving with the
   token workflow's extensions to the world contract's section 3 at the
-  memory round's architecture pass. **Cancellation defers with them and the
-  charter names it in one place only,** `weaver-gate-PRD` section 0's
-  what-this-does-not-reach list, which says every entry there is named in
-  charter section 8 or section 10 and cancellation is in neither. It is
-  carried here so a gap in the charter does not become an omission in this
-  document, and closing it is the charter's. Recorded as narrowed rather
-  than deleted, this list naming what settled each entry.
+  memory round's architecture pass. **Cancellation of an execution no
+  longer defers**: it landed at section 8 and at the contract's section 2
+  on the operator's ruling of 2026-09-22, after the W1c characterization of
+  #646 measured a stop waiting the whole invocation out, and the charter
+  carries it at section 13.5. Until that act the charter named it in its
+  section 0 list alone, in neither section 8 nor section 10, a gap this
+  entry carried so it would not read as an omission here. Cancellation of a
+  generation was never this crate's, landing at the decode seam per
+  `weaver-harness-Spec` section 6.1. Recorded as narrowed rather than
+  deleted, this list naming what settled each entry.
 - **The tool-uid ruling.** Charter section 7's pending candidate, settled
   by the architecture seat's ratification or the tool workflow's threat
   measurement, and nothing here builds against the separate-uid arm.
@@ -1278,6 +1282,32 @@ answer accounted in content. A refusal is this crate's voice and nothing
 ran. An error is the machinery's. A kill carries no account from the tool by
 construction, with any drained partial riding as an attachment and never as
 a result.
+
+**The supervisor hears the seam while it waits, and a cancel is the caller's
+clock brought forward, per the contract's section 2 as amended 2026-09-22.**
+The supervision wait sleeps against the channel end rather than against a
+timer alone, by `poll` with the clock's remainder as its bound, so a cancel
+for the open exchange wakes it as the exit does. On a cancel the group is
+signaled at once by the same path every ending takes, the drain finishes
+bounded as it does at the clock, and the answer is a kill naming the cancel
+as its cause, the partial riding as it rides at the clock. Nothing the
+contract permits arrives on the channel during an execution but the cancel
+and closure, executions being serial and the harness blocked in its wait, so
+an envelope there is the cancel or it is the closure the charter already
+requires this crate to exit on, and closure breaks the same loop, which
+kills the group before the exit as every ending does. The cancel adds no
+clock: the caller's number still bounds the wait, and a supervisor that
+never reads the cancel still answers by it.
+
+**A cancel that arrives past the answer is dropped, never refused.** The
+exchange it names closed from this side when the answer was sent, and the
+two directions crossing is the channel's ordinary case, so the envelope is
+read and discarded and the next open is served as if nothing arrived. A
+refusal in its place would put an envelope on the channel the harness has no
+exchange to correlate, which is the stray answer the contract's ordering rule
+exists to prevent. The out-of-order refusal stays what it is for every other
+misplaced envelope, and this is the one continue-position envelope this
+crate reads.
 
 ```graph
 node: gate-shell-the-one-held-tool
@@ -1319,12 +1349,34 @@ tag: review
 edge: asserts
 from: weaver-gate
 to: gate-execution-four-contents
+
+node: gate-execution-cancel-brings-the-clock-forward
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-execution-cancel-brings-the-clock-forward
+
+node: gate-cancel-past-the-answer-is-dropped
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-gate
+to: gate-cancel-past-the-answer-is-dropped
 ```
 
 The perturbation obligations are apex section 11's: the unheld-name watch
 fails when the refusal arm is removed, the clock watch fails when the kill
 branch is removed, the group-kill watch fails when the group signal is
 removed and a straggler holds the pipes, and the drain watch fails when the
-readers wait for the exit. The four-contents claim is review's because the
-enumeration is a shape fact the compiler holds once the answer type carries
-the cases.
+readers wait for the exit. The cancel watch cancels a sleep far inside a
+long clock and fails when the channel end leaves the supervision wait, the
+answer then arriving at the clock. The late-cancel watch sends a cancel
+after an answer and opens a second execution, and fails when the cancel
+takes the out-of-order arm, a refusal then standing where the second answer
+is read. Both were authored ahead of their code on 2026-09-22 and stand
+uncited until the act that buys them cites them, per Working Process section
+6. The four-contents claim is review's because the enumeration is a shape
+fact the compiler holds once the answer type carries the cases.

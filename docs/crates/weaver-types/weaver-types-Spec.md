@@ -859,6 +859,7 @@ pub enum Payload {
     Fault(FaultReport),
     Tool(ToolExecution),
     ToolAnswer(ToolOutcome),
+    ToolCancel,
 }
 
 pub enum RefusingOrgan {
@@ -963,7 +964,10 @@ the raise and the lower cross, so the ask and the answer enter this enum rather
 than taking a carrier of their own. Two cases rather than one carrying
 a discriminant, on this Spec's standing rule that a name earns its own variant
 where a reader would otherwise infer which direction ran, which is the shape
-the trio's directive and answer already take.
+the trio's directive and answer already take. `ToolCancel` joined them on
+2026-09-22, the cancel that contract's section 2 sends inside an open
+execution at the continue position, a unit case because it carries nothing
+beyond its kind, and the first traffic in this program to take that position.
 
 ```rust
 pub struct ToolExecution {
@@ -976,7 +980,12 @@ pub enum ToolOutcome {
     Result { content: String },
     Refused { reason: String },
     Errored { detail: String },
-    Killed { partial: Option<String> },
+    Killed { partial: Option<String>, by: KillCause },
+}
+
+pub enum KillCause {
+    Clock,
+    Cancel,
 }
 ```
 
@@ -994,12 +1003,16 @@ speaks in the return: a result is the tool's own words, a refusal is the
 gate's voice with nothing run, an error is the machinery's, and a kill carries
 no tool voice by construction, the output drained before the kill riding as an
 attachment rather than as a result. Every one of them is content rather than a
-channel fault, because each is a fact the model must learn.
+channel fault, because each is a fact the model must learn. Since 2026-09-22 a
+kill names what ended it, the clock or the caller's cancel, in a field rather
+than a fifth case, because the rule beneath the four is who speaks and nobody
+speaks in either kill: one content with two causes, so the record can tell a
+tool that ran out of time from one the operator stopped.
 
 **The two definitions are owed to the charter and no act has carried them.**
 `weaver-types-PRD` section 2.3 admits a wire definition when a contract draws
 it, and `weaver-harness-gate-contract` section 7 draws `tool-name` and nothing
-else of this exchange, so the ask and the answer are represented here while
+else of this exchange, so the ask, the cancel, and the answer are represented here while
 the vocabulary nodes they would map to do not exist. Declaring them in the
 charter on this document's demand would invert the direction the corpus runs
 in, so the owing is a contract act reaching both parties to that seam rather

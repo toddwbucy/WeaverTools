@@ -31,10 +31,12 @@ into on this seam, the hook those exchanges raise and lower, the boundary predic
 the client socket, and the process facts a charter has to state before another crate
 can build against it. It does not reach the traffic: the turn exchanges this crate
 will open toward the harness, the framing a client speaks at the socket, streaming,
-backpressure, cancellation, drain on stop, or the fault cases a running hook raises.
+backpressure, drain on stop, or the fault cases a running hook raises.
 Each of those is named as deferred in section 8 or as a cell in section 10 rather than
 left out, because an omission and a deferral read alike to a later reader and only one
-of them is a decision.
+of them is a decision. Cancellation stood in this list from the drafting until
+2026-09-22 while neither section named it, a gap `weaver-gate-Spec` section 7
+carried, and it is chartered at section 13.5 as of that date.
 
 The test that drew the line is mechanical. A clause not needed to make enter and leave
 true is out of this pass.
@@ -419,6 +421,11 @@ line in and one line out the resting shape and streaming an extension to that
 page rather than a replacement, so it arrives when a client needs it and this
 crate gains nothing in anticipation.
 
+**Cancellation of an execution was deferred here by omission until 2026-09-22**,
+section 0 listing it and neither this section nor section 10 carrying it, and it
+is deferred no longer: section 13.5 charters it on the operator's ruling of that
+date, and `weaver-harness-gate-contract` section 2 carries the exchange.
+
 **Staged:** the separate-uid arm of the section 7 cell.
 
 None of these acquires a trait, a variant, a feature flag, or a config field in this
@@ -621,3 +628,31 @@ review seat's finding, and it cannot be derived from the other two because an or
 death is reported by the party that survives rather than the one that died. The
 payload's shape lands with the trace act against the closed set rather than against a
 guess.
+
+### 13.5 Cancelling an execution
+
+Arrived 2026-09-22 on the operator's ruling that a stop reaches a running
+tool, taken after the W1c characterization of #646 measured the stop waiting
+the whole invocation out. Derived from `weaver-harness-gate-contract` section
+2 as that act amends it.
+
+**A cancel is the caller's clock brought forward, and this crate kills on it
+as it kills at the clock.** The harness sends the cancel inside the open
+execution exchange when the operator's stop reaches it mid-invocation, and
+this crate signals the invocation's whole process group at once, descendants
+included, and answers the exchange with a kill that names the cancel as its
+cause. The contract's one-clock rule stands: the caller's number still bounds
+the exchange, a cancel never lengthens a wait, and a cancel this crate never
+reads leaves the clock to do the same work later.
+
+**Every execution still completes with one answer.** A cancel that arrives
+after the answer left is dropped, because the exchange is closed from this
+side and the harness reads what became of the tool from the answer already
+in flight. A tool that finished as the cancel arrived answers in its own
+words. Nothing here opens an exchange, retains anything past the answer, or
+reads content, per section 3.
+
+**What this does not settle.** A descendant that detached itself from the
+group before the kill is the containment question issue #642 carries, and a
+cancel reaches exactly what the clock reaches, no more. How the supervisor
+hears the cancel while a tool runs is the Spec's.

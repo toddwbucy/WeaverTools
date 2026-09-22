@@ -1325,8 +1325,9 @@ the close is authored, on the clean path and on every error path alike, so `Acti
 the run's own fact for exactly the turn's extent and a close that never landed leaves
 the key standing for the unwind to name. **And any position is any position, a running
 turn included.** The serve loop of section 3 takes this channel's directives between
-turns, and the engine's streaming poll takes them between tokens while a turn runs,
-where a stop cancels the generation and answers `TurnAborted` after the record and,
+turns, and the engine's polls take them while a turn runs, between tokens on the
+stream and through an invocation per section 6.2, where a stop cancels the
+generation or the execution and answers `TurnAborted` after the record and,
 since 2026-09-05, an observation answers `Active` with the load's facts lent to the
 seat, touching no bracket. The one bound that stands is the token: a directive arriving
 inside a single token's decode waits for that token, which is the seam's grain and not a
@@ -2288,10 +2289,11 @@ being the closes a client is most likely to need to name.
 **The seat is granted per frame and returns by the entry's return.** At rest
 no seat is outstanding, which is what leaves the leave free to proceed, and a
 stop mid-turn forces what the return otherwise yields: the cancel of 6.1
-closes the generation, the turn closes stopped, and the entry returns the
-seat with the stopped outcome. A leave mid-turn is refused, per the
-coordination contract, so the seat is never reclaimed by force from a live
-turn. **The election flagged for the operator: the seat is granted per frame
+closes the generation or the cancel below closes the invocation, the turn
+closes stopped, and the entry returns the seat with the stopped outcome. A
+leave mid-turn is refused, per the coordination contract, so the seat is
+never reclaimed by force from a live turn. **The election flagged for the
+operator: the seat is granted per frame
 with the wait staying loop 0's, rather than lent for the run with a receive
 port granted to loop 1.** The ground is the boundary rule above and the
 blade of section 6, a run-long seat wanting a port to wait on, which would
@@ -2299,6 +2301,66 @@ hand the loop the agent's outer coordination and the scheduler's position
 with it. The cost is that a loop with work of its own between turns has no
 seat while idle, which no chartered loop wants and a later workflow may
 reopen through the front door.
+
+**The invocation wait spans the same descriptors as the stream's, and a stop
+heard there cancels the execution, on the operator's ruling of 2026-09-22.**
+Before that ruling the wait on an open execution exchange read the gate
+channel alone, so a stop dialed while a tool ran was deaf until the gate
+answered, which #646's characterization measured at the whole of a two-second
+gate delay against under half a millisecond mid-stream, with the tool's
+result fed back to the model before the stop was heard. The wait now polls
+the gate channel, the coordination listener, and an accepted coordination
+connection at once, by section 2.4's `poll` and the serial loop of 6.1, one
+mechanism in its third state. A dial is accepted and credential-checked as
+every dial is, and a stop read there sends the contract's cancel on the open
+execution exchange, at the continue position, and then keeps waiting for
+that exchange's close, which the gate guarantees, the cancel having brought
+the clock forward and added none. The completion is authored from whichever
+of the four contents arrives, a kill naming the cancel in the common case
+and the tool's own words where it finished as the cancel crossed, so the
+record holds the invocation's end whatever it was. The turn then closes
+stopped with no generation after it: the granted result is constructed at
+the exchange's completion as section 6 requires and is fed to nothing, the
+calls the emission still held are not opened, and the stop is answered on
+the coordination seam after the close event is placed, per the
+announce-after-record discipline. An observation read at the same wait
+answers `Active` as it does between tokens. **The election flagged for the
+operator: the stop cancels the execution through the gate rather than
+closing the turn around it.** Closing around it leaves the tool running past
+a turn that no longer exists, which the characterization saw as a live
+process for the length of the stop, and narrowing the promise instead would
+have amended `weaver-harness-PRD` section 2 and apex section 6 to carry an
+exception neither states. #642's detached descendant is the gate's group
+kill's to contain and is untouched by this clause.
+
+```graph
+node: harness-stop-polled-during-the-invocation
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-stop-polled-during-the-invocation
+
+node: harness-stopped-invocation-feeds-no-generation
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-harness
+to: harness-stopped-invocation-feeds-no-generation
+```
+
+The first claim's watch is #646's measurement inverted: a stop queued before
+a tool call whose gate answers after a delay closes the turn well inside the
+delay, and the watch fails when the coordination descriptors leave the wait,
+the close then following the gate's answer. The second's watch counts the
+decode seam's asks after the stop and finds no append-and-generate, and
+fails when the stopped check after the completion is removed and the result
+feeds back. Both are authored ahead of their code and stand uncited until
+the act that buys them cites them, per Working Process section 6, and that
+act retires the characterization test of #646, which asserts the deaf
+interval and must fail once the interval is closed.
 
 **The frame's parse is loop 0's, at the seat's threshold, and it refuses
 rather than faults.** A frame's member decodes per the election of
@@ -2541,7 +2603,7 @@ and no HTTP client in the resolved external tree, by the build-time `cargo tree`
 assertion the floor Specs share.
 
 **Which invariant each claim serves, and why most serve none.** Nineteen of the
-sixty-six carry a `grounds` edge and one of the nineteen carries two, so the edges
+sixty-eight carry a `grounds` edge and one of the nineteen carries two, so the edges
 number twenty: ten to `axiom-floor-is-vocabulary-behavior-is-socket`, four to
 `axiom-harness-integrates-by-the-loop`, three to
 `axiom-join-key-travels-with-the-work`, and three to
@@ -2565,11 +2627,11 @@ no reason to bound a receive, to demand that one write arrive as one read, to fl
 descriptor before an exec, to create a pair before a fork, or to keep a loop from
 minting a port, so those ground in it. Remove it and `nix` is still the OS crate,
 descriptors are still owned types, the child's ends still land at 3 and 4, and the
-fork still runs three calls, so those ground in nothing. **Forty-seven claims
+fork still runs three calls, so those ground in nothing. **Forty-nine claims
 grounding in no invariant is the expected result and not a gap**, per Document
 Format section 4: most of what a Spec elects is a format, a name shape, a count, or
 an ordering of its own interior, and representation is what the invariants are not
-about. **Both figures in this paragraph read against the sixty-six**, the
+about. **Both figures in this paragraph read against the sixty-eight**, the
 disclosure below covering the narrative below it and not this one, which is the
 reading two findings of the audit of 2026-09-13 reached opposite answers on. The
 numerator has not moved since it was written and the denominator had, so the
@@ -2619,7 +2681,7 @@ this section sorts by instrument and the arguments are elsewhere, so a block
 here would sit apart from the prose that earns it. One record is the exception
 and sits at the end of this section, the doctest pinning of the three
 path-taking shapes, whose argument is nowhere else and whose general
-prohibition is section 2.3's. Sixty-six records in all, measured from the records
+prohibition is section 2.3's. Sixty-eight records in all, measured from the records
 and re-measured 2026-09-15 at the same figure, where the narrative below
 reads forty-eight as of the inversion of 2026-08-05 and did not move with the acts
 since, which is named here rather than restated. **The disclosure reaches the
@@ -2657,7 +2719,7 @@ instrument for each stands in this crate's suite, so each of the four carries an
 `asserts` edge from here beside the one from the crate whose record it describes.
 The instruments are the in-file suite of `src/replay.rs`, five tests carrying six
 citations across the four, and the file's own header cites all four for the
-module. **The sixty-six above does not move**, no record landing here, and
+module. **The sixty-eight above does not move**, no record landing here, and
 `weaver-diagnostic-Spec` section 7 is the authority on the four claims' wording,
 on their sorting by instrument, and on why the edge crosses at all.
 
