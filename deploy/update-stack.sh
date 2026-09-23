@@ -4,9 +4,10 @@
 # Box-agnostic: every path is read from /etc/weaver/admin rather than
 # written here, so the same script serves either seat.
 #
-#   ./deploy/update-stack.sh            plan only, no privileges, no writes
+#   ./deploy/update-stack.sh            plan only; refreshes refs, tests and builds, no install
 #   ./deploy/update-stack.sh --install  plan, then install what changed
 #
+# Plan mode writes git refs and build artifacts but invokes no sudo.
 # The plan is the point. An install that swaps every binary hides which act
 # actually moved, and the campaign's comparability rests on knowing that, so
 # this diffs deployed against built and installs only what differs.
@@ -114,10 +115,10 @@ BUILT="$BUILT/release"
 # installing fifty-odd files, every `.d` and `.rlib` among them, and `hades`
 # and its libraries from a workspace that has nothing to do with this one.
 # Discovering the subject from a directory is how a deployment installs what
-# it was never asked to. The workspace also builds `weaver-web`,
-# `weaver-web-connector`, `weaver-analysis` and `weaver-spu-classify`, which
-# this box does not carry and this script does not ship. A member joins by
-# being written here.
+# it was never asked to. The build also makes `weaver-analysis` and
+# `weaver-spu-classify`, which this script does not ship. The frontend package
+# and its binaries are excluded from the build below. A member joins the
+# installed set by being written here.
 MEMBERS="pyworker worker weaver-admin weaver-gate weaver-spu weaver-state"
 
 MEMBER_FEATURES=weaver-harness/pyworker,weaver-state/sqlite,weaver-state/postgres
@@ -269,9 +270,12 @@ cargo test --release --locked \
   awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
 
 # ------------------------------------------------------------------- 4. build
+# The frontend is paused. It ships no member in this deployment, so neither
+# plan nor install builds it. Keep the remaining workspace tools available
+# alongside the six installed members (including analysis for replay).
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --locked --workspace --features "$FEATURES"
+  cargo build --release --locked --workspace --exclude weaver-web --features "$FEATURES"
 printf '  ok\n'
 
 # --------------------------------------------------------------------- 5. plan

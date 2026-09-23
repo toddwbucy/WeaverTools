@@ -88,8 +88,17 @@ ROLE="weaver_$NAME"                # postgres spells with underscores
 DATABASE="weaver_$NAME"
 HOME_DIR="/home/$OPERATOR/.weaveragents/$AGENT_USER"
 STATE_DIR="$HOME_DIR/state"
-ADMIN_CONFIG=${WEAVER_ADMIN_CONFIG:-/etc/weaver/config}
-AGENTS_DIR=$(sudo -n cat "$ADMIN_CONFIG/agent-config-directory" 2>/dev/null || echo /etc/weaver/agents)
+ADMIN_CONFIG=${WEAVER_ADMIN_CONFIG:-/etc/weaver/admin}
+# Planning reads only what this uid can inspect. A missing or unreadable
+# configuration is a refusal, never a guessed destination for the declaration.
+if [ "$APPLY" -eq 1 ]; then
+  AGENTS_DIR=$(sudo -n cat "$ADMIN_CONFIG/agent-config-directory") \
+    || die "cannot read agent-config-directory in $ADMIN_CONFIG"
+else
+  AGENTS_DIR=$(cat "$ADMIN_CONFIG/agent-config-directory") \
+    || die "cannot read agent-config-directory in $ADMIN_CONFIG without privileges"
+fi
+[ -n "$AGENTS_DIR" ] || die "empty agent-config-directory in $ADMIN_CONFIG"
 ALLOW_LIST="$ADMIN_CONFIG/allow-list"
 DECLARATION="$AGENTS_DIR/$NAME.yaml"
 
@@ -138,6 +147,20 @@ done
 [ -e "/home/$AGENT_USER" ] && die "the home /home/$AGENT_USER already exists"
 [ -e "$HOME_DIR" ] && die "the directory $HOME_DIR already exists"
 [ -e "$DECLARATION" ] && die "the declaration $DECLARATION already exists"
+[ -r "$ARTIFACT" ] || printf '   WARNING: the artifact is not readable from this shell: %s\n' "$ARTIFACT"
+if [ "$APPLY" -eq 0 ]; then
+  # Read the whole allow-list so an I/O failure cannot look like no match.
+  listed=$(cat "$ALLOW_LIST") || die "cannot read $ALLOW_LIST without privileges"
+  if grep -qxF "$NAME" <<< "$listed"; then
+    die "$NAME is already in $ALLOW_LIST"
+  fi
+  printf '   no collision found in accounts and paths visible to this uid\n'
+  printf '   PENDING --apply: privileged allow-list, service and store catalog checks\n'
+  printf '   PENDING --apply: authentication paths and filesystem access-entry probe\n'
+  say "plan only"
+  printf '   no provisioning performed; rerun with --apply to check and make it\n'
+  exit 0
+fi
 sudo -n grep -qxF "$NAME" "$ALLOW_LIST" 2>/dev/null && die "$NAME is already in $ALLOW_LIST"
 # **The store's catalogs are asked before anything local is made.** Retiring
 # an agent leaves its role and database behind unless they were dropped by
@@ -155,9 +178,7 @@ if sudo -n systemctl is-active --quiet postgresql 2>/dev/null; then
 else
   printf '   the store is down, so its catalogs are unchecked until --apply starts it\n'
 fi
-[ -r "$ARTIFACT" ] || printf '   WARNING: the artifact is not readable from this shell: %s\n' "$ARTIFACT"
-printf '   nothing of this agent exists yet\n'
-# **Traversal is asked about here rather than discovered halfway through.**
+printf '   local collision checks completed\n'
 # **Traversal is asked about here rather than discovered halfway through.** The
 # member needs passage along a chain that runs through the operator's own home,
 # which is 0700, and this pool answers `setfacl` with Operation not supported,
@@ -182,12 +203,6 @@ else
    or somewhere the member can reach by ownership alone."
 fi
 rmdir "$probe"
-
-if [ "$APPLY" -eq 0 ]; then
-  say "plan only"
-  printf '   rerun with --apply to make it\n'
-  exit 0
-fi
 
 say "accounts"
 # **The agent gets a home and the member does not.** The agent's tools run
