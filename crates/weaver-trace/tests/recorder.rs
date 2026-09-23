@@ -5,14 +5,13 @@
 //! conforms: trace-admission-precedes-fan-out
 //! conforms: trace-one-rendering-two-holders
 //! conforms: trace-sequence-gapless
-//! conforms: trace-whole-events-only
 //! conforms: trace-bracket-kind-omits-payload
 //! conforms: trace-envelope-flattens
 //! conforms: trace-turn-close-internally-tagged
 //! conforms: trace-output-carries-the-counts
 //!
-//! The perturbation-verified tests of `weaver-trace-Spec` section 10. Each
-//! names its perturbation, the mutation under which it was watched to fail.
+//! Recorder tests of `weaver-trace-Spec` section 10. Verified removals are
+//! named at the watches that hold them. Not every test names a perturbation.
 
 use std::fs::File;
 use std::io::Read;
@@ -253,6 +252,10 @@ fn sequence_is_gapless_over_admitted_events() {
 /// elections of its load. The property under test is the rendering's and
 /// not that kind's, so it moves to a kind that still holds it and the run
 /// bracket's other half is the nearest one.
+///
+/// Perturbations: remove Event.payload's skip_serializing_if and the payload
+/// absence assertion fails. Separately remove Event.envelope's serde(flatten)
+/// and the no-envelope-member assertion fails. Both removals were verified.
 #[test]
 fn bracket_kind_omits_payload_and_line_is_flat() {
     let (mut r, _path) = recorder();
@@ -285,6 +288,10 @@ fn bracket_kind_omits_payload_and_line_is_flat() {
 }
 
 /// The turn close is internally tagged: one shape for both closes.
+///
+/// Perturbation: remove tag = "close" from TurnClose while keeping rename_all.
+/// The clean close becomes a string and the expected payload assertion fails.
+/// Verified with that attribute removed and restored after the failing run.
 #[test]
 fn turn_close_is_internally_tagged() {
     let (mut r, _path) = recorder();
