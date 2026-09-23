@@ -499,9 +499,12 @@ against the graph, mechanically. **A dev-dependency is outside this edge set**, 
 operator's ruling of 2026-09-22 that closed the `weaver-state` to `weaver-trace` cell
 of #586 and #590: it is test scaffolding, admitted on the condition that the crate's
 production code imports nothing from it, a condition the crate's own manifest
-instrument watches, so the graph declares production edges and the mechanization above
-reads `[dependencies]` and not `[dev-dependencies]`. A dev-dependency that production
-code reaches is the undeclared edge this gate exists to refuse.
+instrument watches. The edge set is stated by dependency kind and not by manifest
+section: every dependency of the normal or build kind is a production edge, wherever
+the manifest declares it, in a target-qualified table, behind a feature, or under a
+rename alike, and only the dev kind is exempt. The mechanization above reads cargo's
+dependency kinds and not the manifest's text. A dev-dependency that production code
+reaches is the undeclared edge this gate exists to refuse.
 
 **H3, seam conformance.** The seam is exercised against the contract's failure cases
 and not only its success path. A contract that names a refusal and a build that cannot
