@@ -174,9 +174,11 @@ fn the_floor_link_is_taken_without_config() {
     );
 }
 
-/// **One binary.** The gate is its own executable, so the manifest declares
-/// exactly one `[[bin]]`. The bin target's own use of the lib target beside it
-/// is this crate's wiring, per `weaver-gate-Spec` section 1.
+/// **One binary and its library, with integration tests.** Cargo's inventory
+/// sees explicit and implicit targets alike, per `weaver-gate-Spec` section 1.
+/// Build scripts, examples, benches and extra binaries are not this shape.
+/// The separate lib watch below still holds its doctest flag.
+/// Perturb each forbidden target route; a comment spelling [[bin]] must pass.
 ///
 /// **This does not hold "no other crate links it".** The no-organ test above
 /// reads `cargo tree -p weaver-gate`, which is the forward relation, what this
@@ -185,11 +187,33 @@ fn the_floor_link_is_taken_without_config() {
 /// Spec section 1, and wants a reverse walk or a workspace-wide manifest scan.
 #[test]
 fn the_manifest_declares_one_binary() {
-    let manifest = manifest();
+    let meta = cargo_json(&["metadata", "--no-deps", "--format-version", "1"]);
+    let package = meta["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "weaver-gate")
+        .expect("gate package");
+    let targets = package["targets"].as_array().expect("target inventory");
+    let mut bins = 0;
+    let mut libs = 0;
+    for target in targets {
+        match (
+            target["name"].as_str(),
+            target["kind"].as_array().unwrap().as_slice(),
+        ) {
+            (Some("weaver-gate"), [kind]) if kind == "bin" => bins += 1,
+            // Cargo spells an explicitly elected rlib as rlib, not lib.
+            // Both are the library the binary links and the doctest watch holds.
+            (Some("weaver_gate"), [kind]) if kind == "lib" || kind == "rlib" => libs += 1,
+            (_, [kind]) if kind == "test" => {}
+            _ => panic!("unexpected gate target: {target}"),
+        }
+    }
     assert_eq!(
-        manifest.matches("[[bin]]").count(),
-        1,
-        "one binary, forked and exec'd by the harness"
+        (bins, libs),
+        (1, 1),
+        "one gate binary and library: {targets:?}"
     );
 }
 
