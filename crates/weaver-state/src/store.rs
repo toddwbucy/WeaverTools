@@ -13,18 +13,16 @@
 //! The custody, per `weaver-state-Spec` section 3: sqlite behind the seam,
 //! never reached as a file, the distillate landing whole or not at all.
 
-/// The election term as the seam's opener carries it: the elected kinds, each
-/// with its payload key paths, empty meaning the envelope alone. The
-/// default election is the envelope of every kind and nothing more, per
-/// `weaver-trace-PRD` section 11, which this shape spells as an empty map
-/// with `all_kinds` standing.
+/// The custodian's parse of the opener's election, whose meaning is the
+/// `election` term in `weaver-harness-state-contract`'s Vocabulary.
+/// The paths drive index DDL here. Selection belongs to the tee, per
+/// `weaver-trace-Spec` section 11, rather than to this representation.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Election {
-    /// Every kind crosses with its envelope. When false, only the kinds
-    /// named in `keys` cross at all.
+    /// Carried from the opener as a seam fact, not consulted by this custodian.
     pub all_kinds: bool,
-    /// Payload key paths per kind, on top of the envelope. An entry with
-    /// no paths is a meaningful election: presence itself is state.
+    /// Parsed kind/path pairs whose paths drive index DDL.
+    /// An empty path list requires no indexes here.
     pub keys: Vec<(String, Vec<String>)>,
 }
 
@@ -37,8 +35,9 @@ impl Default for Election {
     }
 }
 
-/// One distilled event, parsed from the seam's frame: the envelope whole,
-/// the elected pairs beside it.
+/// Values parsed from one frame and landed whole by the store, per the
+/// `distillate` term in `weaver-harness-state-contract`'s Vocabulary.
+/// Pair values remain the frame's raw text; this crate does not select them.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Distillate {
     pub session: String,

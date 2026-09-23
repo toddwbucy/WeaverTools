@@ -1154,6 +1154,52 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// The operator's 2026-09-22 ruling admits trace only as test scaffolding.
+    /// Read Cargo's dependency kinds, including aliases and target-qualified
+    /// declarations, so no normal or build edge can silently reintroduce it.
+    /// Perturbation: move the trace dependency back to production.
+    #[test]
+    fn trace_is_a_dev_dependency_only() {
+        let metadata = std::process::Command::new(env!("CARGO"))
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .args([
+                "metadata",
+                "--no-deps",
+                "--format-version",
+                "1",
+                "--locked",
+                "--offline",
+            ])
+            .output()
+            .expect("cargo metadata runs");
+        assert!(
+            metadata.status.success(),
+            "metadata failed: {}",
+            String::from_utf8_lossy(&metadata.stderr)
+        );
+        let metadata: serde_json::Value = serde_json::from_slice(&metadata.stdout).unwrap();
+        let package = metadata["packages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|package| package["name"] == "weaver-state")
+            .expect("state is in the manifest's workspace");
+        let trace: Vec<_> = package["dependencies"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|dependency| dependency["name"] == "weaver-trace")
+            .collect();
+        assert!(
+            !trace.is_empty(),
+            "the test scaffolding must remain declared"
+        );
+        assert!(
+            trace.iter().all(|dependency| dependency["kind"] == "dev"),
+            "trace must be test-only across every declaration: {trace:?}"
+        );
+    }
+
     /// The contract's election round trip, section 8: the opener as the
     /// tee renders it parses to the same election on this end, so a
     /// restarted member rebuilds the identical index set.

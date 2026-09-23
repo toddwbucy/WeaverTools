@@ -6,7 +6,7 @@
 **Document ID:** `weaver-state-Spec`
 **Parent:** `weaver-state-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #645
+**Landing PR:** #659
 
 ---
 
@@ -37,19 +37,17 @@ from: weaver-state
 to: state-custody-without-policy
 ```
 
-**The manifest declares two internal crates and they stand differently.**
-`weaver-trace` carries the canonical event vocabulary the ingest parses, and
-the shipped ingest parses that vocabulary without naming the crate: the only
-units reaching it are this crate's own tests, where the opener and the
-distillate are built through `weaver_trace::opener` and `weaver_trace::distill`
-rather than by hand. `weaver-types` is declared and **no unit here consumes it
-at all**, this crate's tests included. Charter section 5 carries a cell for
-each and this clause restates them rather than answering either: what the
-`weaver-trace` dependency is, the graph carrying no edge for it, and which
-member of `weaver-types` this crate consumes. **The floor link itself is not
-open.** It is declared at charter section 1 and kept on the operator's ruling
-of 2026-09-14, a link held for work not yet done being an election rather than
-a leftover, and what the cell asks is what it will be drawn for.
+**The manifest declares one internal crate in `[dependencies]`: `weaver-types`.**
+No unit here consumes it, this crate's tests included, and charter section 5
+keeps that consumer cell open. The floor link itself is declared at charter
+section 1 and kept on the operator's ruling of 2026-09-14, a link held for work
+not yet done being an election rather than a leftover.
+
+**`weaver-trace` stands in `[dev-dependencies]` for this crate's tests alone.**
+They build the opener and distillate through `weaver_trace::opener` and
+`weaver_trace::distill` rather than by hand. Production imports nothing from it,
+and the dependency cell is closed by the operator's ruling of 2026-09-22,
+recorded in charter section 5 under Working Process section 6.
 
 **Dependencies, external.** One per engine, each behind a feature named for
 its engine so a build compiles the integrations it deploys and no other, per
