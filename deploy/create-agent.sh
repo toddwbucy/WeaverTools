@@ -81,24 +81,6 @@ done
 SESSION=${SESSION:-$NAME-001}
 
 
-OPERATOR=${SUDO_USER:-$USER}
-AGENT_USER="weaver-$NAME"          # the agent's own uid: the worker's identity
-MEMBER_USER="weaver-$NAME-state"   # the member's uid: holds the territory
-ROLE="weaver_$NAME"                # postgres spells with underscores
-DATABASE="weaver_$NAME"
-HOME_DIR="/home/$OPERATOR/.weaveragents/$AGENT_USER"
-STATE_DIR="$HOME_DIR/state"
-ADMIN_CONFIG=${WEAVER_ADMIN_CONFIG:-/etc/weaver/config}
-AGENTS_DIR=$(sudo -n cat "$ADMIN_CONFIG/agent-config-directory" 2>/dev/null || echo /etc/weaver/agents)
-ALLOW_LIST="$ADMIN_CONFIG/allow-list"
-DECLARATION="$AGENTS_DIR/$NAME.yaml"
-
-# **Whose identity the store admits is settled and derived.** The charter has
-# the member hold a uid of its own and dial the store under it, and as of
-# 2026-09-15 the code does: the account is the one this script makes, so the
-# identity map, the territory's owner and the spawn's uid are one fact rather
-# than three the operator keeps agreeing.
-
 # **An engine this script cannot provision is refused here rather than written
 # into a declaration.** `weaver-types` admits `none`, `sqlite` and `postgres`,
 # and anything else fails the inventory's parse after every account, database
@@ -111,6 +93,77 @@ case "$ENGINE" in
   none|sqlite) die "$ENGINE is a lawful election and not one this script can make. The inventory refuses state-store.database and state-store.role for it, per weaver-admin/src/inventory.rs, and this script writes both because provisioning them is what it is for: a role, a database, an admission line and two probes over them. Declare a $ENGINE agent by hand, without those two fields$( [ "$ENGINE" = none ] && printf ' and without state-election' ). What this option exists for is to name the engine rather than assume it, so that deploy/update-stack.sh can reconcile the declaration against the build." ;;
   *) die "no store engine named $ENGINE. weaver-types admits none, sqlite and postgres, and this script can provision only postgres." ;;
 esac
+
+OPERATOR=${SUDO_USER:-$USER}
+AGENT_USER="weaver-$NAME"          # the agent's own uid: the worker's identity
+MEMBER_USER="weaver-$NAME-state"   # the member's uid: holds the territory
+ROLE="weaver_$NAME"                # postgres spells with underscores
+DATABASE="weaver_$NAME"
+HOME_DIR="/home/$OPERATOR/.weaveragents/$AGENT_USER"
+STATE_DIR="$HOME_DIR/state"
+ADMIN_CONFIG=${WEAVER_ADMIN_CONFIG:-/etc/weaver/admin}
+# Plan and apply interpret the same configuration. Only the read identity
+# differs. Validate all arguments above before asking for a sudo credential.
+if [ "$APPLY" -eq 1 ]; then
+  sudo -v || die "--apply needs sudo"
+fi
+read_as_owner() {
+  if [ "$APPLY" -eq 1 ]; then sudo -n "$@"; else "$@"; fi
+}
+trim() {
+  local value=$1
+  value=${value#"${value%%[![:space:]]*}"}
+  value=${value%"${value##*[![:space:]]}"}
+  printf '%s' "$value"
+}
+read_config_file() {
+  # Only the allow-list is optional. An unreadable parent must not make a
+  # hidden file look absent. A failed sudo/read is always a failed preflight.
+  read_as_owner sh -c '
+    if [ "$2" = optional ] && [ ! -e "$1" ] && [ ! -L "$1" ]; then
+      [ -x "${1%/*}" ] || exit 1
+      exit 0
+    fi
+    cat -- "$1"
+  ' sh "$1" "${2:-required}" || die "cannot read $1"
+}
+# Preserve test false separately from a failed privileged invocation. A sudo
+# failure also returns 1, so using `sudo test ...` as a boolean loses its cause.
+path_answer() {
+  read_as_owner sh -c '
+    if test "$1" "$2" || { [ "$1" = -e ] && test -L "$2"; }; then
+      printf yes
+    else
+      printf no
+    fi
+  ' sh "$1" "$2" || die "cannot inspect $2"
+}
+require_path() {
+  local answer
+  answer=$(path_answer "$1" "$2") || exit 1
+  [ "$answer" = yes ] || die "$3: $2"
+}
+refuse_existing() {
+  local answer
+  answer=$(path_answer -e "$1") || exit 1
+  [ "$answer" = no ] || die "$2 already exists: $1"
+}
+AGENTS_DIR=$(read_config_file "$ADMIN_CONFIG/agent-config-directory") || exit 1
+AGENTS_DIR=$(trim "$AGENTS_DIR")
+[ -n "$AGENTS_DIR" ] || die "empty agent-config-directory in $ADMIN_CONFIG"
+require_path -d "$AGENTS_DIR" "declaration directory is missing or not a directory"
+require_path -x "$AGENTS_DIR" "declaration directory cannot be traversed"
+if [ "$APPLY" -eq 1 ]; then
+  require_path -w "$AGENTS_DIR" "declaration directory is not writable"
+fi
+ALLOW_LIST="$ADMIN_CONFIG/allow-list"
+DECLARATION="$AGENTS_DIR/$NAME.yaml"
+
+# **Whose identity the store admits is settled and derived.** The charter has
+# the member hold a uid of its own and dial the store under it, and as of
+# 2026-09-15 the code does: the account is the one this script makes, so the
+# identity map, the territory's owner and the spawn's uid are one fact rather
+# than three the operator keeps agreeing.
 
 HBA=""; IDENT=""   # asked of the store itself rather than guessed from a distro path
 
@@ -133,31 +186,30 @@ plan "store engine    $ENGINE         which the deployed member must carry"
 # because a half-made agent that looks whole is worse than an absent one.
 say "checks"
 for u in "$AGENT_USER" "$MEMBER_USER"; do
-  getent passwd "$u" >/dev/null && die "the account $u already exists"
+  if getent passwd "$u" >/dev/null; then
+    die "the account $u already exists"
+  else
+    account_status=$?
+    [ "$account_status" -eq 2 ] || die "cannot read account $u"
+  fi
 done
-[ -e "/home/$AGENT_USER" ] && die "the home /home/$AGENT_USER already exists"
-[ -e "$HOME_DIR" ] && die "the directory $HOME_DIR already exists"
-[ -e "$DECLARATION" ] && die "the declaration $DECLARATION already exists"
-sudo -n grep -qxF "$NAME" "$ALLOW_LIST" 2>/dev/null && die "$NAME is already in $ALLOW_LIST"
-# **The store's catalogs are asked before anything local is made.** Retiring
-# an agent leaves its role and database behind unless they were dropped by
-# hand, and a collision at CREATE ROLE would otherwise die after both
-# accounts and both directories exist, leaving the half-made agent this
-# script refuses to produce.
-if sudo -n systemctl is-active --quiet postgresql 2>/dev/null; then
-  sudo -n -u postgres psql -tAc "select 1 from pg_roles where rolname='$ROLE'" 2>/dev/null | grep -q 1 \
-    && die "the role $ROLE already exists: drop it or pick another name"
-  sudo -n -u postgres psql -tAc "select 1 from pg_database where datname='$DATABASE'" 2>/dev/null | grep -q 1 \
-    && die "the database $DATABASE already exists: drop it or pick another name"
-  HBA=$(sudo -n -u postgres psql -tAc 'show hba_file' 2>/dev/null | tr -d ' ')
-  IDENT=$(sudo -n -u postgres psql -tAc 'show ident_file' 2>/dev/null | tr -d ' ')
-  printf '   the store is up and carries no %s\n' "$ROLE"
-else
-  printf '   the store is down, so its catalogs are unchecked until --apply starts it\n'
-fi
+refuse_existing "/home/$AGENT_USER" "agent home"
+refuse_existing "$HOME_DIR" "territory"
+refuse_existing "$DECLARATION" "declaration"
 [ -r "$ARTIFACT" ] || printf '   WARNING: the artifact is not readable from this shell: %s\n' "$ARTIFACT"
-printf '   nothing of this agent exists yet\n'
-# **Traversal is asked about here rather than discovered halfway through.**
+listed=$(read_config_file "$ALLOW_LIST" optional) || exit 1
+while IFS= read -r entry; do
+  entry=$(trim "$entry")
+  [ "$entry" != "$NAME" ] || die "$NAME is already in $ALLOW_LIST"
+done <<< "$listed"
+if [ "$APPLY" -eq 0 ]; then
+  printf '   no collision found in accounts and paths visible to this uid\n'
+  printf '   PENDING --apply: privileged collision checks, service and store catalogs\n'
+  printf '   PENDING --apply: authentication paths and filesystem access-entry probe\n'
+  say "plan only"
+  printf '   no provisioning performed; rerun with --apply to check and make it\n'
+  exit 0
+fi
 # **Traversal is asked about here rather than discovered halfway through.** The
 # member needs passage along a chain that runs through the operator's own home,
 # which is 0700, and this pool answers `setfacl` with Operation not supported,
@@ -183,11 +235,47 @@ else
 fi
 rmdir "$probe"
 
-if [ "$APPLY" -eq 0 ]; then
-  say "plan only"
-  printf '   rerun with --apply to make it\n'
-  exit 0
-fi
+# **A retired agent can leave its role or database behind.** Discovering
+# that at CREATE ROLE would leave both accounts and directories half-made.
+# Start the store and ask its catalogues before creating anything local.
+# The reversible ACL probe runs first, so its refusal starts no service.
+sudo -n systemctl start postgresql || die "cannot start PostgreSQL for preflight checks"
+sudo -n systemctl is-active --quiet postgresql \
+  || die "cannot confirm PostgreSQL is active for preflight checks"
+
+# Judge each read's status before interpreting its answer. Failed queries
+# must never become empty results, and psql startup files must not alter them.
+read_store() {
+  sudo -n -u postgres psql -X -v ON_ERROR_STOP=1 -tAc "$2" \
+    || die "cannot read $1 from PostgreSQL"
+}
+role_exists=$(read_store "role catalog" "select 1 from pg_roles where rolname='$ROLE'") || exit 1
+case "$role_exists" in
+  1) die "the role $ROLE already exists: drop it or pick another name" ;;
+  "") ;;
+  *) die "unexpected role catalog answer" ;;
+esac
+database_exists=$(read_store "database catalog" "select 1 from pg_database where datname='$DATABASE'") || exit 1
+case "$database_exists" in
+  1) die "the database $DATABASE already exists: drop it or pick another name" ;;
+  "") ;;
+  *) die "unexpected database catalog answer" ;;
+esac
+HBA=$(read_store "hba_file" 'show hba_file') || exit 1
+IDENT=$(read_store "ident_file" 'show ident_file') || exit 1
+[ -n "$HBA" ] || die "empty hba_file from PostgreSQL"
+[ -n "$IDENT" ] || die "empty ident_file from PostgreSQL"
+printf '   the store is up and carries no %s\n' "$ROLE"
+printf '   local collision checks completed\n'
+# Both authentication files and the insertion anchor are known now. Refuse
+# before accounts, directories, roles or databases are made, not at the edit.
+for auth_file in "$HBA" "$IDENT"; do
+  require_path -f "$auth_file" "authentication file is missing or not regular"
+  require_path -r "$auth_file" "authentication file is not readable"
+  require_path -w "$auth_file" "authentication file is not writable"
+done
+sudo -n grep -qE '^local[[:space:]]+all[[:space:]]+all[[:space:]]+peer([[:space:]]|$)' "$HBA" \
+  || die "cannot find 'local all all peer' anchor in $HBA"
 
 say "accounts"
 # **The agent gets a home and the member does not.** The agent's tools run
@@ -220,26 +308,15 @@ for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
 done
 
 say "store"
-sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
-sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE $ROLE LOGIN;"
-sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DATABASE OWNER $ROLE;"
+sudo -u postgres psql -X -v ON_ERROR_STOP=1 -c "CREATE ROLE $ROLE LOGIN;"
+sudo -u postgres psql -X -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DATABASE OWNER $ROLE;"
 
 say "gates"
 # The admission line precedes the catch-all, because pg_hba takes the first
 # match and `local all all peer` would otherwise demand that the kernel name
 # equal the role name, which is exactly what the map exists to avoid.
-[ -n "$HBA" ] || HBA=$(sudo -u postgres psql -tAc 'show hba_file' | tr -d ' ')
-[ -n "$IDENT" ] || IDENT=$(sudo -u postgres psql -tAc 'show ident_file' | tr -d ' ')
-sudo test -f "$HBA" || die "the store names no readable hba file: $HBA"
 sudo cp -a "$HBA" "$HBA.before-$NAME"
 sudo cp -a "$IDENT" "$IDENT.before-$NAME"
-# **The admission goes before the catch-all or the map is never consulted**,
-# pg_hba taking the first match and `local all all peer` demanding that the
-# kernel name equal the role name. A cluster without that catch-all needs a
-# different anchor, so its absence refuses rather than substituting nothing
-# and failing later with a message naming the wrong cause.
-sudo grep -qE '^local[[:space:]]+all[[:space:]]+all[[:space:]]+peer' "$HBA" \
-  || die "no 'local all all peer' line in $HBA to place the admission before"
 sudo sed -i "0,/^local\s\+all\s\+all\s\+peer/s||local   $DATABASE   $ROLE   peer map=weaver\nlocal   all             all                                     peer|" "$HBA"
 printf 'weaver          %s                    %s\n' "$MEMBER_USER" "$ROLE" | sudo tee -a "$IDENT" >/dev/null
 sudo systemctl reload postgresql
@@ -250,7 +327,6 @@ say "declaration"
 # sink at another's directory, so two agents were configured to write one
 # record, and it survived three weeks because nothing checked. The path is
 # derived here rather than accepted.
-sudo install -d -o root -g root -m 0755 /etc/weaver/agents
 sudo tee "$DECLARATION" >/dev/null <<YAML
 session: $SESSION
 spu-instruction:
@@ -314,12 +390,12 @@ say "both gates, verified rather than assumed"
 # **Each probe names the role.** Without `-U` psql defaults the role to the
 # connecting account's own name, so the check would ask about a role nobody
 # created and fail for a reason that is not the gate.
-if sudo -u "$MEMBER_USER" psql -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
+if sudo -u "$MEMBER_USER" psql -X -v ON_ERROR_STOP=1 -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
   printf '   %s reaches the database as %s\n' "$MEMBER_USER" "$ROLE"
 else
   die "the member cannot reach its database: the first gate or the map is wrong"
 fi
-if sudo -u "$AGENT_USER" psql -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
+if sudo -u "$AGENT_USER" psql -X -v ON_ERROR_STOP=1 -U "$ROLE" -d "$DATABASE" -c 'select 1' >/dev/null 2>&1; then
   die "THE AGENT'S UID REACHED THE DATABASE: the second gate is open"
 else
   printf "   the agent's own uid is refused, which is the gate the charter asks for\n"
