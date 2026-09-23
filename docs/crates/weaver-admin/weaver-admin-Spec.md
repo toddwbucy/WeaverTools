@@ -61,14 +61,13 @@ its settler.
 **One binary, per the charter's ruled layout.** The crate builds a single
 executable, `weaver-admin`, and no library surface is published: nothing links
 admin, per the charter's section 7, and a `lib.rs` would be an API for a
-consumer the topology forbids. **A manifest read alone cannot see the
-absence**, one carrying no `[lib]` section being indistinguishable from one
-whose library target Cargo would find by convention, so the instrument reads
-the convention's path beside the manifest.
+consumer the topology forbids. The instrument reads Cargo's target inventory,
+which includes both explicit declarations and targets found by convention.
 `one_binary_and_no_library_surface` of `crates/weaver-admin/tests/manifest.rs`
-asserts that the binary is declared, that no `[lib]` section exists, and that
-no `src/lib.rs` sits where Cargo would find one. The tag follows what that
-test reads.
+requires exactly one binary named `weaver-admin`, permits integration test targets,
+and refuses every other target, including a library, build script, example or bench.
+A comment or alternate TOML spacing cannot change the inventory. The reverse
+relation, that nothing links admin, remains review's.
 
 ```graph
 node: admin-no-library-surface
@@ -1848,10 +1847,10 @@ floor-link under gate H2, and no direct `weaver-traits` line exists, which
 is the charter's declared non-link as a checkable absence. No async runtime,
 no bus crate, and no logging crate in the resolved tree, by the build-time
 `cargo tree` assertion the floor Specs share. One binary and no library
-surface, read as a declared `[[bin]]`, an absent `[lib]` section, and no
-`src/lib.rs` at the path Cargo searches by convention, which is the half a
-manifest read cannot reach on its own and the reason the instrument reads the
-tree beside the file.
+surface, read from Cargo's target inventory by
+`one_binary_and_no_library_surface`. The watch requires the named binary and
+permits integration test targets alone beside it, as section 1 states. Explicit
+and convention-discovered targets pass through the same check.
 
 **Which invariant each claim serves, and why most serve none.** Twelve of the
 forty-four carry a `grounds` edge and those twelve carry thirteen edges, one
@@ -1970,7 +1969,7 @@ act of 2026-08-28:
 `admin-granted-permission-refused-at-inventory`, is this recount's own act,
 counted with the record it adds. Whether the three uncounted arrivals name
 their removals was not audited in this recount and is owed beside the two
-below. **Two of the twenty perturbation records name no removal anywhere
+below. **Two of the twenty-three perturbation records name no removal anywhere
 in this document**:
 `admin-unload-answers-after-confirmed-stop` and
 `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
@@ -2022,8 +2021,8 @@ section 3, the state ask that follows a failed dial, of section 6, and the unloa
 on a confirmed stop, of section 3. **The twelfth departure and the seventh arrival are
 the one event the lead above argues**, the unit's declared open inverting to a declared
 absence. **A rebuild reads this movement as the recut's delta and not as this Spec's**,
-nine records having been added since by acts of their own, so a census taken against
-this paragraph alone lands nine short of section 10's forty.
+thirteen records having been added since by acts of their own, so a census taken
+against this paragraph alone lands thirteen short of section 10's forty-four.
 
 **A claim this Spec cites and another Spec argues is declared by that Spec,**
 not here, because the assertion belongs where its argument and its test live
