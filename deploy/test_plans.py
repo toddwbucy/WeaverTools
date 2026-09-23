@@ -45,11 +45,18 @@ elif name == "cargo":
     else: sys.exit(99)
 elif name == "sudo":
     if os.environ.get("ALLOW_APPLY_CHECKS"):
-        if args[:2] == ["-n", "cat"]: print(pathlib.Path(args[2]).read_text(), end="")
-        elif args[:2] == ["-n", "grep"]: sys.exit(1)
-        elif args[:2] == ["-n", "systemctl"]: pass
+        if args == ["-v"]: sys.exit(1 if os.environ.get("SUDO_FAIL") else 0)
+        elif args[:2] == ["-n", "cat"]:
+            if args[2].endswith("allow-list") and os.environ.get("READ_FAIL") == "allow-list": sys.exit(2)
+            print(pathlib.Path(args[2]).read_text(), end="")
+        elif args[:2] == ["-n", "grep"]:
+            sys.exit(2 if os.environ.get("READ_FAIL") == "allow-list" else 1)
+        elif args[:2] == ["-n", "systemctl"]:
+            sys.exit(2 if os.environ.get("READ_FAIL") == args[2] else 0)
         elif "psql" in args:
             query = args[-1]
+            if os.environ.get("READ_FAIL") and os.environ["READ_FAIL"] in query: sys.exit(2)
+            if os.environ.get("EMPTY_PATH") and os.environ["EMPTY_PATH"] in query: sys.exit(0)
             if "pg_roles" in query and os.environ.get("ROLE_COLLISION"): print("1")
             elif "show hba_file" in query: print("/fixture/pg_hba.conf")
             elif "show ident_file" in query: print("/fixture/pg_ident.conf")
@@ -94,7 +101,7 @@ class PlanTests(unittest.TestCase):
                     "WEAVER_ADMIN_CONFIG": str(self.config), "CALLS": str(self.log),
                     "CARGO_TARGET_DIR": str(self.root / 'target with "quotes"'),
                     "USER": "fixture-no-home", "PROBE": str(self.root / "probe")}
-        for name in ("BASH_ENV", "SUDO_USER", "COLLISION", "ALLOW_APPLY_CHECKS", "ROLE_COLLISION", "BUILD_FAIL"):
+        for name in ("BASH_ENV", "SUDO_USER", "COLLISION", "ALLOW_APPLY_CHECKS", "ROLE_COLLISION", "BUILD_FAIL", "SUDO_FAIL", "READ_FAIL", "EMPTY_PATH"):
             self.env.pop(name, None)
 
     def run_script(self, name, *args):
@@ -170,6 +177,38 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(any(c[0] == "setfacl" for c in self.calls()))
         self.assertFalse(any("useradd" in c for c in self.calls()))
         self.assertFalse(Path(self.env["PROBE"]).exists())
+
+    def test_apply_requires_sudo_before_any_other_privileged_call(self):
+        self.env.update(ALLOW_APPLY_CHECKS="1", SUDO_FAIL="1")
+        result = self.create("--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--apply needs sudo", result.stderr)
+        self.assertEqual([c for c in self.calls() if c[0] == "sudo"], [["sudo", "-v"]])
+
+    def test_apply_read_failures_refuse_before_creating_accounts(self):
+        for fault, cause in (("allow-list", "allow-list"), ("pg_roles", "role catalog"),
+                             ("pg_database", "database catalog"), ("hba_file", "hba_file"),
+                             ("ident_file", "ident_file"), ("start", "start PostgreSQL"),
+                             ("is-active", "confirm PostgreSQL")):
+            with self.subTest(fault=fault):
+                self.log.unlink(missing_ok=True)
+                self.env.update(ALLOW_APPLY_CHECKS="1", READ_FAIL=fault)
+                result = self.create("--apply")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(cause, result.stderr)
+                self.assertFalse(any("useradd" in c for c in self.calls()))
+                self.assertFalse(any(c[0] == "mktemp" for c in self.calls()))
+
+    def test_apply_empty_authentication_paths_refuse_before_creation(self):
+        for path in ("hba_file", "ident_file"):
+            with self.subTest(path=path):
+                self.log.unlink(missing_ok=True)
+                self.env.update(ALLOW_APPLY_CHECKS="1", EMPTY_PATH=path)
+                result = self.create("--apply")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("empty " + path, result.stderr)
+                self.assertFalse(any("useradd" in c for c in self.calls()))
+                self.assertFalse(any(c[0] == "mktemp" for c in self.calls()))
 
     def test_stack_plan_excludes_web_and_compares_all_members(self):
         result = self.run_script("update-stack.sh")

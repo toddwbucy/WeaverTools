@@ -92,6 +92,7 @@ ADMIN_CONFIG=${WEAVER_ADMIN_CONFIG:-/etc/weaver/admin}
 # Planning reads only what this uid can inspect. A missing or unreadable
 # configuration is a refusal, never a guessed destination for the declaration.
 if [ "$APPLY" -eq 1 ]; then
+  sudo -v || die "--apply needs sudo"
   AGENTS_DIR=$(sudo -n cat "$ADMIN_CONFIG/agent-config-directory") \
     || die "cannot read agent-config-directory in $ADMIN_CONFIG"
 else
@@ -161,23 +162,39 @@ if [ "$APPLY" -eq 0 ]; then
   printf '   no provisioning performed; rerun with --apply to check and make it\n'
   exit 0
 fi
-sudo -n grep -qxF "$NAME" "$ALLOW_LIST" 2>/dev/null && die "$NAME is already in $ALLOW_LIST"
-# **The store's catalogs are asked before anything local is made.** Retiring
-# an agent leaves its role and database behind unless they were dropped by
-# hand, and a collision at CREATE ROLE would otherwise die after both
-# accounts and both directories exist, leaving the half-made agent this
-# script refuses to produce.
-if sudo -n systemctl is-active --quiet postgresql 2>/dev/null; then
-  sudo -n -u postgres psql -tAc "select 1 from pg_roles where rolname='$ROLE'" 2>/dev/null | grep -q 1 \
-    && die "the role $ROLE already exists: drop it or pick another name"
-  sudo -n -u postgres psql -tAc "select 1 from pg_database where datname='$DATABASE'" 2>/dev/null | grep -q 1 \
-    && die "the database $DATABASE already exists: drop it or pick another name"
-  HBA=$(sudo -n -u postgres psql -tAc 'show hba_file' 2>/dev/null | tr -d ' ')
-  IDENT=$(sudo -n -u postgres psql -tAc 'show ident_file' 2>/dev/null | tr -d ' ')
-  printf '   the store is up and carries no %s\n' "$ROLE"
-else
-  printf '   the store is down, so its catalogs are unchecked until --apply starts it\n'
+listed=$(sudo -n cat "$ALLOW_LIST") || die "cannot read allow-list $ALLOW_LIST"
+if grep -qxF "$NAME" <<< "$listed"; then
+  die "$NAME is already in $ALLOW_LIST"
 fi
+# Start the store before collision checks, not after creating the accounts.
+# A stopped store cannot answer whether its role/database already exists.
+sudo -n systemctl start postgresql || die "cannot start PostgreSQL for preflight checks"
+sudo -n systemctl is-active --quiet postgresql \
+  || die "cannot confirm PostgreSQL is active for preflight checks"
+
+# Judge each read's status before interpreting its answer. Failed queries
+# must never become empty results, and psql startup files must not alter them.
+read_store() {
+  sudo -n -u postgres psql -X -v ON_ERROR_STOP=1 -tAc "$2" \
+    || die "cannot read $1 from PostgreSQL"
+}
+role_exists=$(read_store "role catalog" "select 1 from pg_roles where rolname='$ROLE'") || exit 1
+case "$role_exists" in
+  1) die "the role $ROLE already exists: drop it or pick another name" ;;
+  "") ;;
+  *) die "unexpected role catalog answer" ;;
+esac
+database_exists=$(read_store "database catalog" "select 1 from pg_database where datname='$DATABASE'") || exit 1
+case "$database_exists" in
+  1) die "the database $DATABASE already exists: drop it or pick another name" ;;
+  "") ;;
+  *) die "unexpected database catalog answer" ;;
+esac
+HBA=$(read_store "hba_file" 'show hba_file') || exit 1
+IDENT=$(read_store "ident_file" 'show ident_file') || exit 1
+[ -n "$HBA" ] || die "empty hba_file from PostgreSQL"
+[ -n "$IDENT" ] || die "empty ident_file from PostgreSQL"
+printf '   the store is up and carries no %s\n' "$ROLE"
 printf '   local collision checks completed\n'
 # **Traversal is asked about here rather than discovered halfway through.** The
 # member needs passage along a chain that runs through the operator's own home,
@@ -235,7 +252,6 @@ for step in "/home/$OPERATOR" "/home/$OPERATOR/.weaveragents" "$HOME_DIR"; do
 done
 
 say "store"
-sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
 sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE $ROLE LOGIN;"
 sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DATABASE OWNER $ROLE;"
 
@@ -243,8 +259,6 @@ say "gates"
 # The admission line precedes the catch-all, because pg_hba takes the first
 # match and `local all all peer` would otherwise demand that the kernel name
 # equal the role name, which is exactly what the map exists to avoid.
-[ -n "$HBA" ] || HBA=$(sudo -u postgres psql -tAc 'show hba_file' | tr -d ' ')
-[ -n "$IDENT" ] || IDENT=$(sudo -u postgres psql -tAc 'show ident_file' | tr -d ' ')
 sudo test -f "$HBA" || die "the store names no readable hba file: $HBA"
 sudo cp -a "$HBA" "$HBA.before-$NAME"
 sudo cp -a "$IDENT" "$IDENT.before-$NAME"
