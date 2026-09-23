@@ -68,10 +68,9 @@ from: weaver-state
 to: weaver-types
 ```
 
-**The `weaver-trace` dependency is not classified here**, and section 5 carries the
-cell. That crate is this crate's sibling, both declaring a `parent` edge to
-`weaver-harness`, and what a sibling edge may be is the narrow question the cell
-turns on rather than a bar on the edge existing.
+On the operator's ruling of 2026-09-22, `weaver-trace` is a dev-dependency for
+this crate's tests alone, outside H2's edge set with no production imports,
+closing section 5's dependency cell without a state-trace contract.
 
 ## 2. What it is not
 

@@ -13,18 +13,18 @@
 //! The custody, per `weaver-state-Spec` section 3: sqlite behind the seam,
 //! never reached as a file, the distillate landing whole or not at all.
 
-/// The election as the seam's opener carries it: the elected kinds, each
+/// The election term as the seam's opener carries it: the elected kinds, each
 /// with its payload key paths, empty meaning the envelope alone. The
 /// default election is the envelope of every kind and nothing more, per
 /// `weaver-trace-PRD` section 11, which this shape spells as an empty map
 /// with `all_kinds` standing.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Election {
-    /// Every kind crosses with its envelope. The default, always true
-    /// today: a kind-restricted election arrives with the operator's
-    /// payload-key elections, and nothing here guesses at its shape.
+    /// Every kind crosses with its envelope. When false, only the kinds
+    /// named in `keys` cross at all.
     pub all_kinds: bool,
-    /// Payload key paths per kind, on top of the envelope.
+    /// Payload key paths per kind, on top of the envelope. An entry with
+    /// no paths is a meaningful election: presence itself is state.
     pub keys: Vec<(String, Vec<String>)>,
 }
 
