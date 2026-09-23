@@ -12,7 +12,8 @@ use std::process::{Command, Stdio};
 /// declared dependency list for this package, so a dependency arriving by any
 /// route, normal, build or dev, target-qualified, behind a feature or under a
 /// rename, is what the instrument sees, per the ruling of 2026-09-23 on #577.
-/// Python's standard JSON parser keeps this crate's own edges empty.
+/// Python's standard JSON parser keeps this crate's own edges empty, and it
+/// refuses by `sys.exit` rather than `assert`, which optimization strips.
 /// Perturbations: add a dev-dependency, a target-qualified dependency, or an
 /// optional dependency behind a feature; each adds a declaration.
 #[test]
@@ -43,10 +44,12 @@ import sys
 
 packages = [p for p in json.load(sys.stdin)["packages"]
             if p["name"] == "weaver-internal"]
-assert len(packages) == 1, "metadata must name exactly one weaver-internal package"
+if len(packages) != 1:
+    sys.exit("metadata must name exactly one weaver-internal package")
 declared = [(d["name"], d["kind"], d.get("target"), d.get("optional"))
             for d in packages[0]["dependencies"]]
-assert declared == [], f"a pure member names no dependency of any kind; got {declared!r}"
+if declared:
+    sys.exit(f"a pure member names no dependency of any kind; got {declared!r}")
 "#,
         ])
         .stdin(Stdio::piped())
