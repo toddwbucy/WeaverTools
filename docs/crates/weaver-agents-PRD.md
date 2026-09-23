@@ -377,6 +377,20 @@ of anything this section or 5.3 requires. Stated because the shape invites the o
 reading: a feature named for what the crate does not draw looks like the draw rule
 speaking, and it is not.
 
+**The filesystem is reached the same way, through a door and not by a path**, per
+the operator's ruling of 2026-09-23. Nothing internal to the agent's operation opens
+the filesystem directly: access goes through admin or the gate, over a Unix socket.
+The exception is narrow and has three conditions, all required: the access is needed
+for the agent's internal operation, it is scoped to the one function that needs it,
+and the kernel secures it. The SPU reading its pinned model artifact, the embedded
+state engine opening its store in a territory only its own account can enter, and the
+Python loop worker reading its loop file each meet all three. A descriptor handed over
+by admin is the preferred form where it fits, as the trace sink and the diagnostic
+record already take it, since an organ that holds a descriptor and no path cannot name
+anything else. The rule is the same one that governs what is compiled into a binary:
+nothing is present unless operation requires it, and a need that arrives later is
+answered by adding it and rebuilding rather than by admitting it in advance.
+
 This invariant is what makes statefulness a feature add rather than a
 re-architecture. Memory behind a socket is a new socket, a new contract, and a
 schema extension. Memory as a linked crate is surgery on the harness's
