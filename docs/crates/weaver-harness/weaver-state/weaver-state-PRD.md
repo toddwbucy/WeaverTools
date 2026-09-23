@@ -8,7 +8,7 @@
 **Companion contract:** `weaver-harness-state-contract`, owed by the act that opens
 the seam and named here so the seam cannot open without it.
 **Editorial:** Per the Working Rules.
-**Landing PR:** #586
+**Landing PR:** #659
 
 ---
 
@@ -68,10 +68,10 @@ from: weaver-state
 to: weaver-types
 ```
 
-**The `weaver-trace` dependency is not classified here**, and section 5 carries the
-cell. That crate is this crate's sibling, both declaring a `parent` edge to
-`weaver-harness`, and what a sibling edge may be is the narrow question the cell
-turns on rather than a bar on the edge existing.
+On the operator's ruling of 2026-09-22, `weaver-trace` is a dev-dependency for
+this crate's tests alone, outside H2's edge set per Working Process section 6,
+with no production imports, closing section 5's dependency cell without a
+state-trace contract.
 
 ## 2. What it is not
 
@@ -362,7 +362,10 @@ that day rather than a shared file or a shared connection today.
 
 ## 5. Open cells
 
-- **What the `weaver-trace` dependency is, or whether it stays. Opened 2026-09-14.**
+- **What the `weaver-trace` dependency is, or whether it stays. Opened 2026-09-14,
+  closed 2026-09-22.** The operator's ruling places it in dev-dependencies for
+  tests alone per Working Process section 6, closing this cell with the earlier
+  alternatives below retained as history.
   The manifest carries the crate and the graph carries no edge for it, which is the
   H2 breach the audit of 2026-09-13 found. **The `floor-link` branch is closed**:
   `weaver-agents-PRD` section 5.1 rules the floor exactly `weaver-traits` and
