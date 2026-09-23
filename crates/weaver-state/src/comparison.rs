@@ -565,9 +565,32 @@ struct Member {
 }
 impl Member {
     fn new(election: Election, diagnostic: bool, destination: &str) -> Self {
+        let mut member = Self::spawn(diagnostic);
+        member.tee = Some(
+            Tee::open(
+                member.wire.try_clone().unwrap(),
+                destination.into(),
+                election,
+            )
+            .unwrap(),
+        );
+        // A shape answer proves the production entry reached serve.
+        assert!(answer_shape(&member.ask("shape", None)).is_empty());
+        assert_eq!(
+            member.door().exists(),
+            diagnostic,
+            "door follows the load's mode"
+        );
+        member
+    }
+    // Raw-open tests must reach the same entry before a tee supplies its opener.
+    fn spawn(diagnostic: bool) -> Self {
         let thread = std::thread::current();
         let test = thread.name().expect("named test thread");
         let scratch = Scratch::new();
+        // Establish the schema before the child and a seeding observer connect.
+        // Otherwise their first opens can race PostgreSQL catalog creation.
+        drop(scratch.open());
         let directory = Directory::new();
         let door = directory.0.join("preload.sock");
         let (wire, child) = UnixStream::pair().unwrap();
@@ -612,20 +635,14 @@ impl Member {
         }
         let process = Process(command.spawn().unwrap());
         drop(child);
-        let tee = Tee::open(wire.try_clone().unwrap(), destination.into(), election).unwrap();
-        let mut member = Self {
+        Self {
             process,
-            tee: Some(tee),
+            tee: None,
             wire,
             buffer: Vec::new(),
             directory,
             _scratch: scratch,
-        };
-        // A shape answer proves the production entry reached serve. A
-        // serving load answers without ever creating or sealing a second door.
-        assert!(answer_shape(&member.ask("shape", None)).is_empty());
-        assert_eq!(door.exists(), diagnostic, "door follows the load's mode");
-        member
+        }
     }
     fn log(&self) -> String {
         std::fs::read_to_string(self.directory.0.join("member.log")).unwrap_or_default()
@@ -954,4 +971,242 @@ fn recorded_rule_three_way_at_matched_cuts() {
         keys: vec![],
     });
     matched_cuts(&empty, &empty.rule(), false, "recorded-empty");
+}
+
+// Seed both the addressed session and a neighbor before a malformed opener.
+// Observe rows and index definitions directly: a rejected opener must not even
+// build indexes from the valid entries surrounding an invalid entry.
+fn seeded_custody(member: &Member) -> postgres::Client {
+    use weaver_state::Store;
+    let mut store = member._scratch.open();
+    store
+        .index_election(&weaver_state::Election {
+            all_kinds: true,
+            keys: vec![("load".into(), vec!["existing".into()])],
+        })
+        .unwrap();
+    for session in ["target", "neighbor"] {
+        store
+            .land(&weaver_state::Distillate {
+                session: session.into(),
+                run: "old-run".into(),
+                turn: None,
+                kind: "load".into(),
+                sequence: 0,
+                pairs: vec![("existing".into(), "null".into())],
+            })
+            .unwrap();
+    }
+    postgres::Config::new()
+        .host_path(&member._scratch.socket)
+        .user(&member._scratch.role)
+        .dbname(&member._scratch.database)
+        .connect(postgres::NoTls)
+        .unwrap()
+}
+fn custody_snapshot(client: &mut postgres::Client) -> Vec<Vec<String>> {
+    [
+        "SELECT row_to_json(e)::text FROM event e ORDER BY id",
+        "SELECT row_to_json(f)::text FROM field f ORDER BY event_id, key",
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' ORDER BY indexname",
+    ]
+    .iter()
+    .map(|query| {
+        client
+            .query(*query, &[])
+            .unwrap()
+            .iter()
+            .map(|row| row.get(0))
+            .collect()
+    })
+    .collect()
+}
+
+#[test]
+#[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory, unshare -Ur, and a built weaver-analysis binary"]
+fn malformed_first_door_elections_leave_custody_untouched() {
+    child_entry();
+    for opener in super::tests::malformed_openers() {
+        let mut member = Member::spawn(true);
+        let mut client = seeded_custody(&member);
+        let before = custody_snapshot(&mut client);
+        member.send(&(opener.clone() + "\n"));
+        // Closing the sender also bounds a mutant that silently defaults and
+        // begins serving: it exits successfully, which is itself a failure.
+        member.wire.shutdown(std::net::Shutdown::Write).unwrap();
+        let status = member.process.wait();
+        assert_eq!(
+            custody_snapshot(&mut client),
+            before,
+            "changed custody: {opener}"
+        );
+        assert!(!status.success(), "accepted {opener}");
+        assert!(
+            member
+                .log()
+                .contains("malformed election in first-door opener"),
+            "{}",
+            member.log()
+        );
+        assert!(
+            !member.door().exists(),
+            "malformed first opener stood the preload door"
+        );
+    }
+}
+
+#[test]
+#[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory, unshare -Ur, and a built weaver-analysis binary"]
+fn malformed_preload_elections_leave_custody_untouched() {
+    child_entry();
+    let mut cases = super::tests::malformed_openers();
+    let valid_election = json!({"all_kinds":true,"keys":[]});
+    cases.push(json!({"election":valid_election}).to_string());
+    for session in [
+        Value::Null,
+        json!(""),
+        json!(false),
+        json!(0),
+        json!([]),
+        json!({}),
+    ] {
+        cases.push(json!({"session":session,"election":valid_election}).to_string());
+    }
+    // A well-shaped opener can still be refused by the engine. That refusal
+    // belongs to this driver's attempt too, not to the standing member.
+    let long_path = "x".repeat(1024);
+    cases.push(
+        json!({"session":"target","election":{"all_kinds":false,
+        "keys":[{"kind":"load","paths":["new.index",long_path]}]}})
+        .to_string(),
+    );
+    for opener in cases {
+        let mut member = Member::new(
+            Election {
+                all_kinds: true,
+                keys: vec![],
+            },
+            true,
+            "target",
+        );
+        let mut client = seeded_custody(&member);
+        let before = custody_snapshot(&mut client);
+        // Shape is a barrier proving the prior replay ask reached parking.
+        member.send("{\"ask\":{\"replay\":{}}}\n");
+        member.ask("shape", None);
+        assert!(member.receive(Duration::from_millis(25)).is_none());
+        let retry_opener = weaver_trace::opener(
+            "target",
+            &Election {
+                all_kinds: true,
+                keys: vec![],
+            },
+        );
+        let row = concat!(
+            r#"{"envelope":{"session":"target","run":"retry","kind":"load","sequence":"1"},"pairs":{}}"#,
+            "\n"
+        );
+        let mut preload = member.connect_preload();
+        preload.set_read_timeout(Some(WAIT)).unwrap();
+        // Keep the bad driver alive and coalesce trailing valid traffic. No
+        // frame after its rejected opener may land or seal a parked answer.
+        preload
+            .write_all(format!("{opener}\n{retry_opener}{row}{{}}\n").as_bytes())
+            .unwrap();
+        let mut byte = [0];
+        match preload.read(&mut byte) {
+            Ok(0) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::ConnectionReset => {}
+            other => panic!("refused preload was not closed: {other:?}; {opener}"),
+        }
+        assert!(
+            member.process.0.try_wait().unwrap().is_none(),
+            "refusal killed member: {}",
+            member.log()
+        );
+        assert_eq!(
+            custody_snapshot(&mut client),
+            before,
+            "changed custody: {opener}"
+        );
+        let fault = if super::parse_session(&opener).is_none_or(|s| s.is_empty()) {
+            "missing nonempty session in preload opener"
+        } else if super::parse_election(&opener).is_none() {
+            "malformed election in preload opener"
+        } else {
+            "the elected key path"
+        };
+        assert!(member.log().contains(fault), "{}", member.log());
+        member.ask("shape", None); // The harness still serves on the same member.
+        assert!(
+            member.receive(Duration::from_millis(25)).is_none(),
+            "refusal released replay"
+        );
+        drop(preload);
+        // Connect succeeding proves the door re-stood. Do not send a new ask:
+        // the successful retry must release the one parked before the refusal.
+        let mut retry = member.connect_preload();
+        retry
+            .write_all(format!("{retry_opener}{row}{{}}\n").as_bytes())
+            .unwrap();
+        let answer = member
+            .receive(WAIT)
+            .expect("retry releases original parked replay");
+        let value: Value = serde_json::from_str(&answer).unwrap();
+        let events = value["answer"]["replay"]["events"].as_array().unwrap();
+        assert_eq!(events.len(), 1, "{answer}");
+        assert_eq!(events[0]["envelope"]["run"], "retry");
+        assert!(
+            member.receive(Duration::from_millis(25)).is_none(),
+            "duplicate parked answer"
+        );
+        let after = custody_snapshot(&mut client);
+        assert_eq!(
+            after[2], before[2],
+            "no new indexes from refused attempt or empty retry"
+        );
+        assert_eq!(after[0].len(), 2, "retry replaces only the target");
+        assert!(after[0].contains(&before[0][1]), "neighbor event unchanged");
+        assert_eq!(
+            after[1],
+            vec![before[1][1].clone()],
+            "neighbor field unchanged"
+        );
+        assert!(member.process.0.try_wait().unwrap().is_none());
+    }
+}
+
+#[test]
+#[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory, unshare -Ur, and a built weaver-analysis binary"]
+fn explicit_empty_elections_open_both_doors() {
+    child_entry();
+    for all_kinds in [false, true] {
+        for keys in [json!([]), json!([{"kind":"load","paths":[]}])] {
+            let opener = format!(
+                "{}\n",
+                json!({"session":"target", "election":{
+                "all_kinds":all_kinds, "keys":keys}})
+            );
+            let mut member = Member::spawn(true);
+            let mut client = seeded_custody(&member);
+            let before = custody_snapshot(&mut client);
+            member.send(&opener);
+            assert!(!answer_shape(&member.ask("shape", None)).is_empty());
+            assert_eq!(
+                custody_snapshot(&mut client),
+                before,
+                "first door preserves holdings"
+            );
+            let mut preload = member.connect_preload();
+            preload.write_all(opener.as_bytes()).unwrap();
+            preload.write_all(b"{}\n").unwrap();
+            drop(preload);
+            assert!(answer_events(&member.ask("replay", None), "replay").is_empty());
+            let after = custody_snapshot(&mut client);
+            assert_eq!(after[2], before[2], "no paths means no new indexes");
+            assert_eq!(after[0].len(), 1, "only the addressed session retires");
+            assert!(after[0][0].contains("neighbor"));
+            assert_eq!(after[1].len(), 1, "neighbor's field remains");
+        }
+    }
 }

@@ -142,7 +142,13 @@ fn member_entry(
     // answering across every session the file holds - the defect this
     // repairs, where unbounded reads looked perfectly well formed.
     let session = parse_session(&opener).unwrap_or_default();
-    let election = parse_election(&opener).unwrap_or_default();
+    let Some(election) = parse_election(&opener) else {
+        eprintln!(
+            "{}",
+            serde_json::json!({"state_fault": "malformed election in first-door opener"})
+        );
+        return std::process::ExitCode::FAILURE;
+    };
     if let Err(fault) = store.index_election(&election) {
         eprintln!(
             "{}",
@@ -330,7 +336,7 @@ fn serve(
         // parked ask answers in that wakeup rather than the next.
         if second_ready {
             if let Some(channel) = preload.as_mut() {
-                let live = fill_buffer(channel, &mut preload_frames);
+                let mut live = fill_buffer(channel, &mut preload_frames);
                 while let Some(line) = take_frame(&mut preload_frames) {
                     if !preload_opened {
                         // **The opener's retirement is the one act this path
@@ -340,27 +346,41 @@ fn serve(
                         // lands, so re-running a preload replaces the
                         // holdings rather than appending to them and a dead
                         // driver's prefix needs no cleanup act. **A frame
-                        // declaring no session is not an opener**: dropped
-                        // whole without retiring, the sender's defect per
-                        // the contract, because a retirement keyed on a
-                        // guess would delete holdings the driver never
-                        // named.
+                        // declaring no session is not an opener**. Every
+                        // refused opener ends this driver's attempt without
+                        // retiring holdings or killing the member. The
+                        // dead-driver cleanup below clears buffered traffic
+                        // and re-stands the door, keeping parked asks parked.
                         let Some(preload_session) = parse_session(&line).filter(|s| !s.is_empty())
                         else {
-                            continue;
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({"state_fault": "missing nonempty session in preload opener"})
+                            );
+                            live = false;
+                            break;
                         };
-                        let election = parse_election(&line).unwrap_or_default();
+                        let Some(election) = parse_election(&line) else {
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({"state_fault": "malformed election in preload opener"})
+                            );
+                            live = false;
+                            break;
+                        };
                         // **A refused election says which path refused it.**
                         // This door can fail on an election the operator
-                        // wrote, per the service engine's naming, and a bare
-                        // non-zero exit leaves the diagnosis nowhere. The
-                        // first door prints the same line.
+                        // wrote, per the service engine's naming. Preserve
+                        // the diagnosis while the member stays alive for a
+                        // retry. The first door prints the same fault before
+                        // its startup exit.
                         if let Err(fault) = store.retire_and_index(&preload_session, &election) {
                             eprintln!(
                                 "{}",
                                 serde_json::json!({"state_fault": format!("{fault:?}")})
                             );
-                            return std::process::ExitCode::FAILURE;
+                            live = false;
+                            break;
                         }
                         preload_opened = true;
                         continue;
@@ -767,32 +787,28 @@ fn parse_session(line: &str) -> Option<String> {
     Some(value.get("session")?.as_str()?.to_string())
 }
 
-/// The opener's shape: `{"election":{"all_kinds":true,"keys":[...]}}`. A
-/// malformed opener falls back to the default election, the envelope of
-/// every kind, which is the contract's default and never a guess.
+/// The opener carries the whole election, per harness-state contract section 2.
+/// Missing or mistyped members refuse the whole parse. Explicit empty keys or
+/// paths remain valid; neither absence nor malformed content stands for them.
 fn parse_election(line: &str) -> Option<Election> {
     let value: serde_json::Value = serde_json::from_str(line).ok()?;
     let election = value.get("election")?;
     let all_kinds = election.get("all_kinds")?.as_bool()?;
     let keys = election
-        .get("keys")
-        .and_then(|k| k.as_array())
-        .map(|entries| {
-            entries
+        .get("keys")?
+        .as_array()?
+        .iter()
+        .map(|entry| {
+            let kind = entry.get("kind")?.as_str()?.to_string();
+            let paths = entry
+                .get("paths")?
+                .as_array()?
                 .iter()
-                .filter_map(|entry| {
-                    let kind = entry.get("kind")?.as_str()?.to_string();
-                    let paths = entry
-                        .get("paths")?
-                        .as_array()?
-                        .iter()
-                        .filter_map(|p| p.as_str().map(str::to_string))
-                        .collect();
-                    Some((kind, paths))
-                })
-                .collect()
+                .map(|path| path.as_str().map(str::to_string))
+                .collect::<Option<Vec<_>>>()?;
+            Some((kind, paths))
         })
-        .unwrap_or_default();
+        .collect::<Option<Vec<_>>>()?;
     Some(Election { all_kinds, keys })
 }
 
@@ -1224,29 +1240,79 @@ mod tests {
         );
     }
 
-    /// A malformed opener falls to the default election, the envelope of
-    /// every kind, which is the contract's default and never a guess.
+    // Shared by the parser and both real-door watches. Valid entries surround
+    // invalid entries so silently filtering a partial election cannot pass.
+    pub(super) fn malformed_openers() -> Vec<String> {
+        use serde_json::{Value, json};
+        let wrap = |election| json!({"session":"target", "election":election}).to_string();
+        let mut cases = vec![
+            "not json".into(),
+            "null".into(),
+            "[]".into(),
+            json!({"session":"target"}).to_string(),
+        ];
+        for election in [
+            Value::Null,
+            json!([]),
+            json!(false),
+            json!({}),
+            json!({"keys":[]}),
+            json!({"all_kinds":false}),
+        ] {
+            cases.push(wrap(election));
+        }
+        for bad in [Value::Null, json!("false"), json!(0), json!([]), json!({})] {
+            cases.push(wrap(json!({"all_kinds":bad,"keys":[]})));
+        }
+        for bad in [Value::Null, json!(false), json!(0), json!(""), json!({})] {
+            cases.push(wrap(json!({"all_kinds":false,"keys":bad})));
+        }
+        let good = json!({"kind":"load", "paths":["new.index"]});
+        let mut bad_entries = vec![
+            Value::Null,
+            json!([]),
+            json!(false),
+            json!("kind"),
+            json!({}),
+            json!({"kind":"load"}),
+            json!({"paths":[]}),
+        ];
+        for bad in [Value::Null, json!(false), json!(0), json!([]), json!({})] {
+            bad_entries.push(json!({"kind":bad,"paths":[]}));
+        }
+        for bad in [Value::Null, json!(false), json!(0), json!(""), json!({})] {
+            bad_entries.push(json!({"kind":"load","paths":bad}));
+        }
+        for bad in [Value::Null, json!(false), json!(0), json!([]), json!({})] {
+            bad_entries.push(json!({"kind":"load","paths":["before",bad,"after"]}));
+        }
+        for bad in bad_entries {
+            cases.push(wrap(json!({"all_kinds":false,"keys":[good,bad,good]})));
+        }
+        cases
+    }
+
     #[test]
-    fn a_malformed_opener_falls_back_to_the_default() {
-        for bad in ["not json", "{}", r#"{"election":{"keys":[]}}"#] {
-            let election = parse_election(bad).unwrap_or_default();
-            assert!(election.all_kinds, "{bad}");
-            assert!(election.keys.is_empty(), "{bad}");
+    fn a_malformed_election_refuses_whole() {
+        for opener in malformed_openers() {
+            assert!(parse_election(&opener).is_none(), "accepted {opener}");
         }
     }
 
-    /// An entry missing its paths member is dropped whole, while an entry
-    /// with an empty paths list stands as the meaningful envelope-only
-    /// election. The tee always renders paths, so the dropped shape is a
-    /// hand-built opener's defect, documented here as the current behavior.
     #[test]
-    fn an_entry_without_paths_is_dropped_whole() {
-        let opener = concat!(
-            r#"{"election":{"all_kinds":false,"keys":["#,
-            r#"{"kind":"load"},{"kind":"turn.closed","paths":[]}]}}"#
-        );
-        let election = parse_election(opener).expect("parses");
-        assert_eq!(election.keys, vec![("turn.closed".to_string(), vec![])]);
+    fn explicit_empty_keys_and_paths_remain_elections() {
+        for all_kinds in [false, true] {
+            for keys in [vec![], vec![("load".to_string(), vec![])]] {
+                let wire_keys: Vec<_> = keys
+                    .iter()
+                    .map(|(kind, paths)| serde_json::json!({"kind":kind,"paths":paths}))
+                    .collect();
+                let opener = serde_json::json!({"election":{
+                    "all_kinds":all_kinds,"keys":wire_keys,"future":null}})
+                .to_string();
+                assert_eq!(parse_election(&opener), Some(Election { all_kinds, keys }));
+            }
+        }
     }
 
     /// A distillate as the tee renders it parses whole on this end: the
