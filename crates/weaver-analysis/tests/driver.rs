@@ -680,6 +680,39 @@ fn derive_requires_and_renders_a_distinct_destination() {
     }
 }
 
+// A child may refuse before reading stdin. Its status and stderr still decide
+// the result; only the resulting broken pipe is an expected write failure.
+fn write_signals_input(mut input: std::process::ChildStdin, record: &[u8]) {
+    use std::io::{ErrorKind, Write};
+    if let Err(error) = input.write_all(record) {
+        assert_eq!(error.kind(), ErrorKind::BrokenPipe, "{error}");
+    }
+}
+
+/// Wait for an actual early refusal before writing, making the pipe failure
+/// deterministic. Restoring write_all(...).unwrap() must fail this watch.
+#[test]
+fn signals_input_tolerates_a_child_that_already_refused() {
+    use std::process::{Command, Stdio};
+    let mut child = Command::new(env!("CARGO_BIN_EXE_weaver-analysis"))
+        .args(["signals", "-", "not-a-number"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let input = child.stdin.take().unwrap();
+    assert!(!child.wait().unwrap().success());
+    write_signals_input(input, b"record the refusing child never reads\n");
+    let result = child.wait_with_output().unwrap();
+    assert!(!result.status.success());
+    assert!(result.stdout.is_empty());
+    assert!(
+        String::from_utf8_lossy(&result.stderr)
+            .contains("the spike bar is not a finite number: not-a-number")
+    );
+}
+
 struct SignalsFiles(std::path::PathBuf);
 
 impl SignalsFiles {
@@ -696,7 +729,6 @@ impl SignalsFiles {
     }
 
     fn run(&self, deposit: Option<&str>, pipe: bool) -> std::process::Output {
-        use std::io::Write;
         use std::process::{Command, Stdio};
         let path = self.0.join("a-path-that-is-not-the-record-run.ndjson");
         std::fs::write(&path, SIGNALS_RECORD).unwrap();
@@ -711,11 +743,12 @@ impl SignalsFiles {
             .stderr(Stdio::piped())
             .spawn()
             .unwrap();
-        let mut input = child.stdin.take().unwrap();
+        let input = child.stdin.take().unwrap();
         if pipe {
-            input.write_all(SIGNALS_RECORD.as_bytes()).unwrap();
+            write_signals_input(input, SIGNALS_RECORD.as_bytes());
+        } else {
+            drop(input);
         }
-        drop(input);
         child.wait_with_output().unwrap()
     }
 }
