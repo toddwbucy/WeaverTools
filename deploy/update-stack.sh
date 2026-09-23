@@ -7,7 +7,8 @@
 #   ./deploy/update-stack.sh            plan only; refreshes refs, tests and builds, no install
 #   ./deploy/update-stack.sh --install  plan, then install what changed
 #
-# Plan mode writes git refs and build artifacts but invokes no sudo.
+# Plan mode writes git refs and build artifacts. On main it also fast-forwards
+# HEAD and rewrites the working tree. It invokes no sudo.
 # The plan is the point. An install that swaps every binary hides which act
 # actually moved, and the campaign's comparability rests on knowing that, so
 # this diffs deployed against built and installs only what differs.

@@ -17,58 +17,95 @@ import unittest
 
 DEPLOY = Path(__file__).resolve().parent
 DOUBLE = r'''#!/usr/bin/env python3
-import json, os, pathlib, sys
+import json, os, pathlib, shutil, subprocess, sys
 name = pathlib.Path(sys.argv[0]).name
 args = sys.argv[1:]
-with open(os.environ["CALLS"], "a") as log:
-    log.write(json.dumps([name, *args]) + "\n")
-if name == "getent":
-    sys.exit(0 if os.environ.get("COLLISION") == args[-1] else 2)
-if name == "git":
-    if args[0] == "rev-parse": print("abcdef0")
-    elif args[0] == "branch": print("fixture-branch")
-elif name == "hostname": print("fixture-box")
-elif name == "nvidia-smi": print("fixture-driver")
-elif name == "pacman": print("cccl 3.3.4-1")
-elif name == "cargo":
-    target = pathlib.Path(os.environ["CARGO_TARGET_DIR"])
-    if args[0] == "metadata": print(json.dumps({"target_directory": str(target)}))
-    elif args[0] == "test":
-        print("test result: ok. 1 passed; 0 failed; 0 ignored")
-    elif args[0] == "build":
-        if os.environ.get("BUILD_FAIL"):
-            print("fixture build refusal", file=sys.stderr)
+root = pathlib.Path(os.environ['FIXTURE_ROOT'])
+with open(os.environ['CALLS'], 'a') as log:
+    log.write(json.dumps([name, *args]) + '\n')
+def mapped(value):
+    if value.startswith('/home/'):
+        return str(root / value.lstrip('/'))
+    return value
+
+def shell_read(arguments):
+    if os.environ.get('READ_FAIL') == 'allow-list' and any(a.endswith('/allow-list') for a in arguments):
+        sys.exit(2)
+    if os.environ.get('PATH_FAIL') and os.environ['PATH_FAIL'] in arguments: sys.exit(1)
+    rewritten = list(map(mapped, arguments))
+    for argument in rewritten:
+        if argument.startswith('/'):
+            assert pathlib.Path(argument).is_relative_to(root), argument
+    sys.exit(subprocess.run(['/bin/sh', *rewritten]).returncode)
+
+if name == 'sh': shell_read(args)
+elif name == 'getent':
+    if os.environ.get('ACCOUNT_FAIL'): sys.exit(1)
+    sys.exit(0 if os.environ.get('COLLISION') == args[-1] else 2)
+elif name == 'id': print('12345')
+elif name == 'git':
+    if args[0] == 'rev-parse': print('abcdef0')
+    elif args[0] == 'branch': print('fixture-branch')
+elif name == 'hostname': print('fixture-box')
+elif name == 'nvidia-smi': print('fixture-driver')
+elif name == 'pacman': print('cccl 3.3.4-1')
+elif name == 'cargo':
+    target = pathlib.Path(os.environ['CARGO_TARGET_DIR'])
+    if args[0] == 'metadata': print(json.dumps({'target_directory': str(target)}))
+    elif args[0] == 'test': print('test result: ok. 1 passed; 0 failed; 0 ignored')
+    elif args[0] == 'build':
+        if os.environ.get('BUILD_FAIL'):
+            print('fixture build refusal', file=sys.stderr)
             sys.exit(42)
-        target.joinpath("release").mkdir(parents=True)
-        for member in ("pyworker", "worker", "weaver-admin", "weaver-gate", "weaver-spu", "weaver-state"):
-            target.joinpath("release", member).write_text("fixture artifact " + member)
+        target.joinpath('release').mkdir(parents=True)
+        for member in ('pyworker', 'worker', 'weaver-admin', 'weaver-gate', 'weaver-spu', 'weaver-state'):
+            target.joinpath('release', member).write_text('fixture artifact ' + member)
     else: sys.exit(99)
-elif name == "sudo":
-    if os.environ.get("ALLOW_APPLY_CHECKS"):
-        if args == ["-v"]: sys.exit(1 if os.environ.get("SUDO_FAIL") else 0)
-        elif args[:2] == ["-n", "cat"]:
-            if args[2].endswith("allow-list") and os.environ.get("READ_FAIL") == "allow-list": sys.exit(2)
-            print(pathlib.Path(args[2]).read_text(), end="")
-        elif args[:2] == ["-n", "grep"]:
-            sys.exit(2 if os.environ.get("READ_FAIL") == "allow-list" else 1)
-        elif args[:2] == ["-n", "systemctl"]:
-            sys.exit(2 if os.environ.get("READ_FAIL") == args[2] else 0)
-        elif "psql" in args:
-            query = args[-1]
-            if os.environ.get("READ_FAIL") and os.environ["READ_FAIL"] in query: sys.exit(2)
-            if os.environ.get("EMPTY_PATH") and os.environ["EMPTY_PATH"] in query: sys.exit(0)
-            if "pg_roles" in query and os.environ.get("ROLE_COLLISION"): print("1")
-            elif "show hba_file" in query: print("/fixture/pg_hba.conf")
-            elif "show ident_file" in query: print("/fixture/pg_ident.conf")
-        else: sys.exit(99)
+elif name == 'sudo':
+    if not os.environ.get('ALLOW_APPLY_CHECKS'): sys.exit(99)
+    if args == ['-v']: sys.exit(1 if os.environ.get('SUDO_FAIL') else 0)
+    command = args[:]
+    if command[0] == '-n': command.pop(0)
+    identity = ''
+    if command[0] == '-u':
+        command.pop(0)
+        identity = command.pop(0)
+    op, *rest = command
+    if op == 'sh': shell_read(rest)
+    elif op == 'systemctl': sys.exit(2 if os.environ.get('READ_FAIL') == rest[0] else 0)
+    elif op == 'psql':
+        query = rest[-1]
+        if os.environ.get('READ_FAIL') and os.environ['READ_FAIL'] in query: sys.exit(2)
+        if os.environ.get('EMPTY_PATH') and os.environ['EMPTY_PATH'] in query: sys.exit(0)
+        if 'pg_roles' in query and os.environ.get('ROLE_COLLISION'): print('1')
+        elif 'show hba_file' in query: print(root / 'pg_hba.conf')
+        elif 'show ident_file' in query: print(root / 'pg_ident.conf')
+        elif query == 'select 1': sys.exit(1 if identity == 'weaver-m1' else 0)
+    elif op in ('grep', 'sed'):
+        # Execute only the text operation on scratch files, never via sudo.
+        file = pathlib.Path(mapped(rest[-1]))
+        assert file.is_relative_to(root), file
+        sys.exit(subprocess.run(['/usr/bin/' + op, *rest[:-1], str(file)]).returncode)
+    elif op == 'tee':
+        file = pathlib.Path(mapped(rest[-1]))
+        assert file.is_relative_to(root), file
+        with file.open('a' if '-a' in rest else 'w') as output: output.write(sys.stdin.read())
+    elif op == 'cp':
+        source, destination = (pathlib.Path(mapped(a)) for a in rest[-2:])
+        assert source.is_relative_to(root) and destination.is_relative_to(root)
+        shutil.copyfile(source, destination)
+    elif op == 'install':
+        directory = pathlib.Path(mapped(rest[-1]))
+        assert directory.is_relative_to(root), directory
+        directory.mkdir(parents=True, exist_ok=True)
+    elif op in ('useradd', 'usermod', 'chmod', 'setfacl'): pass
     else: sys.exit(99)
-elif name == "mktemp":
-    if os.environ.get("ALLOW_APPLY_CHECKS"):
-        probe = pathlib.Path(os.environ["PROBE"])
-        probe.mkdir()
-        print(probe)
-    else: sys.exit(99)
-elif name == "setfacl": sys.exit(1)
+elif name == 'mktemp':
+    if not os.environ.get('ALLOW_APPLY_CHECKS'): sys.exit(99)
+    probe = pathlib.Path(os.environ['PROBE'])
+    probe.mkdir()
+    print(probe)
+elif name == 'setfacl': sys.exit(1 if os.environ.get('ACL_FAIL') else 0)
 else: sys.exit(99)
 '''
 
@@ -88,11 +125,17 @@ class PlanTests(unittest.TestCase):
         (self.config / "worker-binary").write_text(str(self.root / "installed" / "pyworker"))
         (self.config / "allow-list").write_text("existing\n")
         (self.agents / "existing.yaml").write_text("state-store:\n  engine: none\n")
+        self.home = self.root / "home"
+        (self.home / "fixture-no-home" / ".weaveragents").mkdir(parents=True)
+        self.hba = self.root / "pg_hba.conf"
+        self.hba.write_text("local all all peer\n")
+        self.ident = self.root / "pg_ident.conf"
+        self.ident.touch()
         self.artifact = self.root / "model.gguf"
         self.artifact.touch()
         self.bin = self.root / "bin"
         self.bin.mkdir()
-        for name in ("sudo", "systemctl", "psql", "mktemp", "setfacl", "getent", "git", "cargo", "hostname", "nvidia-smi", "pacman"):
+        for name in ("sudo", "systemctl", "psql", "mktemp", "setfacl", "getent", "git", "cargo", "hostname", "nvidia-smi", "pacman", "sh", "id"):
             command = self.bin / name
             command.write_text(DOUBLE)
             command.chmod(0o755)
@@ -100,9 +143,26 @@ class PlanTests(unittest.TestCase):
         self.env = {**os.environ, "PATH": str(self.bin) + os.pathsep + os.environ["PATH"],
                     "WEAVER_ADMIN_CONFIG": str(self.config), "CALLS": str(self.log),
                     "CARGO_TARGET_DIR": str(self.root / 'target with "quotes"'),
-                    "USER": "fixture-no-home", "PROBE": str(self.root / "probe")}
-        for name in ("BASH_ENV", "SUDO_USER", "COLLISION", "ALLOW_APPLY_CHECKS", "ROLE_COLLISION", "BUILD_FAIL", "SUDO_FAIL", "READ_FAIL", "EMPTY_PATH"):
+                    "USER": "fixture-no-home", "PROBE": str(self.root / "probe"),
+                    "FIXTURE_ROOT": str(self.root)}
+        for name in ("BASH_ENV", "SUDO_USER", "COLLISION", "ALLOW_APPLY_CHECKS", "ROLE_COLLISION", "BUILD_FAIL", "SUDO_FAIL", "READ_FAIL", "EMPTY_PATH", "ACL_FAIL", "PATH_FAIL", "ACCOUNT_FAIL"):
             self.env.pop(name, None)
+        # Redirect even shell builtin /home probes into the fixture. The
+        # production scripts have no test-only path switches and never read
+        # the host's real agent homes during these tests.
+        preamble = self.root / "fixture.bash"
+        preamble.write_text("""fixture_args() {
+  local arg
+  fixture_mapped=()
+  for arg in "$@"; do
+    case "$arg" in /home/*) arg="$FIXTURE_ROOT$arg";; esac
+    fixture_mapped+=("$arg")
+  done
+}
+[() { fixture_args "$@"; builtin [ "${fixture_mapped[@]}"; }
+test() { fixture_args "$@"; builtin test "${fixture_mapped[@]}"; }
+""")
+        self.env["BASH_ENV"] = str(preamble)
 
     def run_script(self, name, *args):
         return subprocess.run(["bash", str(self.repo / "deploy" / name), *args],
@@ -118,7 +178,7 @@ class PlanTests(unittest.TestCase):
         forbidden = {"sudo", "systemctl", "psql", "mktemp", "setfacl"}
         self.assertFalse([c for c in self.calls() if c[0] in forbidden], self.calls())
 
-    def test_agent_plan_defers_privileged_checks_without_writes(self):
+    def test_agent_plan_defers_privilege_and_preserves_fixture_files(self):
         before = {p: p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
         result = self.create()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -140,12 +200,14 @@ class PlanTests(unittest.TestCase):
                 self.assertIn("agent-config-directory", result.stderr)
         self.assert_unprivileged()
 
-    def test_agent_plan_refuses_missing_allow_list(self):
+    def test_missing_allow_list_is_empty_in_both_modes(self):
         (self.config / "allow-list").unlink()
         result = self.create()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("cannot read", result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assert_unprivileged()
+        self.env.update(ALLOW_APPLY_CHECKS="1", ACL_FAIL="1")
+        result = self.create("--apply")
+        self.assertIn("refuses access entries", result.stderr)
 
     def test_agent_plan_refuses_visible_collisions(self):
         for collision in ("account", "declaration", "allow-list"):
@@ -167,13 +229,13 @@ class PlanTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("role weaver_m1 already exists", result.stderr)
         self.assertFalse(any("useradd" in c for c in self.calls()))
-        self.assertFalse(any(c[0] == "mktemp" for c in self.calls()))
 
     def test_apply_still_probes_acl_before_creation(self):
-        self.env["ALLOW_APPLY_CHECKS"] = "1"
+        self.env.update(ALLOW_APPLY_CHECKS="1", ACL_FAIL="1")
         result = self.create("--apply")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("refuses access entries", result.stderr)
+        self.assertFalse(any("systemctl" in c for c in self.calls()))
         self.assertTrue(any(c[0] == "setfacl" for c in self.calls()))
         self.assertFalse(any("useradd" in c for c in self.calls()))
         self.assertFalse(Path(self.env["PROBE"]).exists())
@@ -197,7 +259,6 @@ class PlanTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(cause, result.stderr)
                 self.assertFalse(any("useradd" in c for c in self.calls()))
-                self.assertFalse(any(c[0] == "mktemp" for c in self.calls()))
 
     def test_apply_empty_authentication_paths_refuse_before_creation(self):
         for path in ("hba_file", "ident_file"):
@@ -208,7 +269,112 @@ class PlanTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("empty " + path, result.stderr)
                 self.assertFalse(any("useradd" in c for c in self.calls()))
-                self.assertFalse(any(c[0] == "mktemp" for c in self.calls()))
+
+    def assert_no_provisioning(self):
+        self.assertFalse(any("useradd" in c or any("CREATE ROLE" in a or "CREATE DATABASE" in a for a in c)
+                             for c in self.calls()), self.calls())
+
+    def test_authentication_preconditions_refuse_before_provisioning(self):
+        for fault in ("no-peer", "missing-hba", "missing-ident"):
+            with self.subTest(fault=fault):
+                self.log.unlink(missing_ok=True)
+                self.hba.write_text("local all all peer\n")
+                self.ident.touch()
+                if fault == "no-peer": self.hba.write_text("local all all trust\n")
+                elif fault == "missing-hba": self.hba.unlink()
+                else: self.ident.unlink()
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create("--apply")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("anchor" if fault == "no-peer" else "authentication file", result.stderr)
+                self.assert_no_provisioning()
+
+    def test_missing_declaration_directory_refuses_both_modes(self):
+        (self.config / "agent-config-directory").write_text(str(self.root / "missing"))
+        for apply in (False, True):
+            with self.subTest(apply=apply):
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create(*(["--apply"] if apply else []))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("declaration directory", result.stderr)
+                self.assert_no_provisioning()
+
+    def test_invalid_engine_does_not_prompt_for_sudo(self):
+        result = self.create("--apply", "--engine", "invalid")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(c[0] == "sudo" for c in self.calls()))
+
+    def test_apply_uses_privileged_collision_reads(self):
+        for path in (self.agents / "m1.yaml", self.home / "weaver-m1",
+                     self.home / "fixture-no-home" / ".weaveragents" / "weaver-m1"):
+            with self.subTest(path=path):
+                self.log.unlink(missing_ok=True)
+                path.touch()
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create("--apply")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("already exists", result.stderr)
+                logical = str(path).removeprefix(str(self.root)) if path.is_relative_to(self.home) else str(path)
+                self.assertTrue(any(c[0] == "sudo" and logical in c for c in self.calls()))
+                self.assert_no_provisioning()
+                path.unlink()
+
+    def test_configuration_and_allow_list_are_trimmed_in_both_modes(self):
+        (self.config / "agent-config-directory").write_text("  " + str(self.agents) + " \r\n")
+        (self.config / "allow-list").write_text("existing\n  m1 \r\n")
+        for apply in (False, True):
+            with self.subTest(apply=apply):
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create(*(["--apply"] if apply else []))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("m1 is already in", result.stderr)
+                self.assertIn(str(self.agents / "m1.yaml"), result.stdout)
+                self.assert_no_provisioning()
+
+    def test_present_unreadable_allow_list_refuses_in_both_modes(self):
+        # Inject an I/O refusal; chmod alone is ineffective under root test runners.
+        self.env["READ_FAIL"] = "allow-list"
+        for apply in (False, True):
+            with self.subTest(apply=apply):
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create(*(["--apply"] if apply else []))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("cannot read", result.stderr)
+                self.assert_no_provisioning()
+
+    def test_failed_account_lookup_is_not_absence(self):
+        self.env["ACCOUNT_FAIL"] = "1"
+        for apply in (False, True):
+            with self.subTest(apply=apply):
+                self.env["ALLOW_APPLY_CHECKS"] = "1"
+                result = self.create(*(["--apply"] if apply else []))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("cannot read account", result.stderr)
+                self.assert_no_provisioning()
+
+    def test_failed_privileged_path_inspection_is_not_absence(self):
+        self.env.update(ALLOW_APPLY_CHECKS="1", PATH_FAIL=str(self.agents / "m1.yaml"))
+        result = self.create("--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("cannot inspect", result.stderr)
+        self.assert_no_provisioning()
+
+    def test_apply_fixture_reaches_the_end_using_only_configured_directory(self):
+        (self.config / "allow-list").unlink()
+        self.env["ALLOW_APPLY_CHECKS"] = "1"
+        result = self.create("--apply")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("== made", result.stdout)
+        self.assertTrue((self.agents / "m1.yaml").is_file())
+        self.assertIn("m1", (self.config / "allow-list").read_text().splitlines())
+        self.assertIn("local   weaver_m1", self.hba.read_text())
+        self.assertIn("weaver-m1-state", self.ident.read_text())
+        calls = self.calls()
+        sql = [c for c in calls if "psql" in c]
+        self.assertTrue(any("CREATE ROLE" in c[-1] for c in sql))
+        self.assertTrue(any("CREATE DATABASE" in c[-1] for c in sql))
+        self.assertTrue(all("-X" in c for c in sql))
+        self.assertFalse(any("/etc/weaver/agents" in c for c in calls))
 
     def test_stack_plan_excludes_web_and_compares_all_members(self):
         result = self.run_script("update-stack.sh")
