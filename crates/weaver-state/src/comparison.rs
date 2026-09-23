@@ -1059,12 +1059,28 @@ fn malformed_first_door_elections_leave_custody_untouched() {
 #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory, unshare -Ur, and a built weaver-analysis binary"]
 fn malformed_preload_elections_leave_custody_untouched() {
     child_entry();
-    for opener in super::tests::malformed_openers() {
-        // A frame without a session is already dropped before election parsing.
-        // Keep that existing behavior outside this election-only correction.
-        if super::parse_session(&opener).is_none() {
-            continue;
-        }
+    let mut cases = super::tests::malformed_openers();
+    let valid_election = json!({"all_kinds":true,"keys":[]});
+    cases.push(json!({"election":valid_election}).to_string());
+    for session in [
+        Value::Null,
+        json!(""),
+        json!(false),
+        json!(0),
+        json!([]),
+        json!({}),
+    ] {
+        cases.push(json!({"session":session,"election":valid_election}).to_string());
+    }
+    // A well-shaped opener can still be refused by the engine. That refusal
+    // belongs to this driver's attempt too, not to the standing member.
+    let long_path = "x".repeat(1024);
+    cases.push(
+        json!({"session":"target","election":{"all_kinds":false,
+        "keys":[{"kind":"load","paths":["new.index",long_path]}]}})
+        .to_string(),
+    );
+    for opener in cases {
         let mut member = Member::new(
             Election {
                 all_kinds: true,
@@ -1075,37 +1091,88 @@ fn malformed_preload_elections_leave_custody_untouched() {
         );
         let mut client = seeded_custody(&member);
         let before = custody_snapshot(&mut client);
+        // Shape is a barrier proving the prior replay ask reached parking.
+        member.send("{\"ask\":{\"replay\":{}}}\n");
+        member.ask("shape", None);
+        assert!(member.receive(Duration::from_millis(25)).is_none());
+        let retry_opener = weaver_trace::opener(
+            "target",
+            &Election {
+                all_kinds: true,
+                keys: vec![],
+            },
+        );
+        let row = concat!(
+            r#"{"envelope":{"session":"target","run":"retry","kind":"load","sequence":"1"},"pairs":{}}"#,
+            "\n"
+        );
         let mut preload = member.connect_preload();
+        preload.set_read_timeout(Some(WAIT)).unwrap();
+        // Keep the bad driver alive and coalesce trailing valid traffic. No
+        // frame after its rejected opener may land or seal a parked answer.
         preload
-            .write_all((opener.clone() + "\n").as_bytes())
+            .write_all(format!("{opener}\n{retry_opener}{row}{{}}\n").as_bytes())
             .unwrap();
-        drop(preload);
-        // Leave the harness alive: refusal must come from the preload itself.
-        // A caller-default mutation retires rows, so poll the same bound while
-        // retaining those observations even if the mutant never exits.
-        let until = Instant::now() + WAIT;
-        let status = loop {
-            if let Some(status) = member.process.0.try_wait().unwrap() {
-                break Some(status);
-            }
-            if custody_snapshot(&mut client) != before || Instant::now() >= until {
-                break None;
-            }
-            std::thread::sleep(Duration::from_millis(5));
-        };
+        let mut byte = [0];
+        match preload.read(&mut byte) {
+            Ok(0) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::ConnectionReset => {}
+            other => panic!("refused preload was not closed: {other:?}; {opener}"),
+        }
+        assert!(
+            member.process.0.try_wait().unwrap().is_none(),
+            "refusal killed member: {}",
+            member.log()
+        );
         assert_eq!(
             custody_snapshot(&mut client),
             before,
             "changed custody: {opener}"
         );
-        assert!(status.is_some_and(|s| !s.success()), "no refusal: {opener}");
+        let fault = if super::parse_session(&opener).is_none_or(|s| s.is_empty()) {
+            "missing nonempty session in preload opener"
+        } else if super::parse_election(&opener).is_none() {
+            "malformed election in preload opener"
+        } else {
+            "the elected key path"
+        };
+        assert!(member.log().contains(fault), "{}", member.log());
+        member.ask("shape", None); // The harness still serves on the same member.
         assert!(
-            member
-                .log()
-                .contains("malformed election in preload opener"),
-            "{}",
-            member.log()
+            member.receive(Duration::from_millis(25)).is_none(),
+            "refusal released replay"
         );
+        drop(preload);
+        // Connect succeeding proves the door re-stood. Do not send a new ask:
+        // the successful retry must release the one parked before the refusal.
+        let mut retry = member.connect_preload();
+        retry
+            .write_all(format!("{retry_opener}{row}{{}}\n").as_bytes())
+            .unwrap();
+        let answer = member
+            .receive(WAIT)
+            .expect("retry releases original parked replay");
+        let value: Value = serde_json::from_str(&answer).unwrap();
+        let events = value["answer"]["replay"]["events"].as_array().unwrap();
+        assert_eq!(events.len(), 1, "{answer}");
+        assert_eq!(events[0]["envelope"]["run"], "retry");
+        assert!(
+            member.receive(Duration::from_millis(25)).is_none(),
+            "duplicate parked answer"
+        );
+        let after = custody_snapshot(&mut client);
+        assert_eq!(
+            after[2], before[2],
+            "no new indexes from refused attempt or empty retry"
+        );
+        assert_eq!(after[0].len(), 2, "retry replaces only the target");
+        assert!(after[0].contains(&before[0][1]), "neighbor event unchanged");
+        assert_eq!(
+            after[1],
+            vec![before[1][1].clone()],
+            "neighbor field unchanged"
+        );
+        assert!(member.process.0.try_wait().unwrap().is_none());
     }
 }
 

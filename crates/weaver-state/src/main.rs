@@ -336,7 +336,7 @@ fn serve(
         // parked ask answers in that wakeup rather than the next.
         if second_ready {
             if let Some(channel) = preload.as_mut() {
-                let live = fill_buffer(channel, &mut preload_frames);
+                let mut live = fill_buffer(channel, &mut preload_frames);
                 while let Some(line) = take_frame(&mut preload_frames) {
                     if !preload_opened {
                         // **The opener's retirement is the one act this path
@@ -346,33 +346,41 @@ fn serve(
                         // lands, so re-running a preload replaces the
                         // holdings rather than appending to them and a dead
                         // driver's prefix needs no cleanup act. **A frame
-                        // declaring no session is not an opener**: dropped
-                        // whole without retiring, the sender's defect per
-                        // the contract, because a retirement keyed on a
-                        // guess would delete holdings the driver never
-                        // named.
+                        // declaring no session is not an opener**. Every
+                        // refused opener ends this driver's attempt without
+                        // retiring holdings or killing the member. The
+                        // dead-driver cleanup below clears buffered traffic
+                        // and re-stands the door, keeping parked asks parked.
                         let Some(preload_session) = parse_session(&line).filter(|s| !s.is_empty())
                         else {
-                            continue;
+                            eprintln!(
+                                "{}",
+                                serde_json::json!({"state_fault": "missing nonempty session in preload opener"})
+                            );
+                            live = false;
+                            break;
                         };
                         let Some(election) = parse_election(&line) else {
                             eprintln!(
                                 "{}",
                                 serde_json::json!({"state_fault": "malformed election in preload opener"})
                             );
-                            return std::process::ExitCode::FAILURE;
+                            live = false;
+                            break;
                         };
                         // **A refused election says which path refused it.**
                         // This door can fail on an election the operator
-                        // wrote, per the service engine's naming, and a bare
-                        // non-zero exit leaves the diagnosis nowhere. The
-                        // first door prints the same line.
+                        // wrote, per the service engine's naming. Preserve
+                        // the diagnosis while the member stays alive for a
+                        // retry. The first door prints the same fault before
+                        // its startup exit.
                         if let Err(fault) = store.retire_and_index(&preload_session, &election) {
                             eprintln!(
                                 "{}",
                                 serde_json::json!({"state_fault": format!("{fault:?}")})
                             );
-                            return std::process::ExitCode::FAILURE;
+                            live = false;
+                            break;
                         }
                         preload_opened = true;
                         continue;
