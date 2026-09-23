@@ -8,44 +8,65 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-/// **The dependency set is empty.** Read from the lockfile's view of this
-/// package rather than the manifest's text, so a dependency arriving by any
-/// route is what the instrument sees.
+/// **The dependency set is empty, of every kind.** Read from cargo's own
+/// declared dependency list for this package, so a dependency arriving by any
+/// route, normal, build or dev, target-qualified, behind a feature or under a
+/// rename, is what the instrument sees, per the ruling of 2026-09-23 on #577.
+/// Python's standard JSON parser keeps this crate's own edges empty.
+/// Perturbations: add a dev-dependency, a target-qualified dependency, or an
+/// optional dependency behind a feature; each adds a declaration.
 #[test]
 fn the_dependency_set_is_empty() {
     let out = Command::new(env!("CARGO"))
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
         .args([
-            "tree",
-            "-p",
-            "weaver-internal",
-            "--edges",
-            "normal,build",
-            "--prefix",
-            "none",
-            // This inner cargo may not write the lock as a side effect of
-            // answering. It does not prove the lock was in step, the outer
-            // `cargo test` having resolved before this binary was spawned.
-            // `process/gates/lock.sh` is where that is bought, ahead of the
-            // suite, per issue #551's third ask.
+            "metadata",
+            "--no-deps",
+            "--format-version",
+            "1",
             "--locked",
             "--offline",
         ])
         .output()
-        .expect("cargo tree runs");
+        .expect("cargo metadata runs");
     assert!(
         out.status.success(),
-        "cargo tree failed: {}",
+        "cargo metadata failed: {}",
         String::from_utf8_lossy(&out.stderr)
     );
-    let tree = String::from_utf8(out.stdout).expect("utf8");
-    let dependencies: Vec<&str> = tree
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with("weaver-internal"))
-        .collect();
+    let mut check = Command::new("python3")
+        .args([
+            "-c",
+            r#"
+import json
+import sys
+
+packages = [p for p in json.load(sys.stdin)["packages"]
+            if p["name"] == "weaver-internal"]
+assert len(packages) == 1, "metadata must name exactly one weaver-internal package"
+declared = [(d["name"], d["kind"], d.get("target"), d.get("optional"))
+            for d in packages[0]["dependencies"]]
+assert declared == [], f"a pure member names no dependency of any kind; got {declared!r}"
+"#,
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("python3 (the census gate prerequisite) runs");
+    check
+        .stdin
+        .take()
+        .expect("parser stdin")
+        .write_all(&out.stdout)
+        .expect("metadata reaches the JSON parser");
+    let checked = check
+        .wait_with_output()
+        .expect("dependency check completes");
     assert!(
-        dependencies.is_empty(),
-        "a pure member names no dependency: {dependencies:?}"
+        checked.status.success(),
+        "cargo's declared dependency set violates the empty-set claim: {}",
+        String::from_utf8_lossy(&checked.stderr)
     );
 }
 
