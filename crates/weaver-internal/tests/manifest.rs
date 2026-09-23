@@ -8,16 +8,18 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-/// **The dependency set is empty, of every kind.** Read from cargo's own
-/// declared dependency list for this package, so a dependency arriving by any
-/// route, normal, build or dev, target-qualified, behind a feature or under a
-/// rename, is what the instrument sees, per the ruling of 2026-09-23 on #577.
-/// Python's standard JSON parser keeps this crate's own edges empty, and it
-/// refuses by `sys.exit` rather than `assert`, which optimization strips.
-/// Perturbations: add a dev-dependency, a target-qualified dependency, or an
-/// optional dependency behind a feature; each adds a declaration.
+/// **No normal dependency ships.** Read from cargo's own declared dependency
+/// list for this package, where the normal kind is `null`, so a normal
+/// dependency arriving by any route, target-qualified, behind a feature or under
+/// a rename, is what the instrument sees. Build and dev declarations are
+/// admitted, per the operator's ruling of 2026-09-23 on #577: nothing is
+/// compiled into the library unless operations require it. Python's standard
+/// JSON parser keeps this crate's own normal edges empty, and it refuses by
+/// `sys.exit` rather than `assert`, which optimization strips.
+/// Perturbations: a normal, a target-qualified, an optional and a renamed
+/// normal dependency each fail; a build and a dev dependency each pass.
 #[test]
-fn the_dependency_set_is_empty() {
+fn no_normal_dependency_ships() {
     let out = Command::new(env!("CARGO"))
         .current_dir(env!("CARGO_MANIFEST_DIR"))
         .args([
@@ -46,10 +48,10 @@ packages = [p for p in json.load(sys.stdin)["packages"]
             if p["name"] == "weaver-internal"]
 if len(packages) != 1:
     sys.exit("metadata must name exactly one weaver-internal package")
-declared = [(d["name"], d["kind"], d.get("target"), d.get("optional"))
-            for d in packages[0]["dependencies"]]
-if declared:
-    sys.exit(f"a pure member names no dependency of any kind; got {declared!r}")
+normal = [(d["name"], d.get("rename"), d.get("target"), d.get("optional"))
+          for d in packages[0]["dependencies"] if d["kind"] is None]
+if normal:
+    sys.exit(f"a pure member ships no normal dependency; got {normal!r}")
 "#,
         ])
         .stdin(Stdio::piped())
@@ -68,7 +70,7 @@ if declared:
         .expect("dependency check completes");
     assert!(
         checked.status.success(),
-        "cargo's declared dependency set violates the empty-set claim: {}",
+        "cargo's declared dependencies include a normal one: {}",
         String::from_utf8_lossy(&checked.stderr)
     );
 }

@@ -14,7 +14,7 @@
 //! socket dialed or bound - and every framework member is a function of its
 //! arguments alone, no filesystem, no network, no clock, no randomness, and
 //! no state between calls. The manifest half of the pure bar is the empty
-//! dependency set, read by `tests/manifest.rs`.
+//! normal dependency set, read by `tests/manifest.rs`.
 //!
 //! Until the charter's calling-surface cell settles, a member's surface is
 //! the interim minimum of Spec section 2: one public pure function per
