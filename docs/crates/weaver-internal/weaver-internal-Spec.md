@@ -9,7 +9,7 @@ section 6.
 **Document ID:** `weaver-internal-Spec`
 **Parent:** `weaver-internal-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #587
+**Landing PR:** #663
 
 ---
 
@@ -25,18 +25,27 @@ framework's own members alone.
 
 ## 1. The crate
 
-One library target and nothing else: no binary, because a member holds no process, and
-no socket bound anywhere in the crate, because a member that listened would have an
-inbound seam the charter forbids. **The dependency set is empty.** The first member
-computes over its arguments with the standard library alone, and an empty set is the
-manifest form of the charter's pure bar: a crate that cannot name a filesystem, network,
-or clock crate cannot reach one by dependency. A member that needs a dependency is
+One library target and nothing else shipped: no binary, because a member holds no
+process, and no socket bound anywhere in the crate, because a member that listened
+would have an inbound seam the charter forbids. The one target beside the library is
+the manifest instrument's own test, which ships nothing. **No normal dependency is
+declared**, on any target, behind any feature or under any rename, per the operator's
+ruling of 2026-09-23 on issue #577: nothing is compiled into the library unless
+operations require it. A normal dependency is admitted only on a demonstrated
+operational need with its filesystem access governed, controlled and accounted for,
+and no member has either. Build and dev dependencies are admitted, a dev dependency
+reaching only this crate's tests and a build dependency being unusable here, since the
+target-set instrument refuses a build script. The first member computes over its
+arguments with the standard library alone, and an empty normal set is the manifest form
+of the charter's pure bar: a crate that ships no filesystem, network, or clock crate
+cannot reach one by dependency. A member that needs a dependency is
 arguing for a promotion-space entry with operator-owned risk, and that argument happens
-in an act, not in a manifest edit. **The empty set grounds in apex section 5.1**, where
+in an act, not in a manifest edit. **The empty normal set grounds in apex section 5.1**,
+where
 `weaver-traits-Spec` section 1, `weaver-analysis-Spec` section 1 and
 `weaver-harness-Spec` section 1 ground the narrower claim of holding no internal
-dependency, and the reason carries because this set is the wider one: a crate that names
-no crate at all names no internal crate either, and the capability half is the same half
+dependency, and the reason carries because this set is the wider one: a crate that ships
+no crate at all ships no internal crate either, and the capability half is the same half
 those three argue, a member that cannot name a network crate being one that cannot reach
 another process except over a seam this invariant governs.
 
@@ -66,7 +75,8 @@ to: internal-one-library-target
 ```
 
 `internal-one-library-target` is the target-shape half of the same fact: the
-manifest declares exactly one library target and no target of any other kind,
+manifest declares exactly one library target and no shipped target of any other kind,
+the manifest instrument's test target standing beside it,
 which is the shape the first sentence of this section states and the
 instrument `weaver-spu`'s one-binary claim already uses.
 
@@ -225,9 +235,12 @@ to: internal-member-pure-function
 ## 5. What is enforced, and by which instrument
 
 Eight assertions. Two are the manifest instrument's: the resolved dependency
-set of the crate is empty, checked by a test reading the lockfile's view of
-this package, and the manifest declares exactly one library target and no
-other kind. The three perturbation claims are bought by
+set of the crate holds no dependency of the normal kind, checked by a test
+reading cargo's declared dependency list for this package on every target, feature
+and rename, build and dev declarations admitted, and the manifest declares exactly
+one library target and no
+shipped target of any other kind, checked by a test reading cargo's target
+inventory. The three perturbation claims are bought by
 tests that fail when the property is removed: the power conventions fail when the
 minus level or the associativity is moved, the own-words refusals fail when a
 refusal is replaced by a bare error, and the depth bound fails when the entry
