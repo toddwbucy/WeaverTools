@@ -652,9 +652,11 @@ both members of the charter's licence, at the precisions that clause states,
 their source the deposit the operator holds until the record event that
 clause names as owed lands - and a report that cannot establish either says
 so and carries no reproducibility claim, the absent member otherwise reading
-as one. `src/deposit.rs` reads the explicitly named deposit. Naming none leaves
-its members absent, and naming an unreadable deposit refuses rather than silently
-taking the named-none branch.
+as one. **The `read` report still cannot establish either member.** Its output
+carries the run, reader election, and outcome, and its invocation takes no deposit.
+Only `signals` reads an explicitly named deposit through `src/deposit.rs`, under
+the summary clause below. That reader does not discharge the reading report's
+licence obligation.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,
@@ -1036,8 +1038,10 @@ that looked beside the record would name nothing on a pipe**, which section 5 ab
 licenses as a sink shape, so the caller names it or names none. **The signals
 invocation takes the deposit's path beside the record's**, which is the shape a caller
 names one in, and `src/deposit.rs` reads it. The invocation accepts `--deposit`
-for file and pipe input alike. `tests/driver.rs` watches both input shapes, the
-named-none branch, and refusal of a named deposit that cannot be read or parsed.
+for file and pipe input alike. `tests/driver.rs` watches a valid named deposit
+and the named-none branch with both input shapes. Refusal of a named deposit that
+cannot be read or parsed is watched with pipe input only. The corresponding
+file-input refusal has no separate watch.
 
 **The agreement rule reaches what a run can agree on.** The sampling's declared members
 agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
@@ -1146,28 +1150,34 @@ generation, watched to fail when it is derived from a later generation or sent f
 drain that opened after the run's `load`, and watched to fail when the input identifiers
 are not subtracted, which names the first draw and not the prefix.
 
-**Recorded-election instruments.** `tests/driver.rs` holds the following
-obligations separately from the fixed-projection tests above. The three-way
-comparison with an independent tee stands in the state crate's in-file suite,
-reached through its test-only trace dependency, rather than through a new link
-from this crate.
+**Recorded-election instruments.** `tests/driver.rs` watches the CLI wire and
+refusals described below, with the remaining destination-agreement watch named
+beside its obligation. The three-way comparison with an independent tee is a
+separate live instrument in the state crate's in-file suite. It is ignored by
+default and requires scratch PostgreSQL, `unshare -Ur`, and a prebuilt analysis
+binary. It cites state claims, not `analysis-reconstruction-follows-recorded-election`,
+and is not that row's instrument. The tee is reached through state's test-only
+trace dependency, rather than through a new link from this crate.
 
-- Recorded reconstruction: compare the record, an independent tee, and ordinary
-  reconstruction. Include unknown elected kinds and paths, all-kinds with no named
+- Recorded reconstruction: compare the CLI wire with the fixture's expected
+  elected material. Include unknown elected kinds and paths, all-kinds with no named
   kinds, a restrictive empty rule retaining turnless system messages, and an excluded
   ordinary event. Preserve first-match precedence for duplicate-kind entries.
   Restoring the fixed default, dropping unknown material, suppressing the system
   exception, or merging or sorting duplicates before selection must fail.
 - Preflight: absent or conflicting evidence, mixed source sessions, invalid cuts,
   and source-named cuts refuse without an opener and leave existing holdings intact.
-  Reversing conflicting duplicate-kind entries across runs refuses, while reordering
+  The CLI watch checks that the listening door receives no connection, rather than
+  querying a store after refusal. Reversing conflicting duplicate-kind entries
+  across runs refuses, while reordering
   distinct kinds or effective paths does not. Moving validation after the opener or
   accepting a source-named cut must fail the preservation check.
 - Diagnostic destination: missing, empty, or source-equal destinations refuse before
   the opener. Removing any of those checks must fail the refusal fixture.
 - Declaration destination: `derive --as` writes the requested distinct destination
   while keeping source evidence unchanged. Dropping the rename or accepting an invalid
-  destination must fail, and derive/preload destination agreement is checked.
+  destination must fail. A comparison of derive and preload destinations remains
+  owed: the derive test reads its stdout alone.
 - Selection report: mode, source and destination, effective rule, count, and seal
   match the invocation and sent projection. Removing or falsifying any member must
   fail its report comparison.
@@ -1182,9 +1192,8 @@ instrument here reaches the absence of a call `std` offers every crate, so the
 claim is review's and says so rather than borrowing the manifest's coverage.
 
 **Enforcement inventory.** Rows name their declared instrument and citation
-locations. The recorded-election instruments landed in #652, and the four summary
-instruments and deposit reader landed in #658. Their perturbation evidence is
-recorded by those acts, rather than inferred from a citation.
+locations. A citation locates a claim and does not establish the scope of its
+watch. The instrument descriptions above state that scope and the remaining gaps.
 
 | Claim | Instrument |
 | --- | --- |
@@ -1264,10 +1273,11 @@ section 4.
   member on a new event where the closing count has been on the wire since
   2026-08-19, so the cheaper answer is also the one that asks the record for
   nothing. Per issue #461.
-- **What reads a deposit, and how, closed by #658.** Section 5 elects an explicit
-  invocation argument, and `src/deposit.rs` reads the named file. File and pipe
-  inputs use the same reader. The device model comes only from that deposit, and
-  code identity combines the recorded stack with the deposit's observed members.
+- **What reads a deposit, and how, closed 2026-09-22 by #658.** Section 5 elects
+  an explicit `signals --deposit` argument, and `src/deposit.rs` reads the named
+  file. File and pipe inputs use the same reader. The device model comes only from
+  that deposit, and code identity combines the recorded stack with the deposit's
+  observed members.
   No deposit means those members stay absent, while an unreadable named deposit
   refuses. The record event that would carry the observations remains owed by the
   charter, and the task verdict remains absent until its authoring act, #523.
