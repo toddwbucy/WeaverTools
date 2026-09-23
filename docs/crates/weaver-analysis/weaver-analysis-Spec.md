@@ -39,6 +39,7 @@ finished record from a truncated one could hold this shape and not use it.
     src/lib.rs        re-exports, and nothing else
     src/record.rs     the parse of a serving record, section 2
     src/project.rs    the election and the projection, section 3
+    src/selection.rs  the recorded rule and preflight, sections 3 and 4
     src/declare.rs    the declaration derived from the record, section 3
     src/preload.rs    the preload seam's sender, section 4
     src/reading.rs    the diagnostic-trace's parse and the gate, section 5
@@ -47,15 +48,13 @@ finished record from a truncated one could hold this shape and not use it.
     src/field.rs      a position's field, read from the record, section 5
     src/stream.rs     the drain, one road under every reader, section 5
     src/signals.rs    the per-position series, read on the drain, section 5
+    src/deposit.rs    the explicitly named device and code identity, section 5
 
-Twelve rows for the twelve files the tree holds: `src/lib.rs` and the ten modules
-it declares beside itself, eleven library files in all, and `src/main.rs` as the
-one bin target. **`src/deposit.rs` leaves this listing.** No such file exists and
-the word appears nowhere in the crate's source, so the row stood as a thirteenth
-file the crate holds. The election that names that module is section 5's, where
-the deposit is argued, per the convention `weaver-harness-Spec` section 1 states:
-a listing says what the tree holds and a placement election stays at the clause
-that argues it.
+Fourteen rows for the fourteen files the tree holds: `src/lib.rs` and the twelve
+modules it declares beside itself, thirteen library files in all, and `src/main.rs`
+as the one bin target. The listing names existing files, per the convention
+`weaver-harness-Spec` section 1 states. Sections 3 and 4 argue the selection and
+preflight, and section 5 argues the deposit reader.
 
 **Edition and toolchain.** Edition 2024 on the pinned nightly, no nightly feature
 used.
@@ -220,7 +219,8 @@ evidence refuses before the opener, as section 4 requires. Projection includes
 unknown elected kinds and paths and the standing turnless-system exception from
 `weaver-trace-Spec` section 11, independently of the tee implementation. No new
 writer dependency is introduced. Recorded-rule selection, including the effective
-rule comparison of section 4, is a new obligation whose instrument is owed.
+rule comparison of section 4, is watched by `tests/driver.rs`, separately from the
+fixed-election instrument below.
 
 ```graph
 node: analysis-reconstruction-follows-recorded-election
@@ -286,8 +286,8 @@ projection.
 
 **The existing fixed-election instrument checks that the stream follows the
 analysis election.** It watches the diagnostic projection's selected kinds and
-paths, not the new recorded-rule mode, turnless-system exception, or preflight
-refusals. Those obligations have their own records and owed instruments here.
+paths. The recorded-rule mode, turnless-system exception, and preflight refusals
+have separate instruments in `tests/driver.rs`, listed in section 6.
 
 ```graph
 node: analysis-election-declares-what-follows
@@ -652,9 +652,9 @@ both members of the charter's licence, at the precisions that clause states,
 their source the deposit the operator holds until the record event that
 clause names as owed lands - and a report that cannot establish either says
 so and carries no reproducibility claim, the absent member otherwise reading
-as one. **No reader for that deposit stands in this tree**, per the election
-below and section 7's record of it, so what a deposit would have carried is
-what a report says it cannot establish until issue #538's act lands.
+as one. `src/deposit.rs` reads the explicitly named deposit. Naming none leaves
+its members absent, and naming an unreadable deposit refuses rather than silently
+taking the named-none branch.
 
 **The null replay is elected by this crate's own procedure and not by its control
 over the load.** The reader's election rides the declaration and is the operator's,
@@ -1035,10 +1035,9 @@ already has this crate read the device model from a deposit to bound a licence.
 that looked beside the record would name nothing on a pipe**, which section 5 above
 licenses as a sink shape, so the caller names it or names none. **The signals
 invocation takes the deposit's path beside the record's**, which is the shape a caller
-names one in, and `src/deposit.rs` is the placement that reads it. **Neither stands in
-this tree**, so every invocation this crate has today is one that named none and the
-rule below is the whole of what crosses. Section 1's listing carries the files the tree
-holds and this module is not among them, and issue #538 owns the act that lands it.
+names one in, and `src/deposit.rs` reads it. The invocation accepts `--deposit`
+for file and pipe input alike. `tests/driver.rs` watches both input shapes, the
+named-none branch, and refusal of a named deposit that cannot be read or parsed.
 
 **The agreement rule reaches what a run can agree on.** The sampling's declared members
 agree across a run and its derived per-generation seed does not, per `weaver-spu-Spec`
@@ -1147,9 +1146,11 @@ generation, watched to fail when it is derived from a later generation or sent f
 drain that opened after the run's `load`, and watched to fail when the input identifiers
 are not subtracted, which names the first draw and not the prefix.
 
-**New instruments owed by the implementation act.** The following obligations
-are unimplemented, uncited `perturbation` records. Their rows below say owed,
-not enforced by tests written against the previous behavior.
+**Recorded-election instruments.** `tests/driver.rs` holds the following
+obligations separately from the fixed-projection tests above. The three-way
+comparison with an independent tee stands in the state crate's in-file suite,
+reached through its test-only trace dependency, rather than through a new link
+from this crate.
 
 - Recorded reconstruction: compare the record, an independent tee, and ordinary
   reconstruction. Include unknown elected kinds and paths, all-kinds with no named
@@ -1169,7 +1170,7 @@ not enforced by tests written against the previous behavior.
   destination must fail, and derive/preload destination agreement is checked.
 - Selection report: mode, source and destination, effective rule, count, and seal
   match the invocation and sent projection. Removing or falsifying any member must
-  fail its report comparison. This report does not yet exist in the required form.
+  fail its report comparison.
 
 **Enforced by review, two claims.** That this crate dials as an operator principal
 is the operator's arrangement rather than a property a test of this crate reaches,
@@ -1180,9 +1181,10 @@ is the residue section 1 names: the manifest reaches the dependency and no
 instrument here reaches the absence of a call `std` offers every crate, so the
 claim is review's and says so rather than borrowing the manifest's coverage.
 
-**Enforcement inventory.** Existing rows name their declared instrument and
-citation locations, not fresh execution evidence. New behavior is explicitly owed.
-The four previously uncited summary claims remain owed under issue #538.
+**Enforcement inventory.** Rows name their declared instrument and citation
+locations. The recorded-election instruments landed in #652, and the four summary
+instruments and deposit reader landed in #658. Their perturbation evidence is
+recorded by those acts, rather than inferred from a citation.
 
 | Claim | Instrument |
 | --- | --- |
@@ -1191,16 +1193,16 @@ The four previously uncited summary claims remain owed under issue #538.
 | `analysis-binds-no-port` | review: section 1 review of binding calls |
 | `analysis-parse-skips-the-unknown` | perturbation: `src/record.rs`, `tests/driver.rs` |
 | `analysis-derives-no-absent-member` | perturbation: `src/record.rs`, `tests/driver.rs` |
-| `analysis-reconstruction-follows-recorded-election` | perturbation, **owed**: implementation of #650 |
+| `analysis-reconstruction-follows-recorded-election` | perturbation: `tests/driver.rs` |
 | `analysis-election-declares-what-follows` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-projection-splices-verbatim` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-sequence-order-preserved` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-declaration-derives-from-the-record` | perturbation: `src/declare.rs`, `tests/driver.rs` |
-| `analysis-derive-uses-explicit-destination` | perturbation, **owed**: implementation of #650 |
+| `analysis-derive-uses-explicit-destination` | perturbation: `tests/driver.rs` |
 | `analysis-lens-refuses-other-weights` | perturbation: `src/lens.rs`, `tests/lens.rs` |
-| `analysis-diagnostic-requires-distinct-destination` | perturbation, **owed**: implementation of #650 |
-| `analysis-preload-validates-before-opener` | perturbation, **owed**: implementation of #650 |
-| `analysis-preload-reports-effective-selection` | perturbation, **owed**: implementation of #650 |
+| `analysis-diagnostic-requires-distinct-destination` | perturbation: `tests/driver.rs` |
+| `analysis-preload-validates-before-opener` | perturbation: `tests/driver.rs` |
+| `analysis-preload-reports-effective-selection` | perturbation: `tests/driver.rs` |
 | `analysis-preload-cuts-and-renames` | perturbation: `src/project.rs` |
 | `analysis-seal-ends-the-preload` | perturbation: `src/preload.rs`, `tests/driver.rs` |
 | `analysis-dials-as-invoked` | review: `src/main.rs` |
@@ -1216,15 +1218,14 @@ The four previously uncited summary claims remain owed under issue #538.
 | `analysis-signals-keep-absence` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-residency` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-the-record-identity` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
-| `analysis-summary-reports-the-record-session` | perturbation, **owed**: issue #538 |
-| `analysis-summary-reports-the-record-digest` | perturbation, **owed**: issue #538 |
-| `analysis-summary-reports-the-prefix-length` | perturbation, **owed**: issue #538 |
-| `analysis-summary-reports-the-run-and-its-conditions` | perturbation, **owed**: issue #538 |
+| `analysis-summary-reports-the-record-session` | perturbation: `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-record-digest` | perturbation: `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-prefix-length` | perturbation: `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-run-and-its-conditions` | perturbation: `src/signals.rs`, `src/deposit.rs`, `tests/stream.rs`, `tests/driver.rs` |
 
 **Where the records sit.** Records remain beside their clauses in sections 1
-through 5. Existing records retain their prior instrument scope. Five new records
-name the unimplemented selection, preflight, destination, and report obligations.
-They remain uncited until the code act adds their failing perturbations.
+through 5. The selection, preflight, destination, report, and summary records
+retain the scope their clauses declare. Their instruments are named above.
 
 **Which invariant each claim serves.** The internal-dependency claim carries the
 standing `grounds` edge to `axiom-floor-is-vocabulary-behavior-is-socket`. The other
@@ -1263,21 +1264,10 @@ section 4.
   member on a new event where the closing count has been on the wire since
   2026-08-19, so the cheaper answer is also the one that asks the record for
   nothing. Per issue #461.
-- **What reads a deposit, and how, recorded 2026-09-16.** **The election stands
-  and this act does not retract it**: section 5 names `src/deposit.rs` as the
-  placement and the signals invocation taking the deposit's path beside the
-  record's as the shape a caller names one in. Neither is in the tree, the word
-  appearing nowhere in the crate's source, which is section 1's claim and the
-  evidence for this one. What this act removed is the row section 1's layout
-  carried for that module, section 5 keeping the invocation shape it settled and
-  gaining the clause that says neither stands. A layout listing says what the
-  tree holds, so an elected module nobody has built is not one of its rows, and
-  the removal corrects where the election was recorded rather than whether it
-  was made. **What the summary sends today is the turn, the perplexity, the
-  residency, the output count and the weights hash**, per `render_generation`
-  at `crates/weaver-analysis/src/main.rs`, so neither the device model nor the
-  code identity crosses at all and section 5's named-none branch is unbuilt
-  rather than honoured. **That half is issue #538's**, which carries
-  `analysis-summary-reports-the-run-and-its-conditions` among the four records
-  section 5 declares and no code reaches, named as owed at that file's own
-  header.
+- **What reads a deposit, and how, closed by #658.** Section 5 elects an explicit
+  invocation argument, and `src/deposit.rs` reads the named file. File and pipe
+  inputs use the same reader. The device model comes only from that deposit, and
+  code identity combines the recorded stack with the deposit's observed members.
+  No deposit means those members stay absent, while an unreadable named deposit
+  refuses. The record event that would carry the observations remains owed by the
+  charter, and the task verdict remains absent until its authoring act, #523.
