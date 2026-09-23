@@ -20,6 +20,8 @@ fn resolved_tree() -> String {
             "normal",
             "--prefix",
             "none",
+            "--locked",
+            "--offline",
         ])
         .output()
         .expect("cargo tree runs");
@@ -102,19 +104,49 @@ fn no_runtime_no_bus_no_logging() {
     }
 }
 
-/// One binary and no library surface: nothing links admin, so a library target
-/// would be an API for a consumer the topology forbids. The manifest declares
-/// the binary explicitly and no `src/lib.rs` exists for Cargo to find by
-/// convention - which is the half a manifest read cannot see on its own, and
-/// why this test reads the tree beside the file.
+/// One binary with integration tests and no library surface, per the Spec's
+/// crate shape. Cargo's inventory covers every explicit and implicit route,
+/// including a library outside src/lib.rs and a spaced TOML target header.
+/// Perturb with an extra binary, lib, build script, example or bench. A
+/// manifest comment spelling [[bin]] changes no target and must pass.
 #[test]
 fn one_binary_and_no_library_surface() {
-    let manifest = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"))
-        .expect("manifest");
-    assert!(manifest.contains("[[bin]]"), "the binary is declared");
-    assert!(!manifest.contains("[lib]"), "no library section");
+    let out = Command::new(env!("CARGO"))
+        .args([
+            "metadata",
+            "--no-deps",
+            "--format-version",
+            "1",
+            "--locked",
+            "--offline",
+            "--manifest-path",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml"),
+        ])
+        .output()
+        .expect("cargo metadata runs");
     assert!(
-        !std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/lib.rs")).exists(),
-        "no src/lib.rs for Cargo to find by convention"
+        out.status.success(),
+        "metadata failed: {}",
+        String::from_utf8_lossy(&out.stderr)
     );
+    let meta: serde_json::Value = serde_json::from_slice(&out.stdout).expect("cargo JSON");
+    let package = meta["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "weaver-admin")
+        .expect("admin package");
+    let targets = package["targets"].as_array().expect("target inventory");
+    let mut bins = 0;
+    for target in targets {
+        match (
+            target["name"].as_str(),
+            target["kind"].as_array().unwrap().as_slice(),
+        ) {
+            (Some("weaver-admin"), [kind]) if kind == "bin" => bins += 1,
+            (_, [kind]) if kind == "test" => {}
+            _ => panic!("unexpected admin target: {target}"),
+        }
+    }
+    assert_eq!(bins, 1, "exactly one admin binary: {targets:?}");
 }
