@@ -1193,15 +1193,15 @@ recorded by those acts, rather than inferred from a citation.
 | `analysis-binds-no-port` | review: section 1 review of binding calls |
 | `analysis-parse-skips-the-unknown` | perturbation: `src/record.rs`, `tests/driver.rs` |
 | `analysis-derives-no-absent-member` | perturbation: `src/record.rs`, `tests/driver.rs` |
-| `analysis-reconstruction-follows-recorded-election` | perturbation: `tests/driver.rs` |
+| `analysis-reconstruction-follows-recorded-election` | perturbation: `src/selection.rs`, `tests/driver.rs` |
 | `analysis-election-declares-what-follows` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-projection-splices-verbatim` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-sequence-order-preserved` | perturbation: `src/project.rs`, `tests/driver.rs` |
 | `analysis-declaration-derives-from-the-record` | perturbation: `src/declare.rs`, `tests/driver.rs` |
 | `analysis-derive-uses-explicit-destination` | perturbation: `tests/driver.rs` |
 | `analysis-lens-refuses-other-weights` | perturbation: `src/lens.rs`, `tests/lens.rs` |
-| `analysis-diagnostic-requires-distinct-destination` | perturbation: `tests/driver.rs` |
-| `analysis-preload-validates-before-opener` | perturbation: `tests/driver.rs` |
+| `analysis-diagnostic-requires-distinct-destination` | perturbation: `src/selection.rs`, `tests/driver.rs` |
+| `analysis-preload-validates-before-opener` | perturbation: `src/selection.rs`, `tests/driver.rs` |
 | `analysis-preload-reports-effective-selection` | perturbation: `tests/driver.rs` |
 | `analysis-preload-cuts-and-renames` | perturbation: `src/project.rs` |
 | `analysis-seal-ends-the-preload` | perturbation: `src/preload.rs`, `tests/driver.rs` |
@@ -1218,10 +1218,10 @@ recorded by those acts, rather than inferred from a citation.
 | `analysis-signals-keep-absence` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-residency` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-the-record-identity` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
-| `analysis-summary-reports-the-record-session` | perturbation: `src/signals.rs`, `tests/stream.rs` |
-| `analysis-summary-reports-the-record-digest` | perturbation: `src/signals.rs`, `tests/stream.rs` |
-| `analysis-summary-reports-the-prefix-length` | perturbation: `src/signals.rs`, `tests/stream.rs` |
-| `analysis-summary-reports-the-run-and-its-conditions` | perturbation: `src/signals.rs`, `src/deposit.rs`, `tests/stream.rs`, `tests/driver.rs` |
+| `analysis-summary-reports-the-record-session` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-record-digest` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-prefix-length` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
+| `analysis-summary-reports-the-run-and-its-conditions` | perturbation: `src/main.rs`, `src/signals.rs`, `src/deposit.rs`, `tests/stream.rs`, `tests/driver.rs` |
 
 **Where the records sit.** Records remain beside their clauses in sections 1
 through 5. The selection, preflight, destination, report, and summary records
