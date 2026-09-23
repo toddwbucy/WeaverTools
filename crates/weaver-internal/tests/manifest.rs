@@ -1,9 +1,10 @@
 //! conforms: internal-no-dependencies
 //! conforms: internal-one-library-target
 //!
-//! The manifest assertions of `weaver-internal-Spec` section 1: the resolved
-//! dependency set is empty, the manifest form of the charter's pure bar, and
-//! the crate declares exactly one library target and no other kind.
+//! The manifest assertions of `weaver-internal-Spec` section 1: no normal
+//! dependency is declared, the manifest form of the charter's pure bar, with
+//! build and dev dependencies admitted per the operator's ruling on #577, and
+//! the targets are exactly one library and this manifest test.
 
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -77,8 +78,8 @@ if normal:
 
 /// **One library and this instrument are the complete target set.** Cargo's
 /// metadata sees every implicit and explicit target, including build scripts.
-/// Python's standard JSON parser keeps this dependency-free crate's Cargo
-/// edges empty; Python3 is already required by the repository's census gate.
+/// Python's standard JSON parser reads it without adding a Rust dependency,
+/// and Python3 is already required by the repository's census gate.
 /// Perturbations: add build.rs or src/bin/x.rs; either adds a forbidden target.
 #[test]
 fn the_one_target_is_a_library() {
