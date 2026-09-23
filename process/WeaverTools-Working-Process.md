@@ -1,6 +1,6 @@
 # WeaverTools Working Process
 
-**Version:** v0.32, 2026-09-16. Companion to the Working Rules, the Document
+**Version:** v0.33, 2026-09-22. Companion to the Working Rules, the Document
 Format, and the Handoff Format. The apex says what we are building. The Working
 Rules say how we write. The Document Format says what shape a document takes. The
 Handoff Format says what shape a batch takes when it moves between seats. This says
@@ -495,7 +495,16 @@ in the graph. Every Cargo edge is a declared `floor-link` or a `seam` tagged `li
 since the Document Format rules that a pair governed by a contract is a seam and never
 also a floor link. No dependency on a sibling. The parent edge is domain membership and
 appears in no Cargo file, since nesting carries domain rather than dependency. Checked
-against the graph, mechanically.
+against the graph, mechanically. **A dev-dependency is outside this edge set**, on the
+operator's ruling of 2026-09-22 that closed the `weaver-state` to `weaver-trace` cell
+of #586 and #590: it is test scaffolding, admitted on the condition that the crate's
+production code imports nothing from it, a condition the crate's own manifest
+instrument watches. The edge set is stated by dependency kind and not by manifest
+section: every dependency of the normal or build kind is a production edge, wherever
+the manifest declares it, in a target-qualified table, behind a feature, or under a
+rename alike, and only the dev kind is exempt. The mechanization above reads cargo's
+dependency kinds and not the manifest's text. A dev-dependency that production code
+reaches is the undeclared edge this gate exists to refuse.
 
 **H3, seam conformance.** The seam is exercised against the contract's failure cases
 and not only its success path. A contract that names a refusal and a build that cannot
