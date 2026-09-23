@@ -7,7 +7,7 @@ build order. Code is written against it under the gates of Working Process secti
 **Document ID:** `weaver-trace-Spec`
 **Parent:** `weaver-trace-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #632
+**Landing PR:** #670
 
 ---
 
@@ -508,10 +508,15 @@ claims, one line with no interior newline, declaration order with `payload` last
 and byte-identical output across renders, since flatten serializes through a map
 and the determinism claim had to survive that.
 
+**The instrument is `bracket_kind_omits_payload_and_line_is_flat` in
+`tests/recorder.rs`.** Removing `serde(flatten)` from `Event.envelope` nests the
+envelope, and the test fails at its assertion that the line has no `envelope`
+member.
+
 ```graph
 node: trace-envelope-flattens
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-trace
@@ -581,10 +586,14 @@ enum renders `"payload":null` instead, which is a member whose only content is t
 statement that there is no content, and a consumer keying on member presence would see
 two stream shapes for one absence.
 
+**The same recorder test watches the absent payload member on a payload-free
+`unload`.** Removing `skip_serializing_if` from `Event.payload` emits a null
+member and fails the assertion that the line has no `payload` member.
+
 ```graph
 node: trace-bracket-kind-omits-payload
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-trace
@@ -602,10 +611,14 @@ itself is not this crate's claim,** its node and both its edges living at
 `weaver-types-Spec` section 4.3 where the two floor Specs share it so they cannot
 drift, and what this clause asserts is the election the test yields here.
 
+**The instrument is `turn_close_is_internally_tagged` in `tests/recorder.rs`.**
+Removing `tag = "close"` from `TurnClose` changes the clean close's rendering and
+fails the expected `{"close":"clean"}` payload assertion.
+
 ```graph
 node: trace-turn-close-internally-tagged
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-trace
@@ -1492,7 +1505,7 @@ reader can count.** Three in section 1, three in section 2, seventeen in section
 3, five in section 4, two in section 5, four in section 6, two in section 7, one
 in section 8, two in section 9, this section's three, and four in section 11. The
 instruments divide them four to the compiler, three to compile-fail, three to the
-manifest, ten to a perturbation-verified test, and twenty-six to review.
+manifest, thirteen to a perturbation-verified test, and twenty-three to review.
 **The split is stated as a count of declarations because that is a count the next
 act can take**, where a split by provenance is a reading and two readers of one
 section need not reach it alike. The rule that sorted a divided claim's two
@@ -1560,9 +1573,9 @@ would claim an instrument for a claim the instrument does not reach, a tag
 naming the mechanism its own clause names rather than the nearest test that
 touches it, and a node declared for the single row would be a second authority
 on a fact `pairing_licensed` already holds, which gate G5 refuses. **The file's
-header remains false of eleven of its twenty-six tests**, which name no
-perturbation while the header says each does, and that half of issue #606 is
-owed by an act that is not this one.
+tests do not all name a perturbation**, so its header claims no such coverage.
+The remaining mutation documentation is owed under issue #606, rather than
+supplied by the three rendering removals named in section 3.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
 forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
@@ -1604,6 +1617,12 @@ the fact exists.
 
 **Requiring a perturbation-verified test.**
 
+- The envelope flattens: removing `serde(flatten)` fails the recorder's
+  no-envelope-member assertion, per section 3.
+- A payload-free event omits its payload: removing `skip_serializing_if` fails
+  the recorder's no-payload-member assertion, per section 3.
+- The turn close is internally tagged: removing the `close` tag fails the
+  recorder's clean-close payload assertion, per section 3.
 - Canonical form: a monotonic reading beyond the double-safe range round-trips
   exactly, confirmed by watching a consumer parsing it as a double return a
   different number when the decimal-string rule is removed.
