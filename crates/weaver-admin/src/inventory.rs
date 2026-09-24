@@ -1751,47 +1751,67 @@ mod tests {
         );
     }
 
-    /// **A room for the stand-in probe that only the probe's identity can
-    /// enter.** Made with `mkdir` under a name no other run uses, so a path
-    /// already standing there, a planted symlink included, refuses rather
-    /// than being followed. It is then chowned to the identity at `0700`. The
-    /// stand-in script is written root-owned `0755` before the chown, so no
-    /// other local user can reach or replace it. Removed on drop, so a
-    /// failed reading leaves nothing behind.
+    /// **A room for the stand-in probe, in the shared temporary directory,
+    /// never looser than its final mode.** It is made with `mkdir` at `0700`
+    /// under a name no other run uses, so a path already standing there, a
+    /// planted symlink included, refuses rather than being followed. A umask
+    /// can only tighten that. The stand-in script is created new at `0755`,
+    /// root-owned, so nothing else can hold it open for writing. Only then is
+    /// the room's group set to the probe's group and the room opened to
+    /// `0770`, so the probe can write its record and no other local user can
+    /// enter.
+    ///
+    /// **The room stays owned by the test**, root inside the namespace, which
+    /// is the invoking user on the host. A run killed before its drop
+    /// therefore leaves a directory that user removes with a plain `rm`,
+    /// where a room owned by the probe's uid would need the namespace again.
+    /// Removed on drop.
     struct ProbeRoom {
         path: std::path::PathBuf,
         script: std::path::PathBuf,
     }
 
+    /// The stand-in for this binary in reading 3: records its status, its
+    /// database and role arguments and its environment into the room it is
+    /// handed where the socket directory goes. It exits one when the role is
+    /// `refuse` and zero otherwise, which the probe reads as refused and
+    /// admitted.
+    const STAND_IN: &str = "#!/bin/sh\n\
+         /bin/cat /proc/self/status > \"$1/status\"\n\
+         printf 'args %s %s\\n' \"$2\" \"$3\" > \"$1/seen\"\n\
+         env | sed 's/^/env /' >> \"$1/seen\"\n\
+         [ \"$3\" = refuse ] && exit 1\n\
+         exit 0\n";
+
     impl ProbeRoom {
-        fn make(parent: &std::path::Path, uid: u32, gid: u32) -> std::io::Result<Self> {
+        fn make(parent: &std::path::Path, gid: u32) -> std::io::Result<Self> {
             let unique = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
                 .unwrap_or_default();
             let name = format!("weaver-675-{}-{unique}", std::process::id());
-            Self::at(parent.join(name), uid, gid)
+            Self::at(parent.join(name), gid)
         }
 
-        fn at(path: std::path::PathBuf, uid: u32, gid: u32) -> std::io::Result<Self> {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::create_dir(&path)?;
+        fn at(path: std::path::PathBuf, gid: u32) -> std::io::Result<Self> {
+            use std::io::Write;
+            use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
+            std::fs::DirBuilder::new().mode(0o700).create(&path)?;
             let room = Self {
                 script: path.join("probe.sh"),
                 path,
             };
-            std::fs::write(
-                &room.script,
-                "#!/bin/sh\n\
-                 /bin/cat /proc/self/status > \"$1/status\"\n\
-                 printf 'args %s %s\\n' \"$2\" \"$3\" > \"$1/seen\"\n\
-                 env | sed 's/^/env /' >> \"$1/seen\"\n\
-                 [ \"$3\" = refuse ] && exit 1\n\
-                 exit 0\n",
-            )?;
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o755)
+                .open(&room.script)?
+                .write_all(STAND_IN.as_bytes())?;
+            // A umask can only have narrowed the script; this restores the
+            // execute bit the probe needs and opens nothing further.
             std::fs::set_permissions(&room.script, std::fs::Permissions::from_mode(0o755))?;
-            std::fs::set_permissions(&room.path, std::fs::Permissions::from_mode(0o700))?;
-            std::os::unix::fs::chown(&room.path, Some(uid), Some(gid))?;
+            std::os::unix::fs::chown(&room.path, None, Some(gid))?;
+            std::fs::set_permissions(&room.path, std::fs::Permissions::from_mode(0o770))?;
             Ok(room)
         }
     }
@@ -1856,16 +1876,23 @@ mod tests {
     /// 2. After exec, from the child's own status: the uid and gid lines, and
     ///    the supplementary set exactly 4243 and 4244, none of root's.
     /// 3. Through [`probe_store_as`], the store probe's own construction, with
-    ///    a script standing for this binary: it records its status into the
-    ///    directory passed where the socket directory goes, and exits zero,
-    ///    which the probe reads as admitted. The same identity must land.
+    ///    [`STAND_IN`] standing for this binary in a [`ProbeRoom`]: the same
+    ///    identity must land, the arguments must arrive as database then role,
+    ///    none of this process's environment may cross, and an exit of one
+    ///    must read as refused. The room's mode, owner and removal are
+    ///    asserted, and a room whose name is already taken must be refused.
     ///
-    /// Perturbation, each watched 2026-09-24 through the namespace watch: the
-    /// form issue #675 measured (`CommandExt::uid` and `::gid` with
-    /// `setgroups` alone in the pre-exec) fails the spawn `EPERM`. Removing
-    /// the `setgroups` leaves root's set. `setresuid(user, user, 0)` fails
-    /// reading 1. `probe_store_as` rebuilt on `Command::new` with `.uid` alone
-    /// fails reading 3 on the group set.
+    /// Perturbations, each watched failing 2026-09-24 through the namespace
+    /// watch:
+    ///
+    /// - the form issue #675 measured, `CommandExt::uid` and `::gid` with
+    ///   `setgroups` alone in the pre-exec: the spawn fails `EPERM`;
+    /// - `setgroups` removed from `drop_to`: root's supplementary set remains;
+    /// - `setresuid(user, user, 0)` or `setresgid(p, p, 0)`: reading 1;
+    /// - `probe_store_as` rebuilt on `Command::new` with `.uid` alone;
+    /// - database and role swapped, `env_clear` removed, or exit one no longer
+    ///   read as refused: reading 3;
+    /// - the room made recursively, opened to `0777`, or not removed on drop.
     ///
     /// conforms: admin-store-gate-asks-as-the-member
     #[test]
@@ -1903,8 +1930,20 @@ mod tests {
 
         // Reading 3: the store probe's own construction, in a room only the
         // probe's identity can enter, removed however this test ends.
-        let room = ProbeRoom::make(&std::env::temp_dir(), 4242, 4243)
+        let room = ProbeRoom::make(&std::env::temp_dir(), 4243)
             .expect("an exclusive room is made for the probe");
+        {
+            use std::os::unix::fs::MetadataExt;
+            let meta = std::fs::symlink_metadata(&room.path).expect("the room stands");
+            assert!(meta.is_dir(), "the room is a directory, not a link");
+            assert_eq!(
+                meta.mode() & 0o7777,
+                0o770,
+                "the room opens to its group only"
+            );
+            assert_eq!(meta.uid(), 0, "the room stays owned by the test");
+            assert_eq!(meta.gid(), 4243, "and its group is the probe's");
+        }
         let admitted = probe_store_as(&room.script, &room.path, 4242, &[4243, 4244], "db", "role")
             .expect("the probe construction spawns as the identity");
         assert!(admitted, "a probe exiting zero reads as admitted");
@@ -1947,24 +1986,28 @@ mod tests {
             !refused,
             "a probe exiting one reads as refused, never as an error"
         );
+        let room_path = room.path.clone();
         drop(room);
+        assert!(
+            !room_path.exists(),
+            "the room is removed when the reading ends"
+        );
 
         // The room is exclusive: a path already standing at its name refuses
         // rather than being used. The planted link points at a real directory,
-        // which is the case a following `create_dir_all` would enter.
-        let tag = std::process::id();
-        let target = std::env::temp_dir().join(format!("weaver-675-target-{tag}"));
-        let planted = std::env::temp_dir().join(format!("weaver-675-planted-{tag}"));
-        let _ = std::fs::remove_file(&planted);
-        let _ = std::fs::remove_dir_all(&target);
+        // the case a following `mkdir -p` would enter. Both are made inside a
+        // yard that is itself an exclusive room, so this touches nothing it did
+        // not create and the yard's drop removes all of it.
+        let yard = ProbeRoom::make(&std::env::temp_dir(), 4243).expect("the yard is made");
+        let target = yard.path.join("target");
+        let planted = yard.path.join("planted");
         std::fs::create_dir(&target).expect("the link's target is made");
         std::os::unix::fs::symlink(&target, &planted).expect("a symlink is planted");
-        let taken = ProbeRoom::at(planted.clone(), 4242, 4243);
+        let taken = ProbeRoom::at(planted, 4243);
         let refused = taken.is_err();
         let followed = target.join("probe.sh").exists();
         drop(taken);
-        let _ = std::fs::remove_file(&planted);
-        let _ = std::fs::remove_dir_all(&target);
+        drop(yard);
         assert!(
             refused && !followed,
             "a room whose name is already taken is refused, not entered through the link"
