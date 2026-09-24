@@ -726,9 +726,9 @@ pub fn drop_to(uid: u32, gids: &[nix::libc::gid_t]) -> std::io::Result<()> {
 /// **Does the store admit `uid` as `role`?** The question both of the
 /// charter's gates pose, and the one this process cannot ask as itself: peer
 /// authentication reads the connecting uid, so this binary re-executes itself
-/// under the named uid and gid with [`PROBE_STORE_VARIABLE`] set, and the
-/// child asks [`store_admits`] and exits zero for admitted and one for
-/// refused. Any other exit is the probe failing to run, which is an error and
+/// under the named uid and that identity's whole group set, with
+/// [`PROBE_STORE_VARIABLE`] set, and the child asks [`store_admits`] and exits
+/// zero for admitted and one for refused. Any other exit is the probe failing to run, which is an error and
 /// not an answer.
 ///
 /// **Both gates go through here as of 2026-09-15**, per issue #545. The first
@@ -743,6 +743,28 @@ pub fn store_admits_as(
     database: &str,
     role: &str,
 ) -> std::io::Result<bool> {
+    probe_store_as(
+        &std::env::current_exe()?,
+        socket_dir,
+        uid,
+        gids,
+        database,
+        role,
+    )
+}
+
+/// [`store_admits_as`] with the program named, so the probe's own
+/// construction - identity, environment, arguments, the exit reading - can be
+/// driven by a program that reports the identity it was given. Production
+/// passes this binary. Issue #675 lived in exactly this construction.
+pub fn probe_store_as(
+    program: &Path,
+    socket_dir: &Path,
+    uid: u32,
+    gids: &[u32],
+    database: &str,
+    role: &str,
+) -> std::io::Result<bool> {
     // **The probe carries the group set of the identity it stands for**, not
     // this crate's: the spawned member's drop narrows its own set to exactly
     // its group, so a probe inheriting root's memberships would reach a store
@@ -750,7 +772,7 @@ pub fn store_admits_as(
     // that identity will not have. For the member that is a gate passing on a
     // dial that will fail, and for the agent a refusal observed for the wrong
     // reason. [`identity_command`] sets the whole set in the right order.
-    let mut probe = identity_command(&std::env::current_exe()?, uid, gids)?;
+    let mut probe = identity_command(program, uid, gids)?;
     probe
         .env_clear()
         .env(PROBE_STORE_VARIABLE, "1")
@@ -1729,24 +1751,9 @@ mod tests {
         );
     }
 
-    /// The identity a child of [`identity_command`] actually holds, read from
-    /// its own `/proc/self/status`: the four uids, the four gids, and the
-    /// supplementary set, as the kernel reports them after the drop.
-    fn identity_of_a_dropped_child(uid: u32, gids: &[u32]) -> (String, String, String) {
-        let mut command = identity_command(std::path::Path::new("/bin/cat"), uid, gids)
-            .expect("an identity with a primary group builds");
-        command
-            .arg("/proc/self/status")
-            .stdin(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null());
-        let output = command
-            .output()
-            .expect("the dropped child spawns, which is the property issue #675 lost");
-        assert!(
-            output.status.success(),
-            "the dropped child reads its own status"
-        );
-        let status = String::from_utf8(output.stdout).expect("status is ascii");
+    /// The uid, gid and group lines of a `/proc/<pid>/status` text, each
+    /// with its fields joined by single spaces.
+    fn status_identity(status: &str) -> (String, String, String) {
         let line = |key: &str| {
             status
                 .lines()
@@ -1757,20 +1764,57 @@ mod tests {
         (line("Uid:"), line("Gid:"), line("Groups:"))
     }
 
-    /// **The store probe's identity drop, measured in the kernel.** Needs
-    /// euid 0, and runs through
+    /// **The saved ids, checked where they can still be seen.** `execve`
+    /// copies the effective ids into the saved ones, so a status read after
+    /// exec shows saved equal to effective whatever the drop left: that read
+    /// cannot watch this. Registered after [`identity_command`]'s own
+    /// pre-exec, this runs in the child after `drop_to` and before exec, and
+    /// fails the spawn with `ENOTRECOVERABLE` unless all three uids and all
+    /// three gids are the target. Two syscalls and no allocation.
+    fn and_no_saved_id_survives(command: &mut std::process::Command, uid: u32, gid: u32) {
+        use std::os::unix::process::CommandExt;
+        // SAFETY: `getresuid` and `getresgid` are async-signal-safe and the
+        // closure allocates nothing.
+        unsafe {
+            command.pre_exec(move || {
+                let (mut r, mut e, mut s) = (0, 0, 0);
+                let (mut rg, mut eg, mut sg) = (0, 0, 0);
+                if nix::libc::getresuid(&mut r, &mut e, &mut s) < 0
+                    || nix::libc::getresgid(&mut rg, &mut eg, &mut sg) < 0
+                {
+                    return Err(std::io::Error::last_os_error());
+                }
+                if [r, e, s] != [uid; 3] || [rg, eg, sg] != [gid; 3] {
+                    return Err(std::io::Error::from_raw_os_error(
+                        nix::libc::ENOTRECOVERABLE,
+                    ));
+                }
+                Ok(())
+            });
+        }
+    }
+
+    /// **The identity drop, measured in the kernel, on the construction the
+    /// store probe really uses.** Needs euid 0, and runs through
     /// `the_identity_drop_is_watched_inside_a_user_namespace` on a box where
-    /// that is not the invoking uid.
+    /// that is not the invoking uid. Three readings, each for a different
+    /// half of the property:
     ///
-    /// The child is asked for uid 4242 with groups 4243 then 4244, and must
-    /// hold exactly that: all four uids 4242, all four gids 4243, and the
-    /// supplementary set 4243 and 4244 and nothing of root's.
+    /// 1. Before exec, through [`and_no_saved_id_survives`]: the real,
+    ///    effective and saved uids are all 4242 and the gids all 4243.
+    /// 2. After exec, from the child's own status: the uid and gid lines, and
+    ///    the supplementary set exactly 4243 and 4244, none of root's.
+    /// 3. Through [`probe_store_as`], the store probe's own construction, with
+    ///    a script standing for this binary: it records its status into the
+    ///    directory passed where the socket directory goes, and exits zero,
+    ///    which the probe reads as admitted. The same identity must land.
     ///
-    /// Perturbation, watched 2026-09-24 against both: put the identity back
-    /// on `CommandExt::uid` and `CommandExt::gid` with the `setgroups` left in
-    /// the pre-exec, which is the form issue #675 measured, and the spawn
-    /// fails `EPERM`. Drop the `setgroups` from `drop_to` and the child keeps
-    /// root's supplementary set.
+    /// Perturbation, each watched 2026-09-24 through the namespace watch: the
+    /// form issue #675 measured (`CommandExt::uid` and `::gid` with
+    /// `setgroups` alone in the pre-exec) fails the spawn `EPERM`. Removing
+    /// the `setgroups` leaves root's set. `setresuid(user, user, 0)` fails
+    /// reading 1. `probe_store_as` rebuilt on `Command::new` with `.uid` alone
+    /// fails reading 3 on the group set.
     ///
     /// conforms: admin-store-gate-asks-as-the-member
     #[test]
@@ -1781,16 +1825,61 @@ mod tests {
             0,
             "this instrument needs euid 0"
         );
-        let (uids, gids, groups) = identity_of_a_dropped_child(4242, &[4243, 4244]);
-        assert_eq!(
-            uids, "4242 4242 4242 4242",
-            "real, effective, saved and fs uid"
+
+        // Readings 1 and 2: identity_command, checked before and after exec.
+        let mut command = identity_command(std::path::Path::new("/bin/cat"), 4242, &[4243, 4244])
+            .expect("an identity with a primary group builds");
+        and_no_saved_id_survives(&mut command, 4242, 4243);
+        command
+            .arg("/proc/self/status")
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        let output = command
+            .output()
+            .expect("the dropped child spawns with every uid and gid dropped, saved ones included");
+        assert!(
+            output.status.success(),
+            "the dropped child reads its own status"
         );
+        let (uids, gids, groups) =
+            status_identity(&String::from_utf8(output.stdout).expect("status is ascii"));
+        assert_eq!(uids, "4242 4242 4242 4242", "the uid line after the drop");
         assert_eq!(gids, "4243 4243 4243 4243", "the primary group, all four");
         assert_eq!(
             groups, "4243 4244",
             "exactly the identity's set, none of root's"
         );
+
+        // Reading 3: the store probe's own construction.
+        let room = std::env::temp_dir().join(format!("weaver-675-{}", std::process::id()));
+        std::fs::create_dir_all(&room).expect("the room is made");
+        let script = room.join("probe.sh");
+        std::fs::write(
+            &script,
+            "#!/bin/sh\n/bin/cat /proc/self/status > \"$1/status\"\n",
+        )
+        .expect("the stand-in probe is written");
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&room, std::fs::Permissions::from_mode(0o777))
+                .expect("the room is open to the dropped uid");
+            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
+                .expect("the stand-in is executable by the dropped uid");
+        }
+        let admitted = probe_store_as(&script, &room, 4242, &[4243, 4244], "db", "role")
+            .expect("the probe construction spawns as the identity");
+        assert!(admitted, "a probe exiting zero reads as admitted");
+        let (uids, gids, groups) = status_identity(
+            &std::fs::read_to_string(room.join("status")).expect("the probe recorded itself"),
+        );
+        let _ = std::fs::remove_dir_all(&room);
+        assert_eq!(
+            uids, "4242 4242 4242 4242",
+            "the probe runs as the member's uid"
+        );
+        assert_eq!(gids, "4243 4243 4243 4243", "under its primary group");
+        assert_eq!(groups, "4243 4244", "carrying exactly its set");
+
         let empty = identity_command(std::path::Path::new("/bin/cat"), 4242, &[]);
         assert!(
             empty.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput),

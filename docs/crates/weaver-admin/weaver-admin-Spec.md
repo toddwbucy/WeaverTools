@@ -7,7 +7,7 @@ agent. Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-admin-Spec`
 **Parent:** `weaver-admin-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #669
+**Landing PR:** #677
 
 ---
 
@@ -589,10 +589,13 @@ described the member and named admin, which is the defect issue #545 filed: the
 charter derives the object gate's identity from the kernel fact, and a question
 asked by a process that never dials the store derives nothing. Both questions
 now go the same way, a child re-executing this binary under the named uid and
-primary gid and exiting with the answer, which is the mechanism the agent's
-gate has carried since 2026-09-04. **The second gate is unchanged**, no agent's
-uid reaching any store being the property already bought, and it is kept rather
-than rebuilt.
+that identity's whole group set, primary first, and exiting with the answer,
+which is the mechanism the agent's gate has carried since 2026-09-04. **The
+identity is taken in the child before exec, groups then gids then uids**, as
+of 2026-09-24 on issue #675: a probe that left the uid to the spawn's own
+setting lost the privilege its group call needed, and refused every member.
+**The second gate is unchanged**, no agent's uid reaching any store being the
+property already bought, and it is kept rather than rebuilt.
 
 ```graph
 node: admin-store-gate-asks-as-the-member

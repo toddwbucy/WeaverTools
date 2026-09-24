@@ -352,8 +352,8 @@ fn prepare_territory(
 ///
 /// conforms: admin-member-spawn-drops-to-its-account
 fn become_member(member: inventory::MemberAccount) -> std::io::Result<()> {
-    // The one drop routine, shared with the store probe since issue #675, so
-    // the order below the doc comment is written once.
+    // The drop lives in `inventory::drop_to`, shared with the store probe
+    // since issue #675, so the order described above is implemented once.
     inventory::drop_to(member.uid, &[member.gid as nix::libc::gid_t])
 }
 
