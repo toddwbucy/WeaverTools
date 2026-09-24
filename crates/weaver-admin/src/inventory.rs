@@ -1758,8 +1758,10 @@ mod tests {
     /// can only tighten that. The stand-in script is created new at `0755`,
     /// root-owned, so nothing else can hold it open for writing. Only then is
     /// the room's group set to the probe's group and the room opened to
-    /// `0770`, so the probe can write its record and no other local user can
-    /// enter.
+    /// `0770`, so the probe can write its record and no user outside the
+    /// probe's group can enter. Inside the namespace that group maps to a
+    /// subordinate gid nobody holds. The test assumes ids 4242 to 4244 belong
+    /// to no one on a box that runs it as real root.
     ///
     /// **The room stays owned by the test**, root inside the namespace, which
     /// is the invoking user on the host. A run killed before its drop

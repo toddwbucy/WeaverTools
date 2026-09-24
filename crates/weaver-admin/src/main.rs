@@ -343,8 +343,8 @@ fn prepare_territory(
 ///
 /// **The order is not interchangeable.** `setgroups` and `setresgid` both
 /// need the privilege `setresuid` gives away, so a drop that took the uid
-/// first would leave the member holding root's group memberships under the
-/// member's name, which reads as a dropped privilege and is not one.
+/// first would fail its group call with `EPERM`, and the member would not
+/// spawn. Issue #675 was that failure in the store probe.
 ///
 /// Async-signal-safe throughout, per the pre-exec contract: three syscalls
 /// and no allocation. A failure returns the error, which fails the spawn, so
