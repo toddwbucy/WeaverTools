@@ -662,6 +662,67 @@ pub fn store_admits(socket_dir: &Path, database: &str, role: &str) -> std::io::R
     Ok(admitted)
 }
 
+/// **A command that runs `program` as exactly `uid` with exactly `gids`**, the
+/// first of them primary. The identity is taken in the pre-exec by
+/// [`drop_to`] and nowhere else: `CommandExt::uid` and `CommandExt::gid` are
+/// deliberately not used, because the standard library applies them before
+/// it runs the pre-exec, so a `setgroups` placed there runs after root is
+/// gone and fails `EPERM`. Measured on 2026-09-24, issue #675: the store
+/// probe built that way could not be spawned as any member, and every
+/// agent electing postgres refused `BoundaryUnverified`.
+///
+/// An empty `gids` is refused before any spawn: an identity with no primary
+/// group is not one this crate can hand a process.
+pub fn identity_command(
+    program: &Path,
+    uid: u32,
+    gids: &[u32],
+) -> std::io::Result<std::process::Command> {
+    use std::os::unix::process::CommandExt;
+    if gids.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "an identity needs at least its primary group",
+        ));
+    }
+    let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
+    let mut command = std::process::Command::new(program);
+    // SAFETY: `drop_to` is three async-signal-safe syscalls and no
+    // allocation. The group set is built above, before the fork, and only
+    // read in the child.
+    unsafe {
+        command.pre_exec(move || drop_to(uid, &set));
+    }
+    Ok(command)
+}
+
+/// **The privilege drop, in the one order that works**: the supplementary set,
+/// then the gids, then the uids, each of the three ids set so no saved id
+/// survives to return to. `setgroups` and `setresgid` need the privilege
+/// `setresuid` gives away, so the uid goes last. Called in a pre-exec while
+/// the fork still holds root, by the store probe through
+/// [`identity_command`] and by the member's spawn.
+///
+/// Async-signal-safe throughout, per the pre-exec contract. A failure returns
+/// the error, which fails the spawn, so a process this crate could not
+/// unprivilege does not run at all.
+pub fn drop_to(uid: u32, gids: &[nix::libc::gid_t]) -> std::io::Result<()> {
+    let Some(&primary) = gids.first() else {
+        return Err(std::io::Error::from_raw_os_error(nix::libc::EINVAL));
+    };
+    if unsafe { nix::libc::setgroups(gids.len(), gids.as_ptr()) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if unsafe { nix::libc::setresgid(primary, primary, primary) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let user = uid as nix::libc::uid_t;
+    if unsafe { nix::libc::setresuid(user, user, user) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
+
 /// **Does the store admit `uid` as `role`?** The question both of the
 /// charter's gates pose, and the one this process cannot ask as itself: peer
 /// authentication reads the connecting uid, so this binary re-executes itself
@@ -682,41 +743,23 @@ pub fn store_admits_as(
     database: &str,
     role: &str,
 ) -> std::io::Result<bool> {
-    use std::os::unix::process::CommandExt;
-    let mut probe = std::process::Command::new(std::env::current_exe()?);
+    // **The probe carries the group set of the identity it stands for**, not
+    // this crate's: the spawned member's drop narrows its own set to exactly
+    // its group, so a probe inheriting root's memberships would reach a store
+    // socket on a group the identity does not hold, and answer about access
+    // that identity will not have. For the member that is a gate passing on a
+    // dial that will fail, and for the agent a refusal observed for the wrong
+    // reason. [`identity_command`] sets the whole set in the right order.
+    let mut probe = identity_command(&std::env::current_exe()?, uid, gids)?;
     probe
         .env_clear()
         .env(PROBE_STORE_VARIABLE, "1")
         .arg(socket_dir)
         .arg(database)
         .arg(role)
-        .uid(uid)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    // **The probe carries the group set of the identity it stands for.**
-    // `CommandExt::gid` sets the primary group and leaves the supplementary
-    // list inherited from this crate, where the spawned member's `become_member`
-    // narrows it to exactly its own. Without this the probe reaches a store
-    // socket on a group admin holds and the identity does not, and answers
-    // about access that identity will not have: for the member that is a gate
-    // passing on a dial that will fail, and for the agent it is a refusal
-    // observed for the wrong reason.
-    if let Some(primary) = gids.first().copied() {
-        probe.gid(primary);
-        let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
-        // SAFETY: `setgroups` is async-signal-safe and touches only this forked
-        // child's credentials, before exec, while the fork still holds the
-        // privilege the call needs.
-        unsafe {
-            probe.pre_exec(move || {
-                if nix::libc::setgroups(set.len(), set.as_ptr()) < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                Ok(())
-            });
-        }
-    }
     match probe.status()?.code() {
         Some(0) => Ok(true),
         Some(1) => Ok(false),
@@ -1683,6 +1726,129 @@ mod tests {
         assert!(
             matches!(unasked, Err(LifecycleRefusal::BoundaryUnverified)),
             "a store that could not be asked answers neither gate"
+        );
+    }
+
+    /// The identity a child of [`identity_command`] actually holds, read from
+    /// its own `/proc/self/status`: the four uids, the four gids, and the
+    /// supplementary set, as the kernel reports them after the drop.
+    fn identity_of_a_dropped_child(uid: u32, gids: &[u32]) -> (String, String, String) {
+        let mut command = identity_command(std::path::Path::new("/bin/cat"), uid, gids)
+            .expect("an identity with a primary group builds");
+        command
+            .arg("/proc/self/status")
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        let output = command
+            .output()
+            .expect("the dropped child spawns, which is the property issue #675 lost");
+        assert!(
+            output.status.success(),
+            "the dropped child reads its own status"
+        );
+        let status = String::from_utf8(output.stdout).expect("status is ascii");
+        let line = |key: &str| {
+            status
+                .lines()
+                .find_map(|l| l.strip_prefix(key))
+                .map(|rest| rest.split_whitespace().collect::<Vec<_>>().join(" "))
+                .unwrap_or_default()
+        };
+        (line("Uid:"), line("Gid:"), line("Groups:"))
+    }
+
+    /// **The store probe's identity drop, measured in the kernel.** Needs
+    /// euid 0, and runs through
+    /// `the_identity_drop_is_watched_inside_a_user_namespace` on a box where
+    /// that is not the invoking uid.
+    ///
+    /// The child is asked for uid 4242 with groups 4243 then 4244, and must
+    /// hold exactly that: all four uids 4242, all four gids 4243, and the
+    /// supplementary set 4243 and 4244 and nothing of root's.
+    ///
+    /// Perturbation, watched 2026-09-24 against both: put the identity back
+    /// on `CommandExt::uid` and `CommandExt::gid` with the `setgroups` left in
+    /// the pre-exec, which is the form issue #675 measured, and the spawn
+    /// fails `EPERM`. Drop the `setgroups` from `drop_to` and the child keeps
+    /// root's supplementary set.
+    ///
+    /// conforms: admin-store-gate-asks-as-the-member
+    #[test]
+    #[ignore = "needs euid 0: run by the_identity_drop_is_watched_inside_a_user_namespace"]
+    fn identity_command_lands_the_whole_identity_as_root() {
+        assert_eq!(
+            nix::unistd::geteuid().as_raw(),
+            0,
+            "this instrument needs euid 0"
+        );
+        let (uids, gids, groups) = identity_of_a_dropped_child(4242, &[4243, 4244]);
+        assert_eq!(
+            uids, "4242 4242 4242 4242",
+            "real, effective, saved and fs uid"
+        );
+        assert_eq!(gids, "4243 4243 4243 4243", "the primary group, all four");
+        assert_eq!(
+            groups, "4243 4244",
+            "exactly the identity's set, none of root's"
+        );
+        let empty = identity_command(std::path::Path::new("/bin/cat"), 4242, &[]);
+        assert!(
+            empty.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput),
+            "an identity with no primary group is refused before any spawn"
+        );
+    }
+
+    /// **The watch that runs on an ordinary `cargo test`.** Re-executes this
+    /// test binary inside `unshare --map-auto --map-root-user`, where the
+    /// process is uid 0 over the invoking user's subordinate ids, and requires
+    /// the instrument above to report exactly one test passed, so a filter
+    /// that matched nothing cannot read as green.
+    ///
+    /// **Where it runs.** On thinkpad, measured 2026-09-24: `newuidmap` and
+    /// `newgidmap` present, `todd` holding `100000:65536` in `/etc/subuid` and
+    /// `/etc/subgid`. A box where the namespace cannot be entered prints a
+    /// SKIP naming why and passes. That box has no watch, and says so rather
+    /// than claiming one. A box where the namespace enters and the instrument
+    /// fails, fails here.
+    ///
+    /// Perturbation: as the instrument's, watched through this test.
+    #[test]
+    fn the_identity_drop_is_watched_inside_a_user_namespace() {
+        if nix::unistd::geteuid().is_root() {
+            return identity_command_lands_the_whole_identity_as_root();
+        }
+        let exe = std::env::current_exe().expect("the test binary names itself");
+        let ran = std::process::Command::new("unshare")
+            .args(["--map-auto", "--map-root-user"])
+            .arg(&exe)
+            .args([
+                "--exact",
+                "inventory::tests::identity_command_lands_the_whole_identity_as_root",
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .stdin(std::process::Stdio::null())
+            .output();
+        let output = match ran {
+            Ok(output) => output,
+            Err(e) => {
+                eprintln!("SKIP identity drop watch: unshare could not run: {e}");
+                return;
+            }
+        };
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.starts_with("unshare:") {
+            eprintln!(
+                "SKIP identity drop watch: no user namespace here: {}",
+                stderr.trim()
+            );
+            return;
+        }
+        assert!(
+            output.status.success() && stdout.contains("test result: ok. 1 passed"),
+            "the identity drop failed inside the namespace\nstdout:\n{stdout}\nstderr:\n{stderr}"
         );
     }
 

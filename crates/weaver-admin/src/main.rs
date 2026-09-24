@@ -352,18 +352,9 @@ fn prepare_territory(
 ///
 /// conforms: admin-member-spawn-drops-to-its-account
 fn become_member(member: inventory::MemberAccount) -> std::io::Result<()> {
-    let group = member.gid as nix::libc::gid_t;
-    if unsafe { nix::libc::setgroups(1, &group) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    if unsafe { nix::libc::setresgid(group, group, group) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    let user = member.uid as nix::libc::uid_t;
-    if unsafe { nix::libc::setresuid(user, user, user) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    Ok(())
+    // The one drop routine, shared with the store probe since issue #675, so
+    // the order below the doc comment is written once.
+    inventory::drop_to(member.uid, &[member.gid as nix::libc::gid_t])
 }
 
 /// **The arming, the one deliberate gift**, per `weaver-admin-Spec` section
