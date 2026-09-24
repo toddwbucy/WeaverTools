@@ -343,8 +343,8 @@ fn prepare_territory(
 ///
 /// **The order is not interchangeable.** `setgroups` and `setresgid` both
 /// need the privilege `setresuid` gives away, so a drop that took the uid
-/// first would leave the member holding root's group memberships under the
-/// member's name, which reads as a dropped privilege and is not one.
+/// first would fail its group call with `EPERM`, and the member would not
+/// spawn. Issue #675 was that failure in the store probe.
 ///
 /// Async-signal-safe throughout, per the pre-exec contract: three syscalls
 /// and no allocation. A failure returns the error, which fails the spawn, so
@@ -352,18 +352,9 @@ fn prepare_territory(
 ///
 /// conforms: admin-member-spawn-drops-to-its-account
 fn become_member(member: inventory::MemberAccount) -> std::io::Result<()> {
-    let group = member.gid as nix::libc::gid_t;
-    if unsafe { nix::libc::setgroups(1, &group) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    if unsafe { nix::libc::setresgid(group, group, group) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    let user = member.uid as nix::libc::uid_t;
-    if unsafe { nix::libc::setresuid(user, user, user) } < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    Ok(())
+    // The drop lives in `inventory::drop_to`, shared with the store probe
+    // since issue #675, so the order described above is implemented once.
+    inventory::drop_to(member.uid, &[member.gid as nix::libc::gid_t])
 }
 
 /// **The arming, the one deliberate gift**, per `weaver-admin-Spec` section

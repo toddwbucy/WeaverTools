@@ -662,13 +662,74 @@ pub fn store_admits(socket_dir: &Path, database: &str, role: &str) -> std::io::R
     Ok(admitted)
 }
 
+/// **A command that runs `program` as exactly `uid` with exactly `gids`**, the
+/// first of them primary. The identity is taken in the pre-exec by
+/// [`drop_to`] and nowhere else: `CommandExt::uid` and `CommandExt::gid` are
+/// deliberately not used, because the standard library applies them before
+/// it runs the pre-exec, so a `setgroups` placed there runs after root is
+/// gone and fails `EPERM`. Measured on 2026-09-24, issue #675: the store
+/// probe built that way could not be spawned as any member, and every
+/// agent electing postgres refused `BoundaryUnverified`.
+///
+/// An empty `gids` is refused before any spawn: an identity with no primary
+/// group is not one this crate can hand a process.
+pub fn identity_command(
+    program: &Path,
+    uid: u32,
+    gids: &[u32],
+) -> std::io::Result<std::process::Command> {
+    use std::os::unix::process::CommandExt;
+    if gids.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "an identity needs at least its primary group",
+        ));
+    }
+    let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
+    let mut command = std::process::Command::new(program);
+    // SAFETY: `drop_to` is three async-signal-safe syscalls and no
+    // allocation. The group set is built above, before the fork, and only
+    // read in the child.
+    unsafe {
+        command.pre_exec(move || drop_to(uid, &set));
+    }
+    Ok(command)
+}
+
+/// **The privilege drop, in the one order that works**: the supplementary set,
+/// then the gids, then the uids, each of the three ids set so no saved id
+/// survives to return to. `setgroups` and `setresgid` need the privilege
+/// `setresuid` gives away, so the uid goes last. Called in a pre-exec while
+/// the fork still holds root, by the store probe through
+/// [`identity_command`] and by the member's spawn.
+///
+/// Async-signal-safe throughout, per the pre-exec contract. A failure returns
+/// the error, which fails the spawn, so a process this crate could not
+/// unprivilege does not run at all.
+pub fn drop_to(uid: u32, gids: &[nix::libc::gid_t]) -> std::io::Result<()> {
+    let Some(&primary) = gids.first() else {
+        return Err(std::io::Error::from_raw_os_error(nix::libc::EINVAL));
+    };
+    if unsafe { nix::libc::setgroups(gids.len(), gids.as_ptr()) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if unsafe { nix::libc::setresgid(primary, primary, primary) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let user = uid as nix::libc::uid_t;
+    if unsafe { nix::libc::setresuid(user, user, user) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
+
 /// **Does the store admit `uid` as `role`?** The question both of the
 /// charter's gates pose, and the one this process cannot ask as itself: peer
 /// authentication reads the connecting uid, so this binary re-executes itself
-/// under the named uid and gid with [`PROBE_STORE_VARIABLE`] set, and the
-/// child asks [`store_admits`] and exits zero for admitted and one for
-/// refused. Any other exit is the probe failing to run, which is an error and
-/// not an answer.
+/// under the named uid and that identity's whole group set, with
+/// [`PROBE_STORE_VARIABLE`] set, and the child asks [`store_admits`] and exits
+/// zero for admitted and one for refused. Any other exit is the probe failing
+/// to run, which is an error and not an answer.
 ///
 /// **Both gates go through here as of 2026-09-15**, per issue #545. The first
 /// gate asked [`store_admits`] from this process, so the identity the store
@@ -682,41 +743,45 @@ pub fn store_admits_as(
     database: &str,
     role: &str,
 ) -> std::io::Result<bool> {
-    use std::os::unix::process::CommandExt;
-    let mut probe = std::process::Command::new(std::env::current_exe()?);
+    probe_store_as(
+        &std::env::current_exe()?,
+        socket_dir,
+        uid,
+        gids,
+        database,
+        role,
+    )
+}
+
+/// [`store_admits_as`] with the program named, so the probe's own
+/// construction - identity, environment, arguments, the exit reading - can be
+/// driven by a program that reports the identity it was given. Production
+/// passes this binary. Issue #675 lived in exactly this construction.
+pub fn probe_store_as(
+    program: &Path,
+    socket_dir: &Path,
+    uid: u32,
+    gids: &[u32],
+    database: &str,
+    role: &str,
+) -> std::io::Result<bool> {
+    // **The probe carries the group set of the identity it stands for**, not
+    // this crate's: the spawned member's drop narrows its own set to exactly
+    // its group, so a probe inheriting root's memberships would reach a store
+    // socket on a group the identity does not hold, and answer about access
+    // that identity will not have. For the member that is a gate passing on a
+    // dial that will fail, and for the agent a refusal observed for the wrong
+    // reason. [`identity_command`] sets the whole set in the right order.
+    let mut probe = identity_command(program, uid, gids)?;
     probe
         .env_clear()
         .env(PROBE_STORE_VARIABLE, "1")
         .arg(socket_dir)
         .arg(database)
         .arg(role)
-        .uid(uid)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    // **The probe carries the group set of the identity it stands for.**
-    // `CommandExt::gid` sets the primary group and leaves the supplementary
-    // list inherited from this crate, where the spawned member's `become_member`
-    // narrows it to exactly its own. Without this the probe reaches a store
-    // socket on a group admin holds and the identity does not, and answers
-    // about access that identity will not have: for the member that is a gate
-    // passing on a dial that will fail, and for the agent it is a refusal
-    // observed for the wrong reason.
-    if let Some(primary) = gids.first().copied() {
-        probe.gid(primary);
-        let set: Vec<nix::libc::gid_t> = gids.iter().map(|g| *g as nix::libc::gid_t).collect();
-        // SAFETY: `setgroups` is async-signal-safe and touches only this forked
-        // child's credentials, before exec, while the fork still holds the
-        // privilege the call needs.
-        unsafe {
-            probe.pre_exec(move || {
-                if nix::libc::setgroups(set.len(), set.as_ptr()) < 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                Ok(())
-            });
-        }
-    }
     match probe.status()?.code() {
         Some(0) => Ok(true),
         Some(1) => Ok(false),
@@ -1683,6 +1748,331 @@ mod tests {
         assert!(
             matches!(unasked, Err(LifecycleRefusal::BoundaryUnverified)),
             "a store that could not be asked answers neither gate"
+        );
+    }
+
+    /// **A room for the stand-in probe, in the shared temporary directory,
+    /// never looser than its final mode.** It is made with `mkdir` at `0700`
+    /// under a name no other run uses, so a path already standing there, a
+    /// planted symlink included, refuses rather than being followed. A umask
+    /// can only tighten that. The stand-in script is created new at `0755`,
+    /// root-owned, so nothing else can hold it open for writing. Only then is
+    /// the room's group set to the probe's group and the room opened to
+    /// `0770`, so the probe can write its record and no user outside the
+    /// probe's group can enter. Inside the namespace that group maps to a
+    /// subordinate gid nobody holds. The test assumes ids 4242 to 4244 belong
+    /// to no one on a box that runs it as real root.
+    ///
+    /// **The room stays owned by the test**, root inside the namespace, which
+    /// is the invoking user on the host. A run killed before its drop
+    /// therefore leaves a directory that user removes with a plain `rm`,
+    /// where a room owned by the probe's uid would need the namespace again.
+    /// Removed on drop.
+    struct ProbeRoom {
+        path: std::path::PathBuf,
+        script: std::path::PathBuf,
+    }
+
+    /// The stand-in for this binary in reading 3: records its status, its
+    /// database and role arguments and its environment into the room it is
+    /// handed where the socket directory goes. It exits one when the role is
+    /// `refuse` and zero otherwise, which the probe reads as refused and
+    /// admitted.
+    const STAND_IN: &str = "#!/bin/sh\n\
+         /bin/cat /proc/self/status > \"$1/status\"\n\
+         printf 'args %s %s\\n' \"$2\" \"$3\" > \"$1/seen\"\n\
+         env | sed 's/^/env /' >> \"$1/seen\"\n\
+         [ \"$3\" = refuse ] && exit 1\n\
+         exit 0\n";
+
+    impl ProbeRoom {
+        fn make(parent: &std::path::Path, gid: u32) -> std::io::Result<Self> {
+            let unique = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or_default();
+            let name = format!("weaver-675-{}-{unique}", std::process::id());
+            Self::at(parent.join(name), gid)
+        }
+
+        fn at(path: std::path::PathBuf, gid: u32) -> std::io::Result<Self> {
+            use std::io::Write;
+            use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
+            std::fs::DirBuilder::new().mode(0o700).create(&path)?;
+            let room = Self {
+                script: path.join("probe.sh"),
+                path,
+            };
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .mode(0o755)
+                .open(&room.script)?
+                .write_all(STAND_IN.as_bytes())?;
+            // A umask can only have narrowed the script; this restores the
+            // execute bit the probe needs and opens nothing further.
+            std::fs::set_permissions(&room.script, std::fs::Permissions::from_mode(0o755))?;
+            std::os::unix::fs::chown(&room.path, None, Some(gid))?;
+            std::fs::set_permissions(&room.path, std::fs::Permissions::from_mode(0o770))?;
+            Ok(room)
+        }
+    }
+
+    impl Drop for ProbeRoom {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    /// The uid, gid and group lines of a `/proc/<pid>/status` text, each
+    /// with its fields joined by single spaces.
+    fn status_identity(status: &str) -> (String, String, String) {
+        let line = |key: &str| {
+            status
+                .lines()
+                .find_map(|l| l.strip_prefix(key))
+                .map(|rest| rest.split_whitespace().collect::<Vec<_>>().join(" "))
+                .unwrap_or_default()
+        };
+        (line("Uid:"), line("Gid:"), line("Groups:"))
+    }
+
+    /// **The saved ids, checked where they can still be seen.** `execve`
+    /// copies the effective ids into the saved ones, so a status read after
+    /// exec shows saved equal to effective whatever the drop left: that read
+    /// cannot watch this. Registered after [`identity_command`]'s own
+    /// pre-exec, this runs in the child after `drop_to` and before exec, and
+    /// fails the spawn with `ENOTRECOVERABLE` unless all three uids and all
+    /// three gids are the target. Two syscalls and no allocation.
+    fn and_no_saved_id_survives(command: &mut std::process::Command, uid: u32, gid: u32) {
+        use std::os::unix::process::CommandExt;
+        // SAFETY: `getresuid` and `getresgid` are async-signal-safe and the
+        // closure allocates nothing.
+        unsafe {
+            command.pre_exec(move || {
+                let (mut r, mut e, mut s) = (0, 0, 0);
+                let (mut rg, mut eg, mut sg) = (0, 0, 0);
+                if nix::libc::getresuid(&mut r, &mut e, &mut s) < 0
+                    || nix::libc::getresgid(&mut rg, &mut eg, &mut sg) < 0
+                {
+                    return Err(std::io::Error::last_os_error());
+                }
+                if [r, e, s] != [uid; 3] || [rg, eg, sg] != [gid; 3] {
+                    return Err(std::io::Error::from_raw_os_error(
+                        nix::libc::ENOTRECOVERABLE,
+                    ));
+                }
+                Ok(())
+            });
+        }
+    }
+
+    /// **The identity drop, measured in the kernel, on the construction the
+    /// store probe really uses.** Needs euid 0, and runs through
+    /// `the_identity_drop_is_watched_inside_a_user_namespace` on a box where
+    /// that is not the invoking uid. Three readings, each for a different
+    /// half of the property:
+    ///
+    /// 1. Before exec, through [`and_no_saved_id_survives`]: the real,
+    ///    effective and saved uids are all 4242 and the gids all 4243.
+    /// 2. After exec, from the child's own status: the uid and gid lines, and
+    ///    the supplementary set exactly 4243 and 4244, none of root's.
+    /// 3. Through [`probe_store_as`], the store probe's own construction, with
+    ///    [`STAND_IN`] standing for this binary in a [`ProbeRoom`]: the same
+    ///    identity must land, the arguments must arrive as database then role,
+    ///    none of this process's environment may cross, and an exit of one
+    ///    must read as refused. The room's mode, owner and removal are
+    ///    asserted, and a room whose name is already taken must be refused.
+    ///
+    /// Perturbations, each watched failing 2026-09-24 through the namespace
+    /// watch:
+    ///
+    /// - the form issue #675 measured, `CommandExt::uid` and `::gid` with
+    ///   `setgroups` alone in the pre-exec: the spawn fails `EPERM`;
+    /// - `setgroups` removed from `drop_to`: root's supplementary set remains;
+    /// - `setresuid(user, user, 0)` or `setresgid(p, p, 0)`: reading 1;
+    /// - `probe_store_as` rebuilt on `Command::new` with `.uid` alone;
+    /// - database and role swapped, `env_clear` removed, or exit one no longer
+    ///   read as refused: reading 3;
+    /// - the room made recursively, opened to `0777`, or not removed on drop.
+    ///
+    /// conforms: admin-store-gate-asks-as-the-member
+    #[test]
+    #[ignore = "needs euid 0: run by the_identity_drop_is_watched_inside_a_user_namespace"]
+    fn identity_command_lands_the_whole_identity_as_root() {
+        assert_eq!(
+            nix::unistd::geteuid().as_raw(),
+            0,
+            "this instrument needs euid 0"
+        );
+
+        // Readings 1 and 2: identity_command, checked before and after exec.
+        let mut command = identity_command(std::path::Path::new("/bin/cat"), 4242, &[4243, 4244])
+            .expect("an identity with a primary group builds");
+        and_no_saved_id_survives(&mut command, 4242, 4243);
+        command
+            .arg("/proc/self/status")
+            .stdin(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        let output = command
+            .output()
+            .expect("the dropped child spawns with every uid and gid dropped, saved ones included");
+        assert!(
+            output.status.success(),
+            "the dropped child reads its own status"
+        );
+        let (uids, gids, groups) =
+            status_identity(&String::from_utf8(output.stdout).expect("status is ascii"));
+        assert_eq!(uids, "4242 4242 4242 4242", "the uid line after the drop");
+        assert_eq!(gids, "4243 4243 4243 4243", "the primary group, all four");
+        assert_eq!(
+            groups, "4243 4244",
+            "exactly the identity's set, none of root's"
+        );
+
+        // Reading 3: the store probe's own construction, in a room only the
+        // probe's identity can enter, removed however this test ends.
+        let room = ProbeRoom::make(&std::env::temp_dir(), 4243)
+            .expect("an exclusive room is made for the probe");
+        {
+            use std::os::unix::fs::MetadataExt;
+            let meta = std::fs::symlink_metadata(&room.path).expect("the room stands");
+            assert!(meta.is_dir(), "the room is a directory, not a link");
+            assert_eq!(
+                meta.mode() & 0o7777,
+                0o770,
+                "the room opens to its group only"
+            );
+            assert_eq!(meta.uid(), 0, "the room stays owned by the test");
+            assert_eq!(meta.gid(), 4243, "and its group is the probe's");
+        }
+        let admitted = probe_store_as(&room.script, &room.path, 4242, &[4243, 4244], "db", "role")
+            .expect("the probe construction spawns as the identity");
+        assert!(admitted, "a probe exiting zero reads as admitted");
+        let (uids, gids, groups) = status_identity(
+            &std::fs::read_to_string(room.path.join("status")).expect("the probe recorded itself"),
+        );
+        assert_eq!(
+            uids, "4242 4242 4242 4242",
+            "the probe runs as the member's uid"
+        );
+        assert_eq!(gids, "4243 4243 4243 4243", "under its primary group");
+        assert_eq!(groups, "4243 4244", "carrying exactly its set");
+        let seen =
+            std::fs::read_to_string(room.path.join("seen")).expect("the probe recorded its call");
+        assert!(
+            seen.lines().any(|l| l == "args db role"),
+            "database then role, after the socket directory: {seen}"
+        );
+        assert!(
+            seen.lines()
+                .any(|l| l == format!("env {PROBE_STORE_VARIABLE}=1")),
+            "the probe variable is set: {seen}"
+        );
+        assert!(
+            !seen
+                .lines()
+                .any(|l| l.starts_with("env HOME=") || l.starts_with("env PATH=")),
+            "and nothing of this process's environment crosses: {seen}"
+        );
+        let refused = probe_store_as(
+            &room.script,
+            &room.path,
+            4242,
+            &[4243, 4244],
+            "db",
+            "refuse",
+        )
+        .expect("a probe that answers refused still ran");
+        assert!(
+            !refused,
+            "a probe exiting one reads as refused, never as an error"
+        );
+        let room_path = room.path.clone();
+        drop(room);
+        assert!(
+            !room_path.exists(),
+            "the room is removed when the reading ends"
+        );
+
+        // The room is exclusive: a path already standing at its name refuses
+        // rather than being used. The planted link points at a real directory,
+        // the case a following `mkdir -p` would enter. Both are made inside a
+        // yard that is itself an exclusive room, so this touches nothing it did
+        // not create and the yard's drop removes all of it.
+        let yard = ProbeRoom::make(&std::env::temp_dir(), 4243).expect("the yard is made");
+        let target = yard.path.join("target");
+        let planted = yard.path.join("planted");
+        std::fs::create_dir(&target).expect("the link's target is made");
+        std::os::unix::fs::symlink(&target, &planted).expect("a symlink is planted");
+        let taken = ProbeRoom::at(planted, 4243);
+        let refused = taken.is_err();
+        let followed = target.join("probe.sh").exists();
+        drop(taken);
+        drop(yard);
+        assert!(
+            refused && !followed,
+            "a room whose name is already taken is refused, not entered through the link"
+        );
+
+        let empty = identity_command(std::path::Path::new("/bin/cat"), 4242, &[]);
+        assert!(
+            empty.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput),
+            "an identity with no primary group is refused before any spawn"
+        );
+    }
+
+    /// **The watch that runs on an ordinary `cargo test`.** Re-executes this
+    /// test binary inside `unshare --map-auto --map-root-user`, where the
+    /// process is uid 0 over the invoking user's subordinate ids, and requires
+    /// the instrument above to report exactly one test passed, so a filter
+    /// that matched nothing cannot read as green.
+    ///
+    /// **Where it runs.** On thinkpad, measured 2026-09-24: `newuidmap` and
+    /// `newgidmap` present, `todd` holding `100000:65536` in `/etc/subuid` and
+    /// `/etc/subgid`. A box where the namespace cannot be entered prints a
+    /// SKIP naming why and passes. That box has no watch, and says so rather
+    /// than claiming one. A box where the namespace enters and the instrument
+    /// fails, fails here.
+    ///
+    /// Perturbation: as the instrument's, watched through this test.
+    #[test]
+    fn the_identity_drop_is_watched_inside_a_user_namespace() {
+        if nix::unistd::geteuid().is_root() {
+            return identity_command_lands_the_whole_identity_as_root();
+        }
+        let exe = std::env::current_exe().expect("the test binary names itself");
+        let ran = std::process::Command::new("unshare")
+            .args(["--map-auto", "--map-root-user"])
+            .arg(&exe)
+            .args([
+                "--exact",
+                "inventory::tests::identity_command_lands_the_whole_identity_as_root",
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .stdin(std::process::Stdio::null())
+            .output();
+        let output = match ran {
+            Ok(output) => output,
+            Err(e) => {
+                eprintln!("SKIP identity drop watch: unshare could not run: {e}");
+                return;
+            }
+        };
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.starts_with("unshare:") {
+            eprintln!(
+                "SKIP identity drop watch: no user namespace here: {}",
+                stderr.trim()
+            );
+            return;
+        }
+        assert!(
+            output.status.success() && stdout.contains("test result: ok. 1 passed"),
+            "the identity drop failed inside the namespace\nstdout:\n{stdout}\nstderr:\n{stderr}"
         );
     }
 
