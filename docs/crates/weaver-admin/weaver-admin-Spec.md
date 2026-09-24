@@ -593,7 +593,8 @@ that identity's whole group set, primary first, and exiting with the answer,
 which is the mechanism the agent's gate has carried since 2026-09-04. **The
 identity is taken in the child before exec, groups then gids then uids**, as
 of 2026-09-24 on issue #675: a probe that left the uid to the spawn's own
-setting lost the privilege its group call needed, and refused every member.
+setting lost the privilege its group call needed, could not be spawned as any
+member, and so every agent electing postgres refused `validate`.
 **The second gate is unchanged**, no agent's uid reaching any store being the
 property already bought, and it is kept rather than rebuilt.
 

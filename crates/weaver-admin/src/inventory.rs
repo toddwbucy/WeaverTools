@@ -728,8 +728,8 @@ pub fn drop_to(uid: u32, gids: &[nix::libc::gid_t]) -> std::io::Result<()> {
 /// authentication reads the connecting uid, so this binary re-executes itself
 /// under the named uid and that identity's whole group set, with
 /// [`PROBE_STORE_VARIABLE`] set, and the child asks [`store_admits`] and exits
-/// zero for admitted and one for refused. Any other exit is the probe failing to run, which is an error and
-/// not an answer.
+/// zero for admitted and one for refused. Any other exit is the probe failing
+/// to run, which is an error and not an answer.
 ///
 /// **Both gates go through here as of 2026-09-15**, per issue #545. The first
 /// gate asked [`store_admits`] from this process, so the identity the store
@@ -1751,6 +1751,57 @@ mod tests {
         );
     }
 
+    /// **A room for the stand-in probe that only the probe's identity can
+    /// enter.** Made with `mkdir` under a name no other run uses, so a path
+    /// already standing there, a planted symlink included, refuses rather
+    /// than being followed. It is then chowned to the identity at `0700`. The
+    /// stand-in script is written root-owned `0755` before the chown, so no
+    /// other local user can reach or replace it. Removed on drop, so a
+    /// failed reading leaves nothing behind.
+    struct ProbeRoom {
+        path: std::path::PathBuf,
+        script: std::path::PathBuf,
+    }
+
+    impl ProbeRoom {
+        fn make(parent: &std::path::Path, uid: u32, gid: u32) -> std::io::Result<Self> {
+            let unique = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or_default();
+            let name = format!("weaver-675-{}-{unique}", std::process::id());
+            Self::at(parent.join(name), uid, gid)
+        }
+
+        fn at(path: std::path::PathBuf, uid: u32, gid: u32) -> std::io::Result<Self> {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::create_dir(&path)?;
+            let room = Self {
+                script: path.join("probe.sh"),
+                path,
+            };
+            std::fs::write(
+                &room.script,
+                "#!/bin/sh\n\
+                 /bin/cat /proc/self/status > \"$1/status\"\n\
+                 printf 'args %s %s\\n' \"$2\" \"$3\" > \"$1/seen\"\n\
+                 env | sed 's/^/env /' >> \"$1/seen\"\n\
+                 [ \"$3\" = refuse ] && exit 1\n\
+                 exit 0\n",
+            )?;
+            std::fs::set_permissions(&room.script, std::fs::Permissions::from_mode(0o755))?;
+            std::fs::set_permissions(&room.path, std::fs::Permissions::from_mode(0o700))?;
+            std::os::unix::fs::chown(&room.path, Some(uid), Some(gid))?;
+            Ok(room)
+        }
+    }
+
+    impl Drop for ProbeRoom {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
     /// The uid, gid and group lines of a `/proc/<pid>/status` text, each
     /// with its fields joined by single spaces.
     fn status_identity(status: &str) -> (String, String, String) {
@@ -1850,35 +1901,74 @@ mod tests {
             "exactly the identity's set, none of root's"
         );
 
-        // Reading 3: the store probe's own construction.
-        let room = std::env::temp_dir().join(format!("weaver-675-{}", std::process::id()));
-        std::fs::create_dir_all(&room).expect("the room is made");
-        let script = room.join("probe.sh");
-        std::fs::write(
-            &script,
-            "#!/bin/sh\n/bin/cat /proc/self/status > \"$1/status\"\n",
-        )
-        .expect("the stand-in probe is written");
-        {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&room, std::fs::Permissions::from_mode(0o777))
-                .expect("the room is open to the dropped uid");
-            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
-                .expect("the stand-in is executable by the dropped uid");
-        }
-        let admitted = probe_store_as(&script, &room, 4242, &[4243, 4244], "db", "role")
+        // Reading 3: the store probe's own construction, in a room only the
+        // probe's identity can enter, removed however this test ends.
+        let room = ProbeRoom::make(&std::env::temp_dir(), 4242, 4243)
+            .expect("an exclusive room is made for the probe");
+        let admitted = probe_store_as(&room.script, &room.path, 4242, &[4243, 4244], "db", "role")
             .expect("the probe construction spawns as the identity");
         assert!(admitted, "a probe exiting zero reads as admitted");
         let (uids, gids, groups) = status_identity(
-            &std::fs::read_to_string(room.join("status")).expect("the probe recorded itself"),
+            &std::fs::read_to_string(room.path.join("status")).expect("the probe recorded itself"),
         );
-        let _ = std::fs::remove_dir_all(&room);
         assert_eq!(
             uids, "4242 4242 4242 4242",
             "the probe runs as the member's uid"
         );
         assert_eq!(gids, "4243 4243 4243 4243", "under its primary group");
         assert_eq!(groups, "4243 4244", "carrying exactly its set");
+        let seen =
+            std::fs::read_to_string(room.path.join("seen")).expect("the probe recorded its call");
+        assert!(
+            seen.lines().any(|l| l == "args db role"),
+            "database then role, after the socket directory: {seen}"
+        );
+        assert!(
+            seen.lines()
+                .any(|l| l == format!("env {PROBE_STORE_VARIABLE}=1")),
+            "the probe variable is set: {seen}"
+        );
+        assert!(
+            !seen
+                .lines()
+                .any(|l| l.starts_with("env HOME=") || l.starts_with("env PATH=")),
+            "and nothing of this process's environment crosses: {seen}"
+        );
+        let refused = probe_store_as(
+            &room.script,
+            &room.path,
+            4242,
+            &[4243, 4244],
+            "db",
+            "refuse",
+        )
+        .expect("a probe that answers refused still ran");
+        assert!(
+            !refused,
+            "a probe exiting one reads as refused, never as an error"
+        );
+        drop(room);
+
+        // The room is exclusive: a path already standing at its name refuses
+        // rather than being used. The planted link points at a real directory,
+        // which is the case a following `create_dir_all` would enter.
+        let tag = std::process::id();
+        let target = std::env::temp_dir().join(format!("weaver-675-target-{tag}"));
+        let planted = std::env::temp_dir().join(format!("weaver-675-planted-{tag}"));
+        let _ = std::fs::remove_file(&planted);
+        let _ = std::fs::remove_dir_all(&target);
+        std::fs::create_dir(&target).expect("the link's target is made");
+        std::os::unix::fs::symlink(&target, &planted).expect("a symlink is planted");
+        let taken = ProbeRoom::at(planted.clone(), 4242, 4243);
+        let refused = taken.is_err();
+        let followed = target.join("probe.sh").exists();
+        drop(taken);
+        let _ = std::fs::remove_file(&planted);
+        let _ = std::fs::remove_dir_all(&target);
+        assert!(
+            refused && !followed,
+            "a room whose name is already taken is refused, not entered through the link"
+        );
 
         let empty = identity_command(std::path::Path::new("/bin/cat"), 4242, &[]);
         assert!(
