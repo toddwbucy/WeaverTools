@@ -88,8 +88,10 @@ payload renders each job's declaration from the tuple, per `declaration`, with t
 seed the job's own, the loop `basic_loop.py` from the job's stack, the operator's uid
 as the gate's one allowed dialer, and a fresh trace sink per job. A re-feed's derived
 declaration must name the served model and no other artifact and must carry the
-tuple's context capacity, token cap and identity and a seed the tuple admits, per
-`holds_tuple`, under the `derived-artifact` and `derived-tuple` refusals. Every
+tuple's context capacity, token cap and identity, and the seed its source free run
+declared where the source is local or a seed the tuple admits where the source is an
+external trace, per `holds_tuple`, under the `derived-artifact` and `derived-tuple`
+refusals. Every
 measured record must carry the tuple's weights hash and the job's seed, under
 `weights-held` and `seed-held`, and a re-feed must carry them on both sides of the
 comparison, under `source-weights-held`, `source-seed-held`, `replay-weights-held`
@@ -102,8 +104,9 @@ tuple's depth, and one value per token in every per-token series the tuple elect
 entropies always and surprisals because the tuple elects them, per `series` and
 `enough`. A true election with no record key raises rather than going unread, so an
 election added to the tuple cannot be forgotten by the sufficiency check and the
-comparison both. `weaver-spu-Spec` section 13.12's rule stands beneath this: elected
-surprisals render, and disagreement between elected readings is a defect.
+comparison both. `weaver-spu-Spec` section 6's rule, carrying charter section 13.12,
+stands beneath this: elected surprisals render, and disagreement between elected
+readings is a defect.
 
 ## 3. The arms, and the claims the code enforces
 
@@ -124,8 +127,9 @@ The refusals are `arm-order`, `job-identities`, `job-types`, `control-schedule`,
 **TB0, the control.** The claim: holding the seed reproduces on this card, and
 changing it moves the draw and not the distribution. The prediction the code checks:
 every same-seed pair is exact and emits the same text, every own re-feed is certified
-and exact at every position, and every pair of distinct seeds parts within the first
-twenty-four tokens of the first repetition. The falsifier stops the arm where it
+and exact at every position, and every pair of distinct seeds, taken one run per seed
+in the tuple's order, parts within the first twenty-four tokens. The falsifier stops
+the arm where it
 falls: after the operator has unloaded a free run whose earlier same-seed run it does
 not match, under `pair-falsifier`, or an own re-feed that is not certified and exact,
 under `own-refeed-falsifier`, and at the arm's assessment under `control-falsifier`
@@ -151,7 +155,8 @@ reading carries that as part of the kernel stack.
 ## 4. The order of operations
 
 **One command, one state file, three seats.** The operator runs `next` and nothing
-else, as the recorded operator uid and never under sudo, per `Order.operator`. The
+else, never under sudo, per `Order.operator`, and the payload refuses a `next` whose
+invoking uid is not the plan's recorded operator, under its `operator` guard. The
 state file `tb-state.json` carries the cursor over a schedule the plan determines:
 `provision`, then for each arm `start`, and for each job `load`, `measure`, `unload`
 and `settle`, then `finish`, and after the last arm `report` and `review`. Each step
@@ -165,8 +170,9 @@ under `prior-success` and `prior-evidence`.
 
 **Approval gates every step and is not this program's to grant.** `next` waits while
 the hold stands or the review is not `PASS`. Once lifted, every step verifies that
-the review names its seat and reference, that its artifact map covers the plan, the
-seven scripts and the suite, that every artifact still hashes as recorded, that the
+the review names its seat and reference, that its artifact map covers the plan and
+the nine staged files, the eight scripts and the suite, that every artifact still
+hashes as recorded, that the
 plan snapshot parses from the bytes that matched its digest, that the plan's file map
 is covered by the artifact map and agrees with it, and that no halt is recorded,
 under `hold`, `review`, `approval-coverage`, `artifact-hashes`, `plan-snapshot`,
@@ -222,8 +228,10 @@ lands, this workflow is held.
 **Nothing privileged reads an operator-owned input twice.** A check on a path
 followed by a second read of the path binds nothing, so every operator-owned input
 is read once into a root-owned private file whose bytes are verified against the
-recorded digest, and only that file is used afterwards: the served model, under
-`snapshot-hash`, and a re-feed's source trace, under `source-file-hash`. The re-feed
+recorded digest, and only that file is used afterwards: the served model and a
+re-feed's external source trace, each under `snapshot-hash`, every file the plan
+names having first been checked against its manifest digest under
+`source-file-hash`. The re-feed
 then cuts the plan's source run from that snapshot into a second private file, since
 `derive` refuses a record holding two runs, and `derive` and `preload` both receive
 that one file, under `source-run-selected`. The driver likewise hashes and compiles
@@ -253,14 +261,15 @@ group, refuses an existing root or account rather than adopting custody, under
 `fresh-install-root`, installs the model at the historical absolute artifact path or
 checks an identical existing file and never overwrites a different one, and changes
 nothing of `m1`, `karl`, their declarations or `/etc/weaver/admin`. The sinks
-directory is root-owned, group `bravo`, mode `2750`, so the operator reads evidence
-and no member writes outside its own trace.
+directory is root-owned, its group the operator's own, mode `2750`, so the operator
+reads evidence and no member writes outside its own trace.
 
 **Every load stands on an interlock.** A `bravo` load refuses a non-inactive `m1`
 unit, an unreadable unit status, a remaining `m1` coordination door, or any process
 under `m1`'s uid, under `m1-inactive`, `m1-state-readable`, `m1-no-door` and
-`m1-no-process`. It checks the device and driver tuple, that every engine library
-resolves, and that the CUDA runtime resolves from the stack's own library directory
+`m1-no-process`. It checks the device and driver tuple, that the CUDA engine library
+`libggml-cuda.so` resolves every dependency, and that the CUDA runtime resolves from
+the stack's own library directory
 and nowhere else, under `gpu-tuple`, `resolved-libraries` and `cuda-local`. A
 diagnostic load waits for the preload door to stand and for the loader to answer,
 under `preload-door` and `diagnostic-load`, and an admin answer is read for its
@@ -284,8 +293,10 @@ a test failure and not silent drift.
 including one inventory twice, and any inventory with no hosts, no cubins or no PTX,
 since an empty scope makes every verdict vacuous. Its report names the two inventories
 it read by path and digest, and it records per host file whether the file is
-byte-identical and whether each recorded section matches, and per CUDA member whether
-the container and the code sections match.
+byte-identical and whether each recorded section matches, and per CUDA architecture
+group how many members match by container and by code section and which members
+changed or went missing, so a container that differs while its code sections match
+is told apart from a kernel that changed.
 
 **The verdict is conservative and bound to the stacks it judged.** Identity holds
 only when every recorded section, header and CUDA member matches and every host file
@@ -310,11 +321,15 @@ compiled from the hashed bytes the manifest approved and never from cached bytec
 and must be sufficient per section 2. Each trace has a fresh directory, so a retry
 cannot truncate or relabel earlier evidence.
 
-**A re-feed is one certified replay against one verified source.** The source record
-is the earlier free run's record or the reviewed external trace's selected run, read
-once, hashed and parsed, with exactly one measurement, under `source-trace` and
-`source-measurement`. The replay must complete and carry exactly one measurement,
-under `replay-completed`, `single-replay` and `replay-measurement`. Exactness is the
+**A re-feed is one completed replay against one verified source.** The source record
+is the earlier free run's record, read by path from the deposit, which is design item
+B on #679 and is named in section 10 as not yet held, or the reviewed external trace's
+selected run, read once, hashed and parsed, with exactly one measurement, under
+`source-trace` and `source-measurement`. The replay must complete, certified or
+diverged, and carry exactly one measurement, under `replay-completed`,
+`single-replay` and `replay-measurement`. Only the control's own re-feeds must be
+certified, per section 3, since a diverged replay is what the device and kernel arms
+predict. Exactness is the
 output tokens equal, every elected per-token series equal to the bit, and the field
 equal at every position, per `exact`, and the reading is the historical instrument's
 divergence coordinate with its ordinal.
@@ -331,8 +346,11 @@ digest intact.
 
 ## 8. The refusals
 
-Every guard is named, and its name is the reason in the halt. They are grouped here
-by the module that raises them, and section 9 says how each is watched. The
+Every guard is named, and its name is the reason in the halt. Three refusals in the
+payload stand outside that rule today and are owed names by the citations commit on
+#683: an existing `bravo` account, an unknown step, and a privileged command that
+exits nonzero, which raise as plain errors. They are grouped here by the module that
+raises them, and section 9 says how each is watched. The
 coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-order`,
 `job-identities`, `job-types`, `control-schedule`, `own-refeeds`, `source-order`,
 `device-sources`, `device-traces`, `device-selections-distinct`, `kernel-schedule`,
