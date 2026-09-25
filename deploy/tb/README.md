@@ -52,8 +52,10 @@ actual decision. `control_count` must explicitly accept eight Q8_0 pairs and all
 16 own-record re-feeds for this schedule. If the operator chooses more pairs,
 change the schedule validator and tests in a reviewed rework first. No optional
 BF16 rung is silently added. The kernel schedule contains all 16 B1 records;
-it may be emptied only with `executable_identity: true` backed by the approved
-section-comparison evidence. The current comparison does not permit that.
+it may be emptied only with `executable_identity: true` and an `identity_report`
+naming the section comparison, hashed in `files`. Approval reads that report
+once and refuses unless it is `sections.py compare`'s verdict on B1 against B2
+and the verdict is true. The current comparison does not permit that.
 
 `TB-d` jobs identify the source cell (`ampere` or `ada`), source trace and source
 run. All source records selected by the ruling must be listed, not one convenient

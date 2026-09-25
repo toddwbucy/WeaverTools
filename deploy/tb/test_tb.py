@@ -195,6 +195,26 @@ class Fixture(unittest.TestCase):
                 if fault=='no-run':job.pop('source_run')
                 with self.assertRaises(order.Refused):order.validate_plan(bad)
 
+    def test_an_emptied_kernel_arm_stands_on_its_comparison(self):
+        # #683 finding 25: executable_identity alone emptied TB-k. The plan
+        # must name a hashed comparison report, and approval requires it to be
+        # sections.compare's B1-against-B2 verdict, and true.
+        report=self.root/'identity.json'
+        def emptied(verdict,named=True):
+            p=copy.deepcopy(self.plan);p['arms'][2]=dict(name='TB-k',executable_identity=True,jobs=[])
+            report.write_text(json.dumps(verdict))
+            if named:p['arms'][2]['identity_report']=str(report);p['files'][str(report)]=order.sha(report)
+            order.atomic(self.planpath,p);self.state['review']['artifacts'].update({str(self.planpath):order.sha(self.planpath),str(report):order.sha(report)})
+            return p
+        with self.assertRaisesRegex(order.Refused,'kernel-schedule'):order.validate_plan(emptied({},named=False))
+        for label,verdict in [('false',dict(stacks=['B1','B2'],executable_identity=False)),('unpaired',dict(executable_identity=True)),
+                              ('same-stack',dict(stacks=['B1','B1'],executable_identity=True))]:
+            with self.subTest(label=label):
+                emptied(verdict)
+                with self.assertRaisesRegex(order.Refused,'identity-evidence'):self.o.approved(self.state)
+        emptied(dict(stacks=['B1','B2'],executable_identity=True))
+        self.assertEqual(self.o.approved(self.state)['arms'][2]['jobs'],[])
+
     def test_operator_sequence_success_and_repeat(self):
         def runner(s,step,log):log.write_text('SUCCESS: '+step+'\n');return 0
         with contextlib.redirect_stdout(io.StringIO()):self.o.operator('next',runner)

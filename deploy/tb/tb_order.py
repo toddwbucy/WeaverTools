@@ -129,7 +129,10 @@ def validate_plan(plan):
              for cell in ['ampere', 'ada']}
     check('device-selections-distinct', len(set(selections)) == len(selections) and
           not cells['ampere'] & cells['ada'])
-    check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs']) or
+    # An emptied kernel arm names the comparison that empties it, hashed in the
+    # manifest; approved() reads that report and requires its verdict.
+    check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs'] and
+                              arms[2].get('identity_report') in plan.get('files', {})) or
           (sorted(j.get('source_job') for j in arms[2]['jobs']) == sorted(j['id'] for j in free) and
            all(j['kind'] == 'refeed' and j['stack'] == 'B2' for j in arms[2]['jobs'])))
 
@@ -171,6 +174,13 @@ class Order:
         validate_plan(plan)
         check('manifest-coverage', bool(plan.get('files')) and set(plan['files']) <= files.keys())
         check('manifest-hashes', all(files[p] == h for p, h in plan['files'].items()))
+        kernel = plan['arms'][2]
+        if not kernel['jobs']:
+            # One read of the approved report, hashed and parsed: it must be
+            # sections.compare's verdict on B1 against B2, and that verdict true.
+            data = Path(kernel['identity_report']).read_bytes()
+            report = json.loads(data) if hashlib.sha256(data).hexdigest() == files[kernel['identity_report']] else {}
+            check('identity-evidence', report.get('stacks') == ['B1', 'B2'] and report.get('executable_identity') is True)
         return plan
 
     def due(self, s, plan):
