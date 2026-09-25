@@ -1,0 +1,257 @@
+#!/usr/bin/env python3
+"""Operator-only TB payload; copied to a private hash-checked file by tb_order.
+
+Stdlib only: sudo runs this with -I and closed stdin. Never run it directly.
+All mutations belong to the isolated TB installation and the bravo account.
+"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import pwd
+import grp
+import shutil
+import stat
+import subprocess
+import sys
+import time
+
+ROOT = Path('/var/lib/weaver-tb')
+MODEL = Path('/opt/weaver/models/Qwen3-8B-Q8_0.gguf')
+
+
+def need(name, condition):
+    if not condition:
+        raise RuntimeError(name)
+
+
+def sha(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def run(argv, **kw):
+    return subprocess.run(argv, stdin=subprocess.DEVNULL, check=True, text=True, **kw)
+
+
+def m1_unloaded():
+    # No installed admin invocation. Missing unit alone is not enough: also
+    # refuse a surviving coordination door or member/worker process.
+    answer = subprocess.run(['/usr/bin/systemctl', 'show', 'weaver-worker@m1.service',
+                             '--property=ActiveState', '--property=LoadState'],
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    values = dict(line.split('=', 1) for line in answer.stdout.splitlines() if '=' in line)
+    need('m1-state-readable', answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found'])
+    need('m1-inactive', values.get('ActiveState') == 'inactive')
+    need('m1-no-door', not Path('/run/weaver-m1/coordination.sock').exists())
+    try:
+        uid = pwd.getpwnam('weaver-m1').pw_uid
+    except KeyError:
+        uid = None
+    for entry in Path('/proc').iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            need('m1-no-process', uid is None or entry.stat().st_uid != uid)
+        except FileNotFoundError:
+            pass
+
+
+def config(stack):
+    return ROOT / 'config' / stack
+
+
+def environment(stack):
+    return dict(PATH='/usr/bin:/bin', WEAVER_ADMIN_CONFIG=str(config(stack)),
+                LD_LIBRARY_PATH=f'{ROOT}/stacks/{stack}/engine-lib:{ROOT}/stacks/{stack}/cuda-lib')
+
+
+def admin(stack, verb):
+    return [str(ROOT / 'stacks' / stack / 'bin/weaver-admin'), verb, 'bravo']
+
+
+def answer(stack, verb, expected):
+    result = run(admin(stack, verb), env=environment(stack), capture_output=True, timeout=600)
+    print(result.stdout, end='')
+    print(result.stderr, end='', file=sys.stderr)
+    rows = [json.loads(line) for line in result.stdout.splitlines() if line.startswith('{')]
+    need('admin-answer', bool(rows) and rows[-1].get('kind') == 'state' and rows[-1].get('state') == expected)
+    return rows[-1]
+
+
+def save(path, text, mode=0o644):
+    need('no-symlink-destination', not path.is_symlink())
+    path.write_text(text)
+    path.chmod(mode)
+
+
+def provision(plan):
+    need('fresh-install-root', not ROOT.exists())
+    try:
+        pwd.getpwnam('weaver-bravo')
+    except KeyError:
+        pass
+    else:
+        raise RuntimeError('bravo account already exists: review its custody before provisioning')
+    need('model-source', sha(plan['model_source']) == plan['tuple']['weights_sha256'])
+    if MODEL.exists():
+        need('existing-model', sha(MODEL) == plan['tuple']['weights_sha256'])
+    # Verify every input before the first write; an interrupted provision is
+    # retained as a refusal for the seat, never silently resumed or removed.
+    for stack in ['B1', 'B2']:
+        source = Path(plan['stacks'][stack])
+        need('stack-libraries', all((source / x).is_dir() for x in ['bin', 'engine-lib', 'cuda-lib']))
+        files = [p for p in source.rglob('*') if p.is_file()]
+        need('stack-file-coverage', bool(files) and all(str(p) in plan['files'] for p in files))
+    ROOT.mkdir(mode=0o755)
+    save(ROOT / 'plan-sha256', sha(sys.argv[1]) + '\n')
+    if not MODEL.exists():
+        MODEL.parent.mkdir(parents=True, exist_ok=True)
+        with open(plan['model_source'], 'rb') as src, MODEL.open('xb') as dst:
+            shutil.copyfileobj(src, dst)
+        MODEL.chmod(0o644)
+    run(['/usr/bin/groupadd', '--system', 'weaver-bravo'])
+    run(['/usr/bin/useradd', '--system', '--gid', 'weaver-bravo', '--home-dir', str(ROOT / 'home'),
+         '--create-home', '--shell', '/usr/bin/nologin', 'weaver-bravo'])
+    run(['/usr/bin/usermod', '-aG', 'weaver-bravo', plan['operator']])
+    for stack in ['B1', 'B2']:
+        dst = ROOT / 'stacks' / stack
+        shutil.copytree(plan['stacks'][stack], dst, symlinks=True)
+        for p in dst.rglob('*'):
+            if not p.is_symlink():
+                p.chmod(0o755 if p.is_dir() or p.parent.name == 'bin' else 0o644)
+        cfg = config(stack)
+        cfg.mkdir(parents=True)
+        (ROOT / 'agents' / stack).mkdir(parents=True)
+        values = {'allow-list': 'bravo', 'coordination-root': '/run',
+                  'log-path': str(ROOT / f'admin-{stack}.log'),
+                  'agent-config-directory': str(ROOT / 'agents' / stack),
+                  'run-tool': '/usr/bin/systemd-run', 'control-tool': '/usr/bin/systemctl',
+                  'worker-binary': str(dst / 'bin/pyworker'),
+                  'spu-binary': str(dst / 'bin/weaver-spu'), 'gate-binary': str(dst / 'bin/weaver-gate'),
+                  'unit-properties': 'Environment=LD_LIBRARY_PATH=' + environment(stack)['LD_LIBRARY_PATH']}
+        for name, value in values.items():
+            save(cfg / name, value + '\n')
+    sink = ROOT / 'sinks'
+    sink.mkdir()
+    os.chown(sink, 0, grp.getgrnam(plan['operator']).gr_gid)
+    sink.chmod(0o2750)
+    print('Provisioned bravo only. Start a fresh operator shell with the weaver-bravo group before the driver.')
+
+
+def installed(plan):
+    need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == sha(sys.argv[1]))
+    need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
+    for stack in ['B1', 'B2']:
+        source = Path(plan['stacks'][stack])
+        for path, digest in plan['files'].items():
+            p = Path(path)
+            if p.is_relative_to(source):
+                need('installed-stack-hash', sha(ROOT / 'stacks' / stack / p.relative_to(source)) == digest)
+
+
+def declaration(plan, job, sink):
+    t = plan['tuple']
+    return (f'session: tb-{job["id"]}\nspu-instruction:\n  decoder:\n    model-binding:\n'
+            f'      artifact: {MODEL}\n      devices: [0]\n    residual-readout-election: false\n'
+            '    surprisal-election: true\n    field-election:\n      depth: 200\n    identity:\n'
+            '      - role: system\n        content:\n          - type: text\n'
+            f'            text: {json.dumps(t["identity"])}\n    tunable-values:\n'
+            f'      seed: {job["seed"]}\n      context-capacity: 12288\n      max-tokens-per-turn: 8192\n'
+            f'loop-file: {ROOT}/stacks/{job["stack"]}/bin/basic_loop.py\n'
+            'tool-set: []\npermission-mode: ask\ngate-instruction:\n  access-rule:\n'
+            f'    allowed-uids: [{plan["operator_uid"]}]\n    allowed-gids: []\n    denied-uids: []\n'
+            f'trace-sink:\n  kind: file\n  path: {sink}\n  create: true\n')
+
+
+def load(plan, job):
+    m1_unloaded()
+    stack = job['stack']
+    answer(stack, 'show', 'unloaded')
+    # Every load checks the driver version as well as declared device ordinal.
+    gpu = run(['/usr/bin/nvidia-smi', '--query-gpu=index,name,driver_version', '--format=csv,noheader'],
+              capture_output=True).stdout.strip().splitlines()
+    need('gpu-tuple', len(gpu) == 1 and gpu[0].split(', ')[0] == '0' and
+         'RTX PRO 5000 Blackwell' in gpu[0] and gpu[0].endswith(plan['tuple']['driver']))
+    # Fail if ELF resolution falls back to the host toolkit for B1 or B2.
+    lib = ROOT / 'stacks' / stack / 'engine-lib/libggml-cuda.so'
+    resolved = run(['/usr/bin/ldd', str(lib)], env=environment(stack), capture_output=True).stdout
+    need('resolved-libraries', 'not found' not in resolved)
+    for name in ['libcudart.so', 'libcublas.so', 'libcublasLt.so']:
+        lines = [line for line in resolved.splitlines() if name in line]
+        need('cuda-local', len(lines) == 1 and f'{ROOT}/stacks/{stack}/cuda-lib/' in lines[0])
+    print(resolved)
+    directory = ROOT / 'sinks' / job['id']
+    directory.mkdir()  # Never truncate/reuse a run, even after refusal.
+    os.chown(directory, 0, grp.getgrnam(plan['operator']).gr_gid)
+    directory.chmod(0o2750)
+    sink = directory / 'trace.ndjson'
+    target = ROOT / 'agents' / stack / 'bravo.yaml'
+    if job['kind'] == 'free':
+        save(target, declaration(plan, job, sink))
+        answer(stack, 'load', 'idle')
+        return
+    if job.get('source_job'):
+        source = ROOT / 'sinks' / job['source_job'] / 'trace.ndjson'
+    else:
+        source = Path(job['source_trace'])
+        need('external-trace-hash', sha(source) == plan['files'][str(source)])
+    analysis = str(ROOT / 'stacks' / stack / 'bin/weaver-analysis')
+    run([analysis, 'derive', str(source), '--devices', '0', '--sink', str(sink),
+         '--field-depth', '200', '--surprisal', '--out', str(target)], env=environment(stack))
+    # Derive preserves the recorded artifact; never rewrite it to evade identity.
+    need('derived-artifact', f'artifact: {MODEL}' in target.read_text())
+    with (directory / 'load.log').open('w') as log:
+        loader = subprocess.Popen(admin(stack, 'load'), stdin=subprocess.DEVNULL,
+                                  stdout=log, stderr=subprocess.STDOUT, env=environment(stack))
+        try:
+            door = directory / 'state/preload.sock'
+            deadline = time.monotonic() + 120
+            while not door.exists() and loader.poll() is None and time.monotonic() < deadline:
+                time.sleep(0.5)
+            need('preload-door', door.exists() and stat.S_ISSOCK(door.stat().st_mode))
+            run([analysis, 'preload', str(source), str(door)], env=environment(stack), timeout=600)
+            need('diagnostic-load', loader.wait(timeout=600) == 0)
+        finally:
+            if loader.poll() is None:
+                loader.kill()
+                loader.wait()
+    print((directory / 'load.log').read_text())
+
+
+def main():
+    need('root-payload', os.geteuid() == 0)
+    plan_path, expected, step = sys.argv[1:]
+    need('plan-hash', sha(plan_path) == expected)
+    plan = json.loads(Path(plan_path).read_text())
+    need('fixed-root-agent', plan['install_root'] == str(ROOT) and plan['agent'] == 'bravo')
+    need('operator', pwd.getpwnam(plan['operator']).pw_uid == plan['operator_uid'] == int(os.environ['SUDO_UID']))
+    for path, digest in plan['files'].items():
+        need('source-file-hash', sha(path) == digest)
+    if step == 'provision':
+        provision(plan)
+    else:
+        installed(plan)
+        verb, identity = step.split(':', 1)
+        jobs = [j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == identity]
+        need('job-found', len(jobs) == 1)
+        job = jobs[0]
+        if verb == 'load':
+            load(plan, job)
+        elif verb == 'unload':
+            answer(job['stack'], 'unload', 'unloaded')
+            answer(job['stack'], 'show', 'unloaded')
+        else:
+            raise RuntimeError('unknown step')
+    print(f'SUCCESS: {step}', flush=True)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as error:
+        print(f'REFUSED: {error}; NEXT: review seat - inspect partial state, do not retry blindly', file=sys.stderr)
+        sys.exit(1)
