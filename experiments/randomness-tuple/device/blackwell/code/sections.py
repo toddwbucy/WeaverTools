@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-inventory-covers-every-served-file
+# conforms: blackwell-probe-comparison-takes-b1-then-b2
 """Inventory ELF sections and extracted CUDA members without loading libraries."""
 import argparse
 import collections

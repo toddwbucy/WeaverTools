@@ -1,5 +1,10 @@
 # TB preparation (issue #679)
 
+**The authority is `blackwell-probe-Spec`** (`../blackwell-probe-Spec.md`, the
+Blackwell probe's Spec, one measurement under the randomness tuple's device arm);
+this file is the run instructions. Every unit here
+cites the Spec's assertion records it holds an instrument for, in its header.
+
 This is the Blackwell probe's operator coordinator and blocking driver. It is
 preparation, not a measurement result. The operator's narrowed HOLD permits this
 code and the build comparison. No probe arm, privileged operator step or further
@@ -28,7 +33,7 @@ ordinal beside it; do not substitute a current replay binary into this stack.
 Run the nonprivileged staging command once, supplying local absolute paths:
 
 ```
-python3 deploy/tb/prepare.py --handoffs /path/to/handoffs --deposit /path/to/blackwell-deposit
+python3 experiments/randomness-tuple/device/blackwell/code/prepare.py --handoffs /path/to/handoffs --deposit /path/to/blackwell-deposit
 ```
 
 It creates `handoffs/tb/`, `handoffs/tb-evidence/tb-plan.json`,
@@ -173,7 +178,7 @@ each host ELF's header, program headers and sections. Extract with the local `cu
 No library is loaded and no kernel runs. Compare with:
 
 ```
-python3 deploy/tb/sections.py compare B1-MANIFEST B2-MANIFEST OUTPUT.json
+python3 experiments/randomness-tuple/device/blackwell/code/sections.py compare B1-MANIFEST B2-MANIFEST OUTPUT.json
 ```
 
 The result distinguishes cubin container hashes from code-section hashes. All
@@ -187,7 +192,7 @@ inventory. An identity verdict cannot be inferred from equal file counts or
 .text alone.
 
 ```
-cd deploy/tb
+cd experiments/randomness-tuple/device/blackwell/code
 python3 -B -m unittest test_tb
 python3 -B perturb.py > /tmp/tb-perturbations.json
 ```

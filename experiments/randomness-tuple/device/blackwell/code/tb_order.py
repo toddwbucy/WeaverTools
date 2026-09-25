@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-tuple-held-field-for-field
+# conforms: blackwell-probe-schedule-validated-whole
+# conforms: blackwell-probe-one-command-one-seat-per-step
+# conforms: blackwell-probe-approval-gates-every-step
+# conforms: blackwell-probe-wait-verifies-when-the-state-moves
+# conforms: blackwell-probe-halt-is-evidence
+# conforms: blackwell-probe-root-receives-bytes-never-a-path
+# conforms: blackwell-probe-identity-bound-to-approved-stacks
 """TB sequencing, adapted from the W4a flock/atomic-state/driver-lease design.
 
 This is experiment tooling for #679, not a product or conformance assertion.

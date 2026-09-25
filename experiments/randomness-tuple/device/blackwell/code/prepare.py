@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-approval-gates-every-step
 """Stage the TB coordinator locally, held and unapproved. No host/remote changes."""
 import argparse
 import json

@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-tuple-held-field-for-field
+# conforms: blackwell-probe-elected-series-from-the-tuple
+# conforms: blackwell-probe-schedule-validated-whole
+# conforms: blackwell-probe-falsifier-halts-after-unload
+# conforms: blackwell-probe-one-command-one-seat-per-step
+# conforms: blackwell-probe-approval-gates-every-step
+# conforms: blackwell-probe-wait-verifies-when-the-state-moves
+# conforms: blackwell-probe-halt-is-evidence
+# conforms: blackwell-probe-root-receives-bytes-never-a-path
+# conforms: blackwell-probe-operator-input-read-once
+# conforms: blackwell-probe-served-tree-locked-and-verified
+# conforms: blackwell-probe-model-in-custody-on-both-paths
+# conforms: blackwell-probe-installation-refuses-to-adopt
+# conforms: blackwell-probe-load-stands-on-the-interlock
+# conforms: blackwell-probe-inventory-covers-every-served-file
+# conforms: blackwell-probe-comparison-takes-b1-then-b2
+# conforms: blackwell-probe-identity-bound-to-approved-stacks
+# conforms: blackwell-probe-refeed-completes-against-a-verified-source
+# conforms: blackwell-probe-exactness-is-bitwise-over-elected-readings
 """Remove and invert each named guard in disposable copies; never edit the subject."""
 import ast
 import json

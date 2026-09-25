@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-tuple-held-field-for-field
+# conforms: blackwell-probe-root-receives-bytes-never-a-path
+# conforms: blackwell-probe-operator-input-read-once
+# conforms: blackwell-probe-served-tree-locked-and-verified
+# conforms: blackwell-probe-model-in-custody-on-both-paths
+# conforms: blackwell-probe-installation-refuses-to-adopt
+# conforms: blackwell-probe-load-stands-on-the-interlock
 """Operator-only TB payload; tb_order hands root its verified source by -c, never a path.
 
 Stdlib only: sudo runs this with -I and closed stdin. Never run it directly.
@@ -80,8 +87,25 @@ def select_run(whole, run_id, destination):
     return destination
 
 
+def account_exists(name):
+    try:
+        pwd.getpwnam(name)
+    except KeyError:
+        return False
+    return True
+
+
 def run(argv, **kw):
-    return subprocess.run(argv, stdin=subprocess.DEVNULL, check=True, text=True, **kw)
+    """A privileged command that exits nonzero is a named refusal, its output
+    kept in the transcript first: never an unnamed exception."""
+    result = subprocess.run(argv, stdin=subprocess.DEVNULL, text=True, **kw)
+    if result.returncode != 0:
+        if kw.get('capture_output'):
+            print(result.stdout, end='')
+            print(result.stderr, end='', file=sys.stderr)
+        print(f'{argv[0]} exited {result.returncode}', file=sys.stderr)
+    need('command-exit', result.returncode == 0)
+    return result
 
 
 def m1_unloaded():
@@ -174,12 +198,9 @@ def verify_stack(plan, stack, root):
 
 def provision(plan, plan_sha256):
     need('fresh-install-root', not ROOT.exists())
-    try:
-        pwd.getpwnam('weaver-bravo')
-    except KeyError:
-        pass
-    else:
-        raise RuntimeError('bravo account already exists: review its custody before provisioning')
+    # An existing account is custody this payload did not take and will not
+    # adopt; the review seat rules on it before provisioning.
+    need('no-bravo-account', not account_exists('weaver-bravo'))
     need('model-source', sha(plan['model_source']) == plan['tuple']['weights_sha256'])
     if MODEL.exists() or MODEL.is_symlink():
         # Accepted only as a file already in custody; a link or a shared name
@@ -397,13 +418,12 @@ def main():
         jobs = [j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == identity]
         need('job-found', len(jobs) == 1)
         job = jobs[0]
+        need('known-step', verb in ('load', 'unload'))
         if verb == 'load':
             load(plan, job)
-        elif verb == 'unload':
+        else:
             answer(job['stack'], 'unload', 'unloaded')
             answer(job['stack'], 'show', 'unloaded')
-        else:
-            raise RuntimeError('unknown step')
     print(f'SUCCESS: {step}', flush=True)
 
 

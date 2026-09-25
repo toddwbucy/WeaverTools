@@ -1,3 +1,4 @@
+# conforms: blackwell-probe-stubs-are-captures
 """Ground-truth samples the test doubles in test_tb.py are built from.
 
 Each constant was captured from the real tool on this box, unprivileged, or

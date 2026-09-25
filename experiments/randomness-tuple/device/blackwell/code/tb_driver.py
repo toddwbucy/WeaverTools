@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-tuple-held-field-for-field
+# conforms: blackwell-probe-elected-series-from-the-tuple
+# conforms: blackwell-probe-falsifier-halts-after-unload
+# conforms: blackwell-probe-one-command-one-seat-per-step
+# conforms: blackwell-probe-operator-input-read-once
+# conforms: blackwell-probe-refeed-completes-against-a-verified-source
+# conforms: blackwell-probe-exactness-is-bitwise-over-elected-readings
 """One blocking TB arm. Privilege belongs exclusively to operator `next`.
 
 Uses #516's pinned probe readers from a local, reviewed git-archive extraction.

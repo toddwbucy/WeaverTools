@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+# conforms: blackwell-probe-tuple-held-field-for-field
+# conforms: blackwell-probe-elected-series-from-the-tuple
+# conforms: blackwell-probe-schedule-validated-whole
+# conforms: blackwell-probe-falsifier-halts-after-unload
+# conforms: blackwell-probe-one-command-one-seat-per-step
+# conforms: blackwell-probe-approval-gates-every-step
+# conforms: blackwell-probe-wait-verifies-when-the-state-moves
+# conforms: blackwell-probe-halt-is-evidence
+# conforms: blackwell-probe-root-receives-bytes-never-a-path
+# conforms: blackwell-probe-operator-input-read-once
+# conforms: blackwell-probe-served-tree-locked-and-verified
+# conforms: blackwell-probe-model-in-custody-on-both-paths
+# conforms: blackwell-probe-installation-refuses-to-adopt
+# conforms: blackwell-probe-load-stands-on-the-interlock
+# conforms: blackwell-probe-inventory-covers-every-served-file
+# conforms: blackwell-probe-comparison-takes-b1-then-b2
+# conforms: blackwell-probe-identity-bound-to-approved-stacks
+# conforms: blackwell-probe-refeed-completes-against-a-verified-source
+# conforms: blackwell-probe-exactness-is-bitwise-over-elected-readings
 """Host-only tests. All host mutations/admin/GPU calls use stub boundaries."""
 import contextlib
 import copy
@@ -603,9 +622,11 @@ class PayloadTests(unittest.TestCase):
         with patch('tb_payload.run',return_value=cp('unloaded')),contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(payload.answer('B1','show','unloaded')['state'],'unloaded')
         with patch('tb_payload.run',return_value=cp('idle')),self.assertRaises(RuntimeError):payload.answer('B1','show','unloaded')
-        # A real refusal is one line with exit 1, which run(check=True) raises.
-        refusal=subprocess.CalledProcessError(1,['weaver-admin'],golden.ADMIN_NO_RESIDENCY+'\n','')
-        with patch('tb_payload.run',side_effect=refusal),self.assertRaises(subprocess.CalledProcessError):payload.answer('B1','unload','unloaded')
+        # A real refusal is one line with exit 1: run() keeps the line in the
+        # transcript and refuses by name, never an unnamed exception.
+        refusal=subprocess.CompletedProcess(['weaver-admin'],1,golden.ADMIN_NO_RESIDENCY+'\n','')
+        with patch('tb_payload.subprocess.run',return_value=refusal),contextlib.redirect_stdout(io.StringIO()) as out,contextlib.redirect_stderr(io.StringIO()),self.assertRaisesRegex(RuntimeError,'command-exit'):payload.answer('B1','unload','unloaded')
+        self.assertIn(golden.ADMIN_NO_RESIDENCY,out.getvalue())
 
     def test_save_refuses_symlink(self):
         p=self.base/'file';payload.save(p,'a');self.assertEqual(p.read_text(),'a')
@@ -736,7 +757,7 @@ class PayloadTests(unittest.TestCase):
                 self.assertFalse(self.root.exists())
                 self.model.unlink(missing_ok=True)
                 (Path(self.plan['stacks']['B1'])/'cuda-lib').mkdir(exist_ok=True)
-        with patch('tb_payload.pwd.getpwnam',return_value=self.user),self.assertRaises(RuntimeError):payload.provision(self.plan,'d'*64)
+        with patch('tb_payload.pwd.getpwnam',return_value=self.user),self.assertRaisesRegex(RuntimeError,'no-bravo-account'):payload.provision(self.plan,'d'*64)
 
     def setup_load(self):
         self.root.mkdir();(self.root/'sinks').mkdir();(self.root/'agents/B1').mkdir(parents=True)
@@ -865,6 +886,7 @@ class PayloadTests(unittest.TestCase):
             bad=copy.deepcopy(p);change(bad)
             with self.assertRaises(RuntimeError):invoke(bad,**kw)
         invoke(p,step='unload:B1-s7-n1')
+        with self.assertRaisesRegex(RuntimeError,'known-step'):invoke(p,step='frob:B1-s7-n1')
 
     def test_payload_parses_the_snapshot_it_verified(self):
         # #683 finding 2: sudo verifies one snapshot. A plan swapped on disk after
