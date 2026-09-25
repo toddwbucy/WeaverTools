@@ -236,6 +236,11 @@ class Fixture(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as out:self.o.operator()
         self.assertTrue(out.getvalue().startswith('COMPLETE:'))
         self.assertNotIn('refusals',self.o.read())
+        # #683 finding 15: completion claims every receipt, so a receipt
+        # changed after the review refuses it rather than printing COMPLETE.
+        p.write_text('changed after the review\n')
+        with contextlib.redirect_stdout(io.StringIO()) as out,self.assertRaisesRegex(order.Refused,'prior-evidence'):self.o.operator()
+        self.assertNotIn('COMPLETE',out.getvalue())
 
     def test_driver_report_command(self):
         report=self.root/'report.json';report.write_text('{}');self.due('report');self.state['driver']=None;self.save()

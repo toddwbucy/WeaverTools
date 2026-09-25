@@ -219,6 +219,9 @@ class Order:
                 return
             plan = self.approved(s)
             if requested == 'next' and s.get('cursor') == len(schedule(plan)):
+                # Completion is a claim about every receipt, so every receipt is
+                # verified before it is made.
+                self.previous(s, plan)
                 print('COMPLETE: every step is recorded, the review seat\'s review included')
                 return
             due, seat = self.due(s, plan)
