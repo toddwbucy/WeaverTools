@@ -156,7 +156,8 @@ python3 -B perturb.py > /tmp/tb-perturbations.json
 
 The tests use temporary files, a temporary Unix socket and stub admin/GPU calls.
 They make no installed-stack change and need no root. The mutation command copies
-scripts to a temporary directory, removes and inverts every named check, and
-requires each run to fail. Each record carries its failing output. A mutation
+scripts to a temporary directory, runs the unmodified suite there first and
+refuses with `BASELINE FAILED` unless it passes, then removes and inverts every
+named check and requires each run to fail. Each record carries its failing output. A mutation
 that destroys a wait bound is killed by a process-group timeout and identified
 as such. The original files and local deposit are not mutated.

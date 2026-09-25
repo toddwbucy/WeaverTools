@@ -621,6 +621,21 @@ class AdditionalTests(unittest.TestCase):
             order.payload(self.state,'provision',self.root/'log')
 
 
+class PerturbationBaselineTests(unittest.TestCase):
+    def test_a_failing_baseline_refuses_before_any_mutation(self):
+        # #683 finding 5: a suite that already fails would read every mutation
+        # as killed. The runner must refuse instead of reporting full detection.
+        with tempfile.TemporaryDirectory() as tmp:
+            here=Path(__file__).resolve().parent;copy_dir=Path(tmp)
+            for p in here.glob('*'):
+                if p.suffix in ['.py','.sh']:(copy_dir/p.name).write_bytes(p.read_bytes())
+            (copy_dir/'test_tb.py').write_text('import unittest\nclass T(unittest.TestCase):\n    def test_broken(self):self.fail("baseline broken")\n')
+            result=subprocess.run([sys.executable,'-B',str(copy_dir/'perturb.py')],capture_output=True,text=True,timeout=120,env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'))
+            self.assertNotEqual(result.returncode,0)
+            self.assertIn('BASELINE FAILED',result.stderr)
+            self.assertEqual(result.stdout,'')
+
+
 class StagingTests(unittest.TestCase):
     def test_staging_starts_held_and_cannot_overwrite_state(self):
         with tempfile.TemporaryDirectory() as tmp:
