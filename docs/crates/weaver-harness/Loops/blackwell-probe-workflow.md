@@ -4,8 +4,10 @@
 filed under the harness's `Loops/` container beside the diagnostic replay loop it
 drives. It argues no edges of its own: every seam it walks is declared in the crate
 charters and contracts, and the probe is operator tooling rather than a crate, so it
-declares no assertion record. The code under `deploy/tb/` cites this document's
-sections in its file headers, and the instruments of section 9 are what hold it.
+declares no assertion record. Each file under `deploy/tb/` carries a `cites:` line
+naming this document's sections, first after its shebang, and not a `conforms:` line,
+since a citation naming no node would dangle if the census ever read that tree. The
+instruments of section 9 are what hold it.
 
 **Document ID:** `blackwell-probe-workflow`
 **Parent:** `weaver-harness-PRD`
@@ -346,11 +348,13 @@ digest intact.
 
 ## 8. The refusals
 
-Every guard is named, and its name is the reason in the halt. Three refusals in the
-payload stand outside that rule today and are owed names by the citations commit on
-#683: an existing `bravo` account, an unknown step, and a privileged command that
-exits nonzero, which raise as plain errors. They are grouped here by the module that
-raises them, and section 9 says how each is watched. The
+Every guard is named, and its name is the reason in the halt. Three of the payload's
+names arrived with the citations commit on #683, where they had raised as plain
+errors: `no-bravo-account` for an existing `bravo` account, `known-step` for a verb
+that is neither a load nor an unload, and `command-exit` for a privileged command
+exiting nonzero, which prints the command's output to the transcript first. They are
+grouped here by the module that raises them, and section 9 says how each is watched.
+The
 coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-order`,
 `job-identities`, `job-types`, `control-schedule`, `own-refeeds`, `source-order`,
 `device-sources`, `device-traces`, `device-selections-distinct`, `kernel-schedule`,
@@ -369,7 +373,8 @@ coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-orde
 `served-directory-custody`, `installed-model`, `m1-inactive`, `m1-state-readable`,
 `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`,
 `source-run-selected`, `derived-artifact`, `derived-tuple`, `preload-door`,
-`diagnostic-load` and `admin-answer`. The driver's: `driver-not-root`,
+`diagnostic-load`, `admin-answer`, `no-bravo-account`, `known-step` and
+`command-exit`. The driver's: `driver-not-root`,
 `reader-approved`, `fresh-arm`, `gate-answer`, `single-turn`, `nonempty-measurement`,
 `field-depth`, `seed-held`, `weights-held`, `source-trace`, `source-measurement`,
 `source-weights-held`, `source-seed-held`, `replay-completed`, `single-replay`,
@@ -392,10 +397,10 @@ gate and device calls, and makes no change to any installed stack. The mutation 
 `perturb.py` copies the scripts to a temporary directory, refuses unless the
 unmodified suite passes there, then removes and inverts every named guard of section
 8 in turn and requires each run to fail, recording the failing output, and kills with
-a process-group timeout any mutation that destroys a wait bound. At the head this
-document was written from, the suite held 66 tests and the mutation run detected 208
-of 208 runs across 104 guards. A guard the mutation run cannot fail is a guard that
-enforces nothing, and that count is read at every act rather than copied from here.
+a process-group timeout any mutation that destroys a wait bound. At the citations
+commit on #683 the suite held 66 tests and the mutation run detected 214 of 214 runs
+across 107 guards. A guard the mutation run cannot fail is a guard that enforces
+nothing, and that count is read at every act rather than copied from here.
 
 **Every stub is built from a capture, never from what the code expects.** Each
 constant in `golden.py` is a real tool's output captured unprivileged on this box, a
