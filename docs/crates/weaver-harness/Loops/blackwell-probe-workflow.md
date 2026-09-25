@@ -18,14 +18,28 @@ instruments of section 9 are what hold it.
 
 ## 0. What this document is
 
-The specification the probe's code answers to, written from the code as it stood
-after sixteen review passes on pull request #683 and from the registration of the
-cell on issues #511 and #679. It exists because the corpus's first rule of phase
+The workflow document the probe's code answers to, written from the code as it
+stood after sixteen review passes on pull request #683 and from the registration of
+the cell on issues #511 and #679. It exists because the corpus's first rule of phase
 three is that no code lands without a ratified document, and the probe landed as a
 held preparation with only an issue for authority. This document closes that gap by
 stating what the code does and why, in the order the operator meets it, so a reader
 of the code can find each refusal's reason here and a reader of this document can
 find each claim's instrument in the suite.
+
+**It is not a Spec, and its parent is the container's charter.** A Spec belongs to
+a crate and carries assertion records that the crate's code cites. The probe is
+operator tooling with no crate, so it carries none, and the Document Format admits
+it as a workflow document, the kind that walks settled seams and authors no record.
+It is filed under the harness's `Loops/` container because the probe drives the
+harness's loops, a serving turn and the diagnostic replay, and the `Parent:` header
+carries that container's charter the way the diagnostic replay loop's does, which
+is the Format's rule for the container and not a claim that the probe belongs to
+the harness. The probe is the program's measurement instrument, registered in #511
+and run on Ampere and Ada before this cell, and this document states the rules
+every cell of it must hold. The constants that belong to this cell alone, the agent
+name, the isolated root and the two stacks, are the plan's and not this
+document's.
 
 Level discipline, stated once. What the probe measures and why is #511's and #679's
 and is restated in sections 1 through 3 only as far as the code enforces it. How the
