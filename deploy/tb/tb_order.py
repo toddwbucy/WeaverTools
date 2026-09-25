@@ -298,23 +298,16 @@ def payload(state, step, log):
     source = Path(__file__).with_name('tb_payload.py')
     data = source.read_bytes()
     check('payload-hash', hashlib.sha256(data).hexdigest() == state['review']['artifacts'][str(source.resolve())])
-    fd, name = tempfile.mkstemp(prefix='.payload-', suffix='.py', dir=log.parent)
-    try:
-        with os.fdopen(fd, 'wb') as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        check('private-payload', Path(name).stat().st_mode & 0o777 == 0o600)
-        check('copied-payload-hash', sha(name) == hashlib.sha256(data).hexdigest())
-        with log.open('w') as out:
-            # The digest recorded at approval: a plan edited after approved()
-            # must fail the payload's check, not be re-hashed into passing it.
-            return subprocess.run(['sudo', '/usr/bin/python3', '-I', name, state['plan'],
-                                   state['review']['artifacts'][state['plan']], step],
-                                  stdin=subprocess.DEVNULL,
-                                  stdout=out, stderr=subprocess.STDOUT).returncode
-    finally:
-        Path(name).unlink(missing_ok=True)
+    with log.open('w') as out:
+        # Root receives the verified bytes themselves, never a path. A file
+        # the operator's UID can rename, any process of that UID can swap
+        # between the check and sudo's open, and that UID need not hold the
+        # sudo credential (#683 finding 17). The plan goes by path with the
+        # digest recorded at approval, which the payload verifies in one read.
+        return subprocess.run(['sudo', '/usr/bin/python3', '-I', '-c', data.decode(), state['plan'],
+                               state['review']['artifacts'][state['plan']], step],
+                              stdin=subprocess.DEVNULL,
+                              stdout=out, stderr=subprocess.STDOUT).returncode
 
 
 def main():

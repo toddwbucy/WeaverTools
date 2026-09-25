@@ -301,19 +301,29 @@ print('WAITING',flush=True);o.wait('measure:B1-s451234785645-n1',timeout=10,poll
             if child.poll() is None:child.kill();child.wait()
             child.stdout.close();child.stderr.close()
 
-    def test_private_payload_closed_stdin_cleanup(self):
-        # argv is sudo,python,-I,FILE,PLAN,HASH,STEP.
-        def inspect(argv,**kw):
-            self.assertIs(kw['stdin'],subprocess.DEVNULL)
-            file=Path(argv[3]);self.assertEqual(file.stat().st_mode&0o777,0o600)
-            self.assertEqual(order.sha(file),self.state['review']['artifacts'][str(Path(__file__).with_name('tb_payload.py').resolve())])
-            self.assertEqual(argv[:3],['sudo','/usr/bin/python3','-I'])
-            return subprocess.CompletedProcess(argv,0)
-        with patch('tb_order.subprocess.run',side_effect=inspect):self.assertEqual(order.payload(self.state,'provision',self.root/'log'),0)
-        self.assertEqual(list(self.root.glob('.payload-*')),[])
-        self.state['review']['artifacts'][str(Path(__file__).with_name('tb_payload.py').resolve())]='bad'
-        with self.assertRaises(order.Refused):order.payload(self.state,'provision',self.root/'log')
-
+    def test_root_receives_the_verified_bytes_not_a_path(self):
+        # #683 finding 17: argv is sudo,python,-I,-c,SOURCE,PLAN,DIGEST,STEP.
+        # Whatever path sudo is handed, a process of the operator's UID can
+        # swap before root opens it; so the run below swaps any payload path
+        # it is given, and what root would execute must still be exactly the
+        # bytes whose digest the review seat recorded.
+        source=Path(order.__file__).with_name('tb_payload.py');recorded=self.state['review']['artifacts'][str(source.resolve())]
+        planted=self.root/'.payload-planted.py';planted.write_text('raise SystemExit("planted")\n')
+        before=sorted(p.name for p in self.root.iterdir());seen=[]
+        def as_root(argv,**kw):
+            if argv[3]=='-c':executed=argv[4].encode()
+            else:Path(argv[3]).write_bytes(planted.read_bytes());executed=Path(argv[3]).read_bytes()
+            seen.append((argv,kw['stdin'],executed));return subprocess.CompletedProcess(argv,0)
+        with patch('tb_order.subprocess.run',side_effect=as_root):self.assertEqual(order.payload(self.state,'provision',self.root/'log'),0)
+        (argv,stdin,executed),=seen
+        self.assertEqual(hashlib.sha256(executed).hexdigest(),recorded)
+        self.assertIs(stdin,subprocess.DEVNULL)
+        self.assertEqual(argv[:4],['sudo','/usr/bin/python3','-I','-c'])
+        self.assertEqual(argv[5:],[str(self.planpath),self.state['review']['artifacts'][str(self.planpath)],'provision'])
+        self.assertEqual([a for a in argv[2:] if os.path.exists(a)],[str(self.planpath)])
+        self.assertEqual(sorted(p.name for p in self.root.iterdir()),sorted(before+['log']))
+        self.state['review']['artifacts'][str(source.resolve())]='bad'
+        with self.assertRaisesRegex(order.Refused,'payload-hash'):order.payload(self.state,'provision',self.root/'log')
     def test_sudo_receives_digest_recorded_at_approval(self):
         # #683 finding 2: a plan edited after approved() must reach sudo with
         # the review seat's digest, so the payload's plan-hash check refuses it.
@@ -321,7 +331,7 @@ print('WAITING',flush=True);o.wait('measure:B1-s451234785645-n1',timeout=10,poll
         self.planpath.write_text(self.planpath.read_text().replace('"bravo"','"karl"'))
         self.assertNotEqual(order.sha(self.planpath),recorded)
         seen=[]
-        def inspect(argv,**kw):seen.append(argv[4:]);return subprocess.CompletedProcess(argv,0)
+        def inspect(argv,**kw):seen.append(argv[5:]);return subprocess.CompletedProcess(argv,0)
         with patch('tb_order.subprocess.run',side_effect=inspect):order.payload(self.state,'provision',self.root/'log')
         self.assertEqual(seen,[[str(self.planpath),recorded,'provision']])
 
@@ -848,18 +858,6 @@ class AdditionalTests(unittest.TestCase):
                 self.assertEqual(order.main(),expected)
             with patch('sys.argv',['driver','--state',str(self.statepath),'TB0']),patch('tb_driver.os.geteuid',return_value=uid),patch('tb_driver.drive'),contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(driver.main(),expected)
-
-    def test_payload_mode_and_copy_tampering(self):
-        real_temp=tempfile.mkstemp
-        def public(*args,**kw):
-            fd,name=real_temp(*args,**kw);os.chmod(name,0o644);return fd,name
-        with patch('tb_order.tempfile.mkstemp',side_effect=public),patch('tb_order.subprocess.run',return_value=subprocess.CompletedProcess([],0)),self.assertRaises(order.Refused):
-            order.payload(self.state,'provision',self.root/'log')
-        real_sha=order.sha
-        def tampered(path):return 'bad' if Path(path).name.startswith('.payload-') else real_sha(path)
-        with patch('tb_order.sha',side_effect=tampered),patch('tb_order.subprocess.run',return_value=subprocess.CompletedProcess([],0)),self.assertRaises(order.Refused):
-            order.payload(self.state,'provision',self.root/'log')
-
 
 class PerturbationBaselineTests(unittest.TestCase):
     def test_a_failing_baseline_refuses_before_any_mutation(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Operator-only TB payload; copied to a private hash-checked file by tb_order.
+"""Operator-only TB payload; tb_order hands root its verified source by -c, never a path.
 
 Stdlib only: sudo runs this with -I and closed stdin. Never run it directly.
 All mutations belong to the isolated TB installation and the bravo account.

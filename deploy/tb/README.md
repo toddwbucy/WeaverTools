@@ -66,9 +66,14 @@ coverage, changed artifacts, changed receipts or a recorded refusal.
 ## Operator boundary and order
 
 Only the operator runs `next`, as the recorded operator uid, without wrapping it
-in sudo. The coordinator requests sudo internally for a mode-0600 temporary copy
-of the reviewed payload. It checks its bytes, closes stdin, captures a transcript
-and removes the temporary file on both success and failure. The payload is handed
+in sudo. The coordinator requests sudo internally and hands root the reviewed
+payload's verified bytes, never a path: it reads `tb_payload.py` once, checks
+those bytes against the recorded digest, and runs
+`sudo /usr/bin/python3 -I -c <those bytes> <plan> <digest> <step>` with stdin
+closed, capturing a transcript. A file the operator's UID can rename, any
+process of that UID can swap between a check and sudo's open, and that UID need
+not hold the sudo credential. **Any sudoers allowlist for the payload must match
+this `-c` form**, since there is no payload file to name. The payload is handed
 the plan digest the review seat recorded, never one recomputed at call time, and
 it parses the one plan snapshot that matched that digest. The coordinator's own
 approval check parses its plan the same way. The payload uses
