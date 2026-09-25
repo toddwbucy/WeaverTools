@@ -23,6 +23,23 @@ import tb_order as order
 import tb_payload as payload
 
 
+@contextlib.contextmanager
+def swapped_after_hashing(files):
+    """Rewrite each file the moment its current bytes have been hashed, as an
+    operator could between a check and a second read. Any code that reads a
+    file again after checking it then consumes the rewritten bytes."""
+    real=hashlib.sha256
+    pending={p.read_bytes():(p,new) for p,new in files.items()}
+    class Hooked:
+        def __init__(s,data=b''):s.h=real(data);s.seen=bytearray(data)
+        def update(s,b):s.h.update(b);s.seen+=b
+        def hexdigest(s):
+            digest=s.h.hexdigest();hit=pending.pop(bytes(s.seen),None)
+            if hit:hit[0].write_bytes(hit[1])
+            return digest
+    with patch('hashlib.sha256',side_effect=Hooked):yield pending
+
+
 class Fixture(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -316,6 +333,9 @@ class ReadingTests(unittest.TestCase):
                 self.assertFalse(r['executable_identity'],part)
 
 
+TWO_RUNS='{"run":"r1","kind":"turn.opened"}\n{"run":"r2","kind":"turn.opened"}\n{"run":"r2","kind":"turn.closed"}\n'
+
+
 class PayloadTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
@@ -429,10 +449,11 @@ class PayloadTests(unittest.TestCase):
         self.root.mkdir();(self.root/'sinks').mkdir();(self.root/'agents/B1').mkdir(parents=True)
         return dict(id='job',kind='free',stack='B1',seed=7)
 
-    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True):
+    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None):
         default_gpu='0, NVIDIA RTX PRO 5000 Blackwell Laptop GPU, 615.71.09'
         default_ldd='\n'.join(f'{lib} => {self.root}/stacks/B1/cuda-lib/{lib}' for lib in ['libcudart.so','libcublas.so','libcublasLt.so'])
         def run(argv,**kwargs):
+            if on_run:on_run(argv)
             if 'nvidia-smi' in argv[0]:return subprocess.CompletedProcess(argv,0,default_gpu if gpu is None else gpu,'')
             if 'ldd' in argv[0]:return subprocess.CompletedProcess(argv,0,default_ldd if ldd is None else ldd,'')
             if 'derive' in argv:
@@ -458,20 +479,51 @@ class PayloadTests(unittest.TestCase):
         self.assertIn('seed: 7',(self.root/'agents/B1/bravo.yaml').read_text())
 
     def test_replay_load_orders_preload_before_wait(self):
-        job=self.setup_load();source=self.base/'source';source.write_text('{}')
-        job.update(kind='refeed',source_trace=str(source));self.plan['files'][str(source)]=order.sha(source)
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r2');self.plan['files'][str(source)]=order.sha(source)
         self.invoke_load(job)
         self.assertTrue((self.root/'sinks/job/load.log').exists())
 
     def test_replay_refusals(self):
-        job=self.setup_load();source=self.base/'source';source.write_text('{}')
-        job.update(kind='refeed',source_trace=str(source));self.plan['files'][str(source)]=order.sha(source)
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r2');self.plan['files'][str(source)]=order.sha(source)
         for setting in [dict(artifact=False),dict(door=False),dict(loader_rc=1)]:
             with self.assertRaises(RuntimeError):self.invoke_load(job,**setting)
             import shutil
-            shutil.rmtree(self.root/'sinks/job')
+            shutil.rmtree(self.root/'sinks/job');shutil.rmtree(self.root/'snapshots/job')
         self.plan['files'][str(source)]='wrong'
-        with self.assertRaises(RuntimeError):self.invoke_load(job)
+        with self.assertRaisesRegex(RuntimeError,'snapshot-hash'):self.invoke_load(job)
+        self.assertEqual(list((self.root/'snapshots/job').iterdir()),[])
+
+    def test_replay_feeds_one_verified_snapshot_of_the_selected_run(self):
+        # #683 findings 9 and 10: derive and preload each read their input.
+        # Both must receive one root-owned file cut from a single verified
+        # read, holding only the named run, whatever happens to the source.
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r2');self.plan['files'][str(source)]=order.sha(source)
+        seen={}
+        def on_run(argv):
+            for verb in ['derive','preload']:
+                if verb in argv:
+                    fed=Path(argv[argv.index(verb)+1]);seen[verb]=(fed,fed.read_bytes())
+                    source.write_text('{"run":"r2","kind":"substituted"}\n')
+        with swapped_after_hashing({source:b'{"run":"r2","kind":"swapped"}\n'}):self.invoke_load(job,on_run=on_run)
+        selected=b''.join(l for l in TWO_RUNS.encode().splitlines(keepends=True) if b'"r2"' in l)
+        self.assertNotEqual(seen['derive'][0],source)
+        self.assertEqual(seen['derive'],seen['preload'])
+        self.assertEqual(seen['derive'][1],selected)
+
+    def test_replay_refuses_a_run_the_trace_does_not_hold(self):
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r9');self.plan['files'][str(source)]=order.sha(source)
+        with self.assertRaisesRegex(RuntimeError,'source-run-selected'):self.invoke_load(job)
+
+    def test_provision_serves_only_verified_model_bytes(self):
+        # #683 finding 8: model bytes changed after the model-source check are
+        # refused in the installed copy, which is removed, before success.
+        self.stacks();src=Path(self.plan['model_source'])
+        with swapped_after_hashing({src:b'unreviewed weights'}),self.assertRaisesRegex(RuntimeError,'snapshot-hash'):self.provision()
+        self.assertFalse(self.model.exists())
 
     def test_payload_entry_checks(self):
         p=copy.deepcopy(self.plan);p['install_root']=str(self.root);p['files']={}
@@ -611,6 +663,24 @@ class DriverTests(unittest.TestCase):
         self.assertEqual(driver.readers(self.plan).VALUE,2)
         (root/'weaver-probe/weaver_probe.py').write_text('VALUE=3')
         with self.assertRaises(order.Refused):driver.readers(self.plan)
+
+    def test_readers_compile_the_bytes_they_hashed(self):
+        # Codex pass 4 class, driver side: a reader rewritten after its hash
+        # check must not be what runs.
+        root=self.root/'instrument';files={}
+        for parent,file,content in [('cross-precision-repro','confirm_cells.py','VALUE=1'),('weaver-probe','weaver_probe.py','VALUE=2')]:
+            p=root/parent/file;p.parent.mkdir(parents=True);p.write_text(content);self.plan['files'][str(p)]=order.sha(p);files[p]=b'VALUE=99'
+        self.plan['instrument']=str(root)
+        with swapped_after_hashing(files) as pending:module=driver.readers(self.plan)
+        self.assertEqual(pending,{})
+        self.assertEqual((module.VALUE,sys.modules['confirm_cells'].VALUE),(2,1))
+
+    def test_source_record_parses_the_bytes_it_hashed(self):
+        j=self.job('refeed');seen=[]
+        self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.probe.extract_run=lambda rows:seen.append(rows) or copy.deepcopy(self.free)
+        with swapped_after_hashing({self.source:b'{"kind":"model.measurement","run":"r","swapped":true}\n'}):driver.source_record(self.plan,j,self.probe)
+        self.assertEqual(seen,[[dict(kind='model.measurement',run='r')]])
 
     def test_entry_refuses_root(self):
         with patch('sys.argv',['driver','--state',str(self.statepath),'TB0']),patch('tb_driver.os.geteuid',return_value=0),patch('tb_driver.drive'),contextlib.redirect_stderr(io.StringIO()):

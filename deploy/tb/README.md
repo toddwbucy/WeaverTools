@@ -79,6 +79,16 @@ Provisioning refuses a link anywhere in a stack before its first write, since a
 stack is copied by bytes, and each installed stack must then hold exactly the
 reviewed files with no link, which every later step checks again.
 
+**Nothing privileged reads an operator-owned input twice.** A check on a path
+followed by a second read of that path binds nothing, so every such input is
+read once into a root-owned private file whose own bytes are verified against
+the recorded digest, and only that file is used afterwards: the installed model,
+and a re-feed's source trace. A re-feed then cuts the plan's `source_run` from
+that snapshot into a second private file, because `derive` refuses a record
+holding two runs, and `derive` and `preload` both receive that one file. The
+driver likewise hashes and compiles one read of each reader, and hashes and
+parses one read of each source trace.
+
 The sequence is provision, then each arm's start, and for each job:
 
 1. Operator load (a re-feed load derives, starts load, preloads concurrently,

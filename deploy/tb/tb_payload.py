@@ -33,6 +33,48 @@ def sha(path):
     return h.hexdigest()
 
 
+def freeze(source, destination):
+    """Read an operator-owned file once into a new root-owned private file.
+
+    Every consumer after this receives the destination, never the source path:
+    a check on the source followed by a second read of it binds nothing.
+    """
+    fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(fd, 'wb') as dst, open(source, 'rb') as src:
+            shutil.copyfileobj(src, dst, 1024 * 1024)
+            dst.flush()
+            os.fsync(dst.fileno())
+    except BaseException:
+        destination.unlink(missing_ok=True)
+        raise
+    return destination
+
+
+def snapshot(source, digest, destination):
+    """freeze(), then verify the frozen bytes, not the source, against the recorded digest."""
+    freeze(source, destination)
+    try:
+        need('snapshot-hash', sha(destination) == digest)
+    except RuntimeError:
+        destination.unlink()
+        raise
+    return destination
+
+
+def select_run(whole, run_id, destination):
+    """The one run a replay names, cut from a snapshot: derive refuses a record holding two."""
+    lines = [line for line in whole.read_bytes().splitlines(keepends=True)
+             if line.strip() and json.loads(line)['run'] == run_id]
+    need('source-run-selected', bool(lines))
+    fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'wb') as dst:
+        dst.writelines(lines)
+        dst.flush()
+        os.fsync(dst.fileno())
+    return destination
+
+
 def run(argv, **kw):
     return subprocess.run(argv, stdin=subprocess.DEVNULL, check=True, text=True, **kw)
 
@@ -124,8 +166,9 @@ def provision(plan, plan_sha256):
     save(ROOT / 'plan-sha256', plan_sha256 + '\n')
     if not MODEL.exists():
         MODEL.parent.mkdir(parents=True, exist_ok=True)
-        with open(plan['model_source'], 'rb') as src, MODEL.open('xb') as dst:
-            shutil.copyfileobj(src, dst)
+        # The model-source check above refuses early; what root serves is the
+        # copy, verified here before provisioning can report success.
+        snapshot(plan['model_source'], plan['tuple']['weights_sha256'], MODEL)
         MODEL.chmod(0o644)
     run(['/usr/bin/groupadd', '--system', 'weaver-bravo'])
     run(['/usr/bin/useradd', '--system', '--gid', 'weaver-bravo', '--home-dir', str(ROOT / 'home'),
@@ -206,11 +249,17 @@ def load(plan, job):
         save(target, declaration(plan, job, sink))
         answer(stack, 'load', 'idle')
         return
+    # derive and preload each read their input again, so both receive one
+    # root-owned private file cut from a single verified read.
+    frozen = ROOT / 'snapshots' / job['id']
+    frozen.mkdir(mode=0o700, parents=True)
     if job.get('source_job'):
-        source = ROOT / 'sinks' / job['source_job'] / 'trace.ndjson'
+        # Our own sink, written by the agent and root-owned: frozen, with no
+        # reviewed digest to hold it to, and holding the one source run.
+        source = freeze(ROOT / 'sinks' / job['source_job'] / 'trace.ndjson', frozen / 'source.ndjson')
     else:
-        source = Path(job['source_trace'])
-        need('external-trace-hash', sha(source) == plan['files'][str(source)])
+        whole = snapshot(job['source_trace'], plan['files'][str(job['source_trace'])], frozen / 'whole.ndjson')
+        source = select_run(whole, job['source_run'], frozen / 'source.ndjson')
     analysis = str(ROOT / 'stacks' / stack / 'bin/weaver-analysis')
     run([analysis, 'derive', str(source), '--devices', '0', '--sink', str(sink),
          '--field-depth', '200', '--surprisal', '--out', str(target)], env=environment(stack))

@@ -5,6 +5,7 @@ Uses #516's pinned probe readers from a local, reviewed git-archive extraction.
 It never calls the old driver's sudo/admin verbs or rewrites source records.
 """
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -20,17 +21,23 @@ def readers(plan):
     root = Path(plan['instrument'])
     for name, path in [('confirm_cells', root / 'cross-precision-repro/confirm_cells.py'),
                        ('weaver_probe', root / 'weaver-probe/weaver_probe.py')]:
-        check('reader-approved', sha(path) == plan['files'][str(path)])
-        # Compile exactly the hashed source, not an adjacent cached pyc.
+        # One read: these bytes are hashed and these bytes are compiled. The
+        # path names the code in tracebacks only; no cached pyc and no second
+        # read of the file is ever executed.
+        data = path.read_bytes()
+        check('reader-approved', hashlib.sha256(data).hexdigest() == plan['files'][str(path)])
         module = importlib.util.module_from_spec(importlib.util.spec_from_file_location(name, path))
         sys.modules[name] = module
-        exec(compile(path.read_bytes(), str(path), 'exec'), module.__dict__)
+        exec(compile(data, str(path), 'exec'), module.__dict__)
     return module
 
 
+def parse(data):
+    return [json.loads(line) for line in data.splitlines() if line.strip()]
+
+
 def events(path):
-    with Path(path).open() as stream:
-        return [json.loads(line) for line in stream if line.strip()]
+    return parse(Path(path).read_bytes())
 
 
 def until_closed(path, kind, timeout=3600):
@@ -74,8 +81,12 @@ def source_record(plan, job, probe):
     if job.get('source_job'):
         return json.loads((Path(plan['deposit']) / 'runs' / job['source_job'] / 'run.json').read_text())
     path = Path(job['source_trace'])
-    check('source-trace', sha(path) == plan['files'][str(path)])
-    rows = [e for e in events(path) if e['run'] == job['source_run']]
+    # One read, hashed and parsed: the record the report compares against is
+    # cut from the bytes the manifest approved, the same selection the payload
+    # makes for the replay it feeds.
+    data = path.read_bytes()
+    check('source-trace', hashlib.sha256(data).hexdigest() == plan['files'][str(path)])
+    rows = [e for e in parse(data) if e['run'] == job['source_run']]
     check('source-measurement', sum(e['kind'] == 'model.measurement' for e in rows) == 1)
     return dict(probe.extract_run(rows), trace=str(path), run=job['source_run'])
 
