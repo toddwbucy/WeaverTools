@@ -390,8 +390,26 @@ def members():
     return found
 
 
+def experiments():
+    """Every experiment directory, per the Document Format's container entry of
+    2026-09-25: `experiments/<name>/` holds `docs/` and `code/`, which this gate
+    reads like a crate's, and `results/`, which it never reads."""
+    root = os.path.join(ROOT, "experiments")
+    if not os.path.isdir(root):
+        return []
+    return sorted(os.path.join(root, d) for d in os.listdir(root)
+                  if os.path.isdir(os.path.join(root, d)))
+
+
 def docs():
-    for base, dirs, files in os.walk(os.path.join(ROOT, "docs")):
+    roots = [os.path.join(ROOT, "docs")]
+    roots += [os.path.join(e, "docs") for e in experiments()]
+    for root in roots:
+        yield from walk_docs(root)
+
+
+def walk_docs(top):
+    for base, dirs, files in os.walk(top):
         # **Pruned as `sources` prunes it.** A frozen copy of a Spec declares
         # every node the live one does, so ingesting both files each id under
         # duplicates, files every perturbation it declares under uncited, and
@@ -523,7 +541,11 @@ def sources():
     # exactly when a new source file is written and not yet added. Untracked
     # here means untracked and not ignored, so a build product stays out.
     seen = set(git()) | set(git("--others", "--exclude-standard"))
-    inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in members())
+    # **An experiment's `code/` is inside and its `results/` is not**, per the
+    # Document Format's container entry: the code answers to the gate's clock
+    # and the results to their own.
+    roots = list(members()) + [os.path.join(e, "code") for e in experiments()]
+    inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in roots)
     for rel in sorted(seen):
         if not rel.startswith(inside):
             continue

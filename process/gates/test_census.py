@@ -637,6 +637,33 @@ class Census(unittest.TestCase):
             reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (13 nodes, 2 rows)"]
         )
 
+    def test_an_experiment_is_read_like_a_crate_and_its_results_are_not(self):
+        """The container entry of 2026-09-25: `experiments/<name>/docs/` declares,
+        `code/` cites and owes, `results/` is read by neither walk.
+
+        **Held from both sides.** A perturbation declared in the experiment's
+        Spec and cited only from its code is absent from uncited, which fails
+        if either walk stops short of the experiment. A bare unit under `code/`
+        owes a header, which fails if the unit walk does not reach it. And a
+        citation under `results/` naming no node is absent from dangling, which
+        fails if the walk reaches into the records.
+        """
+        for part in ["docs", "code", "results"]:
+            os.makedirs(os.path.join(self.dir, "experiments/demo", part))
+        write(self.dir, "experiments/demo/docs/demo-Spec.md",
+              "```graph\nnode: exp-only-here\nkind: assertion\ntag: perturbation\n\n"
+              "edge: asserts\nfrom: demo\nto: exp-only-here\n```\n")
+        write(self.dir, "experiments/demo/code/tool.py",
+              "#!/usr/bin/env python3\n# conforms: exp-only-here\n")
+        write(self.dir, "experiments/demo/code/bare.py", "print('no header')\n")
+        write(self.dir, "experiments/demo/results/note.py",
+              "# conforms: fix-nonexistent-result\n")
+        reading = census.take()
+        self.assertNotIn("exp-only-here", reading["uncited_perturbations"])
+        self.assertIn("experiments/demo/code/bare.py", reading["sources_without_a_header"])
+        self.assertNotIn("experiments/demo/code/tool.py", reading["sources_without_a_header"])
+        self.assertFalse([d for d in reading["dangling_citations"] if "fix-nonexistent-result" in d])
+
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
         """**The gate is run mid-act**, which is when a source file is written
         and not yet added. Reading the index alone prints a clean pass on the
@@ -937,7 +964,11 @@ class Census(unittest.TestCase):
 
         lines = [ln.strip() for ln in body.splitlines()
                  if ln.strip() and not ln.startswith("#")]
-        self.assertIn("experiments/", lines)
+        # **An experiment's results are excluded and its code and docs are
+        # not**, per the ruling of 2026-09-25 that returned `experiments/` for
+        # a live instrument. The earlier form pinned `experiments/` whole.
+        self.assertIn("experiments/*/results/", lines)
+        self.assertNotIn("experiments/", lines)
         # **Matched by behaviour and not by spelling.** The archive half is
         # written as character classes, so a substring check for "archive"
         # finds nothing while the patterns work - which is how the first form

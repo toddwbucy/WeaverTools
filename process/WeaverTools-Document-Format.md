@@ -113,6 +113,9 @@ declares its own container.
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
     docs/crates/contracts/              contracts, and the material they draw
     docs/crates/weaver-<n>/Loops/       workflow documents of that domain root
+    experiments/<name>/docs/            the Spec of one experiment
+    experiments/<name>/code/            that experiment's code, gated like a crate's
+    experiments/<name>/results/         its dated results, read by no gate
 
 A document under `docs/crates/contracts/` is a contract by its `-contract` suffix,
 named for its parties. A document there without the suffix is drawn material, stated
@@ -160,6 +163,16 @@ naming that `contracts/` gets from its absent prefix. A stub leaves the tree in 
 act that cuts its draft, per Working Process section 2 as ruled 2026-07-31, the draft
 landing at the `.md` name beside the suffix's tracked deletion, so no consumed stub
 survives to be walked and history is the archive.
+
+**An experiment carries its own documents beside its code**, per the operator's
+ruling of 2026-09-25 recorded at Working Process section 5. `experiments/<name>/` is
+the container of one experiment and holds three parts: `docs/`, where its Spec sits
+as `<name>-Spec.md` and is the primary document of the experiment, `code/`, which the
+census reads and holds to headers exactly as it holds a crate's units, and
+`results/`, which holds the dated records an experiment produces and which no gate
+and no ingest reads, on the two-clocks reason that section 5 of the Working Process
+states. The mirror rule does not reach it, since the documents and the code share
+one directory rather than two trees. The first is `experiments/weaver-probe/`.
 
 **The project documents sit outside `docs/` rather than under it.** Working Process
 section 2 puts them outside the document set and outside the mapping, so a mapper that
@@ -213,7 +226,7 @@ the domain parent, which is the apex for a domain root and the root's charter fo
 member. The header is a reader's convenience and the edge governs, so a disagreement
 between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
-hand.
+hand. An experiment's Spec carries none, having no parent, as the apex carries none.
 
 **A crate outside the agent boundary names the suite.** `weaver-agents-PRD` section 0
 rules that such a crate does not refine that document and parents to the suite, and that
@@ -240,6 +253,15 @@ than a parent. Issue #637 carries the measurement and the question.
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One
 PRD, one Spec, and as many contracts as it has seams.
+
+**experiment.** A code root under `experiments/` that is not a crate, declared by its
+own Spec, which is the primary document of the experiment and carries no `Parent:`
+and no `parent` edge, per the operator's ruling of 2026-09-25. It has one Spec and
+no PRD, since what an experiment measures and why is registered on its epic before
+any run, and it asserts its Spec's records the way a crate asserts its own. A Spec
+belongs to any code that requires one, and an experiment's code requires one for
+the same reason a crate's does: the phase-three rule that no code lands without a
+ratified document.
 
 **artifact.** A durable thing produced or consumed by crates without a call between
 them. The agent config, the session record, the model artifact. Artifacts are
@@ -562,9 +584,9 @@ Between a crate and what it owns or touches:
   the owning crate defines, and the artifact holds it. Without this the config's
   fields are drawable in prose and unaddressable in the graph.
 - `writes` and `reads`, from a crate to an artifact.
-- `asserts`, from a crate to an assertion node. The Spec declares the assertion
-  node with a `node` record beside the edge, at the clause the assertion names,
-  the same shape `defines` takes at a definition site.
+- `asserts`, from a crate or an experiment to an assertion node. The Spec declares
+  the assertion node with a `node` record beside the edge, at the clause the
+  assertion names, the same shape `defines` takes at a definition site.
 
 **A Spec states records and is not their source, which is the shape a PRD already
 has.** `asserts` runs from the crate rather than from the document, so a Spec needs

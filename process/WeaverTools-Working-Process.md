@@ -415,6 +415,18 @@ history, and the reruns are when it becomes worth ingesting. Broken links out ar
 accepted on the operator's ruling of the same date, every one of those experiments
 being due a rerun whatever the graph decides.
 
+**An experiment directory returns when its experiment is a live instrument, per the
+operator's ruling of 2026-09-25, and the reason above stays true.** The Weaver probe
+reruns per card and per driver, which is the rerun the paragraph above was waiting
+for, so `experiments/<name>/` stands in this tree again with three parts that answer
+to two clocks: `code/` and `docs/`, which are live and gated like any code and its
+Spec, and `results/`, which holds dated records the gates and the ingest never read.
+A Spec belongs to any code that requires one, a crate's or an experiment's, and an
+experiment's Spec is the primary document of its experiment, carrying no parent. The
+Document Format's section 2 carries the container and section 3 the kind, the
+census reads `code/` and `docs/` and not `results/`, and `.hadesignore` excludes
+`results/` alone. The first is `experiments/weaver-probe/`.
+
 ### Closing checklist
 
 Phase two closes on a checklist, each item verifiable by looking. Closing it is what
@@ -884,7 +896,11 @@ than the profile's bare claim. It is deliberately not a corpus member and
 nothing here is written against it. It does not reach the gates, and a reading
 it produces is evidence about the code rather than authority over a document.
 
-**Where the work sits as of 2026-09-13.** `experiments/` left this repository for the
+**Where the work sits as of 2026-09-25.** `experiments/` returned for the Weaver probe
+under section 5's ruling of that date, as a live instrument whose code and Spec are
+gated and whose results are dated records outside the gates.
+
+**Where the work sat as of 2026-09-13.** `experiments/` left this repository for the
 `weaver-experiments` tree under section 5's ruling of that date, with its history, and
 every archive directory left under section 1's. The paragraph on the experiment
 directory below was written about #404 and about a directory that no longer stands

@@ -1,16 +1,9 @@
-# Blackwell Probe Workflow
+# weaver-probe - Spec
 
-**Status:** MERGED. The workflow document for the Weaver probe's Blackwell cell,
-filed under the harness's `Loops/` container beside the diagnostic replay loop it
-drives. It argues no edges of its own: every seam it walks is declared in the crate
-charters and contracts, and the probe is operator tooling rather than a crate, so it
-declares no assertion record. Each file under `deploy/tb/` carries a `cites:` line
-naming this document's sections, first after its shebang, and not a `conforms:` line,
-since a citation naming no node would dangle if the census ever read that tree. The
-instruments of section 9 are what hold it.
+**Status:** MERGED. In `main` and the source of truth.
 
-**Document ID:** `blackwell-probe-workflow`
-**Parent:** `weaver-harness-PRD`
+**Date filed:** 2026-09-25
+**Document ID:** `weaver-probe-Spec`
 **Editorial:** Per the Working Rules.
 **Landing PR:** #685
 
@@ -18,35 +11,43 @@ instruments of section 9 are what hold it.
 
 ## 0. What this document is
 
-The workflow document the probe's code answers to, written from the code as it
-stood after sixteen review passes on pull request #683 and from the registration of
-the cell on issues #511 and #679. It exists because the corpus's first rule of phase
-three is that no code lands without a ratified document, and the probe landed as a
-held preparation with only an issue for authority. This document closes that gap by
-stating what the code does and why, in the order the operator meets it, so a reader
-of the code can find each refusal's reason here and a reader of this document can
-find each claim's instrument in the suite.
+The Spec of the Weaver probe, the experiment at `experiments/weaver-probe/` that
+measures whether a fixed tuple reproduces on one card and how one card's arithmetic
+moves the distribution against another's. It is the primary document of the
+experiment and carries no parent, per the operator's ruling of 2026-09-25 recorded at
+Working Process section 5 and Document Format section 3: a Spec belongs to any code
+that requires one, and an experiment's code requires one for the reason a crate's
+does, that no code lands in phase three without a ratified document. The probe
+landed as a held preparation with an issue for authority, and this document closes
+that gap by stating what the code does and why, in the order the operator meets it,
+so a reader of the code finds each refusal's reason here and a reader of this
+document finds each claim's instrument in the suite.
 
-**It is not a Spec, and its parent is the container's charter.** A Spec belongs to
-a crate and carries assertion records that the crate's code cites. The probe is
-operator tooling with no crate, so it carries none, and the Document Format admits
-it as a workflow document, the kind that walks settled seams and authors no record.
-It is filed under the harness's `Loops/` container because the probe drives the
-harness's loops, a serving turn and the diagnostic replay, and the `Parent:` header
-carries that container's charter the way the diagnostic replay loop's does, which
-is the Format's rule for the container and not a claim that the probe belongs to
-the harness. The probe is the program's measurement instrument, registered in #511
-and run on Ampere and Ada before this cell, and this document states the rules
-every cell of it must hold. The constants that belong to this cell alone, the agent
-name, the isolated root and the two stacks, are the plan's and not this
-document's.
+It is written from the code as it stood after sixteen review passes on pull request
+#683 and from the registration of the Blackwell cell on issues #511 and #679. The
+code sits in `code/` beside this document and cites the assertion records declared
+here from its file headers with `conforms:` lines, which the census reads there as
+it reads a crate's units. Results, when an arm has run, sit in `results/`, dated and
+read by no gate. What the probe measures and why is the epic's and is restated in
+sections 1 through 3 only as far as the code enforces it. How the seams it drives
+behave is the charters' and contracts' and is cited rather than repeated. What this
+document owns is the workflow: the tuple as the code holds it, the arms as the code
+schedules them, the order of operations, the privilege boundary, the identity
+verdict, the assessment, and the refusals.
 
-Level discipline, stated once. What the probe measures and why is #511's and #679's
-and is restated in sections 1 through 3 only as far as the code enforces it. How the
-seams it drives behave is the charters' and contracts' and is cited rather than
-repeated. What this document owns is the workflow: the tuple as the code holds it,
-the arms as the code schedules them, the order of operations, the privilege boundary,
-the identity verdict, the assessment, and the refusals.
+**One probe, many cells.** The probe has run on Ampere and Ada, on olympus under the
+tooling #516 retired, and the Blackwell cell is its third. The plan already names
+the next, the re-verification of Ampere and Ada at the same tuple on the new driver.
+What varies per cell is the plan: the stacks, the agent name and root, the
+interlock, the device tuple and the registered claims. What does not vary is every
+rule this document states and the code enforces. The constants of the Blackwell
+cell appear here where the code fixes them today, and the act that stands the second
+cell moves them into the plan.
+
+```graph
+node: weaver-probe
+kind: experiment
+```
 
 ## 1. What the probe is
 
@@ -124,6 +125,24 @@ comparison both. `weaver-spu-Spec` section 6's rule, carrying charter section 13
 stands beneath this: elected surprisals render, and disagreement between elected
 readings is a defect.
 
+```graph
+node: probe-tuple-held-field-for-field
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-tuple-held-field-for-field
+
+node: probe-elected-series-from-the-tuple
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-elected-series-from-the-tuple
+```
+
 ## 3. The arms, and the claims the code enforces
 
 **The schedule is fixed and validated whole.** The plan holds exactly the arms
@@ -167,6 +186,24 @@ differing kernels move the distribution on one card, the prediction is that a `B
 record re-fed through `B2` departs at some position, and the falsifier is every
 record re-feeding exact. `B2` also differs in its CUDA user-space libraries, and the
 reading carries that as part of the kernel stack.
+
+```graph
+node: probe-schedule-validated-whole
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-schedule-validated-whole
+
+node: probe-falsifier-halts-after-unload
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-falsifier-halts-after-unload
+```
 
 ## 4. The order of operations
 
@@ -213,6 +250,40 @@ insufficient measurement leaves the cursor where it was. No refusal is bypassed 
 editing the state, and partial resources left by an interrupted step are evidence the
 review seat rules on with a bounded recovery step, since the payload holds no general
 root shell and no arbitrary command.
+
+```graph
+node: probe-one-command-one-seat-per-step
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-one-command-one-seat-per-step
+
+node: probe-approval-gates-every-step
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-approval-gates-every-step
+
+node: probe-wait-verifies-when-the-state-moves
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-wait-verifies-when-the-state-moves
+
+node: probe-halt-is-evidence
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-halt-is-evidence
+```
 
 ## 5. The privilege boundary, and custody
 
@@ -291,6 +362,56 @@ diagnostic load waits for the preload door to stand and for the loader to answer
 under `preload-door` and `diagnostic-load`, and an admin answer is read for its
 content and never for its exit status alone, under `admin-answer`.
 
+```graph
+node: probe-root-receives-bytes-never-a-path
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-root-receives-bytes-never-a-path
+
+node: probe-operator-input-read-once
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-operator-input-read-once
+
+node: probe-served-tree-locked-and-verified
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-served-tree-locked-and-verified
+
+node: probe-model-in-custody-on-both-paths
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-model-in-custody-on-both-paths
+
+node: probe-installation-refuses-to-adopt
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-installation-refuses-to-adopt
+
+node: probe-load-stands-on-the-interlock
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-load-stands-on-the-interlock
+```
+
 ## 6. Executable identity
 
 **The inventory covers every file a load can execute from.** The served
@@ -327,6 +448,32 @@ approved hashes of every file under that stack exactly, under `identity-evidence
 `identity-inputs` and `identity-binds-stacks`. A report over stacks that have since
 changed, or over an inventory that missed a reviewed file, empties nothing.
 
+```graph
+node: probe-inventory-covers-every-served-file
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-inventory-covers-every-served-file
+
+node: probe-comparison-takes-b1-then-b2
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-comparison-takes-b1-then-b2
+
+node: probe-identity-bound-to-approved-stacks
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-identity-bound-to-approved-stacks
+```
+
 ## 7. Measurement and assessment
 
 **A free run is one gate turn, one measurement, one fresh trace.** The driver dials
@@ -359,6 +506,24 @@ re-feed's reading and, for the kernel arm, whether identity emptied it. Each arm
 result is written whole and recorded as that arm's `finish` receipt, and the report
 step runs only after every earlier receipt, each `finish` included, stands with its
 digest intact.
+
+```graph
+node: probe-refeed-completes-against-a-verified-source
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-refeed-completes-against-a-verified-source
+
+node: probe-exactness-is-bitwise-over-elected-readings
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-probe
+to: probe-exactness-is-bitwise-over-elected-readings
+```
 
 ## 8. The refusals
 
@@ -422,6 +587,39 @@ line copied from a real trace, or a shape read from the tool's source at `e69916
 with its command or file and lines and a sha256 beside it. The rule was earned:
 a stub written to its own code's assumption is how a quoted artifact in `derive`'s
 declaration reached review as a refusal every re-feed would have hit on the device.
+This claim is review's and the tag says what was not bought rather than that
+nothing could be: a test that walks every constant in `golden.py` and refuses one
+without a source line and a digest beside it is buyable, and this act declines it
+because the constants are few and each is read at review, which is the instrument
+named.
+
+**The enforcement table.** Every record this document declares, with the instrument
+that holds it. A perturbation row is held by `perturb.py` removing and inverting the
+guards the clause names and by the suite's test of the same name, and the census
+reads each citation from `code/`.
+
+| Claim | Instrument |
+| --- | --- |
+| `probe-tuple-held-field-for-field` | perturbation, `tuple`, `derived-tuple`, `weights-held`, `seed-held` and their re-feed siblings |
+| `probe-elected-series-from-the-tuple` | perturbation, `nonempty-measurement`, `field-depth`, `exact` on surprisals |
+| `probe-schedule-validated-whole` | perturbation, the ten schedule guards of `validate_plan` |
+| `probe-falsifier-halts-after-unload` | perturbation, `pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` |
+| `probe-one-command-one-seat-per-step` | perturbation, `step-order`, `seat`, `not-repeated`, `driver-owner`, `operator-not-root`, `driver-not-root` |
+| `probe-approval-gates-every-step` | perturbation, `hold`, `review`, `approval-coverage`, `artifact-hashes`, `plan-snapshot`, `manifest-coverage`, `manifest-hashes`, `halt` |
+| `probe-wait-verifies-when-the-state-moves` | perturbation, `wait-owner`, `wait-order`, `wait-deadline` and the state-moves test |
+| `probe-halt-is-evidence` | perturbation, `prior-success`, `prior-evidence`, `payload-exit`, `payload-receipt`, `cursor` |
+| `probe-root-receives-bytes-never-a-path` | perturbation, `payload-hash`, `plan-hash`, `root-payload`, `fixed-root-agent`, `operator` |
+| `probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace` |
+| `probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody` |
+| `probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model` |
+| `probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-symlink-destination`, `installation-plan` |
+| `probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
+| `probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
+| `probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
+| `probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
+| `probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn` |
+| `probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit arms |
+| `probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
 **What the instruments cannot buy, named.** No test here touches the card, loads a
 model, or runs as root, so `gpu-tuple`, `cuda-local`, `diagnostic-load` and the
@@ -429,6 +627,16 @@ provisioning path are watched against stubs and captured shapes and are proven o
 by the first held run under the operator's own sequence. The approval custody gap of
 section 5 has no instrument until the privileged step lands, and this document says
 so rather than claiming otherwise.
+
+```graph
+node: probe-stubs-are-captures
+kind: assertion
+tag: review
+
+edge: asserts
+from: weaver-probe
+to: probe-stubs-are-captures
+```
 
 ## 10. What this document does not carry
 

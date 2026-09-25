@@ -50,11 +50,12 @@
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
 
-# **Experiments are a separate corpus and left this tree** on 2026-09-13, per
-# Working Process section 5 and issue #564. Kept after the departure for the
-# same reason the archive patterns are kept after the deletion: the rule is
-# about the class and not about today's directory.
-experiments/
+# **An experiment's results are dated records and are not ingested**, per
+# Working Process section 5 as amended 2026-09-25: `experiments/<name>/` returned
+# for the Weaver probe as a live instrument, its `code/` and `docs/` read like a
+# crate's, its `results/` answering to the other clock. The earlier form of this
+# stanza excluded `experiments/` whole, from the departure of 2026-09-13.
+experiments/*/results/
 
 # **The process documents govern the corpus and are not part of it.** They are
 # tracked here and excluded from the ingest, because a gate reading its own
