@@ -75,7 +75,12 @@ those bytes against the recorded digest, and runs
 closed, capturing a transcript. A file the operator's UID can rename, any
 process of that UID can swap between a check and sudo's open, and that UID need
 not hold the sudo credential. **Any sudoers allowlist for the payload must match
-this `-c` form**, since there is no payload file to name. The payload is handed
+this `-c` form**, since there is no payload file to name. **Approval is not yet in
+root custody:** the review seat's PASS and the artifact digests live in
+`tb-state.json`, which the operator's UID owns, so a process of that UID could
+rewrite what is approved before `next` hands it to root (#683 thread 24). Lifting
+the HOLD owes one privileged step first, installing the approval digests
+root-owned and verifying them on the root side, and that step is #679's. The payload is handed
 the plan digest the review seat recorded, never one recomputed at call time, and
 it parses the one plan snapshot that matched that digest. The coordinator's own
 approval check parses its plan the same way. The payload uses
