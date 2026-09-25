@@ -730,6 +730,24 @@ class DriverTests(unittest.TestCase):
         shorter=copy.deepcopy(arm);shorter['jobs'].pop(0)
         with self.assertRaises(order.Refused):driver.assess(self.plan,shorter,self.probe)
 
+    def test_changed_seeds_compare_one_run_per_distinct_seed(self):
+        # #683 finding 16: the validator constrains only the multiset of free
+        # seeds, so a valid plan may put both runs of one seed first. Each seed
+        # has its own tokens here and the real first_divergence contract (None
+        # only for identical lists), so a same-seed pair would falsify TB0.
+        arm=copy.deepcopy(self.plan['arms'][0]);free=sorted((j for j in arm['jobs'] if j['kind']=='free'),key=lambda j:j['seed'])
+        arm['jobs']=free+[j for j in arm['jobs'] if j['kind']=='refeed']
+        order.validate_plan(dict(self.plan,install_root='/var/lib/weaver-tb',arms=[arm]+self.plan['arms'][1:]))
+        for j in arm['jobs']:
+            directory=Path(self.plan['deposit'])/('runs' if j['kind']=='free' else 'refeeds')/j['id'];directory.mkdir(parents=True)
+            r=dict(self.free,seed=j.get('seed'),output_tokens=[j['seed']%1000]) if j['kind']=='free' else dict(exact=True,replay_outcome='certified')
+            order.atomic(directory/('run.json' if j['kind']=='free' else 'refeed.json'),r)
+        self.probe.first_divergence=lambda a,b:None if a==b else next((i for i,(x,y) in enumerate(zip(a,b)) if x!=y),min(len(a),len(b)))
+        report=json.loads(driver.assess(self.plan,arm,self.probe).read_text())
+        seeds=self.plan['tuple']['seeds']
+        self.assertEqual({(c['a'],c['b']) for c in report['changed_seeds']},{(a,b) for i,a in enumerate(seeds) for b in seeds[i+1:]})
+        self.assertTrue(report['changed_seed_prediction'])
+
     def test_driver_settles_before_next_load_and_stops_falsifier(self):
         # Small schedule exercises the blocking orchestration; full count and
         # source schedule are independently guarded by validate_plan tests.

@@ -164,8 +164,13 @@ def assess(plan, arm, probe):
         report['pairs'] = pairs
         report['own_refeeds'] = [dict(id=j['id'], exact=r['exact'], certified=r['replay_outcome'] == 'certified')
                                  for j, r in results if j['kind'] == 'refeed']
-        report['changed_seeds'] = [dict(a=a['seed'], b=b['seed'], first_difference=probe.first_divergence(a['output_tokens'], b['output_tokens']))
-                                   for i, (_, a) in enumerate(free[:8]) for _, b in free[:8][i+1:]]
+        # One run per distinct seed, in the tuple's seed order. The validator
+        # constrains only the multiset of free seeds, so the job order carries
+        # no repetition structure to rely on.
+        seeds = plan['tuple']['seeds']
+        first = {seed: next(r for j, r in free if j['seed'] == seed) for seed in seeds}
+        report['changed_seeds'] = [dict(a=a, b=b, first_difference=probe.first_divergence(first[a]['output_tokens'], first[b]['output_tokens']))
+                                   for i, a in enumerate(seeds) for b in seeds[i + 1:]]
         report['control_passed'] = all(p['equal'] for p in pairs) and all(r['exact'] and r['certified'] for r in report['own_refeeds'])
         report['changed_seed_prediction'] = all(p['first_difference'] is not None and p['first_difference'] < 24 for p in report['changed_seeds'])
     else:
