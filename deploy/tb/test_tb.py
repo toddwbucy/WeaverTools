@@ -80,9 +80,13 @@ class Fixture(unittest.TestCase):
         self.plan['rulings'] = {k: '#679/ruling' for k in self.plan['rulings']}
         self.source = self.root / 'source.ndjson'
         self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r')))
-        self.plan['files'] = {str(self.source): order.sha(self.source)}
+        # One trace per source device, as the historical cells recorded them.
+        self.ada_source = self.root / 'ada-source.ndjson'
+        self.ada_source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r-ada')))
+        self.plan['files'] = {str(p): order.sha(p) for p in [self.source, self.ada_source]}
         self.plan['arms'][1]['jobs'] = [dict(id=cell, source_cell=cell, kind='refeed', stack='B1',
-                                            source_trace=str(self.source), source_run='r') for cell in ['ampere', 'ada']]
+                                            source_trace=str(trace), source_run=run)
+                                        for cell, trace, run in [('ampere', self.source, 'r'), ('ada', self.ada_source, 'r-ada')]]
         self.planpath = self.root / 'plan.json'
         order.atomic(self.planpath, self.plan)
         scripts = Path(__file__).resolve().parent
@@ -127,7 +131,7 @@ class Fixture(unittest.TestCase):
     def test_manifest_cannot_hide_inputs(self):
         for field in ['absent','mismatch']:
             p=copy.deepcopy(self.plan)
-            p['files']={**p['files'],str(self.root/'unreviewed'):'x'} if field=='absent' else {str(self.source):'wrong'}
+            p['files']={**p['files'],str(self.root/'unreviewed'):'x'} if field=='absent' else {**p['files'],str(self.source):'wrong'}
             order.atomic(self.planpath,p)
             self.state['review']['artifacts'][str(self.planpath)]=order.sha(self.planpath)
             with self.assertRaises(order.Refused):self.o.approved(self.state)
@@ -149,6 +153,18 @@ class Fixture(unittest.TestCase):
         for name, edit in edits:
             p=copy.deepcopy(self.plan);edit(p)
             with self.subTest(name=name),self.assertRaises(order.Refused):order.validate_plan(p)
+
+    def test_device_arm_measures_each_source_once(self):
+        # #683 finding 18: the two cells must not replay one selection, or one
+        # trace file between them.
+        order.validate_plan(self.plan)
+        for fault in ['same-selection','shared-trace','repeated-within-cell']:
+            with self.subTest(fault=fault):
+                bad=copy.deepcopy(self.plan);jobs=bad['arms'][1]['jobs']
+                if fault=='same-selection':jobs[1].update(source_trace=jobs[0]['source_trace'],source_run=jobs[0]['source_run'])
+                if fault=='shared-trace':jobs[1].update(source_trace=jobs[0]['source_trace'],source_run='r-other')
+                if fault=='repeated-within-cell':jobs.append(dict(jobs[0],id='ampere-again'))
+                with self.assertRaisesRegex(order.Refused,'device-selections-distinct'):order.validate_plan(bad)
 
     def test_device_arm_replays_only_reviewed_external_traces(self):
         # #683 finding 6: a TB-d job naming a local source_job, or a trace the

@@ -121,6 +121,14 @@ def validate_plan(plan):
     # under an ampere or ada label.
     check('device-traces', all(not j.get('source_job') and j.get('source_run') and
                                j.get('source_trace') in plan.get('files', {}) for j in arms[1]['jobs']))
+    # Each job measures a different source record, and a trace file is one
+    # device's: a selection repeated, or a trace shared between the cells,
+    # would complete the arm without measuring one of them.
+    selections = [(j.get('source_trace'), j.get('source_run')) for j in arms[1]['jobs']]
+    cells = {cell: {j.get('source_trace') for j in arms[1]['jobs'] if j.get('source_cell') == cell}
+             for cell in ['ampere', 'ada']}
+    check('device-selections-distinct', len(set(selections)) == len(selections) and
+          not cells['ampere'] & cells['ada'])
     check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs']) or
           (sorted(j.get('source_job') for j in arms[2]['jobs']) == sorted(j['id'] for j in free) and
            all(j['kind'] == 'refeed' and j['stack'] == 'B2' for j in arms[2]['jobs'])))
