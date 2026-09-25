@@ -88,7 +88,7 @@ def save(path, text, mode=0o644):
     path.chmod(mode)
 
 
-def provision(plan):
+def provision(plan, plan_sha256):
     need('fresh-install-root', not ROOT.exists())
     try:
         pwd.getpwnam('weaver-bravo')
@@ -107,7 +107,7 @@ def provision(plan):
         files = [p for p in source.rglob('*') if p.is_file()]
         need('stack-file-coverage', bool(files) and all(str(p) in plan['files'] for p in files))
     ROOT.mkdir(mode=0o755)
-    save(ROOT / 'plan-sha256', sha(sys.argv[1]) + '\n')
+    save(ROOT / 'plan-sha256', plan_sha256 + '\n')
     if not MODEL.exists():
         MODEL.parent.mkdir(parents=True, exist_ok=True)
         with open(plan['model_source'], 'rb') as src, MODEL.open('xb') as dst:
@@ -142,8 +142,8 @@ def provision(plan):
     print('Provisioned bravo only. Start a fresh operator shell with the weaver-bravo group before the driver.')
 
 
-def installed(plan):
-    need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == sha(sys.argv[1]))
+def installed(plan, plan_sha256):
+    need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == plan_sha256)
     need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     for stack in ['B1', 'B2']:
         source = Path(plan['stacks'][stack])
@@ -225,16 +225,18 @@ def load(plan, job):
 def main():
     need('root-payload', os.geteuid() == 0)
     plan_path, expected, step = sys.argv[1:]
-    need('plan-hash', sha(plan_path) == expected)
-    plan = json.loads(Path(plan_path).read_text())
+    # One snapshot, checked against the digest recorded at approval, then parsed.
+    data = Path(plan_path).read_bytes()
+    need('plan-hash', hashlib.sha256(data).hexdigest() == expected)
+    plan = json.loads(data)
     need('fixed-root-agent', plan['install_root'] == str(ROOT) and plan['agent'] == 'bravo')
     need('operator', pwd.getpwnam(plan['operator']).pw_uid == plan['operator_uid'] == int(os.environ['SUDO_UID']))
     for path, digest in plan['files'].items():
         need('source-file-hash', sha(path) == digest)
     if step == 'provision':
-        provision(plan)
+        provision(plan, expected)
     else:
-        installed(plan)
+        installed(plan, expected)
         verb, identity = step.split(':', 1)
         jobs = [j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == identity]
         need('job-found', len(jobs) == 1)

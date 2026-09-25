@@ -190,6 +190,30 @@ print('WAITING',flush=True);o.wait('measure:B1-s451234785645-n1',timeout=10,poll
         self.state['review']['artifacts'][str(Path(__file__).with_name('tb_payload.py').resolve())]='bad'
         with self.assertRaises(order.Refused):order.payload(self.state,'provision',self.root/'log')
 
+    def test_sudo_receives_digest_recorded_at_approval(self):
+        # #683 finding 2: a plan edited after approved() must reach sudo with
+        # the review seat's digest, so the payload's plan-hash check refuses it.
+        recorded=self.state['review']['artifacts'][str(self.planpath)]
+        self.planpath.write_text(self.planpath.read_text().replace('"bravo"','"karl"'))
+        self.assertNotEqual(order.sha(self.planpath),recorded)
+        seen=[]
+        def inspect(argv,**kw):seen.append(argv[4:]);return subprocess.CompletedProcess(argv,0)
+        with patch('tb_order.subprocess.run',side_effect=inspect):order.payload(self.state,'provision',self.root/'log')
+        self.assertEqual(seen,[[str(self.planpath),recorded,'provision']])
+
+    def test_approval_parses_the_plan_bytes_it_hashed(self):
+        # A plan swapped between the artifact-hash read and the parse is refused,
+        # never returned as approved.
+        altered=dict(self.plan,note='swapped after hashing')
+        real_sha=order.sha;swapped=[]
+        def hook(path):
+            digest=real_sha(path)
+            if Path(path)==self.planpath and not swapped:
+                swapped.append(1);self.planpath.write_text(json.dumps(altered))
+            return digest
+        with patch('tb_order.sha',side_effect=hook),self.assertRaises(order.Refused):self.o.approved(self.state)
+        self.assertEqual(swapped,[1])
+
     def test_best_effort_notice(self):
         for error in [FileNotFoundError(),subprocess.TimeoutExpired('gh',20)]:
             with patch('tb_order.subprocess.run',side_effect=error),contextlib.redirect_stdout(io.StringIO()):order.notice('load:one')
@@ -277,19 +301,19 @@ class PayloadTests(unittest.TestCase):
         self.assertEqual(p.read_text(),'a')
 
     def provision(self):
-        with patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.grp.getgrnam',return_value=SimpleNamespace(gr_gid=os.getgid())),patch('tb_payload.os.chown'),patch('tb_payload.run'),contextlib.redirect_stdout(io.StringIO()):payload.provision(self.plan)
+        with patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.grp.getgrnam',return_value=SimpleNamespace(gr_gid=os.getgid())),patch('tb_payload.os.chown'),patch('tb_payload.run'),contextlib.redirect_stdout(io.StringIO()):payload.provision(self.plan,'d'*64)
 
     def test_provision_and_installed_hash_checks(self):
         self.stacks();self.provision()
         self.assertTrue((self.root/'config/B1/allow-list').is_file())
         self.assertEqual((self.root/'config/B1/allow-list').read_text(),'bravo\n')
-        payload.installed(self.plan)
+        payload.installed(self.plan,'d'*64)
         file=self.root/'stacks/B1/bin/pyworker';file.write_text('changed')
-        with self.assertRaises(RuntimeError):payload.installed(self.plan)
+        with self.assertRaises(RuntimeError):payload.installed(self.plan,'d'*64)
         file.write_text('stub');self.model.write_text('changed')
-        with self.assertRaises(RuntimeError):payload.installed(self.plan)
+        with self.assertRaises(RuntimeError):payload.installed(self.plan,'d'*64)
         self.model.write_text('weights');(self.root/'plan-sha256').write_text('changed')
-        with self.assertRaises(RuntimeError):payload.installed(self.plan)
+        with self.assertRaises(RuntimeError):payload.installed(self.plan,'d'*64)
         with self.assertRaises(RuntimeError):self.provision()
 
     def test_provision_preconditions_before_mutation(self):
@@ -305,7 +329,7 @@ class PayloadTests(unittest.TestCase):
                 self.assertFalse(self.root.exists())
                 self.model.unlink(missing_ok=True)
                 (Path(self.plan['stacks']['B1'])/'cuda-lib').mkdir(exist_ok=True)
-        with patch('tb_payload.pwd.getpwnam',return_value=self.user),self.assertRaises(RuntimeError):payload.provision(self.plan)
+        with patch('tb_payload.pwd.getpwnam',return_value=self.user),self.assertRaises(RuntimeError):payload.provision(self.plan,'d'*64)
 
     def setup_load(self):
         self.root.mkdir();(self.root/'sinks').mkdir();(self.root/'agents/B1').mkdir(parents=True)
@@ -365,6 +389,24 @@ class PayloadTests(unittest.TestCase):
             bad=copy.deepcopy(p);change(bad)
             with self.assertRaises(RuntimeError):invoke(bad,**kw)
         invoke(p,step='unload:B1-s7-n1')
+
+    def test_payload_parses_the_snapshot_it_verified(self):
+        # #683 finding 2: sudo verifies one snapshot. A plan swapped on disk after
+        # the digest check must not be what provision receives.
+        p=copy.deepcopy(self.plan);p['install_root']=str(self.root);p['files']={}
+        self.planpath.write_text(json.dumps(p));expected=order.sha(self.planpath)
+        altered=dict(p,note='swapped after hashing')
+        real=payload.hashlib.sha256;swapped=[]
+        class Hooked:
+            def __init__(s,*a):s.h=real(*a)
+            def update(s,b):s.h.update(b)
+            def hexdigest(s):
+                r=s.h.hexdigest()
+                if not swapped:swapped.append(1);self.planpath.write_text(json.dumps(altered))
+                return r
+        with patch('sys.argv',['payload',str(self.planpath),expected,'provision']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.provision') as provision,patch('tb_payload.hashlib.sha256',side_effect=Hooked),contextlib.redirect_stdout(io.StringIO()):payload.main()
+        self.assertEqual(swapped,[1])
+        self.assertEqual(provision.call_args.args,(p,expected))
 
 
 class DriverTests(unittest.TestCase):
@@ -448,7 +490,7 @@ class DriverTests(unittest.TestCase):
         # source schedule are independently guarded by validate_plan tests.
         arm=dict(name='TB0',jobs=[dict(id='a',kind='free',seed=7),dict(id='b',kind='free',seed=7),dict(id='c',kind='refeed')])
         self.plan['arms']=[arm]
-        state=dict(plan=str(self.planpath));seen=[]
+        state=dict(plan=str(self.planpath),review=dict(artifacts={str(self.planpath):'recorded-at-approval'}));seen=[]
         o=SimpleNamespace(read=lambda:state,approved=lambda s:self.plan,
                           coding=lambda step,path:seen.append(step),wait=lambda step:seen.append('wait:'+step))
         def measure(plan,job,probe):
@@ -456,6 +498,8 @@ class DriverTests(unittest.TestCase):
             order.atomic(p,dict(self.free,exact=False,replay_outcome='diverged'));return p
         with patch('tb_driver.readers',return_value=self.probe),patch('tb_driver.notice'),patch('tb_driver.measure',side_effect=measure),self.assertRaises(order.Refused):driver.drive(o,'TB0')
         self.assertIn('settle:b',seen);self.assertIn('wait:settle:c',seen);self.assertNotIn('settle:c',seen)
+        # The start record names the digest the review seat approved, not a re-hash.
+        self.assertEqual(json.loads((Path(self.plan['deposit'])/'TB0-start.json').read_text())['plan'],'recorded-at-approval')
         with patch('tb_driver.readers',return_value=self.probe),self.assertRaises(order.Refused):driver.drive(o,'TB0')
         (Path(self.plan['deposit'])/'TB0-start.json').unlink()
         def bad_pair(plan,job,probe):

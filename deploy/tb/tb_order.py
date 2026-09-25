@@ -144,7 +144,10 @@ class Order:
         check('approval-coverage', required <= files.keys())
         check('artifact-hashes', all(Path(p).is_file() and sha(p) == h for p, h in files.items()))
         check('halt', not s.get('halt'))
-        plan = json.loads(Path(s['plan']).read_text())
+        # One snapshot: parse the bytes that matched the recorded digest, never a re-read.
+        data = Path(s['plan']).read_bytes()
+        check('plan-snapshot', hashlib.sha256(data).hexdigest() == files[s['plan']])
+        plan = json.loads(data)
         validate_plan(plan)
         check('manifest-coverage', bool(plan.get('files')) and set(plan['files']) <= files.keys())
         check('manifest-hashes', all(files[p] == h for p, h in plan['files'].items()))
@@ -276,8 +279,11 @@ def payload(state, step, log):
         check('private-payload', Path(name).stat().st_mode & 0o777 == 0o600)
         check('copied-payload-hash', sha(name) == hashlib.sha256(data).hexdigest())
         with log.open('w') as out:
+            # The digest recorded at approval: a plan edited after approved()
+            # must fail the payload's check, not be re-hashed into passing it.
             return subprocess.run(['sudo', '/usr/bin/python3', '-I', name, state['plan'],
-                                   sha(state['plan']), step], stdin=subprocess.DEVNULL,
+                                   state['review']['artifacts'][state['plan']], step],
+                                  stdin=subprocess.DEVNULL,
                                   stdout=out, stderr=subprocess.STDOUT).returncode
     finally:
         Path(name).unlink(missing_ok=True)

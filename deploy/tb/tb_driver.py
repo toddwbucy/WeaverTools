@@ -173,7 +173,7 @@ def drive(order, arm_name):
     root.mkdir(exist_ok=True)
     start = root / f'{arm_name}-start.json'
     check('fresh-arm', not start.exists())
-    atomic(start, dict(arm=arm_name, pid=os.getpid(), plan=sha(state['plan'])))
+    atomic(start, dict(arm=arm_name, pid=os.getpid(), plan=state['review']['artifacts'][state['plan']]))
     order.coding(f'start:{arm_name}', start)
     for job in arm['jobs']:
         notice('load:' + job['id'])

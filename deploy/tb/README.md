@@ -68,7 +68,10 @@ coverage, changed artifacts, changed receipts or a recorded refusal.
 Only the operator runs `next`, as the recorded operator uid, without wrapping it
 in sudo. The coordinator requests sudo internally for a mode-0600 temporary copy
 of the reviewed payload. It checks its bytes, closes stdin, captures a transcript
-and removes the temporary file on both success and failure. The payload uses
+and removes the temporary file on both success and failure. The payload is handed
+the plan digest the review seat recorded, never one recomputed at call time, and
+it parses the one plan snapshot that matched that digest. The coordinator's own
+approval check parses its plan the same way. The payload uses
 Python isolated mode and no import from the working directory. No sudo is run by
 the probe driver. Notification failure never changes a successful step.
 
