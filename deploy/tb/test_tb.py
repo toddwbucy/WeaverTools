@@ -664,6 +664,19 @@ class DriverTests(unittest.TestCase):
         (root/'weaver-probe/weaver_probe.py').write_text('VALUE=3')
         with self.assertRaises(order.Refused):driver.readers(self.plan)
 
+    def test_refeed_requires_the_tuple_weights_on_both_sides(self):
+        # #683 finding 11: a reviewed trace from other weights, or a replay
+        # that ran them, must not be read as a device effect.
+        j=self.job('refeed')
+        self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+        for side in ['source','replay']:
+            with self.subTest(side=side):
+                other=dict(copy.deepcopy(self.free),weights_hash='f'*64)
+                self.probe.extract_run=(lambda rows,side=side,other=other:copy.deepcopy(other) if (side=='replay')==any(e['kind']=='replay.closed' for e in rows) else copy.deepcopy(self.free))
+                try:
+                    with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,f'{side}-weights-held'):driver.measure(self.plan,j,self.probe)
+                finally:self.cleanup_job()
+
     def test_readers_compile_the_bytes_they_hashed(self):
         # Codex pass 4 class, driver side: a reader rewritten after its hash
         # check must not be what runs.

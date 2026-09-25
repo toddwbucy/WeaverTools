@@ -120,6 +120,10 @@ def measure(plan, job, probe):
         refed = probe.extract_run(mine)
         enough(refed)
         src = source_record(plan, job, probe)
+        # A divergence is read as a device or kernel effect only when both sides
+        # ran the tuple's weights, as the free-run path already requires.
+        check('source-weights-held', src.get('weights_hash') == plan['tuple']['weights_sha256'])
+        check('replay-weights-held', refed.get('weights_hash') == plan['tuple']['weights_sha256'])
         reading = probe.reading_two(src, refed)
         # Historical #516 stack coordinate: input-plus-output, not resident.
         div = outcome.get('divergence') or {}
