@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -389,6 +390,15 @@ class PayloadTests(unittest.TestCase):
                 if kind=='directory':(stack/'engine-lib/linked').unlink()
                 else:(stack/'bin/pyworker').unlink();(stack/'bin/pyworker').write_text('stub')
         self.provision();self.assertFalse((self.root/'stacks/B1/bin/pyworker').is_symlink())
+
+    def test_provision_verifies_the_copy_it_installed(self):
+        # #683 finding 7: a stack file changed after the pre-copy checks is
+        # caught in the installed copy before provisioning reports success.
+        self.stacks();real=shutil.copytree
+        def racing(src,dst,*args,**kw):
+            if (Path(src)/'bin').is_dir():(Path(src)/'bin/pyworker').write_text('changed after the check')
+            return real(src,dst,*args,**kw)
+        with patch('tb_payload.shutil.copytree',side_effect=racing),self.assertRaisesRegex(RuntimeError,'installed-stack-hash'):self.provision()
 
     def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
         self.stacks();self.provision();payload.installed(self.plan,'d'*64)
