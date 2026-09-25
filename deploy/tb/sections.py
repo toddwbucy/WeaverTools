@@ -95,7 +95,14 @@ def inventory():
 
 def compare(first, second):
     a, b = [json.loads(pathlib.Path(p).read_text()) for p in [first, second]]
-    report = {"host": {}, "cuda": {}}
+    # A verdict about B1 against B2 needs B1 then B2: the same inventory twice
+    # is identical to itself, and an empty scope makes every all() vacuous.
+    if (a.get('stack'), b.get('stack')) != ('B1', 'B2'):
+        raise ValueError(f"compare takes the B1 inventory then the B2 inventory, not {a.get('stack')} and {b.get('stack')}")
+    for m in (a, b):
+        if not m.get('hosts') or not all(m.get('members', {}).get(kind) for kind in ['cubin', 'ptx']):
+            raise ValueError(f"the {m['stack']} inventory has no hosts, cubins or PTX, and vouches for nothing")
+    report = {"stacks": ['B1', 'B2'], "host": {}, "cuda": {}}
     for name in sorted(a['hosts'].keys() | b['hosts'].keys()):
         sa = {s['name']: s for s in a['hosts'].get(name, {}).get('sections', [])}
         sb = {s['name']: s for s in b['hosts'].get(name, {}).get('sections', [])}

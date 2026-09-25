@@ -416,10 +416,10 @@ class ReadingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'a';q=Path(tmp)/'b'
             section=dict(name='.text',sha256='a',executable=True)
-            manifest=dict(hosts={'lib':dict(file_sha256='f',sections=[section])},members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
-            p.write_text(json.dumps(manifest));q.write_text(json.dumps(manifest))
+            manifest=dict(stack='B1',hosts={'lib':dict(file_sha256='f',sections=[section])},members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
+            p.write_text(json.dumps(manifest));q.write_text(json.dumps(dict(manifest,stack='B2')))
             self.assertTrue(sections.compare(p,q)['executable_identity'])
-            changed=copy.deepcopy(manifest);changed['members']['cubin']['lib.1.sm_120a.cubin']['sections'][0]['sha256']='b'
+            changed=dict(copy.deepcopy(manifest),stack='B2');changed['members']['cubin']['lib.1.sm_120a.cubin']['sections'][0]['sha256']='b'
             q.write_text(json.dumps(changed));r=sections.compare(p,q)
             self.assertFalse(r['executable_identity']);self.assertEqual(r['cuda']['cubin']['sm_120a']['code_equal'],0)
 
@@ -430,15 +430,32 @@ class ReadingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'a';q=Path(tmp)/'b'
             section=dict(name='.text',sha256='a',executable=True)
-            members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{}}
-            p.write_text(json.dumps(dict(hosts={'lib':dict(file_sha256='f',sections=[section])},members=members)))
+            members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}}
+            p.write_text(json.dumps(dict(stack='B1',hosts={'lib':dict(file_sha256='f',sections=[section])},members=members)))
             for host in [dict(file_sha256='g',sections=[section]),dict(sections=[section])]:
-                q.write_text(json.dumps(dict(hosts={'lib':host},members=members)))
+                q.write_text(json.dumps(dict(stack='B2',hosts={'lib':host},members=members)))
                 r=sections.compare(p,q)
                 self.assertEqual(r['host']['lib']['changes'],[])
                 self.assertFalse(r['executable_identity'],host)
-            q.write_text(json.dumps(dict(hosts={},members=members)));p.write_text(q.read_text())
-            self.assertFalse(sections.compare(p,q)['executable_identity'])
+
+    def test_identity_needs_a_b1_b2_pair_with_scope(self):
+        # #683 finding 24: the same inventory twice, the pair reversed, or an
+        # inventory with no hosts or members would make identity vacuous or
+        # self-evident; each refuses rather than returning a verdict.
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'a';q=Path(tmp)/'b'
+            section=dict(name='.text',sha256='a',executable=True)
+            b1=dict(stack='B1',hosts={'lib':dict(file_sha256='f',sections=[section])},
+                    members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
+            p.write_text(json.dumps(b1));q.write_text(json.dumps(dict(b1,stack='B2')))
+            self.assertEqual(sections.compare(p,q)['stacks'],['B1','B2'])
+            for label,first,second in [('same',b1,b1),('reversed',dict(b1,stack='B2'),b1),
+                                       ('no-ptx',b1,dict(b1,stack='B2',members=dict(b1['members'],ptx={}))),
+                                       ('no-cubin',b1,dict(b1,stack='B2',members=dict(b1['members'],cubin={}))),
+                                       ('no-hosts',dict(b1,hosts={}),dict(b1,stack='B2',hosts={}))]:
+                with self.subTest(label=label):
+                    p.write_text(json.dumps(first));q.write_text(json.dumps(second))
+                    with self.assertRaises(ValueError):sections.compare(p,q)
 
     def test_host_headers_are_inventoried_and_compared(self):
         # Real ELF bytes: change the entry point, then one segment's permissions.
@@ -448,8 +465,9 @@ class ReadingTests(unittest.TestCase):
             original=Path(tmp)/'original';original.write_bytes(Path(sys.executable).resolve().read_bytes())
             base=sections.elf_sections(original)
             self.assertGreater(len(base['program_headers']),0)
-            def manifest(record):return dict(hosts={'bin/x':record},members={'cubin':{},'ptx':{}})
-            p=Path(tmp)/'a';p.write_text(json.dumps(manifest(base)))
+            members={'cubin':{'x.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[])},'ptx':{'x.1.sm_75.ptx':dict(size=4,sha256='a')}}
+            def manifest(record,stack='B2'):return dict(stack=stack,hosts={'bin/x':record},members=members)
+            p=Path(tmp)/'a';p.write_text(json.dumps(manifest(base,'B1')))
             q=Path(tmp)/'b';q.write_text(json.dumps(manifest(base)))
             self.assertTrue(sections.compare(p,q)['executable_identity'])
             flags=base['elf_header']['phoff']+4
