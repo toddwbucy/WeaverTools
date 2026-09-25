@@ -59,21 +59,35 @@ def until_closed(path, kind, timeout=3600):
     raise Refused(f'{kind} not recorded inside bound')
 
 
-def enough(rec):
+# The record key extract_run fills for each per-token reading a tuple can
+# elect. A true election with no key here raises rather than going unread, so
+# an election added to the tuple cannot be forgotten by both functions below.
+ELECTED_SERIES = {'surprisal': 'surprisals'}
+
+
+def series(t):
+    """The per-token float series a record must carry: entropies always, and
+    each reading the tuple elects (#683 finding 23; weaver-spu-Spec 1803-1810:
+    elected surprisals render, and disagreement is a defect)."""
+    return ['entropies'] + [ELECTED_SERIES[k] for k, v in sorted(t.items()) if v is True]
+
+
+def enough(t, rec):
     n = len(rec['output_tokens'])
-    check('nonempty-measurement', n > 0 and len(rec['entropies']) == n and len(rec['field']) == n)
-    check('field-depth', all(len(value['ranked']) == 200 for value in rec['field'].values()))
+    check('nonempty-measurement', n > 0 and len(rec['field']) == n and
+          all(len(rec.get(k) or []) == n for k in series(t)))
+    check('field-depth', all(len(value['ranked']) == t['field_depth'] for value in rec['field'].values()))
 
 
 def float_bits(values):
     return b''.join(struct.pack('!d', v) for v in values)
 
 
-def exact(source, replay):
-    enough(source)
-    enough(replay)
+def exact(t, source, replay):
+    enough(t, source)
+    enough(t, replay)
     return (source['output_tokens'] == replay['output_tokens'] and
-            float_bits(source['entropies']) == float_bits(replay['entropies']) and
+            all(float_bits(source[k]) == float_bits(replay[k]) for k in series(t)) and
             {int(k): v for k, v in source['field'].items()} == {int(k): v for k, v in replay['field'].items()})
 
 
@@ -103,7 +117,7 @@ def measure(plan, job, probe):
         mine = [e for e in rows if e['run'] == close['run']]
         check('single-turn', sum(e['kind'] == 'model.measurement' for e in mine) == 1)
         rec = probe.extract_run(mine)
-        enough(rec)
+        enough(plan['tuple'], rec)
         check('seed-held', rec['declared_seed'] == job['seed'])
         check('weights-held', rec['weights_hash'] == plan['tuple']['weights_sha256'])
         rec.update(name=job['id'], arm='TB0', seed=job['seed'], run=close['run'], trace=str(trace), verdict='RAN')
@@ -118,7 +132,7 @@ def measure(plan, job, probe):
         mine = probe.measured_events(rows, close['run'])
         check('replay-measurement', mine is not None)
         refed = probe.extract_run(mine)
-        enough(refed)
+        enough(plan['tuple'], refed)
         src = source_record(plan, job, probe)
         # A divergence is read as a device or kernel effect only when both sides
         # ran the tuple's weights, as the free-run path already requires.
@@ -141,7 +155,7 @@ def measure(plan, job, probe):
         rec = dict(free_readings=free_readings, name=job['id'], trace=str(trace), run=close['run'], verdict='RAN',
                    replay_outcome=outcome['kind'], replay_divergence=div,
                    replay_divergence_ordinal=ordinal, reading_two=reading,
-                   exact=exact(src, refed), refed=refed)
+                   exact=exact(plan['tuple'], src, refed), refed=refed)
         target = dest / 'refeed.json'
     atomic(target, rec)
     with (root / 'probe.jsonl').open('a') as out:
@@ -163,7 +177,7 @@ def assess(plan, arm, probe):
             records = [r for j, r in free if j['seed'] == seed]
             check('pair-count', len(records) == 2)
             a, b = records
-            pairs.append(dict(seed=seed, equal=exact(a, b) and a['emission'] == b['emission'],
+            pairs.append(dict(seed=seed, equal=exact(plan['tuple'], a, b) and a['emission'] == b['emission'],
                               reading=probe.reading_one(a, b)))
         report['pairs'] = pairs
         report['own_refeeds'] = [dict(id=j['id'], exact=r['exact'], certified=r['replay_outcome'] == 'certified')
@@ -215,7 +229,7 @@ def drive(order, arm_name):
             earlier = [j for j in arm['jobs'][:index] if j['kind'] == 'free' and j['seed'] == job['seed']]
             if earlier:
                 old = json.loads((root / 'runs' / earlier[0]['id'] / 'run.json').read_text())
-                check('pair-falsifier', exact(old, rec) and old['emission'] == rec['emission'])
+                check('pair-falsifier', exact(plan['tuple'], old, rec) and old['emission'] == rec['emission'])
         order.coding('settle:' + job['id'], result)
     result = assess(plan, arm, probe)
     order.coding('finish:' + arm_name, result)

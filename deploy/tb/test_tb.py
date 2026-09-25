@@ -379,18 +379,31 @@ class ReadingTests(unittest.TestCase):
     def rec(self):
         # extract_run's real key set (golden.EXTRACT_RUN_KEYS); field keys are
         # ints as extract_run builds them, strings once a record is JSON.
-        return dict(dict.fromkeys(golden.EXTRACT_RUN_KEYS),output_tokens=[1],entropies=[0.5],
+        return dict(dict.fromkeys(golden.EXTRACT_RUN_KEYS),output_tokens=[1],entropies=[0.5],surprisals=[0.25],
                     field={20:dict(ranked=[{'token':i,'probability':.005} for i in range(200)],realized=1)})
 
     def test_exact_rejects_empty_partial_and_changed(self):
+        t=prepare.template(Path('/deposit'),'todd',1000)['tuple']
         a=self.rec();b=copy.deepcopy(a)
-        self.assertTrue(driver.exact(a,b))
-        b['field']={'20':b['field'][20]};self.assertTrue(driver.exact(a,b))
-        b['entropies']=[.5000000000000001];self.assertFalse(driver.exact(a,b))
+        self.assertTrue(driver.exact(t,a,b))
+        b['field']={'20':b['field'][20]};self.assertTrue(driver.exact(t,a,b))
+        b['entropies']=[.5000000000000001];self.assertFalse(driver.exact(t,a,b))
         b=copy.deepcopy(a);b['field'][20]['ranked'].pop()
-        with self.assertRaises(order.Refused):driver.exact(a,b)
+        with self.assertRaises(order.Refused):driver.exact(t,a,b)
         b=copy.deepcopy(a);b['entropies']=[]
-        with self.assertRaises(order.Refused):driver.exact(a,b)
+        with self.assertRaises(order.Refused):driver.exact(t,a,b)
+        # #683 finding 23: the tuple elects surprisal, so the surprisals are
+        # required and compared like the entropies: absent or empty refuses,
+        # one bit changed is unequal.
+        self.assertTrue(t['surprisal'])
+        for missing in [[],None]:
+            b=copy.deepcopy(a);b['surprisals']=missing
+            with self.assertRaisesRegex(order.Refused,'nonempty-measurement'):driver.exact(t,a,b)
+        b=copy.deepcopy(a);b['surprisals']=[.25000000000000006];self.assertFalse(driver.exact(t,a,b))
+        # An unelected reading stays unrequired, and a true election with no
+        # record key fails loudly instead of going unread.
+        b=copy.deepcopy(a);b['surprisals']=None;self.assertTrue(driver.exact(dict(t,surprisal=False),dict(a,surprisals=None),b))
+        with self.assertRaises(KeyError):driver.exact(dict(t,residual=True),a,a)
         self.assertNotEqual(driver.float_bits([0.0]),driver.float_bits([-0.0]))
 
     def test_trace_close_and_missing(self):
