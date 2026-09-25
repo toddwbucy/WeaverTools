@@ -674,6 +674,15 @@ class PayloadTests(unittest.TestCase):
         installed.chmod(0o755);(self.root/'config/B1').chmod(0o777)
         with self.assertRaisesRegex(RuntimeError,'served-directory-custody'):payload.installed(self.plan,'d'*64)
 
+    def test_new_model_must_be_in_custody(self):
+        # #683 finding 30: a model this provisioning creates is held like an
+        # existing one; a group-writable parent lets another process replace
+        # the new file after its hash, so provisioning refuses before success.
+        self.stacks();self.model.parent.chmod(0o775)
+        try:
+            with self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
+        finally:self.model.parent.chmod(0o700)
+
     def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
         self.stacks();self.provision();payload.installed(self.plan,'d'*64)
         installed=self.root/'stacks/B1/bin/pyworker'

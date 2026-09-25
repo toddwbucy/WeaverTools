@@ -198,11 +198,17 @@ def provision(plan, plan_sha256):
     lock(ROOT, 0o755)
     save(ROOT / 'plan-sha256', plan_sha256 + '\n')
     if not MODEL.exists():
+        made = not MODEL.parent.exists()
         MODEL.parent.mkdir(parents=True, exist_ok=True)
+        if made:
+            lock(MODEL.parent, 0o755)
         # The model-source check above refuses early; what root serves is the
-        # copy, verified here before provisioning can report success.
+        # copy, verified here before provisioning can report success, and held
+        # in custody like an existing one: a writable parent lets another
+        # process replace the new file after its hash.
         snapshot(plan['model_source'], plan['tuple']['weights_sha256'], MODEL)
         MODEL.chmod(0o644)
+        need('new-model-custody', model_custody())
     run(['/usr/bin/groupadd', '--system', 'weaver-bravo'])
     run(['/usr/bin/useradd', '--system', '--gid', 'weaver-bravo', '--home-dir', str(ROOT / 'home'),
          '--create-home', '--shell', '/usr/bin/nologin', 'weaver-bravo'])
