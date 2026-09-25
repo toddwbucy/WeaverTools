@@ -313,6 +313,19 @@ class Fixture(unittest.TestCase):
         self.due('start:TB0')
         with self.assertRaisesRegex(order.Refused,'wait-order'):self.o.wait('measure:B1-s451234785645-n1',timeout=0)
 
+    def test_wait_verifies_approval_only_when_the_state_moves(self):
+        # #683 finding 28: approval hashes the whole reviewed deposit, the model
+        # included, under the lock next needs; polling it every second starved
+        # the operator. It now runs once per state, and again once the state
+        # moves, before the wait returns.
+        self.due('load:B1-s451234785645-n1');calls=[];real=order.Order.approved
+        def counting(o,s):calls.append(s['cursor']);return real(o,s)
+        with patch.object(order.Order,'approved',counting):
+            with self.assertRaisesRegex(order.Refused,'wait-deadline'):self.o.wait('measure:B1-s451234785645-n1',timeout=0.3,poll=0.01)
+            self.assertEqual(len(calls),1)
+            self.due('measure:B1-s451234785645-n1');self.o.wait('measure:B1-s451234785645-n1',timeout=0.3,poll=0.01)
+        self.assertEqual(len(calls),2)
+
     def test_process_wait_stays_alive_until_operator_receipt(self):
         self.due('load:B1-s451234785645-n1')
         script="""import os,sys

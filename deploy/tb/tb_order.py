@@ -278,16 +278,24 @@ class Order:
 
     def wait(self, step, timeout=14400, poll=1):
         deadline = time.monotonic() + timeout
+        verified = None
         while True:
             try:
                 with self.locked():
-                    s = self.read()
-                    plan = self.approved(s)
+                    raw = self.path.read_bytes()
+                    s = json.loads(raw)
                     check('wait-owner', live(s.get('driver')) and s['driver']['pid'] == os.getpid())
-                    if self.due(s, plan)[0] == step:
-                        self.previous(s, plan)
-                        return
-                    check('wait-order', self.due(s, plan)[1] == 'operator')
+                    # approved() hashes every reviewed artifact, the model and both
+                    # stacks included, under the lock that next needs. Only a state
+                    # change can make the step due, so the full verification runs
+                    # when the state moves, and always before returning.
+                    if raw != verified:
+                        plan = self.approved(s)
+                        if self.due(s, plan)[0] == step:
+                            self.previous(s, plan)
+                            return
+                        check('wait-order', self.due(s, plan)[1] == 'operator')
+                        verified = raw
             except Busy:
                 pass
             check('wait-deadline', time.monotonic() < deadline)
