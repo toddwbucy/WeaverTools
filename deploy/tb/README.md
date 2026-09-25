@@ -75,6 +75,10 @@ approval check parses its plan the same way. The payload uses
 Python isolated mode and no import from the working directory. No sudo is run by
 the probe driver. Notification failure never changes a successful step.
 
+Provisioning refuses a link anywhere in a stack before its first write, since a
+stack is copied by bytes, and each installed stack must then hold exactly the
+reviewed files with no link, which every later step checks again.
+
 The sequence is provision, then each arm's start, and for each job:
 
 1. Operator load (a re-feed load derives, starts load, preloads concurrently,

@@ -88,6 +88,16 @@ def save(path, text, mode=0o644):
     path.chmod(mode)
 
 
+def verify_stack(plan, stack, root):
+    """The installed copy holds exactly the reviewed files, by bytes, and no link."""
+    source = Path(plan['stacks'][stack])
+    entries = list(root.rglob('*'))
+    need('installed-no-symlinks', not root.is_symlink() and not any(p.is_symlink() for p in entries))
+    expected = {Path(p).relative_to(source): d for p, d in plan['files'].items() if Path(p).is_relative_to(source)}
+    need('installed-stack-coverage', {p.relative_to(root) for p in entries if p.is_file()} == expected.keys())
+    need('installed-stack-hash', all(sha(root / r) == d for r, d in expected.items()))
+
+
 def provision(plan, plan_sha256):
     need('fresh-install-root', not ROOT.exists())
     try:
@@ -103,6 +113,10 @@ def provision(plan, plan_sha256):
     # retained as a refusal for the seat, never silently resumed or removed.
     for stack in ['B1', 'B2']:
         source = Path(plan['stacks'][stack])
+        # B1 is copied by bytes. rglob does not descend a linked directory and
+        # a linked file is hashed at its target, so a link anywhere in a stack
+        # would carry unreviewed or mutable bytes into the root-owned install.
+        need('stack-no-symlinks', not any(p.is_symlink() for p in [source, *source.rglob('*')]))
         need('stack-libraries', all((source / x).is_dir() for x in ['bin', 'engine-lib', 'cuda-lib']))
         files = [p for p in source.rglob('*') if p.is_file()]
         need('stack-file-coverage', bool(files) and all(str(p) in plan['files'] for p in files))
@@ -120,6 +134,8 @@ def provision(plan, plan_sha256):
     for stack in ['B1', 'B2']:
         dst = ROOT / 'stacks' / stack
         shutil.copytree(plan['stacks'][stack], dst, symlinks=True)
+        # The check above ran before the copy; the copy is what root serves.
+        verify_stack(plan, stack, dst)
         for p in dst.rglob('*'):
             if not p.is_symlink():
                 p.chmod(0o755 if p.is_dir() or p.parent.name == 'bin' else 0o644)
@@ -146,11 +162,7 @@ def installed(plan, plan_sha256):
     need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == plan_sha256)
     need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     for stack in ['B1', 'B2']:
-        source = Path(plan['stacks'][stack])
-        for path, digest in plan['files'].items():
-            p = Path(path)
-            if p.is_relative_to(source):
-                need('installed-stack-hash', sha(ROOT / 'stacks' / stack / p.relative_to(source)) == digest)
+        verify_stack(plan, stack, ROOT / 'stacks' / stack)
 
 
 def declaration(plan, job, sink):

@@ -358,6 +358,34 @@ class PayloadTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):payload.installed(self.plan,'d'*64)
         with self.assertRaises(RuntimeError):self.provision()
 
+    def test_provision_refuses_stack_links_before_mutation(self):
+        # #683 finding 4: a linked directory is never descended and a linked file
+        # is hashed at its target, so either would pass coverage and carry
+        # unreviewed bytes into the root-owned install. Both refuse before ROOT.
+        self.stacks()
+        outside=self.base/'outside';outside.mkdir();(outside/'lib.so').write_text('unreviewed')
+        twin=self.base/'twin';twin.write_text('stub')
+        stack=Path(self.plan['stacks']['B1'])
+        for kind in ['directory','file']:
+            with self.subTest(kind=kind):
+                if kind=='directory':(stack/'engine-lib/linked').symlink_to(outside,target_is_directory=True)
+                else:(stack/'bin/pyworker').unlink();(stack/'bin/pyworker').symlink_to(twin)
+                with self.assertRaisesRegex(RuntimeError,'stack-no-symlinks'):self.provision()
+                self.assertFalse(self.root.exists())
+                if kind=='directory':(stack/'engine-lib/linked').unlink()
+                else:(stack/'bin/pyworker').unlink();(stack/'bin/pyworker').write_text('stub')
+        self.provision();self.assertFalse((self.root/'stacks/B1/bin/pyworker').is_symlink())
+
+    def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
+        self.stacks();self.provision();payload.installed(self.plan,'d'*64)
+        installed=self.root/'stacks/B1/bin/pyworker'
+        extra=self.root/'stacks/B1/engine-lib/extra.so';extra.write_text('unreviewed')
+        with self.assertRaisesRegex(RuntimeError,'installed-stack-coverage'):payload.installed(self.plan,'d'*64)
+        extra.unlink();twin=self.base/'twin';twin.write_text('stub')
+        installed.unlink();installed.symlink_to(twin)
+        with self.assertRaisesRegex(RuntimeError,'installed-no-symlinks'):payload.installed(self.plan,'d'*64)
+        installed.unlink();installed.write_text('stub');payload.installed(self.plan,'d'*64)
+
     def test_provision_preconditions_before_mutation(self):
         self.stacks()
         for fault in ['weights','existing-model','libraries','coverage']:
