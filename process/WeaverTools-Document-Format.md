@@ -113,9 +113,9 @@ declares its own container.
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
     docs/crates/contracts/              contracts, and the material they draw
     docs/crates/weaver-<n>/Loops/       workflow documents of that domain root
-    experiments/<name>/docs/            the Spec of one experiment
-    experiments/<name>/code/            that experiment's code, gated like a crate's
-    experiments/<name>/results/         its dated results, read by no gate
+    experiments/<e>/README.md           the charter of one experiment, its hypothesis
+    experiments/<e>/<arm>/              one variable of that hypothesis
+    experiments/<e>/<arm>/<probe>/      one measurement: its Spec, code/ and results/
 
 A document under `docs/crates/contracts/` is a contract by its `-contract` suffix,
 named for its parties. A document there without the suffix is drawn material, stated
@@ -165,14 +165,18 @@ landing at the `.md` name beside the suffix's tracked deletion, so no consumed s
 survives to be walked and history is the archive.
 
 **An experiment carries its own documents beside its code**, per the operator's
-ruling of 2026-09-25 recorded at Working Process section 5. `experiments/<name>/` is
-the container of one experiment and holds three parts: `docs/`, where its Spec sits
-as `<name>-Spec.md` and is the primary document of the experiment, `code/`, which the
-census reads and holds to headers exactly as it holds a crate's units, and
-`results/`, which holds the dated records an experiment produces and which no gate
-and no ingest reads, on the two-clocks reason that section 5 of the Working Process
-states. The mirror rule does not reach it, since the documents and the code share
-one directory rather than two trees. The first is `experiments/weaver-probe/`.
+rulings of 2026-09-25 recorded at Working Process section 5. `experiments/<e>/` is
+the container of one experiment, a hypothesis, and its root `README.md` is the
+charter that registers it: what is declared, what is predicted, what would falsify
+it, and which probe answers for each part. Beneath it an arm is one variable the
+hypothesis names, and a probe under an arm is one measurement of that variable,
+holding its Spec as `<probe>-Spec.md`, its `code/`, which the census reads and holds
+to headers exactly as it holds a crate's units, and its `results/`, which holds the
+dated records the probe produces and which no gate and no ingest reads, on the
+two-clocks reason that section 5 of the Working Process states. The mirror rule does
+not reach it, since the documents and the code share one tree rather than two. The
+first experiment is `experiments/randomness-tuple/`, its first arm `device/`, and its
+first probe `device/blackwell/`.
 
 **The project documents sit outside `docs/` rather than under it.** Working Process
 section 2 puts them outside the document set and outside the mapping, so a mapper that
@@ -226,7 +230,8 @@ the domain parent, which is the apex for a domain root and the root's charter fo
 member. The header is a reader's convenience and the edge governs, so a disagreement
 between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
-hand. An experiment's Spec carries none, having no parent, as the apex carries none.
+hand. An experiment's charter carries none, having no parent, as the apex carries
+none, and a probe's Spec names that charter.
 
 **A crate outside the agent boundary names the suite.** `weaver-agents-PRD` section 0
 rules that such a crate does not refine that document and parents to the suite, and that
@@ -254,14 +259,17 @@ than a parent. Issue #637 carries the measurement and the question.
 vision document's word and it does not cover the floor, so it is not used here. One
 PRD, one Spec, and as many contracts as it has seams.
 
-**experiment.** A code root under `experiments/` that is not a crate, declared by its
-own Spec, which is the primary document of the experiment and carries no `Parent:`
-and no `parent` edge, per the operator's ruling of 2026-09-25. It has one Spec and
-no PRD, since what an experiment measures and why is registered on its epic before
-any run, and it asserts its Spec's records the way a crate asserts its own. A Spec
-belongs to any code that requires one, and an experiment's code requires one for
-the same reason a crate's does: the phase-three rule that no code lands without a
-ratified document.
+**probe.** A code root under an experiment's arm, declared by its own Spec, which
+asserts the probe's records the way a crate's Spec asserts the crate's, per the
+operator's rulings of 2026-09-25. The Spec's `Parent:` is the experiment's charter,
+the root `README.md`, which is the primary document of the experiment and carries no
+`Parent:` and no `parent` edge, as the apex carries none: the charter registers the
+hypothesis and every prediction and falsifier before any probe runs, and the probe's
+Spec states what its code enforces. A Spec belongs to any code that requires one, and
+a probe's code requires one for the same reason a crate's does, the phase-three rule
+that no code lands without a ratified document. The charter and the Spec are the two
+document kinds an experiment produces, and neither is a contract, an experiment
+having no seams of its own.
 
 **artifact.** A durable thing produced or consumed by crates without a call between
 them. The agent config, the session record, the model artifact. Artifacts are
@@ -584,7 +592,7 @@ Between a crate and what it owns or touches:
   the owning crate defines, and the artifact holds it. Without this the config's
   fields are drawable in prose and unaddressable in the graph.
 - `writes` and `reads`, from a crate to an artifact.
-- `asserts`, from a crate or an experiment to an assertion node. The Spec declares
+- `asserts`, from a crate or a probe to an assertion node. The Spec declares
   the assertion node with a `node` record beside the edge, at the clause the
   assertion names, the same shape `defines` takes at a definition site.
 

@@ -638,8 +638,8 @@ class Census(unittest.TestCase):
         )
 
     def test_an_experiment_is_read_like_a_crate_and_its_results_are_not(self):
-        """The container entry of 2026-09-25: `experiments/<name>/docs/` declares,
-        `code/` cites and owes, `results/` is read by neither walk.
+        """The container entry of 2026-09-25: a probe's Spec declares, its
+        `code/` cites and owes, its `results/` is read by neither walk.
 
         **Held from both sides.** A perturbation declared in the experiment's
         Spec and cited only from its code is absent from uncited, which fails
@@ -648,21 +648,27 @@ class Census(unittest.TestCase):
         citation under `results/` naming no node is absent from dangling, which
         fails if the walk reaches into the records.
         """
-        for part in ["docs", "code", "results"]:
-            os.makedirs(os.path.join(self.dir, "experiments/demo", part))
-        write(self.dir, "experiments/demo/docs/demo-Spec.md",
+        probe = "experiments/demo/arm/probe"
+        for part in ["code", "results"]:
+            os.makedirs(os.path.join(self.dir, probe, part))
+        write(self.dir, "experiments/demo/README.md", "# demo\n")
+        write(self.dir, probe + "/probe-Spec.md",
               "```graph\nnode: exp-only-here\nkind: assertion\ntag: perturbation\n\n"
-              "edge: asserts\nfrom: demo\nto: exp-only-here\n```\n")
-        write(self.dir, "experiments/demo/code/tool.py",
+              "edge: asserts\nfrom: probe\nto: exp-only-here\n```\n")
+        write(self.dir, probe + "/code/tool.py",
               "#!/usr/bin/env python3\n# conforms: exp-only-here\n")
-        write(self.dir, "experiments/demo/code/bare.py", "print('no header')\n")
-        write(self.dir, "experiments/demo/results/note.py",
+        write(self.dir, probe + "/code/bare.py", "print('no header')\n")
+        write(self.dir, probe + "/results/note.py",
               "# conforms: fix-nonexistent-result\n")
+        write(self.dir, probe + "/results/report.md",
+              "```graph\nnode: exp-only-here\nkind: assertion\ntag: perturbation\n```\n")
         reading = census.take()
         self.assertNotIn("exp-only-here", reading["uncited_perturbations"])
-        self.assertIn("experiments/demo/code/bare.py", reading["sources_without_a_header"])
-        self.assertNotIn("experiments/demo/code/tool.py", reading["sources_without_a_header"])
+        self.assertIn(probe + "/code/bare.py", reading["sources_without_a_header"])
+        self.assertNotIn(probe + "/code/tool.py", reading["sources_without_a_header"])
         self.assertFalse([d for d in reading["dangling_citations"] if "fix-nonexistent-result" in d])
+        # The report under results/ redeclares the id: pruned, so no duplicate.
+        self.assertNotIn("exp-only-here", reading["duplicate_node_ids"])
 
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
         """**The gate is run mid-act**, which is when a source file is written
@@ -967,7 +973,7 @@ class Census(unittest.TestCase):
         # **An experiment's results are excluded and its code and docs are
         # not**, per the ruling of 2026-09-25 that returned `experiments/` for
         # a live instrument. The earlier form pinned `experiments/` whole.
-        self.assertIn("experiments/*/results/", lines)
+        self.assertIn("experiments/**/results/", lines)
         self.assertNotIn("experiments/", lines)
         # **Matched by behaviour and not by spelling.** The archive half is
         # written as character classes, so a substring check for "archive"

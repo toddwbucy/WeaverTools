@@ -1,9 +1,10 @@
-# weaver-probe - Spec
+# blackwell-probe - Spec
 
 **Status:** MERGED. In `main` and the source of truth.
 
 **Date filed:** 2026-09-25
-**Document ID:** `weaver-probe-Spec`
+**Document ID:** `blackwell-probe-Spec`
+**Parent:** `randomness-tuple-PRD`
 **Editorial:** Per the Working Rules.
 **Landing PR:** #685
 
@@ -11,58 +12,67 @@
 
 ## 0. What this document is
 
-The Spec of the Weaver probe, the experiment at `experiments/weaver-probe/` that
-measures whether a fixed tuple reproduces on one card and how one card's arithmetic
-moves the distribution against another's. It is the primary document of the
-experiment and carries no parent, per the operator's ruling of 2026-09-25 recorded at
-Working Process section 5 and Document Format section 3: a Spec belongs to any code
-that requires one, and an experiment's code requires one for the reason a crate's
-does, that no code lands in phase three without a ratified document. The probe
-landed as a held preparation with an issue for authority, and this document closes
-that gap by stating what the code does and why, in the order the operator meets it,
-so a reader of the code finds each refusal's reason here and a reader of this
-document finds each claim's instrument in the suite.
+The Spec of the Blackwell probe, one measurement of the device field of the
+randomness tuple, filed at `experiments/randomness-tuple/device/blackwell/` beside its
+code and its results. The experiment's charter, the root `README.md` of
+`experiments/randomness-tuple/`, registers the tuple, the device field's claims and
+this probe's place among them, and this document states what the probe's code
+enforces, per the operator's rulings of 2026-09-25 recorded at Working Process
+section 5 and Document Format section 3: a Spec belongs to any code that requires
+one, and a probe's code requires one for the reason a crate's does, that no code
+lands in phase three without a ratified document. The probe landed as a held
+preparation with an issue for authority, and this document closes that gap by
+stating what the code does and why, in the order the operator meets it, so a reader
+of the code finds each refusal's reason here and a reader of this document finds each
+claim's instrument in the suite.
 
 It is written from the code as it stood after sixteen review passes on pull request
-#683 and from the registration of the Blackwell cell on issues #511 and #679. The
-code sits in `code/` beside this document and cites the assertion records declared
-here from its file headers with `conforms:` lines, which the census reads there as
-it reads a crate's units. Results, when an arm has run, sit in `results/`, dated and
-read by no gate. What the probe measures and why is the epic's and is restated in
-sections 1 through 3 only as far as the code enforces it. How the seams it drives
-behave is the charters' and contracts' and is cited rather than repeated. What this
-document owns is the workflow: the tuple as the code holds it, the arms as the code
-schedules them, the order of operations, the privilege boundary, the identity
-verdict, the assessment, and the refusals.
+#683 and from the registration on issues #511 and #679. The code sits in `code/`
+beside this document and cites the assertion records declared here from its file
+headers with `conforms:` lines, which the census reads there as it reads a crate's
+units. Results, when a leg has run, sit in `results/`, dated and read by no gate.
+What the probe measures and why is the charter's and is restated in sections 1
+through 3 only as far as the code enforces it. How the seams it drives behave is the
+crate charters' and contracts' and is cited rather than repeated. What this document
+owns is the workflow: the tuple as the code holds it, the legs as the code schedules
+them, the order of operations, the privilege boundary, the identity verdict, the
+assessment, and the refusals.
 
-**One probe, many cells.** The probe has run on Ampere and Ada, on olympus under the
-tooling #516 retired, and the Blackwell cell is its third. The plan already names
-the next, the re-verification of Ampere and Ada at the same tuple on the new driver.
-What varies per cell is the plan: the stacks, the agent name and root, the
-interlock, the device tuple and the registered claims. What does not vary is every
-rule this document states and the code enforces. The constants of the Blackwell
-cell appear here where the code fixes them today, and the act that stands the second
-cell moves them into the plan.
+**Words.** The chapter's word for one variable's experiment is an leg, the weights
+leg or the batch leg, and that is the word the charter and the directory use. This
+probe's three measurements, the control, the device comparison and the kernel
+comparison, are its legs in this document, and the code's identifier for them is
+`arms`, kept until the code is next touched so that no identifier moves in a
+documents-only act.
+
+**One probe, many cells.** The device field has been measured on Ampere and Ada, on
+olympus under the tooling #516 retired, and the Blackwell probe is its third cell.
+The charter names the next, the re-verification of Ampere and Ada at the same tuple
+on the new driver. What varies per cell is the plan: the stacks, the agent name and
+root, the interlock, the device tuple and the registered claims. What does not vary
+is every rule this document states and the code enforces. The constants of the
+Blackwell cell appear here where the code fixes them today, and the act that stands
+the next cell moves them into the plan.
 
 ```graph
-node: weaver-probe
-kind: experiment
+node: blackwell-probe
+kind: probe
 ```
 
 ## 1. What the probe is
 
-**One card, one commit, two stacks, three arms.** The cell runs the Weaver probe of
+**One card, one commit, two stacks, three legs.** The cell runs the Weaver probe of
 #511 on this box's RTX PRO 5000 Blackwell under one source commit, `e69916a`, so
-the device arm is not also a build arm. `B1` is olympus's `e69916a` stack copied by
+the device leg is not also a build leg. `B1` is olympus's `e69916a` stack copied by
 bytes, the kernel held as bytes, and is the device cell. `B2` is `e69916a` built on
 this box under its own toolkit and CUDA user-space libraries. Whether the two stacks'
-executable sections are identical decides whether the kernel arm runs at all, per
+executable sections are identical decides whether the kernel leg runs at all, per
 section 6.
 
-The three arms are `TB0`, the control, which asks whether the card reproduces under
+The three legs are `TB0`, the control, which asks whether the card reproduces under
 itself, `TB-d`, the device cell, which re-feeds the Ampere and Ada Q8_0 records of
-#511 through `B1`, and `TB-k`, the kernel arm, which re-feeds `B1`'s own records
-through `B2`. Every claim, prediction and falsifier is registered before any arm runs,
+#511 through `B1`, and `TB-k`, the kernel leg, which re-feeds `B1`'s own records
+through `B2`. Every claim, prediction and falsifier is registered before any leg runs,
 and section 3 carries them as the code enforces them.
 
 **The driver confound is carried, not hidden.** The olympus deposits were taken on
@@ -126,34 +136,34 @@ stands beneath this: elected surprisals render, and disagreement between elected
 readings is a defect.
 
 ```graph
-node: probe-tuple-held-field-for-field
+node: blackwell-probe-tuple-held-field-for-field
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-tuple-held-field-for-field
+from: blackwell-probe
+to: blackwell-probe-tuple-held-field-for-field
 
-node: probe-elected-series-from-the-tuple
+node: blackwell-probe-elected-series-from-the-tuple
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-elected-series-from-the-tuple
+from: blackwell-probe
+to: blackwell-probe-elected-series-from-the-tuple
 ```
 
-## 3. The arms, and the claims the code enforces
+## 3. The legs, and the claims the code enforces
 
-**The schedule is fixed and validated whole.** The plan holds exactly the arms
+**The schedule is fixed and validated whole.** The plan holds exactly the legs
 `TB0`, `TB-d` and `TB-k` in that order, every job identity unique and plain, every
 job free or a re-feed on `B1` or `B2`. The control holds two free runs per seed, all
 on `B1`, and one own re-feed per free run. A re-feed names a source that precedes it
-in the schedule or a reviewed external trace with its run. The device arm holds only
+in the schedule or a reviewed external trace with its run. The device leg holds only
 re-feeds on `B1` from reviewed external traces, at least one from each of the
 `ampere` and `ada` cells, each measuring a distinct trace and run, with no trace
 shared between the cells, because a repeated selection or a shared trace would
-complete the arm without measuring one of its cells. The kernel arm holds every `B1`
+complete the leg without measuring one of its cells. The kernel leg holds every `B1`
 record as a re-feed on `B2`, or is empty only on the identity evidence of section 6.
 The refusals are `arm-order`, `job-identities`, `job-types`, `control-schedule`,
 `own-refeeds`, `source-order`, `device-sources`, `device-traces`,
@@ -164,10 +174,10 @@ changing it moves the draw and not the distribution. The prediction the code che
 every same-seed pair is exact and emits the same text, every own re-feed is certified
 and exact at every position, and every pair of distinct seeds, taken one run per seed
 in the tuple's order, parts within the first twenty-four tokens. The falsifier stops
-the arm where it
+the leg where it
 falls: after the operator has unloaded a free run whose earlier same-seed run it does
 not match, under `pair-falsifier`, or an own re-feed that is not certified and exact,
-under `own-refeed-falsifier`, and at the arm's assessment under `control-falsifier`
+under `own-refeed-falsifier`, and at the leg's assessment under `control-falsifier`
 and `changed-seed-prediction`. A card that does not reproduce under itself cannot be
 read against another, so the halt is the finding.
 
@@ -176,11 +186,11 @@ zero relative to Ampere and to Ada, as Ada moved it against Ampere in #511. The
 prediction: each record re-fed through `B1` has per-position readings that differ
 from the recorded ones, and the divergence is reported in the historical instrument's
 input-plus-output coordinate with the output ordinal beside it. The falsifier: a
-re-feed exact to the bit at every position. The arm carries the driver confound of
+re-feed exact to the bit at every position. The leg carries the driver confound of
 section 1 as a qualifier on every reading.
 
-**TB-k, the kernel arm.** If every executable section of `B1` and `B2` is identical
-by section 6's verdict, the arm is recorded as the kernel held by executable identity
+**TB-k, the kernel leg.** If every executable section of `B1` and `B2` is identical
+by section 6's verdict, the leg is recorded as the kernel held by executable identity
 across the two toolchains and nothing runs. If sections differ, the claim is that the
 differing kernels move the distribution on one card, the prediction is that a `B1`
 record re-fed through `B2` departs at some position, and the falsifier is every
@@ -188,21 +198,21 @@ record re-feeding exact. `B2` also differs in its CUDA user-space libraries, and
 reading carries that as part of the kernel stack.
 
 ```graph
-node: probe-schedule-validated-whole
+node: blackwell-probe-schedule-validated-whole
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-schedule-validated-whole
+from: blackwell-probe
+to: blackwell-probe-schedule-validated-whole
 
-node: probe-falsifier-halts-after-unload
+node: blackwell-probe-falsifier-halts-after-unload
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-falsifier-halts-after-unload
+from: blackwell-probe
+to: blackwell-probe-falsifier-halts-after-unload
 ```
 
 ## 4. The order of operations
@@ -211,8 +221,8 @@ to: probe-falsifier-halts-after-unload
 else, never under sudo, per `Order.operator`, and the payload refuses a `next` whose
 invoking uid is not the plan's recorded operator, under its `operator` guard. The
 state file `tb-state.json` carries the cursor over a schedule the plan determines:
-`provision`, then for each arm `start`, and for each job `load`, `measure`, `unload`
-and `settle`, then `finish`, and after the last arm `report` and `review`. Each step
+`provision`, then for each leg `start`, and for each job `load`, `measure`, `unload`
+and `settle`, then `finish`, and after the last leg `report` and `review`. Each step
 names its seat. The operator owns `provision`, `load` and `unload`. The coding seat
 owns `start`, `measure`, `settle`, `finish` and `report`. The review seat owns
 `review`, which is its own edit of the state file under the coordinator's lock and
@@ -234,7 +244,7 @@ unapproved and refuses to overwrite an existing state, so approval is never
 manufactured.
 
 **The driver blocks, and the coordinator holds the lock only while it decides.** An
-arm runs in one driver invocation that takes a lease bound to its process start time,
+leg runs in one driver invocation that takes a lease bound to its process start time,
 per `live`, and the coding-seat steps are refused to any process but the lease
 holder under `driver-owner`. Each wait is bounded at four hours, verifies the driver's
 own live lease, and runs the full approval verification only when the state bytes
@@ -252,37 +262,37 @@ review seat rules on with a bounded recovery step, since the payload holds no ge
 root shell and no arbitrary command.
 
 ```graph
-node: probe-one-command-one-seat-per-step
+node: blackwell-probe-one-command-one-seat-per-step
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-one-command-one-seat-per-step
+from: blackwell-probe
+to: blackwell-probe-one-command-one-seat-per-step
 
-node: probe-approval-gates-every-step
+node: blackwell-probe-approval-gates-every-step
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-approval-gates-every-step
+from: blackwell-probe
+to: blackwell-probe-approval-gates-every-step
 
-node: probe-wait-verifies-when-the-state-moves
+node: blackwell-probe-wait-verifies-when-the-state-moves
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-wait-verifies-when-the-state-moves
+from: blackwell-probe
+to: blackwell-probe-wait-verifies-when-the-state-moves
 
-node: probe-halt-is-evidence
+node: blackwell-probe-halt-is-evidence
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-halt-is-evidence
+from: blackwell-probe
+to: blackwell-probe-halt-is-evidence
 ```
 
 ## 5. The privilege boundary, and custody
@@ -363,53 +373,53 @@ under `preload-door` and `diagnostic-load`, and an admin answer is read for its
 content and never for its exit status alone, under `admin-answer`.
 
 ```graph
-node: probe-root-receives-bytes-never-a-path
+node: blackwell-probe-root-receives-bytes-never-a-path
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-root-receives-bytes-never-a-path
+from: blackwell-probe
+to: blackwell-probe-root-receives-bytes-never-a-path
 
-node: probe-operator-input-read-once
+node: blackwell-probe-operator-input-read-once
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-operator-input-read-once
+from: blackwell-probe
+to: blackwell-probe-operator-input-read-once
 
-node: probe-served-tree-locked-and-verified
+node: blackwell-probe-served-tree-locked-and-verified
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-served-tree-locked-and-verified
+from: blackwell-probe
+to: blackwell-probe-served-tree-locked-and-verified
 
-node: probe-model-in-custody-on-both-paths
+node: blackwell-probe-model-in-custody-on-both-paths
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-model-in-custody-on-both-paths
+from: blackwell-probe
+to: blackwell-probe-model-in-custody-on-both-paths
 
-node: probe-installation-refuses-to-adopt
+node: blackwell-probe-installation-refuses-to-adopt
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-installation-refuses-to-adopt
+from: blackwell-probe
+to: blackwell-probe-installation-refuses-to-adopt
 
-node: probe-load-stands-on-the-interlock
+node: blackwell-probe-load-stands-on-the-interlock
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-load-stands-on-the-interlock
+from: blackwell-probe
+to: blackwell-probe-load-stands-on-the-interlock
 ```
 
 ## 6. Executable identity
@@ -439,7 +449,7 @@ is told apart from a kernel that changed.
 only when every recorded section, header and CUDA member matches and every host file
 is byte-identical. The entry point and segment permissions live outside every
 section, so equal sections do not make equal hosts, and an identity verdict cannot be
-inferred from equal file counts or `.text` alone. An emptied kernel arm names the
+inferred from equal file counts or `.text` alone. An emptied kernel leg names the
 report that empties it, hashed in the plan's file map, and approval reads that report
 once against its digest, requires it to be the comparison's verdict on `B1` against
 `B2` and true, requires each inventory it names to be a reviewed artifact at the
@@ -449,29 +459,29 @@ approved hashes of every file under that stack exactly, under `identity-evidence
 changed, or over an inventory that missed a reviewed file, empties nothing.
 
 ```graph
-node: probe-inventory-covers-every-served-file
+node: blackwell-probe-inventory-covers-every-served-file
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-inventory-covers-every-served-file
+from: blackwell-probe
+to: blackwell-probe-inventory-covers-every-served-file
 
-node: probe-comparison-takes-b1-then-b2
+node: blackwell-probe-comparison-takes-b1-then-b2
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-comparison-takes-b1-then-b2
+from: blackwell-probe
+to: blackwell-probe-comparison-takes-b1-then-b2
 
-node: probe-identity-bound-to-approved-stacks
+node: blackwell-probe-identity-bound-to-approved-stacks
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-identity-bound-to-approved-stacks
+from: blackwell-probe
+to: blackwell-probe-identity-bound-to-approved-stacks
 ```
 
 ## 7. Measurement and assessment
@@ -491,38 +501,38 @@ selected run, read once, hashed and parsed, with exactly one measurement, under
 `source-trace` and `source-measurement`. The replay must complete, certified or
 diverged, and carry exactly one measurement, under `replay-completed`,
 `single-replay` and `replay-measurement`. Only the control's own re-feeds must be
-certified, per section 3, since a diverged replay is what the device and kernel arms
+certified, per section 3, since a diverged replay is what the device and kernel legs
 predict. Exactness is the
 output tokens equal, every elected per-token series equal to the bit, and the field
 equal at every position, per `exact`, and the reading is the historical instrument's
 divergence coordinate with its ordinal.
 
-**Assessment is per arm and the falsifiers halt before it.** The control's report
+**Assessment is per leg and the falsifiers halt before it.** The control's report
 carries every same-seed pair with its equality and reading, every own re-feed with its
 exactness and certification, the first difference for every pair of distinct seeds
 taken one run per seed in the tuple's order, and the two verdicts `control_passed`
-and `changed_seed_prediction`. The device and kernel arms' reports carry each
-re-feed's reading and, for the kernel arm, whether identity emptied it. Each arm's
-result is written whole and recorded as that arm's `finish` receipt, and the report
+and `changed_seed_prediction`. The device and kernel legs' reports carry each
+re-feed's reading and, for the kernel leg, whether identity emptied it. Each leg's
+result is written whole and recorded as that leg's `finish` receipt, and the report
 step runs only after every earlier receipt, each `finish` included, stands with its
 digest intact.
 
 ```graph
-node: probe-refeed-completes-against-a-verified-source
+node: blackwell-probe-refeed-completes-against-a-verified-source
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-refeed-completes-against-a-verified-source
+from: blackwell-probe
+to: blackwell-probe-refeed-completes-against-a-verified-source
 
-node: probe-exactness-is-bitwise-over-elected-readings
+node: blackwell-probe-exactness-is-bitwise-over-elected-readings
 kind: assertion
 tag: perturbation
 
 edge: asserts
-from: weaver-probe
-to: probe-exactness-is-bitwise-over-elected-readings
+from: blackwell-probe
+to: blackwell-probe-exactness-is-bitwise-over-elected-readings
 ```
 
 ## 8. The refusals
@@ -600,26 +610,26 @@ reads each citation from `code/`.
 
 | Claim | Instrument |
 | --- | --- |
-| `probe-tuple-held-field-for-field` | perturbation, `tuple`, `derived-tuple`, `weights-held`, `seed-held` and their re-feed siblings |
-| `probe-elected-series-from-the-tuple` | perturbation, `nonempty-measurement`, `field-depth`, `exact` on surprisals |
-| `probe-schedule-validated-whole` | perturbation, the ten schedule guards of `validate_plan` |
-| `probe-falsifier-halts-after-unload` | perturbation, `pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` |
-| `probe-one-command-one-seat-per-step` | perturbation, `step-order`, `seat`, `not-repeated`, `driver-owner`, `operator-not-root`, `driver-not-root` |
-| `probe-approval-gates-every-step` | perturbation, `hold`, `review`, `approval-coverage`, `artifact-hashes`, `plan-snapshot`, `manifest-coverage`, `manifest-hashes`, `halt` |
-| `probe-wait-verifies-when-the-state-moves` | perturbation, `wait-owner`, `wait-order`, `wait-deadline` and the state-moves test |
-| `probe-halt-is-evidence` | perturbation, `prior-success`, `prior-evidence`, `payload-exit`, `payload-receipt`, `cursor` |
-| `probe-root-receives-bytes-never-a-path` | perturbation, `payload-hash`, `plan-hash`, `root-payload`, `fixed-root-agent`, `operator` |
-| `probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace` |
-| `probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody` |
-| `probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model` |
-| `probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-symlink-destination`, `installation-plan` |
-| `probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
-| `probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
-| `probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
-| `probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
-| `probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn` |
-| `probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit arms |
-| `probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
+| `blackwell-probe-tuple-held-field-for-field` | perturbation, `tuple`, `derived-tuple`, `weights-held`, `seed-held` and their re-feed siblings |
+| `blackwell-probe-elected-series-from-the-tuple` | perturbation, `nonempty-measurement`, `field-depth`, `exact` on surprisals |
+| `blackwell-probe-schedule-validated-whole` | perturbation, the ten schedule guards of `validate_plan` |
+| `blackwell-probe-falsifier-halts-after-unload` | perturbation, `pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` |
+| `blackwell-probe-one-command-one-seat-per-step` | perturbation, `step-order`, `seat`, `not-repeated`, `driver-owner`, `operator-not-root`, `driver-not-root` |
+| `blackwell-probe-approval-gates-every-step` | perturbation, `hold`, `review`, `approval-coverage`, `artifact-hashes`, `plan-snapshot`, `manifest-coverage`, `manifest-hashes`, `halt` |
+| `blackwell-probe-wait-verifies-when-the-state-moves` | perturbation, `wait-owner`, `wait-order`, `wait-deadline` and the state-moves test |
+| `blackwell-probe-halt-is-evidence` | perturbation, `prior-success`, `prior-evidence`, `payload-exit`, `payload-receipt`, `cursor` |
+| `blackwell-probe-root-receives-bytes-never-a-path` | perturbation, `payload-hash`, `plan-hash`, `root-payload`, `fixed-root-agent`, `operator` |
+| `blackwell-probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace` |
+| `blackwell-probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody` |
+| `blackwell-probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model` |
+| `blackwell-probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-symlink-destination`, `installation-plan` |
+| `blackwell-probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
+| `blackwell-probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
+| `blackwell-probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
+| `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
+| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn` |
+| `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases |
+| `blackwell-probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
 **What the instruments cannot buy, named.** No test here touches the card, loads a
 model, or runs as root, so `gpu-tuple`, `cuda-local`, `diagnostic-load` and the
@@ -629,18 +639,18 @@ section 5 has no instrument until the privileged step lands, and this document s
 so rather than claiming otherwise.
 
 ```graph
-node: probe-stubs-are-captures
+node: blackwell-probe-stubs-are-captures
 kind: assertion
 tag: review
 
 edge: asserts
-from: weaver-probe
-to: probe-stubs-are-captures
+from: blackwell-probe
+to: blackwell-probe-stubs-are-captures
 ```
 
 ## 10. What this document does not carry
 
-The results of any arm, which are #679's evidence and the report's. The design of the
+The results of any leg, which are #679's evidence and the report's. The design of the
 privileged approval step, design item B on #679 (evidence digests passed from the
 coordinator's state into the driver rather than re-read by path), the re-staging of
 the two stacks without links and with their CUDA libraries, and the `cuda_provenance`

@@ -390,22 +390,19 @@ def members():
     return found
 
 
-def experiments():
-    """Every experiment directory, per the Document Format's container entry of
-    2026-09-25: `experiments/<name>/` holds `docs/` and `code/`, which this gate
-    reads like a crate's, and `results/`, which it never reads."""
-    root = os.path.join(ROOT, "experiments")
-    if not os.path.isdir(root):
-        return []
-    return sorted(os.path.join(root, d) for d in os.listdir(root)
-                  if os.path.isdir(os.path.join(root, d)))
+def probes():
+    """Every probe's `code/`, per the Document Format's container entry of
+    2026-09-25: `experiments/<e>/<arm>/<probe>/code/` is read like a crate, and
+    a `results/` beside it never is."""
+    return sorted(glob.glob(os.path.join(ROOT, "experiments", "*", "*", "*", "code")))
 
 
 def docs():
-    roots = [os.path.join(ROOT, "docs")]
-    roots += [os.path.join(e, "docs") for e in experiments()]
-    for root in roots:
-        yield from walk_docs(root)
+    yield from walk_docs(os.path.join(ROOT, "docs"))
+    # **An experiment's documents sit beside its code**: the charter at the
+    # experiment's root and each probe's Spec at the probe's. Results are
+    # pruned below, answering to the other clock.
+    yield from walk_docs(os.path.join(ROOT, "experiments"))
 
 
 def walk_docs(top):
@@ -420,7 +417,7 @@ def walk_docs(top):
         # unsorted walk lets two seats baseline different strings from the
         # same tree - the machine-dependent gate the enforcement section
         # already records for the clippy count.
-        dirs[:] = sorted(d for d in dirs if d != ".git")
+        dirs[:] = sorted(d for d in dirs if d not in (".git", "results"))
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)
@@ -541,10 +538,10 @@ def sources():
     # exactly when a new source file is written and not yet added. Untracked
     # here means untracked and not ignored, so a build product stays out.
     seen = set(git()) | set(git("--others", "--exclude-standard"))
-    # **An experiment's `code/` is inside and its `results/` is not**, per the
+    # **A probe's `code/` is inside and its `results/` is not**, per the
     # Document Format's container entry: the code answers to the gate's clock
     # and the results to their own.
-    roots = list(members()) + [os.path.join(e, "code") for e in experiments()]
+    roots = list(members()) + probes()
     inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in roots)
     for rel in sorted(seen):
         if not rel.startswith(inside):

@@ -418,14 +418,17 @@ being due a rerun whatever the graph decides.
 **An experiment directory returns when its experiment is a live instrument, per the
 operator's ruling of 2026-09-25, and the reason above stays true.** The Weaver probe
 reruns per card and per driver, which is the rerun the paragraph above was waiting
-for, so `experiments/<name>/` stands in this tree again with three parts that answer
-to two clocks: `code/` and `docs/`, which are live and gated like any code and its
-Spec, and `results/`, which holds dated records the gates and the ingest never read.
-A Spec belongs to any code that requires one, a crate's or an experiment's, and an
-experiment's Spec is the primary document of its experiment, carrying no parent. The
-Document Format's section 2 carries the container and section 3 the kind, the
-census reads `code/` and `docs/` and not `results/`, and `.hadesignore` excludes
-`results/` alone. The first is `experiments/weaver-probe/`.
+for, so `experiments/<experiment>/` stands in this tree again. An experiment is a
+hypothesis with a charter, its root `README.md`, which is the primary document of the
+experiment and carries no parent. Its arms are sub-directories, one per variable the
+hypothesis names, and each arm holds probes, one per measurement, each a directory
+carrying that probe's Spec, its `code/` and its `results/`. The Spec and the code
+answer to the gate's clock and are read like a crate's, and `results/` holds dated
+records the gates and the ingest never read. A Spec belongs to any code that requires
+one, a crate's or a probe's. The Document Format's section 2 carries the container
+and section 3 the kinds, the census reads every probe's Spec and `code/` and never a
+`results/`, and `.hadesignore` excludes `results/` alone. The first experiment is
+`experiments/randomness-tuple/`, and its first probe is `device/blackwell/`.
 
 ### Closing checklist
 
