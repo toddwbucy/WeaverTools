@@ -477,6 +477,37 @@ class ReadingTests(unittest.TestCase):
                     p.write_text(json.dumps(first));q.write_text(json.dumps(second))
                     with self.assertRaises(ValueError):sections.compare(p,q)
 
+    def test_identity_covers_every_file_a_load_reaches(self):
+        # #683 finding 27: the inventory read only ELF files under bin and
+        # engine-lib, so a different cuda-lib library, which every load puts on
+        # LD_LIBRARY_PATH, or a different bin/basic_loop.py, which the worker
+        # runs, left executable_identity true. The real inventory() runs here.
+        elf=Path(sys.executable).resolve().read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            deposit=Path(tmp)
+            def build(stack,cuda=elf,loop='print(1)\n'):
+                root=deposit/'stacks'/stack
+                for d in ['bin','engine-lib','cuda-lib']:(root/d).mkdir(parents=True,exist_ok=True)
+                (root/'bin/worker').write_bytes(elf);(root/'bin/basic_loop.py').write_text(loop)
+                (root/'engine-lib/libggml-cuda.so').write_bytes(elf);(root/'cuda-lib/libcudart.so.13').write_bytes(cuda)
+                out=deposit/'sections'/stack
+                for d in ['cubin','ptx']:(out/d).mkdir(parents=True,exist_ok=True)
+                (out/'cubin/x.1.sm_120a.cubin').write_bytes(elf);(out/'ptx/x.1.sm_75.ptx').write_text('ptx\n')
+            def inventory(stack):
+                with patch('sys.argv',['sections.py',str(deposit),stack]),contextlib.redirect_stdout(io.StringIO()):sections.inventory()
+                return deposit/'sections'/stack/'section-manifest.json'
+            def verdict():return sections.compare(inventory('B1'),inventory('B2'))
+            build('B1');build('B2')
+            r=verdict();self.assertTrue(r['executable_identity'])
+            self.assertIn('cuda-lib/libcudart.so.13',r['host']);self.assertIn('bin/basic_loop.py',r['host'])
+            changed=bytearray(elf);changed[-1]^=1
+            build('B2',cuda=bytes(changed));r=verdict()
+            self.assertFalse(r['executable_identity']);self.assertFalse(r['host']['cuda-lib/libcudart.so.13']['file_equal'])
+            build('B2',loop='print(2)\n');r=verdict()
+            self.assertFalse(r['executable_identity']);self.assertFalse(r['host']['bin/basic_loop.py']['file_equal'])
+            build('B2');(deposit/'stacks/B2/cuda-lib/libcudart.so').symlink_to('libcudart.so.13')
+            with self.assertRaises(ValueError):inventory('B2')
+
     def test_host_headers_are_inventoried_and_compared(self):
         # Real ELF bytes: change the entry point, then one segment's permissions.
         # Neither lives in a section payload, so the section records stay equal.

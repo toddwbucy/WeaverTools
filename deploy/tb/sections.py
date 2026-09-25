@@ -62,14 +62,23 @@ def inventory():
     root = args.deposit
     stack = root / 'stacks' / args.stack
     output = root / 'sections' / args.stack
+    # Every file a load can reach: bin and engine-lib, and cuda-lib, which
+    # tb_payload puts on LD_LIBRARY_PATH; not only ELF files, since the worker
+    # runs bin/basic_loop.py. ELF files carry sections and headers, every file
+    # its whole-file hash, which the identity verdict requires to match. A
+    # link is refused, as provisioning refuses one: skipping it would vouch
+    # for bytes nobody read.
     hosts = {}
-    for folder in ['bin', 'engine-lib']:
+    for folder in ['bin', 'engine-lib', 'cuda-lib']:
         for path in sorted((stack / folder).rglob('*')):
-            if path.is_file() and not path.is_symlink():
+            if path.is_symlink():
+                raise ValueError(f'{path}: a link in a stack is not inventoried; the stack is copied by bytes')
+            if path.is_file():
                 with path.open('rb') as stream:
                     magic = stream.read(4)
-                if magic == b'\x7fELF':
-                    hosts[str(path.relative_to(stack))] = elf_sections(path)
+                name = str(path.relative_to(stack))
+                hosts[name] = elf_sections(path) if magic == b'\x7fELF' else dict(
+                    file_sha256=digest(path.read_bytes()), sections=[])
     members = {}
     for kind in ['cubin', 'ptx']:
         files = sorted((output / kind).glob('*'))
@@ -82,9 +91,9 @@ def inventory():
         if not members[kind]:
             raise ValueError(f'No {kind} extracted for {args.stack}')
     if not hosts:
-        raise ValueError('No host ELF files found')
+        raise ValueError('No host files found')
     result = dict(stack=args.stack, hosts=hosts, members=members,
-                  scope='All host ELF sections; every extracted cubin and PTX member. No GPU code executed.')
+                  scope='Every file under bin, engine-lib and cuda-lib, ELF files by section and header and every file by whole-file hash; every extracted cubin and PTX member. No GPU code executed.')
     destination = output / 'section-manifest.json'
     destination.write_text(json.dumps(result, indent=2) + '\n')
     architectures = collections.Counter(name.split('.')[-2] for name in members['cubin'])
