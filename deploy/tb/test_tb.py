@@ -875,6 +875,24 @@ class DriverTests(unittest.TestCase):
                     with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,f'{side}-weights-held'):driver.measure(self.plan,j,self.probe)
                 finally:self.cleanup_job()
 
+    def test_refeed_requires_the_source_seed_on_both_sides(self):
+        # #683 finding 21: a replay that ran another seed, or a source outside
+        # the tuple's seeds, must not be read as a device or kernel effect.
+        j=self.job('refeed')
+        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+        held=self.plan['tuple']['seeds'][0];other=self.plan['tuple']['seeds'][1]
+        for guard,source_seed,replay_seed in [('source-seed-held',424242,424242),('replay-seed-held',held,other)]:
+            with self.subTest(guard=guard):
+                def extract(rows,s=source_seed,r=replay_seed):
+                    replay=any(e['kind']=='replay.closed' for e in rows)
+                    return dict(copy.deepcopy(self.free),declared_seed=r if replay else s)
+                self.probe.extract_run=extract
+                try:
+                    with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,guard):driver.measure(self.plan,j,self.probe)
+                finally:self.cleanup_job()
+        self.probe.extract_run=lambda rows:dict(copy.deepcopy(self.free),declared_seed=held)
+        with patch('tb_driver.until_closed',return_value=self.close(True)):driver.measure(self.plan,j,self.probe)
+
     def test_readers_compile_the_bytes_they_hashed(self):
         # Codex pass 4 class, driver side: a reader rewritten after its hash
         # check must not be what runs.

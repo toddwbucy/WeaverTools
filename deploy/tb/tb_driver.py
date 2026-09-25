@@ -124,6 +124,10 @@ def measure(plan, job, probe):
         # ran the tuple's weights, as the free-run path already requires.
         check('source-weights-held', src.get('weights_hash') == plan['tuple']['weights_sha256'])
         check('replay-weights-held', refed.get('weights_hash') == plan['tuple']['weights_sha256'])
+        # The same for the seed: the replay's own model.request must report the
+        # source run's seed, and that seed must be one the tuple holds.
+        check('source-seed-held', src.get('declared_seed') in plan['tuple']['seeds'])
+        check('replay-seed-held', refed.get('declared_seed') == src.get('declared_seed'))
         reading = probe.reading_two(src, refed)
         # Historical #516 stack coordinate: input-plus-output, not resident.
         div = outcome.get('divergence') or {}
