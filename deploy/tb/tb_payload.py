@@ -221,19 +221,39 @@ def installed(plan, plan_sha256):
         verify_stack(plan, stack, ROOT / 'stacks' / stack)
 
 
-def declared_artifacts(text):
-    """Every model-binding artifact a derived declaration names. derive renders
-    the value as a JSON string (weaver-analysis declare.rs at e69916a, lines
-    183-185), so it is parsed as one; a value that is not JSON names nothing."""
+def declared(text, key):
+    """Every value a derived declaration gives key. derive renders each of the
+    keys read here as JSON (weaver-analysis declare.rs at e69916a: artifact
+    183-186, identity 197, the tunable values 199-201), so each is parsed as
+    JSON; a value that is not JSON names nothing."""
     found = []
     for line in text.splitlines():
-        key, _, value = line.strip().partition(':')
-        if key == 'artifact':
+        name, _, value = line.strip().partition(':')
+        if name == key:
             try:
                 found.append(json.loads(value))
             except ValueError:
                 found.append(None)
     return found
+
+
+def declared_artifacts(text):
+    return declared(text, 'artifact')
+
+
+def holds_tuple(plan, job, text):
+    """derive carries the source run's own seed, identity, context capacity and
+    token cap into the replay, so a source recorded under another tuple would
+    replay another experiment under this one's name. A local source holds its
+    free job's seed; an external one, one of the tuple's seeds."""
+    t = plan['tuple']
+    own = [j['seed'] for arm in plan['arms'] for j in arm['jobs'] if j['id'] == job.get('source_job')]
+    identity = [{'role': 'system', 'content': [{'type': 'text', 'text': t['identity']}]}]
+    seeds = declared(text, 'seed')
+    return (len(seeds) == 1 and seeds[0] in (own or t['seeds']) and
+            declared(text, 'context-capacity') == [t['context_capacity']] and
+            declared(text, 'max-tokens-per-turn') == [t['max_tokens']] and
+            declared(text, 'identity') == [identity])
 
 
 def declaration(plan, job, sink):
@@ -293,6 +313,7 @@ def load(plan, job):
          '--field-depth', '200', '--surprisal', '--out', str(target)], env=environment(stack))
     # Derive preserves the recorded artifact; never rewrite it to evade identity.
     need('derived-artifact', declared_artifacts(target.read_text()) == [str(MODEL)])
+    need('derived-tuple', holds_tuple(plan, job, target.read_text()))
     with (directory / 'load.log').open('w') as log:
         loader = subprocess.Popen(admin(stack, 'load'), stdin=subprocess.DEVNULL,
                                   stdout=log, stderr=subprocess.STDOUT, env=environment(stack))

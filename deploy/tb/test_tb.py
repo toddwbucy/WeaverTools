@@ -670,6 +670,29 @@ class PayloadTests(unittest.TestCase):
         shutil.rmtree(self.root/'sinks/job');shutil.rmtree(self.root/'snapshots/job')
         with self.assertRaisesRegex(RuntimeError,'derived-artifact'):self.invoke_load(job,artifact=False)
 
+    def test_replay_source_must_hold_the_tuple(self):
+        # #683 finding 20: derive carries the source run's own seed, identity,
+        # context capacity and token cap into the replay, so each must hold the
+        # plan's tuple; golden's real W4a declaration, another tuple, refuses.
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r2');self.plan['files'][str(source)]=order.sha(source)
+        faults=[{'seed':999},{'context-capacity':32768},{'max-tokens-per-turn':4096},
+                {'identity':[{'role':'system','content':[{'type':'text','text':'another identity'}]}]}]
+        for fault in faults:
+            with self.subTest(fault=list(fault)[0]):
+                try:
+                    with self.assertRaisesRegex(RuntimeError,'derived-tuple'):self.invoke_load(job,declared=fault)
+                finally:shutil.rmtree(self.root/'sinks/job',ignore_errors=True);shutil.rmtree(self.root/'snapshots/job',ignore_errors=True)
+        # A local source holds its own free job's seed, not merely a tuple seed.
+        free=next(j for j in self.plan['arms'][0]['jobs'] if j['kind']=='free')
+        (self.root/'sinks'/free['id']).mkdir();(self.root/'sinks'/free['id']/'trace.ndjson').write_text(TWO_RUNS)
+        local=dict(id='job',kind='refeed',stack='B1',source_job=free['id'])
+        other=next(s for s in self.plan['tuple']['seeds'] if s!=free['seed'])
+        with self.assertRaisesRegex(RuntimeError,'derived-tuple'):self.invoke_load(local,declared={'seed':other})
+        shutil.rmtree(self.root/'sinks/job');shutil.rmtree(self.root/'snapshots/job')
+        self.invoke_load(local,declared={'seed':free['seed']})
+        self.assertFalse(payload.holds_tuple(self.plan,job,derived(self.model,'/sink')))
+
     def test_replay_refuses_a_run_the_trace_does_not_hold(self):
         job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
         job.update(kind='refeed',source_trace=str(source),source_run='r9');self.plan['files'][str(source)]=order.sha(source)
