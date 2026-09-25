@@ -7,7 +7,7 @@ Code is written against it under the gates of Working Process section 6.
 **Document ID:** `weaver-spu-Spec`
 **Parent:** `weaver-spu-PRD`
 **Editorial:** Per the Working Rules.
-**Landing PR:** #640
+**Landing PR:** #684
 
 ---
 
@@ -245,12 +245,13 @@ than a comment. `candle-core`, `candle-nn`, and `candle-transformers` come from
 their own pinned fork for `forward_with_intermediates`, the readout's working
 path, and the qwen2 rotary precision fix: the angle is computed in fp32 and
 the sine and cosine are cast to the model dtype afterwards. This describes
-manifest revision `429615148582d62f285879b97cb63dbdd17b47fd`; the stale
-revision recorded below remains subject to its explicit deferral. `cudarc`
-is caret-pinned rather than exact, so Cargo unifies this crate's device
-handles with candle's inside one minor line, exactness coming from the lock
-file rather than from a requirement that becomes unsatisfiable the day
-candle raises its floor.
+revision `429615148582d62f285879b97cb63dbdd17b47fd`, which the pins below
+record. `cudarc` is caret-pinned rather than exact, so Cargo unifies this
+crate's device handles with candle's inside one minor line, exactness coming
+from the lock file rather than from a requirement that becomes unsatisfiable
+the day candle raises its floor. The manifest requires `0.19.8` and the lock
+resolves `0.19.10` as of #684, the first release whose build script
+accepts the CUDA 13.4 toolkit.
 
 **The pins, recorded here because no document of this corpus carried them
 until 2026-08-06.** `llama-cpp-2` and `llama-cpp-sys-2` both resolve to
@@ -261,26 +262,18 @@ explicit-set door llama.cpp holds for callers whose paths carry no sibling
 pattern, which is what a descriptor path is, and the build script's DLL
 relink becomes idempotent under concurrent builds. `candle-core`, `candle-nn`,
 and `candle-transformers` resolve to `https://github.com/toddwbucy/candle` at
-revision `d24381efff07cb2c79419369d74605f112d2cff7`. **`candle-flash-attn` is
-not a fourth name resolving to it,** the manifest declaring it nowhere and
+revision `429615148582d62f285879b97cb63dbdd17b47fd`, the revision that carries
+qwen2's `forward_with_intermediates` and the qwen2 fp32 rotary fix, held by the
+manifest and `Cargo.lock` since `ab39b49` of 2026-08-19. **`candle-flash-attn`
+is not a fourth name resolving to it,** the manifest declaring it nowhere and
 `Cargo.lock` holding it nowhere: it shares the pin as a value rather than as a
 resolution, which is what the manifest states and what this clause overstated
-until 2026-09-15. Both are full revisions rather than
-abbreviations, because an abbreviation is unambiguous only until the repository
+until 2026-09-15. The manifest delegates that value to this section by name, so
+this clause is the only place it lives. No branch is named for either fork,
+because a branch tip moves and a pinned revision does not. Both are full
+revisions rather than abbreviations, because an abbreviation is unambiguous only
+until the repository
 it names grows a collision, and this Spec is the durable record.
-
-**The candle value above is stale, and it stands as a deferral rather than as a
-miss.** `crates/weaver-spu/Cargo.toml` has pinned
-`429615148582d62f285879b97cb63dbdd17b47fd` for the three declared names since
-`ab39b49` of 2026-08-19, and `Cargo.lock` agrees. For `candle-flash-attn` there
-is no second source at all: the manifest declares it nowhere and delegates its
-revision to this section by name, which is the delegation the paragraph below
-argues for, so this clause is the only place that number lives and the number is
-wrong. **Issue #605 carries the correction**, on the operator's ruling of
-2026-09-15 that this section stays the pin's home and the value moves in an act
-of its own. A wrong value standing silently in a document that calls itself the
-durable record is the failure to avoid, and one standing with its issue named is
-a decision a reader can act on.
 
 **Why the values sit in a Spec at all, which is a question worth answering.** A
 revision is representation and belongs here rather than in the charter. What

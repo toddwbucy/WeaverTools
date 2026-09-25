@@ -146,13 +146,11 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
   planning workspace.
 - `.hades/` is gitignored and absent, so `gate-check.py` cannot run here. The quarry's
   mandatory merge-gate sequence is not executable from this machine.
-- **`nvcc` is present and this bullet said otherwise until 2026-09-17.** The box
-  carries `/opt/cuda/bin/nvcc`, CUDA 13.3.73, and an RTX PRO 5000 Blackwell, so
-  `--features cuda` is not refused for want of a compiler. What is unmeasured is
-  whether it finishes: the device gate ran under a nine-minute bound and timed out
-  mid-flight, zero errors, past `candle-kernels` and into `Checking candle-core`.
-  **That is not a pass and it is specifically not a failure**, and a later reader
-  owes the run rather than either verdict.
+- **`nvcc` is present and the device gate finishes here.** On 2026-09-25 the box
+  carried `/opt/cuda/bin/nvcc`, CUDA 13.4.92, and an RTX PRO 5000 Blackwell on
+  driver 615.71.09, and `weaver-spu`'s gate under `--features cuda,gguf` passed
+  cold twice - build, test and clippy - per #684. The second run had no
+  `CUDARC_CUDA_VERSION` override, cudarc `0.19.10` building its CUDA 13.4 API.
 - **A box that can compile the feature is not a box that should gate the device.**
   The lane ruling of 2026-09-15 stands untouched by the correction above: the
   device is the olympus lane, `weaver-spu`'s gate carries `--features cuda,gguf`
@@ -245,9 +243,10 @@ cargo fmt --all -- --check
 
 Cold resolution needs network: `weaver-spu` sources `candle-*` and `llama-cpp-2`/
 `llama-cpp-sys-2` from `github.com/toddwbucy` forks at pinned revs. The `llama-cpp-rs`
-fork pin (`a67e208`, exposing the ggml scheduler eval callback - the only route to
+fork pin (exposing the ggml scheduler eval callback - the only route to
 per-layer activations from a GGUF model) was the stated precondition for cutting the
-extraction, and it **is** in the quarry's `main`.
+extraction, and it **is** in the quarry's `main`, at `277e4100`; the new tree pins
+`ecce255bcb14dd6d88f184cc8776c23a85afafeb`, moved 2026-08-17, which still exposes it.
 
 `crates/weaver-frontend` is excluded from the workspace and needs X11/Wayland/GL dev
 libs, so build it from inside its own directory if at all.
