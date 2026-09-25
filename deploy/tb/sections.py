@@ -20,6 +20,20 @@ def elf_sections(path):
     offset, size, count, string_index = header[6], header[11], header[12], header[13]
     def section(index):
         return struct.unpack_from('<IIQQQQIIQQ', data, offset + size * index)
+    # The entry point, segment mappings and permissions live outside every
+    # section payload, so they are inventoried here rather than inferred.
+    elf_header = dict(zip(['ident', 'type', 'machine', 'version', 'entry', 'phoff', 'shoff', 'flags',
+                           'ehsize', 'phentsize', 'phnum', 'shentsize', 'shnum', 'shstrndx'],
+                          (header[0].hex(),) + header[1:]))
+    segments = header[10]
+    if segments == 0xffff:
+        segments = section(0)[7]
+    program_headers = []
+    for index in range(segments):
+        fields = struct.unpack_from('<IIQQQQQQ', data, header[5] + header[9] * index)
+        record = dict(zip(['type', 'flags', 'offset', 'vaddr', 'paddr', 'filesz', 'memsz', 'align'], fields))
+        record['sha256'] = digest(data[record['offset']:record['offset'] + record['filesz']])
+        program_headers.append(record)
     if count == 0:
         count = section(0)[5]
     if string_index == 0xffff:
@@ -36,7 +50,8 @@ def elf_sections(path):
         result.append(dict(name=name, type=kind, flags=flags, executable=bool(flags & 4),
                            allocated=bool(flags & 2), size=length,
                            sha256=None if payload is None else digest(payload)))
-    return dict(file_sha256=digest(data), sections=result)
+    return dict(file_sha256=digest(data), elf_header=elf_header, program_headers=program_headers,
+                sections=result)
 
 
 def inventory():
@@ -88,8 +103,13 @@ def compare(first, second):
         for section in sorted(sa.keys() | sb.keys()):
             if sa.get(section) != sb.get(section):
                 changes.append(dict(section=section, B1=sa.get(section), B2=sb.get(section)))
+        ha, hb = a['hosts'].get(name, {}), b['hosts'].get(name, {})
+        headers = [dict(part=part, B1=ha.get(part), B2=hb.get(part))
+                   for part in ['elf_header', 'program_headers'] if ha.get(part) != hb.get(part)]
         report['host'][name] = dict(text_equal=sa.get('.text') == sb.get('.text') and '.text' in sa,
-                                   changes=changes)
+                                   file_equal=ha.get('file_sha256') is not None and
+                                              ha.get('file_sha256') == hb.get('file_sha256'),
+                                   header_changes=headers, changes=changes)
     for kind in ['cubin', 'ptx']:
         ma, mb = a['members'][kind], b['members'][kind]
         groups = {}
@@ -109,8 +129,12 @@ def compare(first, second):
                     group['code_equal'] += 1
         report['cuda'][kind] = groups
     # Conservative: relocations/read-only data also affect execution. Never
-    # conclude held identity from .text alone or hide missing members.
-    report['executable_identity'] = (not any(h['changes'] for h in report['host'].values()) and
+    # conclude held identity from .text alone or hide missing members. A host
+    # counts only when its whole file is byte-identical: headers, segments and
+    # bytes no section or header record explains can change execution, and a
+    # manifest that did not record them cannot vouch for them. No hosts, no claim.
+    report['executable_identity'] = (bool(report['host']) and all(not h['changes'] and not h['header_changes'] and h['file_equal']
+                                         for h in report['host'].values()) and
         all(not g['changed'] and not g['missing'] for groups in report['cuda'].values() for g in groups.values()))
     return report
 
@@ -121,6 +145,8 @@ if __name__ == '__main__':
         report = compare(sys.argv[2], sys.argv[3])
         pathlib.Path(sys.argv[4]).write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(dict(host_text_equal=sum(h['text_equal'] for h in report['host'].values()),
+                             host_file_equal=sum(h['file_equal'] for h in report['host'].values()),
+                             host_header_changed=sum(bool(h['header_changes']) for h in report['host'].values()),
                              host_files=len(report['host']), cuda={k:{arch:dict(equal=g['equal'], code_equal=g['code_equal'], changed=len(g['changed']), missing=len(g['missing'])) for arch,g in v.items()} for k,v in report['cuda'].items()},
                              executable_identity=report['executable_identity'])))
     else:

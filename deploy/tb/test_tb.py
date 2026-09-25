@@ -251,12 +251,54 @@ class ReadingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'a';q=Path(tmp)/'b'
             section=dict(name='.text',sha256='a',executable=True)
-            manifest=dict(hosts={'lib':dict(sections=[section])},members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
+            manifest=dict(hosts={'lib':dict(file_sha256='f',sections=[section])},members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
             p.write_text(json.dumps(manifest));q.write_text(json.dumps(manifest))
             self.assertTrue(sections.compare(p,q)['executable_identity'])
             changed=copy.deepcopy(manifest);changed['members']['cubin']['lib.1.sm_120a.cubin']['sections'][0]['sha256']='b'
             q.write_text(json.dumps(changed));r=sections.compare(p,q)
             self.assertFalse(r['executable_identity']);self.assertEqual(r['cuda']['cubin']['sm_120a']['code_equal'],0)
+
+    def test_host_identity_requires_the_whole_file(self):
+        # #683 finding 3: equal section records do not make equal hosts. A file
+        # hash that differs with no section change, or that was never recorded,
+        # refuses identity.
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'a';q=Path(tmp)/'b'
+            section=dict(name='.text',sha256='a',executable=True)
+            members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{}}
+            p.write_text(json.dumps(dict(hosts={'lib':dict(file_sha256='f',sections=[section])},members=members)))
+            for host in [dict(file_sha256='g',sections=[section]),dict(sections=[section])]:
+                q.write_text(json.dumps(dict(hosts={'lib':host},members=members)))
+                r=sections.compare(p,q)
+                self.assertEqual(r['host']['lib']['changes'],[])
+                self.assertFalse(r['executable_identity'],host)
+            q.write_text(json.dumps(dict(hosts={},members=members)));p.write_text(q.read_text())
+            self.assertFalse(sections.compare(p,q)['executable_identity'])
+
+    def test_host_headers_are_inventoried_and_compared(self):
+        # Real ELF bytes: change the entry point, then one segment's permissions.
+        # Neither lives in a section payload, so the section records stay equal.
+        import struct
+        with tempfile.TemporaryDirectory() as tmp:
+            original=Path(tmp)/'original';original.write_bytes(Path(sys.executable).resolve().read_bytes())
+            base=sections.elf_sections(original)
+            self.assertGreater(len(base['program_headers']),0)
+            def manifest(record):return dict(hosts={'bin/x':record},members={'cubin':{},'ptx':{}})
+            p=Path(tmp)/'a';p.write_text(json.dumps(manifest(base)))
+            q=Path(tmp)/'b';q.write_text(json.dumps(manifest(base)))
+            self.assertTrue(sections.compare(p,q)['executable_identity'])
+            flags=base['elf_header']['phoff']+4
+            for offset,fmt,part in [(24,'<Q','elf_header'),(flags,'<I','program_headers')]:
+                data=bytearray(original.read_bytes())
+                struct.pack_into(fmt,data,offset,struct.unpack_from(fmt,data,offset)[0]^1)
+                changed=Path(tmp)/'changed';changed.write_bytes(data)
+                record=sections.elf_sections(changed)
+                self.assertEqual(record['sections'],base['sections'])
+                q.write_text(json.dumps(manifest(record)));r=sections.compare(p,q)
+                self.assertEqual(r['host']['bin/x']['changes'],[])
+                # The first LOAD segment spans the ELF header, so an entry change moves its hash too.
+                self.assertIn(part,[h['part'] for h in r['host']['bin/x']['header_changes']])
+                self.assertFalse(r['executable_identity'],part)
 
 
 class PayloadTests(unittest.TestCase):

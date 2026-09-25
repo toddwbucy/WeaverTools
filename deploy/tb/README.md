@@ -126,7 +126,7 @@ against the installed stack, intentionally under HOLD.
 ## Build sections and tests
 
 `sections.py DEPOSIT B1` (or B2) inventories already-extracted CUDA members plus
-all host ELF sections. Extract with the local `cuobjdump -xelf all LIBRARY` and
+each host ELF's header, program headers and sections. Extract with the local `cuobjdump -xelf all LIBRARY` and
 `-xptx all LIBRARY` in distinct `sections/STACK/cubin` and `ptx` directories.
 No library is loaded and no kernel runs. Compare with:
 
@@ -136,8 +136,13 @@ python3 deploy/tb/sections.py compare B1-MANIFEST B2-MANIFEST OUTPUT.json
 
 The result distinguishes cubin container hashes from code-section hashes. All
 host sections, including relocation/read-only data, are retained; the identity
-verdict conservatively requires all recorded sections and CUDA members to match.
-An identity verdict cannot be inferred from equal file counts or .text alone.
+verdict conservatively requires all recorded sections, headers and CUDA members
+to match, and every host file to be byte-identical. The entry point and segment
+permissions live outside every section, so equal sections do not make equal
+hosts. A manifest written before the headers were inventoried still carries
+each file hash, which the verdict reads; only the header diff needs a fresh
+inventory. An identity verdict cannot be inferred from equal file counts or
+.text alone.
 
 ```
 cd deploy/tb
