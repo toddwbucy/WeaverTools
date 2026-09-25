@@ -7,6 +7,8 @@ import json
 import pathlib
 import struct
 
+from tb_payload import STACK_ROOTS
+
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -69,7 +71,7 @@ def inventory():
     # link is refused, as provisioning refuses one: skipping it would vouch
     # for bytes nobody read.
     hosts = {}
-    for folder in ['bin', 'engine-lib', 'cuda-lib']:
+    for folder in STACK_ROOTS:
         for path in sorted((stack / folder).rglob('*')):
             if path.is_symlink():
                 raise ValueError(f'{path}: a link in a stack is not inventoried; the stack is copied by bytes')
@@ -93,7 +95,7 @@ def inventory():
     if not hosts:
         raise ValueError('No host files found')
     result = dict(stack=args.stack, hosts=hosts, members=members,
-                  scope='Every file under bin, engine-lib and cuda-lib, ELF files by section and header and every file by whole-file hash; every extracted cubin and PTX member. No GPU code executed.')
+                  scope=f'Every file under {", ".join(STACK_ROOTS)}, ELF files by section and header and every file by whole-file hash; every extracted cubin and PTX member. No GPU code executed.')
     destination = output / 'section-manifest.json'
     destination.write_text(json.dumps(result, indent=2) + '\n')
     architectures = collections.Counter(name.split('.')[-2] for name in members['cubin'])

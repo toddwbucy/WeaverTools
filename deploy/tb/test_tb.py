@@ -698,6 +698,21 @@ class PayloadTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
         finally:self.model.parent.chmod(0o700)
 
+    def test_inventory_roots_pin_the_served_set(self):
+        # #683 finding 31: the inventory walks tb_payload.STACK_ROOTS, so the
+        # served set is derived here from the payload's own output, the
+        # LD_LIBRARY_PATH it exports and the binaries it configures, and pinned
+        # to that constant. A directory served from outside it fails here.
+        self.stacks();self.provision()
+        stack=self.root/'stacks/B1';served=set()
+        for entry in payload.environment('B1')['LD_LIBRARY_PATH'].split(':'):
+            served.add(str(Path(entry).relative_to(stack)))
+        for name in ['worker-binary','spu-binary','gate-binary']:
+            served.add(str(Path((self.root/'config/B1'/name).read_text().strip()).relative_to(stack).parent))
+        self.assertTrue(served,served)
+        self.assertLessEqual(served,set(payload.STACK_ROOTS),f'served outside the inventoried roots: {served-set(payload.STACK_ROOTS)}')
+        self.assertIs(sections.STACK_ROOTS,payload.STACK_ROOTS)
+
     def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
         self.stacks();self.provision();payload.installed(self.plan,'d'*64)
         installed=self.root/'stacks/B1/bin/pyworker'

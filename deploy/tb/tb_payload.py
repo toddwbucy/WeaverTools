@@ -18,6 +18,11 @@ import time
 
 ROOT = Path('/var/lib/weaver-tb')
 MODEL = Path('/opt/weaver/models/Qwen3-8B-Q8_0.gguf')
+# Every directory of a stack a load can execute from: the binaries, and the
+# two library directories environment() puts on LD_LIBRARY_PATH. sections.py
+# inventories exactly this set, so the identity verdict covers what is served;
+# a directory served from outside it is a test failure, not silent drift.
+STACK_ROOTS = ('bin', 'engine-lib', 'cuda-lib')
 
 
 def need(name, condition):
@@ -189,7 +194,7 @@ def provision(plan, plan_sha256):
         # a linked file is hashed at its target, so a link anywhere in a stack
         # would carry unreviewed or mutable bytes into the root-owned install.
         need('stack-no-symlinks', not any(p.is_symlink() for p in [source, *source.rglob('*')]))
-        need('stack-libraries', all((source / x).is_dir() for x in ['bin', 'engine-lib', 'cuda-lib']))
+        need('stack-libraries', all((source / x).is_dir() for x in STACK_ROOTS))
         files = [p for p in source.rglob('*') if p.is_file()]
         need('stack-file-coverage', bool(files) and all(str(p) in plan['files'] for p in files))
     # mkdir's mode is masked by the umask, so every served directory is set
