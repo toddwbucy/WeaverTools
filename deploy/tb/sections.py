@@ -103,7 +103,8 @@ def inventory():
 
 
 def compare(first, second):
-    a, b = [json.loads(pathlib.Path(p).read_text()) for p in [first, second]]
+    raw = [pathlib.Path(p).read_bytes() for p in [first, second]]
+    a, b = [json.loads(r) for r in raw]
     # A verdict about B1 against B2 needs B1 then B2: the same inventory twice
     # is identical to itself, and an empty scope makes every all() vacuous.
     if (a.get('stack'), b.get('stack')) != ('B1', 'B2'):
@@ -111,7 +112,11 @@ def compare(first, second):
     for m in (a, b):
         if not m.get('hosts') or not all(m.get('members', {}).get(kind) for kind in ['cubin', 'ptx']):
             raise ValueError(f"the {m['stack']} inventory has no hosts, cubins or PTX, and vouches for nothing")
-    report = {"stacks": ['B1', 'B2'], "host": {}, "cuda": {}}
+    # The verdict names the inventories it read, by path and digest, so a
+    # reader can bind it to the stack bytes those inventories describe.
+    report = {"stacks": ['B1', 'B2'],
+              "inputs": {m['stack']: dict(manifest=str(p), sha256=digest(r)) for m, p, r in zip([a, b], [first, second], raw)},
+              "host": {}, "cuda": {}}
     for name in sorted(a['hosts'].keys() | b['hosts'].keys()):
         sa = {s['name']: s for s in a['hosts'].get(name, {}).get('sections', [])}
         sb = {s['name']: s for s in b['hosts'].get(name, {}).get('sections', [])}

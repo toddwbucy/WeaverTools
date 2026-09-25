@@ -181,6 +181,19 @@ class Order:
             data = Path(kernel['identity_report']).read_bytes()
             report = json.loads(data) if hashlib.sha256(data).hexdigest() == files[kernel['identity_report']] else {}
             check('identity-evidence', report.get('stacks') == ['B1', 'B2'] and report.get('executable_identity') is True)
+            # A verdict is about the inventories it read, and those about the
+            # stack bytes they hashed: each inventory is a reviewed artifact at
+            # the digest the report names, and its host hashes are exactly the
+            # approved hashes of every file under that stack.
+            for stack in ['B1', 'B2']:
+                named = (report.get('inputs') or {}).get(stack) or {}
+                check('identity-inputs', named.get('manifest') in files and files[named['manifest']] == named.get('sha256'))
+                raw = Path(named['manifest']).read_bytes()
+                manifest = json.loads(raw) if hashlib.sha256(raw).hexdigest() == named['sha256'] else {}
+                source = Path(plan['stacks'][stack])
+                described = {str(source / rel): host.get('file_sha256') for rel, host in (manifest.get('hosts') or {}).items()}
+                approved = {p: h for p, h in plan['files'].items() if Path(p).is_relative_to(source)}
+                check('identity-binds-stacks', bool(described) and described == approved)
         return plan
 
     def due(self, s, plan):

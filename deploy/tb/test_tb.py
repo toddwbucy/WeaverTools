@@ -196,24 +196,39 @@ class Fixture(unittest.TestCase):
                 with self.assertRaises(order.Refused):order.validate_plan(bad)
 
     def test_an_emptied_kernel_arm_stands_on_its_comparison(self):
-        # #683 finding 25: executable_identity alone emptied TB-k. The plan
-        # must name a hashed comparison report, and approval requires it to be
-        # sections.compare's B1-against-B2 verdict, and true.
-        report=self.root/'identity.json'
+        # #683 findings 26 and 29: executable_identity alone emptied TB-k. The
+        # plan must name a hashed comparison report; approval requires it to
+        # be sections.compare's B1-against-B2 verdict, true, read from two
+        # reviewed inventories whose host hashes are exactly the approved
+        # hashes of every file under each stack, so a stale verdict does not
+        # outlive the stacks it judged.
+        report=self.root/'identity.json';manifests={}
+        for stack in ['B1','B2']:
+            src=Path(self.plan['stacks'][stack]);(src/'bin').mkdir(parents=True,exist_ok=True)
+            (src/'bin/worker').write_text(stack);self.plan['files'][str(src/'bin/worker')]=order.sha(src/'bin/worker')
+            m=self.root/f'{stack}-manifest.json';m.write_text(json.dumps(dict(stack=stack,hosts={'bin/worker':dict(file_sha256=order.sha(src/'bin/worker'))})))
+            manifests[stack]=m;self.plan['files'][str(m)]=order.sha(m)
+        def inputs(**over):return {s:dict(dict(manifest=str(m),sha256=order.sha(m)),**over.get(s,{})) for s,m in manifests.items()}
         def emptied(verdict,named=True):
             p=copy.deepcopy(self.plan);p['arms'][2]=dict(name='TB-k',executable_identity=True,jobs=[])
             report.write_text(json.dumps(verdict))
             if named:p['arms'][2]['identity_report']=str(report);p['files'][str(report)]=order.sha(report)
-            order.atomic(self.planpath,p);self.state['review']['artifacts'].update({str(self.planpath):order.sha(self.planpath),str(report):order.sha(report)})
+            order.atomic(self.planpath,p);self.state['review']['artifacts'].update({str(self.planpath):order.sha(self.planpath),str(report):order.sha(report),**{str(m):order.sha(m) for m in manifests.values()},**{p:h for p,h in self.plan['files'].items()}})
             return p
         with self.assertRaisesRegex(order.Refused,'kernel-schedule'):order.validate_plan(emptied({},named=False))
-        for label,verdict in [('false',dict(stacks=['B1','B2'],executable_identity=False)),('unpaired',dict(executable_identity=True)),
-                              ('same-stack',dict(stacks=['B1','B1'],executable_identity=True))]:
+        good=dict(stacks=['B1','B2'],executable_identity=True,inputs=inputs())
+        for label,guard,verdict in [('false','identity-evidence',dict(good,executable_identity=False)),('unpaired','identity-evidence',dict(executable_identity=True)),
+                                    ('same-stack','identity-evidence',dict(good,stacks=['B1','B1'])),('no-inputs','identity-inputs',dict(good,inputs={})),
+                                    ('unreviewed-manifest','identity-inputs',dict(good,inputs=inputs(B2=dict(manifest=str(self.root/'elsewhere.json'))))),
+                                    ('wrong-digest','identity-inputs',dict(good,inputs=inputs(B2=dict(sha256='0'*64))))]:
             with self.subTest(label=label):
                 emptied(verdict)
-                with self.assertRaisesRegex(order.Refused,'identity-evidence'):self.o.approved(self.state)
-        emptied(dict(stacks=['B1','B2'],executable_identity=True))
-        self.assertEqual(self.o.approved(self.state)['arms'][2]['jobs'],[])
+                with self.assertRaisesRegex(order.Refused,guard):self.o.approved(self.state)
+        emptied(good);self.assertEqual(self.o.approved(self.state)['arms'][2]['jobs'],[])
+        # The stacks move under a still-hashed report: the verdict no longer binds.
+        src=Path(self.plan['stacks']['B2'])/'bin/worker';src.write_text('rebuilt');self.plan['files'][str(src)]=order.sha(src)
+        emptied(good)
+        with self.assertRaisesRegex(order.Refused,'identity-binds-stacks'):self.o.approved(self.state)
 
     def test_operator_sequence_success_and_repeat(self):
         def runner(s,step,log):log.write_text('SUCCESS: '+step+'\n');return 0
