@@ -109,6 +109,11 @@ def validate_plan(plan):
     check('device-sources', bool(arms[1]['jobs']) and
           {j.get('source_cell') for j in arms[1]['jobs']} == {'ampere', 'ada'} and
           all(j['kind'] == 'refeed' and j['stack'] == 'B1' for j in arms[1]['jobs']))
+    # A TB-d job replays another device's reviewed trace. The loader and the
+    # driver both prefer source_job, so one here would replay a local B1 run
+    # under an ampere or ada label.
+    check('device-traces', all(not j.get('source_job') and j.get('source_run') and
+                               j.get('source_trace') in plan.get('files', {}) for j in arms[1]['jobs']))
     check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs']) or
           (sorted(j.get('source_job') for j in arms[2]['jobs']) == sorted(j['id'] for j in free) and
            all(j['kind'] == 'refeed' and j['stack'] == 'B2' for j in arms[2]['jobs'])))

@@ -78,7 +78,7 @@ class Fixture(unittest.TestCase):
     def test_manifest_cannot_hide_inputs(self):
         for field in ['absent','mismatch']:
             p=copy.deepcopy(self.plan)
-            p['files']={str(self.root/'unreviewed'): 'x'} if field=='absent' else {str(self.source):'wrong'}
+            p['files']={**p['files'],str(self.root/'unreviewed'):'x'} if field=='absent' else {str(self.source):'wrong'}
             order.atomic(self.planpath,p)
             self.state['review']['artifacts'][str(self.planpath)]=order.sha(self.planpath)
             with self.assertRaises(order.Refused):self.o.approved(self.state)
@@ -94,12 +94,26 @@ class Fixture(unittest.TestCase):
                ('kind',lambda p:p['arms'][0]['jobs'].append(dict(id='extra',kind='shell',stack='B1',source_trace='/trace',source_run='r'))),
                ('control',lambda p:p['arms'][0]['jobs'][0].update(seed=9)),
                ('own',lambda p:p['arms'][0]['jobs'].pop()),
-               ('order',lambda p:p['arms'][1]['jobs'][0].update(source_trace=None)),
+               ('order',lambda p:p['arms'][0]['jobs'].insert(0,p['arms'][0]['jobs'].pop())),
                ('device',lambda p:p['arms'][1].update(jobs=[])),
                ('kernel',lambda p:p['arms'][2].update(jobs=[]))]
         for name, edit in edits:
             p=copy.deepcopy(self.plan);edit(p)
             with self.subTest(name=name),self.assertRaises(order.Refused):order.validate_plan(p)
+
+    def test_device_arm_replays_only_reviewed_external_traces(self):
+        # #683 finding 6: a TB-d job naming a local source_job, or a trace the
+        # manifest does not hash, would replay a B1 run under a device label.
+        order.validate_plan(self.plan)
+        free=[j['id'] for j in self.plan['arms'][0]['jobs'] if j['kind']=='free']
+        for fault in ['source_job','no-trace','unhashed-trace','no-run']:
+            with self.subTest(fault=fault):
+                bad=copy.deepcopy(self.plan);job=bad['arms'][1]['jobs'][0]
+                if fault=='source_job':job['source_job']=free[0]
+                if fault=='no-trace':job.pop('source_trace')
+                if fault=='unhashed-trace':job['source_trace']=str(self.root/'elsewhere.ndjson')
+                if fault=='no-run':job.pop('source_run')
+                with self.assertRaises(order.Refused):order.validate_plan(bad)
 
     def test_operator_sequence_success_and_repeat(self):
         def runner(s,step,log):log.write_text('SUCCESS: '+step+'\n');return 0
