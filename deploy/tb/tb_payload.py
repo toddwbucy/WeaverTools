@@ -130,11 +130,38 @@ def save(path, text, mode=0o644):
     path.chmod(mode)
 
 
+def locked(path):
+    """Only this payload's user can change the entry: owned by it, no group or
+    world write, not a link. A hash binds bytes only where nobody else can
+    replace them, and for a directory that means its entries too."""
+    entry = os.lstat(path)
+    return (not stat.S_ISLNK(entry.st_mode) and entry.st_uid == os.geteuid() and
+            not entry.st_mode & 0o022)
+
+
+def lock(path, mode):
+    """Set the served mode on path, a directory or a file, and every entry
+    beneath a directory, the root included: rglob yields descendants only."""
+    path.chmod(mode)
+    if path.is_dir():
+        for p in path.rglob('*'):
+            if not p.is_symlink():
+                p.chmod(0o755 if p.is_dir() or p.parent.name == 'bin' else 0o644)
+
+
+def served_directories():
+    """Every directory root serves the agent from, outside the stack trees."""
+    return [ROOT, ROOT / 'stacks', ROOT / 'config', ROOT / 'agents',
+            *(config(s) for s in ['B1', 'B2']), *(ROOT / 'agents' / s for s in ['B1', 'B2'])]
+
+
 def verify_stack(plan, stack, root):
-    """The installed copy holds exactly the reviewed files, by bytes, and no link."""
+    """The installed copy holds exactly the reviewed files, by bytes, and no
+    link, in a tree nobody but this payload's user can change."""
     source = Path(plan['stacks'][stack])
     entries = list(root.rglob('*'))
     need('installed-no-symlinks', not root.is_symlink() and not any(p.is_symlink() for p in entries))
+    need('installed-stack-custody', locked(root) and all(locked(p) for p in entries))
     expected = {Path(p).relative_to(source): d for p, d in plan['files'].items() if Path(p).is_relative_to(source)}
     need('installed-stack-coverage', {p.relative_to(root) for p in entries if p.is_file()} == expected.keys())
     need('installed-stack-hash', all(sha(root / r) == d for r, d in expected.items()))
@@ -165,7 +192,10 @@ def provision(plan, plan_sha256):
         need('stack-libraries', all((source / x).is_dir() for x in ['bin', 'engine-lib', 'cuda-lib']))
         files = [p for p in source.rglob('*') if p.is_file()]
         need('stack-file-coverage', bool(files) and all(str(p) in plan['files'] for p in files))
+    # mkdir's mode is masked by the umask, so every served directory is set
+    # explicitly as it is made.
     ROOT.mkdir(mode=0o755)
+    lock(ROOT, 0o755)
     save(ROOT / 'plan-sha256', plan_sha256 + '\n')
     if not MODEL.exists():
         MODEL.parent.mkdir(parents=True, exist_ok=True)
@@ -177,17 +207,21 @@ def provision(plan, plan_sha256):
     run(['/usr/bin/useradd', '--system', '--gid', 'weaver-bravo', '--home-dir', str(ROOT / 'home'),
          '--create-home', '--shell', '/usr/bin/nologin', 'weaver-bravo'])
     run(['/usr/bin/usermod', '-aG', 'weaver-bravo', plan['operator']])
+    for directory in [ROOT / 'stacks', ROOT / 'config', ROOT / 'agents']:
+        directory.mkdir()
+        lock(directory, 0o755)
     for stack in ['B1', 'B2']:
         dst = ROOT / 'stacks' / stack
         shutil.copytree(plan['stacks'][stack], dst, symlinks=True)
-        # The check above ran before the copy; the copy is what root serves.
+        # copytree copies the source root's mode onto dst; lock the whole tree,
+        # dst included, before the copy is verified as what root serves.
+        lock(dst, 0o755)
         verify_stack(plan, stack, dst)
-        for p in dst.rglob('*'):
-            if not p.is_symlink():
-                p.chmod(0o755 if p.is_dir() or p.parent.name == 'bin' else 0o644)
         cfg = config(stack)
-        cfg.mkdir(parents=True)
-        (ROOT / 'agents' / stack).mkdir(parents=True)
+        cfg.mkdir()
+        lock(cfg, 0o755)
+        (ROOT / 'agents' / stack).mkdir()
+        lock(ROOT / 'agents' / stack, 0o755)
         values = {'allow-list': 'bravo', 'coordination-root': '/run',
                   'log-path': str(ROOT / f'admin-{stack}.log'),
                   'agent-config-directory': str(ROOT / 'agents' / stack),
@@ -216,6 +250,7 @@ def model_custody():
 def installed(plan, plan_sha256):
     need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == plan_sha256)
     need('installed-model-custody', model_custody())
+    need('served-directory-custody', all(locked(p) for p in served_directories()))
     need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     for stack in ['B1', 'B2']:
         verify_stack(plan, stack, ROOT / 'stacks' / stack)

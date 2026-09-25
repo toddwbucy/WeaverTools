@@ -563,6 +563,22 @@ class PayloadTests(unittest.TestCase):
         self.model.unlink();self.model.symlink_to(src)
         with self.assertRaisesRegex(RuntimeError,'installed-model-custody'):payload.installed(self.plan,'d'*64)
 
+    def test_served_directories_are_locked_and_stay_locked(self):
+        # #683 finding 22: copytree copies the source root's mode onto the
+        # installed root, and rglob never yields the root, so a world-writable
+        # source left stacks/B1 writable. Every served directory is locked when
+        # it is made, and installed() refuses one reopened later, by name.
+        self.stacks();Path(self.plan['stacks']['B1']).chmod(0o777)
+        self.provision()
+        installed=self.root/'stacks/B1'
+        self.assertEqual(installed.stat().st_mode&0o777,0o755)
+        for d in payload.served_directories():self.assertEqual(d.stat().st_mode&0o022,0,d)
+        payload.installed(self.plan,'d'*64)
+        installed.chmod(0o777)
+        with self.assertRaisesRegex(RuntimeError,'installed-stack-custody'):payload.installed(self.plan,'d'*64)
+        installed.chmod(0o755);(self.root/'config/B1').chmod(0o777)
+        with self.assertRaisesRegex(RuntimeError,'served-directory-custody'):payload.installed(self.plan,'d'*64)
+
     def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
         self.stacks();self.provision();payload.installed(self.plan,'d'*64)
         installed=self.root/'stacks/B1/bin/pyworker'
