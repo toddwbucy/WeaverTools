@@ -151,7 +151,7 @@ class Order:
         files = review.get('artifacts', {})
         required = {str(Path(__file__).resolve().parent / name) for name in
                     ['tb_order.py', 'tb_payload.py', 'tb_driver.py', 'tb-operator.sh',
-                     'test_tb.py', 'perturb.py', 'sections.py', 'prepare.py']}
+                     'test_tb.py', 'golden.py', 'perturb.py', 'sections.py', 'prepare.py']}
         required.add(s['plan'])
         check('approval-coverage', required <= files.keys())
         check('artifact-hashes', all(Path(p).is_file() and sha(p) == h for p, h in files.items()))

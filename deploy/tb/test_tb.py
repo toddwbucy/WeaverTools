@@ -16,11 +16,42 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+import golden
 import prepare
 import sections
 import tb_driver as driver
 import tb_order as order
 import tb_payload as payload
+
+
+def event(line, **fields):
+    """A real event from golden.py with named fields replaced."""
+    e = json.loads(line)
+    e.update(fields)
+    return e
+
+
+def ndjson(*events):
+    """Events as the recorder writes them: compact JSON, one per line."""
+    return ''.join(json.dumps(e, separators=(',', ':')) + '\n' for e in events)
+
+
+def ldd_output(root, cuda_dir):
+    """golden's real ldd capture, with the three CUDA libraries resolved in
+    cuda_dir, as they would be for an installed stack."""
+    lines = []
+    for line in golden.LDD_B1_LIBGGML_CUDA.replace('{DEPOSIT}', str(root)).splitlines():
+        name = line.strip().split(' ')[0]
+        if name.startswith(('libcudart.so', 'libcublas.so', 'libcublasLt.so')):
+            line = line.split(' => ')[0] + f' => {cuda_dir}/{name} ' + line.rsplit(' ', 1)[1]
+        lines.append(line)
+    return '\n'.join(lines) + '\n'
+
+
+def derived(artifact, sink):
+    """golden's real derive output naming artifact and sink."""
+    return (golden.DERIVE_DECLARATION.replace(json.dumps(golden.DERIVE_ARTIFACT), json.dumps(str(artifact)))
+            .replace('{SINK}', str(sink)))
 
 
 @contextlib.contextmanager
@@ -48,7 +79,7 @@ class Fixture(unittest.TestCase):
         self.plan = prepare.template(self.root, 'todd', 1000)
         self.plan['rulings'] = {k: '#679/ruling' for k in self.plan['rulings']}
         self.source = self.root / 'source.ndjson'
-        self.source.write_text('{}\n')
+        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r')))
         self.plan['files'] = {str(self.source): order.sha(self.source)}
         self.plan['arms'][1]['jobs'] = [dict(id=cell, source_cell=cell, kind='refeed', stack='B1',
                                             source_trace=str(self.source), source_run='r') for cell in ['ampere', 'ada']]
@@ -300,14 +331,17 @@ print('WAITING',flush=True);o.wait('measure:B1-s451234785645-n1',timeout=10,poll
 
 class ReadingTests(unittest.TestCase):
     def rec(self):
-        return dict(output_tokens=[1],entropies=[0.5],field={'20':dict(ranked=[{'token':i,'probability':.005} for i in range(200)],realized=1)})
+        # extract_run's real key set (golden.EXTRACT_RUN_KEYS); field keys are
+        # ints as extract_run builds them, strings once a record is JSON.
+        return dict(dict.fromkeys(golden.EXTRACT_RUN_KEYS),output_tokens=[1],entropies=[0.5],
+                    field={20:dict(ranked=[{'token':i,'probability':.005} for i in range(200)],realized=1)})
 
     def test_exact_rejects_empty_partial_and_changed(self):
         a=self.rec();b=copy.deepcopy(a)
         self.assertTrue(driver.exact(a,b))
-        b['field']={20:b['field']['20']};self.assertTrue(driver.exact(a,b))
+        b['field']={'20':b['field'][20]};self.assertTrue(driver.exact(a,b))
         b['entropies']=[.5000000000000001];self.assertFalse(driver.exact(a,b))
-        b=copy.deepcopy(a);b['field']['20']['ranked'].pop()
+        b=copy.deepcopy(a);b['field'][20]['ranked'].pop()
         with self.assertRaises(order.Refused):driver.exact(a,b)
         b=copy.deepcopy(a);b['entropies']=[]
         with self.assertRaises(order.Refused):driver.exact(a,b)
@@ -315,8 +349,8 @@ class ReadingTests(unittest.TestCase):
 
     def test_trace_close_and_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
-            p=Path(tmp)/'trace';p.write_text('{"kind":"turn.closed"}\n')
-            self.assertEqual(driver.until_closed(p,'turn.closed',1),[{'kind':'turn.closed'}])
+            closed=event(golden.TURN_CLOSED);p=Path(tmp)/'trace';p.write_text(ndjson(closed))
+            self.assertEqual(driver.until_closed(p,'turn.closed',1),[closed])
             with self.assertRaises(order.Refused):driver.until_closed(p,'replay.closed',0)
 
     def test_section_comparison_detects_instruction_change(self):
@@ -373,7 +407,7 @@ class ReadingTests(unittest.TestCase):
                 self.assertFalse(r['executable_identity'],part)
 
 
-TWO_RUNS='{"run":"r1","kind":"turn.opened"}\n{"run":"r2","kind":"turn.opened"}\n{"run":"r2","kind":"turn.closed"}\n'
+TWO_RUNS=ndjson(event(golden.TURN_STARTED,run='r1'),event(golden.TURN_STARTED,run='r2'),event(golden.TURN_CLOSED,run='r2'))
 
 
 class PayloadTests(unittest.TestCase):
@@ -401,15 +435,21 @@ class PayloadTests(unittest.TestCase):
         def probe(stdout,rc=0,door=False,procs=None):
             with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],rc,stdout,'')),patch('tb_payload.Path.exists',return_value=door),patch('tb_payload.Path.iterdir',return_value=procs or []),patch('tb_payload.pwd.getpwnam',return_value=self.user):
                 payload.m1_unloaded()
-        probe('LoadState=not-found\nActiveState=inactive\n')
-        for out,rc,door,procs in [('LoadState=loaded\nActiveState=active\n',0,False,[]),('LoadState=loaded\nActiveState=inactive\n',1,False,[]),('LoadState=loaded\nActiveState=inactive\n',0,True,[]),('LoadState=loaded\nActiveState=inactive\n',0,False,[SimpleNamespace(name='42',stat=lambda:SimpleNamespace(st_uid=1000))])]:
+        # golden.SYSTEMCTL_SHOW_M1 is this box's real reading; the refusals
+        # change one value in that real format.
+        probe(golden.SYSTEMCTL_SHOW_M1)
+        loaded=golden.SYSTEMCTL_SHOW_M1.replace('LoadState=not-found','LoadState=loaded')
+        for out,rc,door,procs in [(loaded.replace('ActiveState=inactive','ActiveState=active'),0,False,[]),(loaded,1,False,[]),(loaded,0,True,[]),(loaded,0,False,[SimpleNamespace(name='42',stat=lambda:SimpleNamespace(st_uid=1000))])]:
             with self.assertRaises(RuntimeError):probe(out,rc,door,procs)
 
     def test_admin_reply_not_merely_exit_zero(self):
-        def cp(state,kind='state'):return subprocess.CompletedProcess([],0,json.dumps(dict(kind=kind,state=state))+'\n','')
+        def cp(state):return subprocess.CompletedProcess([],0,golden.ADMIN_STATE.format(state)+'\n','')
         with patch('tb_payload.run',return_value=cp('unloaded')),contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(payload.answer('B1','show','unloaded')['state'],'unloaded')
         with patch('tb_payload.run',return_value=cp('idle')),self.assertRaises(RuntimeError):payload.answer('B1','show','unloaded')
+        # A real refusal is one line with exit 1, which run(check=True) raises.
+        refusal=subprocess.CalledProcessError(1,['weaver-admin'],golden.ADMIN_NO_RESIDENCY+'\n','')
+        with patch('tb_payload.run',side_effect=refusal),self.assertRaises(subprocess.CalledProcessError):payload.answer('B1','unload','unloaded')
 
     def test_save_refuses_symlink(self):
         p=self.base/'file';payload.save(p,'a');self.assertEqual(p.read_text(),'a')
@@ -490,14 +530,14 @@ class PayloadTests(unittest.TestCase):
         return dict(id='job',kind='free',stack='B1',seed=7)
 
     def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None):
-        default_gpu='0, NVIDIA RTX PRO 5000 Blackwell Laptop GPU, 615.71.09'
-        default_ldd='\n'.join(f'{lib} => {self.root}/stacks/B1/cuda-lib/{lib}' for lib in ['libcudart.so','libcublas.so','libcublasLt.so'])
+        default_gpu=golden.NVIDIA_SMI.strip()
+        default_ldd=ldd_output(self.base,f'{self.root}/stacks/B1/cuda-lib')
         def run(argv,**kwargs):
             if on_run:on_run(argv)
             if 'nvidia-smi' in argv[0]:return subprocess.CompletedProcess(argv,0,default_gpu if gpu is None else gpu,'')
             if 'ldd' in argv[0]:return subprocess.CompletedProcess(argv,0,default_ldd if ldd is None else ldd,'')
             if 'derive' in argv:
-                Path(argv[-1]).write_text(f'artifact: {self.model}\n' if artifact else 'artifact: wrong\n')
+                Path(argv[-1]).write_text(derived(self.model if artifact else golden.DERIVE_ARTIFACT,argv[argv.index('--sink')+1]))
             return subprocess.CompletedProcess(argv,0,'','')
         sockets=[]
         def loader(*args,**kw):
@@ -513,7 +553,8 @@ class PayloadTests(unittest.TestCase):
 
     def test_load_tuple_and_libraries(self):
         job=self.setup_load()
-        for gpu,ldd in [('1, Wrong GPU, 615.71.09',None),(None,'libcublas.so => /opt/cuda/lib.so'),(None,'\n'.join(f'{lib} => {self.root}/stacks/B1/cuda-lib/{lib}' for lib in ['libcudart.so','libcublas.so','libcublasLt.so'])+'\nlibother.so => not found')]:
+        # The host-resolved case is golden's real capture: B1 has no cuda-lib.
+        for gpu,ldd in [(golden.NVIDIA_SMI.strip().replace('0, ','1, ',1),None),(None,golden.LDD_B1_LIBGGML_CUDA.replace('{DEPOSIT}',str(self.base))),(None,ldd_output(self.base,f'{self.root}/stacks/B1/cuda-lib')+'\tlibother.so => not found\n')]:
             with self.assertRaises(RuntimeError):self.invoke_load(job,gpu=gpu,ldd=ldd)
         self.invoke_load(job)
         self.assertIn('seed: 7',(self.root/'agents/B1/bravo.yaml').read_text())
@@ -546,12 +587,25 @@ class PayloadTests(unittest.TestCase):
             for verb in ['derive','preload']:
                 if verb in argv:
                     fed=Path(argv[argv.index(verb)+1]);seen[verb]=(fed,fed.read_bytes())
-                    source.write_text('{"run":"r2","kind":"substituted"}\n')
-        with swapped_after_hashing({source:b'{"run":"r2","kind":"swapped"}\n'}):self.invoke_load(job,on_run=on_run)
-        selected=b''.join(l for l in TWO_RUNS.encode().splitlines(keepends=True) if b'"r2"' in l)
+                    source.write_text(ndjson(event(golden.TURN_CLOSED,run='r2',sequence='98')))
+        with swapped_after_hashing({source:ndjson(event(golden.TURN_CLOSED,run='r2',sequence='99')).encode()}):self.invoke_load(job,on_run=on_run)
+        selected=''.join(l for l in TWO_RUNS.splitlines(keepends=True) if json.loads(l)['run']=='r2').encode()
         self.assertNotEqual(seen['derive'][0],source)
         self.assertEqual(seen['derive'],seen['preload'])
         self.assertEqual(seen['derive'][1],selected)
+
+    def test_derived_artifact_is_read_as_derive_renders_it(self):
+        # #683 finding 13: derive quotes the artifact (golden's real capture).
+        # The check parses the value, so the real form passes and a declaration
+        # naming another model, or no parseable model, refuses.
+        self.assertEqual(payload.declared_artifacts(golden.DERIVE_DECLARATION),[golden.DERIVE_ARTIFACT])
+        self.assertEqual(payload.declared_artifacts(derived(self.model,'/sink')),[str(self.model)])
+        self.assertEqual(payload.declared_artifacts(f'      artifact: {self.model}\n'),[None])
+        job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
+        job.update(kind='refeed',source_trace=str(source),source_run='r2');self.plan['files'][str(source)]=order.sha(source)
+        self.invoke_load(job)
+        shutil.rmtree(self.root/'sinks/job');shutil.rmtree(self.root/'snapshots/job')
+        with self.assertRaisesRegex(RuntimeError,'derived-artifact'):self.invoke_load(job,artifact=False)
 
     def test_replay_refuses_a_run_the_trace_does_not_hold(self):
         job=self.setup_load();source=self.base/'source';source.write_text(TWO_RUNS)
@@ -604,7 +658,7 @@ class DriverTests(unittest.TestCase):
         self.plan['deposit']=str(self.root/'deposit');Path(self.plan['deposit']).mkdir()
         self.free=ReadingTests().rec()
         self.free.update(emission='essay',declared_seed=7,weights_hash=self.plan['tuple']['weights_sha256'],input_tokens=10)
-        self.probe=SimpleNamespace(base=SimpleNamespace(gate_turn=lambda *a,**kw:dict(kind='answered',run='r')),
+        self.probe=SimpleNamespace(base=SimpleNamespace(gate_turn=lambda *a,**kw:dict(json.loads(golden.GATE_ANSWERED),run='r')),
                                    ESSAY_PROMPT='fixed',extract_run=lambda rows:copy.deepcopy(self.free),
                                    measured_events=lambda rows,run:rows,reading_two=lambda a,b:dict(positions_compared=1),
                                    reading_one=lambda a,b:{},first_divergence=lambda a,b:0)
@@ -613,8 +667,8 @@ class DriverTests(unittest.TestCase):
         return dict(id='job',kind=kind,stack='B1',seed=7,source_trace=str(self.source),source_run='r')
 
     def close(self,replay=False):
-        if replay:return [dict(kind='replay.closed',run='r',payload=dict(outcome=dict(kind='certified')))]
-        return [dict(kind='model.measurement',run='r'),dict(kind='turn.closed',run='r')]
+        if replay:return [event(golden.REPLAY_CLOSED_CERTIFIED,run='r')]
+        return [event(golden.MODEL_MEASUREMENT,run='r'),event(golden.TURN_CLOSED,run='r')]
 
     def cleanup_job(self):
         import shutil
@@ -633,13 +687,13 @@ class DriverTests(unittest.TestCase):
             if fault=='weights':self.free['weights_hash']='bad'
             rows=[] if fault=='single-turn' else self.close()
             gate=self.probe.base.gate_turn
-            if fault=='answer':self.probe.base.gate_turn=lambda *a,**k:dict(kind='refused')
+            if fault=='answer':self.probe.base.gate_turn=lambda *a,**k:json.loads(golden.GATE_REFUSED)
             with patch('tb_driver.until_closed',return_value=rows),self.assertRaises(order.Refused):driver.measure(self.plan,j,self.probe)
             self.probe.base.gate_turn=gate;self.free=old;self.cleanup_job()
 
     def test_refeed_requires_close_measurement_and_source(self):
         j=self.job('refeed')
-        self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
         with patch('tb_driver.until_closed',return_value=self.close(True)):
             result=driver.measure(self.plan,j,self.probe)
             self.assertTrue(json.loads(result.read_text())['exact'])
@@ -647,12 +701,12 @@ class DriverTests(unittest.TestCase):
         for fault in ['close','outcome','measurement','source-hash','source-measurement']:
             rows=self.close(True)
             if fault=='close':rows=rows*2
-            if fault=='outcome':rows[0]['payload']['outcome']['kind']='refused'
+            if fault=='outcome':rows[0]['payload']['outcome']=dict(kind='abandoned',reason=dict(kind='replay_ask_unanswered'))
             if fault=='source-hash':self.plan['files'][str(self.source)]='bad'
-            if fault=='source-measurement':self.source.write_text('{"run":"r","kind":"other"}\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+            if fault=='source-measurement':self.source.write_text(ndjson(event(golden.TURN_CLOSED,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
             self.probe.measured_events=(lambda rows,run:None) if fault=='measurement' else (lambda rows,run:rows)
             with patch('tb_driver.until_closed',return_value=rows),self.assertRaises((order.Refused,KeyError)):driver.measure(self.plan,j,self.probe)
-            self.cleanup_job();self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+            self.cleanup_job();self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
 
     def test_assess_control_pass_and_falsifiers(self):
         arm=self.plan['arms'][0]
@@ -708,7 +762,7 @@ class DriverTests(unittest.TestCase):
         # #683 finding 11: a reviewed trace from other weights, or a replay
         # that ran them, must not be read as a device effect.
         j=self.job('refeed')
-        self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
         for side in ['source','replay']:
             with self.subTest(side=side):
                 other=dict(copy.deepcopy(self.free),weights_hash='f'*64)
@@ -730,10 +784,10 @@ class DriverTests(unittest.TestCase):
 
     def test_source_record_parses_the_bytes_it_hashed(self):
         j=self.job('refeed');seen=[]
-        self.source.write_text(json.dumps(dict(kind='model.measurement',run='r'))+'\n');self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
         self.probe.extract_run=lambda rows:seen.append(rows) or copy.deepcopy(self.free)
-        with swapped_after_hashing({self.source:b'{"kind":"model.measurement","run":"r","swapped":true}\n'}):driver.source_record(self.plan,j,self.probe)
-        self.assertEqual(seen,[[dict(kind='model.measurement',run='r')]])
+        with swapped_after_hashing({self.source:ndjson(event(golden.MODEL_MEASUREMENT,run='r',sequence='99')).encode()}):driver.source_record(self.plan,j,self.probe)
+        self.assertEqual(seen,[[event(golden.MODEL_MEASUREMENT,run='r')]])
 
     def test_entry_refuses_root(self):
         with patch('sys.argv',['driver','--state',str(self.statepath),'TB0']),patch('tb_driver.os.geteuid',return_value=0),patch('tb_driver.drive'),contextlib.redirect_stderr(io.StringIO()):

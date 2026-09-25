@@ -181,6 +181,12 @@ python3 -B perturb.py > /tmp/tb-perturbations.json
 ```
 
 The tests use temporary files, a temporary Unix socket and stub admin/GPU calls.
+**Every stub is built from `golden.py`**, never from what the code expects: each
+constant there is a real tool's output captured unprivileged on this box, a
+line copied from a real trace, or a shape read from the tool's source at
+`e69916a`, with its command or file and lines, and a sha256, beside it. A stub
+written to its own code's assumption is how derive's quoted artifact reached
+review as a refusal every re-feed would hit on the device.
 They make no installed-stack change and need no root. The mutation command copies
 scripts to a temporary directory, runs the unmodified suite there first and
 refuses with `BASELINE FAILED` unless it passes, then removes and inverts every

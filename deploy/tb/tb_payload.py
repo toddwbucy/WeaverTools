@@ -208,6 +208,21 @@ def installed(plan, plan_sha256):
         verify_stack(plan, stack, ROOT / 'stacks' / stack)
 
 
+def declared_artifacts(text):
+    """Every model-binding artifact a derived declaration names. derive renders
+    the value as a JSON string (weaver-analysis declare.rs at e69916a, lines
+    183-185), so it is parsed as one; a value that is not JSON names nothing."""
+    found = []
+    for line in text.splitlines():
+        key, _, value = line.strip().partition(':')
+        if key == 'artifact':
+            try:
+                found.append(json.loads(value))
+            except ValueError:
+                found.append(None)
+    return found
+
+
 def declaration(plan, job, sink):
     t = plan['tuple']
     return (f'session: tb-{job["id"]}\nspu-instruction:\n  decoder:\n    model-binding:\n'
@@ -264,7 +279,7 @@ def load(plan, job):
     run([analysis, 'derive', str(source), '--devices', '0', '--sink', str(sink),
          '--field-depth', '200', '--surprisal', '--out', str(target)], env=environment(stack))
     # Derive preserves the recorded artifact; never rewrite it to evade identity.
-    need('derived-artifact', f'artifact: {MODEL}' in target.read_text())
+    need('derived-artifact', declared_artifacts(target.read_text()) == [str(MODEL)])
     with (directory / 'load.log').open('w') as log:
         loader = subprocess.Popen(admin(stack, 'load'), stdin=subprocess.DEVNULL,
                                   stdout=log, stderr=subprocess.STDOUT, env=environment(stack))
