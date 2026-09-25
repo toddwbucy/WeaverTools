@@ -48,10 +48,25 @@ def ldd_output(root, cuda_dir):
     return '\n'.join(lines) + '\n'
 
 
-def derived(artifact, sink):
-    """golden's real derive output naming artifact and sink."""
-    return (golden.DERIVE_DECLARATION.replace(json.dumps(golden.DERIVE_ARTIFACT), json.dumps(str(artifact)))
+def derived(artifact, sink, held=None, **values):
+    """golden's real derive output naming artifact and sink. With held, a plan
+    tuple, it carries that tuple's seed, identity, context capacity and token
+    cap in the form derive renders them (compact JSON); values override one."""
+    text = (golden.DERIVE_DECLARATION.replace(json.dumps(golden.DERIVE_ARTIFACT), json.dumps(str(artifact)))
             .replace('{SINK}', str(sink)))
+    if held is None:
+        return text
+    fields = {'seed': held['seeds'][0], 'context-capacity': held['context_capacity'],
+              'max-tokens-per-turn': held['max_tokens'],
+              'identity': [{'role': 'system', 'content': [{'type': 'text', 'text': held['identity']}]}]}
+    fields.update(values)
+    lines = []
+    for line in text.splitlines():
+        key = line.strip().partition(':')[0]
+        if key in fields:
+            line = line[:line.index(key)] + key + ': ' + json.dumps(fields[key], separators=(',', ':'))
+        lines.append(line)
+    return '\n'.join(lines) + '\n'
 
 
 @contextlib.contextmanager
@@ -531,6 +546,23 @@ class PayloadTests(unittest.TestCase):
             return real(src,dst,*args,**kw)
         with patch('tb_payload.shutil.copytree',side_effect=racing),self.assertRaisesRegex(RuntimeError,'installed-stack-hash'):self.provision()
 
+    def test_served_model_must_be_in_custody(self):
+        # #683 finding 19: a model already present is accepted only as a
+        # regular, single-named file only the payload's user can write.
+        self.stacks();src=Path(self.plan['model_source'])
+        for fault in ['symlink','hard-link','group-writable']:
+            with self.subTest(fault=fault):
+                if fault=='symlink':self.model.symlink_to(src)
+                if fault=='hard-link':os.link(src,self.model)
+                if fault=='group-writable':self.model.write_bytes(src.read_bytes());self.model.chmod(0o664)
+                try:
+                    with self.assertRaisesRegex(RuntimeError,'existing-model-custody'):self.provision()
+                    self.assertFalse(self.root.exists())
+                finally:self.model.unlink()
+        self.provision();payload.installed(self.plan,'d'*64)
+        self.model.unlink();self.model.symlink_to(src)
+        with self.assertRaisesRegex(RuntimeError,'installed-model-custody'):payload.installed(self.plan,'d'*64)
+
     def test_installed_copy_holds_exactly_the_reviewed_bytes(self):
         self.stacks();self.provision();payload.installed(self.plan,'d'*64)
         installed=self.root/'stacks/B1/bin/pyworker'
@@ -560,7 +592,7 @@ class PayloadTests(unittest.TestCase):
         self.root.mkdir();(self.root/'sinks').mkdir();(self.root/'agents/B1').mkdir(parents=True)
         return dict(id='job',kind='free',stack='B1',seed=7)
 
-    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None):
+    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None,declared=None):
         default_gpu=golden.NVIDIA_SMI.strip()
         default_ldd=ldd_output(self.base,f'{self.root}/stacks/B1/cuda-lib')
         def run(argv,**kwargs):
@@ -568,7 +600,7 @@ class PayloadTests(unittest.TestCase):
             if 'nvidia-smi' in argv[0]:return subprocess.CompletedProcess(argv,0,default_gpu if gpu is None else gpu,'')
             if 'ldd' in argv[0]:return subprocess.CompletedProcess(argv,0,default_ldd if ldd is None else ldd,'')
             if 'derive' in argv:
-                Path(argv[-1]).write_text(derived(self.model if artifact else golden.DERIVE_ARTIFACT,argv[argv.index('--sink')+1]))
+                Path(argv[-1]).write_text(derived(self.model if artifact else golden.DERIVE_ARTIFACT,argv[argv.index('--sink')+1],self.plan['tuple'],**(declared or {})))
             return subprocess.CompletedProcess(argv,0,'','')
         sockets=[]
         def loader(*args,**kw):

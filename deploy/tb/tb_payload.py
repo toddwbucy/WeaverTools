@@ -149,7 +149,10 @@ def provision(plan, plan_sha256):
     else:
         raise RuntimeError('bravo account already exists: review its custody before provisioning')
     need('model-source', sha(plan['model_source']) == plan['tuple']['weights_sha256'])
-    if MODEL.exists():
+    if MODEL.exists() or MODEL.is_symlink():
+        # Accepted only as a file already in custody; a link or a shared name
+        # to operator-writable bytes would pass the hash and change after it.
+        need('existing-model-custody', model_custody())
         need('existing-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     # Verify every input before the first write; an interrupted provision is
     # retained as a refusal for the seat, never silently resumed or removed.
@@ -201,8 +204,18 @@ def provision(plan, plan_sha256):
     print('Provisioned bravo only. Start a fresh operator shell with the weaver-bravo group before the driver.')
 
 
+def model_custody():
+    """The served model is a regular file only this payload's user can change:
+    not a link, one name, not group- or world-writable, in a directory held the
+    same way. A hash only binds bytes nobody else can rewrite before load."""
+    entry, parent = os.lstat(MODEL), os.stat(MODEL.parent)
+    return (stat.S_ISREG(entry.st_mode) and entry.st_nlink == 1 and entry.st_uid == os.geteuid() and
+            not entry.st_mode & 0o022 and parent.st_uid == os.geteuid() and not parent.st_mode & 0o022)
+
+
 def installed(plan, plan_sha256):
     need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == plan_sha256)
+    need('installed-model-custody', model_custody())
     need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     for stack in ['B1', 'B2']:
         verify_stack(plan, stack, ROOT / 'stacks' / stack)
