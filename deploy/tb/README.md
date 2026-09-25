@@ -109,6 +109,22 @@ requires the review seat's ruling, not a blind retry.
 python3 handoffs/tb/tb_driver.py --state handoffs/tb-evidence/tb-state.json TB0
 ```
 
+After `finish:TB-k` the coding seat records the report in a fresh process, which
+takes its own lease the way an arm's start does. It is refused while any driver
+lease is live, and until every earlier step, each arm's `finish:` included, is
+recorded with its evidence hash intact:
+
+```
+python3 handoffs/tb/tb_driver.py --state handoffs/tb-evidence/tb-state.json report REPORT.json
+```
+
+The cursor then rests on `review`, and `next` prints `WAITING ON: review seat -
+review`. **The review is the review seat's own edit of the state file, never a
+command of this program**, as approval is. Holding the coordinator lock
+(`flock handoffs/tb-evidence/tb-state.lock`), the review seat records
+`done.review` as `{status: SUCCESS, path, sha256}` naming its review evidence and
+advances `cursor` by one. `next` then prints `COMPLETE`.
+
 The same verb takes TB-d or TB-k only when due. This is documentation for after
 approval, not a request to run it now. The driver appends `probe.jsonl`, preserves
 per-run and per-refeed readings, and writes each arm's result separately.

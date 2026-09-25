@@ -176,6 +176,46 @@ class Fixture(unittest.TestCase):
             self.state['driver']['pid']=-1
             with self.assertRaises(order.Refused):self.o.guard(self.state,self.plan,'measure:B1-s451234785645-n1','coding seat')
 
+    def test_report_executor(self):
+        # #683 finding 12, ruling (a): report runs in a fresh process with its
+        # own lease, only after every arm's finish: evidence is recorded and
+        # intact, and hands the cursor to the review seat.
+        report=self.root/'report.json';report.write_text('{}')
+        self.due('finish:TB-k');self.state['driver']=None;self.save()
+        with self.assertRaisesRegex(order.Refused,'step-order'):self.o.coding('report',report)
+        self.due('report');done=self.state['done'].pop('finish:TB-k');self.state['driver']=None;self.save()
+        with self.assertRaisesRegex(order.Refused,'prior-success'):self.o.coding('report',report)
+        self.state['done']['finish:TB-k']=done;Path(done['path']).write_text('changed');self.save()
+        with self.assertRaisesRegex(order.Refused,'prior-evidence'):self.o.coding('report',report)
+        Path(done['path']).write_text('success\n');self.due('report')
+        with self.assertRaisesRegex(order.Refused,'no-live-driver'):self.o.coding('report',report)
+        self.state['driver']=None;self.save()
+        with self.assertRaisesRegex(order.Refused,'report-evidence'):self.o.coding('report',self.root/'absent.json')
+        self.o.coding('report',report)
+        after=self.o.read();steps=[s for s,_ in order.schedule(self.plan)]
+        self.assertEqual(after['cursor'],steps.index('review'))
+        self.assertEqual((after['done']['report']['path'],after['driver']['pid']),(str(report),os.getpid()))
+        with contextlib.redirect_stdout(io.StringIO()) as out:self.o.operator()
+        self.assertEqual(out.getvalue(),'WAITING ON: review seat - review\n')
+
+    def test_next_reports_completion_after_the_review(self):
+        steps=order.schedule(self.plan);self.due(steps[-1][0])
+        p=self.root/'review.log';p.write_text('PASS\n')
+        self.state['done']['review']=dict(status='SUCCESS',path=str(p),sha256=order.sha(p));self.state['cursor']=len(steps);self.save()
+        with contextlib.redirect_stdout(io.StringIO()) as out:self.o.operator()
+        self.assertTrue(out.getvalue().startswith('COMPLETE:'))
+        self.assertNotIn('refusals',self.o.read())
+
+    def test_driver_report_command(self):
+        report=self.root/'report.json';report.write_text('{}');self.due('report');self.state['driver']=None;self.save()
+        with patch('sys.argv',['driver','--state',str(self.statepath),'report']),contextlib.redirect_stderr(io.StringIO()) as err:
+            self.assertEqual(driver.main(),1)
+        self.assertIn('report-path',err.getvalue())
+        self.state['halt']=None;self.save()
+        with patch('sys.argv',['driver','--state',str(self.statepath),'report',str(report)]),contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(driver.main(),0)
+        self.assertIn('report',self.o.read()['done'])
+
     def test_wait_succeeds_only_with_receipt_and_own_live_lease(self):
         self.due('measure:B1-s451234785645-n1')
         self.o.wait('measure:B1-s451234785645-n1',timeout=0)

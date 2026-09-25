@@ -216,12 +216,20 @@ def drive(order, arm_name):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--state', required=True)
-    parser.add_argument('arm', choices=['TB0', 'TB-d', 'TB-k'])
+    parser.add_argument('arm', choices=['TB0', 'TB-d', 'TB-k', 'report'])
+    parser.add_argument('path', nargs='?', help='report only: the report file to record')
     args = parser.parse_args()
     order = Order(args.state)
     try:
         check('driver-not-root', os.geteuid() != 0)
-        drive(order, args.arm)
+        if args.arm == 'report':
+            # Due only once every arm's finish: evidence is recorded and still
+            # hash-intact; the review that follows is the review seat's edit.
+            check('report-path', bool(args.path))
+            order.coding('report', Path(args.path).resolve())
+            print(f'DONE: report {args.path}; NEXT: review seat - review', flush=True)
+        else:
+            drive(order, args.arm)
     except (Exception, KeyboardInterrupt) as error:
         try:
             order.fail(error)

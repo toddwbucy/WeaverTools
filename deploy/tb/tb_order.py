@@ -63,6 +63,13 @@ def live(lease):
     return bool(lease and ticks(lease['pid']) == lease['ticks'])
 
 
+def leases(step):
+    """Steps a fresh coding-seat process takes: an arm's start, and the report
+    after the last arm's driver has exited. Every other coding-seat step must
+    come from the process holding the lease."""
+    return step.startswith('start:') or step == 'report'
+
+
 def schedule(plan):
     steps = [('provision', 'operator')]
     for arm in plan['arms']:
@@ -177,7 +184,7 @@ class Order:
         self.previous(s, plan)
         if requested.startswith(('load:', 'measure:', 'unload:', 'settle:')):
             check('driver-live', live(s.get('driver')))
-        if seat == 'coding seat' and not requested.startswith('start:'):
+        if seat == 'coding seat' and not leases(requested):
             check('driver-owner', s.get('driver', {}).get('pid') == os.getpid())
 
     def finish(self, s, step, evidence):
@@ -211,6 +218,9 @@ class Order:
                 print('WAITING ON: review seat - lift HOLD and record approval hashes')
                 return
             plan = self.approved(s)
+            if requested == 'next' and s.get('cursor') == len(schedule(plan)):
+                print('COMPLETE: every step is recorded, the review seat\'s review included')
+                return
             due, seat = self.due(s, plan)
             if requested == 'next' and seat != 'operator':
                 print(f'WAITING ON: {seat} - {due}')
@@ -238,9 +248,11 @@ class Order:
             s = self.read()
             plan = self.approved(s)
             self.guard(s, plan, step, 'coding seat')
-            if step.startswith('start:'):
+            if leases(step):
                 check('no-live-driver', not live(s.get('driver')))
                 s['driver'] = dict(pid=os.getpid(), ticks=ticks(os.getpid()))
+            if step == 'report':
+                check('report-evidence', Path(evidence).is_file())
             self.finish(s, step, evidence)
 
     def wait(self, step, timeout=14400, poll=1):
