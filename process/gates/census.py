@@ -390,8 +390,38 @@ def members():
     return found
 
 
+def probes():
+    """Every probe's `code/` under `experiments/`, per the Document Format's
+    container entry of 2026-09-25, read like a crate's tree.
+
+    **Found by walking and not by a fixed-depth glob**, so a `code/` one level
+    off the documented depth is read rather than silently skipped, which is
+    the clean-zero failure the enforcement section calls the most expensive
+    line it holds. A `results/` is never descended, answering to the other
+    clock. A Spec with no `code/` beside it is a legal state, the documents
+    landing ahead of the code, so nothing here refuses.
+    """
+    found = []
+    top = os.path.join(ROOT, "experiments")
+    for base, dirs, _ in os.walk(top):
+        dirs[:] = sorted(d for d in dirs if d not in (".git", "results"))
+        if os.path.basename(base) == "code":
+            found.append(base)
+            dirs[:] = []
+    return found
+
+
 def docs():
-    for base, dirs, files in os.walk(os.path.join(ROOT, "docs")):
+    yield from walk_docs(os.path.join(ROOT, "docs"), prune=())
+    # **An experiment's documents sit beside its code**: the charter at the
+    # experiment's root and each probe's Spec at the probe's. A `results/` is
+    # pruned here and nowhere else, which is exactly the set `.hadesignore`
+    # excludes with `experiments/**/results/`: one rule, two readers, one set.
+    yield from walk_docs(os.path.join(ROOT, "experiments"), prune=("results",))
+
+
+def walk_docs(top, prune):
+    for base, dirs, files in os.walk(top):
         # **Pruned as `sources` prunes it.** A frozen copy of a Spec declares
         # every node the live one does, so ingesting both files each id under
         # duplicates, files every perturbation it declares under uncited, and
@@ -402,7 +432,7 @@ def docs():
         # unsorted walk lets two seats baseline different strings from the
         # same tree - the machine-dependent gate the enforcement section
         # already records for the clippy count.
-        dirs[:] = sorted(d for d in dirs if d != ".git")
+        dirs[:] = sorted(d for d in dirs if d != ".git" and d not in prune)
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)
@@ -523,7 +553,11 @@ def sources():
     # exactly when a new source file is written and not yet added. Untracked
     # here means untracked and not ignored, so a build product stays out.
     seen = set(git()) | set(git("--others", "--exclude-standard"))
-    inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in members())
+    # **A probe's `code/` is inside and its `results/` is not**, per the
+    # Document Format's container entry: the code answers to the gate's clock
+    # and the results to their own.
+    roots = list(members()) + probes()
+    inside = tuple(os.path.relpath(m, ROOT) + os.sep for m in roots)
     for rel in sorted(seen):
         if not rel.startswith(inside):
             continue

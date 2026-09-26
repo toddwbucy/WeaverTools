@@ -50,11 +50,12 @@
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][-_]*/
 **/_[Aa][Rr][Cc][Hh][Ii][Vv][Ee][SsDd][-_]*/
 
-# **Experiments are a separate corpus and left this tree** on 2026-09-13, per
-# Working Process section 5 and issue #564. Kept after the departure for the
-# same reason the archive patterns are kept after the deletion: the rule is
-# about the class and not about today's directory.
-experiments/
+# **A probe's results are dated records and are not ingested**, per Working
+# Process section 5 as amended 2026-09-25: `experiments/` returned for the
+# randomness-tuple experiment, each probe's Spec and `code/` read like a crate's
+# and its `results/` answering to the other clock. The earlier form of this
+# stanza excluded `experiments/` whole, from the departure of 2026-09-13.
+experiments/**/results/
 
 # **The process documents govern the corpus and are not part of it.** They are
 # tracked here and excluded from the ingest, because a gate reading its own
@@ -63,7 +64,8 @@ experiments/
 # left the repository. They had not, and the sentence framed a live rule as a
 # legacy safety net a later act could delete. **The rule is current, and it
 # does not depend on where the documents sit**: if they later leave the tree
-# the way experiments/ did, this entry stays, so a seat with copies on disk
+# the way experiments/ did between 2026-09-13 and 2026-09-25, this entry
+# stays, so a seat with copies on disk
 # does not ingest them. Delete the rule only when no seat has the documents.
 #
 # **The contents are excluded and not the directory, because `gates/` and

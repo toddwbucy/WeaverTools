@@ -113,6 +113,9 @@ declares its own container.
     docs/crates/weaver-<n>/weaver-<m>/  a member crate of that domain root
     docs/crates/contracts/              contracts, and the material they draw
     docs/crates/weaver-<n>/Loops/       workflow documents of that domain root
+    experiments/<e>/README.md           the charter of one experiment, its hypothesis
+    experiments/<e>/<arm>/              one variable of that hypothesis
+    experiments/<e>/<arm>/<probe>/      one measurement: its Spec, code/ and results/
 
 A document under `docs/crates/contracts/` is a contract by its `-contract` suffix,
 named for its parties. A document there without the suffix is drawn material, stated
@@ -160,6 +163,20 @@ naming that `contracts/` gets from its absent prefix. A stub leaves the tree in 
 act that cuts its draft, per Working Process section 2 as ruled 2026-07-31, the draft
 landing at the `.md` name beside the suffix's tracked deletion, so no consumed stub
 survives to be walked and history is the archive.
+
+**An experiment carries its own documents beside its code**, per the operator's
+rulings of 2026-09-25 recorded at Working Process section 5. `experiments/<e>/` is
+the container of one experiment, a hypothesis, and its root `README.md` is the
+charter that registers it: what is declared, what is predicted, what would falsify
+it, and which probe answers for each part. Beneath it an arm is one variable the
+hypothesis names, and a probe under an arm is one measurement of that variable,
+holding its Spec as `<probe>-Spec.md`, its `code/`, which the census reads and holds
+to headers exactly as it holds a crate's units, and its `results/`, which holds the
+dated records the probe produces and which no gate and no ingest reads, on the
+two-clocks reason that section 5 of the Working Process states. The mirror rule does
+not reach it, since the documents and the code share one tree rather than two. The
+first experiment is `experiments/randomness-tuple/`, its first arm `device/`, and its
+first probe `device/blackwell/`.
 
 **The project documents sit outside `docs/` rather than under it.** Working Process
 section 2 puts them outside the document set and outside the mapping, so a mapper that
@@ -213,7 +230,8 @@ the domain parent, which is the apex for a domain root and the root's charter fo
 member. The header is a reader's convenience and the edge governs, so a disagreement
 between them is a defect in the header. It is kept rather than dropped because a
 charter opened on its own should say what it belongs to without a directory listing to
-hand.
+hand. An experiment's charter carries none, having no parent, as the apex carries
+none, and a probe's Spec names that charter.
 
 **A crate outside the agent boundary names the suite.** `weaver-agents-PRD` section 0
 rules that such a crate does not refine that document and parents to the suite, and that
@@ -240,6 +258,25 @@ than a parent. Issue #637 carries the measurement and the question.
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One
 PRD, one Spec, and as many contracts as it has seams.
+
+**experiment.** One node per experiment, declared by its charter, the root
+`README.md` of `experiments/<e>/`, which is the primary document of the experiment
+and carries no `Parent:` and no `parent` edge, as the apex carries none. The charter
+is the one document whose filename is not its Document ID, `<e>-PRD`, because the
+operator ruled that a reader opens the README first, and the ID keeps the kind's
+name. The charter registers the hypothesis and every prediction and falsifier before
+any probe runs, and the experiment node is the one record it authors.
+
+**probe.** A code root under an experiment's arm, declared by its own Spec, which
+asserts the probe's records the way a crate's Spec asserts the crate's, per the
+operator's rulings of 2026-09-25. The probe declares one `parent` edge to its
+experiment's node, and the Spec's `Parent:` names the charter, so the header and the
+edge agree as section 3 requires of every other pair. The probe's Spec states what
+its code enforces. A Spec belongs to any code that requires one, and
+a probe's code requires one for the same reason a crate's does, the phase-three rule
+that no code lands without a ratified document. The charter and the Spec are the two
+document kinds an experiment produces, and neither is a contract, an experiment
+having no seams of its own.
 
 **artifact.** A durable thing produced or consumed by crates without a call between
 them. The agent config, the session record, the model artifact. Artifacts are
@@ -562,9 +599,9 @@ Between a crate and what it owns or touches:
   the owning crate defines, and the artifact holds it. Without this the config's
   fields are drawable in prose and unaddressable in the graph.
 - `writes` and `reads`, from a crate to an artifact.
-- `asserts`, from a crate to an assertion node. The Spec declares the assertion
-  node with a `node` record beside the edge, at the clause the assertion names,
-  the same shape `defines` takes at a definition site.
+- `asserts`, from a crate or a probe to an assertion node. The Spec declares
+  the assertion node with a `node` record beside the edge, at the clause the
+  assertion names, the same shape `defines` takes at a definition site.
 
 **A Spec states records and is not their source, which is the shape a PRD already
 has.** `asserts` runs from the crate rather than from the document, so a Spec needs

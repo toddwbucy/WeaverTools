@@ -26,9 +26,9 @@ batch takes when it moves between seats. This says how we write.
   boundaries, is electing and not accumulating. Each document kind carries the
   ones it uses: a process document carries Version and Parent and no state,
   per Working Process section 2, a corpus document carries Status with the
-  identification fields, the apex carries no Parent because it has none, and a
-  workflow document's version and date ride its Status line. The rule binds
-  what accumulates, not which fields a kind elects.
+  identification fields, the apex and an experiment's charter carry no Parent
+  because they have none, and a workflow document's version and date ride its
+  Status line. The rule binds what accumulates, not which fields a kind elects.
   The change narrative lives in the commit that makes the change, and git is the
   archive, which is the stub ruling of 2026-07-31 applied to headers: history is
   the archive and the tree is not. Attributions inside the body stay, because a
