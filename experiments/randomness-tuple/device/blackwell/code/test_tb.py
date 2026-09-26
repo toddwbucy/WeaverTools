@@ -1357,14 +1357,41 @@ class HoldLiftTests(unittest.TestCase):
         with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.assertEqual(seen,[])
         sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
+        # The measure receipt's evidence is the run's result, which recorded
+        # the sink at the close: the state's copy is held to it.
+        result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
+        def record(state_copy,evidence=result):
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(evidence),sha256=order.sha(evidence),sink=state_copy)
+            self.state['halt']=None;self.save()
         # Perturbation: drop the hex check and "g"*64 reaches root.
         for fault in [dict(sink,path='/elsewhere/trace.ndjson'),dict(sink,length=0),dict(sink,length='512'),dict(sink,sha256='short'),
                       dict(sink,sha256='g'*64),dict(sink,sha256='A'*64)]:
-            self.state['done'][f'measure:{source}']['sink']=fault;self.state['halt']=None;self.save()
+            record(fault)
             with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
-        self.state['done'][f'measure:{source}']['sink']=sink;self.state['halt']=None;self.save()
+        record(sink)
         with contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.assertEqual(seen,[('512','a'*64)])
+
+    def test_the_states_sink_copy_is_held_to_the_verified_result(self):
+        # #690 C2.11, #693's fourth pass: a state edited between the measure
+        # and the load cannot hand root another prefix. Perturbation: drop the
+        # comparison with the verified result and the substituted copy, well
+        # formed and at the right path, reaches root.
+        source='B1-s451234785645-n1';load='load:own-B1-s451234785645-n1'
+        self.due(load);seen=[]
+        def runner(s,step,log,*sink):seen.append(sink);log.write_text('SUCCESS: '+step+'\n');return 0
+        sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
+        result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
+        other=dict(sink,length=640,sha256='b'*64)
+        for name,state_copy,change in [('the state copy differs from the result',other,None),
+                                       ('the result changed after its receipt',sink,lambda:order.atomic(result,dict(name=source,sink=other)))]:
+            with self.subTest(name):
+                order.atomic(result,dict(name=source,sink=sink))
+                self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=state_copy)
+                self.state['halt']=None;self.save()
+                if change:change()
+                with self.assertRaisesRegex(order.Refused,'source-sink-recorded|prior-evidence'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        self.assertEqual(seen,[],'root is handed nothing')
 
     def test_root_is_handed_the_sink_after_the_step(self):
         seen=[]

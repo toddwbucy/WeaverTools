@@ -345,13 +345,24 @@ class Order:
         job = next(j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == step.split(':', 1)[1])
         if not job.get('source_job'):
             return ()
-        sink = s.get('done', {}).get(f'measure:{job["source_job"]}', {}).get('sink') or {}
+        done = s.get('done', {}).get(f'measure:{job["source_job"]}', {})
+        sink = done.get('sink') or {}
         expected = str(Path(plan['install_root']) / 'sinks' / job['source_job'] / 'trace.ndjson')
-        # Refused here, before root is invoked, so malformed state creates
-        # nothing under the install root: a digest is 64 lowercase hex.
+        # **The state's copy is checked against evidence this step verifies
+        # itself** (#690 C2.11, the custody rule of section 5): the measure
+        # result is read once and parsed only after its bytes match the
+        # receipt's digest, and the sink it recorded at the run's close must
+        # be the state's copy. Refused here, before root is invoked, so a
+        # malformed or substituted state creates nothing under the install
+        # root: a digest is 64 lowercase hex.
+        try:
+            data = Path(done['path']).read_bytes()
+            recorded = json.loads(data).get('sink') if hashlib.sha256(data).hexdigest() == done.get('sha256') else None
+        except (KeyError, OSError, ValueError, AttributeError):
+            recorded = None
         check('source-sink-recorded', sink.get('path') == expected and type(sink.get('length')) is int
               and sink['length'] > 0 and isinstance(sink.get('sha256'), str)
-              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None)
+              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None and recorded == sink)
         return (str(sink['length']), sink['sha256'])
 
     def coding(self, step, evidence, sink=None):
