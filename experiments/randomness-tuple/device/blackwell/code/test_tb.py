@@ -50,6 +50,17 @@ def event(line, **fields):
     return e
 
 
+def run_events(run, *extra, **fields):
+    """One run's singular events as a real run carries them: request, output,
+    measurement, each once, plus extra; fields override the envelope."""
+    return [event(golden.MODEL_REQUEST, run=run, **fields), event(golden.MODEL_OUTPUT, run=run, **fields),
+            event(golden.MODEL_MEASUREMENT, run=run, **fields), *extra]
+
+
+def trace(run, *extra, **fields):
+    return ndjson(*run_events(run, *extra, **fields))
+
+
 def ndjson(*events):
     """Events as the recorder writes them: compact JSON, one per line."""
     return ''.join(json.dumps(e, separators=(',', ':')) + '\n' for e in events)
@@ -113,10 +124,10 @@ class Fixture(unittest.TestCase):
         self.plan = prepare.template(self.root, 'todd', 1000)
         self.plan['rulings'] = {k: f'https://github.com/toddwbucy/WeaverTools/issues/679#issuecomment-{n}' for n, k in enumerate(self.plan['rulings'], 1)}
         self.source = self.root / 'source.ndjson'
-        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r')))
+        self.source.write_text(trace('r'))
         # One trace per source device, as the historical cells recorded them.
         self.ada_source = self.root / 'ada-source.ndjson'
-        self.ada_source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r-ada')))
+        self.ada_source.write_text(trace('r-ada'))
         self.plan['files'] = {str(p): order.sha(p) for p in [self.source, self.ada_source]}
         self.plan['arms'][1]['jobs'] = [dict(id=cell, source_cell=cell, kind='refeed', stack='B1',
                                             source_trace=str(trace), source_run=run)
@@ -960,8 +971,8 @@ class DriverTests(unittest.TestCase):
 
     def close(self,replay=False):
         # A replay run carries its one measurement and its close, as a real one does.
-        if replay:return [event(golden.MODEL_MEASUREMENT,run='r'),event(golden.REPLAY_CLOSED_CERTIFIED,run='r')]
-        return [event(golden.MODEL_MEASUREMENT,run='r'),event(golden.TURN_CLOSED,run='r')]
+        if replay:return run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r'))
+        return run_events('r',event(golden.TURN_CLOSED,run='r'))
 
     def cleanup_job(self):
         import shutil
@@ -978,15 +989,16 @@ class DriverTests(unittest.TestCase):
             old=copy.deepcopy(self.free)
             if fault=='seed':self.free['declared_seed']=8
             if fault=='weights':self.free['weights_hash']='bad'
-            rows=[] if fault=='single-turn' else self.close()
+            # A run with everything but its measurement, so single-turn is the guard that refuses.
+            rows=[e for e in self.close() if e['kind']!='model.measurement'] if fault=='single-turn' else self.close()
             gate=self.probe.base.gate_turn
             if fault=='answer':self.probe.base.gate_turn=lambda *a,**k:json.loads(golden.GATE_REFUSED)
-            with patch('tb_driver.until_closed',return_value=rows),self.assertRaises(order.Refused):driver.measure(self.plan,j,self.probe)
+            with patch('tb_driver.until_closed',return_value=rows),self.assertRaisesRegex(order.Refused,'single-turn' if fault=='single-turn' else '.'):driver.measure(self.plan,j,self.probe)
             self.probe.base.gate_turn=gate;self.free=old;self.cleanup_job()
 
     def test_refeed_requires_close_measurement_and_source(self):
         j=self.job('refeed')
-        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
         with patch('tb_driver.until_closed',return_value=self.close(True)):
             result=driver.measure(self.plan,j,self.probe)
             self.assertTrue(json.loads(result.read_text())['exact'])
@@ -999,10 +1011,10 @@ class DriverTests(unittest.TestCase):
             if fault=='double-measurement':rows=[event(golden.MODEL_MEASUREMENT,run='r',sequence='9')]+rows
             if fault=='outcome':rows[-1]['payload']['outcome']=dict(kind='abandoned',reason=dict(kind='replay_ask_unanswered'))
             if fault=='source-hash':self.plan['files'][str(self.source)]='bad'
-            if fault=='source-measurement':self.source.write_text(ndjson(event(golden.TURN_CLOSED,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+            if fault=='source-measurement':self.source.write_text(ndjson(*[e for e in run_events('r') if e['kind']!='model.measurement'],event(golden.TURN_CLOSED,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
             self.probe.measured_events=(lambda rows,run:None) if fault=='measurement' else (lambda rows,run:rows)
             with patch('tb_driver.until_closed',return_value=rows),self.assertRaises((order.Refused,KeyError)):driver.measure(self.plan,j,self.probe)
-            self.cleanup_job();self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+            self.cleanup_job();self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
 
     def test_assess_control_pass_and_falsifiers(self):
         arm=self.plan['arms'][0]
@@ -1076,7 +1088,7 @@ class DriverTests(unittest.TestCase):
         # #683 finding 11: a reviewed trace from other weights, or a replay
         # that ran them, must not be read as a device effect.
         j=self.job('refeed')
-        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
         for side in ['source','replay']:
             with self.subTest(side=side):
                 other=dict(copy.deepcopy(self.free),weights_hash='f'*64)
@@ -1085,11 +1097,57 @@ class DriverTests(unittest.TestCase):
                     with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,f'{side}-weights-held'):driver.measure(self.plan,j,self.probe)
                 finally:self.cleanup_job()
 
+    def test_a_second_field_event_for_a_position_refuses_on_every_path(self):
+        # #683 thread 41: extract_run keeps the last field event per position,
+        # so a duplicate would silently decide the readings. The raw selected
+        # events refuse it before extraction on the free, source and replay
+        # paths, by a name each.
+        dup=[event(golden.MODEL_FIELD,run='r'),event(golden.MODEL_FIELD,run='r',sequence='42')]
+        j=self.job('free')
+        with patch('tb_driver.until_closed',return_value=dup+self.close()),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe)
+        self.cleanup_job()
+        j=self.job('refeed')
+        self.source.write_text(trace('r',*dup));self.plan['files'][str(self.source)]=order.sha(self.source)
+        with self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.source_record(self.plan,j,self.probe)
+        self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
+        with patch('tb_driver.until_closed',return_value=dup+self.close(True)),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe)
+        self.cleanup_job()
+        # A position beyond the measurement's output length refuses the same way.
+        beyond=[event(golden.MODEL_FIELD,run='r',payload=dict(json.loads(golden.MODEL_FIELD)['payload'],position=10**6))]
+        with patch('tb_driver.until_closed',return_value=beyond+self.close(True)),self.assertRaisesRegex(order.Refused,'field-beyond-output'):driver.measure(self.plan,j,self.probe)
+        self.cleanup_job()
+        # One event per position, within the output length, passes.
+        one=[event(golden.MODEL_FIELD,run='r')]
+        with patch('tb_driver.until_closed',return_value=one+self.close(True)):driver.measure(self.plan,j,self.probe)
+
+    def test_each_singular_kind_exactly_once_on_every_path(self):
+        # #683 threads 41 and 42, as a class: the pinned extractor keeps the
+        # last event of each kind, so a run's selected events must carry each
+        # singular kind exactly once, on the free, source and replay paths, and
+        # the refusal names the kind and the fault.
+        self.assertEqual(set(driver.SINGULAR_KINDS)|{'model.measurement'},{k for k,v in golden.EXTRACT_RUN_SOURCES.items() if k!='model.field'})
+        lines={'model.request':golden.MODEL_REQUEST,'model.output':golden.MODEL_OUTPUT}
+        for kind,name in [('model.request','request'),('model.output','output')]:
+            for fault in ['absent','duplicated']:
+                def rows(close):
+                    base=[e for e in run_events('r') if e['kind']!=kind] if fault=='absent' else run_events('r',event(lines[kind],run='r',sequence='77'))
+                    return base+[close]
+                with self.subTest(kind=kind,fault=fault,path='free'):
+                    with patch('tb_driver.until_closed',return_value=rows(event(golden.TURN_CLOSED,run='r'))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('free'),self.probe)
+                    self.cleanup_job()
+                with self.subTest(kind=kind,fault=fault,path='source'):
+                    j=self.job('refeed');self.source.write_text(ndjson(*rows(event(golden.TURN_CLOSED,run='r'))));self.plan['files'][str(self.source)]=order.sha(self.source)
+                    with self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.source_record(self.plan,j,self.probe)
+                    self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
+                with self.subTest(kind=kind,fault=fault,path='replay'):
+                    with patch('tb_driver.until_closed',return_value=rows(event(golden.REPLAY_CLOSED_CERTIFIED,run='r'))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('refeed'),self.probe)
+                    self.cleanup_job()
+
     def test_refeed_requires_the_source_seed_on_both_sides(self):
         # #683 finding 21: a replay that ran another seed, or a source outside
         # the tuple's seeds, must not be read as a device or kernel effect.
         j=self.job('refeed')
-        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
         held=self.plan['tuple']['seeds'][0];other=self.plan['tuple']['seeds'][1]
         for guard,source_seed,replay_seed in [('source-seed-held',424242,424242),('replay-seed-held',held,other)]:
             with self.subTest(guard=guard):
@@ -1116,10 +1174,10 @@ class DriverTests(unittest.TestCase):
 
     def test_source_record_parses_the_bytes_it_hashed(self):
         j=self.job('refeed');seen=[]
-        self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
+        self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
         self.probe.extract_run=lambda rows:seen.append(rows) or copy.deepcopy(self.free)
-        with swapped_after_hashing({self.source:ndjson(event(golden.MODEL_MEASUREMENT,run='r',sequence='99')).encode()}):driver.source_record(self.plan,j,self.probe)
-        self.assertEqual(seen,[[event(golden.MODEL_MEASUREMENT,run='r')]])
+        with swapped_after_hashing({self.source:trace('r',sequence='99').encode()}):driver.source_record(self.plan,j,self.probe)
+        self.assertEqual(seen,[run_events('r')])
 
     def test_entry_refuses_root(self):
         with patch('sys.argv',['driver','--state',str(self.statepath),'TB0']),patch('tb_driver.os.geteuid',return_value=0),patch('tb_driver.drive'),contextlib.redirect_stderr(io.StringIO()):

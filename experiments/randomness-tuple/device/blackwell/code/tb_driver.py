@@ -12,6 +12,7 @@ Uses #516's pinned probe readers from a local, reviewed git-archive extraction.
 It never calls the old driver's sudo/admin verbs or rewrites source records.
 """
 import argparse
+import collections
 import hashlib
 import importlib.util
 import json
@@ -79,6 +80,36 @@ def series(t):
     return ['entropies'] + [ELECTED_SERIES[k] for k, v in sorted(t.items()) if v is True]
 
 
+# The kinds the pinned extract_run reads once per run (weaver_probe.py:174-200):
+# it keeps the last event of each, so each must occur exactly once in a run's
+# selected events. model.field is read per position and is held below. The
+# measurement's count is each path's own guard (single-turn, source-measurement,
+# replay-measurement), taken from measurements() here so the count lives once.
+SINGULAR_KINDS = ('model.request', 'model.output')
+
+
+def measurements(rows):
+    return sum(e['kind'] == 'model.measurement' for e in rows)
+
+
+def well_formed(rows):
+    """One run's selected events, judged before anything is extracted from
+    them, on the free, source and replay paths alike: exactly one of each
+    singular kind, and one model.field event per output position with none
+    beyond the measurement's output length. Each fault refuses by the kind and
+    the fault, so a halt says which event the record was missing or had twice.
+    Called after the path's measurement guard, which the field bound rests on."""
+    kinds = collections.Counter(e['kind'] for e in rows)
+    check('request-absent', kinds['model.request'] >= 1)
+    check('request-duplicated', kinds['model.request'] <= 1)
+    check('output-absent', kinds['model.output'] >= 1)
+    check('output-duplicated', kinds['model.output'] <= 1)
+    positions = [e['payload']['position'] for e in rows if e['kind'] == 'model.field']
+    check('field-duplicated', len(positions) == len(set(positions)))
+    measurement = next(e for e in rows if e['kind'] == 'model.measurement')
+    check('field-beyond-output', all(0 <= p < len(measurement['payload']['output_tokens']) for p in positions))
+
+
 def enough(t, rec):
     n = len(rec['output_tokens'])
     check('nonempty-measurement', n > 0 and len(rec['field']) == n and
@@ -108,7 +139,8 @@ def source_record(plan, job, probe):
     data = path.read_bytes()
     check('source-trace', hashlib.sha256(data).hexdigest() == plan['files'][str(path)])
     rows = [e for e in parse(data) if e['run'] == job['source_run']]
-    check('source-measurement', sum(e['kind'] == 'model.measurement' for e in rows) == 1)
+    check('source-measurement', measurements(rows) == 1)
+    well_formed(rows)
     return dict(probe.extract_run(rows), trace=str(path), run=job['source_run'])
 
 
@@ -122,7 +154,8 @@ def measure(plan, job, probe):
         check('gate-answer', close.get('kind') == 'answered' and bool(close.get('run')))
         rows = until_closed(trace, 'turn.closed')
         mine = [e for e in rows if e['run'] == close['run']]
-        check('single-turn', sum(e['kind'] == 'model.measurement' for e in mine) == 1)
+        check('single-turn', measurements(mine) == 1)
+        well_formed(mine)
         rec = probe.extract_run(mine)
         enough(plan['tuple'], rec)
         check('seed-held', rec['declared_seed'] == job['seed'])
@@ -140,7 +173,8 @@ def measure(plan, job, probe):
         # Exactly one, as the free path requires under single-turn: extract_run
         # takes the last measurement's fields over a run's accumulated field
         # events, so two measurements make one ambiguous record.
-        check('replay-measurement', mine is not None and sum(e['kind'] == 'model.measurement' for e in mine) == 1)
+        check('replay-measurement', mine is not None and measurements(mine) == 1)
+        well_formed(mine)
         refed = probe.extract_run(mine)
         enough(plan['tuple'], refed)
         src = source_record(plan, job, probe)

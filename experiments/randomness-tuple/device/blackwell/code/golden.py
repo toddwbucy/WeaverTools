@@ -91,3 +91,31 @@ GATE_REFUSED = '{"kind":"refused","reason":"the line is not a request"}'
 # model.field events. Derived from source.
 EXTRACT_RUN_KEYS = ('emission', 'output_tokens', 'entropies', 'surprisals', 'field', 'finish',
                     'declared_seed', 'generation_seed', 'timings', 'weights_hash', 'model', 'input_tokens')
+
+# A model.field event, derived from source: no W4a trace carries one (the field
+# election was off there), so the envelope is MODEL_MEASUREMENT's with the kind
+# and the next sequence, and the payload is the shape weaver-trace renders at
+# e69916a (crates/weaver-trace/src/event.rs:370-383): position as a number,
+# ranked as [{token, probability}], realized as the token drawn. One such
+# event per output position is what a run's field is; a second for the same
+# position is what extract_run would silently overwrite.
+MODEL_FIELD = '{"session":"w4a-replay-m1-002","run":"w4a-diagnostic-m1-002","turn":"t-1","sequence":"6","kind":"model.field","subsystem":"spu_decoder","wall_ms":1790296337468,"monotonic_ns":"772651931","payload":{"position":0,"ranked":[{"token":9707,"probability":0.5},{"token":11,"probability":0.25}],"realized":9707}}'
+
+# model.request and model.output, verbatim lines from the same W4a diagnostic
+# replay (lines 4 and 5), the two other singular kinds the
+# pinned extractor reads per run.
+MODEL_REQUEST = '{"session":"w4a-replay-m1-002","run":"w4a-diagnostic-m1-002","turn":"t-1","sequence":"3","kind":"model.request","subsystem":"spu_decoder","wall_ms":1790296337468,"monotonic_ns":"772630948","payload":{"rendered":"<|im_start|>system\\nYou are a careful assistant. Answer from what you know, say plainly when you do not know, and keep answers as short as the question allows.<|im_end|>\\n<|im_start|>user\\nPlease retain these facts for this conversation: the project name is Copper Finch; the locker number is 731; the ordered colors are teal, amber, violet. Reply only: Facts received.<|im_end|>\\n<|im_start|>assistant\\n","sampling":{"generation_seed":14458752852352082704,"repetition_penalty":1.100000023841858,"repetition_window":64,"seed":451234785645,"temperature":0.699999988079071,"top_k":40,"top_p":0.949999988079071},"stop":{"max_tokens":4096,"stop_tokens":[151645],"terminator":151645},"template":"<|im_start|>{role}\\n{message}<|im_end|>\\n"}}'
+MODEL_OUTPUT = '{"session":"w4a-replay-m1-002","run":"w4a-diagnostic-m1-002","turn":"t-1","sequence":"4","kind":"model.output","subsystem":"spu_decoder","wall_ms":1790296337468,"monotonic_ns":"772648352","payload":{"emission":"Facts received.","finish":"completed","resident":126,"capacity":32768}}'
+
+# Which event kind each extract_run key is read from, per
+# weaver-probe/weaver_probe.py:174-200 (sha256 92d9a400...5130): the pinned
+# extractor keeps the LAST event of each kind for a run, and the last field
+# event per position, so a run's selected events must carry exactly one of
+# each singular kind, and one field event per output position, before
+# anything is extracted. The driver's SINGULAR_KINDS is pinned to this.
+EXTRACT_RUN_SOURCES = {
+    'model.request': ('declared_seed', 'generation_seed'),
+    'model.output': ('emission', 'finish'),
+    'model.measurement': ('output_tokens', 'input_tokens', 'entropies', 'surprisals', 'timings', 'weights_hash', 'model'),
+    'model.field': ('field',),
+}
