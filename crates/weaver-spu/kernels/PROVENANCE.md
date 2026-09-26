@@ -114,7 +114,7 @@ coverage they give is uneven in a way worth stating rather than averaging.
 | Machine | Toolkit | Compiles and links | Suite runs | Device-side |
 |---|---|---|---|---|
 | A6000 pair, Ampere | CUDA 13.0 | yes, all four lines | yes | yes, three device tests |
-| RTX PRO Blackwell laptop | CUDA 13.4 | yes, all four lines | yes | the suite's, yes; these kernels, not run |
+| RTX PRO Blackwell laptop | CUDA 13.4 | yes, all four lines | yes | suite tests yes, these kernels not run |
 
 On the Blackwell box the linked archive was read back with `cuobjdump`: both
 members of `libweaver_cuda_kernels.a` carry native SASS for `sm_86`, `sm_89`,
@@ -130,14 +130,17 @@ line has no machine behind it and rides on the `cuobjdump` evidence alone.
 `aee9af9c`, on CUDA 13.4.92, driver 615.71.09. The archive read back with
 `cuobjdump` carries the same four lines in both members, so the
 compiles-and-links column is re-taken rather than inherited, and the crate's
-suite ran there under `cuda,gguf`, 211 passing. **Its device tests ran on the
-card**: the GGUF seam through llama.cpp's CUDA backend, and the native candle
-path against a Qwen2.5-0.5B safetensors export, generating and reading every
-layer's residual. **These kernels did not.** Nothing in the crate calls into
-`libweaver_cuda_kernels.a`, the comparison code that would being the part below
-that has not crossed, so they are known to be present and linkable on Blackwell
-and not known to produce correct numbers there. That gap closes when the
-comparison code crosses, not before.
+suite ran there under `cuda,gguf`, 211 passing, where a pass also counts a test
+that skipped for want of an artifact or a second card. **What ran on the card
+with its assertions** was ten GGUF seam tests through llama.cpp's CUDA backend,
+and four native candle tests against a Qwen2.5-0.5B safetensors export: the
+sidecar header, generation through the native engine, the elected readout over
+every layer, and the surprisal election. The pair, sharded, tap-family and pace
+tests skipped. **These kernels did not run.** Nothing in the crate calls into
+`libweaver_cuda_kernels.a`, the comparison code that would do so being the part
+below that has not crossed, so they are known to be present and linkable on
+Blackwell and not known to produce correct numbers there. That gap closes when
+the comparison code crosses, not before.
 
 
 ## What has not crossed yet, named so the gap is not read as completeness
