@@ -245,7 +245,7 @@ than a comment. `candle-core`, `candle-nn`, and `candle-transformers` come from
 their own pinned fork for `forward_with_intermediates`, the readout's working
 path, and the qwen2 rotary precision fix: the angle is computed in fp32 and
 the sine and cosine are cast to the model dtype afterwards. This describes
-revision `429615148582d62f285879b97cb63dbdd17b47fd`, which the pins below
+revision `aee9af9c3e0b23ab9188a492d0b3ebdb5f3a3f4b`, which the pins below
 record. `cudarc` is caret-pinned rather than exact, so Cargo unifies this
 crate's device handles with candle's inside one minor line, exactness coming
 from the lock file rather than from a requirement that becomes unsatisfiable
@@ -262,9 +262,19 @@ explicit-set door llama.cpp holds for callers whose paths carry no sibling
 pattern, which is what a descriptor path is, and the build script's DLL
 relink becomes idempotent under concurrent builds. `candle-core`, `candle-nn`,
 and `candle-transformers` resolve to `https://github.com/toddwbucy/candle` at
-revision `429615148582d62f285879b97cb63dbdd17b47fd`, the revision that carries
-qwen2's `forward_with_intermediates` and the qwen2 fp32 rotary fix, held by the
-manifest and `Cargo.lock` since `ab39b49` of 2026-08-19. **`candle-flash-attn`
+revision `aee9af9c3e0b23ab9188a492d0b3ebdb5f3a3f4b`, moved 2026-09-26 from
+`429615148582d62f285879b97cb63dbdd17b47fd` on the operator's ruling of that date.
+The new revision is the fork's merge of its pull request #33 and holds the old
+one as an ancestor, so `forward_with_intermediates` and the qwen2 fp32 rotary
+fix carry over unrewritten. It adds upstream through `aebc405d` of 2026-09-25,
+which brings cudarc `0.19.10` and removes `ug`, and the fork's fix for upstream
+regression #3972, where `rms_norm` failed on every checkpoint without a norm
+bias. **No revision between upstream's of 2026-09-02 and this one is a safe
+pin without that fix**, which upstream has not yet merged. **A bf16 reading
+does not carry across this move**: greedy tokens agree while logits move by up
+to 0.5, reduction order changing under upstream's kernel work, and f32 is
+bit-identical, so a bf16 figure compared across the two revisions is re-taken
+at this one. **`candle-flash-attn`
 is not a fourth name resolving to it,** the manifest declaring it nowhere and
 `Cargo.lock` holding it nowhere: it shares the pin as a value rather than as a
 resolution, which is what the manifest states and what this clause overstated
@@ -1594,9 +1604,11 @@ finding proposed and the same answer.
 **The detector's table is a property of the pinned revision, so the measurements
 below name it.** Which families it recognises, and which it settles on first,
 change with the dependency rather than with this crate, so a revision bump can
-move a marker set this crate never edited. Everything measured here is against
-`llama-cpp-rs` at `277e4100`, the revision this crate pins, and a bump reopens
-these readings rather than inheriting them.
+move a marker set this crate never edited. Everything measured here was read
+against `llama-cpp-rs` at `277e4100`, the revision this crate pinned when the
+readings were taken. The pin moved to `ecce255b` on 2026-08-17 and these
+readings were not re-taken there, so they stand as readings of the earlier
+revision, and a bump reopens them rather than inheriting them.
 
 **It fails closed on a template it does not recognise, and one family this
 binary already carries is such a template.** Gemma4 returns an error rather
