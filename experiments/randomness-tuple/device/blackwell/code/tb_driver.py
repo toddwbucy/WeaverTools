@@ -22,7 +22,7 @@ import struct
 import sys
 import time
 
-from tb_order import Order, Refused, atomic, check, notice, sha
+from tb_order import Order, Refused, atomic, check, elected, notice, sha
 
 
 def readers(plan):
@@ -77,7 +77,7 @@ def series(t):
     """The per-token float series a record must carry: entropies always, and
     each reading the tuple elects (#683 finding 23; weaver-spu-Spec 1803-1810:
     elected surprisals render, and disagreement is a defect)."""
-    return ['entropies'] + [ELECTED_SERIES[k] for k, v in sorted(t.items()) if v is True]
+    return ['entropies'] + [ELECTED_SERIES[k] for k, v in sorted(t.items()) if elected(v)]
 
 
 # The kinds the pinned extract_run reads once per run (weaver_probe.py:174-200):

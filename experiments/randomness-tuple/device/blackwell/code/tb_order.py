@@ -37,6 +37,18 @@ class Busy(Refused):
     pass
 
 
+def elected(value):
+    """A plan's boolean read by identity, never by equality: 1 == True in
+    Python, and an election the validator equates with True that the driver's
+    series() then reads as not-True would elect nothing. validate_plan and
+    series() both read through here."""
+    return value is True
+
+
+def declined(value):
+    return value is False
+
+
 def check(name, condition):
     if not condition:
         raise Refused(name)
@@ -97,14 +109,17 @@ def validate_plan(plan):
     check('schema', plan.get('version') == 1)
     check('agent', plan.get('agent') == 'bravo')
     check('isolated-root', plan.get('install_root') == '/var/lib/weaver-tb')
-    check('tuple', plan.get('tuple') == {
+    # Compared as JSON, not as Python values: dict equality reads 1 as True and
+    # 7.0 as 7, and series() elects on `is True`, so a tuple that equals this
+    # one by value could still elect nothing.
+    check('tuple', json.dumps(plan.get('tuple'), sort_keys=True) == json.dumps({
         'artifact': '/opt/weaver/models/Qwen3-8B-Q8_0.gguf',
         'weights_sha256': '0cfbf745760f07a76ddeb358dd025a27f2e11d1ca9c9a4169a373d52990fe86e',
         'devices': [0], 'context_capacity': 12288, 'max_tokens': 8192,
         'field_depth': 200, 'surprisal': True, 'residual': False,
         'identity': 'You are Karl, a careful writer. Answer plainly and at length when asked, and do not stop early.',
         'seeds': [451234785645, 1156316220, 7, 1000003, 123456789, 987654321, 2718281828, 3141592653],
-        'runs_per_seed': 2, 'driver': '615.71.09'})
+        'runs_per_seed': 2, 'driver': '615.71.09'}, sort_keys=True))
     # Each ruling is the URL of the decision on this repository, an issue or
     # pull request, optionally one comment of it; a placeholder is refused.
     check('rulings', all(isinstance(plan.get('rulings', {}).get(k), str) and RULING.fullmatch(plan['rulings'][k])
@@ -145,9 +160,9 @@ def validate_plan(plan):
           not cells['ampere'] & cells['ada'])
     # An emptied kernel arm names the comparison that empties it, hashed in the
     # manifest; approved() reads that report and requires its verdict.
-    check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs'] and
+    check('kernel-schedule', (elected(arms[2].get('executable_identity')) and not arms[2]['jobs'] and
                               arms[2].get('identity_report') in plan.get('files', {})) or
-          (arms[2].get('executable_identity', False) is False and
+          (declined(arms[2].get('executable_identity', False)) and
            sorted(j.get('source_job') for j in arms[2]['jobs']) == sorted(j['id'] for j in free) and
            all(j['kind'] == 'refeed' and j['stack'] == 'B2' for j in arms[2]['jobs'])))
 

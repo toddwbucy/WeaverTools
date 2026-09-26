@@ -186,6 +186,9 @@ class Fixture(unittest.TestCase):
         edits=[('schema',lambda p:p.update(version=2)), ('agent',lambda p:p.update(agent='m1')),
                ('root',lambda p:p.update(install_root='/etc/weaver/admin')),
                ('tuple',lambda p:p['tuple'].update(context_capacity=100)),
+               # #683 thread 44: 1 equals True by value and elects nothing by identity.
+               ('tuple-election-as-int',lambda p:p['tuple'].update(surprisal=1)),
+               ('tuple-seed-as-float',lambda p:p['tuple'].update(seeds=[float(p['tuple']['seeds'][0])]+p['tuple']['seeds'][1:])),
                ('ruling',lambda p:p['rulings'].update(control_count=None)),
                # #683 thread 40: a ruling is the decision's URL, never a placeholder.
                ('ruling-true',lambda p:p['rulings'].update(control_count=True)),
@@ -474,6 +477,10 @@ class ReadingTests(unittest.TestCase):
 
     def test_exact_rejects_empty_partial_and_changed(self):
         t=prepare.template(Path('/deposit'),'todd',1000)['tuple']
+        # #683 thread 44: series() elects by the shared identity predicate, so
+        # a 1 the validator would also refuse elects nothing here either.
+        self.assertIn('surprisals',driver.series(t));self.assertNotIn('surprisals',driver.series(dict(t,surprisal=1)))
+        self.assertTrue(order.elected(True) and not order.elected(1) and order.declined(False) and not order.declined(0))
         a=self.rec();b=copy.deepcopy(a)
         self.assertTrue(driver.exact(t,a,b))
         b['field']={'20':b['field'][20]};self.assertTrue(driver.exact(t,a,b))
