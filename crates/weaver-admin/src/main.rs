@@ -32,6 +32,38 @@ mod surface;
 mod unit;
 mod verbs;
 
+/// A path under the temp directory for this crate's tests, removed when the
+/// test ends, pass or fail: the guard drops on the unwind a failed assertion
+/// takes as on a clean return, so no run leaves a directory behind (#690
+/// item C2.9).
+#[cfg(test)]
+mod scratch {
+    pub(crate) struct Scratch(pub(crate) std::path::PathBuf);
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            match std::fs::symlink_metadata(&self.0) {
+                Ok(meta) if meta.is_dir() => drop(std::fs::remove_dir_all(&self.0)),
+                Ok(_) => drop(std::fs::remove_file(&self.0)),
+                Err(_) => {}
+            }
+        }
+    }
+
+    impl std::ops::Deref for Scratch {
+        type Target = std::path::Path;
+        fn deref(&self) -> &std::path::Path {
+            &self.0
+        }
+    }
+
+    impl AsRef<std::path::Path> for Scratch {
+        fn as_ref(&self) -> &std::path::Path {
+            &self.0
+        }
+    }
+}
+
 use std::path::PathBuf;
 
 use weaver_types::{AgentName, LifecycleAnswer, LifecycleDirective, LifecycleRefusal};
@@ -1515,7 +1547,9 @@ mod tests {
     #[test]
     fn the_territory_is_owned_by_the_member_and_closed_on_every_load() {
         use std::os::unix::fs::{MetadataExt, PermissionsExt};
-        let root = std::env::temp_dir().join(format!("wt-territory-{}", std::process::id()));
+        let root = crate::scratch::Scratch(
+            std::env::temp_dir().join(format!("wt-territory-{}", std::process::id())),
+        );
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).expect("the operator-side directory");
         let member = inventory::MemberAccount {

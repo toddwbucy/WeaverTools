@@ -625,12 +625,12 @@ mod tests {
     use crate::record::Record;
     use weaver_types::SessionId;
 
-    fn sink() -> (OwnedFd, std::path::PathBuf) {
-        let path = std::env::temp_dir().join(format!(
+    fn sink() -> (OwnedFd, crate::scratch::Scratch) {
+        let path = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-replay-{}-{:?}.ndjson",
             std::process::id(),
             std::thread::current().id()
-        ));
+        )));
         let file = std::fs::File::create(&path).expect("sink");
         (OwnedFd::from(file), path)
     }
@@ -646,16 +646,17 @@ mod tests {
         )
     }
 
-    fn listener() -> crate::channel::CoordinationListener {
-        let dir = std::env::temp_dir().join(format!(
+    fn listener() -> (
+        crate::channel::CoordinationListener,
+        crate::scratch::Scratch,
+    ) {
+        let dir = crate::scratch::dir(format!(
             "weaver-replay-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        std::fs::create_dir_all(&dir).expect("scratch dir");
-        let path = dir.join("c.sock");
-        std::fs::remove_file(&path).ok();
-        crate::channel::bind_coordination(&path).expect("bind")
+        let listener = crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind");
+        (listener, dir)
     }
 
     fn record_lines(path: &std::path::Path) -> Vec<serde_json::Value> {
@@ -728,7 +729,7 @@ mod tests {
         let decode = crate::channel::decode_from_owned(near);
         let decode_peer = std::thread::spawn(move || decode_script(far));
 
-        let coordination = listener();
+        let (coordination, _coordination_dir) = listener();
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
         let mut fullness = None;

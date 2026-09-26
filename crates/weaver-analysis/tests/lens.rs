@@ -249,8 +249,9 @@ fn the_manifest_is_the_lens_it_names() {
         Path::new("/x/y/lens-manifest-1000p.json")
     );
 
-    let dir = std::env::temp_dir().join(format!("weaver-analysis-lens-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).expect("scratch");
+    // Removed when the test ends, pass or fail (#690 item C2.9).
+    let guard = Scratch::new("lens");
+    let dir = guard.0.clone();
     let lens = dir.join("jacobian_lens_m-bf16.safetensors");
     std::fs::write(&lens, b"").expect("lens");
     let write = |manifest: &str| std::fs::write(dir.join("lens-manifest.json"), manifest);
@@ -333,8 +334,9 @@ fn the_digest_is_the_standard() {
 /// instead of on this claim.
 #[test]
 fn the_threaded_head_is_the_single_thread_head_to_the_bit() {
-    let scratch = std::env::temp_dir().join(format!("weaver-analysis-head-{}", std::process::id()));
-    std::fs::create_dir_all(&scratch).expect("scratch");
+    // Removed when the test ends, pass or fail (#690 item C2.9).
+    let guard = Scratch::new("head");
+    let scratch = guard.0.clone();
     let (vocabulary, width) = (301usize, 8usize);
     // A fixed generator, so the fixture is the same on every run and no
     // two rows agree.

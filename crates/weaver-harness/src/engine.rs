@@ -2078,7 +2078,7 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -2208,7 +2208,7 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let answered = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -2333,7 +2333,7 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let counts = {
             let mut fullness = Some((1237, 8191));
             let mut pressure_reported = false;
@@ -2485,7 +2485,7 @@ mod tests {
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -2678,7 +2678,7 @@ mod tests {
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
 
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let error = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -2890,7 +2890,7 @@ mod tests {
         let mut gate_ordinal = 0u64;
         let mut held = std::collections::VecDeque::new();
 
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -3073,7 +3073,7 @@ mod tests {
             .expect("load");
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -3164,7 +3164,7 @@ mod tests {
         let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let mut fullness = None;
         let mut pressure_reported = false;
         let load_facts = crate::engine::test_load_facts();
@@ -3231,7 +3231,7 @@ mod tests {
         )
         .expect("socketpair");
         let decode = crate::channel::decode_from_owned(near);
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("pair");
         let admin = admin_end.into_channel();
 
@@ -3404,7 +3404,7 @@ mod tests {
         };
         use std::time::{Duration, Instant};
         const DELAY_MS: u16 = 2_000;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let (near, far) = socketpair(
             AddressFamily::Unix,
             SockType::SeqPacket,
@@ -3717,7 +3717,7 @@ mod tests {
         )
         .expect("socketpair");
         let decode = crate::channel::decode_from_owned(near);
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let (verb_end, admin_end) = crate::channel::OrganChannel::pair().expect("pair");
         let admin = admin_end.into_channel();
 
@@ -3904,11 +3904,11 @@ mod tests {
         });
 
         let session = SessionId("s-d".into());
-        let sink_path = std::env::temp_dir().join(format!(
+        let sink_path = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-engine-column-{}-{:?}.ndjson",
             std::process::id(),
             std::thread::current().id()
-        ));
+        )));
         let sink = OwnedFd::from(std::fs::File::create(&sink_path).expect("sink"));
         let mut recorder = crate::record::Record::Diagnostic(
             weaver_diagnostic::Recorder::receive(
@@ -3921,7 +3921,7 @@ mod tests {
         let author = Author::new(&session, &weaver_types::RunId("r-d".into()));
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let outcome = {
             let mut fullness = None;
             let mut pressure_reported = false;
@@ -4069,7 +4069,7 @@ mod tests {
         let (mut recorder, author) = loaded_recorder();
         let mut turn_ordinal = 36u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let mut fullness = Some((27196, 32768));
         let mut pressure_reported = false;
         let load_facts = crate::engine::test_load_facts();
@@ -4198,7 +4198,7 @@ mod tests {
         let (mut recorder, author) = loaded_recorder();
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let mut fullness = None;
         let mut pressure_reported = false;
         let load_facts = crate::engine::test_load_facts();
@@ -4267,7 +4267,7 @@ mod tests {
         let (mut recorder, author) = loaded_recorder();
         let mut turn_ordinal = 0u64;
         let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
-        let listener = test_listener();
+        let (listener, _dir) = test_listener();
         let mut fullness = None;
         let mut pressure_reported = false;
         let load_facts = crate::engine::test_load_facts();
@@ -4305,16 +4305,17 @@ mod tests {
         );
     }
 
-    fn test_listener() -> crate::channel::CoordinationListener {
-        let dir = std::env::temp_dir().join(format!(
+    fn test_listener() -> (
+        crate::channel::CoordinationListener,
+        crate::scratch::Scratch,
+    ) {
+        let dir = crate::scratch::dir(format!(
             "weaver-engine-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        std::fs::create_dir_all(&dir).expect("scratch dir");
-        let path = dir.join("c.sock");
-        std::fs::remove_file(&path).ok();
-        crate::channel::bind_coordination(&path).expect("bind")
+        let listener = crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind");
+        (listener, dir)
     }
 
     fn tempfile() -> OwnedFd {

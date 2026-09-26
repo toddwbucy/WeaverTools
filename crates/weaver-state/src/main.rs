@@ -899,6 +899,21 @@ impl<'a> LineReader<'a> {
 
 #[cfg(test)]
 mod tests {
+    /// A path under the temp directory, removed when the test ends, pass or
+    /// fail: the guard drops on the unwind a failed assertion takes as on a
+    /// clean return (#690 item C2.9).
+    struct Scratch(std::path::PathBuf);
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            match std::fs::symlink_metadata(&self.0) {
+                Ok(meta) if meta.is_dir() => drop(std::fs::remove_dir_all(&self.0)),
+                Ok(_) => drop(std::fs::remove_file(&self.0)),
+                Err(_) => {}
+            }
+        }
+    }
+
     /// **The engine leads and the positionals keep their places**, per
     /// `weaver-state-Spec` section 4 as of 2026-09-04. Perturbation: parse
     /// the flags after the positionals and the diagnostic case reads the
@@ -979,12 +994,12 @@ mod tests {
     #[test]
     fn the_preload_door_denies_every_uid_but_its_owner() {
         use std::os::unix::fs::PermissionsExt;
-        let path = std::env::temp_dir().join(format!(
+        let scratch = Scratch(std::env::temp_dir().join(format!(
             "weaver-state-preload-mode-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
-        let path = path.to_str().expect("a utf-8 scratch path");
+        )));
+        let path = scratch.0.to_str().expect("a utf-8 scratch path");
         // **The ambient umask is elected rather than read, so this runs
         // everywhere.** An earlier form read it and skipped where it already
         // produced `0700`, which `0077` does - a common hardened default, so
@@ -1012,7 +1027,6 @@ mod tests {
             "the door states its mode rather than inheriting one, got {mode:04o}"
         );
         drop(listener);
-        let _ = std::fs::remove_file(path);
     }
 
     /// **A replay ask parks at an open preload until the seal**, per
@@ -1109,9 +1123,10 @@ mod tests {
             // the operator principal and is admitted.
             return;
         }
-        let path =
-            std::env::temp_dir().join(format!("weaver-state-preload-{}", std::process::id()));
-        let path = path.to_string_lossy().into_owned();
+        let scratch = Scratch(
+            std::env::temp_dir().join(format!("weaver-state-preload-{}", std::process::id())),
+        );
+        let path = scratch.0.to_string_lossy().into_owned();
         let listener = stand_preload_name(&path).expect("the name stands");
         let _dialer = std::os::unix::net::UnixStream::connect(&path).expect("dials");
         // **Wait for the door to be readable before judging it.** The
@@ -1131,7 +1146,6 @@ mod tests {
             admit_operator(&listener).is_none(),
             "a non-operator peer is refused"
         );
-        let _ = std::fs::remove_file(&path);
     }
 
     /// **The door stands only where the party that stands the member names
@@ -1159,15 +1173,14 @@ mod tests {
             absent.as_deref().map(stand_preload_name).is_none(),
             "a serving load names no preload socket and stands no door"
         );
-        let path = std::env::temp_dir()
-            .join(format!("weaver-state-named-{}", std::process::id()))
-            .to_string_lossy()
-            .into_owned();
+        let scratch = Scratch(
+            std::env::temp_dir().join(format!("weaver-state-named-{}", std::process::id())),
+        );
+        let path = scratch.0.to_string_lossy().into_owned();
         assert!(
             stand_preload_name(&path).is_some(),
             "and a named one stands"
         );
-        let _ = std::fs::remove_file(&path);
     }
 
     /// The operator's 2026-09-22 ruling admits trace only as test scaffolding.

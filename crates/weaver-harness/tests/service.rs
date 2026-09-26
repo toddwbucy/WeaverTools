@@ -56,16 +56,16 @@ impl Drop for Scratch {
 }
 
 fn bound_listener() -> (CoordinationListener, std::path::PathBuf, Scratch) {
-    let dir = std::env::temp_dir().join(format!(
+    let dir = Scratch(std::env::temp_dir().join(format!(
         "weaver-harness-{}-{:?}",
         std::process::id(),
         std::thread::current().id()
-    ));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).expect("scratch");
-    let path = dir.join("coordination.sock");
+    )));
+    let _ = std::fs::remove_dir_all(&dir.0);
+    std::fs::create_dir_all(&dir.0).expect("scratch");
+    let path = dir.0.join("coordination.sock");
     let listener = bind_coordination(&path).expect("bind");
-    (listener, path, Scratch(dir))
+    (listener, path, dir)
 }
 
 /// Admin's part: dial the name the worker bound. It carries whatever
@@ -449,22 +449,22 @@ fn non_directive_payload_is_a_fault() {
 fn dropping_the_harness_closes_the_listener() {
     let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
     // SAFETY: the child adopts, drops, probes, reports, and _exits.
+    // The directory is made and guarded here, before the fork: the child
+    // `_exit`s and drops nothing, so the parent's guard is what removes it,
+    // pass or fail. Fresh per run by the clock, so a recycled pid never
+    // meets a stale socket.
+    let dir = Scratch(std::env::temp_dir().join(format!(
+        "weaver-drop-{}-{:?}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    )));
+    std::fs::create_dir_all(&dir.0).expect("scratch");
     match unsafe { nix::unistd::fork() }.expect("fork") {
         nix::unistd::ForkResult::Child => {
-            // A fresh directory per run: a pid-named one outlives the run
-            // that made it, and a recycled pid would then meet a stale
-            // socket and fail the bind.
-            let dir = std::env::temp_dir().join(format!(
-                "weaver-drop-{}-{:?}",
-                std::process::id(),
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_nanos())
-                    .unwrap_or(0)
-            ));
-            let _ = std::fs::remove_dir_all(&dir);
-            let _ = std::fs::create_dir_all(&dir);
-            let listener = bind_coordination(&dir.join("c.sock")).expect("bind");
+            let listener = bind_coordination(&dir.0.join("c.sock")).expect("bind");
             let raw = listener.as_fd().as_raw_fd();
             let harness = Harness::listen(
                 listener,

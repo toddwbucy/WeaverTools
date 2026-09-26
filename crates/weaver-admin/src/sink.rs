@@ -147,14 +147,14 @@ mod tests {
     use super::*;
     use std::os::fd::AsFd;
 
-    fn scratch(tag: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!(
+    fn scratch(tag: &str) -> crate::scratch::Scratch {
+        let dir = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-admin-sink-{tag}-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
+        )));
+        let _ = std::fs::remove_dir_all(&dir.0);
+        std::fs::create_dir_all(&dir.0).expect("scratch");
         dir
     }
 
