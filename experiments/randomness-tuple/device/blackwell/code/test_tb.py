@@ -1468,19 +1468,26 @@ class ReviewRoundOneTests(unittest.TestCase):
     clear, for both readers."""
 
     def test_the_close_is_returned_from_the_read_it_was_seen_in(self):
-        # Perturbation: detect the close in one read and return a second, as
-        # before, and the bytes returned are the swapped read with no close.
+        # Two shapes of the one defect, a close seen in one read and another
+        # read returned. The read after the one holding the close is swapped
+        # for bytes with no close: perturbation `return path.read_bytes()`
+        # after detecting, and the swapped bytes come back. And the first read
+        # is swapped: b34f62e's tail-then-read order returns it, while a
+        # function returning its own read keeps polling to the real one.
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'trace';closed=ndjson(event(golden.TURN_CLOSED,run='r')).encode();p.write_bytes(closed)
             swapped=ndjson(event(golden.TURN_STARTED,run='r'),event(golden.TURN_STARTED,run='r')).encode()
-            real=Path.read_bytes;calls=[]
-            def read_bytes(path):
-                calls.append(1)
-                return swapped if len(calls)==1 else real(path)
-            with patch.object(Path,'read_bytes',read_bytes):
-                got=driver.until_closed(p,'turn.closed',5)
-            self.assertIn(b'turn.closed',got,'the returned bytes hold the close they were returned for')
-            self.assertEqual(got,closed)
+            real=Path.read_bytes
+            for name,swap_on in [('the read after the close is swapped',2),('the first read is swapped',1)]:
+                with self.subTest(name):
+                    calls=[]
+                    def read_bytes(path):
+                        calls.append(1)
+                        return swapped if len(calls)==swap_on else real(path)
+                    with patch.object(Path,'read_bytes',read_bytes):
+                        got=driver.until_closed(p,'turn.closed',5)
+                    self.assertIn(b'turn.closed',got,'the returned bytes hold the close they were returned for')
+                    self.assertEqual(got,closed,'and are the bytes the close was inspected in')
 
     def reading(self,**patches):
         base=dict(run=patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,golden.SYSTEMCTL_SHOW_M1,'')),
