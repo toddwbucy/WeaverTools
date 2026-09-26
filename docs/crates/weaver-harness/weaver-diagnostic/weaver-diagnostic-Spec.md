@@ -155,7 +155,7 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Seventeen kinds, exhaustive, and the set is this crate's own.**
+**Eighteen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
     replay.identity        the input identity the pass established
@@ -174,8 +174,9 @@ to: diagnostic-session-is-the-replays-own
     flush                  a cut the loop drove, as the record carries one
     refusal                a typed refusal answering an ask the pass sent
     fault                  a death, named
+    recall                 an answered state-seam ask, by the identities it returned
 
-**Thirteen spellings are the serving vocabulary's and mean there what they mean
+**Fourteen spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
 coincidence, per section 4. **Four are this record's own**, the `replay.` trio
@@ -187,6 +188,18 @@ port, the decode surface, and the flush, and `weaver-harness-Spec` section 6 has
 harness author a `flush` event on the flush's confirmation. A record that could not
 carry it would drop an act its own loop is chartered to perform, which is the
 accumulation reading broken exactly where the serving record protects it.
+
+**`recall` is carried because a replay's enter asks the member as a serving enter
+does**, on the ruling of 2026-09-26 that made an answered state-seam ask a serving
+kind, per `weaver-trace-Spec` section 3. The replay's enter asks for the session's
+identity, the loop's replay port asks for the holdings, and the harness authors a
+`recall` for each answered ask whatever the record's mechanism, so a record that could
+not carry one would refuse the replay's own enter and its own walk. The replay port's
+lands inside the bracket after `replay.opened` and before `replay.identity`, named by
+the holdings' first and last events and their count. It splices the serving payload as
+the other thirteen shared kinds do. What it adds to a replay's reading is nothing yet:
+`diagnostic-replay-loop` section 2's walk passes turnless kinds by, and the grouping
+that reads a flush and a source recall beside it is a later act's.
 
 **`refusal` is carried because the same section authors every typed refusal, and a
 replay produces two.** `weaver-harness-Spec` section 6's ruling of 2026-08-22 has a
@@ -231,8 +244,8 @@ record's identity is its provenance and never a member, per section 4's discrimi
 the parent charter's 2026-08-24 correction, so nothing here reads the kind's presence as
 identifying anything. **The exhaustiveness grounds in apex section 5.3, and not on the
 serving record's reason.** `weaver-trace-Spec` section 3 argues from a set closed by
-ruling and matching its charter one to one, and this set is not that one: seventeen
-kinds, thirteen of them the serving vocabulary's and four this record's own, so closure
+ruling and matching its charter one to one, and this set is not that one: eighteen
+kinds, fourteen of them the serving vocabulary's and four this record's own, so closure
 by charter does not carry across. What carries is the contract's. Section 7 of
 `weaver-harness-diagnostic-contract` makes a change to this kind set a change both
 parties merge in one act, which is a closure the seam states, and a consumer able to
@@ -255,8 +268,8 @@ to: axiom-contract-is-a-complete-interface
 
 ### 3.3 The payload shapes
 
-**The mapping is total: seventeen kinds, sixteen shapes named whole and the
-seventeenth named to its members.** Thirteen take the serving payload of the
+**The mapping is total: eighteen kinds, seventeen shapes named whole and the
+eighteenth named to its members.** Fourteen take the serving payload of the
 same name, spliced or shaped as `weaver-trace-Spec` section 3 shapes it, that
 document being authoritative and a divergence a defect against it. Three are
 declared here. `residual.column`'s identity members are fixed in section 3.2

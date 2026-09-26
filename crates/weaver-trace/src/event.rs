@@ -114,12 +114,12 @@ pub enum Subsystem {
     Tool,
 }
 
-/// The twenty-one event kinds, exhaustive, matching the charter's section 3.1
+/// The twenty-two event kinds, exhaustive, matching the charter's section 3.1
 /// exactly. Every kind carries an explicit rename because no scheme produces
 /// the charter's dotted names, and the enum is exhaustive because the set is
 /// closed by ruling: an attribute that let a consumer absorb a further kind
 /// into a wildcard would defeat the closure the corpus keys on. **The count
-/// is pinned in `tests/kinds.rs`**, an array of twenty-one checked against an
+/// is pinned in `tests/kinds.rs`**, an array of twenty-two checked against an
 /// exhaustive match over this enum, so a kind added here and answered in the
 /// crate's own matches stops at that file's match. An act that writes the new
 /// arm there too and leaves the array alone still passes, which is issue
@@ -175,6 +175,11 @@ pub enum Kind {
     ClassifyRequest,
     #[serde(rename = "classify.output")]
     ClassifyOutput,
+    /// An answered ask on the state seam, per charter section 3.1's
+    /// twenty-second kind: which ask the harness made and the identities of
+    /// the events custody answered with, never their contents.
+    #[serde(rename = "recall")]
+    Recall,
 }
 
 /// What an event carries beside its envelope. Untagged: the envelope's `kind`
@@ -187,7 +192,7 @@ pub enum Kind {
 /// back, the working structure holding rendered lines, and the asymmetry is a
 /// compile property pinned at the crate root.
 ///
-/// The kind-to-payload mapping is total, twenty-one kinds and sixteen
+/// The kind-to-payload mapping is total, twenty-two kinds and seventeen
 /// dispositions, the payload-free case counting as one of them.
 /// **`pairing_licensed` in `writer.rs` enforces the mapping and is the
 /// authority on it**, this comment naming only which variant of this enum
@@ -200,8 +205,8 @@ pub enum Kind {
 /// `turn.closed` carries `TurnClosed`, `fault` carries `Fault`, `flush`
 /// carries `Flush`, `elision` carries `Elision`, `refusal` carries
 /// `Refusal`, the four model kinds carry their four own variants, the
-/// classify pair carries its two, and the tool bracket's two carry
-/// `Deferred`.
+/// classify pair carries its two, `recall` carries `Recall`, and the tool
+/// bracket's two carry `Deferred`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
 pub enum Payload {
@@ -269,6 +274,10 @@ pub enum Payload {
     /// met is the record's own fact and never a fabricated answer. What
     /// changed is that one kind stopped meaning two things.
     ClassifyOutput(ClassifyScored),
+    /// A recall's account, shaped on the flush's precedent: plain small data
+    /// the harness authors from the state seam's answer, per charter section
+    /// 3.1's twenty-second kind.
+    Recall(RecallAccount),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
     /// interim rather than a placeholder struct, because a struct shaped
@@ -315,6 +324,68 @@ pub enum StopReason {
 pub struct FlushCounts {
     pub resident_before: u64,
     pub resident_after: u64,
+}
+
+/// An answered ask on the state seam: what was asked, and which events
+/// custody answered with.
+///
+/// **Identities and never contents.** The events a recall returns are
+/// already in the record under their own identities, so the account names
+/// them by run, turn, sequence and kind and carries none of their pairs: a
+/// reader who wants a returned event's content reads it where it stands. What
+/// the record lacked before this kind was the ask itself and which events
+/// answered it, which is the input a loop then builds the next turn from.
+///
+/// **A partial answer lists every identity and a whole-session answer its
+/// bounds.** A bounded recall is exactly the case where which events came
+/// back is the fact, so each is named. The replay port's answer is the source
+/// session from its first event to its last, so it is named by those two
+/// and the count, and never by a list as long as the session.
+///
+/// **Only an answered ask is recorded here.** A seam that refused or died
+/// answered nothing, and that fact is the refusal event's or the fault's, per
+/// `weaver-trace-Spec` section 3's recall clause.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct RecallAccount {
+    pub ask: RecallAsk,
+    pub returned: Vec<RecalledIdentity>,
+    /// How many events answered, carried where `returned` holds the
+    /// answer's bounds rather than every identity: a whole-session replay
+    /// answer is identified by its first and last events and this count.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub count: Option<u64>,
+}
+
+/// The ask as the harness sent it: which of the state seam's asks, and the
+/// turn bound where the ask carried one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct RecallAsk {
+    pub verb: RecallVerb,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_turns: Option<u64>,
+}
+
+/// Which state-seam ask returned the events: the enter's identity ask, a
+/// recall, the enter's under a restoring load and the seat's after a flush
+/// alike, or the replay port's whole-session ask.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecallVerb {
+    Identity,
+    Recall,
+    Replay,
+}
+
+/// One returned event's identity as custody answered it. The turn is absent
+/// where the event belongs to none, a seated prefix among them, and the
+/// sequence is the decimal string the record spelled.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct RecalledIdentity {
+    pub run: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub turn: Option<String>,
+    pub sequence: String,
+    pub kind: String,
 }
 
 /// What an elision removed and what the session held either side.

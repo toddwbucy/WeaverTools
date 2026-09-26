@@ -124,7 +124,8 @@ fn admit(event: &Event) -> Result<(), Failure> {
             | Kind::ModelField
             | Kind::Flush
             | Kind::Refusal
-            | Kind::Fault,
+            | Kind::Fault
+            | Kind::Recall,
             Some(Payload::Spliced(_)),
         ) => Ok(()),
         (_, None) => refuse(SubmitRefusal::RequiredFieldAbsent {

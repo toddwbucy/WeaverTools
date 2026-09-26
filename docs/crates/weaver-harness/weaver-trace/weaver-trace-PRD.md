@@ -315,8 +315,9 @@ its closure.
 | `model.field` | one decode position's ranked candidates with their probabilities and the rank the draw landed on, when the field election stands |
 | `elision` | an interior span of the decode context made absent, the loop's election, the span it named beside the resident counts either side |
 | `refusal` | a typed refusal clerked to the record, one kind for every seam, the organ's case carried opaque as `fault` does |
+| `recall` | an answered ask on the state seam, what was asked and the identities of the events custody answered with, never their contents |
 
-Twenty-one kinds. Adding one is an edit to this charter and to every contract whose
+Twenty-two kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
 **`model.field` is the nineteenth**, added 2026-08-21 on `weaver-spu-PRD`
 section 13.11's election. It is the first kind recorded per decode position
@@ -331,7 +332,10 @@ make the record unaffordable rather than complete.
 
 **`elision` is the twentieth and `refusal` the twenty-first**, both of
 2026-08-22 and both argued at their own clauses below - the table and the
-count word above caught up to them on 2026-08-26.
+count word above caught up to them on 2026-08-26. **`recall` is the twenty-second**, on
+the operator's ruling of 2026-09-26 under epic #690: the M1 run's post-flush input was
+drawn from a state-seam ask the record did not hold, and `weaver-trace-Spec` section 3
+argues the shape.
 
 **The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because

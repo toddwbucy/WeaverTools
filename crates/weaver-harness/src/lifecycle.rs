@@ -1580,8 +1580,20 @@ impl Harness {
                 None if state_member => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                 None => seed.clone(),
                 Some(seam) => {
-                    match crate::state::identity_material(seam.ask_identity_within(ask_bound), seed)
-                    {
+                    // An answered identity ask reaches the record as a
+                    // `recall` before the open is built from it, per
+                    // `weaver-trace-Spec` section 3's recall clause. A miss
+                    // records nothing here and refuses below.
+                    let answered = seam.ask_identity_within(ask_bound);
+                    if let Some(events) = &answered {
+                        record_enter_ask(
+                            &run.author,
+                            &mut run.recorder,
+                            weaver_trace::RecallVerb::Identity,
+                            events,
+                        );
+                    }
+                    match crate::state::identity_material(answered, seed) {
                         Some(material) => material,
                         None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                     }
@@ -1600,12 +1612,23 @@ impl Harness {
         let restored: Vec<weaver_traits::Message> = if restoring {
             match run.state.as_mut() {
                 None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
-                Some(seam) => match crate::state::restored_conversation(
-                    seam.ask_recall_within(None, ask_bound),
-                ) {
-                    Some(messages) => messages,
-                    None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
-                },
+                Some(seam) => {
+                    // The restoring recall reaches the record the same way,
+                    // one kind for every answered ask on the seam.
+                    let answered = seam.ask_recall_within(None, ask_bound);
+                    if let Some(events) = &answered {
+                        record_enter_ask(
+                            &run.author,
+                            &mut run.recorder,
+                            weaver_trace::RecallVerb::Recall,
+                            events,
+                        );
+                    }
+                    match crate::state::restored_conversation(answered) {
+                        Some(messages) => messages,
+                        None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
+                    }
+                }
             }
         } else {
             Vec::new()
@@ -2331,6 +2354,37 @@ fn seat_restored_prefix(
     }
 }
 
+/// The enter's answered state-seam asks reach the record as `recall`
+/// events, per `weaver-trace-Spec` section 3's recall clause, before the open
+/// is built from them. **A recall the recorder will not take is named in a
+/// fault rather than refusing the enter**, the miss accounting the seated
+/// prefix already runs on: the answer is good and the load can stand, and
+/// what went unrecorded is the provenance of the prefix the run opens under,
+/// which is the case that fault names.
+fn record_enter_ask(
+    author: &crate::authorship::Author,
+    recorder: &mut crate::record::Record,
+    verb: weaver_trace::RecallVerb,
+    answered: &[crate::state::Recalled],
+) {
+    if let Err(failure) = author.author_recall(recorder, verb, None, answered) {
+        let account = serde_json::json!({
+            "organ": "harness",
+            "miss": "recall-unrecorded",
+            "failure": format!("{failure:?}"),
+        });
+        let _ = author.author_fault(
+            recorder,
+            Subsystem::Harness,
+            None,
+            &crate::authorship::harness_report(
+                weaver_types::FaultCase::IdentityPrefixUnrecorded,
+                &account.to_string(),
+            ),
+        );
+    }
+}
+
 fn seat_identity_prefix(
     author: &crate::authorship::Author,
     recorder: &mut crate::record::Record,
@@ -3035,6 +3089,214 @@ mod tests {
             assert_eq!(load["payload"]["composer"]["sha256"], "cd".repeat(32));
             let _ = std::fs::remove_dir_all(&dir);
         }
+    }
+
+    /// Enters a serving run against a scripted state member, one half of a
+    /// socket pair the way admin's spawn hands the harness its end, and
+    /// returns the record the enter left. The member answers the grants ask
+    /// with an empty surface, the identity ask with one seated prefix event and, under a restoring load, the
+    /// recall ask with one turned exchange, and drains the tee's traffic
+    /// otherwise. The fan-out fails past the load, as every enter test's
+    /// bogus organ paths make it.
+    fn enter_against_a_member(restore: Option<weaver_types::Lineage>) -> Vec<serde_json::Value> {
+        use std::io::{BufRead, BufReader, Write};
+
+        let dir = std::env::temp_dir().join(format!(
+            "weaver-enter-ask-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("scratch");
+        let listener =
+            crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
+        let sink_path = dir.join("trace.ndjson");
+        let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
+        let mut harness = Harness {
+            coordination: listener,
+            organs: OrganBinaries {
+                classify: None,
+                spu: "/nonexistent/weaver-spu".into(),
+                gate: "/nonexistent/weaver-gate".into(),
+            },
+            parameters: OrganParameters::default(),
+            state: ChannelState::BeforeEnter,
+            composer: Some(weaver_trace::LoopIdentity::compiled("test")),
+        };
+        let payload = weaver_types::EnterPayload {
+            session: SessionId("s-1".into()),
+            run: weaver_types::RunId("r-1".into()),
+            spu_instruction: weaver_types::SpuInstruction {
+                classify: None,
+                decoder: weaver_types::DecoderInstruction {
+                    model_binding: weaver_types::ModelBinding {
+                        artifact: weaver_types::ArtifactRef("unreachable".into()),
+                        devices: vec![weaver_types::DeviceOrdinal(0)],
+                    },
+                    residual_readout_election: false,
+                    field_election: None,
+                    surprisal_election: false,
+                    refeed_permission: false,
+                    column_permission: false,
+                    identity: Vec::new(),
+                    tunable_values: Default::default(),
+                },
+            },
+            binding: weaver_types::EnterBinding::Serving {
+                gate_instruction: weaver_types::GateInstruction {
+                    access_rule: weaver_types::AccessRule {
+                        allowed_uids: Default::default(),
+                        allowed_gids: Default::default(),
+                        denied_uids: Default::default(),
+                    },
+                },
+            },
+            state_store: weaver_types::StateStore::default(),
+            declaration: String::new(),
+            restore,
+            stack: Default::default(),
+            state_election: weaver_types::StateElection {
+                all_kinds: false,
+                keys: Vec::new(),
+            },
+        };
+        let (near, far) = std::os::unix::net::UnixStream::pair().expect("pair");
+        let member = std::thread::spawn(move || {
+            let mut answers = far.try_clone().expect("clone");
+            for line in BufReader::new(far).lines() {
+                let Ok(line) = line else { break };
+                let answer = if line.starts_with(r#"{"ask":{"grants""#) {
+                    r#"{"answer":{"grants":{"surface":[]}}}"#
+                } else if line.starts_with(r#"{"ask":{"identity""#) {
+                    concat!(
+                        r#"{"answer":{"identity":{"messages":[{"envelope":{"session":"s-0","#,
+                        r#""run":"r-0","kind":"message.system","sequence":"3"},"#,
+                        r#""pairs":{"role":"system","content":[{"type":"text","#,
+                        r#""text":"You are Karl."}]}}]}}}"#
+                    )
+                } else if line.starts_with(r#"{"ask":{"recall""#) {
+                    concat!(
+                        r#"{"answer":{"recall":{"events":["#,
+                        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
+                        r#""kind":"message.user","sequence":"5"},"pairs":{"role":"user","#,
+                        r#""content":[{"type":"text","text":"hello"}]}},"#,
+                        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
+                        r#""kind":"message.assistant","sequence":"9"},"pairs":{"role":"assistant","#,
+                        r#""content":[{"type":"text","text":"hi"}]}}]}}}"#
+                    )
+                } else {
+                    continue;
+                };
+                if answers.write_all(format!("{answer}\n").as_bytes()).is_err() {
+                    break;
+                }
+            }
+        });
+        let mut run = match harness.enter(payload, Some(sink), Some(OwnedFd::from(near))) {
+            Err(EnterFailure::AfterLoad(run, _)) => run,
+            Ok(_) => panic!("the bogus fan-out cannot succeed"),
+            Err(EnterFailure::BeforeLoad(refusal)) => {
+                panic!("failed before the load: {refusal:?}")
+            }
+        };
+        let _ = leave(&mut run);
+        drop(run);
+        member
+            .join()
+            .expect("the member finishes when the channel closes");
+        let held = std::fs::read_to_string(&sink_path).expect("the sink reads back");
+        let _ = std::fs::remove_dir_all(&dir);
+        held.lines()
+            .map(|line| serde_json::from_str(line).expect("each line parses"))
+            .collect()
+    }
+
+    /// **The enter's answered identity ask reaches the record as a `recall`
+    /// before the prefix it seats**, per `weaver-trace-Spec` section 3's
+    /// recall clause: the prefix the run opens under is drawn from this
+    /// answer, so the record names the ask and the identity of each event it
+    /// returned, turnless, ahead of the `message.system` it becomes.
+    ///
+    /// Perturbation: drop the `record_enter_ask` call from the identity ask
+    /// and the recall assertion fails. Watched under exactly that removal.
+    ///
+    /// conforms: trace-recall-records-the-ask-and-its-identities
+    #[test]
+    fn the_enter_records_its_identity_ask_before_the_prefix() {
+        let events = enter_against_a_member(None);
+        let kinds: Vec<&str> = events.iter().map(|e| e["kind"].as_str().unwrap()).collect();
+        assert_eq!(kinds[0], "load", "the load opens the run");
+        assert_eq!(kinds[1], "recall", "the identity ask follows it: {kinds:?}");
+        assert_eq!(
+            kinds[2], "message.system",
+            "and the prefix it seats after that"
+        );
+        let recall = &events[1];
+        assert!(recall.get("turn").is_none(), "before any turn");
+        assert_eq!(recall["payload"]["ask"]["verb"], "identity");
+        assert!(
+            recall["payload"]["ask"].get("last_turns").is_none(),
+            "the identity ask carries no bound"
+        );
+        assert_eq!(
+            recall["payload"]["returned"],
+            serde_json::json!([{"run": "r-0", "sequence": "3", "kind": "message.system"}]),
+            "the returned event by identity alone"
+        );
+        assert_eq!(
+            events.iter().filter(|e| e["kind"] == "recall").count(),
+            1,
+            "and a load electing no restore asks nothing else"
+        );
+    }
+
+    /// **Under a restoring load the recall ask is recorded too, beside the
+    /// identity's**, one kind for every answered ask on the seam, each ahead
+    /// of what it seats.
+    ///
+    /// Perturbation: drop the `record_enter_ask` call from the restoring
+    /// recall and the second assertion fails.
+    #[test]
+    fn a_restoring_enter_records_its_recall_ask_too() {
+        let events = enter_against_a_member(Some(weaver_types::Lineage {
+            parent: SessionId("s-0".into()),
+            run: weaver_types::RunId("r-0".into()),
+            through: 1,
+        }));
+        let recalls: Vec<&serde_json::Value> =
+            events.iter().filter(|e| e["kind"] == "recall").collect();
+        assert_eq!(
+            recalls.len(),
+            2,
+            "the identity ask and the recall ask: {events:?}"
+        );
+        assert_eq!(recalls[1]["payload"]["ask"]["verb"], "recall");
+        assert!(
+            recalls[1]["payload"]["ask"].get("last_turns").is_none(),
+            "the restoring recall is unbounded"
+        );
+        assert_eq!(
+            recalls[1]["payload"]["returned"],
+            serde_json::json!([
+                {"run": "r-0", "turn": "t-1", "sequence": "5", "kind": "message.user"},
+                {"run": "r-0", "turn": "t-1", "sequence": "9", "kind": "message.assistant"}
+            ])
+        );
+        // Both asks are answered before anything is seated, so both recalls
+        // precede the seated prefix. The restored exchange itself is not
+        // asserted here: its turned kinds are refused turnless at the writer
+        // today, a defect of the restore door that is epic #690 item C2.7 and not
+        // this act's to settle.
+        let at = |kind: &str, text: &str| {
+            events
+                .iter()
+                .position(|e| e["kind"] == kind && e.to_string().contains(text))
+                .unwrap_or_else(|| panic!("{kind} {text} is in the record: {events:?}"))
+        };
+        assert!(
+            at("recall", r#""verb":"recall""#) < at("message.system", "You are Karl."),
+            "the recall precedes what the open seats"
+        );
     }
 
     #[test]

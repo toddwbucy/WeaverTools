@@ -264,6 +264,57 @@ impl Author {
         ))
     }
 
+    /// Authors the `recall` event for an answered state-seam ask, per
+    /// `weaver-trace-Spec` section 3's recall clause: the ask as it was sent
+    /// and the identities of the events custody answered with, never their
+    /// pairs, turnless. **Called before the answer reaches its consumer**, on
+    /// the announce-after-record rule the flush follows: a loop, or an open,
+    /// that built its input from an answer the record did not yet hold could
+    /// act on it and leave no trace of what it was given. An ask that was not
+    /// answered is never this door's, a dead seam being the refusal's or the
+    /// fault's to record.
+    pub fn author_recall(
+        &self,
+        recorder: &mut Record,
+        verb: weaver_trace::RecallVerb,
+        last_turns: Option<u64>,
+        answered: &[crate::state::Recalled],
+    ) -> Result<Sequence, RecordFailure> {
+        let identity = |event: &crate::state::Recalled| weaver_trace::RecalledIdentity {
+            run: event.run.clone(),
+            turn: event.turn.clone(),
+            sequence: event.sequence.clone(),
+            kind: event.kind.clone(),
+        };
+        // A whole-session answer is named by its bounds and its count, a
+        // partial one by every identity it returned.
+        let (returned, count) = match verb {
+            weaver_trace::RecallVerb::Replay => {
+                let bounds = match answered {
+                    [] => Vec::new(),
+                    [only] => vec![identity(only)],
+                    [first, .., last] => vec![identity(first), identity(last)],
+                };
+                (bounds, Some(answered.len() as u64))
+            }
+            weaver_trace::RecallVerb::Identity | weaver_trace::RecallVerb::Recall => {
+                (answered.iter().map(identity).collect(), None)
+            }
+        };
+        let account = weaver_trace::RecallAccount {
+            ask: weaver_trace::RecallAsk { verb, last_turns },
+            returned,
+            count,
+        };
+        self.author(
+            recorder,
+            Kind::Recall,
+            Subsystem::Harness,
+            None,
+            Some(Payload::Recall(account)),
+        )
+    }
+
     /// Authors a tool-result message from the granted value, the one door
     /// for the role, per `weaver-harness-Spec` section 6: the record is
     /// minted from the grant at this site and nowhere else, so what enters
