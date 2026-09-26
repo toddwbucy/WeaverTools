@@ -97,7 +97,10 @@ def ticks(pid):
 
 
 def live(lease):
-    return bool(lease and ticks(lease['pid']) == lease['ticks'])
+    # A pid that is not an int names no process of its own: /proc/self is
+    # the reader, and 1234.0 reads nothing.
+    return bool(isinstance(lease, dict) and type(lease.get('pid')) is int and
+                ticks(lease['pid']) == lease.get('ticks'))
 
 
 def leases(step):
@@ -123,8 +126,12 @@ def validate_plan(plan):
     check('agent', plan.get('agent') == 'bravo')
     # Two stacks are two roots: resolved, distinct, and neither inside the
     # other, since a B2 nested under B1 would put its bytes in the B1 install.
-    roots = [Path(plan.get('stacks', {}).get(s, '')).resolve() for s in ['B1', 'B2']]
-    check('stacks-distinct', all(str(plan.get('stacks', {}).get(s)) for s in ['B1', 'B2']) and roots[0] != roots[1] and
+    # Each named as a nonempty string before a path is made of it: str(None)
+    # is 'None', and a missing stack resolves to the working directory.
+    stacks = [plan.get('stacks', {}).get(s) for s in ['B1', 'B2']]
+    check('stacks-distinct', all(isinstance(r, str) and r for r in stacks))
+    roots = [Path(r).resolve() for r in stacks]
+    check('stacks-distinct', roots[0] != roots[1] and
           not roots[0].is_relative_to(roots[1]) and not roots[1].is_relative_to(roots[0]))
     check('isolated-root', plan.get('install_root') == '/var/lib/weaver-tb')
     # Compared as JSON, not as Python values: dict equality reads 1 as True and
@@ -146,8 +153,8 @@ def validate_plan(plan):
     check('arm-order', [a['name'] for a in arms] == ['TB0', 'TB-d', 'TB-k'])
     jobs = [j for a in arms for j in a['jobs']]
     import re
-    check('job-identities', len({j['id'] for j in jobs}) == len(jobs) and
-          all(re.fullmatch(r'[A-Za-z0-9_-]+', j['id']) for j in jobs))
+    check('job-identities', all(isinstance(j.get('id'), str) and re.fullmatch(r'[A-Za-z0-9_-]+', j['id']) for j in jobs)
+          and len({j['id'] for j in jobs}) == len(jobs))
     check('job-types', all(j['kind'] in ['free', 'refeed'] and j['stack'] in ['B1', 'B2'] for j in jobs))
     control = arms[0]['jobs']
     free = [j for j in control if j['kind'] == 'free']

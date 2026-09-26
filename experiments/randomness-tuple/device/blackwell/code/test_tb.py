@@ -1658,6 +1658,66 @@ class JsonEqualityTests(unittest.TestCase):
             payload.main()
 
 
+    def test_the_plan_refuses_a_stack_or_job_id_that_is_not_a_string(self):
+        # A missing stack was str(None), truthy, and resolved to the working
+        # directory. A job id of 5 reached re.fullmatch and raised.
+        f=Fixture('test_plan_validation');f.setUp();self.addCleanup(f.doCleanups)
+        for name,edit in [('stacks-distinct',lambda p:p['stacks'].pop('B1')),('stacks-distinct',lambda p:p['stacks'].update(B1=5)),
+                          ('job-identities',lambda p:p['arms'][0]['jobs'][0].update(id=5)),('job-identities',lambda p:p['arms'][0]['jobs'][0].update(id=['a']))]:
+            p=copy.deepcopy(f.plan);edit(p)
+            with self.subTest(name),self.assertRaisesRegex(order.Refused,name):order.validate_plan(p)
+
+    def test_a_lease_names_a_process_only_by_an_int_pid(self):
+        # A pid of 'self' read the reader's own /proc entry as the lease holder.
+        me=os.getpid()
+        self.assertTrue(order.live(dict(pid=me,ticks=order.ticks(me))))
+        for lease in [dict(pid='self',ticks=order.ticks('self')),dict(pid=float(me),ticks=order.ticks(me)),dict(pid=me),None]:
+            with self.subTest(lease=lease):self.assertFalse(order.live(lease))
+
+    def test_a_field_position_is_an_int_and_duplicates_are_json_facts(self):
+        d=DriverTests('test_a_second_field_event_for_a_position_refuses_on_every_path');d.setUp();self.addCleanup(d.doCleanups)
+        base=json.loads(golden.MODEL_FIELD)['payload'];j=d.job('free')
+        cases=[[event(golden.MODEL_FIELD,run='r',payload=dict(base,position=float(base['position'])))],
+               [event(golden.MODEL_FIELD,run='r',payload=dict(base,position=str(base['position'])))],
+               [event(golden.MODEL_FIELD,run='r'),event(golden.MODEL_FIELD,run='r',sequence='42',payload=dict(base,position=float(base['position'])))]]
+        for n,ev in enumerate(cases):
+            try:
+                with self.subTest(case=n),patch('tb_driver.until_closed',return_value=closed_bytes(ev+d.close())),self.assertRaisesRegex(order.Refused,'field-beyond-output'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_exactness_compares_field_keys_as_written(self):
+        # A result file holds the field's keys as JSON strings and a fresh
+        # extraction as ints: both read as one record, and '03' is not 3.
+        d=DriverTests('test_exact_holds_the_input_length');d.setUp();self.addCleanup(d.doCleanups)
+        t=prepare.template(Path('/deposit'),'todd',1000)['tuple']
+        a=copy.deepcopy(d.free);k=next(iter(a['field']))
+        written=dict(copy.deepcopy(a),field={str(kk):v for kk,v in a['field'].items()})
+        padded=dict(copy.deepcopy(a),field={('0'+str(kk) if kk==k else kk):v for kk,v in a['field'].items()})
+        self.assertTrue(driver.exact(t,a,written))
+        self.assertFalse(driver.exact(t,a,padded),'field key 03 is not 3')
+
+    def test_the_input_length_and_divergence_position_are_ints(self):
+        d=DriverTests('test_refeed_holds_the_input_and_refuses_a_divergence_inside_it');d.setUp();self.addCleanup(d.doCleanups)
+        j=d.job('refeed');n=d.free['input_tokens']
+        d.free['input_tokens']=float(n)
+        try:
+            with patch('tb_driver.until_closed',return_value=closed_bytes(d.close(True))),self.assertRaisesRegex(order.Refused,'input-held'):driver.measure(d.plan,j,d.probe,{})
+        finally:d.cleanup_job()
+        d.free['input_tokens']=n
+        for pos in [float(n),str(n)]:
+            at=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=pos,recorded=1,recomputed=2)))))
+            try:
+                with self.subTest(position=pos),patch('tb_driver.until_closed',return_value=closed_bytes(at)),self.assertRaisesRegex(order.Refused,'divergence-in-input'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_roots_sink_length_is_ascii_digits(self):
+        h='0'*64
+        self.assertTrue(payload.well_formed_sink(('512',h)))
+        for length in ['\u0665\u0661\u0662','0512','0','',' 512','512.0']:
+            with self.subTest(length=length):self.assertFalse(payload.well_formed_sink((length,h)))
+
 class AdditionalTests(unittest.TestCase):
     save = Fixture.save
     setUp = Fixture.setUp

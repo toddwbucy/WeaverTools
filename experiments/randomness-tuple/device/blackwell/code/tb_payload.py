@@ -509,7 +509,9 @@ def well_formed_sink(source_sink):
     if source_sink is None or len(source_sink) != 2:
         return False
     length, digest = source_sink
-    return (length.isdecimal() and int(length) > 0 and len(digest) == 64
+    # ASCII digits only: str.isdecimal() admits every script's digits, and
+    # int() reads them as the same length.
+    return (length[:1] in tuple('123456789') and all(c in '0123456789' for c in length) and len(digest) == 64
             and all(c in '0123456789abcdef' for c in digest))
 
 

@@ -135,9 +135,12 @@ def well_formed(rows):
     check('output-absent', kinds['model.output'] >= 1)
     check('output-duplicated', kinds['model.output'] <= 1)
     positions = [e['payload']['position'] for e in rows if e['kind'] == 'model.field']
-    check('field-duplicated', len(positions) == len(set(positions)))
+    # Positions are told apart as JSON facts, so 3 and 3.0 are two, and the
+    # bound below refuses the one that is not an int.
+    check('field-duplicated', len(positions) == len({json.dumps(p) for p in positions}))
     measurement = next(e for e in rows if e['kind'] == 'model.measurement')
-    check('field-beyond-output', all(0 <= p < len(measurement['payload']['output_tokens']) for p in positions))
+    check('field-beyond-output', all(type(p) is int and 0 <= p < len(measurement['payload']['output_tokens'])
+                                     for p in positions))
 
 
 def enough(t, rec):
@@ -159,7 +162,7 @@ def exact(t, source, replay):
     return (same(source['input_tokens'], replay['input_tokens']) and
             same(source['output_tokens'], replay['output_tokens']) and
             all(float_bits(source[k]) == float_bits(replay[k]) for k in series(t)) and
-            same({int(k): v for k, v in source['field'].items()}, {int(k): v for k, v in replay['field'].items()}))
+            same({str(k): v for k, v in source['field'].items()}, {str(k): v for k, v in replay['field'].items()}))
 
 
 def source_record(plan, job, probe, receipts):
@@ -242,11 +245,12 @@ def measure(plan, job, probe, receipts):
         # pinned comparator reports as an ordinary divergence
         # (weaver-harness replay.rs:385-416 at e69916a), never a device or
         # kernel reading. Both refuse before any reading is taken.
-        check('input-held', same(src.get('input_tokens'), refed.get('input_tokens')))
+        check('input-held', type(src.get('input_tokens')) is int and same(src['input_tokens'], refed.get('input_tokens')))
         div = outcome.get('divergence') or {}
-        check('divergence-in-input', div.get('kind') != 'token_path' or int(div['position']) >= refed['input_tokens'])
+        check('divergence-in-input', div.get('kind') != 'token_path' or
+              (type(div.get('position')) is int and div['position'] >= refed['input_tokens']))
         # Historical #516 stack coordinate: input-plus-output, not resident.
-        ordinal = int(div['position']) - refed['input_tokens'] if div.get('kind') == 'token_path' else None
+        ordinal = div['position'] - refed['input_tokens'] if div.get('kind') == 'token_path' else None
         free_readings = []
         for candidate in plan['arms'][0]['jobs']:
             if candidate['kind'] == 'free' and same(candidate['seed'], src.get('declared_seed')):
