@@ -879,7 +879,8 @@ of identical bytes under different stems are one record identity and two per-fil
 maps: this value fixes their digests and not their names. Whether the split's
 manifest should carry the names, which would change the identity every later admit
 of a split records, is the operator's to rule and is named at `weaver-web-Spec` section
-10, in the web's own repository since 2026-09-26, where the consequence lands.
+10 (`git show 112bc65:docs/crates/weaver-web/weaver-web-Spec.md`, in the web's own
+repository since 2026-09-26), where the consequence lands.
 
 ```graph
 node: spu-weights-hash-at-admit

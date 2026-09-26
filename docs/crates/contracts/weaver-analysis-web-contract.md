@@ -24,7 +24,11 @@ is the operator's to say.
   browser is a display engine and holds no end of this seam. Since 2026-09-26 the
   crate and its charter live outside this repository, at
   `WeaverTools_Project/weaver-web/` beside it, on the operator's ruling of that
-  date, and this page stays with its sender.
+  date, and this page stays with its sender. **Every `weaver-web-PRD` and
+  `weaver-web-Spec` citation on this page reads against `112bc65`**, the last
+  `main` commit holding them, per Working Process section 1:
+  `git show 112bc65:docs/crates/weaver-web/weaver-web-Spec.md`, and
+  `weaver-web-PRD.md` beside it.
 
 No third party reaches this seam. **The agent holds no end of it**: the
 emitter parses a finished record outside the agent as an operator principal,
