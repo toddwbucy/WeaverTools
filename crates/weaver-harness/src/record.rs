@@ -152,9 +152,12 @@ fn convert(event: Event) -> Result<weaver_diagnostic::Event, RecordFailure> {
         Kind::Fault => weaver_diagnostic::Kind::Fault,
         Kind::Recall => weaver_diagnostic::Kind::Recall,
         Kind::Elision => weaver_diagnostic::Kind::Elision,
+        // A restored message is seated by a serving enter, and a diagnostic
+        // enter seats no prefix, per `weaver-diagnostic-Spec` section 3.2.
         Kind::Load
         | Kind::Unload
         | Kind::SessionClosed
+        | Kind::MessageRestored
         | Kind::ToolCallStarted
         | Kind::ToolCallCompleted
         | Kind::ClassifyRequest

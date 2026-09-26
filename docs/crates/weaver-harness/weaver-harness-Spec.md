@@ -2132,9 +2132,11 @@ tool-result door refuses in the message door: a door that writes what it was not
 for launders a bad declaration into a record that looks well formed. **Under a restoring
 load the door admits the roles the restored prefix carries**, per issue #432: the
 restored conversation is seated as prefix and the door authors what the open carried, so
-user and assistant messages reach the record turnless beside the system ones, and the
-record of a branch is complete without its parent. The system-only rule stands for the
-declaration's own field, which is still the only prefix a declaration can write.
+each restored message, whatever its role, reaches the record turnless as
+`message.restored`, per `weaver-trace-Spec` section 3's restored-prefix clause as of
+2026-09-26, and the record of a branch is complete without its parent. The system-only
+rule stands for the declaration's own field, which is still the only prefix a
+declaration can write.
 
 ```graph
 node: harness-identity-door-writes-system-only

@@ -10,6 +10,7 @@
 //! conforms: trace-turn-close-internally-tagged
 //! conforms: trace-output-carries-the-counts
 //! conforms: trace-recall-records-the-ask-and-its-identities
+//! conforms: trace-restored-message-is-turnless-and-whole
 //!
 //! Recorder tests of `weaver-trace-Spec` section 10. Verified removals are
 //! named at the watches that hold them. Not every test names a perturbation.
@@ -1073,6 +1074,73 @@ fn a_recall_is_turnless_and_names_what_answered() {
         )),
         "a whole-session answer by its bounds and its count: {}",
         recalls[1]
+    );
+}
+
+/// **A restored message is turnless and carries the message whole**, per
+/// `weaver-trace-Spec` section 3's restored-prefix clause: a restoring
+/// load's conversation is seated ahead of every turn, so the kind belongs to
+/// none, and its payload is the message the harness rendered, role and
+/// content, spliced as the identity's is. The four turned message kinds are
+/// not moved by it, and a user message with no turn still refuses.
+///
+/// Perturbations: take `Kind::MessageRestored` out of `turn_forbidden` and
+/// the turn-bearing submission is admitted; drop it from the message row of
+/// `pairing_licensed` and the turnless one refuses. Watched under each.
+#[test]
+fn a_restored_message_is_turnless_and_carries_the_message_whole() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections())))
+        .unwrap();
+    let message = || {
+        Some(Payload::Message(
+            raw_payload(r#"{"role":"user","content":[{"type":"text","text":"hello"}]}"#).unwrap(),
+        ))
+    };
+    r.submit(event(Kind::MessageRestored, None, message()))
+        .expect("a turnless restored message is the ordinary case");
+    assert!(
+        r.submit(event(Kind::MessageRestored, Some("t-1"), message()))
+            .is_err(),
+        "a restored message carrying a turn is refused rather than admitted"
+    );
+    assert!(
+        r.submit(event(Kind::MessageRestored, None, None)).is_err(),
+        "a restored message carrying nothing is refused"
+    );
+    let counts = Some(Payload::Flush(weaver_trace::FlushCounts {
+        resident_before: 27196,
+        resident_after: 712,
+    }));
+    assert!(
+        r.submit(event(Kind::MessageRestored, None, counts))
+            .is_err(),
+        "and one carrying another kind's payload is refused"
+    );
+    assert!(
+        r.submit(event(Kind::MessageUser, None, message())).is_err(),
+        "the turned user kind still refuses a message with no turn"
+    );
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    let restored: Vec<&str> = out
+        .lines()
+        .filter(|l| l.contains(r#""kind":"message.restored""#))
+        .collect();
+    assert_eq!(
+        restored.len(),
+        1,
+        "only the well-formed one reached the sink"
+    );
+    let line: serde_json::Value = serde_json::from_str(restored[0]).expect("the line parses");
+    assert!(line.get("turn").is_none(), "belonging to no turn");
+    assert!(
+        restored[0]
+            .contains(r#""payload":{"role":"user","content":[{"type":"text","text":"hello"}]}"#),
+        "the message whole, role and content: {}",
+        restored[0]
     );
 }
 

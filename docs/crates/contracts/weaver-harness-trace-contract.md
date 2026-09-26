@@ -60,10 +60,10 @@ stated even when empty, because an explicit nothing is an assertion someone chec
 and an absent group is silence.
 
 **From `weaver-traits`.** The message model. The `message.system`,
-`message.user`, `message.assistant`,
-and `message.tool_result` payloads carry conversation messages in whatever shape that
+`message.user`, `message.assistant`, `message.tool_result`,
+and `message.restored` payloads carry conversation messages in whatever shape that
 crate defines, and this contract does not redefine them. The harness draws it. The
-recorder does not, because those four payloads are opaque to it per `weaver-trace-PRD`
+recorder does not, because those five payloads are opaque to it per `weaver-trace-PRD`
 section 3, so this name crosses the seam in one direction only.
 
 **From `weaver-types`.** Nothing. The clause is present with that answer because

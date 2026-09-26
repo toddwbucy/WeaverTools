@@ -201,13 +201,12 @@ single occurrence time. `weaver-harness-trace-contract` section 3 states which p
 stamps them and why the scopes differ. The payload shape is determined by the kind,
 and the kind vocabulary is closed.
 
-**Four payload shapes are opaque to this crate.** `message.system`,
-`message.user`,
-`message.assistant`, and `message.tool_result` carry conversation messages in the
-shape `weaver-traits` defines, and this crate neither defines that shape nor decodes
-it. It records the octets, sequences them, and carries them as opaque
-content. Decoding is the harness's, which links `weaver-traits` and is the only party
-that reads a message as a message.
+**Five payload shapes are opaque to this crate.** `message.system`,
+`message.user`, `message.assistant`, `message.tool_result`, and `message.restored` carry
+conversation messages in the shape `weaver-traits` defines, and this crate neither
+defines that shape nor decodes it. It records the octets, sequences them, and carries
+them as opaque content. Decoding is the harness's, which links `weaver-traits` and is
+the only party that reads a message as a message.
 
 This is the demand rule rather than a convenience. Section 6 guarantees canonical
 byte form, a gapless run-scoped sequence, an interrogable committed boundary, whole
@@ -316,8 +315,9 @@ its closure.
 | `elision` | an interior span of the decode context made absent, the loop's election, the span it named beside the resident counts either side |
 | `refusal` | a typed refusal clerked to the record, one kind for every seam, the organ's case carried opaque as `fault` does |
 | `recall` | an answered ask on the state seam, what was asked and the identities of the events custody answered with, never their contents |
+| `message.restored` | one message of a restored conversation, seated at a restoring load's open ahead of every turn, the message whole |
 
-Twenty-two kinds. Adding one is an edit to this charter and to every contract whose
+Twenty-three kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
 **`model.field` is the nineteenth**, added 2026-08-21 on `weaver-spu-PRD`
 section 13.11's election. It is the first kind recorded per decode position
@@ -335,7 +335,10 @@ make the record unaffordable rather than complete.
 count word above caught up to them on 2026-08-26. **`recall` is the twenty-second**, on
 the operator's ruling of 2026-09-26 under epic #690: the M1 run's post-flush input was
 drawn from a state-seam ask the record did not hold, and `weaver-trace-Spec` section 3
-argues the shape.
+argues the shape. **`message.restored` is the twenty-third**, on the operator's ruling
+of 2026-09-26 under the same epic: a branch's record did not hold the conversation its
+model was opened with, each restored message refused turnless under its turned kind, and
+the same section argues the shape.
 
 **The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because

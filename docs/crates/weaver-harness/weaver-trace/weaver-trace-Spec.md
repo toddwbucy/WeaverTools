@@ -340,7 +340,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-twenty-two variants, twenty-two renames, and the wire spelling is the charter's.
+twenty-three variants, twenty-three renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -425,7 +425,7 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Twenty-two kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Twenty-three kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
 attribute that let a consumer absorb a further kind into a wildcard would defeat
@@ -625,11 +625,11 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, twenty-two kinds and seventeen dispositions**,
+**The kind-to-payload mapping is total, twenty-three kinds and seventeen dispositions**,
 the payload-free case counting as one of them. `refusal` carries `Refusal`, spliced, the
 organ's own account of what it turned away. `session.closed` and `turn.started` carry
 `None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
-did, the one kind with two licensed pairings. `load` carries `Elections`. The four
+did, the one kind with two licensed pairings. `load` carries `Elections`. The five
 message kinds carry `Message`. `turn.closed` carries `TurnClosed`. `fault` carries
 `Fault`. `flush` carries `FlushCounts`, the resident token counts before and after, both
 plain integers. **`elision` carries `ElisionSpan` and not those counts**: an elision
@@ -641,9 +641,9 @@ its two own shapes, `ClassifyAsk` and `ClassifyScored`. **A refused classify aut
 output at all** and reaches the record under `refusal`, so a refusal the exchange met is
 still the record's fact and never a fabricated answer, carried by the kind the class
 gives it rather than by the outcome's own variant. The tool bracket's two carry
-`Deferred`. `recall` carries `RecallAccount`. Three plus one plus four plus one plus one
-plus two plus four plus two plus two plus one plus one is twenty-two, which is the whole
-of charter section 3.1's set.
+`Deferred`. `recall` carries `RecallAccount`. Three plus one plus five plus one plus one
+plus two plus four plus two plus two plus one plus one is twenty-three, which is the
+whole of charter section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
 it was wrong silently.** An earlier draft assigned thirteen and left
@@ -656,7 +656,7 @@ like a mapping that is total**, which is why the recount lands as prose here
 and as a member list above rather than as a claim about totality alone.
 
 **The kind count stopped being prose alone on 2026-09-16**, `tests/kinds.rs` checking
-an array of twenty-two against an exhaustive match over the kind set, so an act that
+an array of twenty-three against an exhaustive match over the kind set, so an act that
 adds a kind and answers the crate's own matches stops at that test's match. **It does
 not reach an act that writes the new arm there too and leaves the array alone**, both
 of the test's assertions walking the array and so never reaching a kind the array does
@@ -924,6 +924,39 @@ any assembly. That exclusion predates this act and is what makes recording
 the prefix a record change rather than a behavior change, which is the
 property an elected diagnostic is held to and the one this act holds itself
 to as well.
+
+**A restored conversation is recorded under `message.restored`, the twenty-third
+kind**, on the operator's ruling of 2026-09-26 under epic #690 item C2.7. A restoring
+load seats the parent's conversation at the open beside the identity, per
+`weaver-harness-Spec` section 6.1. Until this kind the harness authored each restored
+message turnless under its turned kind, which the writer refused as it refuses any
+turnless user message, so a branch's record did not hold the conversation its model
+was opened with. **One kind serves every role, and the message carries the role and
+content**: the payload is the message the harness rendered, spliced as the identity's
+is, so the kind says where the message came from and the payload says what it was.
+**The kind forbids a turn**, a restored message being seated ahead of every turn of
+the run, for the flush's reason. **The operator weighed three readings and elected
+this one.** Moving the turned kinds to turn-optional would loosen the turn bracket for
+every message a loop authors. Carrying each message's source turn would make a
+branch's record depend on its parent's, against section 6.1's rule that a branch's
+record stands without it. A kind of its own keeps both, and it keeps the turnless
+`message.system` meaning the identity alone, a restored system message otherwise
+reading as a second identity to every later reader of the prefix. **Nothing re-reads
+it into a later prompt either**, the assembled structure sweeping the three turned
+kinds alone. **A restored message the recorder will not take is a fault**,
+`identity_prefix_unrecorded` with `restored-prefix-unrecorded` as the miss, the
+accounting the identity and the recall already run on, so the diagnostic replay's
+identity step refuses that record rather than certifying it.
+
+```graph
+node: trace-restored-message-is-turnless-and-whole
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-restored-message-is-turnless-and-whole
+```
 
 **The surprisal's election is a plain boolean and is present rather than
 skipped when false**, which is the opposite election from the field's
@@ -1508,7 +1541,7 @@ to: trace-append-failed-no-recovery
 
 **Enforced by the compiler.**
 
-- The kind enum is exhaustive, so a twenty-third kind breaks every consumer's match.
+- The kind enum is exhaustive, so a twenty-fourth kind breaks every consumer's match.
 - `WorkingStructure` exposes no mutation surface: every public accessor yields a
   shared reference and the append is crate-private, so alteration after landing is
   unrepresentable rather than merely forbidden. This is the signature half of the
@@ -1555,12 +1588,12 @@ arguments are elsewhere, so a block here would sit apart from the prose that
 earns it. Three sit at the end of this section, being the claims argued only
 here.
 
-**Forty-seven records in all, and the split is where they are declared, which a
-reader can count.** Three in section 1, three in section 2, eighteen in section
+**Forty-eight records in all, and the split is where they are declared, which a
+reader can count.** Three in section 1, three in section 2, nineteen in section
 3, five in section 4, two in section 5, four in section 6, two in section 7, one
 in section 8, two in section 9, this section's three, and four in section 11. The
 instruments divide them four to the compiler, three to compile-fail, three to the
-manifest, fourteen to a perturbation-verified test, and twenty-three to review.
+manifest, fifteen to a perturbation-verified test, and twenty-three to review.
 **The split is stated as a count of declarations because that is a count the next
 act can take**, where a split by provenance is a reading and two readers of one
 section need not reach it alike. The rule that sorted a divided claim's two
@@ -1575,7 +1608,7 @@ its test lives. **The tagging test section 3 applies is declared by
 Specs share, and what this document records is the election that test yields for
 `TurnClose`. Those two are tests this Spec would otherwise owe, and
 `trace-tee-selects-never-computes` is not a third: section 11 declares it and it
-counts with the forty-six. The threat walk closing this section
+counts with the forty-eight. The threat walk closing this section
 takes no node of its own, per Document Format section 5, and it names no test of
 its own either, its instrument being the compile-fail set already recorded.
 
@@ -1623,7 +1656,7 @@ arm dropped, the arm widened to any kind, and the render re-encoded through a
 sort rather than an owing.** What it watches is one row of
 `trace-kind-payload-mapping-total` and one payload's reading of
 `trace-splice-or-shape`, both review-tagged claims made over the whole set of
-twenty-two kinds and of every spliced payload. A `perturbation` tag on either
+twenty-three kinds and of every spliced payload. A `perturbation` tag on either
 would claim an instrument for a claim the instrument does not reach, a tag
 naming the mechanism its own clause names rather than the nearest test that
 touches it, and a node declared for the single row would be a second authority
@@ -1633,7 +1666,7 @@ The remaining mutation documentation is owed under issue #606, rather than
 supplied by the three rendering removals named in section 3.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
-forty-six carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
+forty-eight carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1651,9 +1684,9 @@ reason to report pressure rather than author it, and no reason to hold the
 envelope out of the tee's election, so those three ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Forty-one claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: seventeen of the forty-six are section 3's
-event schema and fifteen of those seventeen ground in nothing, a schema being
+**Forty-three claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: nineteen of the forty-eight are section 3's
+event schema and seventeen of those nineteen ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
 **Two calls are worth stating rather than leaving to be read.** The two contract
@@ -1712,6 +1745,11 @@ the fact exists.
   watched to fail when the kind leaves `turn_forbidden` or its pairing row, and the
   harness authors one after a flush and at the enter's asks, watched to fail when
   the authoring is removed at either site.
+- A restored message is recorded turnless under `message.restored` with the message
+  whole, per section 3: the recorder refuses one carrying a turn or another kind's
+  payload, watched to fail when the kind leaves `turn_forbidden` or the message
+  pairing row, and a restoring enter lands the restored exchange with no fault,
+  watched to fail when the harness authors it under the turned kinds again.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test
