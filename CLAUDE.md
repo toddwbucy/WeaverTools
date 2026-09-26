@@ -310,9 +310,11 @@ indexes them, it does not replace them:
 3. **Perturbation-verified tests** for invariants that are behaviours. Always confirm the
    test fails when the property is removed - a test that passes either way converts
    "unenforced" into "documented as enforced", which is worse than no test.
-4. Human and CodeRabbit review. Read the review **body**, not the thread count: CR posts
-   findings outside the diff range that create no thread and are absent from the
-   "actionable comments" total.
+4. Human and Codex review. Read the review **body**, not the thread count: a clean
+   Codex pass edits its summary comment in place and posts no review object and no
+   thread, and findings arrive as review threads, sometimes a minute after the
+   summary row flips, so a thread count of zero is not a verdict until the summary
+   row reads completed.
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
    operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
    workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
@@ -447,43 +449,44 @@ evidence the gate did not fire, not evidence of correctness.
 
 ## The pull request path
 
-All pull requests open as drafts. A draft PR goes to the code review seat, a sub-agent
-invoked under the review skill. The sub-agent posts its review to the pull request
-before the coding session acts on it, and hands the same report to the coding session.
-Posting first is required, so the record carries the finding as it stood, whether it
-was fixed or argued down.
+All pull requests open as drafts, from a worktree, and the arrangement runs as the
+#683 trial of 2026-09-25 settled it: the Executor seat opens the draft, Codex's
+GitHub review is the third-party reviewer, the Planner seat grades, and the
+operator merges. CodeRabbit is retired since 2026-09-22.
 
-The coding session answers each finding with a commit. More than four review rounds
-with the seat means the diff is not the problem. The pull request is pulled and the
-work re-enters authoring.
+**Every push fires a Codex code pass**, undrafting fires one, and `@codex review`
+or `@codex security review` on the pull request requests one. A clean pass edits
+the summary comment in place and posts no review object and no thread; findings
+arrive as review threads, sometimes a minute after the summary row flips. Because
+a push fires a pass, the rework is always reviewed, which is the rule the
+sub-agent seat once carried as its second pass: on 2026-09-11 answering fifteen
+findings introduced a real defect in three pull requests of four, each found by
+the pass after the fixes.
 
-**The seat reviews twice, and the second pass reviews the rework.** Answering
-fifteen findings is itself an act, and on 2026-09-11 it introduced a real defect
-in three pull requests out of four: a transaction that was not a snapshot, a
-sweep whose claim was measured against one marker of several, and a newtype that
-held its kind for the compiler and not for the value. **Each was found by the
-pass that came after the fixes**, not by the one that found the original
-defects. So a second pass is not optional where the first produced substantive
-work; where the first returned nothing actionable, a second is ritual.
+**The Planner grades every pass on the pull request** against a clean extract of
+the head, and verifies each fix by its own perturbation, not by the Executor's
+account. The grade is what the Executor acts on: a valid finding is fixed, an
+invalid one is declined with the reason, and either way the finding is answered
+on the pull request, since the record carries it as it stood. **Passing means no
+finding that changes behaviour or corrects a claim is unanswered.**
 
-**Passing means no finding that changes behaviour or corrects a claim is
-unanswered.** A declined finding is answered - with the reason on the pull
-request, since the record carries the finding as it stood either way.
+**Fix the class and walk every site before the next pass.** A finding names one
+site of its class, and a site fix answers the finding while the reviewer finds
+the next site: #683's tail was two classes fixed narrowly and found again, pass
+after pass. So a fix greps every consumer of the same shape in every file of
+the act, tables each site in the body with its disposition, and only then takes
+the next pass.
 
-**The reviews are cheap in the resource that is scarce.** A pass runs in a
-sub-agent, so its own hundred-odd thousand tokens never enter the session's
-window and only the findings do. **Do not spend a review pass on what the
-census counts**: a reviewer's attention on "is this perturbation cited" is
-attention not on "does this fix hold", and the first is deterministic.
+**More than four review rounds means the diff is not the problem.** The pull
+request returns to authoring, which is the rule that stopped #683 at twenty-eight
+passes: the code was sound and the review series had become the work.
 
-The order, then: gates including the census, first review, answer every finding,
-gates again, second review, then out of draft.
-
-A pull request leaves draft only when the code review seat passes it. Leaving draft is
-what invokes CodeRabbit, which is the final pass and is expected to confirm rather
-than to find work. Two exchanges with CodeRabbit is the ceiling. A third means the
-draft phase did not finish, so the pull request returns to draft and the seat works it
-again before it comes back out.
+**Gates before review, and do not spend a pass on what the census counts**: a
+reviewer's attention on "is this perturbation cited" is attention not on "does
+this fix hold", and the first is deterministic. The order, then: gates including
+the census, the push and its pass, every finding answered, gates again, the
+Planner's grade, then out of draft when the Planner passes it and the operator
+takes the merge.
 
 ## Police call
 
