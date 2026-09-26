@@ -1383,6 +1383,14 @@ class HoldLiftTests(unittest.TestCase):
         sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
         result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
         other=dict(sink,length=640,sha256='b'*64)
+        # #695: Python equality reads 512.0 as 512, so the result's record and
+        # the state's copy could hold different JSON facts and compare equal.
+        # Perturbation: compare them with == again and this reaches root.
+        with self.subTest('the result records 512.0 and the state 512'):
+            order.atomic(result,dict(name=source,sink=dict(sink,length=512.0)))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=sink)
+            self.state['halt']=None;self.save()
+            with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         with self.subTest('the state copy differs from the result'):
             order.atomic(result,dict(name=source,sink=sink))
             self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=other)
@@ -1605,6 +1613,48 @@ class ReviewRoundOneTests(unittest.TestCase):
         pt=PayloadTests('test_payload_entry_checks');pt.setUp();self.addCleanup(pt.doCleanups)
         p=copy.deepcopy(pt.plan);p['install_root']=str(pt.root);p['files']={};pt.planpath.write_text(json.dumps(p))
         with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'unload:B1-s7-n1']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.installed'),patch('tb_payload.answer'),patch('tb_payload.m1_reading',return_value=unread),contextlib.redirect_stdout(io.StringIO()),self.assertRaisesRegex(RuntimeError,'m1-unloaded-at-unload'):
+            payload.main()
+
+
+class JsonEqualityTests(unittest.TestCase):
+    """#695's first Codex pass as a class: every equality between JSON-parsed
+    values compares canonical JSON text or checks each side's type, so 7.0
+    is not 7 and true is not 1 anywhere the probe judges a record."""
+
+    def test_same_tells_json_facts_apart(self):
+        for a,b in [(512,512.0),(1,True),(0,False),([3],[3.0]),({'a':1},{'a':1.0})]:
+            self.assertFalse(order.same(a,b),(a,b));self.assertFalse(payload.same(a,b),(a,b))
+        self.assertTrue(order.same({'b':1,'a':[2]},{'a':[2],'b':1}))
+
+    def test_the_plan_refuses_a_coerced_version_or_seed(self):
+        f=Fixture('test_plan_validation');f.setUp();self.addCleanup(f.doCleanups)
+        for name,edit in [('schema',lambda p:p.update(version=True)),('schema',lambda p:p.update(version=1.0)),
+                          ('control-schedule',lambda p:next(j for j in p['arms'][0]['jobs'] if j['kind']=='free').update(seed=float(p['tuple']['seeds'][0])))]:
+            p=copy.deepcopy(f.plan);edit(p)
+            with self.subTest(name),self.assertRaisesRegex(order.Refused,name):order.validate_plan(p)
+
+    def test_exactness_and_the_seed_guards_refuse_a_coerced_number(self):
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        a=copy.deepcopy(d.free);b=copy.deepcopy(d.free);b['output_tokens']=[float(x) for x in a['output_tokens']]
+        self.assertFalse(driver.exact(d.plan['tuple'],a,b),'[3.0] is not [3]')
+        d.free['declared_seed']=7.0
+        with patch('tb_driver.until_closed',return_value=closed_bytes(d.close())),self.assertRaisesRegex(order.Refused,'seed-held'):
+            driver.measure(d.plan,d.job(),d.probe,{})
+
+    def test_the_derived_tuple_refuses_a_coerced_value(self):
+        pt=PayloadTests('test_replay_source_must_hold_the_tuple');pt.setUp();self.addCleanup(pt.doCleanups)
+        job=dict(id='job',kind='refeed',stack='B1',source_trace='x',source_run='r')
+        t=pt.plan['tuple']
+        good=derived(pt.model,'/sink',t)
+        self.assertTrue(payload.holds_tuple(pt.plan,job,good))
+        coerced=good.replace(f"context-capacity: {t['context_capacity']}",f"context-capacity: {float(t['context_capacity'])}")
+        self.assertNotEqual(coerced,good)
+        self.assertFalse(payload.holds_tuple(pt.plan,job,coerced),'12288.0 is not 12288')
+
+    def test_the_operator_uid_must_be_an_integer(self):
+        pt=PayloadTests('test_payload_entry_checks');pt.setUp();self.addCleanup(pt.doCleanups)
+        p=copy.deepcopy(pt.plan);p['install_root']=str(pt.root);p['files']={};p['operator_uid']=1000.0;pt.planpath.write_text(json.dumps(p))
+        with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'provision']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.provision'),contextlib.redirect_stdout(io.StringIO()),self.assertRaisesRegex(RuntimeError,'operator'):
             payload.main()
 
 

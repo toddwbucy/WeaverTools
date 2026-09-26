@@ -53,6 +53,15 @@ def declined(value):
     return value is False
 
 
+def same(a, b):
+    """Two JSON values equal as JSON facts, compared as canonical text (#695):
+    Python equality reads 512.0 as 512 and true as 1, so two records holding
+    different facts would compare equal. validate_plan's tuple check compares
+    this way for the same reason, and every equality between JSON-parsed
+    values in the probe goes through here or checks each side's type."""
+    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
 def check(name, condition):
     if not condition:
         raise Refused(name)
@@ -110,7 +119,7 @@ def schedule(plan):
 
 
 def validate_plan(plan):
-    check('schema', plan.get('version') == 1)
+    check('schema', same(plan.get('version'), 1))
     check('agent', plan.get('agent') == 'bravo')
     # Two stacks are two roots: resolved, distinct, and neither inside the
     # other, since a B2 nested under B1 would put its bytes in the B1 install.
@@ -142,7 +151,8 @@ def validate_plan(plan):
     check('job-types', all(j['kind'] in ['free', 'refeed'] and j['stack'] in ['B1', 'B2'] for j in jobs))
     control = arms[0]['jobs']
     free = [j for j in control if j['kind'] == 'free']
-    check('control-schedule', sorted(j['seed'] for j in free) == sorted(plan['tuple']['seeds'] * 2)
+    check('control-schedule', all(type(j.get('seed')) is int for j in free) and
+          sorted(j['seed'] for j in free) == sorted(plan['tuple']['seeds'] * 2)
           and all(j['stack'] == 'B1' for j in control))
     own = [j for j in control if j['kind'] == 'refeed']
     check('own-refeeds', sorted(j['source_job'] for j in own) == sorted(j['id'] for j in free))
@@ -233,7 +243,7 @@ class Order:
                 source = Path(plan['stacks'][stack])
                 described = {str(source / rel): host.get('file_sha256') for rel, host in (manifest.get('hosts') or {}).items()}
                 approved = {p: h for p, h in plan['files'].items() if Path(p).is_relative_to(source)}
-                check('identity-binds-stacks', bool(described) and described == approved)
+                check('identity-binds-stacks', bool(described) and same(described, approved))
                 manifests[stack] = manifest
                 inputs = (report.get('inputs') or {})
             # The verdict is what the comparison says of those two verified
@@ -245,7 +255,7 @@ class Order:
                 recomputed = sections.comparison(manifests['B1'], manifests['B2'], inputs)
             except ValueError:
                 recomputed = None
-            check('identity-recomputed', recomputed == report)
+            check('identity-recomputed', same(recomputed, report))
         return plan
 
     def due(self, s, plan):
@@ -268,7 +278,7 @@ class Order:
         if requested.startswith(('load:', 'measure:', 'unload:', 'settle:')):
             check('driver-live', live(s.get('driver')))
         if seat == 'coding seat' and not leases(requested):
-            check('driver-owner', s.get('driver', {}).get('pid') == os.getpid())
+            check('driver-owner', same(s.get('driver', {}).get('pid'), os.getpid()))
 
     def finish(self, s, step, evidence, sink=None):
         done = dict(status='SUCCESS', path=str(evidence), sha256=sha(evidence))
@@ -307,7 +317,7 @@ class Order:
                 print('WAITING ON: review seat - lift HOLD and record approval hashes')
                 return
             plan = self.approved(s)
-            if requested == 'next' and s.get('cursor') == len(schedule(plan)):
+            if requested == 'next' and same(s.get('cursor'), len(schedule(plan))):
                 # Completion is a claim about every receipt, so every receipt is
                 # verified before it is made.
                 self.previous(s, plan)
@@ -362,7 +372,7 @@ class Order:
             recorded = None
         check('source-sink-recorded', sink.get('path') == expected and type(sink.get('length')) is int
               and sink['length'] > 0 and isinstance(sink.get('sha256'), str)
-              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None and recorded == sink)
+              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None and same(recorded, sink))
         return (str(sink['length']), sink['sha256'])
 
     def coding(self, step, evidence, sink=None):
@@ -389,7 +399,7 @@ class Order:
                 with self.locked():
                     raw = self.path.read_bytes()
                     s = json.loads(raw)
-                    check('wait-owner', live(s.get('driver')) and s['driver']['pid'] == os.getpid())
+                    check('wait-owner', live(s.get('driver')) and same(s['driver']['pid'], os.getpid()))
                     # approved() hashes every reviewed artifact, the model and both
                     # stacks included, under the lock that next needs. Only a state
                     # change can make the step due, so the full verification runs

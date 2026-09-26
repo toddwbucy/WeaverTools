@@ -33,6 +33,13 @@ MODEL = Path('/opt/weaver/models/Qwen3-8B-Q8_0.gguf')
 STACK_ROOTS = ('bin', 'engine-lib', 'cuda-lib')
 
 
+def same(a, b):
+    """Two JSON values equal as JSON facts, compared as canonical text: Python
+    equality reads 512.0 as 512 and true as 1. The coordinator's same(); this
+    file runs from its own verified bytes and imports nothing of the probe."""
+    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
 def need(name, condition):
     if not condition:
         raise RuntimeError(name)
@@ -475,10 +482,10 @@ def holds_tuple(plan, job, text):
     own = [j['seed'] for arm in plan['arms'] for j in arm['jobs'] if j['id'] == job.get('source_job')]
     identity = [{'role': 'system', 'content': [{'type': 'text', 'text': t['identity']}]}]
     seeds = declared(text, 'seed')
-    return (len(seeds) == 1 and seeds[0] in (own or t['seeds']) and
-            declared(text, 'context-capacity') == [t['context_capacity']] and
-            declared(text, 'max-tokens-per-turn') == [t['max_tokens']] and
-            declared(text, 'identity') == [identity])
+    return (len(seeds) == 1 and any(same(seeds[0], s) for s in (own or t['seeds'])) and
+            same(declared(text, 'context-capacity'), [t['context_capacity']]) and
+            same(declared(text, 'max-tokens-per-turn'), [t['max_tokens']]) and
+            same(declared(text, 'identity'), [identity]))
 
 
 def declaration(plan, job, sink):
@@ -584,7 +591,8 @@ def main():
     need('plan-hash', hashlib.sha256(data).hexdigest() == expected)
     plan = json.loads(data)
     need('fixed-root-agent', plan['install_root'] == str(ROOT) and plan['agent'] == 'bravo')
-    need('operator', pwd.getpwnam(plan['operator']).pw_uid == plan['operator_uid'] == int(os.environ['SUDO_UID']))
+    need('operator', type(plan['operator_uid']) is int and
+         pwd.getpwnam(plan['operator']).pw_uid == plan['operator_uid'] == int(os.environ['SUDO_UID']))
     for path, digest in plan['files'].items():
         need('source-file-hash', sha(path) == digest)
     if step == 'provision':
