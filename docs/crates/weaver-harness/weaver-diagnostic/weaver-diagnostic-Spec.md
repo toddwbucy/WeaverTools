@@ -221,17 +221,18 @@ harness author a `flush` event on the flush's confirmation. A record that could 
 carry it would drop an act its own loop is chartered to perform, which is the
 accumulation reading broken exactly where the serving record protects it.
 
-**`recall` is carried because a replay's enter asks the member as a serving enter
-does**, on the ruling of 2026-09-26 that made an answered state-seam ask a serving
-kind, per `weaver-trace-Spec` section 3. The replay's enter asks for the session's
-identity, the loop's replay port asks for the holdings, and the harness authors a
-`recall` for each answered ask whatever the record's mechanism, so a record that could
-not carry one would refuse the replay's own enter and its own walk. The replay port's
+**`recall` is carried because the replay's own replay port authors one**, on the
+ruling of 2026-09-26 that made an answered state-seam ask a serving kind, per
+`weaver-trace-Spec` section 3. The loop's replay port asks the member for the
+holdings, and the harness records the answered ask as a `recall` whatever the record's
+mechanism, so a record that could not carry one would refuse the replay's own walk. It
 lands inside the bracket after `replay.opened` and before `replay.identity`, named by
-the holdings' first and last events and their count. It splices the serving payload as
-the other thirteen shared kinds do. What it adds to a replay's reading is nothing yet:
-`diagnostic-replay-loop` section 2's walk passes turnless kinds by, and the grouping
-that reads a flush and a source recall beside it is a later act's.
+the holdings' first and last events and their count. The replay's enter records
+nothing, as it records no load and no prefix, per the same section. It splices the
+serving payload as the other fourteen shared kinds do. The walk reads the source's
+flush and elision since 2026-09-26, and a source's own `recall` rides the holdings for
+a reader, the cross-check that would read it being owed, per `diagnostic-replay-loop`
+section 2.
 
 **`elision` is carried because the loop now performs one**, as of 2026-09-26, which
 closes the open election section 8 held. `diagnostic-replay-loop` section 2 reproduces
@@ -253,16 +254,16 @@ partial account being the point of authoring one. Routing either to `fault` woul
 collapse a refusal into a death, which is the collapse this section refuses twice
 elsewhere.
 
-**The eight serving kinds this set does not carry are absent by construction rather
-than by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
-`tool.call.started`, `tool.call.completed`, and the classify pair have nothing to
-author them, and a variant standing for a case nothing produces is the reserved slot
-apex section 9 forbids. `load`, `unload`, and `session.closed` are
-absent for a different reason: they bracket a serving load and this record's bracket
-is the pass, which the `replay.` trio carries. **`elision` is absent on the
-narrower ground the flush's presence leaves standing**: the loop's grant names the
-flush and not the elision, and a later act that grants one adds the kind with its
-own argument rather than finding a variant seated for it.
+**The seven serving kinds this set does not carry are absent by construction rather than
+by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
+`tool.call.started`, `tool.call.completed`, and the classify pair have nothing to author
+them, and a variant standing for a case nothing produces is the reserved slot apex
+section 9 forbids. `load`, `unload`, and `session.closed` are absent for a different
+reason: they bracket a serving load and this record's bracket is the pass, which the
+`replay.` trio carries. **`elision` was the eighth until 2026-09-26**, absent on the
+narrower ground the flush's presence left standing, the loop's grant then naming the
+flush and not the elision. The act that granted the loop the elision added the kind with
+its own argument, above.
 
 **`residual.column` is carried because the diagnostic binding may ask past the fold**,
 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as amended, and

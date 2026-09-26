@@ -91,8 +91,8 @@ pub enum Kind {
     #[serde(rename = "fault")]
     Fault,
     /// An answered state-seam ask, the serving vocabulary's `recall`: the
-    /// replay's enter asks the member for its identity as a serving enter
-    /// does, and the seat's recall port is the same port under a replay.
+    /// replay port authors one for the holdings it answered, inside the
+    /// bracket. The replay's enter records nothing, as it records no load.
     #[serde(rename = "recall")]
     Recall,
     /// A span of the resident removed, the serving vocabulary's `elision`:
