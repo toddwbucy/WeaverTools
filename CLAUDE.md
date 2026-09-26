@@ -470,16 +470,16 @@ invalid one is declined with the reason, and either way the finding is answered
 on the pull request, since the record carries it as it stood. **Passing means no
 finding that changes behaviour or corrects a claim is unanswered.**
 
-**Fix the class and walk every site before the next pass.** A finding names one
-site of its class, and a site fix answers the finding while the reviewer finds
-the next site: #683's tail was two classes fixed narrowly and found again, pass
-after pass. So a fix greps every consumer of the same shape in every file of
-the act, tables each site in the body with its disposition, and only then takes
-the next pass.
+**Fix the class and walk every site before the next pass.** A finding names one site of
+its class, and a site fix answers the finding while the reviewer finds the next site:
+#683's tail was classes fixed narrowly and found again, pass after pass. So a fix greps
+every consumer of the same shape in every file of the act, tables each site in the body
+with its disposition, and only then takes the next pass.
 
-**More than four review rounds means the diff is not the problem.** The pull
-request returns to authoring, which is the rule that stopped #683 at twenty-eight
-passes: the code was sound and the review series had become the work.
+**More than four review rounds means the diff is not the problem.** The pull request
+returns to authoring, which is the rule that stopped #683 at twenty-eight passes: the
+findings were valid to the last pass, each the next site of a few classes, and the
+series stopped because a review that long is authoring by another name.
 
 **Gates before review, and do not spend a pass on what the census counts**: a
 reviewer's attention on "is this perturbation cited" is attention not on "does
