@@ -561,6 +561,19 @@ produced substantive work. **Passing means no finding that changes behaviour or
 corrects a claim is unanswered**, a declined finding being answered with its reason
 on the pull request.
 
+**A pull request names what it answers, and a merge is not done until the ledger
+is**, on the operator's ruling of 2026-09-26. The body carries every issue the act
+closes and every epic item it closes or moves, by epic and item number with what
+the act did to it, and the Planner's verification before undraft checks the list
+is there. After the operator merges, the Executor ticks each named item on its
+epic with the merge commit, or annotates it as moved or declined with the reason,
+in the same session as the merge notice, and the Planner's verification of main
+after a merge reads those edits. An epic closes only when its checklist is empty
+or every remaining item is annotated with where it went. The audit of that date
+found thirty items landed and never ticked across eleven epics, which is the drift
+this rule stops. `CLAUDE.md`'s pull request path carries the same rule with the
+invocation, and this section owns it.
+
 The three cells, settled with the ratification. H2 runs as a review query against
 the graph for now, a build script being a later mechanization of the same check.
 H1's mechanical bar is the Spec's own instruments: the doctests, compile pins, and

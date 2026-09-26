@@ -491,6 +491,23 @@ pass the gates and then are pushed, that push fires a pass and the Planner grade
 and the loop repeats until a pass leaves nothing to push, more than four rounds of it
 being the bound above. Then the operator's merge.
 
+**A pull request names what it answers, and a merge is not done until the ledger
+is.** On the operator's ruling of 2026-09-26, after an audit of the eleven epics
+found thirty checklist items landed and never ticked, twenty-two belonging to a
+crate that had left, and every closed epic still carrying live items. Three
+clauses. First, the body carries every issue the act closes, as `Closes #N`, and
+every epic item it closes or moves, by epic and item number with what the act did
+to it, and a pull request that answers nothing says so in one line. The Planner's
+verification before undraft checks the list is there. Second, after the operator
+merges, the Executor ticks each named item on its epic with the merge commit, or
+annotates it as moved or declined with the reason, in the same session as the
+merge notice, and the Planner's verification of main after a merge reads those
+edits. Third, an epic closes only when its checklist is empty or every remaining
+item is annotated with where it went. GitHub joins an issue to a pull request
+only whole, and an epic is the one thing a pull request never closes whole, so
+the join is made by hand in the body and kept true at the merge, and the register
+of 2026-09-26 is what its absence cost.
+
 ## Police call
 
 **An act picks up the litter it walks past.** A count gone stale, a doc comment
