@@ -141,7 +141,7 @@ def validate_plan(plan):
     # manifest; approved() reads that report and requires its verdict.
     check('kernel-schedule', (arms[2].get('executable_identity') is True and not arms[2]['jobs'] and
                               arms[2].get('identity_report') in plan.get('files', {})) or
-          (arms[2].get('executable_identity') is not True and
+          (arms[2].get('executable_identity', False) is False and
            sorted(j.get('source_job') for j in arms[2]['jobs']) == sorted(j['id'] for j in free) and
            all(j['kind'] == 'refeed' and j['stack'] == 'B2' for j in arms[2]['jobs'])))
 

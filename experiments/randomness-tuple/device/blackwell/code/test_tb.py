@@ -186,7 +186,11 @@ class Fixture(unittest.TestCase):
                ('kernel',lambda p:p['arms'][2].update(jobs=[])),
                # #683 thread 36: identity true is defined to empty the leg, so a
                # full kernel schedule claiming it is a contradiction, refused.
-               ('kernel-identity-with-jobs',lambda p:p['arms'][2].update(executable_identity=True))]
+               ('kernel-identity-with-jobs',lambda p:p['arms'][2].update(executable_identity=True)),
+               # #683 thread 38: only absent or exactly false keeps the jobs; a
+               # truthy 1 or "true" would be recorded as identity over a run leg.
+               ('kernel-identity-truthy-int',lambda p:p['arms'][2].update(executable_identity=1)),
+               ('kernel-identity-truthy-str',lambda p:p['arms'][2].update(executable_identity='true'))]
         for name, edit in edits:
             p=copy.deepcopy(self.plan);edit(p)
             with self.subTest(name=name),self.assertRaises(order.Refused):order.validate_plan(p)
