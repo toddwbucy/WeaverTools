@@ -1203,6 +1203,33 @@ class DriverTests(unittest.TestCase):
                     with patch('tb_driver.until_closed',return_value=rows(event(golden.REPLAY_CLOSED_CERTIFIED,run='r'))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('refeed'),self.probe)
                     self.cleanup_job()
 
+    def test_exact_holds_the_input_length(self):
+        # #683 thread 46: the input length is part of exactness for pairs too.
+        t=prepare.template(Path('/deposit'),'todd',1000)['tuple']
+        a=dict(copy.deepcopy(self.free),input_tokens=10);b=dict(copy.deepcopy(a),input_tokens=11)
+        self.assertTrue(driver.exact(t,a,copy.deepcopy(a)));self.assertFalse(driver.exact(t,a,b))
+
+    def test_refeed_holds_the_input_and_refuses_a_divergence_inside_it(self):
+        # #683 thread 46: a replay that tokenized the prompt differently ran
+        # another stimulus. Source and replay must hold one input length, and
+        # a token-path divergence inside the input refuses rather than being
+        # converted to an output ordinal and read as a device effect.
+        j=self.job('refeed')
+        other=dict(copy.deepcopy(self.free),input_tokens=self.free['input_tokens']+2)
+        self.probe.extract_run=lambda rows:copy.deepcopy(other) if any(e['kind']=='replay.closed' for e in rows) else copy.deepcopy(self.free)
+        try:
+            with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,'input-held'):driver.measure(self.plan,j,self.probe)
+        finally:self.cleanup_job()
+        self.probe.extract_run=lambda rows:copy.deepcopy(self.free)
+        inside=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=self.free['input_tokens']-1,recorded=1,recomputed=2)))))
+        try:
+            with patch('tb_driver.until_closed',return_value=inside),self.assertRaisesRegex(order.Refused,'divergence-in-input'):driver.measure(self.plan,j,self.probe)
+        finally:self.cleanup_job()
+        # At the boundary the position is the first output token, ordinal 0.
+        at=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=self.free['input_tokens'],recorded=1,recomputed=2)))))
+        with patch('tb_driver.until_closed',return_value=at):result=driver.measure(self.plan,j,self.probe)
+        self.assertEqual(json.loads(result.read_text())['replay_divergence_ordinal'],0)
+
     def test_refeed_requires_the_source_seed_on_both_sides(self):
         # #683 finding 21: a replay that ran another seed, or a source outside
         # the tuple's seeds, must not be read as a device or kernel effect.

@@ -124,7 +124,10 @@ def float_bits(values):
 def exact(t, source, replay):
     enough(t, source)
     enough(t, replay)
-    return (source['output_tokens'] == replay['output_tokens'] and
+    # The stimulus is part of exactness: two records that read the same tokens
+    # out of different input lengths did not run the same experiment.
+    return (source['input_tokens'] == replay['input_tokens'] and
+            source['output_tokens'] == replay['output_tokens'] and
             all(float_bits(source[k]) == float_bits(replay[k]) for k in series(t)) and
             {int(k): v for k, v in source['field'].items()} == {int(k): v for k, v in replay['field'].items()})
 
@@ -187,8 +190,16 @@ def measure(plan, job, probe):
         check('source-seed-held', src.get('declared_seed') in plan['tuple']['seeds'])
         check('replay-seed-held', refed.get('declared_seed') == src.get('declared_seed'))
         reading = probe.reading_two(src, refed)
-        # Historical #516 stack coordinate: input-plus-output, not resident.
+        # A replay that tokenized the prompt differently ran another stimulus:
+        # the source and the replay must hold one input length, and a
+        # token-path divergence inside that input is a stimulus change the
+        # pinned comparator reports as an ordinary divergence
+        # (weaver-harness replay.rs:385-416 at e69916a), never a device or
+        # kernel reading. Both refuse before any reading is taken.
+        check('input-held', src.get('input_tokens') == refed.get('input_tokens'))
         div = outcome.get('divergence') or {}
+        check('divergence-in-input', div.get('kind') != 'token_path' or int(div['position']) >= refed['input_tokens'])
+        # Historical #516 stack coordinate: input-plus-output, not resident.
         ordinal = int(div['position']) - refed['input_tokens'] if div.get('kind') == 'token_path' else None
         free_readings = []
         for candidate in plan['arms'][0]['jobs']:
