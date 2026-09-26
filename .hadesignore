@@ -64,7 +64,8 @@ experiments/**/results/
 # left the repository. They had not, and the sentence framed a live rule as a
 # legacy safety net a later act could delete. **The rule is current, and it
 # does not depend on where the documents sit**: if they later leave the tree
-# the way experiments/ did, this entry stays, so a seat with copies on disk
+# the way experiments/ did between 2026-09-13 and 2026-09-25, this entry
+# stays, so a seat with copies on disk
 # does not ingest them. Delete the rule only when no seat has the documents.
 #
 # **The contents are excluded and not the directory, because `gates/` and

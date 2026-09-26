@@ -391,21 +391,36 @@ def members():
 
 
 def probes():
-    """Every probe's `code/`, per the Document Format's container entry of
-    2026-09-25: `experiments/<e>/<arm>/<probe>/code/` is read like a crate, and
-    a `results/` beside it never is."""
-    return sorted(glob.glob(os.path.join(ROOT, "experiments", "*", "*", "*", "code")))
+    """Every probe's `code/` under `experiments/`, per the Document Format's
+    container entry of 2026-09-25, read like a crate's tree.
+
+    **Found by walking and not by a fixed-depth glob**, so a `code/` one level
+    off the documented depth is read rather than silently skipped, which is
+    the clean-zero failure the enforcement section calls the most expensive
+    line it holds. A `results/` is never descended, answering to the other
+    clock. A Spec with no `code/` beside it is a legal state, the documents
+    landing ahead of the code, so nothing here refuses.
+    """
+    found = []
+    top = os.path.join(ROOT, "experiments")
+    for base, dirs, _ in os.walk(top):
+        dirs[:] = sorted(d for d in dirs if d not in (".git", "results"))
+        if os.path.basename(base) == "code":
+            found.append(base)
+            dirs[:] = []
+    return found
 
 
 def docs():
-    yield from walk_docs(os.path.join(ROOT, "docs"))
+    yield from walk_docs(os.path.join(ROOT, "docs"), prune=())
     # **An experiment's documents sit beside its code**: the charter at the
-    # experiment's root and each probe's Spec at the probe's. Results are
-    # pruned below, answering to the other clock.
-    yield from walk_docs(os.path.join(ROOT, "experiments"))
+    # experiment's root and each probe's Spec at the probe's. A `results/` is
+    # pruned here and nowhere else, which is exactly the set `.hadesignore`
+    # excludes with `experiments/**/results/`: one rule, two readers, one set.
+    yield from walk_docs(os.path.join(ROOT, "experiments"), prune=("results",))
 
 
-def walk_docs(top):
+def walk_docs(top, prune):
     for base, dirs, files in os.walk(top):
         # **Pruned as `sources` prunes it.** A frozen copy of a Spec declares
         # every node the live one does, so ingesting both files each id under
@@ -417,7 +432,7 @@ def walk_docs(top):
         # unsorted walk lets two seats baseline different strings from the
         # same tree - the machine-dependent gate the enforcement section
         # already records for the clippy count.
-        dirs[:] = sorted(d for d in dirs if d not in (".git", "results"))
+        dirs[:] = sorted(d for d in dirs if d != ".git" and d not in prune)
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.join(base, f)

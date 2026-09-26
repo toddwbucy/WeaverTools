@@ -19,7 +19,15 @@ Working Process section 5. It registers the tuple as the chapter declares it (Bu
 2026), names for each field what is predicted, what would falsify it, what the record
 already shows and what is still owed, and says which probe answers for each. The
 probes carry their own Specs and code beneath the arm they belong to, and this
-document states no rule that code conforms to.
+document states no rule that code conforms to. Its filename is the README a reader
+opens first and its Document ID is the charter's, `randomness-tuple-PRD`, per
+Document Format section 3, and the experiment node below is the one record it
+authors.
+
+```graph
+node: randomness-tuple
+kind: experiment
+```
 
 **The tuple is a declaration set and not a set of demonstrated sensitivities.** Of the
 six fields, four have been shown to move bits when varied alone, and two are declared

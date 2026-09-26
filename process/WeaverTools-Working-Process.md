@@ -426,8 +426,9 @@ carrying that probe's Spec, its `code/` and its `results/`. The Spec and the cod
 answer to the gate's clock and are read like a crate's, and `results/` holds dated
 records the gates and the ingest never read. A Spec belongs to any code that requires
 one, a crate's or a probe's. The Document Format's section 2 carries the container
-and section 3 the kinds, the census reads every probe's Spec and `code/` and never a
-`results/`, and `.hadesignore` excludes `results/` alone. The first experiment is
+and section 3 the kinds, the census reads every document under `experiments/`
+outside a `results/`, the charter and each probe's Spec among them, and every probe's
+`code/`, and `.hadesignore` excludes `results/` alone. The first experiment is
 `experiments/randomness-tuple/`, and its first probe is `device/blackwell/`.
 
 ### Closing checklist

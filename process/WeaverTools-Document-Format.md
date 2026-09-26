@@ -259,13 +259,20 @@ than a parent. Issue #637 carries the measurement and the question.
 vision document's word and it does not cover the floor, so it is not used here. One
 PRD, one Spec, and as many contracts as it has seams.
 
+**experiment.** One node per experiment, declared by its charter, the root
+`README.md` of `experiments/<e>/`, which is the primary document of the experiment
+and carries no `Parent:` and no `parent` edge, as the apex carries none. The charter
+is the one document whose filename is not its Document ID, `<e>-PRD`, because the
+operator ruled that a reader opens the README first, and the ID keeps the kind's
+name. The charter registers the hypothesis and every prediction and falsifier before
+any probe runs, and the experiment node is the one record it authors.
+
 **probe.** A code root under an experiment's arm, declared by its own Spec, which
 asserts the probe's records the way a crate's Spec asserts the crate's, per the
-operator's rulings of 2026-09-25. The Spec's `Parent:` is the experiment's charter,
-the root `README.md`, which is the primary document of the experiment and carries no
-`Parent:` and no `parent` edge, as the apex carries none: the charter registers the
-hypothesis and every prediction and falsifier before any probe runs, and the probe's
-Spec states what its code enforces. A Spec belongs to any code that requires one, and
+operator's rulings of 2026-09-25. The probe declares one `parent` edge to its
+experiment's node, and the Spec's `Parent:` names the charter, so the header and the
+edge agree as section 3 requires of every other pair. The probe's Spec states what
+its code enforces. A Spec belongs to any code that requires one, and
 a probe's code requires one for the same reason a crate's does, the phase-three rule
 that no code lands without a ratified document. The charter and the Spec are the two
 document kinds an experiment produces, and neither is a contract, an experiment

@@ -27,10 +27,11 @@ of the code finds each refusal's reason here and a reader of this document finds
 claim's instrument in the suite.
 
 It is written from the code as it stood after sixteen review passes on pull request
-#683 and from the registration on issues #511 and #679. The code sits in `code/`
-beside this document and cites the assertion records declared here from its file
-headers with `conforms:` lines, which the census reads there as it reads a crate's
-units. Results, when a leg has run, sit in `results/`, dated and read by no gate.
+#683 and from the registration on issues #511 and #679. The code lands in `code/`
+beside this document with #683, which moves it there and cites the assertion
+records declared here from its file headers with `conforms:` lines, read by the
+census as it reads a crate's units. Until that lands, the nineteen perturbation
+records stand uncited and the baseline says so. Results, when a leg has run, sit in `results/`, dated and read by no gate.
 What the probe measures and why is the charter's and is restated in sections 1
 through 3 only as far as the code enforces it. How the seams it drives behave is the
 crate charters' and contracts' and is cited rather than repeated. What this document
@@ -38,8 +39,8 @@ owns is the workflow: the tuple as the code holds it, the legs as the code sched
 them, the order of operations, the privilege boundary, the identity verdict, the
 assessment, and the refusals.
 
-**Words.** The chapter's word for one variable's experiment is an leg, the weights
-leg or the batch leg, and that is the word the charter and the directory use. This
+**Words.** The chapter's word for one variable's experiment is an arm, the weights
+arm or the batch arm, and that is the word the charter and the directory use. This
 probe's three measurements, the control, the device comparison and the kernel
 comparison, are its legs in this document, and the code's identifier for them is
 `arms`, kept until the code is next touched so that no identifier moves in a
@@ -57,6 +58,10 @@ the next cell moves them into the plan.
 ```graph
 node: blackwell-probe
 kind: probe
+
+edge: parent
+from: blackwell-probe
+to: randomness-tuple
 ```
 
 ## 1. What the probe is
@@ -538,7 +543,7 @@ to: blackwell-probe-exactness-is-bitwise-over-elected-readings
 ## 8. The refusals
 
 Every guard is named, and its name is the reason in the halt. Three of the payload's
-names arrived with the citations commit on #683, where they had raised as plain
+names arrive with the citations commit on #683, where they had raised as plain
 errors: `no-bravo-account` for an existing `bravo` account, `known-step` for a verb
 that is neither a load nor an unload, and `command-exit` for a privileged command
 exiting nonzero, which prints the command's output to the transcript first. They are
@@ -586,10 +591,10 @@ gate and device calls, and makes no change to any installed stack. The mutation 
 `perturb.py` copies the scripts to a temporary directory, refuses unless the
 unmodified suite passes there, then removes and inverts every named guard of section
 8 in turn and requires each run to fail, recording the failing output, and kills with
-a process-group timeout any mutation that destroys a wait bound. At the citations
-commit on #683 the suite held 66 tests and the mutation run detected 214 of 214 runs
-across 107 guards. A guard the mutation run cannot fail is a guard that enforces
-nothing, and that count is read at every act rather than copied from here.
+a process-group timeout any mutation that destroys a wait bound. A guard the
+mutation run cannot fail is a guard that enforces nothing, and the count is a
+reading taken at an act and never a fact this document holds: the instrument is the
+run, and an act states the numbers it got in its own body, as #683's does.
 
 **Every stub is built from a capture, never from what the code expects.** Each
 constant in `golden.py` is a real tool's output captured unprivileged on this box, a
