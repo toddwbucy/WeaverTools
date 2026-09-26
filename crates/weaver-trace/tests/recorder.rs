@@ -9,6 +9,7 @@
 //! conforms: trace-envelope-flattens
 //! conforms: trace-turn-close-internally-tagged
 //! conforms: trace-output-carries-the-counts
+//! conforms: trace-recall-records-the-ask-and-its-identities
 //!
 //! Recorder tests of `weaver-trace-Spec` section 10. Verified removals are
 //! named at the watches that hold them. Not every test names a perturbation.
@@ -951,6 +952,127 @@ fn an_elision_refuses_a_turn() {
         elisions[0].contains("\"from\":41") && elisions[0].contains("\"to\":57"),
         "and it carries the span it removed: {}",
         elisions[0]
+    );
+}
+
+/// **A recall is turnless, pairs only with its own account, and names the
+/// returned events by identity alone**, per `weaver-trace-Spec` section 3's
+/// recall clause. The account renders the ask and the identities in declared
+/// order with an absent turn omitted, so a reader grouping by turn reads it
+/// without a second lookup and a returned event's content stays where it
+/// already stands in the record. A replay's whole-session answer renders its
+/// two bounds and the count after them, and a partial one carries no count.
+///
+/// Perturbations: take `Kind::Recall` out of `turn_forbidden` and the
+/// turn-bearing submission is admitted; drop its row from `pairing_licensed`
+/// and the turnless one refuses; pair it with a flush's counts in the row
+/// instead and the mismatched submission is admitted. Watched under each.
+#[test]
+fn a_recall_is_turnless_and_names_what_answered() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections())))
+        .unwrap();
+    let account = || {
+        Some(Payload::Recall(weaver_trace::RecallAccount {
+            ask: weaver_trace::RecallAsk {
+                verb: weaver_trace::RecallVerb::Recall,
+                last_turns: Some(4),
+            },
+            returned: vec![
+                weaver_trace::RecalledIdentity {
+                    run: "r-0".into(),
+                    turn: None,
+                    sequence: "7".into(),
+                    kind: "message.system".into(),
+                },
+                weaver_trace::RecalledIdentity {
+                    run: "r-1".into(),
+                    turn: Some("t-36".into()),
+                    sequence: "250".into(),
+                    kind: "message.assistant".into(),
+                },
+            ],
+            count: None,
+        }))
+    };
+    r.submit(event(Kind::Recall, None, account()))
+        .expect("a turnless recall with its account is the ordinary case");
+    assert!(
+        r.submit(event(Kind::Recall, Some("t-37"), account()))
+            .is_err(),
+        "a recall carrying a turn is refused rather than admitted"
+    );
+    let counts = Some(Payload::Flush(weaver_trace::FlushCounts {
+        resident_before: 27196,
+        resident_after: 712,
+    }));
+    assert!(
+        r.submit(event(Kind::Recall, None, counts)).is_err(),
+        "a recall carrying another kind's payload is refused"
+    );
+    assert!(
+        r.submit(event(Kind::Recall, None, None)).is_err(),
+        "and a recall carrying nothing is refused"
+    );
+    // A whole-session answer: its bounds and the count, after `returned`.
+    r.submit(event(
+        Kind::Recall,
+        None,
+        Some(Payload::Recall(weaver_trace::RecallAccount {
+            ask: weaver_trace::RecallAsk {
+                verb: weaver_trace::RecallVerb::Replay,
+                last_turns: None,
+            },
+            returned: vec![
+                weaver_trace::RecalledIdentity {
+                    run: "r-1".into(),
+                    turn: None,
+                    sequence: "0".into(),
+                    kind: "load".into(),
+                },
+                weaver_trace::RecalledIdentity {
+                    run: "r-1".into(),
+                    turn: Some("t-37".into()),
+                    sequence: "262".into(),
+                    kind: "turn.closed".into(),
+                },
+            ],
+            count: Some(263),
+        })),
+    ))
+    .expect("a replay's account is the same kind");
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    let recalls: Vec<&str> = out.lines().filter(|l| l.contains("\"recall\"")).collect();
+    assert_eq!(
+        recalls.len(),
+        2,
+        "only the two well-formed recalls reached the sink"
+    );
+    let line: serde_json::Value = serde_json::from_str(recalls[0]).expect("the line parses");
+    assert!(line.get("turn").is_none(), "belonging to no turn");
+    // Read from the line's own bytes rather than a parsed value, which
+    // would sort the members and hide the declared order.
+    assert!(
+        recalls[0].contains(concat!(
+            r#""payload":{"ask":{"verb":"recall","last_turns":4},"returned":["#,
+            r#"{"run":"r-0","sequence":"7","kind":"message.system"},"#,
+            r#"{"run":"r-1","turn":"t-36","sequence":"250","kind":"message.assistant"}]}"#
+        )),
+        "the ask and the identities, in declared order, and no pairs: {}",
+        recalls[0]
+    );
+    assert!(
+        recalls[1].contains(concat!(
+            r#""payload":{"ask":{"verb":"replay"},"returned":["#,
+            r#"{"run":"r-1","sequence":"0","kind":"load"},"#,
+            r#"{"run":"r-1","turn":"t-37","sequence":"262","kind":"turn.closed"}],"#,
+            r#""count":263}"#
+        )),
+        "a whole-session answer by its bounds and its count: {}",
+        recalls[1]
     );
 }
 

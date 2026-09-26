@@ -473,8 +473,24 @@ impl<'a> Ports<'a> {
     /// conversation as custody holds it, in landing order, bounded to the
     /// most recent turns where a bound is given. `None` is the dead peer at
     /// the seat, the same absence a missing leg serves.
+    ///
+    /// **An answered recall reaches the record before it reaches the loop**,
+    /// as a `recall` event naming the ask and the identities returned, per
+    /// `weaver-trace-Spec` section 3's recall clause: the re-entry a loop
+    /// builds after a flush is built from this answer, so a record without
+    /// it could not say what the post-flush input was drawn from. A recall
+    /// the recorder will not take answers `None`, the flush's rule.
     pub fn recall(&mut self, last_turns: Option<u64>) -> Option<Vec<crate::state::Recalled>> {
-        self.state.as_mut()?.ask_recall(last_turns)
+        let answered = self.state.as_mut()?.ask_recall(last_turns)?;
+        self.author
+            .author_recall(
+                self.recorder,
+                weaver_trace::RecallVerb::Recall,
+                last_turns,
+                &answered,
+            )
+            .ok()?;
+        Some(answered)
     }
 
     /// The replay port, per `weaver-harness-Spec` section 6's clause of
@@ -485,8 +501,24 @@ impl<'a> Ports<'a> {
     /// pass**, the replay ask being the one whose answer lawfully waits,
     /// parked at an open preload until the seal, and only the asking loop
     /// knowing how long a preload is worth waiting on.
+    ///
+    /// **An answered replay ask reaches the record as a `recall` before the
+    /// loop walks it**, named by the answer's first and last events and its
+    /// count, per `weaver-trace-Spec` section 3's recall clause: the replay
+    /// feeds the model from this answer, and the ask is recorded by the seat
+    /// that made it rather than inferred from the loop's own account of the
+    /// holdings. A replay answer the recorder will not take answers `None`.
     pub fn replay(&mut self, bound_ms: u64) -> Option<Vec<crate::state::Recalled>> {
-        self.state.as_mut()?.ask_replay(bound_ms)
+        let answered = self.state.as_mut()?.ask_replay(bound_ms)?;
+        self.author
+            .author_recall(
+                self.recorder,
+                weaver_trace::RecallVerb::Replay,
+                None,
+                &answered,
+            )
+            .ok()?;
+        Some(answered)
     }
 
     /// The state port, per `weaver-harness-Spec` section 6: the shape ask
@@ -3924,6 +3956,344 @@ mod tests {
         assert_eq!(column["payload"]["layers"], 2);
         assert_eq!(column["payload"]["width"], 2);
         std::fs::remove_file(&sink_path).ok();
+    }
+
+    /// A serving recorder over a scratch sink, its load authored, the
+    /// shape every seat test below opens on.
+    fn loaded_recorder() -> (crate::record::Record, Author) {
+        let session = SessionId("s-1".into());
+        let mut recorder = crate::record::Record::Serving(
+            Recorder::receive(
+                tempfile(),
+                RunRef("r-1".into()),
+                SessionRef(session.0.clone()),
+            )
+            .expect("recorder"),
+        );
+        let author = Author::new(&session, &weaver_types::RunId("r-1".into()));
+        author
+            .author(
+                &mut recorder,
+                Kind::Load,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Elections(weaver_trace::Elections {
+                    residual_readout: false,
+                    field: None,
+                    surprisal: false,
+                    tee: Some(weaver_trace::Election::default()),
+                    state_member: true,
+                    declaration: Default::default(),
+                    lineage: None,
+                    stack: Default::default(),
+                    state_store: Default::default(),
+                    composer: weaver_trace::LoopIdentity::compiled("test"),
+                })),
+            )
+            .expect("load");
+        (recorder, author)
+    }
+
+    /// **The recall after a flush reaches the record between the flush and
+    /// the re-entry, and before the loop holds the answer**, per
+    /// `weaver-trace-Spec` section 3's recall clause, on the M1 record's
+    /// shape: `m1-002` flushed at sequence 255 and re-entered at 257, and
+    /// the `recall(4)` between them left no event, so the post-flush input
+    /// was drawn from an ask the record did not hold (#673, item 2).
+    ///
+    /// The flush answers the counts that record carried, the loop asks for
+    /// the last four turns as the M1 loop does, and custody answers one
+    /// turnless prefix event and one turned one. The recall lands at the
+    /// flush's sequence plus one, turnless, naming the ask and each returned
+    /// event by run, turn, sequence and kind, and carrying none of their
+    /// pairs.
+    ///
+    /// Perturbation: drop the `author_recall` call from `Ports::recall` and
+    /// the recall-count assertion fails, the answer still reaching the loop.
+    /// Watched under exactly that removal.
+    ///
+    /// conforms: trace-recall-records-the-ask-and-its-identities
+    #[test]
+    fn the_recall_after_a_flush_is_recorded_before_the_loop_holds_it() {
+        use std::io::{Read, Write};
+
+        let (near, far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let peer = std::thread::spawn(move || {
+            let mut buf = vec![0u8; 65536];
+            let n = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()).expect("recv flush");
+            let directive: weaver_types::TokenDirective =
+                serde_json::from_slice(&buf[..n]).expect("the flush parses");
+            assert_eq!(directive, weaver_types::TokenDirective::Flush { keep: 0 });
+            let answer = weaver_types::TokenAnswer::Flushed {
+                resident_before: 27196,
+                resident_after: 712,
+            };
+            let bytes = serde_json::to_vec(&answer).expect("answer renders");
+            send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
+        });
+
+        let (ours, mut member) = std::os::unix::net::UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = crate::state::StateSeam::new(ours);
+        member
+            .write_all(
+                concat!(
+                    r#"{"answer":{"recall":{"events":["#,
+                    r#"{"envelope":{"session":"s-1","run":"r-0","kind":"message.system","#,
+                    r#""sequence":"3"},"pairs":{"role":"system","content":"You are Karl."}},"#,
+                    r#"{"envelope":{"session":"s-1","run":"r-1","turn":"t-36","#,
+                    r#""kind":"message.assistant","sequence":"250"},"#,
+                    r#""pairs":{"role":"assistant","content":"the plan"}}]}}}"#,
+                    "\n"
+                )
+                .as_bytes(),
+            )
+            .expect("custody answers in advance");
+
+        let (mut recorder, author) = loaded_recorder();
+        let mut turn_ordinal = 36u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
+        let listener = test_listener();
+        let mut fullness = Some((27196, 32768));
+        let mut pressure_reported = false;
+        let load_facts = crate::engine::test_load_facts();
+        let answered = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                None,
+                None,
+                Some(&mut seam),
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            assert_eq!(ports.flush(0), Some((27196, 712)), "the flush holds");
+            let answered = ports.recall(Some(4)).expect("custody answered");
+            // The loop holds the answer from here, and the record already
+            // carries it: read the structure while the grant still stands.
+            let recalls = ports
+                .recorder
+                .structure()
+                .expect("the serving record")
+                .iter()
+                .filter(|r| r.kind == Kind::Recall)
+                .count();
+            assert_eq!(
+                recalls, 1,
+                "the recall is recorded before the loop holds it"
+            );
+            answered
+        };
+        peer.join().expect("the decode peer finishes");
+        assert_eq!(answered.len(), 2, "the loop receives what custody answered");
+
+        let mut asked = [0u8; 128];
+        let n = member.read(&mut asked).expect("reads the ask");
+        assert_eq!(&asked[..n], b"{\"ask\":{\"recall\":{\"last-turns\":4}}}\n");
+
+        let records = recorder.structure().expect("the serving record");
+        let flush = records
+            .iter()
+            .find(|r| r.kind == Kind::Flush)
+            .expect("the flush is recorded");
+        let recall = records
+            .iter()
+            .find(|r| r.kind == Kind::Recall)
+            .expect("the recall is recorded");
+        let flush: serde_json::Value = serde_json::from_str(flush.line.as_ref()).expect("parses");
+        let line: &str = recall.line.as_ref();
+        let recall: serde_json::Value = serde_json::from_str(line).expect("parses");
+        let sequence = |event: &serde_json::Value| -> u64 {
+            event["sequence"]
+                .as_str()
+                .expect("a decimal string")
+                .parse()
+                .expect("a number")
+        };
+        assert_eq!(
+            sequence(&recall),
+            sequence(&flush) + 1,
+            "the recall follows the flush with nothing between, where the re-entry comes next"
+        );
+        assert!(recall.get("turn").is_none(), "a recall belongs to no turn");
+        assert_eq!(recall["subsystem"], "harness");
+        assert!(
+            line.contains(concat!(
+                r#""payload":{"ask":{"verb":"recall","last_turns":4},"returned":["#,
+                r#"{"run":"r-0","sequence":"3","kind":"message.system"},"#,
+                r#"{"run":"r-1","turn":"t-36","sequence":"250","kind":"message.assistant"}]}"#
+            )),
+            "the ask and the identities, in declared order: {line}"
+        );
+        assert!(
+            !line.contains("You are Karl.") && !line.contains("the plan"),
+            "and none of the returned events' contents: {line}"
+        );
+    }
+
+    /// **A whole-session replay answer is recorded by its bounds and its
+    /// count, never as a list as long as the session**, per
+    /// `weaver-trace-Spec` section 3's recall clause, and before the loop
+    /// walks it. Three events answer, so the middle one is what a list would
+    /// have carried and the bounds do not.
+    ///
+    /// Perturbation: record every identity for the replay verb and the
+    /// `returned` assertion fails, three entries where two stand; drop the
+    /// `author_recall` call from `Ports::replay` and the count assertion
+    /// fails. Watched under both.
+    ///
+    /// conforms: trace-recall-records-the-ask-and-its-identities
+    #[test]
+    fn a_replay_answer_is_recorded_by_its_bounds_and_count() {
+        use std::io::Write;
+
+        let (near, _far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let (ours, mut member) = std::os::unix::net::UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        let mut seam = crate::state::StateSeam::new(ours);
+        member
+            .write_all(
+                concat!(
+                    r#"{"answer":{"replay":{"events":["#,
+                    r#"{"envelope":{"kind":"message.system","run":"r-0","sequence":"1"},"pairs":{}},"#,
+                    r#"{"envelope":{"kind":"model.request","run":"r-0","turn":"t-1","sequence":"4"},"pairs":{}},"#,
+                    r#"{"envelope":{"kind":"turn.closed","run":"r-0","turn":"t-1","sequence":"9"},"pairs":{}}"#,
+                    r#"]}}}"#,
+                    "\n"
+                )
+                .as_bytes(),
+            )
+            .expect("custody answers in advance");
+
+        let (mut recorder, author) = loaded_recorder();
+        let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
+        let listener = test_listener();
+        let mut fullness = None;
+        let mut pressure_reported = false;
+        let load_facts = crate::engine::test_load_facts();
+        let answered = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                None,
+                None,
+                Some(&mut seam),
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            ports.replay(2_000).expect("custody answered")
+        };
+        assert_eq!(answered.len(), 3, "the loop walks the whole answer");
+
+        let records = recorder.structure().expect("the serving record");
+        let recalls: Vec<serde_json::Value> = records
+            .iter()
+            .filter(|r| r.kind == Kind::Recall)
+            .map(|r| serde_json::from_str(r.line.as_ref()).expect("parses"))
+            .collect();
+        assert_eq!(recalls.len(), 1, "the replay ask is recorded once");
+        let payload = &recalls[0]["payload"];
+        assert_eq!(payload["ask"], serde_json::json!({"verb": "replay"}));
+        assert_eq!(payload["count"], 3, "the events the member answered");
+        assert_eq!(
+            payload["returned"],
+            serde_json::json!([
+                {"run": "r-0", "sequence": "1", "kind": "message.system"},
+                {"run": "r-0", "turn": "t-1", "sequence": "9", "kind": "turn.closed"}
+            ]),
+            "named by its first and last events and nothing between"
+        );
+    }
+
+    /// **A recall custody did not answer is not a recall event**, per
+    /// `weaver-trace-Spec` section 3's recall clause: a dead seam answers
+    /// nothing, and the loop reads `None` with the record unchanged.
+    ///
+    /// Perturbation: author the recall before the ask answers, with an
+    /// empty identity list for a miss, and the count assertion fails.
+    #[test]
+    fn a_recall_the_member_did_not_answer_records_no_recall() {
+        let (near, _far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let (ours, member) = std::os::unix::net::UnixStream::pair().expect("pair");
+        ours.set_nonblocking(true).expect("nonblocking");
+        drop(member);
+        let mut seam = crate::state::StateSeam::new(ours);
+
+        let (mut recorder, author) = loaded_recorder();
+        let mut turn_ordinal = 0u64;
+        let mut turn_in_flight: Option<weaver_types::TurnKey> = None;
+        let listener = test_listener();
+        let mut fullness = None;
+        let mut pressure_reported = false;
+        let load_facts = crate::engine::test_load_facts();
+        {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                None,
+                None,
+                Some(&mut seam),
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            assert!(
+                ports.recall(Some(4)).is_none(),
+                "a dead member answers nothing"
+            );
+        }
+        assert_eq!(
+            recorder
+                .structure()
+                .expect("the serving record")
+                .iter()
+                .filter(|r| r.kind == Kind::Recall)
+                .count(),
+            0,
+            "and the record holds no recall for an ask nothing answered"
+        );
     }
 
     fn test_listener() -> crate::channel::CoordinationListener {

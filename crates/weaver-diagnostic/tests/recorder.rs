@@ -1,6 +1,7 @@
 //! conforms: diagnostic-canonical-form-follows-trace
 //! conforms: diagnostic-session-is-the-replays-own
 //! conforms: diagnostic-admission-precedes-the-write
+//! conforms: diagnostic-turn-rule-per-kind
 //!
 //! The writer's perturbation watches, per `weaver-diagnostic-Spec` section 7.
 //! Each names the removal it was watched failing under, per the corpus's
@@ -134,7 +135,7 @@ fn the_session_is_the_replays_own() {
     let (mut recorder, mut read_back) = stand("s-diag-1", "r-diag-1");
     recorder
         .submit(Event {
-            envelope: envelope(Kind::TurnStarted, None, 1, 1),
+            envelope: envelope(Kind::TurnStarted, Some("t-1"), 1, 1),
             payload: None,
         })
         .expect("submit");
@@ -165,7 +166,7 @@ fn admission_precedes_the_write() {
     assert_eq!(contents(&mut read_back), "", "the refusal touched the sink");
     let sequence = recorder
         .submit(Event {
-            envelope: envelope(Kind::TurnStarted, None, 1, 1),
+            envelope: envelope(Kind::TurnStarted, Some("t-1"), 1, 1),
             payload: None,
         })
         .expect("the record survives a refusal");
@@ -222,4 +223,158 @@ fn a_null_splice_refuses_as_malformed() {
         "expected a malformed refusal, got {refused:?}"
     );
     assert_eq!(contents(&mut read_back), "", "the refusal touched the sink");
+}
+
+/// A payload each kind pairs with, so a submission is refused or admitted
+/// on its turn alone.
+fn licensed_payload(kind: Kind) -> Option<Payload> {
+    let spliced = || {
+        Some(Payload::Spliced(
+            RawValue::from_string("{}".into()).expect("raw"),
+        ))
+    };
+    match kind {
+        Kind::ReplayOpened => Some(Payload::ReplayOpened(weaver_diagnostic::ReplayOpened {
+            reader_elected: false,
+        })),
+        Kind::ReplayIdentity => Some(Payload::ReplayIdentity(weaver_diagnostic::ReplayIdentity {
+            replayed_session: "s-src".into(),
+            model: weaver_diagnostic::ModelId("m".into()),
+            weights_hash: weaver_diagnostic::WeightsHash("h".into()),
+            template: weaver_diagnostic::TemplateId("t".into()),
+        })),
+        Kind::ReplayClosed => Some(Payload::ReplayClosed(weaver_diagnostic::ReplayClosed {
+            outcome: weaver_diagnostic::ReplayOutcome::Certified,
+        })),
+        Kind::ResidualColumn => Some(Payload::ResidualColumn(weaver_diagnostic::ResidualColumn {
+            position: 10,
+            layers: 1,
+            width: 1,
+            values: vec![vec![1.0]],
+        })),
+        Kind::TurnStarted => None,
+        _ => spliced(),
+    }
+}
+
+fn submit_as(kind: Kind, turn: Option<&str>) -> Result<Sequence, weaver_diagnostic::Failure> {
+    let (mut recorder, _read_back) = stand("s-d", "r-d");
+    recorder.submit(Event {
+        envelope: envelope(kind, turn, 1, 1),
+        payload: licensed_payload(kind),
+    })
+}
+
+/// **A kind that belongs to no turn refuses one, and is admitted without**,
+/// per `weaver-diagnostic-Spec` section 3.2's turn table: the replay trio,
+/// and `flush` and `recall` with their serving rule.
+///
+/// Perturbation: move any one of these kinds out of `turn_rule`'s forbidden
+/// arm and its turned submission is admitted. Watched moving `Recall` and
+/// `Flush`.
+#[test]
+fn a_turnless_kind_refuses_a_turn() {
+    for kind in [
+        Kind::ReplayOpened,
+        Kind::ReplayIdentity,
+        Kind::ReplayClosed,
+        Kind::Flush,
+        Kind::Recall,
+    ] {
+        assert!(
+            submit_as(kind, None).is_ok(),
+            "{kind:?} without a turn is its ordinary case"
+        );
+        assert!(
+            matches!(
+                submit_as(kind, Some("t-1")),
+                Err(weaver_diagnostic::Failure::SubmitRefused {
+                    refusal: SubmitRefusal::PayloadMalformed
+                })
+            ),
+            "{kind:?} carrying a turn is refused"
+        );
+    }
+}
+
+/// **A kind that belongs to a turn refuses its absence, and is admitted
+/// with one**, per the same table: a replayed turn's bracket, its messages
+/// but the system one, the four model kinds, and a residual column.
+///
+/// Perturbation: move any one of these out of the required arm and its
+/// turnless submission is admitted. Watched moving `ModelRequest` and
+/// `ResidualColumn`.
+#[test]
+fn a_turned_kind_refuses_no_turn() {
+    for kind in [
+        Kind::TurnStarted,
+        Kind::TurnClosed,
+        Kind::MessageUser,
+        Kind::MessageAssistant,
+        Kind::MessageToolResult,
+        Kind::ModelRequest,
+        Kind::ModelOutput,
+        Kind::ModelMeasurement,
+        Kind::ModelField,
+        Kind::ResidualColumn,
+    ] {
+        assert!(
+            submit_as(kind, Some("t-1")).is_ok(),
+            "{kind:?} inside a turn is its ordinary case"
+        );
+        assert!(
+            matches!(
+                submit_as(kind, None),
+                Err(weaver_diagnostic::Failure::SubmitRefused {
+                    refusal: SubmitRefusal::RequiredFieldAbsent { .. }
+                })
+            ),
+            "{kind:?} without a turn is refused"
+        );
+    }
+}
+
+/// **A turn-optional kind is admitted both ways**, per the same table: the
+/// seated prefix precedes every turn and a system message in one carries it,
+/// and a refusal or a fault falls inside a turn or between them.
+///
+/// Perturbation: move any one of these into the forbidden or the required
+/// arm and one of its two submissions refuses. Watched moving `Refusal` to
+/// the forbidden arm and `MessageSystem` to the required one.
+#[test]
+fn a_turn_optional_kind_is_admitted_either_way() {
+    for kind in [Kind::MessageSystem, Kind::Refusal, Kind::Fault] {
+        assert!(submit_as(kind, None).is_ok(), "{kind:?} without a turn");
+        assert!(submit_as(kind, Some("t-1")).is_ok(), "{kind:?} inside one");
+    }
+}
+
+/// **Every kind of the set stands in exactly one of the three tests above**,
+/// so a kind added to the set and given a rule without a watch fails here.
+/// The match is exhaustive and wildcard-free for the reason `turn_rule`'s is.
+#[test]
+fn every_kind_has_a_turn_watch() {
+    fn watched(kind: Kind) -> bool {
+        match kind {
+            Kind::ReplayOpened
+            | Kind::ReplayIdentity
+            | Kind::ReplayClosed
+            | Kind::Flush
+            | Kind::Recall
+            | Kind::TurnStarted
+            | Kind::TurnClosed
+            | Kind::MessageUser
+            | Kind::MessageAssistant
+            | Kind::MessageToolResult
+            | Kind::ModelRequest
+            | Kind::ModelOutput
+            | Kind::ModelMeasurement
+            | Kind::ModelField
+            | Kind::ResidualColumn
+            | Kind::MessageSystem
+            | Kind::Refusal
+            | Kind::Fault => true,
+        }
+    }
+    assert!(watched(Kind::Recall));
 }

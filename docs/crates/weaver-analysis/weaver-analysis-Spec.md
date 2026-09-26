@@ -634,9 +634,9 @@ different authority.** The line is the same line and the envelope the same
 envelope, per `weaver-diagnostic-Spec` sections 2 and 3.1, so section 2's rules
 above bind here unchanged: skip unknown content in semantic interpretation,
 derive nothing absent, and retain raw projection material. **What differs is the kind
-set**, seventeen rather than twenty-one, and
-`weaver-diagnostic-Spec` section 3.2 is authoritative for it, a divergence being a
-defect against that document rather than this one.
+set**, eighteen rather than twenty-two, and `weaver-diagnostic-Spec` section 3.2 is
+authoritative for it, a divergence being a defect against that document rather than this
+one.
 
 **Which record this crate holds is answered by the record.** A bracket opening with
 `replay.opened` is a diagnostic-trace and one opening with `load` is a serving

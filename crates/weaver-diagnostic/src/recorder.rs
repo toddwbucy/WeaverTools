@@ -102,6 +102,20 @@ fn admit(event: &Event) -> Result<(), Failure> {
     {
         return refuse(SubmitRefusal::PayloadMalformed);
     }
+    // **The turn rule before the pairing**, per section 3.2's table: a kind
+    // that belongs to no turn refuses one, a kind that belongs to a turn
+    // refuses its absence, and the serving vocabulary's kinds keep their
+    // serving rule, as they keep their serving meaning. The refusals are the
+    // serving recorder's own, so one malformed event answers alike in both.
+    match (turn_rule(event.envelope.kind), &event.envelope.turn) {
+        (TurnRule::Forbidden, Some(_)) => return refuse(SubmitRefusal::PayloadMalformed),
+        (TurnRule::Required, None) => {
+            return refuse(SubmitRefusal::RequiredFieldAbsent {
+                field: FieldName("turn".into()),
+            });
+        }
+        _ => {}
+    }
     match (&event.envelope.kind, &event.payload) {
         (Kind::ReplayOpened, Some(Payload::ReplayOpened(_)))
         | (Kind::ReplayIdentity, Some(Payload::ReplayIdentity(_)))
@@ -124,13 +138,55 @@ fn admit(event: &Event) -> Result<(), Failure> {
             | Kind::ModelField
             | Kind::Flush
             | Kind::Refusal
-            | Kind::Fault,
+            | Kind::Fault
+            | Kind::Recall,
             Some(Payload::Spliced(_)),
         ) => Ok(()),
         (_, None) => refuse(SubmitRefusal::RequiredFieldAbsent {
             field: FieldName("payload".into()),
         }),
         (_, Some(_)) => refuse(SubmitRefusal::PayloadKindMismatch),
+    }
+}
+
+/// Whether a kind belongs to a turn, per section 3.2's table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TurnRule {
+    /// The kind belongs to no turn and refuses one.
+    Forbidden,
+    /// The kind belongs to a turn and refuses its absence.
+    Required,
+    /// The turn is present exactly when the event belongs to one.
+    Optional,
+}
+
+/// **Exhaustive and wildcard-free**, so a kind added to the set cannot be
+/// admitted until it is given a rule here and a row in section 3.2's table.
+fn turn_rule(kind: Kind) -> TurnRule {
+    match kind {
+        // The bracket and the fact the pass established belong to the pass,
+        // and a cut or an ask between turns belongs to none, as in a serving
+        // record.
+        Kind::ReplayOpened
+        | Kind::ReplayIdentity
+        | Kind::ReplayClosed
+        | Kind::Flush
+        | Kind::Recall => TurnRule::Forbidden,
+        // What a replayed turn carries, and a column taken at one of its
+        // positions.
+        Kind::TurnStarted
+        | Kind::TurnClosed
+        | Kind::MessageUser
+        | Kind::MessageAssistant
+        | Kind::MessageToolResult
+        | Kind::ModelRequest
+        | Kind::ModelOutput
+        | Kind::ModelMeasurement
+        | Kind::ModelField
+        | Kind::ResidualColumn => TurnRule::Required,
+        // The seated prefix precedes every turn and a message in one carries
+        // it, and a refusal or a fault falls inside a turn or between them.
+        Kind::MessageSystem | Kind::Refusal | Kind::Fault => TurnRule::Optional,
     }
 }
 

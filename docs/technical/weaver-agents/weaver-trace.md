@@ -47,16 +47,16 @@ question and a run-scoped monotonic reading for interval measurement. The two
 are not interchangeable and neither answers the other's question, which is why
 there is no single occurrence time.
 
-**The closed kind set.** Twenty-one kinds, flat, every one recorded when it
-occurs: the run brackets and the session close, the turn brackets, the four
-conversation messages, the tool brackets, the decode boundary with its
-measurement, the classify pair, the context edits - flush and elision, each
-carrying the resident counts either side - the fault, the refusal, and the
-per-position field when its election stands. Adding a kind is a document edit,
-because consumers key on the closure.
-Four payload shapes - the conversation messages - are deliberately opaque here:
-this crate records their octets and never decodes them, because the engine is
-the only party that reads a message as a message.
+**The closed kind set.** Twenty-two kinds, flat, every one recorded when it occurs: the
+run brackets and the session close, the turn brackets, the four conversation messages,
+the tool brackets, the decode boundary with its measurement, the classify pair, the
+context edits - flush and elision, each carrying the resident counts either side - the
+fault, the refusal, the per-position field when its election stands, and the recall, an
+answered ask on the state seam named by the identities it returned. Adding a kind is a
+document edit, because consumers key on the closure. Four payload shapes - the
+conversation messages - are deliberately opaque here: this crate records their octets
+and never decodes them, because the engine is the only party that reads a message as a
+message.
 
 **The two materializations of a session.** The working structure is the session
 in RAM: the run's admitted events, in canonical form, in order - what the loop
@@ -160,5 +160,5 @@ that ground.
   the claim, is an open ruling.
 - **The payload shapes the decode work settles** ride that work and land with
   it.
-- Nothing else is crate-local. The kind set stands at twenty-one and the
+- Nothing else is crate-local. The kind set stands at twenty-two and the
   variant, rename, and dispatch counts stand with it.

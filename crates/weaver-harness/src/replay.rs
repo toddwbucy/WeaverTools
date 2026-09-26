@@ -817,6 +817,7 @@ mod tests {
             kinds,
             vec![
                 "replay.opened",
+                "recall",
                 "replay.identity",
                 "turn.started",
                 "model.request",
@@ -827,6 +828,26 @@ mod tests {
                 "replay.closed",
             ],
             "the certified pass authors the mirrored bracket whole"
+        );
+        // The replay ask is recorded by the seat that made it, inside the
+        // bracket and ahead of the identity the loop establishes from it,
+        // named by the answer's bounds and count.
+        let recall = lines
+            .iter()
+            .find(|l| l["kind"] == "recall")
+            .expect("the replay ask is recorded");
+        assert_eq!(recall["payload"]["ask"]["verb"], "replay");
+        assert_eq!(
+            recall["payload"]["count"], 2,
+            "the events the member answered"
+        );
+        assert_eq!(
+            recall["payload"]["returned"],
+            serde_json::json!([
+                {"run": "r-1", "turn": "t-1", "sequence": "4", "kind": "model.request"},
+                {"run": "r-1", "turn": "t-1", "sequence": "6", "kind": "model.measurement"}
+            ]),
+            "named by its first and last events: {recall}"
         );
     }
 

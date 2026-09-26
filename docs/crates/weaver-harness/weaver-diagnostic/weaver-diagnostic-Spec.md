@@ -155,7 +155,7 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Seventeen kinds, exhaustive, and the set is this crate's own.**
+**Eighteen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
     replay.identity        the input identity the pass established
@@ -174,12 +174,43 @@ to: diagnostic-session-is-the-replays-own
     flush                  a cut the loop drove, as the record carries one
     refusal                a typed refusal answering an ask the pass sent
     fault                  a death, named
+    recall                 an answered state-seam ask, by the identities it returned
 
-**Thirteen spellings are the serving vocabulary's and mean there what they mean
+**Fourteen spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
 coincidence, per section 4. **Four are this record's own**, the `replay.` trio
 and `residual.column`, and no serving record carries any of them.
+
+**Every kind carries a turn rule, and a shared kind keeps its serving one**, as of
+2026-09-26. Keeping the serving meaning includes keeping when the kind belongs to a
+turn, so the recorder applies the rule at admission before the pairing, with the
+serving recorder's own refusals: a turn on a kind that belongs to none refuses as a
+malformed payload, and a missing turn on a kind that belongs to one refuses as the
+required field absent. Until this act the admission judged the pairing alone and
+admitted a turned `flush` or a turnless `model.request`, which a serving recorder
+refuses.
+
+    turnless        replay.opened, replay.identity, replay.closed, flush, recall
+    turn-required   turn.started, turn.closed, message.user, message.assistant,
+                    message.tool_result, model.request, model.output,
+                    model.measurement, model.field, residual.column
+    turn-optional   message.system, refusal, fault
+
+The replay trio belongs to the pass and not to a replayed turn, and `residual.column`
+to the turn whose position it was taken at, which is how the harness authors each.
+**The rule is one exhaustive match in `src/recorder.rs`**, so a kind added to the set
+is not admitted until it is given a rule and a row here.
+
+```graph
+node: diagnostic-turn-rule-per-kind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-diagnostic
+to: diagnostic-turn-rule-per-kind
+```
 
 **`flush` is carried because the loop is granted the flush by name.**
 `diagnostic-replay-loop` section 1 enumerates what the seat grants it, the state
@@ -187,6 +218,18 @@ port, the decode surface, and the flush, and `weaver-harness-Spec` section 6 has
 harness author a `flush` event on the flush's confirmation. A record that could not
 carry it would drop an act its own loop is chartered to perform, which is the
 accumulation reading broken exactly where the serving record protects it.
+
+**`recall` is carried because a replay's enter asks the member as a serving enter
+does**, on the ruling of 2026-09-26 that made an answered state-seam ask a serving
+kind, per `weaver-trace-Spec` section 3. The replay's enter asks for the session's
+identity, the loop's replay port asks for the holdings, and the harness authors a
+`recall` for each answered ask whatever the record's mechanism, so a record that could
+not carry one would refuse the replay's own enter and its own walk. The replay port's
+lands inside the bracket after `replay.opened` and before `replay.identity`, named by
+the holdings' first and last events and their count. It splices the serving payload as
+the other thirteen shared kinds do. What it adds to a replay's reading is nothing yet:
+`diagnostic-replay-loop` section 2's walk passes turnless kinds by, and the grouping
+that reads a flush and a source recall beside it is a later act's.
 
 **`refusal` is carried because the same section authors every typed refusal, and a
 replay produces two.** `weaver-harness-Spec` section 6's ruling of 2026-08-22 has a
@@ -231,8 +274,8 @@ record's identity is its provenance and never a member, per section 4's discrimi
 the parent charter's 2026-08-24 correction, so nothing here reads the kind's presence as
 identifying anything. **The exhaustiveness grounds in apex section 5.3, and not on the
 serving record's reason.** `weaver-trace-Spec` section 3 argues from a set closed by
-ruling and matching its charter one to one, and this set is not that one: seventeen
-kinds, thirteen of them the serving vocabulary's and four this record's own, so closure
+ruling and matching its charter one to one, and this set is not that one: eighteen
+kinds, fourteen of them the serving vocabulary's and four this record's own, so closure
 by charter does not carry across. What carries is the contract's. Section 7 of
 `weaver-harness-diagnostic-contract` makes a change to this kind set a change both
 parties merge in one act, which is a closure the seam states, and a consumer able to
@@ -255,8 +298,8 @@ to: axiom-contract-is-a-complete-interface
 
 ### 3.3 The payload shapes
 
-**The mapping is total: seventeen kinds, sixteen shapes named whole and the
-seventeenth named to its members.** Thirteen take the serving payload of the
+**The mapping is total: eighteen kinds, seventeen shapes named whole and the
+eighteenth named to its members.** Fourteen take the serving payload of the
 same name, spliced or shaped as `weaver-trace-Spec` section 3 shapes it, that
 document being authoritative and a divergence a defect against it. Three are
 declared here. `residual.column`'s identity members are fixed in section 3.2
@@ -649,6 +692,9 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
   consumes no sequence, watched to fail when the refusal is moved after the write.
+- Every kind carries its turn rule: a turnless kind refuses a turn, a turn-required
+  kind refuses its absence, and a turn-optional kind is admitted both ways, each
+  watched to fail when one kind is moved to another arm of the rule.
 - The divergence position is the resident length at the draw: a re-fed answer whose
   first draw differs from the recorded path closes naming the position the closing
   count places that draw at, watched to fail when the pass names the draw's index in
@@ -666,9 +712,9 @@ sibling crate's participation and is not this document's to elect.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
-section 6. Fifteen sit there and none sits here.
+section 6. Sixteen sit there and none sits here.
 
-**Four of the fifteen take a second `asserts` edge, and it runs from
+**Four of the sixteen take a second `asserts` edge, and it runs from
 `weaver-harness`.** That the record identifies itself at the open, that an absent
 identity is not invented, that an outcome is not manufactured, and that a divergence
 position is the resident length at the draw are four claims **this crate holds no
