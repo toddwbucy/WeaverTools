@@ -177,10 +177,7 @@ def m1_reading():
         readable = answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found']
     except OSError:
         values, readable = {}, False
-    try:
-        door = Path('/run/weaver-m1/coordination.sock').exists()
-    except OSError:
-        door = None
+    door = door_state(Path('/run/weaver-m1/coordination.sock'))
     try:
         uid = pwd.getpwnam('weaver-m1').pw_uid
     except KeyError:
@@ -200,6 +197,21 @@ def m1_reading():
     except OSError:
         process = None
     return dict(readable=readable, active_state=values.get('ActiveState'), door=door, process=process)
+
+
+def door_state(path):
+    """Whether a path stands, read by stat so a refused look stays refused:
+    True where it stands, False only where the kernel says there is no such
+    file, and None for any other failure. `Path.exists()` is not used because
+    on Python 3.14 it answers False for a path behind a denied directory
+    (#693), which would read an unreadable m1 door as absent and clear."""
+    try:
+        os.stat(path)
+        return True
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return None
 
 
 def proc_hides_processes():

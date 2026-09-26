@@ -75,7 +75,7 @@ def golden_reading(systemctl=None):
     """The interlock reading m1_reading takes from golden's real capture of
     this box's systemctl answer, no door and no m1 process: m1 absent."""
     with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,systemctl or golden.SYSTEMCTL_SHOW_M1,'')),\
-         patch('tb_payload.Path.exists',return_value=False),patch('tb_payload.Path.iterdir',return_value=[]),\
+         patch('tb_payload.door_state',return_value=False),patch('tb_payload.Path.iterdir',return_value=[]),\
          patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.proc_hides_processes',return_value=False):
         return payload.m1_reading()
 
@@ -678,7 +678,7 @@ class PayloadTests(unittest.TestCase):
 
     def test_m1_interlock(self):
         def probe(stdout,rc=0,door=False,procs=None):
-            with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],rc,stdout,'')),patch('tb_payload.Path.exists',return_value=door),patch('tb_payload.Path.iterdir',return_value=procs or []),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.proc_hides_processes',return_value=False):
+            with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],rc,stdout,'')),patch('tb_payload.door_state',return_value=door),patch('tb_payload.Path.iterdir',return_value=procs or []),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.proc_hides_processes',return_value=False):
                 payload.m1_unloaded()
         # golden.SYSTEMCTL_SHOW_M1 is this box's real reading; the refusals
         # change one value in that real format.
@@ -1491,7 +1491,7 @@ class ReviewRoundOneTests(unittest.TestCase):
 
     def reading(self,**patches):
         base=dict(run=patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,golden.SYSTEMCTL_SHOW_M1,'')),
-                  exists=patch('tb_payload.Path.exists',return_value=False),
+                  door=patch('tb_payload.door_state',return_value=False),
                   iterdir=patch('tb_payload.Path.iterdir',return_value=[]),
                   user=patch('tb_payload.pwd.getpwnam',side_effect=KeyError),
                   hides=patch('tb_payload.proc_hides_processes',return_value=False),
@@ -1508,7 +1508,7 @@ class ReviewRoundOneTests(unittest.TestCase):
         refused_stat=[SimpleNamespace(name='42',stat=lambda:(_ for _ in ()).throw(PermissionError()))]
         for name,patches,fact,value in [
             ('systemctl unrunnable',dict(run=patch('tb_payload.subprocess.run',side_effect=OSError)),'readable',False),
-            ('door refused',dict(exists=patch('tb_payload.Path.exists',side_effect=PermissionError)),'door',None),
+            ('door refused',dict(door=patch('tb_payload.door_state',return_value=None)),'door',None),
             ('process refused',dict(iterdir=patch('tb_payload.Path.iterdir',return_value=refused_stat),user=patch('tb_payload.pwd.getpwnam',return_value=SimpleNamespace(pw_uid=1000))),'process',None),
             ('proc unlistable',dict(iterdir=patch('tb_payload.Path.iterdir',side_effect=PermissionError)),'process',None),
             ('hidepid, unprivileged',dict(hides=patch('tb_payload.proc_hides_processes',return_value=True)),'process',None)]:
@@ -1523,6 +1523,22 @@ class ReviewRoundOneTests(unittest.TestCase):
         # Root sees every process whatever hidepid says, so the scan runs.
         r=self.reading(hides=patch('tb_payload.proc_hides_processes',return_value=True),euid=patch('tb_payload.os.geteuid',return_value=0))
         self.assertTrue(payload.m1_clear(r))
+
+    def test_the_door_is_read_by_stat_and_a_refused_look_is_unread(self):
+        # #693, on this box's Python 3.14: Path.exists() answers False behind
+        # a denied directory, so the door is read by stat against a real
+        # locked directory here, not a patched method. Perturbation: read the
+        # door with Path.exists() again and the refused look reads False.
+        with tempfile.TemporaryDirectory() as tmp:
+            locked=Path(tmp)/'locked';locked.mkdir();door=locked/'coordination.sock';door.touch()
+            # A 000 directory does not deny root, so under root this case
+            # would pass without testing anything: it refuses to run instead.
+            self.assertNotEqual(os.geteuid(),0,'run the suite unprivileged: root is not denied by a 000 directory')
+            self.assertIs(payload.door_state(door),True)
+            self.assertIs(payload.door_state(locked/'absent.sock'),False)
+            locked.chmod(0)
+            try:self.assertIsNone(payload.door_state(door),'a door behind a denied directory is unread')
+            finally:locked.chmod(0o700)
 
     def test_hidepid_is_read_from_the_mount_table(self):
         for options,hidden in [('rw,nosuid,nodev,noexec,relatime',False),('rw,relatime,hidepid=2',True),

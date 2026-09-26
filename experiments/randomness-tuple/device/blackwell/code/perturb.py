@@ -39,7 +39,7 @@ def guards(path):
 # The handlers whose catching is itself a rule: a read the interlock cannot
 # make is unread, never clear (#693 thread 2). Each is made to catch nothing,
 # and the suite must then fail, as a named guard must when removed.
-HANDLERS = {'tb_payload.py': ['m1_reading']}
+HANDLERS = {'tb_payload.py': ['m1_reading', 'door_state']}
 
 
 def handlers(path, functions):
