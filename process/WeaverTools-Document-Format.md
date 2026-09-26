@@ -259,9 +259,10 @@ than a parent. Issue #637 carries the measurement and the question.
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
 vision document's word and it does not cover the floor, so it is not used here. One PRD,
 one Spec, and as many contracts as it has seams. **A crate whose sources and charter
-live outside this repository has its node declared by the contract it is party to**, as
-of 2026-09-26 and pending the operator's word, so the `party` edge and any seam edge
-naming it point at a declared node rather than dangling. `weaver-web` is the one case,
+live outside this repository has its node and its one `parent` edge declared by the
+contract it is party to**, as of 2026-09-26 and pending the operator's word, so the
+`party` edge and any seam edge naming it point at a declared node rather than dangling
+and the crate keeps its place in the domain tree G3 reads. `weaver-web` is the one case,
 its charter having left with the crate.
 
 **experiment.** One node per experiment, declared by its charter, the root
