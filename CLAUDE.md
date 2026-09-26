@@ -483,9 +483,13 @@ series stopped because a review that long is authoring by another name.
 
 **Gates before review, and do not spend a pass on what the census counts**: a
 reviewer's attention on "is this perturbation cited" is attention not on "does
-this fix hold", and the first is deterministic. The order, then: gates including the
-census, the Planner's grade against a clean extract, out of draft, the Codex pass, every
-finding answered, gates again, the Planner's verification of the rework, the operator's
+this fix hold", and the first is deterministic. The order, then, is this. Gates
+including the census come first, then the Planner's verification of the head against a
+clean extract, then out of draft, which fires the Codex pass. The Planner grades every
+finding of that pass. Every finding is answered, fixed or declined, the fixes are
+pushed, and the gates run again on the rework. That push fires a pass and the Planner
+grades it, and the loop repeats until a pass posts no finding that changes behaviour or
+corrects a claim, more than four rounds of it being the bound above. Then the operator's
 merge.
 
 ## Police call
