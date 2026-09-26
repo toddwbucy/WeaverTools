@@ -571,7 +571,7 @@ class ReadingTests(unittest.TestCase):
             self.assertEqual(sections.compare(p,q)['stacks'],['B1','B2'])
             # One inventory named twice, by another spelling, refuses before it is read.
             same=Path(tmp)/'same';same.write_text(json.dumps(b1))
-            with self.assertRaises(ValueError):sections.compare(same,Path(tmp)/'..'/Path(tmp).name/'same')
+            with self.assertRaisesRegex(ValueError,'twice'):sections.compare(same,Path(tmp)/'..'/Path(tmp).name/'same')
             for label,first,second in [('same',b1,b1),('reversed',dict(b1,stack='B2'),b1),
                                        ('no-ptx',b1,dict(b1,stack='B2',members=dict(b1['members'],ptx={}))),
                                        ('no-cubin',b1,dict(b1,stack='B2',members=dict(b1['members'],cubin={}))),
@@ -800,6 +800,18 @@ class PayloadTests(unittest.TestCase):
             with patch.object(payload,'ROOT',nested):
                 shutil.copytree(self.root,nested);(self.base/'under').chmod(0o775)
                 with self.assertRaisesRegex(RuntimeError,'served-directory-custody'):payload.installed(self.plan,'d'*64)
+
+    def test_model_directories_are_made_locked_one_by_one(self):
+        # #683 thread 50: mkdir(parents=True) makes the intermediate directories
+        # at the umask and lock() reaches only the last, so a permissive sudo
+        # umask left /opt/weaver group-writable and every retry refusing. Each
+        # missing component is made at 0755 and locked as it is made, before
+        # ROOT exists.
+        self.stacks();deep=self.base/'made'/'below'/'models';old=os.umask(0o002)
+        try:
+            with patch.object(payload,'MODEL',deep/'model'):self.provision()
+        finally:os.umask(old)
+        for d in [self.base/'made',self.base/'made'/'below',deep]:self.assertEqual(d.stat().st_mode&0o777,0o755,d)
 
     def test_new_model_must_be_in_custody(self):
         # #683 finding 30: a model this provisioning creates is held like an

@@ -103,6 +103,19 @@ def group_exists(name):
     return True
 
 
+def make_locked(directory):
+    """Every missing component of directory's chain, made one at a time and
+    locked as it is made: mkdir(parents=True) would make the intermediate
+    ones at the umask, and lock() reaches only the directory it is given."""
+    missing = []
+    while not directory.exists():
+        missing.append(directory)
+        directory = directory.parent
+    for component in reversed(missing):
+        component.mkdir(mode=0o755)
+        lock(component, 0o755)
+
+
 def model_chain_held():
     """The model's directory chain as it stands before this payload writes:
     from the nearest existing ancestor of MODEL up to TRUSTED. Checked before
@@ -236,6 +249,10 @@ def provision(plan, plan_sha256):
     # snapshot's custody rests on.
     need('operator-group', group_exists(plan['operator']))
     need('model-chain-custody', model_chain_held())
+    # The model's missing directories are made here, each locked as it is
+    # made, before ROOT exists: a failure among them leaves no root standing.
+    if not MODEL.exists():
+        make_locked(MODEL.parent)
     # ROOT's own ancestry, held before ROOT is made: a renameable ancestor lets
     # a same-UID process move the new root out from under the writes that
     # follow. installed() holds it again before every later step.
@@ -263,10 +280,6 @@ def provision(plan, plan_sha256):
     lock(ROOT, 0o755)
     save(ROOT / 'plan-sha256', plan_sha256 + '\n')
     if not MODEL.exists():
-        made = not MODEL.parent.exists()
-        MODEL.parent.mkdir(parents=True, exist_ok=True)
-        if made:
-            lock(MODEL.parent, 0o755)
         # The model-source check above refuses early; what root serves is the
         # copy, verified here before provisioning can report success, and held
         # in custody like an existing one: a writable parent lets another
