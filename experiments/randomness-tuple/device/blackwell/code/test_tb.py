@@ -658,7 +658,13 @@ class PayloadTests(unittest.TestCase):
         self.assertEqual(p.read_text(),'a')
 
     def provision(self):
-        with patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.grp.getgrnam',return_value=SimpleNamespace(gr_gid=os.getgid())),patch('tb_payload.os.chown'),patch('tb_payload.run'),contextlib.redirect_stdout(io.StringIO()):payload.provision(self.plan,'d'*64)
+        with patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.grp.getgrnam',side_effect=self.groups),patch('tb_payload.os.chown'),patch('tb_payload.run'),contextlib.redirect_stdout(io.StringIO()):payload.provision(self.plan,'d'*64)
+
+    def groups(self,name):
+        # The box's groups as a test sets them; before provisioning the
+        # operator's exists and bravo's does not.
+        if name in getattr(self,'groups_present',{self.plan['operator']}):return SimpleNamespace(gr_gid=os.getgid())
+        raise KeyError(name)
 
     def test_provision_and_installed_hash_checks(self):
         self.stacks();self.provision()
@@ -744,8 +750,9 @@ class PayloadTests(unittest.TestCase):
         deep=self.base/'ancestor'/'models';deep.mkdir(parents=True)
         with patch.object(payload,'MODEL',deep/'model'):
             (self.base/'ancestor').chmod(0o775)
-            with self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
-            (self.base/'ancestor').chmod(0o755);(deep/'model').unlink(missing_ok=True);shutil.rmtree(self.root)
+            with self.assertRaisesRegex(RuntimeError,'model-chain-custody'):self.provision()
+            self.assertFalse(self.root.exists())
+            (self.base/'ancestor').chmod(0o755)
             self.provision();payload.installed(self.plan,'d'*64)
             (self.base/'ancestor').chmod(0o775)
             with self.assertRaisesRegex(RuntimeError,'installed-model-custody'):payload.installed(self.plan,'d'*64)
@@ -761,7 +768,10 @@ class PayloadTests(unittest.TestCase):
         # the new file after its hash, so provisioning refuses before success.
         self.stacks();self.model.parent.chmod(0o775)
         try:
-            with self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
+            # Held before the first write since thread 43's walk: the parent is
+            # the chain's first link, so nothing is made.
+            with self.assertRaisesRegex(RuntimeError,'model-chain-custody'):self.provision()
+            self.assertFalse(self.root.exists())
         finally:self.model.parent.chmod(0o700)
 
     def test_inventory_roots_pin_the_served_set(self):
@@ -788,6 +798,31 @@ class PayloadTests(unittest.TestCase):
         installed.unlink();installed.symlink_to(twin)
         with self.assertRaisesRegex(RuntimeError,'installed-no-symlinks'):payload.installed(self.plan,'d'*64)
         installed.unlink();installed.write_text('stub');payload.installed(self.plan,'d'*64)
+
+    def test_provision_holds_every_precondition_before_the_first_write(self):
+        # #683 thread 43 and the walk it asked for: groupadd's, the final
+        # chown's and the snapshot's preconditions were asserted only after
+        # ROOT was made, so a failure left ROOT standing and every retry
+        # refusing under fresh-install-root. Each refuses by name with
+        # nothing written.
+        self.stacks()
+        self.groups_present={self.plan['operator'],'weaver-bravo'}
+        with self.assertRaisesRegex(RuntimeError,'no-bravo-group'):self.provision()
+        self.assertFalse(self.root.exists())
+        self.groups_present=set()
+        with self.assertRaisesRegex(RuntimeError,'operator-group'):self.provision()
+        self.assertFalse(self.root.exists())
+        self.groups_present={self.plan['operator']}
+        deep=self.base/'ancestor'/'models';deep.mkdir(parents=True);(self.base/'ancestor').chmod(0o775)
+        with patch.object(payload,'MODEL',deep/'model'),self.assertRaisesRegex(RuntimeError,'model-chain-custody'):self.provision()
+        self.assertFalse(self.root.exists());self.assertFalse((deep/'model').exists())
+        (self.base/'ancestor').chmod(0o755)
+        # What new-model-custody alone still catches: the written file itself,
+        # here a second name given to it during the write.
+        real=payload.snapshot
+        def linked(source,digest,destination):
+            real(source,digest,destination);os.link(destination,destination.with_name('twin'));return destination
+        with patch('tb_payload.snapshot',side_effect=linked),self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
 
     def test_provision_preconditions_before_mutation(self):
         self.stacks()

@@ -95,6 +95,25 @@ def account_exists(name):
     return True
 
 
+def group_exists(name):
+    try:
+        grp.getgrnam(name)
+    except KeyError:
+        return False
+    return True
+
+
+def model_chain_held():
+    """The model's directory chain as it stands before this payload writes:
+    from the nearest existing ancestor of MODEL up to TRUSTED. Checked before
+    the first write so a renameable ancestor refuses with nothing made,
+    rather than after the snapshot with ROOT already standing."""
+    directory = MODEL.parent
+    while not directory.exists():
+        directory = directory.parent
+    return chain_custody(directory / MODEL.name)
+
+
 def run(argv, **kw):
     """A privileged command that exits nonzero is a named refusal, its output
     kept in the transcript first: never an unnamed exception."""
@@ -201,6 +220,14 @@ def provision(plan, plan_sha256):
     # An existing account is custody this payload did not take and will not
     # adopt; the review seat rules on it before provisioning.
     need('no-bravo-account', not account_exists('weaver-bravo'))
+    need('no-bravo-group', not group_exists('weaver-bravo'))
+    # Every precondition a later command asserts is held here, before the
+    # first write: an interrupted provision otherwise leaves ROOT standing and
+    # every retry refusing under fresh-install-root. The operator's group is
+    # what the sinks are chowned to, and the model's chain is what the
+    # snapshot's custody rests on.
+    need('operator-group', group_exists(plan['operator']))
+    need('model-chain-custody', model_chain_held())
     need('model-source', sha(plan['model_source']) == plan['tuple']['weights_sha256'])
     if MODEL.exists() or MODEL.is_symlink():
         # Accepted only as a file already in custody; a link or a shared name
