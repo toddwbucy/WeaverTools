@@ -829,7 +829,10 @@ answer reaches its consumer**, per `weaver-harness-Spec` section 6: the seat's r
 port, the seat's replay port, the enter's identity ask, and the enter's recall under a
 restoring load, one kind and the verb naming which. The replay's ask is recorded by the
 seat that made it and not inferred from `replay.identity`, which is the loop's finding
-about the holdings rather than the seam's answer. It is authored on the
+about the holdings rather than the seam's answer. **Under a diagnostic binding the enter
+records nothing**, as it records no load and no prefix there: that record opens with
+`replay.opened`, per `weaver-diagnostic-Spec` section 4, and the ask that feeds the
+model is the replay port's, recorded inside the bracket. It is authored on the
 announce-after-record rule the flush follows, so a loop or an open never builds from an
 answer the record does not hold. **A recall belongs to no turn**, for the flush's
 reason: the enter's asks precede the first turn and the seat's falls between a flush and

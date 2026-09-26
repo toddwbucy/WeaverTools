@@ -1583,9 +1583,13 @@ impl Harness {
                     // An answered identity ask reaches the record as a
                     // `recall` before the open is built from it, per
                     // `weaver-trace-Spec` section 3's recall clause. A miss
-                    // records nothing here and refuses below.
+                    // records nothing here and refuses below. **Under a
+                    // diagnostic binding the enter records nothing**, as it
+                    // records no load and no prefix: that record opens with
+                    // `replay.opened`, and the ask that feeds the model there
+                    // is the replay port's, recorded inside the bracket.
                     let answered = seam.ask_identity_within(ask_bound);
-                    if let Some(events) = &answered {
+                    if !diagnostic && let Some(events) = &answered {
                         record_enter_ask(
                             &run.author,
                             &mut run.recorder,
@@ -1614,9 +1618,10 @@ impl Harness {
                 None => after_load!(run, LifecycleRefusal::DescriptorsUnusable),
                 Some(seam) => {
                     // The restoring recall reaches the record the same way,
-                    // one kind for every answered ask on the seam.
+                    // one kind for every answered ask on the seam, and under
+                    // the same diagnostic exception.
                     let answered = seam.ask_recall_within(None, ask_bound);
-                    if let Some(events) = &answered {
+                    if !diagnostic && let Some(events) = &answered {
                         record_enter_ask(
                             &run.author,
                             &mut run.recorder,
@@ -3098,7 +3103,10 @@ mod tests {
     /// recall ask with one turned exchange, and drains the tee's traffic
     /// otherwise. The fan-out fails past the load, as every enter test's
     /// bogus organ paths make it.
-    fn enter_against_a_member(restore: Option<weaver_types::Lineage>) -> Vec<serde_json::Value> {
+    fn enter_against_a_member(
+        restore: Option<weaver_types::Lineage>,
+        diagnostic: bool,
+    ) -> Vec<serde_json::Value> {
         use std::io::{BufRead, BufReader, Write};
 
         let dir = std::env::temp_dir().join(format!(
@@ -3142,14 +3150,18 @@ mod tests {
                     tunable_values: Default::default(),
                 },
             },
-            binding: weaver_types::EnterBinding::Serving {
-                gate_instruction: weaver_types::GateInstruction {
-                    access_rule: weaver_types::AccessRule {
-                        allowed_uids: Default::default(),
-                        allowed_gids: Default::default(),
-                        denied_uids: Default::default(),
+            binding: if diagnostic {
+                weaver_types::EnterBinding::Diagnostic
+            } else {
+                weaver_types::EnterBinding::Serving {
+                    gate_instruction: weaver_types::GateInstruction {
+                        access_rule: weaver_types::AccessRule {
+                            allowed_uids: Default::default(),
+                            allowed_gids: Default::default(),
+                            denied_uids: Default::default(),
+                        },
                     },
-                },
+                }
             },
             state_store: weaver_types::StateStore::default(),
             declaration: String::new(),
@@ -3223,7 +3235,7 @@ mod tests {
     /// conforms: trace-recall-records-the-ask-and-its-identities
     #[test]
     fn the_enter_records_its_identity_ask_before_the_prefix() {
-        let events = enter_against_a_member(None);
+        let events = enter_against_a_member(None, false);
         let kinds: Vec<&str> = events.iter().map(|e| e["kind"].as_str().unwrap()).collect();
         assert_eq!(kinds[0], "load", "the load opens the run");
         assert_eq!(kinds[1], "recall", "the identity ask follows it: {kinds:?}");
@@ -3258,11 +3270,14 @@ mod tests {
     /// recall and the second assertion fails.
     #[test]
     fn a_restoring_enter_records_its_recall_ask_too() {
-        let events = enter_against_a_member(Some(weaver_types::Lineage {
-            parent: SessionId("s-0".into()),
-            run: weaver_types::RunId("r-0".into()),
-            through: 1,
-        }));
+        let events = enter_against_a_member(
+            Some(weaver_types::Lineage {
+                parent: SessionId("s-0".into()),
+                run: weaver_types::RunId("r-0".into()),
+                through: 1,
+            }),
+            false,
+        );
         let recalls: Vec<&serde_json::Value> =
             events.iter().filter(|e| e["kind"] == "recall").collect();
         assert_eq!(
@@ -3297,6 +3312,32 @@ mod tests {
             at("recall", r#""verb":"recall""#) < at("message.system", "You are Karl."),
             "the recall precedes what the open seats"
         );
+    }
+
+    /// **Under a diagnostic binding the enter records nothing, so the record
+    /// opens with `replay.opened`**, per `weaver-diagnostic-Spec` section 4 and
+    /// `weaver-trace-Spec` section 3's recall clause: the enter authors no load
+    /// and no prefix there, and its asks are setup the diagnostic record does
+    /// not carry, the ask that feeds the model being the replay port's, inside
+    /// the bracket. The member answers the enter's asks exactly as it does for
+    /// a serving enter, so a recall written here would be the first event.
+    ///
+    /// Perturbation: drop `!diagnostic` from the identity ask's guard and the
+    /// assertion fails, the record opening with `recall`. Watched under
+    /// exactly that removal.
+    #[test]
+    fn a_diagnostic_enter_records_nothing_ahead_of_the_bracket() {
+        let events = enter_against_a_member(None, true);
+        assert!(
+            events.iter().all(|e| e["kind"] != "recall"),
+            "no recall from the enter: {events:?}"
+        );
+        if let Some(first) = events.first() {
+            assert_eq!(
+                first["kind"], "replay.opened",
+                "whatever the record holds opens with the bracket: {events:?}"
+            );
+        }
     }
 
     #[test]

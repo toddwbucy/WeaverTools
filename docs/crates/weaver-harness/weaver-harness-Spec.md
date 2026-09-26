@@ -1990,9 +1990,12 @@ through the cut, rebuilt as canonical messages in landing order, follow the iden
 the open's `messages`. **Each answered ask reaches the record as a `recall` before the
 open is built from it**, the identity ask's and the restoring recall's alike, as of
 2026-09-26 per `weaver-trace-Spec` section 3, a recall the recorder will not take being
-named in an `identity_prefix_unrecorded` fault rather than refusing the enter. They are
-prefix material, permanent for the residency and the floor a flush returns to, because
-the point of standing from a record is to condition the possibility space the way the
+named in an `identity_prefix_unrecorded` fault rather than refusing the enter. **Under a
+diagnostic binding the enter records nothing**, its asks being setup the diagnostic
+record does not carry as it carries no load and no prefix: that record opens with
+`replay.opened`, and the ask that feeds the model is the replay port's. They are prefix
+material, permanent for the residency and the floor a flush returns to, because the
+point of standing from a record is to condition the possibility space the way the
 identity does, only longer, and a prefix a flush could drop would not be one. The window
 pays for it and the declaration's capacity is where the operator sees the cost. **The
 turn ordinal starts at the cut**: the first turn of a restoring run is numbered one past
