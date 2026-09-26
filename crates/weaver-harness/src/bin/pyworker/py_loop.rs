@@ -111,6 +111,28 @@ impl Seat {
         Ok(ports.elide(from, to))
     }
 
+    /// The task's score, at the run's close: the predicate the task
+    /// answered, whether it held, and where the task supplies a denominator,
+    /// the count the run measured against it. Answers True once the record
+    /// holds the verdict, and False where the harness refused it - inside a
+    /// turn, a second score for the run, an empty predicate, one term
+    /// without the other, or a zero denominator - or the recorder would not
+    /// take it.
+    ///
+    /// **What the predicate is, and when a task is done, is this loop's.**
+    /// The harness records the verdict and never judges it.
+    #[pyo3(signature = (predicate, passed, measured=None, denominator=None))]
+    fn score(
+        &mut self,
+        predicate: &str,
+        passed: bool,
+        measured: Option<u64>,
+        denominator: Option<u64>,
+    ) -> PyResult<bool> {
+        let ports = self.ports_mut()?;
+        Ok(ports.score(predicate, passed, measured, denominator))
+    }
+
     /// Custody's recall: the conversation's message events in landing
     /// order, bounded to the most recent turns where a bound is given, or
     /// None where the leg is down. Each event is {"kind": str, "turn":

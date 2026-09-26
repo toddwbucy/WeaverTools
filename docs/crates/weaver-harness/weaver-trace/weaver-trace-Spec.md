@@ -340,7 +340,7 @@ the derive default emits `"MessageUser"` and `rename_all = "snake_case"` emits
 it to a scheme would put a second spelling of every kind on the wire, which is the
 one-name-two-nodes defect the Document Format rules against for identifiers and
 which reads the same way for a consumer keying on a kind. The mapping is total:
-twenty-three variants, twenty-three renames, and the wire spelling is the charter's.
+twenty-four variants, twenty-four renames, and the wire spelling is the charter's.
 
 ```graph
 node: trace-kind-explicit-renames
@@ -425,7 +425,7 @@ from: weaver-trace
 to: trace-subsystem-case-set
 ```
 
-**Twenty-three kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
+**Twenty-four kinds, exhaustive, matching charter section 3.1 exactly.** The enum is
 exhaustive rather than `#[non_exhaustive]` because the set is closed by ruling and
 adding one is an edit to the charter and to every contract naming the set: an
 attribute that let a consumer absorb a further kind into a wildcard would defeat
@@ -625,7 +625,7 @@ from: weaver-trace
 to: trace-turn-close-internally-tagged
 ```
 
-**The kind-to-payload mapping is total, twenty-three kinds and seventeen dispositions**,
+**The kind-to-payload mapping is total, twenty-four kinds and eighteen dispositions**,
 the payload-free case counting as one of them. `refusal` carries `Refusal`, spliced, the
 organ's own account of what it turned away. `session.closed` and `turn.started` carry
 `None`, and `unload` carries `UnloadClose` where a member stood and `None` where none
@@ -641,9 +641,9 @@ its two own shapes, `ClassifyAsk` and `ClassifyScored`. **A refused classify aut
 output at all** and reaches the record under `refusal`, so a refusal the exchange met is
 still the record's fact and never a fabricated answer, carried by the kind the class
 gives it rather than by the outcome's own variant. The tool bracket's two carry
-`Deferred`. `recall` carries `RecallAccount`. Three plus one plus five plus one plus one
-plus two plus four plus two plus two plus one plus one is twenty-three, which is the
-whole of charter section 3.1's set.
+`Deferred`. `recall` carries `RecallAccount`. `score` carries `TaskScore`. Three plus
+one plus five plus one plus one plus two plus four plus two plus two plus one plus one
+plus one is twenty-four, which is the whole of charter section 3.1's set.
 
 **The count is stated because it has twice been wrong, and the second time
 it was wrong silently.** An earlier draft assigned thirteen and left
@@ -656,7 +656,7 @@ like a mapping that is total**, which is why the recount lands as prose here
 and as a member list above rather than as a claim about totality alone.
 
 **The kind count stopped being prose alone on 2026-09-16**, `tests/kinds.rs` checking
-an array of twenty-three against an exhaustive match over the kind set, so an act that
+an array of twenty-four against an exhaustive match over the kind set, so an act that
 adds a kind and answers the crate's own matches stops at that test's match. **It does
 not reach an act that writes the new arm there too and leaves the array alone**, both
 of the test's assertions walking the array and so never reaching a kind the array does
@@ -956,6 +956,37 @@ tag: perturbation
 edge: asserts
 from: weaver-trace
 to: trace-restored-message-is-turnless-and-whole
+```
+
+**`score` records a task's verdict on its run, the twenty-fourth kind**, on the
+operator's rulings of 2026-09-09 and 2026-09-26 on issue #523. A verdict on a run, the
+task's predicate answered and the ratio over the task's denominator where one exists, is
+a fact about a run that happened, so the record carries it rather than a reader
+computing it later. **The task is the loop's**, the program holding the mechanic and no
+motive, so the loop hands the verdict to the seat's score port and the harness authors
+it, per `weaver-harness-Spec` section 6. **The payload is `TaskScore`**: the predicate's
+name, whether it held, and `ratio` where the task supplies a denominator. **The ratio is
+carried as its two terms**, what the run measured and the task's denominator, both
+integers, and never as a quotient: a float would enter the record rounded, and two
+readers dividing one recorded pair agree to the bit where two recorded quotients need
+not, so the record holds what was counted and a reader computes the quotient. **Absent
+is absent**: a task that supplies no denominator records no ratio, never a zero or a one
+standing for it. **The kind forbids a turn**, the verdict being the run's close and
+asked between turns, for the flush's reason. **One run carries one verdict**: the port
+refuses a second, a verdict inside a standing turn, an empty predicate, one term without
+the other, and a zero denominator, and it authors nothing for any of them, those being
+the loop's malformed calls rather than a seam's refusal. It is authored before the port
+answers, on the announce-after-record rule. The diagnostic record carries no score, a
+replay scoring nothing.
+
+```graph
+node: trace-score-records-the-verdict-and-its-terms
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-trace
+to: trace-score-records-the-verdict-and-its-terms
 ```
 
 **The surprisal's election is a plain boolean and is present rather than
@@ -1541,7 +1572,7 @@ to: trace-append-failed-no-recovery
 
 **Enforced by the compiler.**
 
-- The kind enum is exhaustive, so a twenty-fourth kind breaks every consumer's match.
+- The kind enum is exhaustive, so a twenty-fifth kind breaks every consumer's match.
 - `WorkingStructure` exposes no mutation surface: every public accessor yields a
   shared reference and the append is crate-private, so alteration after landing is
   unrepresentable rather than merely forbidden. This is the signature half of the
@@ -1588,12 +1619,12 @@ arguments are elsewhere, so a block here would sit apart from the prose that
 earns it. Three sit at the end of this section, being the claims argued only
 here.
 
-**Forty-eight records in all, and the split is where they are declared, which a
-reader can count.** Three in section 1, three in section 2, nineteen in section
+**Forty-nine records in all, and the split is where they are declared, which a
+reader can count.** Three in section 1, three in section 2, twenty in section
 3, five in section 4, two in section 5, four in section 6, two in section 7, one
 in section 8, two in section 9, this section's three, and four in section 11. The
 instruments divide them four to the compiler, three to compile-fail, three to the
-manifest, fifteen to a perturbation-verified test, and twenty-three to review.
+manifest, sixteen to a perturbation-verified test, and twenty-three to review.
 **The split is stated as a count of declarations because that is a count the next
 act can take**, where a split by provenance is a reading and two readers of one
 section need not reach it alike. The rule that sorted a divided claim's two
@@ -1608,7 +1639,7 @@ its test lives. **The tagging test section 3 applies is declared by
 Specs share, and what this document records is the election that test yields for
 `TurnClose`. Those two are tests this Spec would otherwise owe, and
 `trace-tee-selects-never-computes` is not a third: section 11 declares it and it
-counts with the forty-eight. The threat walk closing this section
+counts with the forty-nine. The threat walk closing this section
 takes no node of its own, per Document Format section 5, and it names no test of
 its own either, its instrument being the compile-fail set already recorded.
 
@@ -1656,7 +1687,7 @@ arm dropped, the arm widened to any kind, and the render re-encoded through a
 sort rather than an owing.** What it watches is one row of
 `trace-kind-payload-mapping-total` and one payload's reading of
 `trace-splice-or-shape`, both review-tagged claims made over the whole set of
-twenty-three kinds and of every spliced payload. A `perturbation` tag on either
+twenty-four kinds and of every spliced payload. A `perturbation` tag on either
 would claim an instrument for a claim the instrument does not reach, a tag
 naming the mechanism its own clause names rather than the nearest test that
 touches it, and a node declared for the single row would be a second authority
@@ -1666,7 +1697,7 @@ The remaining mutation documentation is owed under issue #606, rather than
 supplied by the three rendering removals named in section 3.
 
 **Which invariant each claim serves, and why most serve none.** Five of the
-forty-eight carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
+forty-nine carry a `grounds` edge, three to `axiom-join-key-travels-with-the-work`
 and two to `axiom-contract-is-a-complete-interface`. The other two axioms take
 nothing from this crate. `axiom-floor-is-vocabulary-behavior-is-socket` reaches
 none of it because this crate is not floor, so the vocabulary clause governs none
@@ -1684,9 +1715,9 @@ reason to report pressure rather than author it, and no reason to hold the
 envelope out of the tee's election, so those three ground in it.
 Remove it and the kind renames are still dotted, the subsystem set is still six
 cases, and the payload is still untagged, so those ground in nothing.
-**Forty-three claims grounding in no invariant is the expected result and not a
-gap**, per Document Format section 4: nineteen of the forty-eight are section 3's
-event schema and seventeen of those nineteen ground in nothing, a schema being
+**Forty-four claims grounding in no invariant is the expected result and not a
+gap**, per Document Format section 4: twenty of the forty-nine are section 3's
+event schema and eighteen of those twenty ground in nothing, a schema being
 representation and representation being what the invariants are not about.
 
 **Two calls are worth stating rather than leaving to be read.** The two contract
@@ -1750,6 +1781,11 @@ the fact exists.
   payload, watched to fail when the kind leaves `turn_forbidden` or the message
   pairing row, and a restoring enter lands the restored exchange with no fault,
   watched to fail when the harness authors it under the turned kinds again.
+- A score is recorded turnless with the verdict and the ratio's two terms, per section
+  3: the recorder refuses one carrying a turn or another kind's payload, watched to fail
+  when the kind leaves `turn_forbidden` or its pairing row, and the port records one per
+  run and refuses a verdict inside a turn or with one term alone, watched to fail when
+  each of those three checks is removed.
 - Close-on-exec on the descriptors the worker receives, **owed to
   `weaver-harness-Spec`** rather than run here, the flag being supplied at the
   harness's receive site per `weaver-admin-harness-contract` section 5. The test

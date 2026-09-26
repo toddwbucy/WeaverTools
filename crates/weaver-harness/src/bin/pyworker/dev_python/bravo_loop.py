@@ -19,7 +19,7 @@
 # blocks since 2026-08-20, as the paragraph on the ablation line below
 # says, so an edit made to one arm's file is made to both.
 #
-# The seat offers exactly seven calls:
+# The seat offers exactly nine calls:
 #   seat.assembled_empty() -> bool        first-turn test
 #   seat.session_shape()   -> list|None   [{"run": str, "kinds": {k: n}}]
 #   seat.fullness()        -> tuple|None  (resident, capacity), plain counts
@@ -29,6 +29,9 @@
 #                                         line, bounded by the seam at the
 #                                         identity prefix and the resident
 #                                         count
+#   seat.elide(from, to)   -> tuple|None  (resident_before, resident_after);
+#                                         a half-open interior span leaves
+#                                         the session, between turns only
 #   seat.classify(text)    -> list|None   [(label, score)] from the classify
 #                                         artifact's head; None covers every
 #                                         absence alike - no classifier
@@ -39,6 +42,10 @@
 #   seat.recall(n)         -> list|None   message events, newest n turns:
 #                                         {"kind", "turn", "sequence",
 #                                          "pairs": {key: json_text}}
+#   seat.score(predicate, passed, measured=None, denominator=None)
+#                          -> bool        the task's verdict at the run's
+#                                         close, True once the record holds
+#                                         it. This loop scores nothing yet.
 #   seat.turn(delta)       -> dict        runs one turn, delta is a list of
 #                                         {"role": "system"|"user"|
 #                                          "assistant", "text": str}

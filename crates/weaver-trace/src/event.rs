@@ -114,12 +114,12 @@ pub enum Subsystem {
     Tool,
 }
 
-/// The twenty-three event kinds, exhaustive, matching the charter's section 3.1
+/// The twenty-four event kinds, exhaustive, matching the charter's section 3.1
 /// exactly. Every kind carries an explicit rename because no scheme produces
 /// the charter's dotted names, and the enum is exhaustive because the set is
 /// closed by ruling: an attribute that let a consumer absorb a further kind
 /// into a wildcard would defeat the closure the corpus keys on. **The count
-/// is pinned in `tests/kinds.rs`**, an array of twenty-three checked against an
+/// is pinned in `tests/kinds.rs`**, an array of twenty-four checked against an
 /// exhaustive match over this enum, so a kind added here and answered in the
 /// crate's own matches stops at that file's match. An act that writes the new
 /// arm there too and leaves the array alone still passes, which is issue
@@ -187,6 +187,12 @@ pub enum Kind {
     /// turn-required and a restored message never reads as the identity.
     #[serde(rename = "message.restored")]
     MessageRestored,
+    /// A task's verdict on its run, per charter section 3.1's twenty-fourth
+    /// kind (#523): the predicate the task answered, whether it held, and the
+    /// ratio over the task's denominator where one exists. Authored at the
+    /// run's close, between turns, so it belongs to none.
+    #[serde(rename = "score")]
+    Score,
 }
 
 /// What an event carries beside its envelope. Untagged: the envelope's `kind`
@@ -199,7 +205,7 @@ pub enum Kind {
 /// back, the working structure holding rendered lines, and the asymmetry is a
 /// compile property pinned at the crate root.
 ///
-/// The kind-to-payload mapping is total, twenty-three kinds and seventeen
+/// The kind-to-payload mapping is total, twenty-four kinds and eighteen
 /// dispositions, the payload-free case counting as one of them.
 /// **`pairing_licensed` in `writer.rs` enforces the mapping and is the
 /// authority on it**, this comment naming only which variant of this enum
@@ -212,7 +218,8 @@ pub enum Kind {
 /// `turn.closed` carries `TurnClosed`, `fault` carries `Fault`, `flush`
 /// carries `Flush`, `elision` carries `Elision`, `refusal` carries
 /// `Refusal`, the four model kinds carry their four own variants, the
-/// classify pair carries its two, `recall` carries `Recall`, and the tool
+/// classify pair carries its two, `recall` carries `Recall`, `score` carries
+/// `Score`, and the tool
 /// bracket's two carry `Deferred`.
 #[derive(Debug, Clone, Serialize)]
 #[serde(untagged)]
@@ -285,6 +292,10 @@ pub enum Payload {
     /// the harness authors from the state seam's answer, per charter section
     /// 3.1's twenty-second kind.
     Recall(RecallAccount),
+    /// A task's verdict, shaped on the flush's precedent: plain small data the
+    /// task hands the harness at the run's close, per charter section 3.1's
+    /// twenty-fourth kind.
+    Score(TaskScore),
     /// The payloads whose shapes their own workflows settle, since the trace
     /// act of 2026-08-02 the tool bracket's two alone. Raw bytes in the
     /// interim rather than a placeholder struct, because a struct shaped
@@ -321,16 +332,38 @@ pub enum StopReason {
     Refused,
 }
 
-/// The decode boundary, request side: the rendered prompt as the family
-/// library produced it and the sampling values, both spliced because their
-/// shapes are other crates' - what is shaped here is what no other crate
-/// defines.
-/// The decode boundary, response side: the emission verbatim, before any
-/// parse, and how the generation ended.
+/// The resident token counts either side of a flush, both the SPU's own, as
+/// its confirmation carried them.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct FlushCounts {
     pub resident_before: u64,
     pub resident_after: u64,
+}
+
+/// A task's verdict on its run: which predicate it answered and whether that
+/// held, and where the task supplies a denominator, the ratio as its terms.
+///
+/// **The ratio is carried as its two terms and never as a quotient.** A float
+/// would enter the record rounded, and two readers dividing one recorded pair
+/// agree to the bit where two recorded quotients need not, so the record holds
+/// what was counted and a reader computes the quotient.
+///
+/// **Absent is absent.** A task that supplies no denominator records no ratio,
+/// never a zero or a one standing for it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TaskScore {
+    pub predicate: String,
+    pub passed: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ratio: Option<ScoreRatio>,
+}
+
+/// The ratio's two terms: what the run measured over what the task supplies,
+/// the turns taken over the optimal count where the task is a map.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct ScoreRatio {
+    pub measured: u64,
+    pub denominator: u64,
 }
 
 /// An answered ask on the state seam: what was asked, and which events

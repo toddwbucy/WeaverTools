@@ -420,6 +420,7 @@ fn turn_forbidden(kind: Kind) -> bool {
             | Kind::Elision
             | Kind::Recall
             | Kind::MessageRestored
+            | Kind::Score
     )
 }
 
@@ -447,6 +448,8 @@ fn turn_required(kind: Kind) -> bool {
         // A restored message is seated at the open, ahead of every turn of
         // the run, so it belongs to none, as the identity prefix does.
         | Kind::MessageRestored
+        // A score is the task's verdict at the run's close, between turns.
+        | Kind::Score
         | Kind::ClassifyRequest
         | Kind::ClassifyOutput
         // **`message.system` serves two cases and so is turn-optional**, per
@@ -484,7 +487,7 @@ pub struct Pressure {
     pub over_mark: bool,
 }
 
-/// The total kind-to-payload mapping, twenty-three kinds and seventeen
+/// The total kind-to-payload mapping, twenty-four kinds and eighteen
 /// dispositions, matching charter section 3.1 whole, enforced here because
 /// the untagged payload leaves serde unable to. **`load` stopped being
 /// payload-free 2026-08-21**: it carries the diagnostic elections of its
@@ -518,6 +521,7 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
             | (Kind::ClassifyRequest, Some(Payload::ClassifyRequest(_)))
             | (Kind::ClassifyOutput, Some(Payload::ClassifyOutput(_)))
             | (Kind::Recall, Some(Payload::Recall(_)))
+            | (Kind::Score, Some(Payload::Score(_)))
             | (
                 Kind::ToolCallStarted | Kind::ToolCallCompleted,
                 Some(Payload::Deferred(_))

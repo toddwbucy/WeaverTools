@@ -316,8 +316,9 @@ its closure.
 | `refusal` | a typed refusal clerked to the record, one kind for every seam, the organ's case carried opaque as `fault` does |
 | `recall` | an answered ask on the state seam, what was asked and the identities of the events custody answered with, never their contents |
 | `message.restored` | one message of a restored conversation, seated at a restoring load's open ahead of every turn, the message whole |
+| `score` | a task's verdict on its run at the run's close, the predicate answered and whether it held, and the ratio over the task's denominator as its two terms where one exists |
 
-Twenty-three kinds. Adding one is an edit to this charter and to every contract whose
+Twenty-four kinds. Adding one is an edit to this charter and to every contract whose
 vocabulary clause names the set, because consumers key on the closure.
 **`model.field` is the nineteenth**, added 2026-08-21 on `weaver-spu-PRD`
 section 13.11's election. It is the first kind recorded per decode position
@@ -338,7 +339,9 @@ drawn from a state-seam ask the record did not hold, and `weaver-trace-Spec` sec
 argues the shape. **`message.restored` is the twenty-third**, on the operator's ruling
 of 2026-09-26 under the same epic: a branch's record did not hold the conversation its
 model was opened with, each restored message refused turnless under its turned kind, and
-the same section argues the shape.
+the same section argues the shape. **`score` is the twenty-fourth**, on the operator's
+rulings of 2026-09-09 and 2026-09-26 on issue #523: a task's verdict on a run is a fact
+about that run, so the record carries it, and the same section argues the shape.
 
 **The record declares the posture it was written in.** Section 3.1's `load`
 event carries every diagnostic election of the load by name, because

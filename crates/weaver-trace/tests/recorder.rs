@@ -11,6 +11,7 @@
 //! conforms: trace-output-carries-the-counts
 //! conforms: trace-recall-records-the-ask-and-its-identities
 //! conforms: trace-restored-message-is-turnless-and-whole
+//! conforms: trace-score-records-the-verdict-and-its-terms
 //!
 //! Recorder tests of `weaver-trace-Spec` section 10. Verified removals are
 //! named at the watches that hold them. Not every test names a perturbation.
@@ -1169,6 +1170,84 @@ fn a_restored_message_is_turnless_and_carries_the_message_whole() {
             .contains(r#""payload":{"role":"user","content":[{"type":"text","text":"hello"}]}"#),
         "the message whole, role and content: {}",
         restored[0]
+    );
+}
+
+/// **A score is turnless and carries the verdict and the ratio's terms**, per
+/// `weaver-trace-Spec` section 3's score clause (#523). The predicate and
+/// whether it held render in declared order, the ratio as its two integer
+/// terms where the task supplies a denominator, and nothing where it does not,
+/// so an absent ratio is never read as a zero or a one.
+///
+/// Perturbations: take `Kind::Score` out of `turn_forbidden` and the turned
+/// submission is admitted; drop its row from `pairing_licensed` and the
+/// turnless one refuses. Watched under each.
+#[test]
+fn a_score_is_turnless_and_carries_the_verdict_and_its_terms() {
+    let (mut r, path) = recorder();
+    r.submit(event(Kind::Load, None, Some(elections())))
+        .unwrap();
+    let scored = |ratio: Option<weaver_trace::ScoreRatio>| {
+        Some(Payload::Score(weaver_trace::TaskScore {
+            predicate: "reached-the-goal".into(),
+            passed: true,
+            ratio,
+        }))
+    };
+    let terms = || {
+        Some(weaver_trace::ScoreRatio {
+            measured: 14,
+            denominator: 11,
+        })
+    };
+    r.submit(event(Kind::Score, None, scored(terms())))
+        .expect("a turnless score with its terms is the ordinary case");
+    r.submit(event(Kind::Score, None, scored(None)))
+        .expect("and one whose task supplies no denominator");
+    assert!(
+        r.submit(event(Kind::Score, Some("t-3"), scored(terms())))
+            .is_err(),
+        "a score carrying a turn is refused rather than admitted"
+    );
+    assert!(
+        r.submit(event(Kind::Score, None, None)).is_err(),
+        "a score carrying nothing is refused"
+    );
+    let counts = Some(Payload::Flush(weaver_trace::FlushCounts {
+        resident_before: 27196,
+        resident_after: 712,
+    }));
+    assert!(
+        r.submit(event(Kind::Score, None, counts)).is_err(),
+        "and one carrying another kind's payload is refused"
+    );
+    r.drain().unwrap();
+
+    let mut out = String::new();
+    File::open(&path).unwrap().read_to_string(&mut out).unwrap();
+    let scores: Vec<&str> = out
+        .lines()
+        .filter(|l| l.contains(r#""kind":"score""#))
+        .collect();
+    assert_eq!(
+        scores.len(),
+        2,
+        "only the two well-formed scores reached the sink"
+    );
+    let line: serde_json::Value = serde_json::from_str(scores[0]).expect("the line parses");
+    assert!(line.get("turn").is_none(), "belonging to no turn");
+    assert!(
+        scores[0].contains(concat!(
+            r#""payload":{"predicate":"reached-the-goal","passed":true,"#,
+            r#""ratio":{"measured":14,"denominator":11}}"#
+        )),
+        "the verdict and the ratio's two terms, in declared order: {}",
+        scores[0]
+    );
+    assert!(
+        scores[1].contains(r#""payload":{"predicate":"reached-the-goal","passed":true}"#),
+        "and no ratio where the task supplied no denominator: {}",
+        scores[1]
     );
 }
 

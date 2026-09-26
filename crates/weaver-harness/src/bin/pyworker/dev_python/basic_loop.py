@@ -21,12 +21,14 @@
 # prompt from a box running this.
 #
 # WHAT IS DELIBERATELY ABSENT, and why each absence is the experiment's
-# rather than an omission. The seat offers seven calls and this loop uses
+# rather than an omission. The seat offers nine calls and this loop uses
 # one. `session_shape` and the continuity line it feeds are state, and the
 # point of this arm is the math under the loop code before state enters.
 # `fullness` and `flush` are context management, which cannot be measured
 # until a turn count reaches pressure. `recall` and `classify` reach organs
-# this arm does not exercise. Each is available and none is wired, so a
+# this arm does not exercise. `elide` is context management like the
+# flush, and `score` wants a task this arm does not run. Each is available
+# and none is wired, so a
 # later arm adds one at a time against a baseline taken without it.
 #
 # A crossing that runs no turn falls back to a plain unshaped turn, so the
