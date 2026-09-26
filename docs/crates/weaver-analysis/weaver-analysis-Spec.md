@@ -125,6 +125,29 @@ from: weaver-analysis
 to: analysis-no-runtime-no-socket-crate
 ```
 
+**No crate in this workspace depends on this one, of any kind**, on the operator's
+condition of 2026-09-26 for this crate staying in the repository when `weaver-web`
+left it. The claim above keeps the interior out of this crate. This one keeps this
+crate out of the interior, so it stays a leaf that can leave the tree the way the web
+did without any member's build changing. A normal, build or dev dependency on it,
+direct or renamed, target-qualified or optional, is the dependency the condition
+forbids, and the instrument reads cargo's declared dependencies of every workspace
+member rather than a manifest's text so every one of those routes is seen. **It reads
+every `crates/*/Cargo.toml` against the member set** as well, so a crate standing
+under `crates/` outside the workspace is a refusal rather than a member the read never
+saw. The record carries no `grounds` edge: the condition is the operator's for where
+this crate lives, not an invariant of the agent.
+
+```graph
+node: analysis-no-crate-depends-on-it
+kind: assertion
+tag: manifest
+
+edge: asserts
+from: weaver-analysis
+to: analysis-no-crate-depends-on-it
+```
+
 **It binds no listening port and holds no server.** The charter's section 2 has
 this crate governing nothing inside the agent, with the harness holding no channel
 to it and no behavior conditioned on its presence, and the absence of a listener is
@@ -1088,7 +1111,8 @@ below. No second opener on one channel, the sender consumed by the seal.
 **Enforced by the manifest.** No `weaver-*` dependency at all, read against the
 graph under gate H2, this crate declaring two `seam` records, both tagged
 `socket`, and no `floor-link`. No async runtime and no socket crate in the
-resolved tree.
+resolved tree. No workspace crate depending on this one, read from cargo's
+declared dependencies of every member.
 
 **Requiring a perturbation-verified test.**
 
@@ -1199,6 +1223,7 @@ watch. The instrument descriptions above state that scope and the remaining gaps
 | --- | --- |
 | `analysis-no-internal-dependency` | manifest: `Cargo.toml`, `tests/manifest.rs` |
 | `analysis-no-runtime-no-socket-crate` | manifest: `Cargo.toml`, `tests/manifest.rs` |
+| `analysis-no-crate-depends-on-it` | manifest: `Cargo.toml`, `tests/manifest.rs` |
 | `analysis-binds-no-port` | review: section 1 review of binding calls |
 | `analysis-parse-skips-the-unknown` | perturbation: `src/record.rs`, `tests/driver.rs` |
 | `analysis-derives-no-absent-member` | perturbation: `src/record.rs`, `tests/driver.rs` |

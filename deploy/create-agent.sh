@@ -402,5 +402,11 @@ else
 fi
 
 say "made"
+# **The group add applies to a login taken after it.** `usermod -aG` changes
+# the account and not a session already running, so a shell that predates this
+# run cannot reach the gate's socket until it takes the group (#673, measured
+# on the W4a run of 2026-09-25).
+printf '   %s joined group %s: a session that predates this run needs a new\n' "$OPERATOR" "$AGENT_USER"
+printf '   login, or `newgrp %s`, before the group applies\n' "$AGENT_USER"
 printf '   validate it before loading:\n'
 printf '     sudo WEAVER_ADMIN_CONFIG=%s weaver-admin validate %s\n' "$ADMIN_CONFIG" "$NAME"

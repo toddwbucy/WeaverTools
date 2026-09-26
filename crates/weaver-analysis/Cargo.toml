@@ -9,6 +9,10 @@ edition = "2024"
 # types, so no weaver-* dependency appears here on purpose.
 # conforms: analysis-no-internal-dependency
 # conforms: analysis-no-runtime-no-socket-crate
+# conforms: analysis-no-crate-depends-on-it
+# And no workspace crate depends on this one, the operator's condition of
+# 2026-09-26 for it staying here: tests/manifest.rs reads every member's
+# declared dependencies.
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
