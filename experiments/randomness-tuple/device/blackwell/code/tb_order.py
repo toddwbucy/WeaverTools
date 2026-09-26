@@ -53,6 +53,15 @@ def declined(value):
     return value is False
 
 
+def same(a, b):
+    """Two JSON values equal as JSON facts, compared as canonical text (#695):
+    Python equality reads 512.0 as 512 and true as 1, so two records holding
+    different facts would compare equal. validate_plan's tuple check compares
+    this way for the same reason, and every equality between JSON-parsed
+    values in the probe goes through here or checks each side's type."""
+    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
 def check(name, condition):
     if not condition:
         raise Refused(name)
@@ -88,7 +97,14 @@ def ticks(pid):
 
 
 def live(lease):
-    return bool(lease and ticks(lease['pid']) == lease['ticks'])
+    # A pid that is not an int names no process of its own: /proc/self is
+    # the reader, and 1234.0 reads nothing. Both start ticks must be present,
+    # since a dead pid reads None and a lease with no ticks holds None, and
+    # two absences are not one process.
+    if not (isinstance(lease, dict) and type(lease.get('pid')) is int and isinstance(lease.get('ticks'), str)):
+        return False
+    observed = ticks(lease['pid'])
+    return observed is not None and observed == lease['ticks']
 
 
 def leases(step):
@@ -110,12 +126,16 @@ def schedule(plan):
 
 
 def validate_plan(plan):
-    check('schema', plan.get('version') == 1)
+    check('schema', same(plan.get('version'), 1))
     check('agent', plan.get('agent') == 'bravo')
     # Two stacks are two roots: resolved, distinct, and neither inside the
     # other, since a B2 nested under B1 would put its bytes in the B1 install.
-    roots = [Path(plan.get('stacks', {}).get(s, '')).resolve() for s in ['B1', 'B2']]
-    check('stacks-distinct', all(str(plan.get('stacks', {}).get(s)) for s in ['B1', 'B2']) and roots[0] != roots[1] and
+    # Each named as a nonempty string before a path is made of it: str(None)
+    # is 'None', and a missing stack resolves to the working directory.
+    stacks = [plan.get('stacks', {}).get(s) for s in ['B1', 'B2']]
+    check('stacks-distinct', all(isinstance(r, str) and r for r in stacks))
+    roots = [Path(r).resolve() for r in stacks]
+    check('stacks-distinct', roots[0] != roots[1] and
           not roots[0].is_relative_to(roots[1]) and not roots[1].is_relative_to(roots[0]))
     check('isolated-root', plan.get('install_root') == '/var/lib/weaver-tb')
     # Compared as JSON, not as Python values: dict equality reads 1 as True and
@@ -137,12 +157,13 @@ def validate_plan(plan):
     check('arm-order', [a['name'] for a in arms] == ['TB0', 'TB-d', 'TB-k'])
     jobs = [j for a in arms for j in a['jobs']]
     import re
-    check('job-identities', len({j['id'] for j in jobs}) == len(jobs) and
-          all(re.fullmatch(r'[A-Za-z0-9_-]+', j['id']) for j in jobs))
+    check('job-identities', all(isinstance(j.get('id'), str) and re.fullmatch(r'[A-Za-z0-9_-]+', j['id']) for j in jobs)
+          and len({j['id'] for j in jobs}) == len(jobs))
     check('job-types', all(j['kind'] in ['free', 'refeed'] and j['stack'] in ['B1', 'B2'] for j in jobs))
     control = arms[0]['jobs']
     free = [j for j in control if j['kind'] == 'free']
-    check('control-schedule', sorted(j['seed'] for j in free) == sorted(plan['tuple']['seeds'] * 2)
+    check('control-schedule', all(type(j.get('seed')) is int for j in free) and
+          sorted(j['seed'] for j in free) == sorted(plan['tuple']['seeds'] * 2)
           and all(j['stack'] == 'B1' for j in control))
     own = [j for j in control if j['kind'] == 'refeed']
     check('own-refeeds', sorted(j['source_job'] for j in own) == sorted(j['id'] for j in free))
@@ -233,7 +254,7 @@ class Order:
                 source = Path(plan['stacks'][stack])
                 described = {str(source / rel): host.get('file_sha256') for rel, host in (manifest.get('hosts') or {}).items()}
                 approved = {p: h for p, h in plan['files'].items() if Path(p).is_relative_to(source)}
-                check('identity-binds-stacks', bool(described) and described == approved)
+                check('identity-binds-stacks', bool(described) and same(described, approved))
                 manifests[stack] = manifest
                 inputs = (report.get('inputs') or {})
             # The verdict is what the comparison says of those two verified
@@ -245,7 +266,7 @@ class Order:
                 recomputed = sections.comparison(manifests['B1'], manifests['B2'], inputs)
             except ValueError:
                 recomputed = None
-            check('identity-recomputed', recomputed == report)
+            check('identity-recomputed', same(recomputed, report))
         return plan
 
     def due(self, s, plan):
@@ -268,7 +289,7 @@ class Order:
         if requested.startswith(('load:', 'measure:', 'unload:', 'settle:')):
             check('driver-live', live(s.get('driver')))
         if seat == 'coding seat' and not leases(requested):
-            check('driver-owner', s.get('driver', {}).get('pid') == os.getpid())
+            check('driver-owner', same(s.get('driver', {}).get('pid'), os.getpid()))
 
     def finish(self, s, step, evidence, sink=None):
         done = dict(status='SUCCESS', path=str(evidence), sha256=sha(evidence))
@@ -307,7 +328,7 @@ class Order:
                 print('WAITING ON: review seat - lift HOLD and record approval hashes')
                 return
             plan = self.approved(s)
-            if requested == 'next' and s.get('cursor') == len(schedule(plan)):
+            if requested == 'next' and same(s.get('cursor'), len(schedule(plan))):
                 # Completion is a claim about every receipt, so every receipt is
                 # verified before it is made.
                 self.previous(s, plan)
@@ -345,13 +366,24 @@ class Order:
         job = next(j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == step.split(':', 1)[1])
         if not job.get('source_job'):
             return ()
-        sink = s.get('done', {}).get(f'measure:{job["source_job"]}', {}).get('sink') or {}
+        done = s.get('done', {}).get(f'measure:{job["source_job"]}', {})
+        sink = done.get('sink') or {}
         expected = str(Path(plan['install_root']) / 'sinks' / job['source_job'] / 'trace.ndjson')
-        # Refused here, before root is invoked, so malformed state creates
-        # nothing under the install root: a digest is 64 lowercase hex.
+        # **The state's copy is checked against evidence this step verifies
+        # itself** (#690 C2.11, the custody rule of section 5): the measure
+        # result is read once and parsed only after its bytes match the
+        # receipt's digest, and the sink it recorded at the run's close must
+        # be the state's copy. Refused here, before root is invoked, so a
+        # malformed or substituted state creates nothing under the install
+        # root: a digest is 64 lowercase hex.
+        try:
+            data = Path(done['path']).read_bytes()
+            recorded = json.loads(data).get('sink') if hashlib.sha256(data).hexdigest() == done.get('sha256') else None
+        except (KeyError, OSError, ValueError, AttributeError):
+            recorded = None
         check('source-sink-recorded', sink.get('path') == expected and type(sink.get('length')) is int
               and sink['length'] > 0 and isinstance(sink.get('sha256'), str)
-              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None)
+              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None and same(recorded, sink))
         return (str(sink['length']), sink['sha256'])
 
     def coding(self, step, evidence, sink=None):
@@ -378,7 +410,7 @@ class Order:
                 with self.locked():
                     raw = self.path.read_bytes()
                     s = json.loads(raw)
-                    check('wait-owner', live(s.get('driver')) and s['driver']['pid'] == os.getpid())
+                    check('wait-owner', live(s.get('driver')) and same(s['driver']['pid'], os.getpid()))
                     # approved() hashes every reviewed artifact, the model and both
                     # stacks included, under the lock that next needs. Only a state
                     # change can make the step due, so the full verification runs

@@ -1357,14 +1357,60 @@ class HoldLiftTests(unittest.TestCase):
         with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.assertEqual(seen,[])
         sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
+        # The measure receipt's evidence is the run's result, which recorded
+        # the sink at the close: the state's copy is held to it.
+        result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
+        def record(state_copy,evidence=result):
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(evidence),sha256=order.sha(evidence),sink=state_copy)
+            self.state['halt']=None;self.save()
         # Perturbation: drop the hex check and "g"*64 reaches root.
         for fault in [dict(sink,path='/elsewhere/trace.ndjson'),dict(sink,length=0),dict(sink,length='512'),dict(sink,sha256='short'),
                       dict(sink,sha256='g'*64),dict(sink,sha256='A'*64)]:
-            self.state['done'][f'measure:{source}']['sink']=fault;self.state['halt']=None;self.save()
+            record(fault)
             with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
-        self.state['done'][f'measure:{source}']['sink']=sink;self.state['halt']=None;self.save()
+        record(sink)
         with contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.assertEqual(seen,[('512','a'*64)])
+
+    def test_the_states_sink_copy_is_held_to_the_verified_result(self):
+        # #690 C2.11, #693's fourth pass: a state edited between the measure
+        # and the load cannot hand root another prefix. Perturbation: drop the
+        # comparison with the verified result and the substituted copy, well
+        # formed and at the right path, reaches root.
+        source='B1-s451234785645-n1';load='load:own-B1-s451234785645-n1'
+        self.due(load);seen=[]
+        def runner(s,step,log,*sink):seen.append(sink);log.write_text('SUCCESS: '+step+'\n');return 0
+        sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
+        result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
+        other=dict(sink,length=640,sha256='b'*64)
+        # #695: Python equality reads 512.0 as 512, so the result's record and
+        # the state's copy could hold different JSON facts and compare equal.
+        # Perturbation: compare them with == again and this reaches root.
+        with self.subTest('the result records 512.0 and the state 512'):
+            order.atomic(result,dict(name=source,sink=dict(sink,length=512.0)))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=sink)
+            self.state['halt']=None;self.save()
+            with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        with self.subTest('the state copy differs from the result'):
+            order.atomic(result,dict(name=source,sink=sink))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=other)
+            self.state['halt']=None;self.save()
+            with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        # The result's bytes change between previous()'s check and the read
+        # source_sink() makes, its sink field still the state's copy: only the
+        # digest gate can refuse it. Perturbation: parse the result whatever
+        # its bytes (`if True else None`) and this passes to root.
+        with self.subTest('the result changed after previous() read it'):
+            order.atomic(result,dict(name=source,sink=sink))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=sink)
+            self.state['halt']=None;self.save()
+            real=order.Order.previous
+            def then_changed(o,s,plan):
+                real(o,s,plan)
+                with result.open('a') as out:out.write('\n')
+            with patch.object(order.Order,'previous',then_changed),self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):
+                self.o.operator(runner=runner)
+        self.assertEqual(seen,[],'root is handed nothing')
 
     def test_root_is_handed_the_sink_after_the_step(self):
         seen=[]
@@ -1569,6 +1615,150 @@ class ReviewRoundOneTests(unittest.TestCase):
         with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'unload:B1-s7-n1']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.installed'),patch('tb_payload.answer'),patch('tb_payload.m1_reading',return_value=unread),contextlib.redirect_stdout(io.StringIO()),self.assertRaisesRegex(RuntimeError,'m1-unloaded-at-unload'):
             payload.main()
 
+
+class JsonEqualityTests(unittest.TestCase):
+    """#695's first Codex pass as a class: every equality between JSON-parsed
+    values compares canonical JSON text or checks each side's type, so 7.0
+    is not 7 and true is not 1 anywhere the probe judges a record."""
+
+    def test_same_tells_json_facts_apart(self):
+        for a,b in [(512,512.0),(1,True),(0,False),([3],[3.0]),({'a':1},{'a':1.0})]:
+            self.assertFalse(order.same(a,b),(a,b));self.assertFalse(payload.same(a,b),(a,b))
+        self.assertTrue(order.same({'b':1,'a':[2]},{'a':[2],'b':1}))
+
+    def test_the_plan_refuses_a_coerced_version_or_seed(self):
+        f=Fixture('test_plan_validation');f.setUp();self.addCleanup(f.doCleanups)
+        for name,edit in [('schema',lambda p:p.update(version=True)),('schema',lambda p:p.update(version=1.0)),
+                          ('control-schedule',lambda p:next(j for j in p['arms'][0]['jobs'] if j['kind']=='free').update(seed=float(p['tuple']['seeds'][0])))]:
+            p=copy.deepcopy(f.plan);edit(p)
+            with self.subTest(name),self.assertRaisesRegex(order.Refused,name):order.validate_plan(p)
+
+    def test_exactness_and_the_seed_guards_refuse_a_coerced_number(self):
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        a=copy.deepcopy(d.free);b=copy.deepcopy(d.free);b['output_tokens']=[float(x) for x in a['output_tokens']]
+        self.assertFalse(driver.exact(d.plan['tuple'],a,b),'[3.0] is not [3]')
+        d.free['declared_seed']=7.0
+        with patch('tb_driver.until_closed',return_value=closed_bytes(d.close())),self.assertRaisesRegex(order.Refused,'seed-held'):
+            driver.measure(d.plan,d.job(),d.probe,{})
+
+    def test_the_derived_tuple_refuses_a_coerced_value(self):
+        pt=PayloadTests('test_replay_source_must_hold_the_tuple');pt.setUp();self.addCleanup(pt.doCleanups)
+        job=dict(id='job',kind='refeed',stack='B1',source_trace='x',source_run='r')
+        t=pt.plan['tuple']
+        good=derived(pt.model,'/sink',t)
+        self.assertTrue(payload.holds_tuple(pt.plan,job,good))
+        coerced=good.replace(f"context-capacity: {t['context_capacity']}",f"context-capacity: {float(t['context_capacity'])}")
+        self.assertNotEqual(coerced,good)
+        self.assertFalse(payload.holds_tuple(pt.plan,job,coerced),'12288.0 is not 12288')
+
+    def test_the_operator_uid_must_be_an_integer(self):
+        pt=PayloadTests('test_payload_entry_checks');pt.setUp();self.addCleanup(pt.doCleanups)
+        p=copy.deepcopy(pt.plan);p['install_root']=str(pt.root);p['files']={};p['operator_uid']=1000.0;pt.planpath.write_text(json.dumps(p))
+        with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'provision']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.provision'),contextlib.redirect_stdout(io.StringIO()),self.assertRaisesRegex(RuntimeError,'operator'):
+            payload.main()
+
+
+    def test_the_plan_refuses_a_stack_or_job_id_that_is_not_a_string(self):
+        # A missing stack was str(None), truthy, and resolved to the working
+        # directory. A job id of 5 reached re.fullmatch and raised.
+        f=Fixture('test_plan_validation');f.setUp();self.addCleanup(f.doCleanups)
+        for name,edit in [('stacks-distinct',lambda p:p['stacks'].pop('B1')),('stacks-distinct',lambda p:p['stacks'].update(B1=5)),
+                          ('job-identities',lambda p:p['arms'][0]['jobs'][0].update(id=5)),('job-identities',lambda p:p['arms'][0]['jobs'][0].update(id=['a']))]:
+            p=copy.deepcopy(f.plan);edit(p)
+            with self.subTest(name),self.assertRaisesRegex(order.Refused,name):order.validate_plan(p)
+
+    def test_a_lease_names_a_process_only_by_an_int_pid(self):
+        # A pid of 'self' read the reader's own /proc entry as the lease holder.
+        me=os.getpid()
+        self.assertTrue(order.live(dict(pid=me,ticks=order.ticks(me))))
+        for lease in [dict(pid='self',ticks=order.ticks('self')),dict(pid=float(me),ticks=order.ticks(me)),dict(pid=me),None]:
+            with self.subTest(lease=lease):self.assertFalse(order.live(lease))
+
+    def test_a_field_position_is_an_int_and_duplicates_are_json_facts(self):
+        d=DriverTests('test_a_second_field_event_for_a_position_refuses_on_every_path');d.setUp();self.addCleanup(d.doCleanups)
+        base=json.loads(golden.MODEL_FIELD)['payload'];j=d.job('free')
+        cases=[[event(golden.MODEL_FIELD,run='r',payload=dict(base,position=float(base['position'])))],
+               [event(golden.MODEL_FIELD,run='r',payload=dict(base,position=str(base['position'])))],
+               [event(golden.MODEL_FIELD,run='r'),event(golden.MODEL_FIELD,run='r',sequence='42',payload=dict(base,position=float(base['position'])))]]
+        for n,ev in enumerate(cases):
+            try:
+                with self.subTest(case=n),patch('tb_driver.until_closed',return_value=closed_bytes(ev+d.close())),self.assertRaisesRegex(order.Refused,'field-beyond-output'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_exactness_compares_field_keys_as_written(self):
+        # A result file holds the field's keys as JSON strings and a fresh
+        # extraction as ints: both read as one record, and '03' is not 3.
+        d=DriverTests('test_exact_holds_the_input_length');d.setUp();self.addCleanup(d.doCleanups)
+        t=prepare.template(Path('/deposit'),'todd',1000)['tuple']
+        a=copy.deepcopy(d.free);k=next(iter(a['field']))
+        written=dict(copy.deepcopy(a),field={str(kk):v for kk,v in a['field'].items()})
+        padded=dict(copy.deepcopy(a),field={('0'+str(kk) if kk==k else kk):v for kk,v in a['field'].items()})
+        self.assertTrue(driver.exact(t,a,written))
+        self.assertFalse(driver.exact(t,a,padded),'field key 03 is not 3')
+
+    def test_the_input_length_and_divergence_position_are_ints(self):
+        d=DriverTests('test_refeed_holds_the_input_and_refuses_a_divergence_inside_it');d.setUp();self.addCleanup(d.doCleanups)
+        j=d.job('refeed');n=d.free['input_tokens']
+        d.free['input_tokens']=float(n)
+        try:
+            with patch('tb_driver.until_closed',return_value=closed_bytes(d.close(True))),self.assertRaisesRegex(order.Refused,'input-held'):driver.measure(d.plan,j,d.probe,{})
+        finally:d.cleanup_job()
+        d.free['input_tokens']=n
+        for pos in [float(n),str(n)]:
+            at=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=pos,recorded=1,recomputed=2)))))
+            try:
+                with self.subTest(position=pos),patch('tb_driver.until_closed',return_value=closed_bytes(at)),self.assertRaisesRegex(order.Refused,'divergence-in-input'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_roots_sink_length_is_ascii_digits(self):
+        h='0'*64
+        self.assertTrue(payload.well_formed_sink(('512',h)))
+        for length in ['\u0665\u0661\u0662','0512','0','',' 512','512.0']:
+            with self.subTest(length=length):self.assertFalse(payload.well_formed_sink((length,h)))
+
+
+class AbsenceTests(unittest.TestCase):
+    """#695's second Codex pass as a class: an equality whose sides both come
+    from a .get() or a read that answers None on failure holds for two
+    absences, so the expected side is required present at each guard."""
+
+    def test_a_dead_lease_with_no_ticks_is_not_live_and_refuses_driver_live(self):
+        p=subprocess.Popen(['true']);p.wait();dead=p.pid
+        self.assertIsNone(order.ticks(dead))
+        me=os.getpid()
+        for lease in [dict(pid=dead),dict(pid=dead,ticks=None),dict(pid=me),dict(pid=me,ticks=None)]:
+            with self.subTest(lease=lease):self.assertFalse(order.live(lease))
+        f=Fixture('test_history_order_seat_lease');f.setUp();self.addCleanup(f.doCleanups)
+        f.due('load:B1-s451234785645-n1');s=copy.deepcopy(f.state);s['driver']=dict(pid=dead)
+        with self.assertRaisesRegex(order.Refused,'driver-live'):f.o.guard(s,f.plan,'load:B1-s451234785645-n1','operator')
+
+    def test_a_diverged_outcome_without_its_divergence_refuses(self):
+        d=DriverTests('test_refeed_holds_the_input_and_refuses_a_divergence_inside_it');d.setUp();self.addCleanup(d.doCleanups)
+        j=d.job('refeed')
+        for outcome in [dict(kind='diverged'),dict(kind='diverged',divergence=None),dict(kind='diverged',divergence=dict(position=3))]:
+            rows=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=outcome)))
+            try:
+                with self.subTest(outcome=outcome),patch('tb_driver.until_closed',return_value=closed_bytes(rows)),self.assertRaisesRegex(order.Refused,'replay-completed'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_an_absent_seed_or_weights_refuses_by_name(self):
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        for key,name in [('declared_seed','seed-held'),('weights_hash','weights-held')]:
+            held=d.free.pop(key)
+            try:
+                with self.subTest(key),patch('tb_driver.until_closed',return_value=closed_bytes(d.close())),self.assertRaisesRegex(order.Refused,name):
+                    driver.measure(d.plan,d.job(),d.probe,{})
+            finally:d.cleanup_job();d.free[key]=held
+        # Source and replay both without a seed: two absences, refused before
+        # any reading, by the source guard and, were it gone, by the replay's.
+        d.free.pop('declared_seed')
+        try:
+            with patch('tb_driver.until_closed',return_value=closed_bytes(d.close(True))),self.assertRaisesRegex(order.Refused,'seed-held'):
+                driver.measure(d.plan,d.job('refeed'),d.probe,{})
+        finally:d.cleanup_job()
 
 class AdditionalTests(unittest.TestCase):
     save = Fixture.save

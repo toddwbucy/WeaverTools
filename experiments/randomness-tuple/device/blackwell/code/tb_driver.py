@@ -23,7 +23,7 @@ import struct
 import sys
 import time
 
-from tb_order import Order, Refused, atomic, check, elected, notice, sha
+from tb_order import Order, Refused, atomic, check, elected, notice, same, sha
 from tb_payload import m1_clear, m1_reading
 
 
@@ -135,9 +135,12 @@ def well_formed(rows):
     check('output-absent', kinds['model.output'] >= 1)
     check('output-duplicated', kinds['model.output'] <= 1)
     positions = [e['payload']['position'] for e in rows if e['kind'] == 'model.field']
-    check('field-duplicated', len(positions) == len(set(positions)))
+    # Positions are told apart as JSON facts, so 3 and 3.0 are two, and the
+    # bound below refuses the one that is not an int.
+    check('field-duplicated', len(positions) == len({json.dumps(p) for p in positions}))
     measurement = next(e for e in rows if e['kind'] == 'model.measurement')
-    check('field-beyond-output', all(0 <= p < len(measurement['payload']['output_tokens']) for p in positions))
+    check('field-beyond-output', all(type(p) is int and 0 <= p < len(measurement['payload']['output_tokens'])
+                                     for p in positions))
 
 
 def enough(t, rec):
@@ -156,10 +159,10 @@ def exact(t, source, replay):
     enough(t, replay)
     # The stimulus is part of exactness: two records that read the same tokens
     # out of different input lengths did not run the same experiment.
-    return (source['input_tokens'] == replay['input_tokens'] and
-            source['output_tokens'] == replay['output_tokens'] and
+    return (same(source['input_tokens'], replay['input_tokens']) and
+            same(source['output_tokens'], replay['output_tokens']) and
             all(float_bits(source[k]) == float_bits(replay[k]) for k in series(t)) and
-            {int(k): v for k, v in source['field'].items()} == {int(k): v for k, v in replay['field'].items()})
+            same({str(k): v for k, v in source['field'].items()}, {str(k): v for k, v in replay['field'].items()}))
 
 
 def source_record(plan, job, probe, receipts):
@@ -206,8 +209,10 @@ def measure(plan, job, probe, receipts):
         well_formed(mine)
         rec = probe.extract_run(mine)
         enough(plan['tuple'], rec)
-        check('seed-held', rec['declared_seed'] == job['seed'])
-        check('weights-held', rec['weights_hash'] == plan['tuple']['weights_sha256'])
+        # The expected side is present at each guard, so an absent record
+        # refuses here by name rather than as a KeyError or as two absences.
+        check('seed-held', type(job.get('seed')) is int and same(rec.get('declared_seed'), job['seed']))
+        check('weights-held', rec.get('weights_hash') == plan['tuple']['weights_sha256'])
         rec.update(name=job['id'], arm='TB0', seed=job['seed'], run=close['run'], trace=str(trace), verdict='RAN',
                    sink=sink, interlock=interlock_at_close())
         target = dest / 'run.json'
@@ -217,7 +222,12 @@ def measure(plan, job, probe, receipts):
         check('single-replay', len(closes) == 1)
         close = closes[0]
         outcome = close['payload']['outcome']
-        check('replay-completed', outcome['kind'] in ['certified', 'diverged'])
+        # A diverged outcome carries its divergence, tagged on kind
+        # (weaver-diagnostic event.rs ReplayOutcome at e69916a): one without it
+        # would read below as no divergence at all.
+        check('replay-completed', outcome['kind'] == 'certified' or
+              (outcome['kind'] == 'diverged' and isinstance(outcome.get('divergence'), dict) and
+               isinstance(outcome['divergence'].get('kind'), str)))
         mine = probe.measured_events(rows, close['run'])
         # Exactly one, as the free path requires under single-turn: extract_run
         # takes the last measurement's fields over a run's accumulated field
@@ -233,8 +243,9 @@ def measure(plan, job, probe, receipts):
         check('replay-weights-held', refed.get('weights_hash') == plan['tuple']['weights_sha256'])
         # The same for the seed: the replay's own model.request must report the
         # source run's seed, and that seed must be one the tuple holds.
-        check('source-seed-held', src.get('declared_seed') in plan['tuple']['seeds'])
-        check('replay-seed-held', refed.get('declared_seed') == src.get('declared_seed'))
+        check('source-seed-held', any(same(src.get('declared_seed'), s) for s in plan['tuple']['seeds']))
+        check('replay-seed-held', type(src.get('declared_seed')) is int and
+              same(refed.get('declared_seed'), src['declared_seed']))
         reading = probe.reading_two(src, refed)
         # A replay that tokenized the prompt differently ran another stimulus:
         # the source and the replay must hold one input length, and a
@@ -242,14 +253,15 @@ def measure(plan, job, probe, receipts):
         # pinned comparator reports as an ordinary divergence
         # (weaver-harness replay.rs:385-416 at e69916a), never a device or
         # kernel reading. Both refuse before any reading is taken.
-        check('input-held', src.get('input_tokens') == refed.get('input_tokens'))
+        check('input-held', type(src.get('input_tokens')) is int and same(src['input_tokens'], refed.get('input_tokens')))
         div = outcome.get('divergence') or {}
-        check('divergence-in-input', div.get('kind') != 'token_path' or int(div['position']) >= refed['input_tokens'])
+        check('divergence-in-input', div.get('kind') != 'token_path' or
+              (type(div.get('position')) is int and div['position'] >= refed['input_tokens']))
         # Historical #516 stack coordinate: input-plus-output, not resident.
-        ordinal = int(div['position']) - refed['input_tokens'] if div.get('kind') == 'token_path' else None
+        ordinal = div['position'] - refed['input_tokens'] if div.get('kind') == 'token_path' else None
         free_readings = []
         for candidate in plan['arms'][0]['jobs']:
-            if candidate['kind'] == 'free' and candidate['seed'] == src.get('declared_seed'):
+            if candidate['kind'] == 'free' and same(candidate['seed'], src.get('declared_seed')):
                 # Every free run measured so far has its receipt; one not yet
                 # measured has none, and is not read.
                 if f'measure:{candidate["id"]}' in receipts:
@@ -277,7 +289,7 @@ def assess(plan, arm, probe, receipts):
             records = [r for j, r in free if j['seed'] == seed]
             check('pair-count', len(records) == 2)
             a, b = records
-            pairs.append(dict(seed=seed, equal=exact(plan['tuple'], a, b) and a['emission'] == b['emission'],
+            pairs.append(dict(seed=seed, equal=exact(plan['tuple'], a, b) and same(a['emission'], b['emission']),
                               reading=probe.reading_one(a, b)))
         report['pairs'] = pairs
         report['own_refeeds'] = [dict(id=j['id'], exact=r['exact'], certified=r['replay_outcome'] == 'certified')
@@ -331,7 +343,7 @@ def drive(order, arm_name):
             earlier = [j for j in arm['jobs'][:index] if j['kind'] == 'free' and j['seed'] == job['seed']]
             if earlier:
                 old = receipt(receipts, 'measure:' + earlier[0]['id'])
-                check('pair-falsifier', exact(plan['tuple'], old, rec) and old['emission'] == rec['emission'])
+                check('pair-falsifier', exact(plan['tuple'], old, rec) and same(old['emission'], rec['emission']))
         receipts = order.coding('settle:' + job['id'], result)
     result = assess(plan, arm, probe, receipts)
     order.coding('finish:' + arm_name, result)

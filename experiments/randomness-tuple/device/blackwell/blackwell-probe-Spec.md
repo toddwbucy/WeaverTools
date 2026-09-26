@@ -338,6 +338,21 @@ reviewed payload and the approval digests root-owned, verified against what the
 review seat published, and `next` hands sudo the root-owned copy. Until that step
 lands, this workflow is held.
 
+**No privileged step acts on a copy of a fact held by another party without checking
+it against evidence it verified itself**, as a rule of this probe's custody from
+2026-09-26 (#690 C2.11, the operator's ruling of that date). A copy is a second
+statement of a fact whose first statement is evidence: a local re-feed's sink length
+and digest stand in the state file and in the source run's measure result, and the
+coordinator hands root the state's copy only after reading the result once, holding
+its bytes to the receipt's digest, and finding the result's own record equal to it,
+under `source-sink-recorded`. **The rule is substrate-neutral**: a state store that
+moved from a file on this box to a service across a network would change nothing on
+the consuming side but the address, the copy still arriving from another party and
+still checked against evidence the consumer verifies. **Where no such evidence exists
+the fact is named rather than trusted**: the approval fields, the halt, the cursor and
+each receipt's status are read by shape or equality and acted on, and they rest on the
+state file's owner until the privileged approval step above puts them in root custody.
+
 **Nothing privileged reads an operator-owned input twice.** A check on a path
 followed by a second read of the path binds nothing, so every operator-owned input
 is read once into a root-owned private file whose bytes are verified against the
