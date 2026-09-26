@@ -174,6 +174,11 @@ struct Run {
     sampling: Option<serde_json::Value>,
     weights: Option<String>,
     verdict: Option<Verdict>,
+    /// The run's latest measured generation: its turn, and the entry it
+    /// produced, or `None` where its measurement produced none. The close
+    /// names this generation, so the verdict crosses on its entry or not at
+    /// all.
+    closing: Option<(Option<String>, Option<usize>)>,
 }
 
 #[derive(Debug)]
@@ -277,9 +282,27 @@ impl Signals {
                 run.closed = true;
                 // The verdict is the run's close's, so it crosses on the entry
                 // for the generation that close names, the run's last, and on
-                // no other: every earlier generation has none to repeat.
-                if let Some(last) = run.entries.last() {
-                    self.series.generations[*last].verdict = run.verdict.take();
+                // no other: every earlier generation has none to repeat. Where
+                // that generation produced no entry, begun and never measured
+                // or measured with no readable draws, the run refuses naming
+                // it rather than dropping the verdict or moving it elsewhere.
+                if let Some(verdict) = run.verdict.take() {
+                    let closing = match (&run.pending, &run.closing) {
+                        (Some(begun), _) => Err(begun.turn.clone()),
+                        (None, Some((_, Some(entry)))) => Ok(*entry),
+                        (None, Some((turn, None))) => Err(turn.clone()),
+                        (None, None) => Err(None),
+                    };
+                    match closing {
+                        Ok(entry) => self.series.generations[entry].verdict = Some(verdict),
+                        Err(turn) => {
+                            return Step::Refuse(format!(
+                                "run {} is scored and its closing generation{} produced no entry to carry the verdict",
+                                event.run,
+                                turn.map(|t| format!(" in turn {t}")).unwrap_or_default()
+                            ));
+                        }
+                    }
                 }
                 if run.loaded {
                     let digest = run
@@ -341,6 +364,7 @@ impl Signals {
                 let Some(tokens) = member("output_tokens")
                     .and_then(|v| serde_json::from_str::<Vec<u32>>(v.get()).ok())
                 else {
+                    run.closing = Some((event.turn.clone(), None));
                     return Step::Continue;
                 };
                 let inputs = member("input_tokens")
@@ -376,6 +400,7 @@ impl Signals {
                         surprisal: surprisals.as_ref().and_then(|v| v.get(ordinal).copied()),
                     });
                 }
+                run.closing = Some((event.turn.clone(), Some(self.series.generations.len())));
                 run.entries.push(self.series.generations.len());
                 self.series.generations.push(GenerationSummary {
                     turn: event.turn,

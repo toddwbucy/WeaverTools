@@ -723,11 +723,15 @@ fn summaries_keep_run_conditions_raw_and_each_absence_independent() {
 /// the last entry, the close being the run's and not the score's. A verdict
 /// with no denominator crosses with no ratio, an unscored run's summary
 /// carries none, and a record holding a second score refuses, the trace
-/// having refused to write one (#707).
+/// having refused to write one (#707). **Where the closing generation
+/// produced no entry**, its measurement unreadable or never landed, or the
+/// run holds no generation at all, the scored run refuses naming it rather
+/// than moving the verdict to an earlier entry (#708 round one).
 ///
 /// Perturbations: drop the `score` arm and the verdict never crosses; place
-/// it on every entry of the run and the first entry carries one. Watched
-/// under each.
+/// it on every entry of the run and the first entry carries one; fall back to
+/// the run's last entry where the closing generation has none and the
+/// malformed-last case crosses on turn t1. Watched under each.
 #[test]
 fn the_verdict_crosses_once_on_the_closing_generation() {
     let unload = r#"{"session":"source","run":"r","sequence":"7","kind":"unload","payload":{}}"#;
@@ -788,6 +792,51 @@ fn the_verdict_crosses_once_on_the_closing_generation() {
     assert!(
         !out.status.success(),
         "a record holding a second score refuses rather than choosing one"
+    );
+
+    // The close names the run's last generation, and where that generation
+    // produced no entry the scored run refuses naming it, rather than the
+    // verdict dropping or landing on an earlier generation (#708 round one).
+    let malformed_last = scored.replace("\"output_tokens\":[10,11,12]", "\"output_tokens\":null");
+    let out = signals_from_pipe(&malformed_last, &[]);
+    assert!(
+        !out.status.success() && String::from_utf8_lossy(&out.stderr).contains("turn t2"),
+        "a closing generation with no readable draws refuses naming its turn: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let measurement_t2 = r#"{"session":"source","run":"r","turn":"t2","sequence":"6","kind":"model.measurement","payload":{"input_tokens":[5,6],"output_tokens":[10,11,12]}}"#;
+    assert!(scored.contains(measurement_t2));
+    let unmeasured_last = scored.replace(&format!("{measurement_t2}\n"), "");
+    assert!(
+        !signals_from_pipe(&unmeasured_last, &[]).status.success(),
+        "a closing generation begun and never measured refuses"
+    );
+    let unmeasured_run = [
+        r#"{"session":"source","run":"r","sequence":"0","kind":"load","payload":{}}"#.to_string(),
+        score("1", terms),
+        r#"{"session":"source","run":"r","sequence":"2","kind":"unload","payload":{}}"#.to_string(),
+    ]
+    .join("\n")
+        + "\n";
+    assert!(
+        !signals_from_pipe(&unmeasured_run, &[]).status.success(),
+        "a scored run with no generation refuses"
+    );
+    let malformed_first = scored.replace("\"output_tokens\":[8,9]", "\"output_tokens\":null");
+    let summary = summary_value(&malformed_first, &[]);
+    let entries = summary["generations"].as_array().unwrap();
+    assert_eq!(
+        entries.len(),
+        1,
+        "the malformed first generation produced no entry"
+    );
+    assert_eq!(
+        entries[0]["turn"], "t2",
+        "the one entry is the closing generation's"
+    );
+    assert!(
+        entries[0].get("verdict").is_some(),
+        "and carries the verdict: {summary}"
     );
 }
 

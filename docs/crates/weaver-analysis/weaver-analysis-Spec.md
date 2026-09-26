@@ -1081,7 +1081,9 @@ agree across a run and its derived per-generation seed does not, per `weaver-spu
 section 8.5, so this crate reports the block as the record spells it and never reads a
 run of two generations as a run of two conditions. The task's verdict is authored at the
 close and crosses on that generation's entry alone, read from the record's `score`
-event as it spelled it, and a record holding two refuses the run.
+event as it spelled it. A record holding two refuses the run, and so does a scored run
+whose closing generation produced no entry, the verdict then having nowhere true to
+cross.
 
 **Where the caller names none, the device model crosses absent and the code identity
 crosses carrying only what the record held.** This crate neither infers a device from a
