@@ -81,11 +81,24 @@ pub struct GenerationSummary {
     pub verdict: Option<Verdict>,
 }
 
-/// Reserved until the task-close event in #523 exists. This reader emits none.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// **The task's verdict**, per `weaver-analysis-web-contract` section 2.2:
+/// the predicate the task answered and whether it held, and the ratio over
+/// the task's denominator where one exists, read from the record's `score`
+/// event as the record spelled it (#523). It crosses once per run, on the
+/// entry for the generation the run's close names.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Verdict {
     pub predicate: String,
-    pub ratio: f64,
+    pub passed: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ratio: Option<Ratio>,
+}
+
+/// The ratio as its two terms, what the run measured over the task's
+/// denominator, carried as the record carries it and never divided here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Ratio {
+    pub measured: u64,
     pub denominator: u64,
 }
 
@@ -160,6 +173,7 @@ struct Run {
     entries: Vec<usize>,
     sampling: Option<serde_json::Value>,
     weights: Option<String>,
+    verdict: Option<Verdict>,
 }
 
 #[derive(Debug)]
@@ -261,6 +275,12 @@ impl Signals {
             }
             "unload" => {
                 run.closed = true;
+                // The verdict is the run's close's, so it crosses on the entry
+                // for the generation that close names, the run's last, and on
+                // no other: every earlier generation has none to repeat.
+                if let Some(last) = run.entries.last() {
+                    self.series.generations[*last].verdict = run.verdict.take();
+                }
                 if run.loaded {
                     let digest = run
                         .raw_only
@@ -270,6 +290,20 @@ impl Signals {
                         self.series.generations[*index].prefix_length = run.prefix;
                     }
                 }
+            }
+            // One verdict per run, read as the record spelled it. The trace
+            // refuses a second score, so a record carrying two was not written
+            // by this program's recorder and the run refuses.
+            "score" => {
+                if run.verdict.is_some() {
+                    return Step::Refuse(format!("run {} carries a second score", event.run));
+                }
+                let Some(verdict) =
+                    payload.and_then(|p| serde_json::from_str::<Verdict>(p.get()).ok())
+                else {
+                    return Step::Refuse(format!("run {} has an unreadable score", event.run));
+                };
+                run.verdict = Some(verdict);
             }
             "model.request" => {
                 run.begin(event.turn);
