@@ -25,6 +25,8 @@ import sys
 import tempfile
 import time
 
+import sections
+
 
 RULING = re.compile(r'https://github\.com/toddwbucy/WeaverTools/(issues|pull)/[0-9]+(#issuecomment-[0-9]+)?')
 
@@ -215,6 +217,7 @@ class Order:
             # stack bytes they hashed: each inventory is a reviewed artifact at
             # the digest the report names, and its host hashes are exactly the
             # approved hashes of every file under that stack.
+            manifests = {}
             for stack in ['B1', 'B2']:
                 named = (report.get('inputs') or {}).get(stack) or {}
                 check('identity-inputs', named.get('manifest') in files and files[named['manifest']] == named.get('sha256'))
@@ -224,6 +227,18 @@ class Order:
                 described = {str(source / rel): host.get('file_sha256') for rel, host in (manifest.get('hosts') or {}).items()}
                 approved = {p: h for p, h in plan['files'].items() if Path(p).is_relative_to(source)}
                 check('identity-binds-stacks', bool(described) and described == approved)
+                manifests[stack] = manifest
+                inputs = (report.get('inputs') or {})
+            # The verdict is what the comparison says of those two verified
+            # inventories now, not what the report claims: an approved report
+            # that is not the comparison's own output over them empties
+            # nothing. The manifests are the parsed bytes verified above, so
+            # nothing is read twice.
+            try:
+                recomputed = sections.comparison(manifests['B1'], manifests['B2'], inputs)
+            except ValueError:
+                recomputed = None
+            check('identity-recomputed', recomputed == report)
         return plan
 
     def due(self, s, plan):

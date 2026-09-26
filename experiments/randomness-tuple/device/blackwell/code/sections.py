@@ -109,6 +109,16 @@ def inventory():
 def compare(first, second):
     raw = [pathlib.Path(p).read_bytes() for p in [first, second]]
     a, b = [json.loads(r) for r in raw]
+    inputs = {m['stack']: dict(manifest=str(p), sha256=digest(r)) for m, p, r in zip([a, b], [first, second], raw)}
+    return comparison(a, b, inputs)
+
+
+def comparison(a, b, inputs):
+    """The pure verdict over two parsed inventories, with the inputs record the
+    caller vouches for: compare() reads the files and passes their paths and
+    digests, and the coordinator passes the manifests it has already verified
+    against the approved digests, so recomputing the verdict at approval
+    reads nothing twice."""
     # A verdict about B1 against B2 needs B1 then B2: the same inventory twice
     # is identical to itself, and an empty scope makes every all() vacuous.
     if (a.get('stack'), b.get('stack')) != ('B1', 'B2'):
@@ -118,9 +128,7 @@ def compare(first, second):
             raise ValueError(f"the {m['stack']} inventory has no hosts, cubins or PTX, and vouches for nothing")
     # The verdict names the inventories it read, by path and digest, so a
     # reader can bind it to the stack bytes those inventories describe.
-    report = {"stacks": ['B1', 'B2'],
-              "inputs": {m['stack']: dict(manifest=str(p), sha256=digest(r)) for m, p, r in zip([a, b], [first, second], raw)},
-              "host": {}, "cuda": {}}
+    report = {"stacks": ['B1', 'B2'], "inputs": inputs, "host": {}, "cuda": {}}
     for name in sorted(a['hosts'].keys() | b['hosts'].keys()):
         sa = {s['name']: s for s in a['hosts'].get(name, {}).get('sections', [])}
         sb = {s['name']: s for s in b['hosts'].get(name, {}).get('sections', [])}
