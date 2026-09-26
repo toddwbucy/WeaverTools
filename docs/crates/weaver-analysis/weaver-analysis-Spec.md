@@ -1223,7 +1223,7 @@ watch. The instrument descriptions above state that scope and the remaining gaps
 | `analysis-control-gates-the-reading` | perturbation: `src/lens.rs`, `tests/lens.rs` |
 | `analysis-captures-compare-exactly` | perturbation: `src/capture.rs`, `tests/lens.rs` |
 | `analysis-compare-refuses-across-loops-and-members` | perturbation: `src/capture.rs`, `tests/lens.rs` |
-| `analysis-reading-drains-within-a-turn` | perturbation: `tests/stream.rs` |
+| `analysis-reading-drains-within-a-turn` | perturbation: `src/stream.rs`, `src/capture.rs`, `tests/stream.rs` |
 | `analysis-signals-keep-absence` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-residency` | perturbation: `src/signals.rs`, `tests/stream.rs` |
 | `analysis-summary-reports-the-record-identity` | perturbation: `src/main.rs`, `src/signals.rs`, `tests/stream.rs` |
