@@ -929,7 +929,7 @@ summary first, one object naming the position count, how many carry an entropy a
 many a surprisal, and the generations by turn with those members, then one line per
 point carrying turn, ordinal, token, entropy, and surprisal, and the spikes with their
 bar on standard error. **An absent member is omitted from the object and never rendered
-null**, on the record's own absent- not-empty rule, so a reader tells a member this verb
+null**, on the record's own absent-not-empty rule, so a reader tells a member this verb
 did not send from one it sent, and the sentinel is sent. A record holding no measured
 generation refuses, typed as the others are.
 

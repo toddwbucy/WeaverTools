@@ -68,9 +68,9 @@ one is the world, and the graph carries no node for it, so the `party` edge abov
 whole of what the graph can hold here. `weaver-admin-PRD` section 6 says the same of its
 own two outward boundaries and names this page as the shape they share, so a later
 reader meets one reading rather than two. **The world at this boundary is a local
-principal**, per the party prose above and the named local Unix sockets of `weaver-gate-
-PRD` section 2, so a client stands on the box the agent runs on by construction and no
-document owes a placement clause to put it there.
+principal**, per the party prose above and the named local Unix sockets of
+`weaver-gate-PRD` section 2, so a client stands on the box the agent runs on by
+construction and no document owes a placement clause to put it there.
 
 ## 1. The channel
 
