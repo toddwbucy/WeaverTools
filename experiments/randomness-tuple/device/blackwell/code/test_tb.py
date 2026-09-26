@@ -603,7 +603,7 @@ class PayloadTests(unittest.TestCase):
         self.base=Path(self.tmp.name);self.root=self.base/'install';self.model=self.base/'model'
         self.plan=prepare.template(self.base/'deposit','todd',1000)
         self.planpath=self.base/'plan';self.planpath.write_text('{}')
-        for name,value in [('ROOT',self.root),('MODEL',self.model)]:
+        for name,value in [('ROOT',self.root),('MODEL',self.model),('TRUSTED',self.base)]:
             p=patch.object(payload,name,value);p.start();self.addCleanup(p.stop)
         p=patch('sys.argv',['payload',str(self.planpath),order.sha(self.planpath),'provision']);p.start();self.addCleanup(p.stop)
         self.user=SimpleNamespace(pw_uid=1000)
@@ -721,6 +721,28 @@ class PayloadTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'installed-stack-custody'):payload.installed(self.plan,'d'*64)
         installed.chmod(0o755);(self.root/'config/B1').chmod(0o777)
         with self.assertRaisesRegex(RuntimeError,'served-directory-custody'):payload.installed(self.plan,'d'*64)
+
+    def test_model_custody_walks_every_ancestor(self):
+        # #683 thread 39: a verified model under an operator-writable ancestor
+        # is a file the operator can rename out from under the load. The walk
+        # runs from the parent up to TRUSTED (the filesystem root in
+        # production, this test's base here); a group-writable grandparent
+        # refuses by name, at provisioning and at every later step, and the
+        # isolated root's own chain is held to the same rule.
+        self.stacks()
+        deep=self.base/'ancestor'/'models';deep.mkdir(parents=True)
+        with patch.object(payload,'MODEL',deep/'model'):
+            (self.base/'ancestor').chmod(0o775)
+            with self.assertRaisesRegex(RuntimeError,'new-model-custody'):self.provision()
+            (self.base/'ancestor').chmod(0o755);(deep/'model').unlink(missing_ok=True);shutil.rmtree(self.root)
+            self.provision();payload.installed(self.plan,'d'*64)
+            (self.base/'ancestor').chmod(0o775)
+            with self.assertRaisesRegex(RuntimeError,'installed-model-custody'):payload.installed(self.plan,'d'*64)
+            (self.base/'ancestor').chmod(0o755);payload.installed(self.plan,'d'*64)
+            nested=self.base/'under'/'root';nested.parent.mkdir()
+            with patch.object(payload,'ROOT',nested):
+                shutil.copytree(self.root,nested);(self.base/'under').chmod(0o775)
+                with self.assertRaisesRegex(RuntimeError,'served-directory-custody'):payload.installed(self.plan,'d'*64)
 
     def test_new_model_must_be_in_custody(self):
         # #683 finding 30: a model this provisioning creates is held like an

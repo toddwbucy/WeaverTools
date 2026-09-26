@@ -270,19 +270,44 @@ def provision(plan, plan_sha256):
     print('Provisioned bravo only. Start a fresh operator shell with the weaver-bravo group before the driver.')
 
 
+# The ancestor a custody walk stops at, the filesystem root: everything a load
+# reads sits under it, and nothing above it exists to be renamed.
+TRUSTED = Path('/')
+
+
+def chain_custody(path):
+    """Every directory from path's parent up to TRUSTED, inclusive, is one the
+    operator cannot rename an entry out of: a real directory, not a link, owned
+    by this payload's user or by root, closed to group and world writes. A
+    verified file under a renameable ancestor is a file the operator can swap
+    whole between the hash and the load; the model and the isolated root are
+    both held to this, and every served directory sits beneath one of them."""
+    directory = Path(path).parent
+    while True:
+        entry = os.lstat(directory)
+        if not stat.S_ISDIR(entry.st_mode) or entry.st_uid not in (os.geteuid(), 0) or entry.st_mode & 0o022:
+            return False
+        if directory == TRUSTED or directory.parent == directory:
+            return directory == TRUSTED
+        directory = directory.parent
+
+
 def model_custody():
     """The served model is a regular file only this payload's user can change:
     not a link, one name, not group- or world-writable, in a directory held the
-    same way. A hash only binds bytes nobody else can rewrite before load."""
+    same way, under a chain of directories none of which the operator can
+    rename an entry out of. A hash only binds bytes nobody else can rewrite,
+    or swap whole, before load."""
     entry, parent = os.lstat(MODEL), os.stat(MODEL.parent)
     return (stat.S_ISREG(entry.st_mode) and entry.st_nlink == 1 and entry.st_uid == os.geteuid() and
-            not entry.st_mode & 0o022 and parent.st_uid == os.geteuid() and not parent.st_mode & 0o022)
+            not entry.st_mode & 0o022 and parent.st_uid == os.geteuid() and not parent.st_mode & 0o022 and
+            chain_custody(MODEL))
 
 
 def installed(plan, plan_sha256):
     need('installation-plan', (ROOT / 'plan-sha256').read_text().strip() == plan_sha256)
     need('installed-model-custody', model_custody())
-    need('served-directory-custody', all(locked(p) for p in served_directories()))
+    need('served-directory-custody', all(locked(p) for p in served_directories()) and chain_custody(ROOT))
     need('installed-model', sha(MODEL) == plan['tuple']['weights_sha256'])
     for stack in ['B1', 'B2']:
         verify_stack(plan, stack, ROOT / 'stacks' / stack)
