@@ -1,3 +1,5 @@
+//! conforms: gate-agent-uid-denied-by-construction
+//!
 //! The scaffolding the gate's integration suites share.
 //!
 //! It lives once because `scratch` existed three times and `instruction` twice,

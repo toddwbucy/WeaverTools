@@ -1,3 +1,5 @@
+//! conforms: harness-dev-boundary-in-the-filesystem
+//!
 //! The Python-iterating worker, a builder's composition root per
 //! `weaver-harness-Spec` section 6 and issue #134. Framework identical to
 //! the demonstration worker - same arguments, same loop 0, same crossing -

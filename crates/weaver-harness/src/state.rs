@@ -1,3 +1,6 @@
+//! conforms: harness-restoring-open-seats-the-record
+//! conforms: harness-session-opens-at-enter
+//!
 //! The state seam's ask end, per `weaver-harness-Spec` section 6: a clone
 //! of the standing state channel held on the run beside the tee the enter
 //! attaches, the ask written and the answer awaited on the serving thread

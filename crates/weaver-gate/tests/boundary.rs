@@ -88,13 +88,13 @@ fn the_socket_denies_every_uid_outside_the_group() {
 /// **Reading it means setting it**, `umask(2)` returning the old value, so
 /// even a read takes the lock this crate's own guard serializes on.
 ///
-/// **That lock does not reach a sibling test calling `common::scratch`**,
-/// which takes no lock at all, so the window is narrowed rather than closed:
-/// the read sets and restores across two adjacent calls and nothing else.
-/// Closing it properly would mean every path that creates a file in this
-/// binary taking the same lock, which is a larger act than this one and is
-/// filed rather than half-done here. The exposure is a test-only directory
-/// in `/tmp` for the length of two syscalls.
+/// **That lock now reaches a sibling test calling `common::scratch`**, which
+/// creates its directory under `with_umask_held` since the helpers were
+/// shared, so the window this read opens is closed for every file the
+/// fixtures create through it. What the read still exposes is the length of
+/// two syscalls to any path creating a file in this binary by another
+/// route, of which the suites have one today: the child log `entry.rs`
+/// creates beside its scratch path.
 ///
 /// **The hold is scoped and ends before the raise.** Holding it across would
 /// deadlock, `Hook::raise` taking the same non-reentrant mutex, which is what

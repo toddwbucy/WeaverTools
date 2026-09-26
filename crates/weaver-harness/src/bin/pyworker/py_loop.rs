@@ -1,3 +1,5 @@
+//! conforms: harness-dev-boundary-in-the-filesystem
+//!
 //! The Python connector at the dev boundary, per issue #134: the crossing
 //! stays the one named function, seat and parsed request in, response
 //! content out, and this module marshals it into an embedded interpreter.

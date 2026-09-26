@@ -1,3 +1,5 @@
+//! conforms: analysis-reading-drains-within-a-turn
+//!
 //! The record's events, drained rather than held, per
 //! `weaver-analysis-Spec` section 5.
 //!
