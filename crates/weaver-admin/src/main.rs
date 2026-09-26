@@ -1545,6 +1545,199 @@ mod tests {
         );
         let _ = std::fs::remove_dir_all(&root);
     }
+
+    /// **The member spawn drops to the member's account, driven through
+    /// `stand_state_member` itself** (#673 item 6). Needs euid 0, and runs
+    /// through `the_member_spawn_is_watched_inside_a_user_namespace` on a box
+    /// where that is not the invoking uid. A stand-in `weaver-state` beside
+    /// the worker records the identity it runs under into the territory the
+    /// real path prepared, and the reading is the kernel's own status after
+    /// exec: every uid the member's, every gid its group's, and the
+    /// supplementary set that group alone, none of root's. The member's end
+    /// is read too, a socket at the fixed number.
+    ///
+    /// `drop_to`'s own instrument, beside the store probe's in the inventory
+    /// module, watches the order of the three calls and the saved ids. This
+    /// one watches that the member's spawn takes the drop at all, which no
+    /// reading of `drop_to` can see.
+    ///
+    /// Perturbations, each watched failing 2026-09-26 through the namespace
+    /// watch: remove `become_member` from the spawn's pre-exec and the member
+    /// runs as uid 0; hand `drop_to` root's group beside the member's and the
+    /// supplementary set carries 0.
+    ///
+    /// conforms: admin-member-spawn-drops-to-its-account
+    #[test]
+    #[ignore = "needs euid 0: run by the_member_spawn_is_watched_inside_a_user_namespace"]
+    fn the_member_spawn_lands_the_members_identity_as_root() {
+        use std::os::unix::fs::PermissionsExt;
+        assert!(
+            nix::unistd::geteuid().is_root(),
+            "this instrument needs euid 0"
+        );
+        /// Removes the tree however the reading ends. It runs as root in
+        /// the namespace, the only party that can enter the member's room.
+        struct Yard(std::path::PathBuf);
+        impl Drop for Yard {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let yard =
+            Yard(std::env::temp_dir().join(format!("wt-member-spawn-{}", std::process::id())));
+        let _ = std::fs::remove_dir_all(&yard.0);
+        let bin = yard.0.join("bin");
+        let sink = yard.0.join("sink");
+        for dir in [&bin, &sink] {
+            std::fs::create_dir_all(dir).expect("the yard's directories");
+            std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o755))
+                .expect("the member can traverse them");
+        }
+        std::fs::set_permissions(&yard.0, std::fs::Permissions::from_mode(0o755))
+            .expect("and the yard");
+        // The stand-in writes its reading whole and then renames it, so a
+        // partial file is never what the poll below reads.
+        let stand_in = bin.join("weaver-state");
+        std::fs::write(
+            &stand_in,
+            concat!(
+                "#!/bin/sh
+",
+                "for a; do t=$a; done
+",
+                "/usr/bin/readlink /proc/self/fd/3 > \"$t/fd3\"\n",
+                "/bin/cat /proc/self/status > \"$t/status.part\" && ",
+                "/bin/mv \"$t/status.part\" \"$t/status\"\n",
+            ),
+        )
+        .expect("the stand-in is written");
+        std::fs::set_permissions(&stand_in, std::fs::Permissions::from_mode(0o755))
+            .expect("and made executable");
+
+        let source = format!(
+            concat!(
+                "session: s-1\n",
+                "spu-instruction:\n",
+                "  decoder:\n",
+                "    model-binding:\n",
+                "      artifact: qwen3-4b-instruct\n",
+                "      devices: [0]\n",
+                "    residual-readout-election: false\n",
+                "    identity: []\n",
+                "    tunable-values: {{}}\n",
+                "tool-set: []\n",
+                "permission-mode: ask\n",
+                "gate-instruction:\n",
+                "  access-rule:\n",
+                "    allowed-uids: [0]\n",
+                "    allowed-gids: []\n",
+                "    denied-uids: [1701]\n",
+                "trace-sink:\n",
+                "  kind: file\n",
+                "  path: {}/trace.ndjson\n",
+                "  create: true\n",
+                "state-store:\n",
+                "  engine: sqlite\n",
+            ),
+            sink.display()
+        );
+        let config = weaver_types::parse(&source).expect("the declaration parses");
+        let gate_instruction = config
+            .gate_instruction
+            .clone()
+            .expect("a serving declaration carries its instruction");
+        let member = inventory::MemberAccount {
+            uid: 4242,
+            gid: 4243,
+        };
+        let inventory = inventory::Inventory {
+            config,
+            identity: "weaver-alpha".into(),
+            declaration: String::new(),
+            binding: weaver_types::EnterBinding::Serving { gate_instruction },
+            lineage: None,
+            member_account: Some(member),
+        };
+        let mut service = unread_config();
+        service.unit.worker = bin.join("weaver-worker");
+
+        let harness_end = stand_state_member(&service, &inventory);
+        assert!(harness_end.is_some(), "the member stands");
+        let territory = sink.join("state");
+        let status = territory.join("status");
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while !status.exists() && std::time::Instant::now() < deadline {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        let read = std::fs::read_to_string(&status).expect("the member recorded itself");
+        let line = |key: &str| {
+            read.lines()
+                .find_map(|l| l.strip_prefix(key))
+                .map(|rest| rest.split_whitespace().collect::<Vec<_>>().join(" "))
+                .unwrap_or_default()
+        };
+        assert_eq!(
+            line("Uid:"),
+            "4242 4242 4242 4242",
+            "every uid the member's"
+        );
+        assert_eq!(line("Gid:"), "4243 4243 4243 4243", "every gid its group's");
+        assert_eq!(line("Groups:"), "4243", "its group alone, none of root's");
+        let fd3 = std::fs::read_to_string(territory.join("fd3")).expect("the end was read");
+        assert!(
+            fd3.starts_with("socket:"),
+            "the member's end is a socket at the fixed number: {fd3}"
+        );
+    }
+
+    /// **The watch that runs on an ordinary `cargo test`**, the store
+    /// probe's pattern: re-executes this test binary inside `unshare
+    /// --map-auto --map-root-user`, where the process is uid 0 over the
+    /// invoking user's subordinate ids, and requires the instrument above to
+    /// report exactly one test passed, so a filter matching nothing cannot
+    /// read as green. A box where the namespace cannot be entered prints a
+    /// SKIP naming why and passes, and has no watch.
+    ///
+    /// Perturbation: as the instrument's, watched through this test.
+    #[test]
+    fn the_member_spawn_is_watched_inside_a_user_namespace() {
+        if nix::unistd::geteuid().is_root() {
+            return the_member_spawn_lands_the_members_identity_as_root();
+        }
+        let exe = std::env::current_exe().expect("the test binary names itself");
+        let ran = std::process::Command::new("unshare")
+            .args(["--map-auto", "--map-root-user"])
+            .arg(&exe)
+            .args([
+                "--exact",
+                "tests::the_member_spawn_lands_the_members_identity_as_root",
+                "--ignored",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .stdin(std::process::Stdio::null())
+            .output();
+        let output = match ran {
+            Ok(output) => output,
+            Err(e) => {
+                eprintln!("SKIP member spawn watch: unshare could not run: {e}");
+                return;
+            }
+        };
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.starts_with("unshare:") {
+            eprintln!(
+                "SKIP member spawn watch: no user namespace here: {}",
+                stderr.trim()
+            );
+            return;
+        }
+        assert!(
+            output.status.success() && stdout.contains("test result: ok. 1 passed"),
+            "the member spawn failed inside the namespace\nstdout:\n{stdout}\nstderr:\n{stderr}"
+        );
+    }
 }
 
 #[cfg(test)]

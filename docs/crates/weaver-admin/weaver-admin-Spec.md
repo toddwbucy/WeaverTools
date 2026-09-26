@@ -1149,23 +1149,26 @@ write is a member that dies at its first open.
 ```graph
 node: admin-member-spawn-drops-to-its-account
 kind: assertion
-tag: review
+tag: perturbation
 
 edge: asserts
 from: weaver-admin
 to: admin-member-spawn-drops-to-its-account
 ```
 
-**The drop's record is review and the reason is named.** What it asserts is
-that the spawned process runs as the member and holds no group root left it -
-the supplementary set narrowed to the member's own group, then the gids, then
-the uids, in that order, because the two narrowings need the privilege the last
-one gives away. The instrument that would watch it is a box carrying a
-provisioned agent and this crate's root, and nothing in this tree stands one:
-the suite runs unprivileged, where every one of the three calls refuses, so a
-test written here would assert the refusal and not the drop. It is not bought
-rather than absent, per apex section 11, and the act that stands a provisioned
-box buys it.
+**The drop's record is perturbation, as of 2026-09-26** (#673 item 6). What it asserts
+is that the spawned process runs as the member and holds no group root left it - the
+supplementary set narrowed to the member's own group, then the gids, then the uids, in
+that order, because the two narrowings need the privilege the last one gives away. The
+instrument drives `stand_state_member` itself inside a user namespace, where the test
+runs as root over the invoking user's subordinate ids: a stand-in member beside the
+worker records the identity it runs under into the territory the real path prepared, and
+the kernel's status after exec must read every uid the member's, every gid its group's,
+and the supplementary set that group alone. **It stood at review until then** on the
+reading that an unprivileged suite could only assert the three calls' refusal. The store
+probe's namespaced watch of 2026-09-24 disproved that reading, the same calls succeeding
+inside the namespace, and this instrument is that watch pointed at the member's spawn. A
+box where the namespace cannot be entered prints a skip naming why and has no watch.
 
 **The territory is the member's own room and a load closes it rather than
 opening it.** It is one subdirectory of the operator-side directory the sink
@@ -1957,11 +1960,12 @@ The records are at the clauses that argue the claims, across sections 1
 through 8, rather than gathered here, per Document Format section 6: this
 section sorts by instrument and the arguments are elsewhere, so a block here
 would sit apart from the prose that earns it. Forty-four records in all,
-fifteen tagged for review, twenty-three for perturbation, four for the
+fourteen tagged for review, twenty-four for perturbation, four for the
 manifest, and two for a compile pin, the restore's judgment joining on
-2026-09-06 and the member's own account bringing four on 2026-09-15, three of
-them watched and the spawn's drop the review whose reason section 6 names. The
-residency record moved from review to
+2026-09-06 and the member's own account bringing four on 2026-09-15, all four
+watched since the spawn's drop moved from review to perturbation on 2026-09-26,
+its instrument driving the spawn inside a user namespace. The residency record
+moved from review to
 perturbation on 2026-08-06, when the code act gave it a test, and the library
 surface from review to the manifest on 2026-09-15, its test having read the
 absence the clause said nothing mechanical read. **Three of the
@@ -1973,7 +1977,7 @@ act of 2026-08-28:
 `admin-granted-permission-refused-at-inventory`, is this recount's own act,
 counted with the record it adds. Whether the three uncounted arrivals name
 their removals was not audited in this recount and is owed beside the two
-below. **Two of the twenty-three perturbation records name no removal anywhere
+below. **Two of the twenty-four perturbation records name no removal anywhere
 in this document**:
 `admin-unload-answers-after-confirmed-stop` and
 `admin-kind-mismatch-refused-at-inventory`. A perturbation tag without a
@@ -2081,6 +2085,11 @@ directive is asserted where the run happens.
   the member's account, and a room widened between loads is closed again,
   confirmed by watching the mode read `0750` when the group-owned preparation
   is restored.
+- The member's spawn drops to its account: `stand_state_member` run as root
+  inside a user namespace stands a member whose every uid, every gid and whole
+  supplementary set are its account's, confirmed by watching the member run as
+  uid 0 when `become_member` is removed from the spawn's pre-exec, and carry
+  root's group when `drop_to` is handed it beside the member's.
 - One write is one read: two envelopes are written back to back on the
   coordination channel and both writes complete before either read, and two
   reads return exactly one envelope each, confirmed by watching the first
