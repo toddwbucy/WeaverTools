@@ -183,7 +183,10 @@ class Fixture(unittest.TestCase):
                ('own',lambda p:p['arms'][0]['jobs'].pop()),
                ('order',lambda p:p['arms'][0]['jobs'].insert(0,p['arms'][0]['jobs'].pop())),
                ('device',lambda p:p['arms'][1].update(jobs=[])),
-               ('kernel',lambda p:p['arms'][2].update(jobs=[]))]
+               ('kernel',lambda p:p['arms'][2].update(jobs=[])),
+               # #683 thread 36: identity true is defined to empty the leg, so a
+               # full kernel schedule claiming it is a contradiction, refused.
+               ('kernel-identity-with-jobs',lambda p:p['arms'][2].update(executable_identity=True))]
         for name, edit in edits:
             p=copy.deepcopy(self.plan);edit(p)
             with self.subTest(name=name),self.assertRaises(order.Refused):order.validate_plan(p)
