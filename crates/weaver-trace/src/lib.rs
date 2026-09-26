@@ -56,6 +56,7 @@
 //!         Kind::ClassifyRequest => "classify.request",
 //!         Kind::ClassifyOutput => "classify.output",
 //!         Kind::Recall => "recall",
+//!         Kind::MessageRestored => "message.restored",
 //!     }
 //! }
 //! ```

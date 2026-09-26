@@ -419,6 +419,7 @@ fn turn_forbidden(kind: Kind) -> bool {
             | Kind::Flush
             | Kind::Elision
             | Kind::Recall
+            | Kind::MessageRestored
     )
 }
 
@@ -443,6 +444,9 @@ fn turn_required(kind: Kind) -> bool {
         // the seat's between a flush and the re-entry, so it belongs to no
         // turn for the flush's reason too.
         | Kind::Recall
+        // A restored message is seated at the open, ahead of every turn of
+        // the run, so it belongs to none, as the identity prefix does.
+        | Kind::MessageRestored
         | Kind::ClassifyRequest
         | Kind::ClassifyOutput
         // **`message.system` serves two cases and so is turn-optional**, per
@@ -480,7 +484,7 @@ pub struct Pressure {
     pub over_mark: bool,
 }
 
-/// The total kind-to-payload mapping, twenty-two kinds and seventeen
+/// The total kind-to-payload mapping, twenty-three kinds and seventeen
 /// dispositions, matching charter section 3.1 whole, enforced here because
 /// the untagged payload leaves serde unable to. **`load` stopped being
 /// payload-free 2026-08-21**: it carries the diagnostic elections of its
@@ -498,7 +502,8 @@ fn pairing_licensed(kind: Kind, payload: Option<&Payload>) -> bool {
                 Kind::MessageSystem
                     | Kind::MessageUser
                     | Kind::MessageAssistant
-                    | Kind::MessageToolResult,
+                    | Kind::MessageToolResult
+                    | Kind::MessageRestored,
                 Some(Payload::Message(_))
             )
             | (Kind::TurnClosed, Some(Payload::TurnClosed(_)))

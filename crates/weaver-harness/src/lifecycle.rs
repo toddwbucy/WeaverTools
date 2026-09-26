@@ -3264,10 +3264,16 @@ mod tests {
 
     /// **Under a restoring load the recall ask is recorded too, beside the
     /// identity's**, one kind for every answered ask on the seam, each ahead
-    /// of what it seats.
+    /// of what it seats, **and the restored exchange lands** as
+    /// `message.restored`, turnless, one event per message in landing order
+    /// after the identity, with no fault accounting a miss (#690 item C2.7).
     ///
-    /// Perturbation: drop the `record_enter_ask` call from the restoring
-    /// recall and the second assertion fails.
+    /// Perturbations: drop the `record_enter_ask` call from the restoring
+    /// recall and the second assertion fails; author the restored messages
+    /// under their turned kinds again and the writer refuses each, so no
+    /// `message.restored` lands and two faults do. Watched under each.
+    ///
+    /// conforms: trace-restored-message-is-turnless-and-whole
     #[test]
     fn a_restoring_enter_records_its_recall_ask_too() {
         let events = enter_against_a_member(
@@ -3298,10 +3304,8 @@ mod tests {
             ])
         );
         // Both asks are answered before anything is seated, so both recalls
-        // precede the seated prefix. The restored exchange itself is not
-        // asserted here: its turned kinds are refused turnless at the writer
-        // today, a defect of the restore door that is epic #690 item C2.7 and not
-        // this act's to settle.
+        // precede the seated prefix, and the restored exchange follows the
+        // identity it was opened under.
         let at = |kind: &str, text: &str| {
             events
                 .iter()
@@ -3311,6 +3315,37 @@ mod tests {
         assert!(
             at("recall", r#""verb":"recall""#) < at("message.system", "You are Karl."),
             "the recall precedes what the open seats"
+        );
+        let restored: Vec<&serde_json::Value> = events
+            .iter()
+            .filter(|e| e["kind"] == "message.restored")
+            .collect();
+        assert_eq!(
+            restored.len(),
+            2,
+            "one event per restored message: {events:?}"
+        );
+        assert_eq!(
+            restored[0]["payload"],
+            serde_json::json!({"role": "user", "content": [{"type": "text", "text": "hello"}]})
+        );
+        assert_eq!(
+            restored[1]["payload"],
+            serde_json::json!({"role": "assistant", "content": [{"type": "text", "text": "hi"}]})
+        );
+        assert!(
+            restored.iter().all(|e| e.get("turn").is_none()),
+            "belonging to no turn: {restored:?}"
+        );
+        assert!(
+            at("message.system", "You are Karl.") < at("message.restored", r#""text":"hello""#)
+                && at("message.restored", r#""text":"hello""#)
+                    < at("message.restored", r#""text":"hi""#),
+            "after the identity, in landing order: {events:?}"
+        );
+        assert!(
+            events.iter().all(|e| e["kind"] != "fault"),
+            "no miss is accounted: {events:?}"
         );
     }
 

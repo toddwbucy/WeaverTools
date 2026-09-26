@@ -222,31 +222,32 @@ impl Author {
     /// The restored prefix's door, per `weaver-harness-Spec` section 6.1:
     /// under a restoring load the door admits the roles the restored
     /// conversation carries, user, assistant, and tool result beside system,
-    /// each authored turnless as the identity is, so the record of a branch
-    /// is complete without its parent. The system-only rule stands for the
-    /// declaration's own field at `author_identity`, still the only prefix a
-    /// declaration can write.
+    /// each authored turnless as `message.restored`, so the record of a
+    /// branch is complete without its parent. **One kind for every role, the
+    /// role riding in the message**, per `weaver-trace-Spec` section 3's
+    /// restored-prefix clause as of 2026-09-26: the four turned message kinds
+    /// stay turn-required, and a restored system message never reads as the
+    /// identity the turnless `message.system` is. The system-only rule stands
+    /// for the declaration's own field at `author_identity`, still the only
+    /// prefix a declaration can write.
     pub fn author_restored(
         &self,
         recorder: &mut Record,
         message: &Message,
     ) -> Result<Result<Sequence, RecordFailure>, UnlicensedMessage> {
         licensed(message)?;
-        let kind = match message.role {
-            Role::System => Kind::MessageSystem,
-            Role::User => Kind::MessageUser,
-            Role::Assistant => Kind::MessageAssistant,
-            Role::ToolResult => Kind::MessageToolResult,
-            // The floor's role set grows, per its non-exhaustive election,
-            // and a role this door has no kind for refuses by name rather
-            // than being written under a kind it is not.
-            _ => {
-                return Err(UnlicensedMessage {
-                    role: role_name(&message.role),
-                    block: "restored-door-no-kind",
-                });
-            }
-        };
+        // The floor's role set grows, per its non-exhaustive election, and a
+        // role this door was not written for refuses by name rather than
+        // being restored under a rule that never considered it.
+        if !matches!(
+            message.role,
+            Role::System | Role::User | Role::Assistant | Role::ToolResult
+        ) {
+            return Err(UnlicensedMessage {
+                role: role_name(&message.role),
+                block: "restored-door-unknown-role",
+            });
+        }
         let rendered = serde_json::to_string(message).map_err(|_| UnlicensedMessage {
             role: role_name(&message.role),
             block: "unrenderable",
@@ -257,7 +258,7 @@ impl Author {
         })?;
         Ok(self.author(
             recorder,
-            kind,
+            Kind::MessageRestored,
             Subsystem::Harness,
             None,
             Some(Payload::Message(payload)),

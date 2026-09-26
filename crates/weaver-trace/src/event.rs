@@ -114,12 +114,12 @@ pub enum Subsystem {
     Tool,
 }
 
-/// The twenty-two event kinds, exhaustive, matching the charter's section 3.1
+/// The twenty-three event kinds, exhaustive, matching the charter's section 3.1
 /// exactly. Every kind carries an explicit rename because no scheme produces
 /// the charter's dotted names, and the enum is exhaustive because the set is
 /// closed by ruling: an attribute that let a consumer absorb a further kind
 /// into a wildcard would defeat the closure the corpus keys on. **The count
-/// is pinned in `tests/kinds.rs`**, an array of twenty-two checked against an
+/// is pinned in `tests/kinds.rs`**, an array of twenty-three checked against an
 /// exhaustive match over this enum, so a kind added here and answered in the
 /// crate's own matches stops at that file's match. An act that writes the new
 /// arm there too and leaves the array alone still passes, which is issue
@@ -180,6 +180,13 @@ pub enum Kind {
     /// the events custody answered with, never their contents.
     #[serde(rename = "recall")]
     Recall,
+    /// One message of a restored conversation, seated at a restoring load's
+    /// open ahead of every turn, per charter section 3.1's twenty-third
+    /// kind: the message whole, its role and its content, turnless as the
+    /// identity is. A kind of its own so the four turned message kinds stay
+    /// turn-required and a restored message never reads as the identity.
+    #[serde(rename = "message.restored")]
+    MessageRestored,
 }
 
 /// What an event carries beside its envelope. Untagged: the envelope's `kind`
@@ -192,7 +199,7 @@ pub enum Kind {
 /// back, the working structure holding rendered lines, and the asymmetry is a
 /// compile property pinned at the crate root.
 ///
-/// The kind-to-payload mapping is total, twenty-two kinds and seventeen
+/// The kind-to-payload mapping is total, twenty-three kinds and seventeen
 /// dispositions, the payload-free case counting as one of them.
 /// **`pairing_licensed` in `writer.rs` enforces the mapping and is the
 /// authority on it**, this comment naming only which variant of this enum
@@ -201,7 +208,7 @@ pub enum Kind {
 /// because six variants hold `Box<RawValue>` and a shape cannot tell them
 /// apart: `session.closed` and `turn.started` carry nothing, `unload`
 /// carries `Unload` where a member stood and nothing where none did, `load`
-/// carries `Elections`, the four message kinds carry `Message`,
+/// carries `Elections`, the five message kinds carry `Message`,
 /// `turn.closed` carries `TurnClosed`, `fault` carries `Fault`, `flush`
 /// carries `Flush`, `elision` carries `Elision`, `refusal` carries
 /// `Refusal`, the four model kinds carry their four own variants, the
