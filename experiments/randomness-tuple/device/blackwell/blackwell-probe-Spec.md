@@ -547,12 +547,11 @@ to: blackwell-probe-exactness-is-bitwise-over-elected-readings
 ## 8. The refusals
 
 Every guard is named, and its name is the reason in the halt. Three of the payload's
-names arrive with the citations commit on #683, where they had raised as plain
-errors: `no-bravo-account` for an existing `bravo` account, `known-step` for a verb
-that is neither a load nor an unload, and `command-exit` for a privileged command
-exiting nonzero, which prints the command's output to the transcript first. They are
-grouped here by the module that raises them, and section 9 says how each is watched.
-The
+names arrive with the citations commit on #683, where they had raised as plain errors:
+`no-bravo-account` for an existing `bravo` account, `known-step` for a verb that is
+neither a load nor an unload, and `command-exit` for a privileged command exiting
+nonzero, which prints the command's output to the transcript first. They are grouped
+here by the module that raises them, and section 9 says how each is watched. The
 coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-order`,
 `job-identities`, `job-types`, `control-schedule`, `own-refeeds`, `source-order`,
 `device-sources`, `device-traces`, `device-selections-distinct`, `kernel-schedule`,
@@ -565,21 +564,21 @@ coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-orde
 `plan-hash`, `fixed-root-agent`, `operator`, `source-file-hash`, `job-found`,
 `model-source`, `existing-model-custody`, `existing-model`, `stack-no-symlinks`,
 `stack-libraries`, `stack-file-coverage`, `fresh-install-root`,
-`no-symlink-destination`, `snapshot-hash`, `new-model-custody`,
-`installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`,
-`installed-stack-hash`, `installation-plan`, `installed-model-custody`,
-`served-directory-custody`, `installed-model`, `m1-inactive`, `m1-state-readable`,
-`m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`,
-`source-run-selected`, `derived-artifact`, `derived-tuple`, `preload-door`,
-`diagnostic-load`, `admin-answer`, `no-bravo-account`, `known-step` and
-`command-exit`. The driver's: `driver-not-root`,
+`no-symlink-destination`, `snapshot-hash`, `new-model-custody`, `installed-no-symlinks`,
+`installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`,
+`installation-plan`, `installed-model-custody`, `served-directory-custody`,
+`installed-model`, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`,
+`gpu-tuple`, `resolved-libraries`, `cuda-local`, `source-run-selected`,
+`derived-artifact`, `derived-tuple`, `preload-door`, `diagnostic-load`, `admin-answer`,
+`no-bravo-account`, `known-step` and `command-exit`. The driver's: `driver-not-root`,
 `reader-approved`, `fresh-arm`, `gate-answer`, `single-turn`, `nonempty-measurement`,
 `field-depth`, `seed-held`, `weights-held`, `source-trace`, `source-measurement`,
 `source-weights-held`, `source-seed-held`, `replay-completed`, `single-replay`,
-`replay-measurement`, `replay-weights-held`, `replay-seed-held`, `pair-count`,
-`pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`,
-`changed-seed-prediction` and `report-path`. The inventory raises its refusals as
-errors on the command line, since it runs before any plan exists.
+`replay-measurement`, `request-absent`, `request-duplicated`, `output-absent`,
+`output-duplicated`, `field-duplicated`, `field-beyond-output`, `replay-weights-held`,
+`replay-seed-held`, `pair-count`, `pair-falsifier`, `own-refeed-falsifier`,
+`control-falsifier`, `changed-seed-prediction` and `report-path`. The inventory raises
+its refusals as errors on the command line, since it runs before any plan exists.
 
 **The rulings are refusals too.** A plan whose `hold_lifted`, `cuda_provenance` or
 `control_count` ruling is empty is refused under `rulings`, and each names the URL
@@ -636,7 +635,7 @@ reads each citation from `code/`.
 | `blackwell-probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
 | `blackwell-probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
 | `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
-| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn` |
+| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn`, and `well_formed`'s `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`, `field-duplicated`, `field-beyond-output` on every path |
 | `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases |
 | `blackwell-probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
