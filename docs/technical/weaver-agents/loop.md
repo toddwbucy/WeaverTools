@@ -79,7 +79,7 @@ replayed are two loads of the same weights, so the wrong arrangement is not
 guarded against but unrepresentable. The diagnostic loop gets its own page when
 its consumer exists, and this page will point at it.
 
-## The seat is eight calls
+## The seat is nine calls
 
 The seat is what a loop is written against. It is a set of ports the harness
 grants, not a library the loop links, and it is small enough to list.
@@ -93,19 +93,15 @@ grants, not a library the loop links, and it is small enough to list.
 | `elide(from, to)` | the resident counts either side, a half-open interior span removed |
 | `classify(text)` | every label of the classify artifact's head, scored |
 | `recall(n)` | the message events of the newest n turns, envelopes whole |
+| `score(predicate, passed, measured, denominator)` | whether the task's verdict on the run was recorded |
 | `turn(delta)` | runs one turn |
 
-**A discrepancy this page reports rather than settles.** The loop file's header
-says the seat offers exactly seven calls and lists seven. The connector exposes
-eight, `elide` having arrived with the elision port of 2026-08-22 without the header
-being recounted. Rechecked 2026-08-24: both counts stand, so the discrepancy does
-too.
-
-The table above is drawn from the connector. **That is a report and not a ruling.**
-This site's rule is that where a paper and its source disagree the paper is the
-defect, so a page is not the place a code comment gets corrected. What is owed is a
-fix to that header, and it is owed by the act that next touches the file rather than
-by this one.
+**The loop files' headers now agree with the connector.** They said the seat offered
+exactly seven calls while the connector exposed eight, `elide` having arrived with the
+elision port of 2026-08-22 without the headers being recounted, and this page reported
+that rather than settling it, a page being no place to correct a code comment. The act
+that added `score` on 2026-09-26 (#523) touched the headers and recounted them, so both
+now list the nine calls the table above draws from the connector.
 
 ## The one crossing
 

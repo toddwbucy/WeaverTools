@@ -254,15 +254,16 @@ partial account being the point of authoring one. Routing either to `fault` woul
 collapse a refusal into a death, which is the collapse this section refuses twice
 elsewhere.
 
-**The eight serving kinds this set does not carry are absent by construction rather than
+**The nine serving kinds this set does not carry are absent by construction rather than
 by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
 `tool.call.started`, `tool.call.completed`, and the classify pair have nothing to author
 them, and a variant standing for a case nothing produces is the reserved slot apex
 section 9 forbids. `load`, `unload`, and `session.closed` are absent for a different
 reason: they bracket a serving load and this record's bracket is the pass, which the
 `replay.` trio carries. `message.restored`, since 2026-09-26, is absent on the
-identity's ground: a diagnostic enter seats no prefix, per section 4. **`elision` was
-absent too until 2026-09-26**, on the narrower ground the flush's presence left
+identity's ground: a diagnostic enter seats no prefix, per section 4. `score`, since the
+same day, is absent because a replay runs no task and so reaches no verdict. **`elision`
+was absent too until 2026-09-26**, on the narrower ground the flush's presence left
 standing, the loop's grant then naming the flush and not the elision. The act that
 granted the loop the elision added the kind with its own argument, above.
 

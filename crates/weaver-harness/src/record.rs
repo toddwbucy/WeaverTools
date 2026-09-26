@@ -158,6 +158,8 @@ fn convert(event: Event) -> Result<weaver_diagnostic::Event, RecordFailure> {
         | Kind::Unload
         | Kind::SessionClosed
         | Kind::MessageRestored
+        // A replay scores nothing: the task's verdict is the serving run's.
+        | Kind::Score
         | Kind::ToolCallStarted
         | Kind::ToolCallCompleted
         | Kind::ClassifyRequest

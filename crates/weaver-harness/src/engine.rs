@@ -530,6 +530,70 @@ impl<'a> Ports<'a> {
         Some(answered)
     }
 
+    /// **The task's score**, per `weaver-harness-Spec` section 6's score
+    /// port and `weaver-trace-Spec` section 3's score clause (#523): the
+    /// verdict a task reached on this run, the predicate it answered and
+    /// whether that held, with the ratio over the task's denominator where
+    /// the task supplies one. The task is the loop's, so the loop hands the
+    /// verdict in and the harness authors it.
+    ///
+    /// **Recorded before the port answers**, on the announce-after-record
+    /// rule: `true` means the record holds the verdict. `false` means it does
+    /// not, and the port refuses without authoring anything where the call
+    /// is malformed or out of place:
+    ///
+    /// - a turn stands, the score being the run's close and belonging to no
+    ///   turn;
+    /// - a score already stands for this run, one run carrying one verdict;
+    /// - the predicate is empty, a verdict that names nothing;
+    /// - one term of the ratio arrives without the other, or the denominator
+    ///   is zero, neither being a ratio;
+    /// - the record is the diagnostic one, which carries no score, or the
+    ///   recorder will not take it.
+    ///
+    /// conforms: trace-score-records-the-verdict-and-its-terms
+    pub fn score(
+        &mut self,
+        predicate: &str,
+        passed: bool,
+        measured: Option<u64>,
+        denominator: Option<u64>,
+    ) -> bool {
+        if self.turn_in_flight.is_some() || predicate.is_empty() {
+            return false;
+        }
+        let ratio = match (measured, denominator) {
+            (None, None) => None,
+            (Some(measured), Some(denominator)) if denominator > 0 => {
+                Some(weaver_trace::ScoreRatio {
+                    measured,
+                    denominator,
+                })
+            }
+            _ => return false,
+        };
+        let scored = match self.recorder.structure() {
+            Some(structure) => structure.iter().any(|r| r.kind == Kind::Score),
+            None => return false,
+        };
+        if scored {
+            return false;
+        }
+        self.author
+            .author(
+                self.recorder,
+                Kind::Score,
+                Subsystem::Harness,
+                None,
+                Some(Payload::Score(weaver_trace::TaskScore {
+                    predicate: predicate.to_string(),
+                    passed,
+                    ratio,
+                })),
+            )
+            .is_ok()
+    }
+
     /// The state port, per `weaver-harness-Spec` section 6: the shape ask
     /// of `weaver-harness-state-contract` section 2, answered from the
     /// member's holdings, or `None` where the leg is down, the answer
@@ -3969,6 +4033,133 @@ mod tests {
 
     /// A serving recorder over a scratch sink, its load authored, the
     /// shape every seat test below opens on.
+    /// Runs `ask` against a granted seat with `turn` standing, and answers
+    /// what it answered beside every `score` line the record then holds.
+    fn with_seat<R>(
+        turn: Option<weaver_types::TurnKey>,
+        ask: impl FnOnce(&mut Ports<'_>) -> R,
+    ) -> (R, Vec<String>) {
+        let (near, _far) = socketpair(
+            AddressFamily::Unix,
+            SockType::SeqPacket,
+            None,
+            SockFlag::SOCK_CLOEXEC,
+        )
+        .expect("socketpair");
+        let decode = crate::channel::decode_from_owned(near);
+        let (mut recorder, author) = loaded_recorder();
+        let mut turn_ordinal = 3u64;
+        let mut turn_in_flight = turn;
+        let (listener, _dir) = test_listener();
+        let mut fullness = None;
+        let mut pressure_reported = false;
+        let load_facts = crate::engine::test_load_facts();
+        let answered = {
+            let mut ports = Ports::grant(
+                &decode,
+                &author,
+                &mut recorder,
+                &mut turn_ordinal,
+                &mut turn_in_flight,
+                &load_facts,
+                None,
+                &listener,
+                None,
+                None,
+                None,
+                None,
+                &mut fullness,
+                &mut pressure_reported,
+            );
+            ask(&mut ports)
+        };
+        let scores = recorder
+            .structure()
+            .expect("the serving record")
+            .iter()
+            .filter(|r| r.kind == Kind::Score)
+            .map(|r| r.line.to_string())
+            .collect();
+        (answered, scores)
+    }
+
+    /// **A run records one score, between turns, with its ratio's terms**
+    /// (#523). The first verdict lands and the port answers true, the
+    /// payload carrying the predicate, whether it held, and both terms. A
+    /// second verdict for the same run is refused and authors nothing.
+    ///
+    /// Perturbation: drop the check for a score already standing in
+    /// `Ports::score` and the second verdict lands too, two lines where one
+    /// is asserted.
+    ///
+    /// conforms: trace-score-records-the-verdict-and-its-terms
+    #[test]
+    fn a_run_records_one_score_between_turns() {
+        let (answers, scores) = with_seat(None, |ports| {
+            (
+                ports.score("reached-the-goal", true, Some(14), Some(11)),
+                ports.score("reached-the-goal", false, None, None),
+            )
+        });
+        assert_eq!(
+            answers,
+            (true, false),
+            "the first lands, the second refuses"
+        );
+        assert_eq!(scores.len(), 1, "one run, one verdict: {scores:?}");
+        assert!(
+            scores[0].contains(concat!(
+                r#""payload":{"predicate":"reached-the-goal","passed":true,"#,
+                r#""ratio":{"measured":14,"denominator":11}}"#
+            )) && !scores[0].contains(r#""turn""#),
+            "the verdict and both terms, turnless: {}",
+            scores[0]
+        );
+    }
+
+    /// **A score out of place or malformed is refused and authors nothing**
+    /// (#523): inside a standing turn, with one term of the ratio and not the
+    /// other, with a zero denominator, or with an empty predicate. A verdict
+    /// whose task supplies no denominator is not malformed and lands with no
+    /// ratio at all.
+    ///
+    /// Perturbations: drop the turn check and the mid-turn verdict lands;
+    /// let a lone term through as no ratio and the half-ratio verdicts land.
+    /// Watched under each.
+    ///
+    /// conforms: trace-score-records-the-verdict-and-its-terms
+    #[test]
+    fn a_score_out_of_place_or_malformed_is_refused() {
+        let (answered, scores) = with_seat(Some(weaver_types::TurnKey("t-3".into())), |ports| {
+            ports.score("reached-the-goal", true, None, None)
+        });
+        assert!(
+            !answered && scores.is_empty(),
+            "no score inside a turn: {scores:?}"
+        );
+        for (measured, denominator, what) in [
+            (Some(14), None, "a measured count with no denominator"),
+            (None, Some(11), "a denominator with no measured count"),
+            (Some(14), Some(0), "a zero denominator"),
+        ] {
+            let (answered, scores) = with_seat(None, |ports| {
+                ports.score("reached-the-goal", true, measured, denominator)
+            });
+            assert!(!answered && scores.is_empty(), "{what} refuses: {scores:?}");
+        }
+        let (answered, scores) = with_seat(None, |ports| ports.score("", true, None, None));
+        assert!(!answered && scores.is_empty(), "an empty predicate refuses");
+        let (answered, scores) = with_seat(None, |ports| {
+            ports.score("reached-the-goal", false, None, None)
+        });
+        assert!(answered, "a verdict with no denominator lands");
+        assert!(
+            scores[0].contains(r#""payload":{"predicate":"reached-the-goal","passed":false}"#),
+            "with no ratio at all: {}",
+            scores[0]
+        );
+    }
+
     fn loaded_recorder() -> (crate::record::Record, Author) {
         let session = SessionId("s-1".into());
         let mut recorder = crate::record::Record::Serving(

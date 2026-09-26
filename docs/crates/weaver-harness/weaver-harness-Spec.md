@@ -1934,6 +1934,18 @@ a preload is worth waiting on. **An answered replay reaches the record as a `rec
 before the loop walks it**, as of 2026-09-26, named by the answer's first and last
 events and its count rather than by every identity, per the same clause.
 
+**The seat carries the score port, 2026-09-26, on issue #523.** `Ports` grows one call:
+the predicate a task answered on this run, whether it held, and, where the task supplies
+a denominator, the count the run measured against it, answering whether the record holds
+the verdict. **The task is the loop's and the verdict is the loop's**, the harness
+holding the mechanic and no motive, so the port records what it is handed and judges
+nothing. It authors the record's `score` before it answers, per `weaver-trace-Spec`
+section 3's score clause, and refuses without authoring where the call is out of place
+or malformed: inside a standing turn, a second verdict for the run, an empty predicate,
+one term of the ratio without the other, or a zero denominator. Those are the loop's own
+malformed calls rather than a seam's refusal, so no `refusal` event carries them. Under
+a diagnostic binding the port answers false, the replay's record carrying no score.
+
 **The seat carries the classify port, 2026-08-19, through the same front
 door, with the classifier code act's opening.** `Ports` grows one call:
 content in, the artifact's scored labels back, or nothing where the leg is

@@ -57,6 +57,7 @@
 //!         Kind::ClassifyOutput => "classify.output",
 //!         Kind::Recall => "recall",
 //!         Kind::MessageRestored => "message.restored",
+//!         Kind::Score => "score",
 //!     }
 //! }
 //! ```
@@ -149,8 +150,8 @@ pub use canonical::{MonotonicNs, Sequence};
 pub use event::{
     Candidate, ClassifyAsk, ClassifyScored, Elections, ElisionSpan, Envelope, Event, Finish,
     FlushCounts, GrantSurface, Kind, Line, Lineage, LoopIdentity, ModelField, ModelOutput, Payload,
-    RecallAccount, RecallAsk, RecallVerb, RecalledIdentity, RunRef, SessionRef, StopReason,
-    StoreIdentity, Subsystem, TurnClose, TurnRef, UnloadClose, raw_payload,
+    RecallAccount, RecallAsk, RecallVerb, RecalledIdentity, RunRef, ScoreRatio, SessionRef,
+    StopReason, StoreIdentity, Subsystem, TaskScore, TurnClose, TurnRef, UnloadClose, raw_payload,
 };
 pub use failure::{Failure, FieldName, SubmitRefusal, WriteError};
 pub use structure::{Record, WorkingStructure};

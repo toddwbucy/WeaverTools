@@ -1,8 +1,8 @@
 //! conforms: trace-kind-payload-mapping-total
 //!
 //! **The kind set's count, read by the compiler rather than by a reader.**
-//! `weaver-trace-Spec` section 3 states the mapping is total over twenty-three
-//! kinds and seventeen dispositions, and records that the recount has gone wrong
+//! `weaver-trace-Spec` section 3 states the mapping is total over twenty-four
+//! kinds and eighteen dispositions, and records that the recount has gone wrong
 //! twice, the second time silently, both halves standing at eighteen kinds
 //! against a crate compiling thirteen. Until this file the count stood in prose
 //! and in no instrument, and a mapping that is stale reads exactly like a
@@ -62,10 +62,11 @@ fn ordinal(kind: Kind) -> usize {
         Kind::ClassifyOutput => 20,
         Kind::Recall => 21,
         Kind::MessageRestored => 22,
+        Kind::Score => 23,
     }
 }
 
-/// **The kind set is twenty-three, and each of the twenty-three stands in it
+/// **The kind set is twenty-four, and each of the twenty-four stands in it
 /// once**, per `weaver-trace-Spec` section 3.
 ///
 /// The array's declared length is the count and the compiler checks it. The
@@ -74,8 +75,8 @@ fn ordinal(kind: Kind) -> usize {
 ///
 /// The first is about `ALL` alone and reaches no match: no kind is named
 /// twice. Perturbation: name `Kind::ClassifyRequest` in place of
-/// `Kind::ClassifyOutput` and it fails, the twenty-three entries no longer
-/// naming twenty-three kinds.
+/// `Kind::ClassifyOutput` and it fails, the twenty-four entries no longer
+/// naming twenty-four kinds.
 ///
 /// The second is about `ordinal` against `ALL`: every ordinal the exhaustive
 /// match produces is reached. **Marking happens without asserting**, so a
@@ -83,10 +84,10 @@ fn ordinal(kind: Kind) -> usize {
 /// stopping the walk where the pigeonhole would make the second unreachable.
 /// Perturbation: return 19 from the `Kind::ClassifyOutput` arm of `ordinal`
 /// and it fails while the first passes, `ALL` being untouched and its
-/// twenty-three kinds still distinct.
+/// twenty-four kinds still distinct.
 #[test]
-fn the_kind_set_is_twenty_three() {
-    const ALL: [Kind; 23] = [
+fn the_kind_set_is_twenty_four() {
+    const ALL: [Kind; 24] = [
         Kind::Load,
         Kind::Unload,
         Kind::SessionClosed,
@@ -110,12 +111,13 @@ fn the_kind_set_is_twenty_three() {
         Kind::ClassifyOutput,
         Kind::Recall,
         Kind::MessageRestored,
+        Kind::Score,
     ];
 
     for (at, kind) in ALL.iter().enumerate() {
         assert!(
             !ALL[..at].contains(kind),
-            "the twenty-three entries name one kind twice: {kind:?}"
+            "the twenty-four entries name one kind twice: {kind:?}"
         );
     }
 

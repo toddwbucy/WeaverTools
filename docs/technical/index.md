@@ -78,7 +78,7 @@ written per turn and takes effect on the next crossing. Extending the floor is a
 build-time change** and is grouped here because both are places a person decides
 something rather than places the framework does.
 
-- [The loop](weaver-agents/loop.md) - loop 0 and loop 1, the seat's eight calls, the one
+- [The loop](weaver-agents/loop.md) - loop 0 and loop 1, the seat's nine calls, the one
   crossing, and everything the framework refuses to decide
 - [Extending the program](weaver-agents/extending.md) - the floor, the seams, a new
   organ, and where the framework's requirements stop
