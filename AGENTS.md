@@ -29,4 +29,4 @@ Use Rust tests and doctests, with descriptive `snake_case` test names and integr
 
 ## Commit & Pull Request Guidelines
 
-Follow history's descriptive prefixes: `code:`, `docs:`, or `process:`. Open PRs as drafts. Describe behavior changes, relevant Spec clauses/issues, and validation results. Complete required gates and review before leaving draft; answer every finding and repeat review after substantive rework. See `CLAUDE.md` for the detailed review sequence.
+Follow history's descriptive prefixes: `code:`, `docs:`, or `process:`. Open PRs as drafts. Describe behavior changes, relevant Spec clauses/issues, and validation results. The gates and the Planner's verification complete before leaving draft, and leaving draft fires the Codex pass. Answer every finding, and the review repeats after substantive rework until a pass leaves nothing to push. `CLAUDE.md` carries the sequence.
