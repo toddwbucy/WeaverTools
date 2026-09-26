@@ -111,7 +111,7 @@ class Fixture(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         self.plan = prepare.template(self.root, 'todd', 1000)
-        self.plan['rulings'] = {k: '#679/ruling' for k in self.plan['rulings']}
+        self.plan['rulings'] = {k: f'https://github.com/toddwbucy/WeaverTools/issues/679#issuecomment-{n}' for n, k in enumerate(self.plan['rulings'], 1)}
         self.source = self.root / 'source.ndjson'
         self.source.write_text(ndjson(event(golden.MODEL_MEASUREMENT, run='r')))
         # One trace per source device, as the historical cells recorded them.
@@ -176,6 +176,11 @@ class Fixture(unittest.TestCase):
                ('root',lambda p:p.update(install_root='/etc/weaver/admin')),
                ('tuple',lambda p:p['tuple'].update(context_capacity=100)),
                ('ruling',lambda p:p['rulings'].update(control_count=None)),
+               # #683 thread 40: a ruling is the decision's URL, never a placeholder.
+               ('ruling-true',lambda p:p['rulings'].update(control_count=True)),
+               ('ruling-int',lambda p:p['rulings'].update(control_count=1)),
+               ('ruling-text',lambda p:p['rulings'].update(hold_lifted='placeholder')),
+               ('ruling-elsewhere',lambda p:p['rulings'].update(cuda_provenance='https://example.org/issues/1')),
                ('arm',lambda p:p['arms'][0].update(name='WRONG')),
                ('identities',lambda p:p['arms'][1]['jobs'][0].update(id=p['arms'][1]['jobs'][1]['id'])),
                ('kind',lambda p:p['arms'][0]['jobs'].append(dict(id='extra',kind='shell',stack='B1',source_trace='/trace',source_run='r'))),

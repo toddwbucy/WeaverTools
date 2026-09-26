@@ -18,11 +18,15 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import time
+
+
+RULING = re.compile(r'https://github\.com/toddwbucy/WeaverTools/(issues|pull)/[0-9]+(#issuecomment-[0-9]+)?')
 
 
 class Refused(RuntimeError):
@@ -101,8 +105,10 @@ def validate_plan(plan):
         'identity': 'You are Karl, a careful writer. Answer plainly and at length when asked, and do not stop early.',
         'seeds': [451234785645, 1156316220, 7, 1000003, 123456789, 987654321, 2718281828, 3141592653],
         'runs_per_seed': 2, 'driver': '615.71.09'})
-    check('rulings', all(plan.get('rulings', {}).get(k) for k in
-                         ['hold_lifted', 'cuda_provenance', 'control_count']))
+    # Each ruling is the URL of the decision on this repository, an issue or
+    # pull request, optionally one comment of it; a placeholder is refused.
+    check('rulings', all(isinstance(plan.get('rulings', {}).get(k), str) and RULING.fullmatch(plan['rulings'][k])
+                         for k in ['hold_lifted', 'cuda_provenance', 'control_count']))
     arms = plan['arms']
     check('arm-order', [a['name'] for a in arms] == ['TB0', 'TB-d', 'TB-k'])
     jobs = [j for a in arms for j in a['jobs']]
