@@ -557,13 +557,13 @@ coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-orde
 `device-sources`, `device-traces`, `device-selections-distinct`, `kernel-schedule`,
 `hold`, `review`, `approval-coverage`, `artifact-hashes`, `halt`, `plan-snapshot`,
 `manifest-coverage`, `manifest-hashes`, `identity-evidence`, `identity-inputs`,
-`identity-binds-stacks`, `cursor`, `prior-success`, `prior-evidence`, `step-order`,
-`seat`, `not-repeated`, `driver-live`, `driver-owner`, `no-live-driver`,
-`report-evidence`, `payload-hash`, `payload-exit`, `payload-receipt`, `wait-owner`,
-`wait-order`, `wait-deadline` and `operator-not-root`. The payload's: `root-payload`,
-`plan-hash`, `fixed-root-agent`, `operator`, `source-file-hash`, `job-found`,
-`model-source`, `existing-model-custody`, `existing-model`, `stack-no-symlinks`,
-`stack-libraries`, `stack-file-coverage`, `fresh-install-root`,
+`identity-binds-stacks`, `identity-recomputed`, `cursor`, `prior-success`,
+`prior-evidence`, `step-order`, `seat`, `not-repeated`, `driver-live`, `driver-owner`,
+`no-live-driver`, `report-evidence`, `payload-hash`, `payload-exit`, `payload-receipt`,
+`wait-owner`, `wait-order`, `wait-deadline` and `operator-not-root`. The payload's:
+`root-payload`, `plan-hash`, `fixed-root-agent`, `operator`, `source-file-hash`,
+`job-found`, `model-source`, `existing-model-custody`, `existing-model`,
+`stack-no-symlinks`, `stack-libraries`, `stack-file-coverage`, `fresh-install-root`,
 `no-symlink-destination`, `snapshot-hash`, `new-model-custody`, `installed-no-symlinks`,
 `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`,
 `installation-plan`, `installed-model-custody`, `served-directory-custody`,
@@ -576,9 +576,10 @@ coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-orde
 `source-weights-held`, `source-seed-held`, `replay-completed`, `single-replay`,
 `replay-measurement`, `request-absent`, `request-duplicated`, `output-absent`,
 `output-duplicated`, `field-duplicated`, `field-beyond-output`, `replay-weights-held`,
-`replay-seed-held`, `pair-count`, `pair-falsifier`, `own-refeed-falsifier`,
-`control-falsifier`, `changed-seed-prediction` and `report-path`. The inventory raises
-its refusals as errors on the command line, since it runs before any plan exists.
+`replay-seed-held`, `input-held`, `divergence-in-input`, `pair-count`, `pair-falsifier`,
+`own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` and
+`report-path`. The inventory raises its refusals as errors on the command line, since it
+runs before any plan exists.
 
 **The rulings are refusals too.** A plan whose `hold_lifted`, `cuda_provenance` or
 `control_count` ruling is empty is refused under `rulings`, and each names the URL
@@ -634,9 +635,9 @@ reads each citation from `code/`.
 | `blackwell-probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
 | `blackwell-probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
 | `blackwell-probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
-| `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
+| `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks`, `identity-recomputed` |
 | `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn`, and `well_formed`'s `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`, `field-duplicated`, `field-beyond-output` on every path |
-| `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases |
+| `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases, and `input-held`, `divergence-in-input` on the re-feed path, with the input length in `exact` |
 | `blackwell-probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
 **What the instruments cannot buy, named.** No test here touches the card, loads a
