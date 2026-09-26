@@ -454,14 +454,14 @@ All pull requests open as drafts, from a worktree, and the arrangement runs as t
 GitHub review is the third-party reviewer, the Planner seat grades, and the
 operator merges. CodeRabbit is retired since 2026-09-22.
 
-**Every push fires a Codex code pass**, undrafting fires one, and `@codex review`
-or `@codex security review` on the pull request requests one. A clean pass edits
-the summary comment in place and posts no review object and no thread; findings
-arrive as review threads, sometimes a minute after the summary row flips. Because
-a push fires a pass, the rework is always reviewed, which is the rule the
-sub-agent seat once carried as its second pass: on 2026-09-11 answering fifteen
-findings introduced a real defect in three pull requests of four, each found by
-the pass after the fixes.
+**A pull request in draft gets no pass.** Undrafting fires one, every push to an
+undrafted pull request fires one, and `@codex review` or `@codex security review` on the
+pull request requests one. A clean pass edits the summary comment in place and posts no
+review object and no thread; findings arrive as review threads, sometimes a minute after
+the summary row flips. Because the rework is a push to an undrafted pull request, the
+rework is always reviewed, which is the rule the sub-agent seat once carried as its
+second pass: on 2026-09-11 answering fifteen findings introduced a real defect in three
+pull requests of four, each found by the pass after the fixes.
 
 **The Planner grades every pass on the pull request** against a clean extract of
 the head, and verifies each fix by its own perturbation, not by the Executor's
@@ -483,10 +483,10 @@ series stopped because a review that long is authoring by another name.
 
 **Gates before review, and do not spend a pass on what the census counts**: a
 reviewer's attention on "is this perturbation cited" is attention not on "does
-this fix hold", and the first is deterministic. The order, then: gates including
-the census, the push and its pass, every finding answered, gates again, the
-Planner's grade, then out of draft when the Planner passes it and the operator
-takes the merge.
+this fix hold", and the first is deterministic. The order, then: gates including the
+census, the Planner's grade against a clean extract, out of draft, the Codex pass, every
+finding answered, gates again, the Planner's verification of the rework, the operator's
+merge.
 
 ## Police call
 
