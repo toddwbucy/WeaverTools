@@ -173,8 +173,16 @@ def answer(stack, verb, expected):
 
 
 def save(path, text, mode=0o644):
+    """A file root writes beneath a held chain: refused by name if its name is a
+    link, and opened O_NOFOLLOW so the write is pinned to a regular file at
+    that name whatever changes between the check and the open. O_TRUNC, not
+    O_EXCL, because the declaration is rewritten at every load."""
     need('no-symlink-destination', not path.is_symlink())
-    path.write_text(text)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, mode)
+    with os.fdopen(fd, 'w') as stream:
+        stream.write(text)
+        stream.flush()
+        os.fsync(stream.fileno())
     path.chmod(mode)
 
 

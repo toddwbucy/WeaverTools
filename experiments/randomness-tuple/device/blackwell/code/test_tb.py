@@ -677,7 +677,13 @@ class PayloadTests(unittest.TestCase):
         self.assertIn(golden.ADMIN_NO_RESIDENCY,out.getvalue())
 
     def test_save_refuses_symlink(self):
+        # The named guard first; then, with the guard bypassed as a race would
+        # bypass it, the open itself refuses to follow a link at the name
+        # (#683 thread 47's second half: writes beneath a held root are pinned).
         p=self.base/'file';payload.save(p,'a');self.assertEqual(p.read_text(),'a')
+        target=self.base/'elsewhere';target.write_text('x');link=self.base/'linked';link.symlink_to(target)
+        with patch('tb_payload.need'),self.assertRaises(OSError):payload.save(link,'b')
+        self.assertEqual(target.read_text(),'x')
         link=self.base/'link';link.symlink_to(p)
         with self.assertRaises(RuntimeError):payload.save(link,'b')
         self.assertEqual(p.read_text(),'a')
