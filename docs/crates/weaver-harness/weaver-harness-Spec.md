@@ -1857,11 +1857,13 @@ because each party writes what it is the authority on, per the decode
 contract. A context that shrank without a record would break the same
 accumulation the flush's event exists to protect, and an interior removal
 breaks it harder: a flush leaves a suffix a reader could infer from the
-counts, and an elision leaves a sequence no count describes.
-Perturbation-verified: the scripted seam's answer carries counts deliberately
-unroundable and no span at all, the confirmation variant having none to carry,
-so a site reading the span from the answer has nothing to read and one
-defaulting it fails on the span the loop named.
+counts, and an elision leaves a sequence no count describes. **A refused authoring still
+answers the counts**, the removal having happened, and since 2026-09-26 the only refusal
+reachable there is the stream's own standing failure, under which nothing more can be
+recorded and the record's ending is the evidence. Perturbation-verified: the scripted
+seam's answer carries counts deliberately unroundable and no span at all, the
+confirmation variant having none to carry, so a site reading the span from the answer
+has nothing to read and one defaulting it fails on the span the loop named.
 
 ```graph
 node: harness-elision-authors-from-the-ask

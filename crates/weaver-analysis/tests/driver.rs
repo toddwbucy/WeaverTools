@@ -613,7 +613,11 @@ fn the_report_names_the_selection_that_crossed() {
         {"kind":"message.system","paths":["role","content"]},
         {"kind":"message.user","paths":["role","content"]},
         {"kind":"message.assistant","paths":["role","content"]},
-        {"kind":"message.tool_result","paths":["role","content"]}
+        {"kind":"message.tool_result","paths":["role","content"]},
+        {"kind":"flush","paths":["resident_before","resident_after"]},
+        {"kind":"elision","paths":["from","to","resident_before","resident_after"]},
+        {"kind":"fault","paths":["case"]},
+        {"kind":"recall","paths":["ask","returned","count"]}
     ]});
     for (args, mode, destination, election, count) in [
         (vec![], "recorded", "source", recorded.clone(), 2),

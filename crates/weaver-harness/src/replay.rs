@@ -52,6 +52,62 @@ struct SourceGeneration {
     weights_hash: String,
 }
 
+/// A resident edit the source made between turns, with the counts the
+/// record carried for it. The replay reproduces each where it fell, so the
+/// resident a later turn re-feeds onto is the one the source's turn drew on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Edit {
+    Flush {
+        before: u64,
+        after: u64,
+    },
+    Elision {
+        from: u64,
+        to: u64,
+        before: u64,
+        after: u64,
+    },
+}
+
+/// The holdings grouped: the recorded turns in landing order, and each edit
+/// with the number of turns that preceded it.
+struct Grouped {
+    turns: Vec<(String, Vec<SourceGeneration>)>,
+    edits: Vec<(usize, Edit)>,
+}
+
+/// Reproduces one recorded edit through the seat's own port and holds it to
+/// the record's counts. `Ok(true)` continues the walk. `Ok(false)` means the
+/// pass ended here with its account already recorded: a refused or dead
+/// port authors its own refusal and no close follows, as a refused re-feed
+/// ends the pass, and counts that disagree close it abandoned at identity,
+/// since the replay would go on feeding a context the source never held.
+fn reproduce(seat: &mut Ports<'_>, edit: Edit) -> Result<bool, TurnError> {
+    let (answered, recorded, what) = match edit {
+        Edit::Flush { before, after } => (seat.flush(after), (before, after), "flush"),
+        Edit::Elision {
+            from,
+            to,
+            before,
+            after,
+        } => (seat.elide(from, to), (before, after), "elision"),
+    };
+    let Some(answered) = answered else {
+        return Ok(false);
+    };
+    if answered != recorded {
+        refuse_identity(
+            seat,
+            format!(
+                "the replay's {what} took the resident from {} to {} where the record's went from {} to {}",
+                answered.0, answered.1, recorded.0, recorded.1
+            ),
+        )?;
+        return Ok(false);
+    }
+    Ok(true)
+}
+
 /// The walk, whole: ask, group, establish identity, re-feed, compare,
 /// close. Returns only on a channel-level failure the service cannot
 /// survive: every outcome of the replay itself is the record's.
@@ -82,8 +138,8 @@ pub(crate) fn drive(
         );
     };
 
-    let turns = match group(&events) {
-        Ok(turns) => turns,
+    let Grouped { turns, edits } = match group(&events) {
+        Ok(grouped) => grouped,
         Err(detail) => return refuse_identity(seat, detail),
     };
 
@@ -125,7 +181,19 @@ pub(crate) fn drive(
     // comparable behind a divergence, but the certification itself fails at
     // the first divergent position, per the charter's step 2, and the pass
     // closes naming it.
-    for (turn_key, generations) in &turns {
+    // **The source's resident edits are reproduced where they fell**, per
+    // `diagnostic-replay-loop` section 2 as of 2026-09-26: a flush or an
+    // elision between two turns is driven through the seat with the
+    // record's counts before the later turn re-feeds, so that turn draws on
+    // the resident the source's did. The M1 run `m1-002` flushed at 255 and
+    // re-entered at 259, and a walk that passed the flush by re-fed turn 37
+    // onto every earlier turn and diverged there (#673 item 1).
+    for (index, (turn_key, generations)) in turns.iter().enumerate() {
+        for &(_, edit) in edits.iter().filter(|(at, _)| *at == index) {
+            if !reproduce(seat, edit)? {
+                return Ok(());
+            }
+        }
         let turn = TurnKey(turn_key.clone());
         seat.replay_turn_started(&turn)?;
         for source in generations {
@@ -167,6 +235,11 @@ pub(crate) fn drive(
         }
         seat.replay_turn_closed(&turn)?;
     }
+    for &(_, edit) in edits.iter().filter(|(at, _)| *at == turns.len()) {
+        if !reproduce(seat, edit)? {
+            return Ok(());
+        }
+    }
 
     close(seat, ReplayOutcome::Certified)
 }
@@ -198,7 +271,8 @@ fn refuse_identity(seat: &mut Ports<'_>, detail: String) -> Result<(), TurnError
 /// opened a second session the replay has no fresh context for, so
 /// holdings spanning runs refuse at identity instead of replaying a
 /// conversation across a boundary the source never crossed.
-fn group(events: &[Recalled]) -> Result<Vec<(String, Vec<SourceGeneration>)>, String> {
+fn group(events: &[Recalled]) -> Result<Grouped, String> {
+    let mut edits: Vec<(usize, Edit)> = Vec::new();
     let mut run: Option<&str> = None;
     let mut order: Vec<String> = Vec::new();
     let mut pending: std::collections::BTreeMap<String, PendingRequest> = Default::default();
@@ -245,8 +319,52 @@ fn group(events: &[Recalled]) -> Result<Vec<(String, Vec<SourceGeneration>)>, St
                     .or_default()
                     .push(measurement_members(event, turn, request)?);
             }
+            // **A resident edit is a step of the walk**, placed after the
+            // turns that preceded it: it lands between turns, so one
+            // arriving while a request stands unpaired is refused.
+            "flush" | "elision" => {
+                if let Some(turn) = pending.keys().next() {
+                    return Err(format!("a {} lands inside turn {turn}", event.kind));
+                }
+                let count = |key: &str| -> Result<u64, String> {
+                    pair(event, key)
+                        .and_then(|raw| raw.parse().ok())
+                        .ok_or_else(|| {
+                            format!(
+                                "the {} at sequence {} holds no {key}",
+                                event.kind, event.sequence
+                            )
+                        })
+                };
+                let edit = if event.kind == "flush" {
+                    Edit::Flush {
+                        before: count("resident_before")?,
+                        after: count("resident_after")?,
+                    }
+                } else {
+                    Edit::Elision {
+                        from: count("from")?,
+                        to: count("to")?,
+                        before: count("resident_before")?,
+                        after: count("resident_after")?,
+                    }
+                };
+                edits.push((order.len(), edit));
+            }
+            // **An open whose prefix went unrecorded does not certify**, per
+            // `weaver-trace-Spec` section 3's recall clause: the harness names
+            // a recall or a seated prefix the recorder would not take in an
+            // `identity_prefix_unrecorded` fault, and a record missing the
+            // provenance of the input its run opened under is not one a
+            // certification can stand on.
+            "fault" if pair(event, "case") == Some("\"identity_prefix_unrecorded\"") => {
+                return Err(format!(
+                    "the source's open recorded an identity_prefix_unrecorded fault at sequence {}, so its opening input is not in the record",
+                    event.sequence
+                ));
+            }
             // Turnless events - the run brackets, the seated prefix, a
-            // flush, the load - inform identity and feed nothing
+            // recall, the load - inform identity and feed nothing
             // positionally, and kinds this walk does not read pass by, per
             // the versionless-schema rule.
             _ => {}
@@ -263,7 +381,10 @@ fn group(events: &[Recalled]) -> Result<Vec<(String, Vec<SourceGeneration>)>, St
         }
         grouped.push((turn, generations));
     }
-    Ok(grouped)
+    Ok(Grouped {
+        turns: grouped,
+        edits,
+    })
 }
 
 /// The request's elected members, half a [`SourceGeneration`] until its
@@ -968,6 +1089,284 @@ mod tests {
         r#""model":"art","weights_hash":"h"},"#,
         r#""resident":6,"capacity":64}}"#
     );
+
+    /// A scripted SPU that holds a resident count, as the real one does: a
+    /// flush returns it to `keep`, an elision removes its span, and a re-feed
+    /// appends the input, the draws and the terminator. **It draws the
+    /// recorded path only where the re-feed starts at the resident the
+    /// source's generation started at**, and draws 9999 otherwise, which is
+    /// the device's behaviour the M1 run showed: the same rendered delta on a
+    /// different resident drew a different token.
+    fn resident_spu(far: std::os::fd::OwnedFd, mut resident: u64, starts: &[u64]) {
+        let mut buf = vec![0u8; 65536];
+        let mut refeeds = 0;
+        while let Ok(n) = recv(far.as_raw_fd(), &mut buf, MsgFlags::empty()) {
+            if n == 0 {
+                break;
+            }
+            let directive: serde_json::Value =
+                serde_json::from_slice(&buf[..n]).expect("the directive parses");
+            let answer = match directive["kind"].as_str() {
+                Some("flush") => {
+                    let before = resident;
+                    resident = directive["keep"].as_u64().expect("a keep");
+                    serde_json::to_string(&weaver_types::TokenAnswer::Flushed {
+                        resident_before: before,
+                        resident_after: resident,
+                    })
+                    .expect("renders")
+                }
+                Some("elide") => {
+                    let before = resident;
+                    let span =
+                        directive["to"].as_u64().unwrap() - directive["from"].as_u64().unwrap();
+                    resident -= span;
+                    serde_json::to_string(&weaver_types::TokenAnswer::Elided {
+                        resident_before: before,
+                        resident_after: resident,
+                    })
+                    .expect("renders")
+                }
+                Some("re_feed") => {
+                    let drawn = if starts.get(refeeds) == Some(&resident) {
+                        3
+                    } else {
+                        9999
+                    };
+                    refeeds += 1;
+                    resident += 2 + 1 + 1;
+                    format!(
+                        concat!(
+                            r#"{{"kind":"re_fed","body":{{"emission":"hi","finish":"completed","#,
+                            r#""content":[{{"type":"text","text":"hi"}}],"#,
+                            r#""request":{{"rendered":"hi","template":"tmpl","sampling":{{"seed":37}}}},"#,
+                            r#""measurement":{{"input_tokens":[1,2],"output_tokens":[{}],"#,
+                            r#""model":"art","weights_hash":"h"}},"#,
+                            r#""resident":{},"capacity":32768}}}}"#
+                        ),
+                        drawn, resident
+                    )
+                }
+                other => panic!("an unscripted directive: {other:?}"),
+            };
+            if send(far.as_raw_fd(), answer.as_bytes(), MsgFlags::empty()).is_err() {
+                break;
+            }
+        }
+    }
+
+    /// One recorded generation of the sealed answer's shape, in `turn`, at
+    /// the sequences given, for building a longer holdings list.
+    fn generation(turn: &str, request: u64, measurement: u64) -> String {
+        format!(
+            concat!(
+                r#"{{"envelope":{{"kind":"model.request","run":"r-1","turn":"{t}","sequence":"{a}"}},"#,
+                r#""pairs":{{"rendered":"hi","template":"tmpl","sampling":{{"seed":37}}}}}},"#,
+                r#"{{"envelope":{{"kind":"model.measurement","run":"r-1","turn":"{t}","sequence":"{b}"}},"#,
+                r#""pairs":{{"input_tokens":[1,2],"output_tokens":[3],"model":"art","weights_hash":"h"}}}}"#
+            ),
+            t = turn,
+            a = request,
+            b = measurement
+        )
+    }
+
+    fn holdings(events: &[String]) -> String {
+        format!(
+            "{}{}{}\n",
+            r#"{"answer":{"replay":{"events":["#,
+            events.join(","),
+            r#"]}}}"#
+        )
+    }
+
+    fn flush_event(sequence: u64, before: u64, after: u64) -> String {
+        format!(
+            r#"{{"envelope":{{"kind":"flush","run":"r-1","sequence":"{sequence}"}},"pairs":{{"resident_before":{before},"resident_after":{after}}}}}"#
+        )
+    }
+
+    /// The M1 run's shape around its flush: turn 36 closed the resident at
+    /// 26551, the flush at 255 took it to 38, and turn 37 re-entered there.
+    fn m1_holdings(flush_before: u64) -> String {
+        holdings(&[
+            generation("t-36", 250, 252),
+            flush_event(255, flush_before, 38),
+            generation("t-37", 259, 261),
+        ])
+    }
+
+    /// Turn 36 starts at 26547, so its re-feed of two input tokens, one draw
+    /// and the terminator closes at 26551, and turn 37 starts at 38.
+    fn m1_spu(far: std::os::fd::OwnedFd) {
+        resident_spu(far, 26547, &[26547, 38]);
+    }
+
+    /// **The replay certifies past the flush, `m1-002`'s shape**, per
+    /// `diagnostic-replay-loop` section 2 as of 2026-09-26 (#673 item 1):
+    /// the recorded flush is reproduced through the seat between the two
+    /// turns with its counts, so turn 37 re-feeds onto the 38 tokens the
+    /// source's did and draws the recorded path, and the destination
+    /// records the flush where it fell.
+    ///
+    /// Perturbation: drop the `"flush" | "elision"` arm from `group`, or the
+    /// `reproduce` call before each turn, and turn 37 re-feeds onto the
+    /// 26551 tokens of every earlier turn, draws 9999 and the pass diverges.
+    /// Watched under both.
+    #[test]
+    fn the_replay_certifies_past_the_flush() {
+        let (outcome, lines) = run_drive(Some(m1_holdings(26551)), m1_spu);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(
+            close["payload"]["outcome"]["kind"], "certified",
+            "the post-flush turn certifies: {close}"
+        );
+        let kinds: Vec<&str> = lines.iter().filter_map(|l| l["kind"].as_str()).collect();
+        let flush = kinds
+            .iter()
+            .position(|k| *k == "flush")
+            .expect("the flush is recorded");
+        let turns: Vec<usize> = kinds
+            .iter()
+            .enumerate()
+            .filter(|(_, k)| **k == "turn.started")
+            .map(|(i, _)| i)
+            .collect();
+        assert!(
+            turns[0] < flush && flush < turns[1],
+            "between the two turns, where the source's fell: {kinds:?}"
+        );
+        assert_eq!(lines[flush]["payload"]["resident_before"], 26551);
+        assert_eq!(lines[flush]["payload"]["resident_after"], 38);
+    }
+
+    /// **A reproduction whose counts disagree with the record closes the pass
+    /// abandoned at identity, naming both**: the replay would otherwise go on
+    /// feeding a resident the source never held.
+    ///
+    /// Perturbation: drop the comparison in `reproduce` and the pass walks on
+    /// and certifies over a flush that did not match.
+    #[test]
+    fn a_flush_that_disagrees_with_the_record_abandons_at_identity() {
+        let (outcome, lines) = run_drive(Some(m1_holdings(26550)), m1_spu);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned");
+        let detail = close["payload"]["outcome"]["reason"]["detail"]
+            .as_str()
+            .expect("a detail");
+        assert!(
+            detail.contains("26551") && detail.contains("26550"),
+            "names both counts: {detail}"
+        );
+    }
+
+    /// **An elision is reproduced the same way**, the source's other resident
+    /// edit: its span removed through the seat and its counts held.
+    ///
+    /// Perturbation: drop the elision's branch in `group` and the later turn
+    /// re-feeds onto the unelided resident and diverges. Drop `elision` from
+    /// the diagnostic mapping and the event goes unrecorded while the pass
+    /// certifies, which the recorded-event assertion catches.
+    #[test]
+    fn the_replay_certifies_past_an_elision() {
+        fn spu(far: std::os::fd::OwnedFd) {
+            resident_spu(far, 100, &[100, 84]);
+        }
+        let elision = r#"{"envelope":{"kind":"elision","run":"r-1","sequence":"7"},"pairs":{"from":10,"to":30,"resident_before":104,"resident_after":84}}"#;
+        let answer = holdings(&[
+            generation("t-1", 4, 6),
+            elision.to_string(),
+            generation("t-2", 9, 11),
+        ]);
+        let (outcome, lines) = run_drive(Some(answer), spu);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "certified", "{close}");
+        // The replay's own record holds the elision it performed, between the
+        // two turns: a record that could not carry it would drop an act its
+        // own loop performs, the flush's reason.
+        let kinds: Vec<&str> = lines.iter().filter_map(|l| l["kind"].as_str()).collect();
+        let elision = kinds
+            .iter()
+            .position(|k| *k == "elision")
+            .unwrap_or_else(|| panic!("the elision is recorded: {kinds:?}"));
+        let turns: Vec<usize> = kinds
+            .iter()
+            .enumerate()
+            .filter(|(_, k)| **k == "turn.started")
+            .map(|(i, _)| i)
+            .collect();
+        assert!(turns[0] < elision && elision < turns[1], "{kinds:?}");
+        assert_eq!(lines[elision]["payload"]["from"], 10);
+        assert_eq!(lines[elision]["payload"]["resident_after"], 84);
+    }
+
+    /// **An edit the record cannot place, or cannot count, refuses the
+    /// grouping before any forward pass**: a flush while a request stands
+    /// unpaired, and a flush holding no counts, as a source elected without
+    /// them would.
+    #[test]
+    fn an_edit_without_its_place_or_its_counts_refuses_the_grouping() {
+        let inside = holdings(&[
+            r#"{"envelope":{"kind":"model.request","run":"r-1","turn":"t-1","sequence":"4"},"pairs":{"rendered":"hi","template":"tmpl","sampling":{"seed":37}}}"#.to_string(),
+            flush_event(5, 6, 3),
+            r#"{"envelope":{"kind":"model.measurement","run":"r-1","turn":"t-1","sequence":"6"},"pairs":{"input_tokens":[1,2],"output_tokens":[3],"model":"art","weights_hash":"h"}}"#.to_string(),
+        ]);
+        let bare = holdings(&[
+            generation("t-1", 4, 6),
+            r#"{"envelope":{"kind":"flush","run":"r-1","sequence":"7"},"pairs":{}}"#.to_string(),
+            generation("t-2", 9, 11),
+        ]);
+        for (answer, expected) in [
+            (inside, "lands inside turn t-1"),
+            (bare, "holds no resident_before"),
+        ] {
+            let (outcome, lines) = run_drive(Some(answer), idle_decode);
+            assert!(outcome.is_ok());
+            let close = lines.last().expect("the close stands");
+            assert_eq!(close["payload"]["outcome"]["kind"], "abandoned");
+            assert!(
+                close["payload"]["outcome"]["reason"]["detail"]
+                    .as_str()
+                    .is_some_and(|d| d.contains(expected)),
+                "{expected}: {close}"
+            );
+        }
+    }
+
+    /// **A source whose open recorded `identity_prefix_unrecorded` does not
+    /// certify, and an unrelated fault does not stop one** (#690 item C2.8).
+    ///
+    /// Perturbation: drop the fault arm from `group` and the first holdings
+    /// certify; match any fault case and the second abandons.
+    #[test]
+    fn an_unrecorded_opening_refuses_certification_and_another_fault_does_not() {
+        let fault = |case: &str| {
+            format!(
+                r#"{{"envelope":{{"kind":"fault","run":"r-1","sequence":"2"}},"pairs":{{"case":"{case}"}}}}"#
+            )
+        };
+        let unrecorded = holdings(&[fault("identity_prefix_unrecorded"), generation("t-1", 4, 6)]);
+        let (outcome, lines) = run_drive(Some(unrecorded), idle_decode);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned", "{close}");
+        assert!(
+            close["payload"]["outcome"]["reason"]["detail"]
+                .as_str()
+                .is_some_and(|d| d.contains("identity_prefix_unrecorded")),
+            "{close}"
+        );
+        let unrelated = holdings(&[fault("recorder_commit_pressure"), generation("t-1", 4, 6)]);
+        let (outcome, lines) = run_drive(Some(unrelated), answers_refed);
+        assert!(outcome.is_ok());
+        assert_eq!(
+            lines.last().expect("the close stands")["payload"]["outcome"]["kind"],
+            "certified"
+        );
+    }
 
     /// conforms: diagnostic-divergence-position-is-the-resident-length
     #[test]

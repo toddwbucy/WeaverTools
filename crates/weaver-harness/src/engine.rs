@@ -464,6 +464,15 @@ impl<'a> Ports<'a> {
         // session is unwell. Pressure is now a reading and never an answer,
         // and what remains here is the ordinary authoring failure, which
         // `Recorder` has already discarded by the time it answers.
+        //
+        // **Since 2026-09-26 the only refusal reachable here is the stream's
+        // own standing failure.** The event is always turnless and always
+        // paired with its span, and the diagnostic set carries `elision` as
+        // of that date, so nothing admits it on one binding and refuses it
+        // on the other. A standing failure refuses every later submission,
+        // a fault naming this elision included, so the record's ending is
+        // the evidence and the recorder's failure travels by the paths that
+        // already carry it.
         let _ = authored;
         Some(counts)
     }

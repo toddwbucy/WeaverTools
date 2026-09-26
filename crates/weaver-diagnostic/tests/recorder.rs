@@ -267,7 +267,7 @@ fn submit_as(kind: Kind, turn: Option<&str>) -> Result<Sequence, weaver_diagnost
 
 /// **A kind that belongs to no turn refuses one, and is admitted without**,
 /// per `weaver-diagnostic-Spec` section 3.2's turn table: the replay trio,
-/// and `flush` and `recall` with their serving rule.
+/// and `flush`, `elision` and `recall` with their serving rule.
 ///
 /// Perturbation: move any one of these kinds out of `turn_rule`'s forbidden
 /// arm and its turned submission is admitted. Watched moving `Recall` and
@@ -279,6 +279,7 @@ fn a_turnless_kind_refuses_a_turn() {
         Kind::ReplayIdentity,
         Kind::ReplayClosed,
         Kind::Flush,
+        Kind::Elision,
         Kind::Recall,
     ] {
         assert!(
@@ -360,6 +361,7 @@ fn every_kind_has_a_turn_watch() {
             | Kind::ReplayIdentity
             | Kind::ReplayClosed
             | Kind::Flush
+            | Kind::Elision
             | Kind::Recall
             | Kind::TurnStarted
             | Kind::TurnClosed

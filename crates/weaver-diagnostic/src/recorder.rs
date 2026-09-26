@@ -139,7 +139,8 @@ fn admit(event: &Event) -> Result<(), Failure> {
             | Kind::Flush
             | Kind::Refusal
             | Kind::Fault
-            | Kind::Recall,
+            | Kind::Recall
+            | Kind::Elision,
             Some(Payload::Spliced(_)),
         ) => Ok(()),
         (_, None) => refuse(SubmitRefusal::RequiredFieldAbsent {
@@ -171,6 +172,7 @@ fn turn_rule(kind: Kind) -> TurnRule {
         | Kind::ReplayIdentity
         | Kind::ReplayClosed
         | Kind::Flush
+        | Kind::Elision
         | Kind::Recall => TurnRule::Forbidden,
         // What a replayed turn carries, and a column taken at one of its
         // positions.

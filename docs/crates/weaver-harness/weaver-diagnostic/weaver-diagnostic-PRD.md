@@ -398,9 +398,10 @@ structural instead.
 Open cells, each named rather than implied:
 
 - **This crate's Spec landed 2026-08-27** and both elections this cell held are
-  settled there. The writer's vocabulary is its own closed set of eighteen
-  kinds since the act of 2026-09-26 added `recall`, fourteen spelled as the serving
-  vocabulary spells them and meaning there what they mean here, four of the record's own
+  settled there. The writer's vocabulary is its own closed set of nineteen
+  kinds since the acts of 2026-09-26 added `recall` and `elision`, fifteen
+  spelled as the serving vocabulary spells them and meaning there what they
+  mean here, four of the record's own
   that no serving record carries, `residual.column` the fourth per section
   13.7 of the SPU's charter as amended. The residual
   readout rides `model.measurement` exactly where a serving record puts it, density

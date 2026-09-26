@@ -276,8 +276,15 @@ event**, which that step says outright it reads there and never from the holding
 the holdings are what that rule produced, so recovering it from them would be
 reading a projection to learn what did the projecting. Since this crate's election
 decides what reaches the holdings at all, an election omitting `load` would land a
-session whose certification cannot check the rule that built it, which is the
-failure `weaver-agents-PRD` section 8 added the criterion to prevent.
+session whose certification cannot check the rule that built it, which is the failure
+`weaver-agents-PRD` section 8 added the criterion to prevent. **The source's resident
+edits, a fault's case and the recall are elected too**, as of 2026-09-26: `flush` with
+`resident_before` and `resident_after`, and `elision` with `from`, `to` and both counts,
+because `diagnostic-replay-loop` section 2's walk reproduces each where it fell and
+holds the reproduction to them. `fault` is elected with its `case`, because the identity
+step refuses a source whose open recorded `identity_prefix_unrecorded`. `recall` is
+elected with `ask`, `returned` and `count`, bounded to identities, so the destination
+carries what the source's post-flush input was drawn from.
 
 **This document is authoritative for the election's content**, per G5, and
 `diagnostic-replay-loop` section 2's step 2 sketches it for a reader walking the
@@ -634,7 +641,7 @@ different authority.** The line is the same line and the envelope the same
 envelope, per `weaver-diagnostic-Spec` sections 2 and 3.1, so section 2's rules
 above bind here unchanged: skip unknown content in semantic interpretation,
 derive nothing absent, and retain raw projection material. **What differs is the kind
-set**, eighteen rather than twenty-two, and `weaver-diagnostic-Spec` section 3.2 is
+set**, nineteen rather than twenty-two, and `weaver-diagnostic-Spec` section 3.2 is
 authoritative for it, a divergence being a defect against that document rather than this
 one.
 

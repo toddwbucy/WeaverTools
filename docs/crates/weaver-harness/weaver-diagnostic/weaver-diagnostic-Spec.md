@@ -155,7 +155,7 @@ to: diagnostic-session-is-the-replays-own
 
 ### 3.2 The kind set
 
-**Eighteen kinds, exhaustive, and the set is this crate's own.**
+**Nineteen kinds, exhaustive, and the set is this crate's own.**
 
     replay.opened          the pass's bracket opens, and the record identifies itself
     replay.identity        the input identity the pass established
@@ -175,8 +175,9 @@ to: diagnostic-session-is-the-replays-own
     refusal                a typed refusal answering an ask the pass sent
     fault                  a death, named
     recall                 an answered state-seam ask, by the identities it returned
+    elision                a span the loop removed, as the record carries one
 
-**Fourteen spellings are the serving vocabulary's and mean there what they mean
+**Fifteen spellings are the serving vocabulary's and mean there what they mean
 here.** A kind that names the same fact carries the same spelling and the same
 payload shape, which is what makes reader compatibility a rule rather than a
 coincidence, per section 4. **Four are this record's own**, the `replay.` trio
@@ -191,7 +192,8 @@ required field absent. Until this act the admission judged the pairing alone and
 admitted a turned `flush` or a turnless `model.request`, which a serving recorder
 refuses.
 
-    turnless        replay.opened, replay.identity, replay.closed, flush, recall
+    turnless        replay.opened, replay.identity, replay.closed, flush, elision,
+                    recall
     turn-required   turn.started, turn.closed, message.user, message.assistant,
                     message.tool_result, model.request, model.output,
                     model.measurement, model.field, residual.column
@@ -219,17 +221,27 @@ harness author a `flush` event on the flush's confirmation. A record that could 
 carry it would drop an act its own loop is chartered to perform, which is the
 accumulation reading broken exactly where the serving record protects it.
 
-**`recall` is carried because a replay's enter asks the member as a serving enter
-does**, on the ruling of 2026-09-26 that made an answered state-seam ask a serving
-kind, per `weaver-trace-Spec` section 3. The replay's enter asks for the session's
-identity, the loop's replay port asks for the holdings, and the harness authors a
-`recall` for each answered ask whatever the record's mechanism, so a record that could
-not carry one would refuse the replay's own enter and its own walk. The replay port's
+**`recall` is carried because the replay's own replay port authors one**, on the
+ruling of 2026-09-26 that made an answered state-seam ask a serving kind, per
+`weaver-trace-Spec` section 3. The loop's replay port asks the member for the
+holdings, and the harness records the answered ask as a `recall` whatever the record's
+mechanism, so a record that could not carry one would refuse the replay's own walk. It
 lands inside the bracket after `replay.opened` and before `replay.identity`, named by
-the holdings' first and last events and their count. It splices the serving payload as
-the other thirteen shared kinds do. What it adds to a replay's reading is nothing yet:
-`diagnostic-replay-loop` section 2's walk passes turnless kinds by, and the grouping
-that reads a flush and a source recall beside it is a later act's.
+the holdings' first and last events and their count. The replay's enter records
+nothing, as it records no load and no prefix, per the same section. It splices the
+serving payload as the other fourteen shared kinds do. The walk reads the source's
+flush and elision since 2026-09-26, and a source's own `recall` rides the holdings for
+a reader, the cross-check that would read it being owed, per `diagnostic-replay-loop`
+section 2.
+
+**`elision` is carried because the loop now performs one**, as of 2026-09-26, which
+closes the open election section 8 held. `diagnostic-replay-loop` section 2 reproduces
+a source's elision where it fell, as it reproduces a flush, so the loop's grant names
+the elision port beside the flush's, and a record that could not carry the act would
+drop one its own loop performs, the flush's reason. Until this act the harness's
+authoring of a replay's elision was refused as outside this vocabulary and went
+unrecorded while the pass went on. It splices the serving payload, the span and both
+counts, and belongs to no turn.
 
 **`refusal` is carried because the same section authors every typed refusal, and a
 replay produces two.** `weaver-harness-Spec` section 6's ruling of 2026-08-22 has a
@@ -242,16 +254,16 @@ partial account being the point of authoring one. Routing either to `fault` woul
 collapse a refusal into a death, which is the collapse this section refuses twice
 elsewhere.
 
-**The eight serving kinds this set does not carry are absent by construction rather
-than by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
-`tool.call.started`, `tool.call.completed`, and the classify pair have nothing to
-author them, and a variant standing for a case nothing produces is the reserved slot
-apex section 9 forbids. `load`, `unload`, and `session.closed` are
-absent for a different reason: they bracket a serving load and this record's bracket
-is the pass, which the `replay.` trio carries. **`elision` is absent on the
-narrower ground the flush's presence leaves standing**: the loop's grant names the
-flush and not the elision, and a later act that grants one adds the kind with its
-own argument rather than finding a variant seated for it.
+**The seven serving kinds this set does not carry are absent by construction rather than
+by omission.** A replay runs no Gate, calls no tool, and asks no classifier, so
+`tool.call.started`, `tool.call.completed`, and the classify pair have nothing to author
+them, and a variant standing for a case nothing produces is the reserved slot apex
+section 9 forbids. `load`, `unload`, and `session.closed` are absent for a different
+reason: they bracket a serving load and this record's bracket is the pass, which the
+`replay.` trio carries. **`elision` was the eighth until 2026-09-26**, absent on the
+narrower ground the flush's presence left standing, the loop's grant then naming the
+flush and not the elision. The act that granted the loop the elision added the kind with
+its own argument, above.
 
 **`residual.column` is carried because the diagnostic binding may ask past the fold**,
 per the operator's ruling of 2026-08-30, `weaver-spu-PRD` section 13.7 as amended, and
@@ -274,8 +286,8 @@ record's identity is its provenance and never a member, per section 4's discrimi
 the parent charter's 2026-08-24 correction, so nothing here reads the kind's presence as
 identifying anything. **The exhaustiveness grounds in apex section 5.3, and not on the
 serving record's reason.** `weaver-trace-Spec` section 3 argues from a set closed by
-ruling and matching its charter one to one, and this set is not that one: eighteen
-kinds, fourteen of them the serving vocabulary's and four this record's own, so closure
+ruling and matching its charter one to one, and this set is not that one: nineteen
+kinds, fifteen of them the serving vocabulary's and four this record's own, so closure
 by charter does not carry across. What carries is the contract's. Section 7 of
 `weaver-harness-diagnostic-contract` makes a change to this kind set a change both
 parties merge in one act, which is a closure the seam states, and a consumer able to
@@ -298,8 +310,8 @@ to: axiom-contract-is-a-complete-interface
 
 ### 3.3 The payload shapes
 
-**The mapping is total: eighteen kinds, seventeen shapes named whole and the
-eighteenth named to its members.** Fourteen take the serving payload of the
+**The mapping is total: nineteen kinds, eighteen shapes named whole and the
+nineteenth named to its members.** Fifteen take the serving payload of the
 same name, spliced or shaped as `weaver-trace-Spec` section 3 shapes it, that
 document being authoritative and a divergence a defect against it. Three are
 declared here. `residual.column`'s identity members are fixed in section 3.2
@@ -779,11 +791,7 @@ about.
   yet express it. The case lands with the code act that builds the seam,
   owed rather than seated now, a variant standing for what nothing yet
   produces being the reserved slot this Spec refuses elsewhere.
-- **Whether a replay that elides gains `elision`.** Section 3.2 carries `flush`,
-  the loop's grant naming it, and excludes `elision` because that same grant does
-  not. A loop later granted the elision port reopens the question with its own
-  argument rather than finding the variant waiting, and the refusal that would
-  answer such an ask is already carried.
+
 - **The satellite types.** `Sequence`, `Subsystem`'s spelling here, `FieldName`,
   `WriteError`, `AbandonReason`'s case set, and `RunRef`, `SessionRef`, and
   `TurnRef` as this crate's own newtypes over owned strings, on the same

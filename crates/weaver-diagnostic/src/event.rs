@@ -48,10 +48,10 @@ pub struct Event {
     pub payload: Option<Payload>,
 }
 
-/// The eighteen kinds, exhaustive, per section 3.2. A kind added beyond
+/// The nineteen kinds, exhaustive, per section 3.2. A kind added beyond
 /// this set breaks every consumer's match, which is the compile pin.
 ///
-/// Fourteen spellings are the serving vocabulary's and mean there what they
+/// Fifteen spellings are the serving vocabulary's and mean there what they
 /// mean here. Four are this record's own, the `replay.` trio and
 /// `residual.column`, and no serving record carries any of them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -91,17 +91,22 @@ pub enum Kind {
     #[serde(rename = "fault")]
     Fault,
     /// An answered state-seam ask, the serving vocabulary's `recall`: the
-    /// replay's enter asks the member for its identity as a serving enter
-    /// does, and the seat's recall port is the same port under a replay.
+    /// replay port authors one for the holdings it answered, inside the
+    /// bracket. The replay's enter records nothing, as it records no load.
     #[serde(rename = "recall")]
     Recall,
+    /// A span of the resident removed, the serving vocabulary's `elision`:
+    /// the replay reproduces a source's elision where it fell, as it does a
+    /// flush, so its record carries the act for the flush's reason.
+    #[serde(rename = "elision")]
+    Elision,
 }
 
 /// What an event carries beside its envelope. Untagged: the envelope's
 /// `kind` is the discriminant, and admission enforces the kind-to-payload
 /// pairing, per section 3.3's total mapping.
 ///
-/// **Fourteen kinds splice the serving payload of the same name**, arriving
+/// **Fifteen kinds splice the serving payload of the same name**, arriving
 /// pre-rendered from the harness and carried verbatim, which is what the
 /// `raw_value` dependency buys and why this crate re-encodes nothing. The
 /// residual readout rides the spliced `model.measurement` exactly where a
