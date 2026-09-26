@@ -495,7 +495,23 @@ def declaration(plan, job, sink):
             f'trace-sink:\n  kind: file\n  path: {sink}\n  create: true\n')
 
 
+def well_formed_sink(source_sink):
+    """A local re-feed's recorded sink as root receives it: two arguments, a
+    positive decimal length and a 64-lowercase-hex digest. Root judges the
+    shape itself rather than trusting the coordinator's argv."""
+    if source_sink is None or len(source_sink) != 2:
+        return False
+    length, digest = source_sink
+    return (length.isdecimal() and int(length) > 0 and len(digest) == 64
+            and all(c in '0123456789abcdef' for c in digest))
+
+
 def load(plan, job, source_sink=None):
+    # **Every refusal that needs no read of the card or the stack comes before
+    # the first write**: a malformed recorded sink creates no directory, so
+    # correcting the state lets the job be retried without recovery.
+    if job.get('source_job'):
+        need('source-sink-given', well_formed_sink(source_sink))
     m1_unloaded('load')
     stack = job['stack']
     answer(stack, 'show', 'unloaded')
@@ -531,7 +547,6 @@ def load(plan, job, source_sink=None):
         # at its run's turn.closed, the length and digest the driver recorded
         # in the coordinator's state then, which the coordinator hands here.
         # What the unload appended after that close lies past the length.
-        need('source-sink-given', source_sink is not None and len(source_sink) == 2)
         source = snapshot(ROOT / 'sinks' / job['source_job'] / 'trace.ndjson', source_sink[1],
                           frozen / 'source.ndjson', length=int(source_sink[0]))
     else:

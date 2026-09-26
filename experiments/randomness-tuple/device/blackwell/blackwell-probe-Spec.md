@@ -554,7 +554,14 @@ the source run's close**: the driver cuts the sink at that run's `turn.closed` l
 one read, refusing under `sink-closed` where the line is not there, and records the
 prefix per section 4, and the payload freezes exactly that many bytes and verifies them
 against the recorded digest under `source-sink-given` and `snapshot-hash`, so what the
-unload appended after the close is outside the replay.
+unload appended after the close is outside the replay. **The shape refusals precede the
+first write and the content refusal follows it**: a recorded sink whose length is not a
+positive integer or whose digest is not 64 lowercase hex is refused by the coordinator
+under `source-sink-recorded` before root is invoked, and again by the payload under
+`source-sink-given` before it creates any directory, so a corrected state can retry the
+job. A well-formed digest the sink no longer matches is refused under `snapshot-hash`
+after the job's directories stand, the snapshot needing its own, and the rule that a run
+is never reused leaves them as evidence for the review seat.
 
 **Assessment is per leg, and the control's falsifiers halt before it.** The control's
 report carries every same-seed pair with its equality and reading, every own re-feed

@@ -347,8 +347,11 @@ class Order:
             return ()
         sink = s.get('done', {}).get(f'measure:{job["source_job"]}', {}).get('sink') or {}
         expected = str(Path(plan['install_root']) / 'sinks' / job['source_job'] / 'trace.ndjson')
+        # Refused here, before root is invoked, so malformed state creates
+        # nothing under the install root: a digest is 64 lowercase hex.
         check('source-sink-recorded', sink.get('path') == expected and type(sink.get('length')) is int
-              and sink['length'] > 0 and isinstance(sink.get('sha256'), str) and len(sink['sha256']) == 64)
+              and sink['length'] > 0 and isinstance(sink.get('sha256'), str)
+              and re.fullmatch(r'[0-9a-f]{64}', sink['sha256']) is not None)
         return (str(sink['length']), sink['sha256'])
 
     def coding(self, step, evidence, sink=None):

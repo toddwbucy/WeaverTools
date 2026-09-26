@@ -1357,7 +1357,9 @@ class HoldLiftTests(unittest.TestCase):
         with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.assertEqual(seen,[])
         sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
-        for fault in [dict(sink,path='/elsewhere/trace.ndjson'),dict(sink,length=0),dict(sink,length='512'),dict(sink,sha256='short')]:
+        # Perturbation: drop the hex check and "g"*64 reaches root.
+        for fault in [dict(sink,path='/elsewhere/trace.ndjson'),dict(sink,length=0),dict(sink,length='512'),dict(sink,sha256='short'),
+                      dict(sink,sha256='g'*64),dict(sink,sha256='A'*64)]:
             self.state['done'][f'measure:{source}']['sink']=fault;self.state['halt']=None;self.save()
             with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
         self.state['done'][f'measure:{source}']['sink']=sink;self.state['halt']=None;self.save()
@@ -1401,10 +1403,21 @@ class HoldLiftTests(unittest.TestCase):
             if 'derive' in argv:fed['bytes']=Path(argv[argv.index('derive')+1]).read_bytes()
         pt.invoke_load(local,declared={'seed':free['seed']},on_run=on_run,source_sink=(str(len(recorded)),hashlib.sha256(recorded).hexdigest()))
         self.assertEqual(fed['bytes'],recorded,'the replay is fed the prefix recorded at the close, and not the unload after it')
-        for given,changed in [(None,recorded),((str(len(recorded)),hashlib.sha256(recorded).hexdigest()),recorded.replace(b'r1',b'rX'))]:
-            shutil.rmtree(pt.root/'sinks/job');shutil.rmtree(pt.root/'snapshots/job');sink.write_bytes(changed)
-            with self.assertRaisesRegex(RuntimeError,'source-sink-given' if given is None else 'snapshot-hash'):
+        good=(str(len(recorded)),hashlib.sha256(recorded).hexdigest())
+        # A malformed recorded sink refuses before root writes anything, so the
+        # job can be retried once the state is corrected. Perturbation: move
+        # source-sink-given below the mkdirs and the job's directories stand.
+        for given in [None,(good[0],),('0',good[1]),('-3',good[1]),('x',good[1]),(good[0],'g'*64),(good[0],good[1].upper()),(good[0],good[1][:63])]:
+            shutil.rmtree(pt.root/'sinks/job',ignore_errors=True);shutil.rmtree(pt.root/'snapshots/job',ignore_errors=True)
+            with self.subTest(given=given),self.assertRaisesRegex(RuntimeError,'source-sink-given'):
                 pt.invoke_load(local,declared={'seed':free['seed']},source_sink=given)
+            self.assertFalse((pt.root/'sinks/job').exists(),given);self.assertFalse((pt.root/'snapshots/job').exists(),given)
+        # A well-formed digest the sink no longer matches is refused after the
+        # directories stand: the snapshot needs its own, and never reusing a
+        # run leaves them as evidence for the review seat.
+        sink.write_bytes(recorded.replace(b'r1',b'rX'))
+        with self.assertRaisesRegex(RuntimeError,'snapshot-hash'):
+            pt.invoke_load(local,declared={'seed':free['seed']},source_sink=good)
 
     # 679.2: the driver reads evidence once, against the receipts.
 
