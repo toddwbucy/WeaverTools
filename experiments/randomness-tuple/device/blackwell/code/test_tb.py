@@ -1383,14 +1383,25 @@ class HoldLiftTests(unittest.TestCase):
         sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
         result=self.root/'run.json';order.atomic(result,dict(name=source,sink=sink))
         other=dict(sink,length=640,sha256='b'*64)
-        for name,state_copy,change in [('the state copy differs from the result',other,None),
-                                       ('the result changed after its receipt',sink,lambda:order.atomic(result,dict(name=source,sink=other)))]:
-            with self.subTest(name):
-                order.atomic(result,dict(name=source,sink=sink))
-                self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=state_copy)
-                self.state['halt']=None;self.save()
-                if change:change()
-                with self.assertRaisesRegex(order.Refused,'source-sink-recorded|prior-evidence'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        with self.subTest('the state copy differs from the result'):
+            order.atomic(result,dict(name=source,sink=sink))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=other)
+            self.state['halt']=None;self.save()
+            with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        # The result's bytes change between previous()'s check and the read
+        # source_sink() makes, its sink field still the state's copy: only the
+        # digest gate can refuse it. Perturbation: parse the result whatever
+        # its bytes (`if True else None`) and this passes to root.
+        with self.subTest('the result changed after previous() read it'):
+            order.atomic(result,dict(name=source,sink=sink))
+            self.state['done'][f'measure:{source}']=dict(status='SUCCESS',path=str(result),sha256=order.sha(result),sink=sink)
+            self.state['halt']=None;self.save()
+            real=order.Order.previous
+            def then_changed(o,s,plan):
+                real(o,s,plan)
+                with result.open('a') as out:out.write('\n')
+            with patch.object(order.Order,'previous',then_changed),self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):
+                self.o.operator(runner=runner)
         self.assertEqual(seen,[],'root is handed nothing')
 
     def test_root_is_handed_the_sink_after_the_step(self):
