@@ -251,7 +251,8 @@ impl Store for Sqlite {
     }
 
     /// The recall query, per `weaver-state-Spec` section 4: the event rows
-    /// of the four message kinds with their field pairs, ordered by the
+    /// of the four message kinds and of `message.restored` with their field
+    /// pairs, ordered by the
     /// `id` column, bounded where asked to the distinct session, run, and
     /// turn triples of the most recent turns by id, the rows outside them
     /// left unread. The bound keys the whole turn identity because a turn
@@ -292,7 +293,8 @@ impl Store for Sqlite {
                 "SELECT id, session, run, turn, kind, sequence FROM event
                  WHERE session = ?1
                    AND kind IN ('message.system', 'message.user',
-                                'message.assistant', 'message.tool_result')
+                                'message.assistant', 'message.tool_result',
+                                'message.restored')
                  ORDER BY id",
             )
             .map_err(fault)?;

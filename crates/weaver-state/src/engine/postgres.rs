@@ -283,8 +283,11 @@ fn with_pairs(
     Ok(out)
 }
 
-const MESSAGE_KINDS: &str =
-    "('message.system', 'message.user', 'message.assistant', 'message.tool_result')";
+/// The kinds a recall serves: the four message kinds and a restored prefix
+/// message, which a branch's record holds its inherited conversation as, per
+/// `weaver-state-Spec` section 4.
+const MESSAGE_KINDS: &str = "('message.system', 'message.user', 'message.assistant', \
+     'message.tool_result', 'message.restored')";
 
 impl Store for Postgres {
     fn index_election(&mut self, election: &Election) -> Result<(), CustodyFault> {

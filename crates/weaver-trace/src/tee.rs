@@ -127,8 +127,11 @@ pub fn distill(line: &str, election: &Election) -> Option<String> {
     // seated identity prefix is the session's first holding and the store
     // its custodian, so it crosses before the election is consulted, one
     // pair per top-level payload member, the value that member's canonical
-    // JSON, and the election's paths for the kind add nothing to it.
-    if event.kind == "message.system" && event.turn.is_none() {
+    // JSON, and the election's paths for the kind add nothing to it. **A
+    // `message.restored` line does too**, as of 2026-09-26 (#697): it is the
+    // conversation a branch's run opened under, and a restore from that
+    // branch rebuilds it from what custody holds, so no election may thin it.
+    if (event.kind == "message.system" && event.turn.is_none()) || event.kind == "message.restored" {
         if let Some(payload) = event.payload {
             let members: BTreeMap<std::borrow::Cow<'_, str>, &RawValue> =
                 serde_json::from_str(payload.get()).ok()?;

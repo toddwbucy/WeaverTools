@@ -379,16 +379,18 @@ pub(crate) fn identity_material(
 /// **The restored conversation, rebuilt from the recall answer**, per
 /// `weaver-harness-Spec` section 6.1. `None` for the answer is the ask
 /// missed and refuses the enter. The turned message events rebuild as
-/// canonical messages in landing order, and the turnless rows are the
-/// identity ask's, seated once by it and skipped here, so a prefix does
-/// not reach the open twice. A message that does not rebuild refuses the
-/// same way a miss does.
+/// canonical messages in landing order, and so does a `message.restored`
+/// row, the conversation a branch inherited and recorded turnless at its own
+/// open, so a restore from a branch reopens with it (#697). The other
+/// turnless rows are the identity ask's, seated once by it and skipped here,
+/// so a prefix does not reach the open twice. A message that does not
+/// rebuild refuses the same way a miss does.
 pub(crate) fn restored_conversation(
     answer: Option<Vec<Recalled>>,
 ) -> Option<Vec<weaver_traits::Message>> {
     let held = answer?;
     held.iter()
-        .filter(|event| event.turn.is_some())
+        .filter(|event| event.turn.is_some() || event.kind == "message.restored")
         .map(prefix_message)
         .collect()
 }

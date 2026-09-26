@@ -213,7 +213,12 @@ pub fn project_with(
     let mut out = Vec::new();
     for event in events {
         let mut selected = std::collections::BTreeMap::new();
-        if event.envelope.kind == "message.system" && event.envelope.turn.is_none() {
+        // The tee's whole-distill rule, mirrored for a preload: the seated
+        // identity and a branch's restored conversation cross whole under
+        // every election, per `weaver-trace-Spec` section 11 (#697).
+        if (event.envelope.kind == "message.system" && event.envelope.turn.is_none())
+            || event.envelope.kind == "message.restored"
+        {
             if let Some(payload) = &event.payload {
                 let Ok(members) = serde_json::from_str::<
                     std::collections::BTreeMap<String, &serde_json::value::RawValue>,

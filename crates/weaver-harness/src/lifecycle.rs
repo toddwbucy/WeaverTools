@@ -3105,6 +3105,27 @@ mod tests {
         restore: Option<weaver_types::Lineage>,
         diagnostic: bool,
     ) -> Vec<serde_json::Value> {
+        enter_against_a_member_recalling(restore, diagnostic, PARENT_RECALL)
+    }
+
+    /// The parent's recall answer: one turn, the user's message and the
+    /// assistant's, as custody holds a record that was never itself a
+    /// branch.
+    const PARENT_RECALL: &str = concat!(
+        r#"{"answer":{"recall":{"events":["#,
+        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
+        r#""kind":"message.user","sequence":"5"},"pairs":{"role":"user","#,
+        r#""content":[{"type":"text","text":"hello"}]}},"#,
+        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
+        r#""kind":"message.assistant","sequence":"9"},"pairs":{"role":"assistant","#,
+        r#""content":[{"type":"text","text":"hi"}]}}]}}}"#
+    );
+
+    fn enter_against_a_member_recalling(
+        restore: Option<weaver_types::Lineage>,
+        diagnostic: bool,
+        recall_answer: &'static str,
+    ) -> Vec<serde_json::Value> {
         use std::io::{BufRead, BufReader, Write};
 
         let dir = crate::scratch::dir(format!(
@@ -3183,15 +3204,7 @@ mod tests {
                         r#""text":"You are Karl."}]}}]}}}"#
                     )
                 } else if line.starts_with(r#"{"ask":{"recall""#) {
-                    concat!(
-                        r#"{"answer":{"recall":{"events":["#,
-                        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
-                        r#""kind":"message.user","sequence":"5"},"pairs":{"role":"user","#,
-                        r#""content":[{"type":"text","text":"hello"}]}},"#,
-                        r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-1","#,
-                        r#""kind":"message.assistant","sequence":"9"},"pairs":{"role":"assistant","#,
-                        r#""content":[{"type":"text","text":"hi"}]}}]}}}"#
-                    )
+                    recall_answer
                 } else {
                     continue;
                 };
@@ -3342,6 +3355,83 @@ mod tests {
         assert!(
             events.iter().all(|e| e["kind"] != "fault"),
             "no miss is accounted: {events:?}"
+        );
+    }
+
+    /// **A restore from a branch reopens with the branch's inherited
+    /// conversation** (#697, answering Codex's finding on #702). The parent
+    /// here is itself a branch, so custody's recall answers its identity,
+    /// the conversation it inherited as `message.restored` rows, and then
+    /// its own turn. The new run's open carries the inherited exchange ahead
+    /// of the branch's own, all of it landing as `message.restored` in
+    /// landing order, and the identity row is not restored a second time.
+    ///
+    /// Perturbation: filter `restored_conversation` back to turned rows
+    /// alone and the inherited exchange is lost, two restored messages
+    /// landing where four are asserted.
+    ///
+    /// conforms: trace-restored-message-is-turnless-and-whole
+    #[test]
+    fn a_restore_from_a_branch_reopens_with_its_inherited_conversation() {
+        const BRANCH_RECALL: &str = concat!(
+            r#"{"answer":{"recall":{"events":["#,
+            r#"{"envelope":{"session":"s-0","run":"r-0","#,
+            r#""kind":"message.system","sequence":"3"},"pairs":{"role":"system","#,
+            r#""content":[{"type":"text","text":"You are Karl."}]}},"#,
+            r#"{"envelope":{"session":"s-0","run":"r-0","#,
+            r#""kind":"message.restored","sequence":"4"},"pairs":{"role":"user","#,
+            r#""content":[{"type":"text","text":"inherited question"}]}},"#,
+            r#"{"envelope":{"session":"s-0","run":"r-0","#,
+            r#""kind":"message.restored","sequence":"5"},"pairs":{"role":"assistant","#,
+            r#""content":[{"type":"text","text":"inherited answer"}]}},"#,
+            r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-2","#,
+            r#""kind":"message.user","sequence":"9"},"pairs":{"role":"user","#,
+            r#""content":[{"type":"text","text":"hello"}]}},"#,
+            r#"{"envelope":{"session":"s-0","run":"r-0","turn":"t-2","#,
+            r#""kind":"message.assistant","sequence":"12"},"pairs":{"role":"assistant","#,
+            r#""content":[{"type":"text","text":"hi"}]}}]}}}"#
+        );
+        let events = enter_against_a_member_recalling(
+            Some(weaver_types::Lineage {
+                parent: SessionId("s-0".into()),
+                run: weaver_types::RunId("r-0".into()),
+                through: 2,
+            }),
+            false,
+            BRANCH_RECALL,
+        );
+        let restored: Vec<String> = events
+            .iter()
+            .filter(|e| e["kind"] == "message.restored")
+            .map(|e| {
+                format!(
+                    "{}:{}",
+                    e["payload"]["role"].as_str().unwrap_or("?"),
+                    e["payload"]["content"][0]["text"].as_str().unwrap_or("?")
+                )
+            })
+            .collect();
+        assert_eq!(
+            restored,
+            [
+                "user:inherited question",
+                "assistant:inherited answer",
+                "user:hello",
+                "assistant:hi"
+            ],
+            "the inherited exchange ahead of the branch's own, in landing order: {events:?}"
+        );
+        assert!(
+            events.iter().all(|e| e["kind"] != "fault"),
+            "no miss is accounted: {events:?}"
+        );
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| e["kind"] == "message.system")
+                .count(),
+            1,
+            "the identity is seated once, by the identity ask: {events:?}"
         );
     }
 
