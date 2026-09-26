@@ -457,7 +457,7 @@ operator merges. CodeRabbit is retired since 2026-09-22.
 **A pull request in draft gets no pass.** Undrafting fires one, every push to an
 undrafted pull request fires one, and `@codex review` or `@codex security review` on the
 pull request requests one. A clean pass edits the summary comment in place and posts no
-review object and no thread; findings arrive as review threads, sometimes a minute after
+review object and no thread. Findings arrive as review threads, sometimes a minute after
 the summary row flips. Because the rework is a push to an undrafted pull request, the
 rework is always reviewed, which is the rule the sub-agent seat once carried as its
 second pass: on 2026-09-11 answering fifteen findings introduced a real defect in three
