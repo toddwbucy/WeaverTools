@@ -2,6 +2,7 @@
 //! conforms: diagnostic-identity-absent-not-invented
 //! conforms: diagnostic-outcome-absent-not-manufactured
 //! conforms: diagnostic-divergence-position-is-the-resident-length
+//! conforms: diagnostic-identity-refuses-an-unaccounted-input
 //!
 //! The diagnostic replay, per `diagnostic-replay-loop` and
 //! `weaver-harness-Spec` section 6.2's second criterion: the seat granted
@@ -17,13 +18,13 @@
 //! lands in the diagnostic-trace and nothing is answered outward, there
 //! being no one on this seam to answer.
 //!
-//! **The four claims cited above are `weaver-diagnostic-Spec`'s records and
+//! **The five claims cited above are `weaver-diagnostic-Spec`'s records and
 //! this crate's to hold.** That crate is the mechanism and this one is the
-//! author, per `weaver-diagnostic-PRD` section 1, so each of the four carries
+//! author, per `weaver-diagnostic-PRD` section 1, so each of the five carries
 //! an `asserts` edge from this crate beside the one from the crate whose
 //! record it describes, and the instruments are the suite below.
 //! `weaver-harness-Spec` section 8 carries the custody from this side and
-//! `weaver-diagnostic-Spec` section 7 carries the four claims.
+//! `weaver-diagnostic-Spec` section 7 carries the five claims.
 
 use weaver_diagnostic::{
     AbandonReason, Divergence, Kind, ModelId, Payload, ReplayClosed, ReplayIdentity, ReplayOpened,
@@ -1371,6 +1372,8 @@ mod tests {
         }
     }
 
+    /// conforms: diagnostic-identity-refuses-an-unaccounted-input
+    ///
     /// **A source whose open recorded `identity_prefix_unrecorded` does not
     /// certify, and an unrelated fault does not stop one** (#690 item C2.8).
     ///
@@ -1428,6 +1431,8 @@ mod tests {
         holdings(&events)
     }
 
+    /// conforms: diagnostic-identity-refuses-an-unaccounted-input
+    ///
     /// **A post-flush request with no recall before it does not certify, on
     /// a record that carries the recall kind** (#690 item C2.10), per
     /// `diagnostic-replay-loop` section 2: the seat's recall is what the
@@ -1469,6 +1474,38 @@ mod tests {
         assert!(outcome.is_ok());
         let close = lines.last().expect("the close stands");
         assert_eq!(close["payload"]["outcome"]["kind"], "abandoned", "{close}");
+    }
+
+    /// conforms: diagnostic-identity-refuses-an-unaccounted-input
+    ///
+    /// **Each flush needs its own recall**: the seat's recall after the
+    /// first flush accounts for turn 37's re-entry and not for turn 38's,
+    /// which follows a second flush with none, so the pass abandons naming
+    /// the second flush and its turn.
+    ///
+    /// Perturbation: stop tracking flushes once a seat recall has been seen
+    /// and the second flush passes unaccounted, the pass reaching the walk.
+    #[test]
+    fn each_flush_needs_its_own_recall() {
+        let events = vec![
+            recall_event(1, "identity"),
+            generation("t-36", 250, 252),
+            flush_event(255, 26551, 38),
+            recall_event(257, "recall"),
+            generation("t-37", 259, 261),
+            flush_event(262, 42, 20),
+            generation("t-38", 264, 266),
+        ];
+        let (outcome, lines) = run_drive(Some(holdings(&events)), m1_spu);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned", "{close}");
+        assert!(
+            close["payload"]["outcome"]["reason"]["detail"]
+                .as_str()
+                .is_some_and(|d| d.contains("flush at sequence 262") && d.contains("t-38")),
+            "names the second flush and its turn: {close}"
+        );
     }
 
     /// conforms: diagnostic-divergence-position-is-the-resident-length
