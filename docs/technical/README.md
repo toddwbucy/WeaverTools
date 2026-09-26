@@ -103,12 +103,12 @@ residual rather than the class the claim would need.
 **One paper per crate, plus six that belong to no crate**, and the directories
 carry the boundary: `weaver-agents/` for the agent domain, with
 `weaver-internal/` beneath it for the callables that crate mounts,
-[`weaver-web/`](weaver-web/weaver-web.md) for the frontend domain that reaches an
-agent only across a contract, [`weaver-diagnostic/`](weaver-diagnostic/jacobian-lens.md)
-for the instruments that read a finished record, and the seam itself at the top.
-A crate paper answers
-what one crate is, what it owns, which seams it holds, how its primary operation
-works, what it refuses, and what it has not built.
+`weaver-web/` for the frontend domain that reaches an agent only across a contract,
+moved with its crate to `WeaverTools_Project/weaver-web/docs/technical/` on 2026-09-26,
+[`weaver-diagnostic/`](weaver-diagnostic/jacobian-lens.md) for the instruments that read
+a finished record, and the seam itself at the top. A crate paper answers what one crate
+is, what it owns, which seams it holds, how its primary operation works, what it
+refuses, and what it has not built.
 
 **The papers describe and decide nothing.** Every paper is read out of the merged
 corpus, which is the authority on every claim it makes. **Where a paper and its

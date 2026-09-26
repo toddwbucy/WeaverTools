@@ -18,12 +18,12 @@ construction, and each says on its face what it does not yet have.
 **The directories carry the boundary, and one level down they carry
 membership.** `weaver-agents/` holds the agent domain: nine crate papers, the two
 surfaces an operator writes against, and `weaver-internal/` beneath it for the
-callables that crate mounts. `weaver-web/` holds the frontend domain, outside the
-boundary, reaching an agent only across a contract. `weaver-diagnostic/` holds the
-instruments that read a finished record, and is the newest and least built of the
-three.
-The contracts page stays at the top because it is the seam itself, and the two
-external contracts on it are where that boundary is actually drawn.
+callables that crate mounts. The frontend domain, `weaver-web`, left this repository on
+2026-09-26 for `WeaverTools_Project/weaver-web/` beside it, reaching an agent only
+across a contract as before. `weaver-diagnostic/` holds the instruments that read a
+finished record, and is the newest and least built of the two. The contracts page stays
+at the top because it is the seam itself, and the two external contracts on it are where
+that boundary is actually drawn.
 
 A paper reads out a merged document and never decides anything: where a paper and
 its source disagree, the paper is the defect.
@@ -89,8 +89,10 @@ Outside the agent boundary, reaching an agent only across the external contracts
 The first thing to do so, and therefore the first real test of whether those
 contracts are enough to build against.
 
-- [weaver-web](weaver-web/weaver-web.md) - the channel, the lifecycle view, and
-  the live trace view, and the one reach the contracts turned out not to cover
+- weaver-web - the channel, the lifecycle view, and the live trace view, and the
+  one reach the contracts turned out not to cover. Its page moved with the crate on
+  2026-09-26 to `docs/technical/weaver-web/weaver-web.md` in
+  `WeaverTools_Project/weaver-web/`, the operator's ruling of that date.
 
 ## The diagnostic domain
 

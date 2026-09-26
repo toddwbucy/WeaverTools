@@ -977,14 +977,18 @@ and the suite around it is named in the living vision's section 13,
 weaver-web standing up as the first outside consumer against the two
 external contracts of 2026-08-01. **It stood in its own tree until 2026-08-23 and
 is absorbed into this one by the ruling of that date**, which leaves the contract
-coupling untouched and makes both sides of the seam editable in one commit. What
-that changes here is who leads: needs discovered in use pull framework acts
-through the change protocols, where the roadmap once pushed, and the
-predicted pulls are streaming through the gate's world contract, a status
-ask on admin's operator contract, and the operator's read on state per that
-charter's named cell. Framework work queued on its own account: the Python
-connector of issue #134, the payload-key election through the declaration,
-and the Role::System floor act.
+coupling untouched and makes both sides of the seam editable in one commit. **It left
+again on 2026-09-26, on the operator's ruling of that date**, for
+`WeaverTools_Project/weaver-web/` beside this repository, its history carried by subtree
+split and its repository to be decided, because a frontend this close to the code slowed
+production down: it stands up as the first outside consumer from outside the tree, which
+is where an outside consumer stands, and the contracts are what it builds against. What
+that changes here is who leads: needs discovered in use pull framework acts through the
+change protocols, where the roadmap once pushed, and the predicted pulls are streaming
+through the gate's world contract, a status ask on admin's operator contract, and the
+operator's read on state per that charter's named cell. Framework work queued on its own
+account: the Python connector of issue #134, the payload-key election through the
+declaration, and the Role::System floor act.
 
 ## 8. What this document does not do
 

@@ -59,15 +59,16 @@ category rather than a party alongside it.
 
 **What the deleted record was reaching for is real and is stated where it belongs.**
 `weaver-gate-PRD` section 2 has the world dialing and this crate binding and
-accepting, and `weaver-web-Spec` section 1 has that crate reaching the agent
-exactly as an outside consumer does, a socket dialed by path. Both crossings are
-this boundary working. **What neither carries is a seam edge, and the absence is
-the graph's rule rather than a ruling that the boundary is not a seam.** A seam
-edge runs between two crate nodes, the far end of this one is the world, and the
-graph carries no node for it, so the `party` edge above is the whole of what the
-graph can hold here. `weaver-admin-PRD` section 6 says the same of its own two
-outward boundaries and names this page as the shape they share, so a later reader
-meets one reading rather than two. **The world at this boundary is a local
+accepting, and `weaver-web-Spec` section 1 (`git show
+112bc65:docs/crates/weaver-web/weaver-web-Spec.md`, in the web's own repository since
+2026-09-26) has that crate reaching the agent exactly as an outside consumer does, a
+socket dialed by path. Both crossings are this boundary working. **What neither carries
+is a seam edge, and the absence is the graph's rule rather than a ruling that the
+boundary is not a seam.** A seam edge runs between two crate nodes, the far end of this
+one is the world, and the graph carries no node for it, so the `party` edge above is the
+whole of what the graph can hold here. `weaver-admin-PRD` section 6 says the same of its
+own two outward boundaries and names this page as the shape they share, so a later
+reader meets one reading rather than two. **The world at this boundary is a local
 principal**, per the party prose above and the named local Unix sockets of
 `weaver-gate-PRD` section 2, so a client stands on the box the agent runs on by
 construction and no document owes a placement clause to put it there.

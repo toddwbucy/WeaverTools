@@ -238,7 +238,8 @@ rules that such a crate does not refine that document and parents to the suite, 
 what governs outside crates at the suite level is not yet written. So the value is the
 suite rather than a charter, and the graph parent edge still names the `WeaverTools`
 system node, which is the same belonging under the name the graph has for it.
-`weaver-analysis-PRD` and `weaver-web-PRD` are the two documents that take it.
+`weaver-analysis-PRD` is the one document that takes it, `weaver-web-PRD` having taken
+it too until its crate left the repository on 2026-09-26.
 
 **What the apex's absent header reads against.** Working Rules section 1 elects which
 fields each kind carries and is authoritative for `weaver-agents-PRD` carrying none.
@@ -256,8 +257,13 @@ contracts carrying the field name an apex invariant, which is an axiom citation 
 than a parent. Issue #637 carries the measurement and the question.
 
 **crate.** Every crate, whether a domain root or a member of one. Organ is the
-vision document's word and it does not cover the floor, so it is not used here. One
-PRD, one Spec, and as many contracts as it has seams.
+vision document's word and it does not cover the floor, so it is not used here. One PRD,
+one Spec, and as many contracts as it has seams. **A crate whose sources and charter
+live outside this repository has its node and its one `parent` edge declared by the
+contract it is party to**, as of 2026-09-26 and pending the operator's word, so the
+`party` edge and any seam edge naming it point at a declared node rather than dangling
+and the crate keeps its place in the domain tree G3 reads. `weaver-web` is the one case,
+its charter having left with the crate.
 
 **experiment.** One node per experiment, declared by its charter, the root
 `README.md` of `experiments/<e>/`, which is the primary document of the experiment
@@ -692,10 +698,10 @@ instrument exists, and a tag reading `review` beside it says the opposite. Cited
 a test means the citation a file under a crate's `tests/` target carries, every unit
 there being a test, or a citation written at an item or at a statement inside a
 `#[cfg(test)]` suite. **The scope follows where the instrument sits and never a
-directory.** `weaver-state` and `weaver-web` have no `tests/` target at all and hold
-every test they have in the in-file suite, so a scope named for the directory is
-empty by construction for two of the twelve crates, and section 4 admits four
-citation markers where a path under `tests/` reads one.
+directory.** `weaver-state` has no `tests/` target at all and holds every test it has in
+the in-file suite, as `weaver-web` did until it left the repository on 2026-09-26, so a
+scope named for the directory is empty by construction for one of the eleven crates, and
+section 4 admits four citation markers where a path under `tests/` reads one.
 
 **A sighting is read per claim and four dispositions occur in this corpus.** The tag
 moves, where the test is the instrument the claim wants and the clause bought it
