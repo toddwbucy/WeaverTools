@@ -98,9 +98,13 @@ def ticks(pid):
 
 def live(lease):
     # A pid that is not an int names no process of its own: /proc/self is
-    # the reader, and 1234.0 reads nothing.
-    return bool(isinstance(lease, dict) and type(lease.get('pid')) is int and
-                ticks(lease['pid']) == lease.get('ticks'))
+    # the reader, and 1234.0 reads nothing. Both start ticks must be present,
+    # since a dead pid reads None and a lease with no ticks holds None, and
+    # two absences are not one process.
+    if not (isinstance(lease, dict) and type(lease.get('pid')) is int and isinstance(lease.get('ticks'), str)):
+        return False
+    observed = ticks(lease['pid'])
+    return observed is not None and observed == lease['ticks']
 
 
 def leases(step):

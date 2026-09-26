@@ -209,8 +209,10 @@ def measure(plan, job, probe, receipts):
         well_formed(mine)
         rec = probe.extract_run(mine)
         enough(plan['tuple'], rec)
-        check('seed-held', same(rec['declared_seed'], job['seed']))
-        check('weights-held', rec['weights_hash'] == plan['tuple']['weights_sha256'])
+        # The expected side is present at each guard, so an absent record
+        # refuses here by name rather than as a KeyError or as two absences.
+        check('seed-held', type(job.get('seed')) is int and same(rec.get('declared_seed'), job['seed']))
+        check('weights-held', rec.get('weights_hash') == plan['tuple']['weights_sha256'])
         rec.update(name=job['id'], arm='TB0', seed=job['seed'], run=close['run'], trace=str(trace), verdict='RAN',
                    sink=sink, interlock=interlock_at_close())
         target = dest / 'run.json'
@@ -220,7 +222,12 @@ def measure(plan, job, probe, receipts):
         check('single-replay', len(closes) == 1)
         close = closes[0]
         outcome = close['payload']['outcome']
-        check('replay-completed', outcome['kind'] in ['certified', 'diverged'])
+        # A diverged outcome carries its divergence, tagged on kind
+        # (weaver-diagnostic event.rs ReplayOutcome at e69916a): one without it
+        # would read below as no divergence at all.
+        check('replay-completed', outcome['kind'] == 'certified' or
+              (outcome['kind'] == 'diverged' and isinstance(outcome.get('divergence'), dict) and
+               isinstance(outcome['divergence'].get('kind'), str)))
         mine = probe.measured_events(rows, close['run'])
         # Exactly one, as the free path requires under single-turn: extract_run
         # takes the last measurement's fields over a run's accumulated field
@@ -237,7 +244,8 @@ def measure(plan, job, probe, receipts):
         # The same for the seed: the replay's own model.request must report the
         # source run's seed, and that seed must be one the tuple holds.
         check('source-seed-held', any(same(src.get('declared_seed'), s) for s in plan['tuple']['seeds']))
-        check('replay-seed-held', same(refed.get('declared_seed'), src.get('declared_seed')))
+        check('replay-seed-held', type(src.get('declared_seed')) is int and
+              same(refed.get('declared_seed'), src['declared_seed']))
         reading = probe.reading_two(src, refed)
         # A replay that tokenized the prompt differently ran another stimulus:
         # the source and the replay must hold one input length, and a

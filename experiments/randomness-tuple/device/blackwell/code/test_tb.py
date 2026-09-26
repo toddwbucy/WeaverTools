@@ -1718,6 +1718,48 @@ class JsonEqualityTests(unittest.TestCase):
         for length in ['\u0665\u0661\u0662','0512','0','',' 512','512.0']:
             with self.subTest(length=length):self.assertFalse(payload.well_formed_sink((length,h)))
 
+
+class AbsenceTests(unittest.TestCase):
+    """#695's second Codex pass as a class: an equality whose sides both come
+    from a .get() or a read that answers None on failure holds for two
+    absences, so the expected side is required present at each guard."""
+
+    def test_a_dead_lease_with_no_ticks_is_not_live_and_refuses_driver_live(self):
+        p=subprocess.Popen(['true']);p.wait();dead=p.pid
+        self.assertIsNone(order.ticks(dead))
+        me=os.getpid()
+        for lease in [dict(pid=dead),dict(pid=dead,ticks=None),dict(pid=me),dict(pid=me,ticks=None)]:
+            with self.subTest(lease=lease):self.assertFalse(order.live(lease))
+        f=Fixture('test_history_order_seat_lease');f.setUp();self.addCleanup(f.doCleanups)
+        f.due('load:B1-s451234785645-n1');s=copy.deepcopy(f.state);s['driver']=dict(pid=dead)
+        with self.assertRaisesRegex(order.Refused,'driver-live'):f.o.guard(s,f.plan,'load:B1-s451234785645-n1','operator')
+
+    def test_a_diverged_outcome_without_its_divergence_refuses(self):
+        d=DriverTests('test_refeed_holds_the_input_and_refuses_a_divergence_inside_it');d.setUp();self.addCleanup(d.doCleanups)
+        j=d.job('refeed')
+        for outcome in [dict(kind='diverged'),dict(kind='diverged',divergence=None),dict(kind='diverged',divergence=dict(position=3))]:
+            rows=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=outcome)))
+            try:
+                with self.subTest(outcome=outcome),patch('tb_driver.until_closed',return_value=closed_bytes(rows)),self.assertRaisesRegex(order.Refused,'replay-completed'):
+                    driver.measure(d.plan,j,d.probe,{})
+            finally:d.cleanup_job()
+
+    def test_an_absent_seed_or_weights_refuses_by_name(self):
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        for key,name in [('declared_seed','seed-held'),('weights_hash','weights-held')]:
+            held=d.free.pop(key)
+            try:
+                with self.subTest(key),patch('tb_driver.until_closed',return_value=closed_bytes(d.close())),self.assertRaisesRegex(order.Refused,name):
+                    driver.measure(d.plan,d.job(),d.probe,{})
+            finally:d.cleanup_job();d.free[key]=held
+        # Source and replay both without a seed: two absences, refused before
+        # any reading, by the source guard and, were it gone, by the replay's.
+        d.free.pop('declared_seed')
+        try:
+            with patch('tb_driver.until_closed',return_value=closed_bytes(d.close(True))),self.assertRaisesRegex(order.Refused,'seed-held'):
+                driver.measure(d.plan,d.job('refeed'),d.probe,{})
+        finally:d.cleanup_job()
+
 class AdditionalTests(unittest.TestCase):
     save = Fixture.save
     setUp = Fixture.setUp
