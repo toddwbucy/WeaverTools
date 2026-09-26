@@ -637,6 +637,51 @@ class Census(unittest.TestCase):
             reading["enforcement_table_mismatch"], ["docs/demo-Spec.md (13 nodes, 2 rows)"]
         )
 
+    def test_an_experiment_is_read_like_a_crate_and_its_results_are_not(self):
+        """The container entry of 2026-09-25: a probe's Spec declares, its
+        `code/` cites and owes, its `results/` is read by neither walk.
+
+        **Held from both sides.** A perturbation declared in the experiment's
+        Spec and cited only from its code is absent from uncited, which fails
+        if either walk stops short of the experiment. A bare unit under `code/`
+        owes a header, which fails if the unit walk does not reach it. And a
+        citation under `results/` naming no node is absent from dangling, which
+        fails if the walk reaches into the records.
+        """
+        probe = "experiments/demo/arm/probe"
+        for part in ["code", "results"]:
+            os.makedirs(os.path.join(self.dir, probe, part))
+        write(self.dir, "experiments/demo/README.md", "# demo\n")
+        write(self.dir, probe + "/probe-Spec.md",
+              "```graph\nnode: exp-only-here\nkind: assertion\ntag: perturbation\n\n"
+              "edge: asserts\nfrom: probe\nto: exp-only-here\n\n"
+              "node: exp-declared-uncited\nkind: assertion\ntag: perturbation\n\n"
+              "edge: asserts\nfrom: probe\nto: exp-declared-uncited\n```\n")
+        write(self.dir, probe + "/code/tool.py",
+              "#!/usr/bin/env python3\n# conforms: exp-only-here\n")
+        write(self.dir, probe + "/code/bare.py", "print('no header')\n")
+        write(self.dir, probe + "/results/note.py",
+              "# conforms: fix-nonexistent-result\n")
+        write(self.dir, probe + "/results/report.md",
+              "```graph\nnode: exp-only-here\nkind: assertion\ntag: perturbation\n```\n")
+        reading = census.take()
+        # **The docs half, held from both sides.** The Spec declares two
+        # perturbations and the code cites one. The uncited one is listed,
+        # which fails when the walk never reads the Spec, and the cited one is
+        # neither uncited nor dangling, which fails when either walk stops
+        # short. An assertNotIn alone is vacuous when the node is never
+        # declared, which is the mutation this pair was rewritten to catch.
+        self.assertIn("exp-declared-uncited", reading["uncited_perturbations"])
+        self.assertNotIn("exp-only-here", reading["uncited_perturbations"])
+        self.assertFalse([d for d in reading["dangling_citations"] if "exp-only-here" in d])
+        self.assertIn(probe + "/code/bare.py", reading["sources_without_a_header"])
+        self.assertNotIn(probe + "/code/tool.py", reading["sources_without_a_header"])
+        self.assertFalse([d for d in reading["dangling_citations"] if "fix-nonexistent-result" in d])
+        # **The results prune, held on the metric's own string.** The report
+        # under results/ redeclares the id, and the duplicate metric emits
+        # "id: path and path", so a bare-id membership check never matched.
+        self.assertFalse([d for d in reading["duplicate_node_ids"] if d.startswith("exp-only-here")])
+
     def test_a_new_file_not_yet_staged_still_owes_a_header(self):
         """**The gate is run mid-act**, which is when a source file is written
         and not yet added. Reading the index alone prints a clean pass on the
@@ -937,7 +982,15 @@ class Census(unittest.TestCase):
 
         lines = [ln.strip() for ln in body.splitlines()
                  if ln.strip() and not ln.startswith("#")]
-        self.assertIn("experiments/", lines)
+        # **A probe's results are excluded and its code and Spec are not**,
+        # per the ruling of 2026-09-25 that returned `experiments/`, held by
+        # behaviour through the same probe repository the boundary test uses.
+        ignored = ignore_probe(self.dir, "resultsprobe")
+        self.assertTrue(ignored("experiments/e/arm/probe/results/", True))
+        self.assertTrue(ignored("experiments/e/arm/probe/results/report.md", False))
+        self.assertFalse(ignored("experiments/e/arm/probe/code/tool.py", False))
+        self.assertFalse(ignored("experiments/e/arm/probe/probe-Spec.md", False))
+        self.assertFalse(ignored("experiments/e/README.md", False))
         # **Matched by behaviour and not by spelling.** The archive half is
         # written as character classes, so a substring check for "archive"
         # finds nothing while the patterns work - which is how the first form

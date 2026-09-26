@@ -415,6 +415,22 @@ history, and the reruns are when it becomes worth ingesting. Broken links out ar
 accepted on the operator's ruling of the same date, every one of those experiments
 being due a rerun whatever the graph decides.
 
+**An experiment directory returns when its experiment is a live instrument, per the
+operator's ruling of 2026-09-25, and the reason above stays true.** The Weaver probe
+reruns per card and per driver, which is the rerun the paragraph above was waiting
+for, so `experiments/<experiment>/` stands in this tree again. An experiment is a
+hypothesis with a charter, its root `README.md`, which is the primary document of the
+experiment and carries no parent. Its arms are sub-directories, one per variable the
+hypothesis names, and each arm holds probes, one per measurement, each a directory
+carrying that probe's Spec, its `code/` and its `results/`. The Spec and the code
+answer to the gate's clock and are read like a crate's, and `results/` holds dated
+records the gates and the ingest never read. A Spec belongs to any code that requires
+one, a crate's or a probe's. The Document Format's section 2 carries the container
+and section 3 the kinds, the census reads every document under `experiments/`
+outside a `results/`, the charter and each probe's Spec among them, and every probe's
+`code/`, and `.hadesignore` excludes `results/` alone. The first experiment is
+`experiments/randomness-tuple/`, and its first probe is `device/blackwell/`.
+
 ### Closing checklist
 
 Phase two closes on a checklist, each item verifiable by looking. Closing it is what
@@ -884,7 +900,11 @@ than the profile's bare claim. It is deliberately not a corpus member and
 nothing here is written against it. It does not reach the gates, and a reading
 it produces is evidence about the code rather than authority over a document.
 
-**Where the work sits as of 2026-09-13.** `experiments/` left this repository for the
+**Where the work sits as of 2026-09-25.** `experiments/` returned for the Weaver probe
+under section 5's ruling of that date, as a live instrument whose code and Spec are
+gated and whose results are dated records outside the gates.
+
+**Where the work sat as of 2026-09-13.** `experiments/` left this repository for the
 `weaver-experiments` tree under section 5's ruling of that date, with its history, and
 every archive directory left under section 1's. The paragraph on the experiment
 directory below was written about #404 and about a directory that no longer stands
