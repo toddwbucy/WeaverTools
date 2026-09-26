@@ -189,18 +189,22 @@ read against another, so the halt is the finding.
 
 **TB-d, the device cell.** The claim: Blackwell moves the distribution from position
 zero relative to Ampere and to Ada, as Ada moved it against Ampere in #511. The
-prediction: each record re-fed through `B1` has per-position readings that differ
-from the recorded ones, and the divergence is reported in the historical instrument's
-input-plus-output coordinate with the output ordinal beside it. The falsifier: a
-re-feed exact to the bit at every position. The leg carries the driver confound of
-section 1 as a qualifier on every reading.
+prediction: each record re-fed through `B1` has per-position readings that differ from
+the recorded ones, and the divergence is reported in the historical instrument's
+input-plus-output coordinate with the output ordinal beside it. The falsifier: a re-feed
+exact to the bit at every position. A falsifier of this leg is a result and not a halt:
+the leg records it in the reading and completes, since a card whose arithmetic matches
+another's is the finding this leg exists to make or unmake, and only the control's
+falsifier stops the probe. The leg carries the driver confound of section 1 as a
+qualifier on every reading.
 
-**TB-k, the kernel leg.** If every executable section of `B1` and `B2` is identical
-by section 6's verdict, the leg is recorded as the kernel held by executable identity
+**TB-k, the kernel leg.** If every executable section of `B1` and `B2` is identical by
+section 6's verdict, the leg is recorded as the kernel held by executable identity
 across the two toolchains and nothing runs. If sections differ, the claim is that the
 differing kernels move the distribution on one card, the prediction is that a `B1`
-record re-fed through `B2` departs at some position, and the falsifier is every
-record re-feeding exact. `B2` also differs in its CUDA user-space libraries, and the
+record re-fed through `B2` departs at some position, and the falsifier is every record
+re-feeding exact. As for the device leg, that falsifier is recorded and completes the
+leg rather than halting it. `B2` also differs in its CUDA user-space libraries, and the
 reading carries that as part of the kernel stack.
 
 ```graph
@@ -341,22 +345,29 @@ that one file, under `source-run-selected`. The driver likewise hashes and compi
 one read of each reader and hashes and parses one read of each source trace, under
 `reader-approved` and `source-trace`.
 
-**Everything root serves from is locked when made and verified before it is
-trusted.** Provisioning refuses a link anywhere in a source stack before its first
-write, under `stack-no-symlinks`, and requires every stack file to be in the plan's
-file map, under `stack-file-coverage`. It copies each stack by bytes, then locks the
-installed tree with the root included, since the copy preserves the source root's
-mode and a walk of descendants never reaches the root, and it locks the isolated root
-and every directory it makes beneath it as it makes them, since a directory's mode is
-masked by the umask. The installed copy must then hold exactly the reviewed files, no
-link, every entry owned by the payload's user with no group or world write, under
-`installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage` and
-`installed-stack-hash`, and every later step checks the served directories again
-under `served-directory-custody`. The served model is a regular file with one name,
-owned by the payload's user, not group or world writable, in a directory held the
-same way, whether it was found or freshly installed, under `existing-model-custody`,
-`new-model-custody` and `installed-model-custody`, and its bytes are the tuple's,
-under `model-source`, `existing-model` and `installed-model`.
+**Everything root serves from is locked when made and verified before it is trusted.**
+Provisioning refuses a link anywhere in a source stack before its first write, under
+`stack-no-symlinks`, and requires every stack file to be in the plan's file map, under
+`stack-file-coverage`. It copies each stack by bytes, then locks the installed tree with
+the root included, since the copy preserves the source root's mode and a walk of
+descendants never reaches the root, and it locks the isolated root and every directory
+it makes beneath it as it makes them, since a directory's mode is masked by the umask.
+The installed copy must then hold exactly the reviewed files, no link, every entry owned
+by the payload's user with no group or world write, under `installed-no-symlinks`,
+`installed-stack-custody`, `installed-stack-coverage` and `installed-stack-hash`, and
+every later step checks the served directories again under `served-directory-custody`.
+The served model is a regular file with one name, owned by the payload's user, not group
+or world writable, in a directory held the same way, whether it was found or freshly
+installed, under `existing-model-custody`, `new-model-custody` and
+`installed-model-custody`, and its bytes are the tuple's, under `model-source`,
+`existing-model` and `installed-model`. Every precondition a later command asserts is
+held before the first write, since an interrupted provision otherwise leaves the root
+standing and every retry refusing under `fresh-install-root`: the account and group, the
+operator's group, the model's chain and the root's own chain, under `no-bravo-account`,
+`no-bravo-group`, `operator-group`, `model-chain-custody` and `root-chain-custody`.
+Writes beneath a held root are made through link-refusing opens behind the named check,
+and the remaining edge, an ancestor changing owner or mode during provisioning, needs
+root and is outside the adversary this document names.
 
 **The installation is isolated and refuses to adopt.** Provisioning uses only
 `/var/lib/weaver-tb`, its own two admin roots and the `weaver-bravo` account and
@@ -500,28 +511,30 @@ compiled from the hashed bytes the manifest approved and never from cached bytec
 and must be sufficient per section 2. Each trace has a fresh directory, so a retry
 cannot truncate or relabel earlier evidence.
 
-**A re-feed is one completed replay against one verified source.** The source record
-is the earlier free run's record, read by path from the deposit, which is design item
-B on #679 and is named in section 10 as not yet held, or the reviewed external trace's
+**A re-feed is one completed replay against one verified source.** The source record is
+the earlier free run's record, read by path from the deposit, which is design item B on
+#679 and is named in section 10 as not yet held, or the reviewed external trace's
 selected run, read once, hashed and parsed, with exactly one measurement, under
 `source-trace` and `source-measurement`. The replay must complete, certified or
-diverged, and carry exactly one measurement, under `replay-completed`,
-`single-replay` and `replay-measurement`. Only the control's own re-feeds must be
-certified, per section 3, since a diverged replay is what the device and kernel legs
-predict. Exactness is the
+diverged, and carry exactly one measurement, under `replay-completed`, `single-replay`
+and `replay-measurement`. Only the control's own re-feeds must be certified, per section
+3, since a diverged replay is what the device and kernel legs predict. Exactness is the
 output tokens equal, every elected per-token series equal to the bit, and the field
-equal at every position, per `exact`, and the reading is the historical instrument's
-divergence coordinate with its ordinal.
+equal at every position, per `exact`, the input length included: the extractor carries
+the input as a count, so the length is held between source and replay under
+`input-held`, the comparator's report of a divergence inside the input is refused under
+`divergence-in-input` rather than read as a device or kernel effect, and token-by-token
+identity of the input is not a record the instrument carries, and the reading is the
+historical instrument's divergence coordinate with its ordinal.
 
-**Assessment is per leg and the falsifiers halt before it.** The control's report
-carries every same-seed pair with its equality and reading, every own re-feed with its
-exactness and certification, the first difference for every pair of distinct seeds
-taken one run per seed in the tuple's order, and the two verdicts `control_passed`
-and `changed_seed_prediction`. The device and kernel legs' reports carry each
-re-feed's reading and, for the kernel leg, whether identity emptied it. Each leg's
-result is written whole and recorded as that leg's `finish` receipt, and the report
-step runs only after every earlier receipt, each `finish` included, stands with its
-digest intact.
+**Assessment is per leg, and the control's falsifiers halt before it.** The control's
+report carries every same-seed pair with its equality and reading, every own re-feed
+with its exactness and certification, the first difference for every pair of distinct
+seeds taken one run per seed in the tuple's order, and the two verdicts `control_passed`
+and `changed_seed_prediction`. The device and kernel legs' reports carry each re-feed's
+reading and, for the kernel leg, whether identity emptied it. Each leg's result is
+written whole and recorded as that leg's `finish` receipt, and the report step runs only
+after every earlier receipt, each `finish` included, stands with its digest intact.
 
 ```graph
 node: blackwell-probe-refeed-completes-against-a-verified-source
@@ -544,39 +557,41 @@ to: blackwell-probe-exactness-is-bitwise-over-elected-readings
 ## 8. The refusals
 
 Every guard is named, and its name is the reason in the halt. Three of the payload's
-names arrive with the citations commit on #683, where they had raised as plain
-errors: `no-bravo-account` for an existing `bravo` account, `known-step` for a verb
-that is neither a load nor an unload, and `command-exit` for a privileged command
-exiting nonzero, which prints the command's output to the transcript first. They are
-grouped here by the module that raises them, and section 9 says how each is watched.
-The
-coordinator's: `schema`, `agent`, `isolated-root`, `tuple`, `rulings`, `arm-order`,
-`job-identities`, `job-types`, `control-schedule`, `own-refeeds`, `source-order`,
-`device-sources`, `device-traces`, `device-selections-distinct`, `kernel-schedule`,
-`hold`, `review`, `approval-coverage`, `artifact-hashes`, `halt`, `plan-snapshot`,
-`manifest-coverage`, `manifest-hashes`, `identity-evidence`, `identity-inputs`,
-`identity-binds-stacks`, `cursor`, `prior-success`, `prior-evidence`, `step-order`,
-`seat`, `not-repeated`, `driver-live`, `driver-owner`, `no-live-driver`,
-`report-evidence`, `payload-hash`, `payload-exit`, `payload-receipt`, `wait-owner`,
-`wait-order`, `wait-deadline` and `operator-not-root`. The payload's: `root-payload`,
-`plan-hash`, `fixed-root-agent`, `operator`, `source-file-hash`, `job-found`,
-`model-source`, `existing-model-custody`, `existing-model`, `stack-no-symlinks`,
-`stack-libraries`, `stack-file-coverage`, `fresh-install-root`,
-`no-symlink-destination`, `snapshot-hash`, `new-model-custody`,
+names arrive with the citations commit on #683, where they had raised as plain errors:
+`no-bravo-account` for an existing `bravo` account, `known-step` for a verb that is
+neither a load nor an unload, and `command-exit` for a privileged command exiting
+nonzero, which prints the command's output to the transcript first. They are grouped
+here by the module that raises them, and section 9 says how each is watched. The
+coordinator's: `schema`, `agent`, `stacks-distinct`, `isolated-root`, `tuple`,
+`rulings`, `arm-order`, `job-identities`, `job-types`, `control-schedule`,
+`own-refeeds`, `source-order`, `device-sources`, `device-traces`,
+`device-selections-distinct`, `kernel-schedule`, `hold`, `review`, `approval-coverage`,
+`artifact-hashes`, `halt`, `plan-snapshot`, `manifest-coverage`, `manifest-hashes`,
+`identity-evidence`, `identity-inputs`, `identity-binds-stacks`, `identity-recomputed`,
+`cursor`, `prior-success`, `prior-evidence`, `step-order`, `seat`, `not-repeated`,
+`driver-live`, `driver-owner`, `no-live-driver`, `report-evidence`, `payload-hash`,
+`payload-exit`, `payload-receipt`, `wait-owner`, `wait-order`, `wait-deadline` and
+`operator-not-root`. The payload's: `root-payload`, `plan-hash`, `fixed-root-agent`,
+`operator`, `source-file-hash`, `job-found`, `model-source`, `existing-model-custody`,
+`existing-model`, `stack-no-symlinks`, `stack-libraries`, `stack-file-coverage`,
+`fresh-install-root`, `no-symlink-destination`, `snapshot-hash`, `new-model-custody`,
 `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`,
 `installed-stack-hash`, `installation-plan`, `installed-model-custody`,
 `served-directory-custody`, `installed-model`, `m1-inactive`, `m1-state-readable`,
 `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`,
 `source-run-selected`, `derived-artifact`, `derived-tuple`, `preload-door`,
-`diagnostic-load`, `admin-answer`, `no-bravo-account`, `known-step` and
-`command-exit`. The driver's: `driver-not-root`,
-`reader-approved`, `fresh-arm`, `gate-answer`, `single-turn`, `nonempty-measurement`,
-`field-depth`, `seed-held`, `weights-held`, `source-trace`, `source-measurement`,
-`source-weights-held`, `source-seed-held`, `replay-completed`, `single-replay`,
-`replay-measurement`, `replay-weights-held`, `replay-seed-held`, `pair-count`,
-`pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`,
-`changed-seed-prediction` and `report-path`. The inventory raises its refusals as
-errors on the command line, since it runs before any plan exists.
+`diagnostic-load`, `admin-answer`, `no-bravo-account`, `no-bravo-group`,
+`operator-group`, `model-chain-custody`, `root-chain-custody`, `known-step` and
+`command-exit`. The driver's: `driver-not-root`, `reader-approved`, `fresh-arm`,
+`gate-answer`, `single-turn`, `nonempty-measurement`, `field-depth`, `seed-held`,
+`weights-held`, `source-trace`, `source-measurement`, `source-weights-held`,
+`source-seed-held`, `replay-completed`, `single-replay`, `replay-measurement`,
+`request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`,
+`field-duplicated`, `field-beyond-output`, `replay-weights-held`, `replay-seed-held`,
+`input-held`, `divergence-in-input`, `pair-count`, `pair-falsifier`,
+`own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` and
+`report-path`. The inventory raises its refusals as errors on the command line, since it
+runs before any plan exists.
 
 **The rulings are refusals too.** A plan whose `hold_lifted`, `cuda_provenance` or
 `control_count` ruling is empty is refused under `rulings`, and each names the URL
@@ -618,7 +633,7 @@ reads each citation from `code/`.
 | --- | --- |
 | `blackwell-probe-tuple-held-field-for-field` | perturbation, `tuple`, `derived-tuple`, `weights-held`, `seed-held` and their re-feed siblings |
 | `blackwell-probe-elected-series-from-the-tuple` | perturbation, `nonempty-measurement`, `field-depth`, `exact` on surprisals |
-| `blackwell-probe-schedule-validated-whole` | perturbation, the ten schedule guards of `validate_plan` |
+| `blackwell-probe-schedule-validated-whole` | perturbation, the ten schedule guards of `validate_plan` and `stacks-distinct`, the two stacks resolved, distinct and disjoint |
 | `blackwell-probe-falsifier-halts-after-unload` | perturbation, `pair-falsifier`, `own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` |
 | `blackwell-probe-one-command-one-seat-per-step` | perturbation, `step-order`, `seat`, `not-repeated`, `driver-owner`, `operator-not-root`, `driver-not-root` |
 | `blackwell-probe-approval-gates-every-step` | perturbation, `hold`, `review`, `approval-coverage`, `artifact-hashes`, `plan-snapshot`, `manifest-coverage`, `manifest-hashes`, `halt` |
@@ -626,15 +641,15 @@ reads each citation from `code/`.
 | `blackwell-probe-halt-is-evidence` | perturbation, `prior-success`, `prior-evidence`, `payload-exit`, `payload-receipt`, `cursor` |
 | `blackwell-probe-root-receives-bytes-never-a-path` | perturbation, `payload-hash`, `plan-hash`, `root-payload`, `fixed-root-agent`, `operator` |
 | `blackwell-probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace` |
-| `blackwell-probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody` |
-| `blackwell-probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model` |
-| `blackwell-probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-symlink-destination`, `installation-plan` |
+| `blackwell-probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody`, `root-chain-custody` |
+| `blackwell-probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model`, `model-chain-custody` |
+| `blackwell-probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-bravo-group`, `operator-group`, `no-symlink-destination`, `installation-plan` |
 | `blackwell-probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
 | `blackwell-probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
 | `blackwell-probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
-| `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks` |
-| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn` |
-| `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases |
+| `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks`, `identity-recomputed` |
+| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn`, and `well_formed`'s `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`, `field-duplicated`, `field-beyond-output` on every path |
+| `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases, and `input-held`, `divergence-in-input` on the re-feed path, with the input length in `exact` |
 | `blackwell-probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
 **What the instruments cannot buy, named.** No test here touches the card, loads a
