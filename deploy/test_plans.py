@@ -376,14 +376,13 @@ test() { fixture_args "$@"; builtin test "${fixture_mapped[@]}"; }
         self.assertTrue(all("-X" in c for c in sql))
         self.assertFalse(any("/etc/weaver/agents" in c for c in calls))
 
-    def test_stack_plan_excludes_web_and_compares_all_members(self):
+    def test_stack_plan_builds_the_whole_workspace_and_compares_all_members(self):
         result = self.run_script("update-stack.sh")
         self.assertEqual(result.returncode, 0, result.stderr)
         build = next(c for c in self.calls() if c[:2] == ["cargo", "build"])
         self.assertIn("--locked", build)
         self.assertIn("--workspace", build)
-        self.assertIn("--exclude", build)
-        self.assertEqual(build[build.index("--exclude") + 1], "weaver-web")
+        self.assertNotIn("--exclude", build)
         self.assertIn("weaver-spu/cuda", build[-1])
         self.assertEqual(result.stdout.count("NEW"), 6)
         self.assertIn("plan only. rerun with --install", result.stdout)

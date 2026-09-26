@@ -21,7 +21,10 @@ is the operator's to say.
 - **`weaver-web`, the reader and the only receiver.** The connector on the
   agents' own box, per `weaver-web-PRD` section 5, which lands what crosses
   in its own store and draws from the store rather than from the wire. The
-  browser is a display engine and holds no end of this seam.
+  browser is a display engine and holds no end of this seam. Since 2026-09-26 the
+  crate and its charter live outside this repository, at
+  `WeaverTools_Project/weaver-web/` beside it, on the operator's ruling of that
+  date, and this page stays with its sender.
 
 No third party reaches this seam. **The agent holds no end of it**: the
 emitter parses a finished record outside the agent as an operator principal,
@@ -67,7 +70,17 @@ to: weaver-analysis
 edge: party
 from: weaver-analysis-web-contract
 to: weaver-web
+
+node: weaver-web
+kind: crate
 ```
+
+**The reader's node is declared here since 2026-09-26**, its charter having left this
+repository with the crate for `WeaverTools_Project/weaver-web/` (destination commit
+`f2f01d8`) on the operator's ruling of that date. A contract whose party lives outside
+the repository declares that party's node, per the Document Format section 3, so the
+party edge above and the seam edge `weaver-analysis-PRD` section 1 draws point at a node
+a document declares rather than dangling.
 
 ## Vocabulary
 

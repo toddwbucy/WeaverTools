@@ -922,16 +922,16 @@ generation's measurement carries, per `weaver-spu-Spec` section 3, spelled as th
 record spelled it, so the sentinel crosses as the empty string it is, a hash the SPU
 could not compute being a fact of the record and not an absence, and the member is
 absent only where the measurement carries none. This reader reports it and derives
-nothing, and it is the source the run row of `weaver-web-Spec` section 2.2 fills
-from. The
+nothing, and it is the source the run row of `weaver-analysis-web-contract` section 2.2
+fills from, the row the web renders from its own repository since 2026-09-26. The
 `signals <record> [<k>]` verb, `k` two deviations where none is named, renders the
-summary first, one object naming the position count, how many carry an entropy and
-how many a surprisal, and the generations by turn with those members, then one line
-per point carrying turn, ordinal, token, entropy, and surprisal, and the spikes with
-their bar on standard error. **An absent member is omitted from the object and never
-rendered null**, on the record's own absent-not-empty rule, so a reader tells a
-member this verb did not send from one it sent, and the sentinel is sent. A record
-holding no measured generation refuses, typed as the others are.
+summary first, one object naming the position count, how many carry an entropy and how
+many a surprisal, and the generations by turn with those members, then one line per
+point carrying turn, ordinal, token, entropy, and surprisal, and the spikes with their
+bar on standard error. **An absent member is omitted from the object and never rendered
+null**, on the record's own absent- not-empty rule, so a reader tells a member this verb
+did not send from one it sent, and the sentinel is sent. A record holding no measured
+generation refuses, typed as the others are.
 
 ```graph
 node: analysis-signals-keep-absence

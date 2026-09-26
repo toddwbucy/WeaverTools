@@ -271,12 +271,12 @@ cargo test --release --locked \
   awk '{p+=$4; f+=$6} END {printf "  %d passed, %d failed\n", p, f; exit (f>0)}'
 
 # ------------------------------------------------------------------- 4. build
-# The frontend is paused. It ships no member in this deployment, so neither
-# plan nor install builds it. Keep the remaining workspace tools available
-# alongside the six installed members (including analysis for replay).
+# The frontend left the repository on 2026-09-26 and ships no member here, so
+# the build is the whole workspace: the six installed members and the tools
+# beside them (including analysis for replay).
 say "build"
 NVCC_CCBIN=${NVCC_CCBIN:-/usr/bin/g++-15} \
-  cargo build --release --locked --workspace --exclude weaver-web --features "$FEATURES"
+  cargo build --release --locked --workspace --features "$FEATURES"
 printf '  ok\n'
 
 # --------------------------------------------------------------------- 5. plan

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This Rust 2024 workspace contains twelve packages under `crates/weaver-*`. Each crate keeps implementation in `src/` and integration tests in `tests/`, with fixtures where needed. `weaver-traits` and `weaver-types` provide shared foundations; the harness connects components through contracted seams. Web assets live in `crates/weaver-web/assets/`, templates under its `src/`, and database migrations in `migrations/`.
+This Rust 2024 workspace contains eleven packages under `crates/weaver-*`. Each crate keeps implementation in `src/` and integration tests in `tests/`, with fixtures where needed. `weaver-traits` and `weaver-types` provide shared foundations; the harness connects components through contracted seams.
 
 `docs/crates/` holds crate PRDs, Specs, and contracts. `process/` holds working rules and validation scripts; `deploy/` contains deployment scripts. Read `process/WeaverTools-Working-Process.md` before changing behavior: implementation must follow ratified Specs.
 
@@ -17,7 +17,7 @@ Use the toolchain pinned in `rust-toolchain.toml` (`nightly-2026-02-13`). Run fr
 - `cargo fmt --all -- --check`: check formatting.
 - `python3 process/gates/census.py`: check document/code conformance against the baseline; introduce no new defects.
 
-Keep `--locked` on Cargo commands that resolve dependencies. The SPU defaults to GGUF and builds llama.cpp; CUDA is optional. For local web startup, use `cargo run -p weaver-web --bin weaver-web --locked -- --config <config.toml>`. Follow `crates/weaver-web/README.md` for PostgreSQL and connector setup.
+Keep `--locked` on Cargo commands that resolve dependencies. The SPU defaults to GGUF and builds llama.cpp; CUDA is optional.
 
 ## Coding Style & Naming Conventions
 

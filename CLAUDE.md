@@ -162,7 +162,7 @@ The quarry's own `CLAUDE.md` documents runtime paths (`/opt/weavertools` source,
 
 ## Building the new tree
 
-From `WeaverTools/`. Nightly, edition 2024, twelve packages.
+From `WeaverTools/`. Nightly, edition 2024, eleven packages.
 
 ```bash
 cargo build --workspace --locked
@@ -366,7 +366,7 @@ indexes them, it does not replace them:
 
    **The workspace sweep is not the gate and under-reports it.** A crate that
    fails does not compile under deny-warnings, so its dependents are not
-   linted at all and `--workspace` answers a smaller question than twelve
+   linted at all and `--workspace` answers a smaller question than eleven
    per-crate runs do.
 
 6. **The census**, on the operator's ruling of 2026-09-11.
