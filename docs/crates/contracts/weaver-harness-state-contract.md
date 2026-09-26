@@ -191,16 +191,16 @@ decode context is empty and the session's knowledge is not, so the loop
 asks for the material and composes its own re-entry. The ask carries one
 optional member, `last-turns`: a count bounding the answer to the most
 recent turns, absent meaning the session whole. The answer carries the
-events of the four message kinds in landing order, each with its envelope
-whole and its elected pairs beside it - the distillate's own shape served
-back - so what returns is exactly what the election kept, no more
-recallable than it was distillable. Selection bounds and ordering are
-custody's organizing licence, and every judgment about what to keep,
-summarize, or drop in the rebuilt context is the loop's.
+events of the four message kinds and of `message.restored` in landing order,
+each with its envelope whole and its elected pairs beside it - the distillate's
+own shape served back - so what returns is exactly what the election kept, no
+more recallable than it was distillable. Selection bounds and ordering are
+custody's organizing licence, and every judgment about what to keep, summarize,
+or drop in the rebuilt context is the loop's.
 
 **The `replay` ask returns the session's elected events whole, in landing
 order**, added 2026-08-24 against the diagnostic replay loop's need: the
-loop walks a preloaded session positionally, and the four message kinds the
+loop walks a preloaded session positionally, and the message kinds the
 recall serves are less than a replay reads, the rendered contributions and
 the recorded measurements being the point. The ask carries no members and
 the answer serves every held event of the declared session as the

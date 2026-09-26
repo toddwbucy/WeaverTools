@@ -275,7 +275,8 @@ run groups are ordered by the least `id` each holds, each carrying its kinds and
 counts as the envelope spelled them, rendered as the contract's answer frame and written
 back on the channel as one answer frame, the frame's byte shape riding the encoding
 election of section 6. The `recall` ask reads the event rows of the four message kinds
-with their field pairs, ordered by the `id` column like every landing-order answer, and
+and of `message.restored`, a branch's inherited conversation (#697), with their field
+pairs, ordered by the `id` column like every landing-order answer, and
 where `last-turns` bounds it the bound resolves as the distinct session, run, and turn
 triples of the most recent turns by id, the rows outside them left unread, a turn label
 recurring across runs naming two different turns. The answer serves each event as the
@@ -371,7 +372,7 @@ mechanism, the replaced ask cleared unanswered and the seal answering
 whatever the slot holds when it lands. Where the member stands without the
 door, the ask
 answers
-immediately, the query being the recall's generalized past the four
+immediately, the query being the recall's generalized past the
 message kinds: every event row of the declared session with its field
 pairs, ordered by the `id` column, served as the distillate's own shape.
 

@@ -115,7 +115,7 @@ pub enum Ask {
     Recall { last_turns: Option<u64> },
     /// Every held event of the declared session, whole, in landing order.
     /// Carries no members: what a replay reads is the session, and the
-    /// four message kinds `recall` serves are less than it needs.
+    /// message kinds `recall` serves are less than it needs.
     Replay,
     /// The boundary as the store states it, read at the enter and the
     /// leave, per the contract as of 2026-09-04. Carries no members.
@@ -299,4 +299,94 @@ pub fn parse_distillate(frame: &str) -> Option<Distillate> {
         sequence: envelope.get("sequence")?.as_str()?.parse().ok()?,
         pairs,
     })
+}
+
+/// A branch's record as the tee distils it, for both engines' restore tests
+/// (#697): its identity, the conversation it inherited as `message.restored`
+/// rows, then its own turn. The election names the turned message kinds and
+/// not the restored one, so the restored rows reach custody by the tee's
+/// whole-distill rule alone.
+#[cfg(test)]
+pub(crate) fn branch_record() -> Vec<Distillate> {
+    let election = weaver_trace::Election {
+        all_kinds: false,
+        keys: ["message.user", "message.assistant"]
+            .iter()
+            .map(|kind| weaver_trace::ElectedKind {
+                kind: (*kind).into(),
+                paths: vec!["role".into(), "content".into()],
+            })
+            .collect(),
+    };
+    let line = |sequence: u32, turn: Option<&str>, kind: &str, role: &str, text: &str| {
+        let turn = turn
+            .map(|t| format!(r#","turn":"{t}""#))
+            .unwrap_or_default();
+        format!(
+            concat!(
+                r#"{{"session":"s-branch","run":"r-branch"{turn},"kind":"{kind}","#,
+                r#""sequence":"{sequence}","subsystem":"harness","wall_ms":1,"#,
+                r#""monotonic_ns":"{sequence}","payload":{{"role":"{role}","#,
+                r#""content":[{{"type":"text","text":"{text}"}}]}}}}"#
+            ),
+            turn = turn,
+            kind = kind,
+            sequence = sequence,
+            role = role,
+            text = text
+        )
+    };
+    [
+        line(1, None, "message.system", "system", "You are Karl."),
+        line(2, None, "message.restored", "user", "inherited question"),
+        line(3, None, "message.restored", "assistant", "inherited answer"),
+        line(4, Some("t-1"), "message.user", "user", "hello"),
+        line(5, Some("t-1"), "message.assistant", "assistant", "hi"),
+    ]
+    .iter()
+    .map(|line| {
+        let frame = weaver_trace::distill(line, &election).expect("the tee distils the line");
+        parse_distillate(&frame).expect("custody parses the frame")
+    })
+    .collect()
+}
+
+/// What a restore from that branch is answered with: the identity, the
+/// inherited exchange with its role and content, then the branch's own
+/// turn, in landing order. A bounded recall, the seat's after a flush,
+/// answers the newest turns alone and none of the turnless rows.
+#[cfg(test)]
+pub(crate) fn assert_branch_recall(whole: &[RecalledEvent], bounded: &[RecalledEvent]) {
+    let kinds: Vec<&str> = whole.iter().map(|e| e.kind.as_str()).collect();
+    assert_eq!(
+        kinds,
+        [
+            "message.system",
+            "message.restored",
+            "message.restored",
+            "message.user",
+            "message.assistant"
+        ],
+        "the inherited exchange is recalled between the identity and the branch's turn"
+    );
+    let pair = |event: &RecalledEvent, key: &str| {
+        event
+            .pairs
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.clone())
+            .unwrap_or_default()
+    };
+    assert_eq!(pair(&whole[1], "role"), r#""user""#);
+    assert_eq!(
+        pair(&whole[1], "content"),
+        r#"[{"type":"text","text":"inherited question"}]"#
+    );
+    assert_eq!(pair(&whole[2], "role"), r#""assistant""#);
+    let bounded: Vec<&str> = bounded.iter().map(|e| e.kind.as_str()).collect();
+    assert_eq!(
+        bounded,
+        ["message.user", "message.assistant"],
+        "a bounded recall answers the newest turn and no turnless row"
+    );
 }

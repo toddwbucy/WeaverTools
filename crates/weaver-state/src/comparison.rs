@@ -24,6 +24,7 @@ struct Selection {
     paths: &'static [&'static str],
     message: bool,
     identity: bool,
+    whole: bool,
 }
 const SELECTION: &[Selection] = &[
     Selection {
@@ -31,42 +32,58 @@ const SELECTION: &[Selection] = &[
         paths: &["tee"],
         message: false,
         identity: false,
+        whole: false,
     },
     Selection {
         kind: "model.request",
         paths: &["rendered", "template", "sampling"],
         message: false,
         identity: false,
+        whole: false,
     },
     Selection {
         kind: "model.measurement",
         paths: &["input_tokens", "output_tokens", "model", "weights_hash"],
         message: false,
         identity: false,
+        whole: false,
     },
     Selection {
         kind: "message.system",
         paths: &["role", "content"],
         message: true,
         identity: true,
+        whole: true,
     },
     Selection {
         kind: "message.user",
         paths: &["role", "content"],
         message: true,
         identity: false,
+        whole: false,
     },
     Selection {
         kind: "message.assistant",
         paths: &["role", "content"],
         message: true,
         identity: false,
+        whole: false,
     },
     Selection {
         kind: "message.tool_result",
         paths: &["role", "content"],
         message: true,
         identity: false,
+        whole: false,
+    },
+    // A branch's inherited conversation: served by the recall, distilled
+    // whole like the identity, and never answered as identity (#697).
+    Selection {
+        kind: "message.restored",
+        paths: &["role", "content"],
+        message: true,
+        identity: false,
+        whole: true,
     },
 ];
 const SESSION: &str = "s-w5b";
@@ -129,7 +146,7 @@ fn expected(lines: &[String], rule: &Election, destination: &str) -> Vec<Event> 
         .filter_map(|line| {
             let members = object(line);
             let kind = text(&members["kind"]);
-            let system = SELECTION.iter().any(|s| s.identity && s.kind == kind)
+            let system = SELECTION.iter().any(|s| s.whole && s.kind == kind)
                 && !members.contains_key("turn");
             let selected = rule.keys.iter().find(|s| s.kind == kind);
             if !system && !rule.all_kinds && selected.is_none() {
@@ -385,6 +402,16 @@ impl Record {
                 SELECTION[3].kind,
                 &format!(
                     r#"{{"content":[{{"text":"prefix {run}","type":"text"}}],"role":"system","unknown":{{"z":1.00, "a":1e3}},"null":null,"empty":""}}"#
+                ),
+            );
+            // The run's inherited conversation, recorded at its open as a
+            // branch's is, so the recall and the preload are held to it.
+            add(
+                run,
+                None,
+                SELECTION[7].kind,
+                &format!(
+                    r#"{{"content":[{{"text":"inherited {run}","type":"text"}}],"role":"user"}}"#
                 ),
             );
             for index in 1..=turns {

@@ -1865,7 +1865,10 @@ canonical JSON, so the seated prefix reaches the store as the record rendered it
 whatever the operator elected, and the election's paths for the kind add nothing to it.
 A line this crate rendered always parses, so a parse failure here is unreachable in
 custody and answered by not distilling, the guard standing against a caller outside
-custody rather than a case inside it. Two properties of the read carry assertions.
+custody rather than a case inside it. **A `message.restored` line distills whole too**,
+as of 2026-09-26 (#697): it is the conversation a branch's run opened under, and a
+restore from that branch rebuilds it from what custody holds, so no election may thin
+it. Two properties of the read carry assertions.
 
 **The envelope is not electable, and no election can produce an unattributable
 row.** Every distilled event carries session, run, turn, kind, and sequence as

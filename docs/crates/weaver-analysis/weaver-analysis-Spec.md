@@ -307,13 +307,15 @@ message from
 the `role` and `content` the distillate carried. So the election names the four
 message kinds the store's `recall` serves, `message.system`, `message.user`,
 `message.assistant`, and `message.tool_result`, each with `role` and `content`, beside
-the three the replay reads. The ceiling widens with the asker rather than moving from
-the rule: what bounds the election from above is what any party asks of the preloaded
-holdings, and the harness's open is the second such party after the replay loop. The
-diagnostic loop reads past those four kinds untouched. Ordinary reconstruction
-uses the recorded rule even when that rule does not carry the same conversation
-pairs. The driver never enriches a reconstruction to make it resemble a diagnostic
-projection.
+the three the replay reads. **A restored message crosses whole instead**, as of
+2026-09-26 (#697): it is always turnless, the rule the tee applies to the identity takes
+it first, and an entry for it would never be read, so the store's `recall` serves it
+beside the four without the election naming it. The ceiling widens with the asker rather
+than moving from the rule: what bounds the election from above is what any party asks of
+the preloaded holdings, and the harness's open is the second such party after the replay
+loop. The diagnostic loop reads past those four kinds untouched. Ordinary reconstruction
+uses the recorded rule even when that rule does not carry the same conversation pairs.
+The driver never enriches a reconstruction to make it resemble a diagnostic projection.
 
 **The existing fixed-election instrument checks that the stream follows the
 analysis election.** It watches the diagnostic projection's selected kinds and
