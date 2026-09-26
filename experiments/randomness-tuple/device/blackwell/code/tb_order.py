@@ -7,6 +7,7 @@
 # conforms: blackwell-probe-halt-is-evidence
 # conforms: blackwell-probe-root-receives-bytes-never-a-path
 # conforms: blackwell-probe-identity-bound-to-approved-stacks
+# conforms: blackwell-probe-refeed-completes-against-a-verified-source
 """TB sequencing, adapted from the W4a flock/atomic-state/driver-lease design.
 
 This is experiment tooling for #679, not a product or conformance assertion.
@@ -14,6 +15,7 @@ Approval is supplied by the designated review seat, never by this program.
 """
 import argparse
 import contextlib
+import copy
 import fcntl
 import hashlib
 import json
@@ -268,8 +270,14 @@ class Order:
         if seat == 'coding seat' and not leases(requested):
             check('driver-owner', s.get('driver', {}).get('pid') == os.getpid())
 
-    def finish(self, s, step, evidence):
-        s.setdefault('done', {})[step] = dict(status='SUCCESS', path=str(evidence), sha256=sha(evidence))
+    def finish(self, s, step, evidence, sink=None):
+        done = dict(status='SUCCESS', path=str(evidence), sha256=sha(evidence))
+        # A free run's measure receipt also holds its sink as it stood at the
+        # run's turn.closed: the prefix through that line, by length and
+        # digest, which a later re-feed of that run is snapshotted against.
+        if sink is not None:
+            done['sink'] = sink
+        s.setdefault('done', {})[step] = done
         s['cursor'] += 1
         atomic(self.path, s)
 
@@ -311,11 +319,12 @@ class Order:
                 return
             step = due if requested == 'next' else requested
             self.guard(s, plan, step, 'operator')
+            extra = self.source_sink(s, plan, step)
             fd, name = tempfile.mkstemp(prefix='scheduled-', suffix='.log', dir=self.directory)
             os.close(fd)
             log = Path(name)
             try:
-                result = (runner or payload)(s, step, log)
+                result = (runner or payload)(s, step, log, *extra)
                 check('payload-exit', result == 0)
                 check('payload-receipt', log.read_text().splitlines()[-1:] == [f'SUCCESS: {step}'])
                 self.finish(s, step, log)
@@ -327,7 +336,25 @@ class Order:
                 atomic(self.path, s)
                 raise
 
-    def coding(self, step, evidence):
+    def source_sink(self, s, plan, step):
+        """What root is handed beside a local re-feed's load: the length and
+        digest its source run's sink was recorded at, from that run's measure
+        receipt. Nothing for any other step."""
+        if not step.startswith('load:'):
+            return ()
+        job = next(j for arm in plan['arms'] for j in arm['jobs'] if j['id'] == step.split(':', 1)[1])
+        if not job.get('source_job'):
+            return ()
+        sink = s.get('done', {}).get(f'measure:{job["source_job"]}', {}).get('sink') or {}
+        expected = str(Path(plan['install_root']) / 'sinks' / job['source_job'] / 'trace.ndjson')
+        check('source-sink-recorded', sink.get('path') == expected and type(sink.get('length')) is int
+              and sink['length'] > 0 and isinstance(sink.get('sha256'), str) and len(sink['sha256']) == 64)
+        return (str(sink['length']), sink['sha256'])
+
+    def coding(self, step, evidence, sink=None):
+        """Record a coding-seat step, and answer the receipts as they now
+        stand, so the driver reads each evidence file once against the digest
+        the coordinator holds rather than by path alone."""
         with self.locked():
             s = self.read()
             plan = self.approved(s)
@@ -337,7 +364,8 @@ class Order:
                 s['driver'] = dict(pid=os.getpid(), ticks=ticks(os.getpid()))
             if step == 'report':
                 check('report-evidence', Path(evidence).is_file())
-            self.finish(s, step, evidence)
+            self.finish(s, step, evidence, sink)
+            return copy.deepcopy(s['done'])
 
     def wait(self, step, timeout=14400, poll=1):
         deadline = time.monotonic() + timeout
@@ -356,7 +384,10 @@ class Order:
                         plan = self.approved(s)
                         if self.due(s, plan)[0] == step:
                             self.previous(s, plan)
-                            return
+                            # The receipts previous() has just verified,
+                            # handed to the driver so what it reads next it
+                            # reads against these digests.
+                            return copy.deepcopy(s.get('done', {}))
                         check('wait-order', self.due(s, plan)[1] == 'operator')
                         verified = raw
             except Busy:
@@ -375,7 +406,7 @@ def notice(step):
         pass
 
 
-def payload(state, step, log):
+def payload(state, step, log, *sink):
     source = Path(__file__).with_name('tb_payload.py')
     data = source.read_bytes()
     check('payload-hash', hashlib.sha256(data).hexdigest() == state['review']['artifacts'][str(source.resolve())])
@@ -385,8 +416,10 @@ def payload(state, step, log):
         # between the check and sudo's open, and that UID need not hold the
         # sudo credential (#683 finding 17). The plan goes by path with the
         # digest recorded at approval, which the payload verifies in one read.
+        # A local re-feed's load also carries its source sink's recorded length
+        # and digest, which the payload snapshots the sink against.
         return subprocess.run(['sudo', '/usr/bin/python3', '-I', '-c', data.decode(), state['plan'],
-                               state['review']['artifacts'][state['plan']], step],
+                               state['review']['artifacts'][state['plan']], step, *sink],
                               stdin=subprocess.DEVNULL,
                               stdout=out, stderr=subprocess.STDOUT).returncode
 

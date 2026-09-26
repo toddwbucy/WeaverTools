@@ -6,6 +6,7 @@
 # conforms: blackwell-probe-operator-input-read-once
 # conforms: blackwell-probe-refeed-completes-against-a-verified-source
 # conforms: blackwell-probe-exactness-is-bitwise-over-elected-readings
+# conforms: blackwell-probe-load-stands-on-the-interlock
 """One blocking TB arm. Privilege belongs exclusively to operator `next`.
 
 Uses #516's pinned probe readers from a local, reviewed git-archive extraction.
@@ -23,6 +24,7 @@ import sys
 import time
 
 from tb_order import Order, Refused, atomic, check, elected, notice, sha
+from tb_payload import m1_clear, m1_reading
 
 
 def readers(plan):
@@ -48,6 +50,30 @@ def events(path):
     return parse(Path(path).read_bytes())
 
 
+def receipt(receipts, step):
+    """A recorded step's evidence, read once and parsed only after its bytes
+    match the digest the coordinator recorded for it and handed back with the
+    wait or the record that returned these receipts."""
+    check('receipt-present', step in receipts)
+    data = Path(receipts[step]['path']).read_bytes()
+    check('receipt-digest', hashlib.sha256(data).hexdigest() == receipts[step]['sha256'])
+    return json.loads(data)
+
+
+def closed_prefix(data, run, kind):
+    """The sink's bytes through the line recording `kind` for `run`, or None.
+    A sink grows after its run closes, the unload appending its own event, so
+    what a re-feed is later held to is this prefix and not the whole file."""
+    offset = 0
+    for line in data.splitlines(keepends=True):
+        offset += len(line)
+        if line.strip():
+            event = json.loads(line)
+            if event.get('kind') == kind and event.get('run') == run:
+                return data[:offset]
+    return None
+
+
 def until_closed(path, kind, timeout=3600):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -62,7 +88,9 @@ def until_closed(path, kind, timeout=3600):
             lines = tail.split(b'\n')[1:] if size > 65536 else tail.split(b'\n')
             for line in lines[:-1]:
                 if line and json.loads(line).get('kind') == kind:
-                    return events(path)
+                    # The bytes, read once here: the caller parses and cuts
+                    # them, and nothing reads the sink a second time.
+                    return path.read_bytes()
         time.sleep(1)
     raise Refused(f'{kind} not recorded inside bound')
 
@@ -132,9 +160,9 @@ def exact(t, source, replay):
             {int(k): v for k, v in source['field'].items()} == {int(k): v for k, v in replay['field'].items()})
 
 
-def source_record(plan, job, probe):
+def source_record(plan, job, probe, receipts):
     if job.get('source_job'):
-        return json.loads((Path(plan['deposit']) / 'runs' / job['source_job'] / 'run.json').read_text())
+        return receipt(receipts, f'measure:{job["source_job"]}')
     path = Path(job['source_trace'])
     # One read, hashed and parsed: the record the report compares against is
     # cut from the bytes the manifest approved, the same selection the payload
@@ -147,26 +175,42 @@ def source_record(plan, job, probe):
     return dict(probe.extract_run(rows), trace=str(path), run=job['source_run'])
 
 
-def measure(plan, job, probe):
+def interlock_at_close():
+    """The interlock read again as the measurement closes: m1 standing now
+    means it may have stood during the reading, so the reading is refused. The
+    reading is returned to be recorded beside the result it vouches for."""
+    reading = m1_reading()
+    check('m1-unloaded-at-close', m1_clear(reading))
+    return reading
+
+
+def measure(plan, job, probe, receipts):
+    """One job's measurement: its result file and, for a free run, its sink as
+    it stood at the run's close, which the coordinator records in the measure
+    receipt."""
     trace = Path(plan['install_root']) / 'sinks' / job['id'] / 'trace.ndjson'
     root = Path(plan['deposit'])
     dest = root / ('runs' if job['kind'] == 'free' else 'refeeds') / job['id']
     dest.mkdir(parents=True, exist_ok=False)
+    sink = None
     if job['kind'] == 'free':
         close = probe.base.gate_turn({'gate_socket': '/run/weaver-bravo/gate.sock'}, probe.ESSAY_PROMPT, timeout=3600)
         check('gate-answer', close.get('kind') == 'answered' and bool(close.get('run')))
-        rows = until_closed(trace, 'turn.closed')
-        mine = [e for e in rows if e['run'] == close['run']]
+        prefix = closed_prefix(until_closed(trace, 'turn.closed'), close['run'], 'turn.closed')
+        check('sink-closed', prefix is not None)
+        sink = dict(path=str(trace), length=len(prefix), sha256=hashlib.sha256(prefix).hexdigest())
+        mine = [e for e in parse(prefix) if e['run'] == close['run']]
         check('single-turn', measurements(mine) == 1)
         well_formed(mine)
         rec = probe.extract_run(mine)
         enough(plan['tuple'], rec)
         check('seed-held', rec['declared_seed'] == job['seed'])
         check('weights-held', rec['weights_hash'] == plan['tuple']['weights_sha256'])
-        rec.update(name=job['id'], arm='TB0', seed=job['seed'], run=close['run'], trace=str(trace), verdict='RAN')
+        rec.update(name=job['id'], arm='TB0', seed=job['seed'], run=close['run'], trace=str(trace), verdict='RAN',
+                   sink=sink, interlock=interlock_at_close())
         target = dest / 'run.json'
     else:
-        rows = until_closed(trace, 'replay.closed')
+        rows = parse(until_closed(trace, 'replay.closed'))
         closes = [e for e in rows if e['kind'] == 'replay.closed']
         check('single-replay', len(closes) == 1)
         close = closes[0]
@@ -180,7 +224,7 @@ def measure(plan, job, probe):
         well_formed(mine)
         refed = probe.extract_run(mine)
         enough(plan['tuple'], refed)
-        src = source_record(plan, job, probe)
+        src = source_record(plan, job, probe, receipts)
         # A divergence is read as a device or kernel effect only when both sides
         # ran the tuple's weights, as the free-run path already requires.
         check('source-weights-held', src.get('weights_hash') == plan['tuple']['weights_sha256'])
@@ -204,26 +248,25 @@ def measure(plan, job, probe):
         free_readings = []
         for candidate in plan['arms'][0]['jobs']:
             if candidate['kind'] == 'free' and candidate['seed'] == src.get('declared_seed'):
-                path = root / 'runs' / candidate['id'] / 'run.json'
-                if path.is_file():
-                    free_readings.append(dict(target=candidate['id'], reading=probe.reading_one(src, json.loads(path.read_text()))))
+                # Every free run measured so far has its receipt; one not yet
+                # measured has none, and is not read.
+                if f'measure:{candidate["id"]}' in receipts:
+                    free_readings.append(dict(target=candidate['id'], reading=probe.reading_one(
+                        src, receipt(receipts, f'measure:{candidate["id"]}'))))
         rec = dict(free_readings=free_readings, name=job['id'], trace=str(trace), run=close['run'], verdict='RAN',
                    replay_outcome=outcome['kind'], replay_divergence=div,
                    replay_divergence_ordinal=ordinal, reading_two=reading,
-                   exact=exact(plan['tuple'], src, refed), refed=refed)
+                   exact=exact(plan['tuple'], src, refed), refed=refed, interlock=interlock_at_close())
         target = dest / 'refeed.json'
     atomic(target, rec)
     with (root / 'probe.jsonl').open('a') as out:
         out.write(json.dumps(dict(job=job, result=str(target), sha256=sha(target))) + '\n')
-    return target
+    return target, sink
 
 
-def assess(plan, arm, probe):
+def assess(plan, arm, probe, receipts):
     root = Path(plan['deposit'])
-    results = []
-    for job in arm['jobs']:
-        filename = root / ('runs' if job['kind'] == 'free' else 'refeeds') / job['id'] / ('run.json' if job['kind'] == 'free' else 'refeed.json')
-        results.append((job, json.loads(filename.read_text())))
+    results = [(job, receipt(receipts, f'measure:{job["id"]}')) for job in arm['jobs']]
     report = dict(arm=arm['name'], jobs=len(results))
     if arm['name'] == 'TB0':
         free = [(j, r) for j, r in results if j['kind'] == 'free']
@@ -267,26 +310,28 @@ def drive(order, arm_name):
     start = root / f'{arm_name}-start.json'
     check('fresh-arm', not start.exists())
     atomic(start, dict(arm=arm_name, pid=os.getpid(), plan=state['review']['artifacts'][state['plan']]))
-    order.coding(f'start:{arm_name}', start)
+    # Every evidence read below is against the receipts the coordinator last
+    # verified and handed back, never a path read alone (#683 thread 14).
+    receipts = order.coding(f'start:{arm_name}', start)
     for job in arm['jobs']:
         notice('load:' + job['id'])
-        order.wait('measure:' + job['id'])
-        result = measure(plan, job, probe)
-        order.coding('measure:' + job['id'], result)
+        receipts = order.wait('measure:' + job['id'])
+        result, sink = measure(plan, job, probe, receipts)
+        order.coding('measure:' + job['id'], result, sink=sink)
         notice('unload:' + job['id'])
         index = arm['jobs'].index(job)
-        order.wait('settle:' + job['id'])
+        receipts = order.wait('settle:' + job['id'])
         # Stop immediately after the operator has unloaded a falsified control.
-        rec = json.loads(result.read_text())
+        rec = receipt(receipts, 'measure:' + job['id'])
         if arm_name == 'TB0' and job['kind'] == 'refeed':
             check('own-refeed-falsifier', rec['exact'] and rec['replay_outcome'] == 'certified')
         if arm_name == 'TB0' and job['kind'] == 'free':
             earlier = [j for j in arm['jobs'][:index] if j['kind'] == 'free' and j['seed'] == job['seed']]
             if earlier:
-                old = json.loads((root / 'runs' / earlier[0]['id'] / 'run.json').read_text())
+                old = receipt(receipts, 'measure:' + earlier[0]['id'])
                 check('pair-falsifier', exact(plan['tuple'], old, rec) and old['emission'] == rec['emission'])
-        order.coding('settle:' + job['id'], result)
-    result = assess(plan, arm, probe)
+        receipts = order.coding('settle:' + job['id'], result)
+    result = assess(plan, arm, probe, receipts)
     order.coding('finish:' + arm_name, result)
     print(f'DONE: {arm_name}; results {result}', flush=True)
 

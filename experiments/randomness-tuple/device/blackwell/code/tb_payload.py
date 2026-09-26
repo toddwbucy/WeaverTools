@@ -6,6 +6,7 @@
 # conforms: blackwell-probe-model-in-custody-on-both-paths
 # conforms: blackwell-probe-installation-refuses-to-adopt
 # conforms: blackwell-probe-load-stands-on-the-interlock
+# conforms: blackwell-probe-refeed-completes-against-a-verified-source
 """Operator-only TB payload; tb_order hands root its verified source by -c, never a path.
 
 Stdlib only: sudo runs this with -I and closed stdin. Never run it directly.
@@ -45,16 +46,27 @@ def sha(path):
     return h.hexdigest()
 
 
-def freeze(source, destination):
+def freeze(source, destination, length=None):
     """Read an operator-owned file once into a new root-owned private file.
 
     Every consumer after this receives the destination, never the source path:
-    a check on the source followed by a second read of it binds nothing.
+    a check on the source followed by a second read of it binds nothing. With
+    a length, only that many leading bytes are copied: a sink recorded at a
+    run's close is frozen as it stood then, whatever the unload appended.
     """
     fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     try:
         with os.fdopen(fd, 'wb') as dst, open(source, 'rb') as src:
-            shutil.copyfileobj(src, dst, 1024 * 1024)
+            if length is None:
+                shutil.copyfileobj(src, dst, 1024 * 1024)
+            else:
+                remaining = length
+                while remaining > 0:
+                    block = src.read(min(remaining, 1024 * 1024))
+                    if not block:
+                        break
+                    dst.write(block)
+                    remaining -= len(block)
             dst.flush()
             os.fsync(dst.fileno())
     except BaseException:
@@ -63,9 +75,12 @@ def freeze(source, destination):
     return destination
 
 
-def snapshot(source, digest, destination):
-    """freeze(), then verify the frozen bytes, not the source, against the recorded digest."""
-    freeze(source, destination)
+def snapshot(source, digest, destination, length=None):
+    """freeze(), then verify the frozen bytes, not the source, against the recorded digest.
+
+    A short source fails the same check: fewer bytes than the recorded length
+    never hash to the recorded digest."""
+    freeze(source, destination, length)
     try:
         need('snapshot-hash', sha(destination) == digest)
     except RuntimeError:
@@ -140,27 +155,53 @@ def run(argv, **kw):
     return result
 
 
-def m1_unloaded():
-    # No installed admin invocation. Missing unit alone is not enough: also
-    # refuse a surviving coordination door or member/worker process.
+def m1_reading():
+    """The interlock's four facts as they stand now, read without privilege, so
+    the driver takes the same reading at a measurement's close that root takes
+    at the load and the unload. No installed admin invocation. A missing unit
+    alone is not enough: a surviving coordination door or member/worker process
+    also stands. A fact that cannot be read is recorded as unread, never as
+    clear."""
     answer = subprocess.run(['/usr/bin/systemctl', 'show', 'weaver-worker@m1.service',
                              '--property=ActiveState', '--property=LoadState'],
                             stdin=subprocess.DEVNULL, capture_output=True, text=True)
     values = dict(line.split('=', 1) for line in answer.stdout.splitlines() if '=' in line)
-    need('m1-state-readable', answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found'])
-    need('m1-inactive', values.get('ActiveState') == 'inactive')
-    need('m1-no-door', not Path('/run/weaver-m1/coordination.sock').exists())
+    try:
+        door = Path('/run/weaver-m1/coordination.sock').exists()
+    except PermissionError:
+        door = None
     try:
         uid = pwd.getpwnam('weaver-m1').pw_uid
     except KeyError:
         uid = None
+    process = False
     for entry in Path('/proc').iterdir():
         if not entry.name.isdigit():
             continue
         try:
-            need('m1-no-process', uid is None or entry.stat().st_uid != uid)
+            process = process or (uid is not None and entry.stat().st_uid == uid)
         except FileNotFoundError:
             pass
+    return dict(readable=answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found'],
+                active_state=values.get('ActiveState'), door=door, process=process)
+
+
+def m1_clear(reading):
+    """Whether a reading shows m1 absent on all four facts."""
+    return (reading['readable'] is True and reading['active_state'] == 'inactive' and
+            reading['door'] is False and reading['process'] is False)
+
+
+def m1_unloaded(when='load'):
+    """The interlock at a load, each fact refusing by its own name, and the
+    reading printed to the transcript that is this step's receipt."""
+    reading = m1_reading()
+    print(f'INTERLOCK at {when}: {json.dumps(reading, sort_keys=True)}', flush=True)
+    need('m1-state-readable', reading['readable'])
+    need('m1-inactive', reading['active_state'] == 'inactive')
+    need('m1-no-door', reading['door'] is False)
+    need('m1-no-process', reading['process'] is False)
+    return reading
 
 
 def config(stack):
@@ -414,8 +455,8 @@ def declaration(plan, job, sink):
             f'trace-sink:\n  kind: file\n  path: {sink}\n  create: true\n')
 
 
-def load(plan, job):
-    m1_unloaded()
+def load(plan, job, source_sink=None):
+    m1_unloaded('load')
     stack = job['stack']
     answer(stack, 'show', 'unloaded')
     # Every load checks the driver version as well as declared device ordinal.
@@ -446,9 +487,13 @@ def load(plan, job):
     frozen = ROOT / 'snapshots' / job['id']
     frozen.mkdir(mode=0o700, parents=True)
     if job.get('source_job'):
-        # Our own sink, written by the agent and root-owned: frozen, with no
-        # reviewed digest to hold it to, and holding the one source run.
-        source = freeze(ROOT / 'sinks' / job['source_job'] / 'trace.ndjson', frozen / 'source.ndjson')
+        # Our own sink, written by the agent and root-owned: frozen as it stood
+        # at its run's turn.closed, the length and digest the driver recorded
+        # in the coordinator's state then, which the coordinator hands here.
+        # What the unload appended after that close lies past the length.
+        need('source-sink-given', source_sink is not None and len(source_sink) == 2)
+        source = snapshot(ROOT / 'sinks' / job['source_job'] / 'trace.ndjson', source_sink[1],
+                          frozen / 'source.ndjson', length=int(source_sink[0]))
     else:
         whole = snapshot(job['source_trace'], plan['files'][str(job['source_trace'])], frozen / 'whole.ndjson')
         source = select_run(whole, job['source_run'], frozen / 'source.ndjson')
@@ -478,7 +523,7 @@ def load(plan, job):
 
 def main():
     need('root-payload', os.geteuid() == 0)
-    plan_path, expected, step = sys.argv[1:]
+    plan_path, expected, step, *source_sink = sys.argv[1:]
     # One snapshot, checked against the digest recorded at approval, then parsed.
     data = Path(plan_path).read_bytes()
     need('plan-hash', hashlib.sha256(data).hexdigest() == expected)
@@ -497,10 +542,16 @@ def main():
         job = jobs[0]
         need('known-step', verb in ('load', 'unload'))
         if verb == 'load':
-            load(plan, job)
+            load(plan, job, source_sink or None)
         else:
             answer(job['stack'], 'unload', 'unloaded')
             answer(job['stack'], 'show', 'unloaded')
+            # The interlock again at the unload, with the card now free: m1
+            # standing here means it may have stood during the reading, so the
+            # step refuses and the reading is never settled.
+            reading = m1_reading()
+            print(f'INTERLOCK at unload: {json.dumps(reading, sort_keys=True)}', flush=True)
+            need('m1-unloaded-at-unload', m1_clear(reading))
     print(f'SUCCESS: {step}', flush=True)
 
 

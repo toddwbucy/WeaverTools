@@ -66,6 +66,20 @@ def ndjson(*events):
     return ''.join(json.dumps(e, separators=(',', ':')) + '\n' for e in events)
 
 
+def closed_bytes(rows):
+    """The sink's bytes as until_closed now returns them, read once."""
+    return ndjson(*rows).encode()
+
+
+def golden_reading(systemctl=None):
+    """The interlock reading m1_reading takes from golden's real capture of
+    this box's systemctl answer, no door and no m1 process: m1 absent."""
+    with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,systemctl or golden.SYSTEMCTL_SHOW_M1,'')),\
+         patch('tb_payload.Path.exists',return_value=False),patch('tb_payload.Path.iterdir',return_value=[]),\
+         patch('tb_payload.pwd.getpwnam',side_effect=KeyError):
+        return payload.m1_reading()
+
+
 def ldd_output(root, cuda_dir):
     """golden's real ldd capture, with the three CUDA libraries resolved in
     cuda_dir, as they would be for an installed stack."""
@@ -529,7 +543,7 @@ class ReadingTests(unittest.TestCase):
     def test_trace_close_and_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
             closed=event(golden.TURN_CLOSED);p=Path(tmp)/'trace';p.write_text(ndjson(closed))
-            self.assertEqual(driver.until_closed(p,'turn.closed',1),[closed])
+            self.assertEqual(driver.until_closed(p,'turn.closed',1),ndjson(closed).encode())
             with self.assertRaises(order.Refused):driver.until_closed(p,'replay.closed',0)
 
     def test_section_comparison_detects_instruction_change(self):
@@ -899,7 +913,7 @@ class PayloadTests(unittest.TestCase):
         self.root.mkdir();(self.root/'sinks').mkdir();(self.root/'agents/B1').mkdir(parents=True)
         return dict(id='job',kind='free',stack='B1',seed=7)
 
-    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None,declared=None):
+    def invoke_load(self,job,gpu=None,ldd=None,loader_rc=0,door=True,artifact=True,on_run=None,declared=None,source_sink=None):
         default_gpu=golden.NVIDIA_SMI.strip()
         default_ldd=ldd_output(self.base,f'{self.root}/stacks/B1/cuda-lib')
         def run(argv,**kwargs):
@@ -917,7 +931,7 @@ class PayloadTests(unittest.TestCase):
                 sock=socket.socket(socket.AF_UNIX);sock.bind(str(state/'preload.sock'));sockets.append(sock)
             return SimpleNamespace(poll=lambda:None if door else 1,wait=lambda **kw:loader_rc,kill=lambda:None)
         try:
-            with patch('tb_payload.m1_unloaded'),patch('tb_payload.answer'),patch('tb_payload.run',side_effect=run),patch('tb_payload.os.chown'),patch('tb_payload.grp.getgrnam',return_value=SimpleNamespace(gr_gid=os.getgid())),patch('tb_payload.subprocess.Popen',side_effect=loader),contextlib.redirect_stdout(io.StringIO()):payload.load(self.plan,job)
+            with patch('tb_payload.m1_unloaded'),patch('tb_payload.answer'),patch('tb_payload.run',side_effect=run),patch('tb_payload.os.chown'),patch('tb_payload.grp.getgrnam',return_value=SimpleNamespace(gr_gid=os.getgid())),patch('tb_payload.subprocess.Popen',side_effect=loader),contextlib.redirect_stdout(io.StringIO()):payload.load(self.plan,job,source_sink)
         finally:
             for sock in sockets:sock.close()
 
@@ -994,10 +1008,11 @@ class PayloadTests(unittest.TestCase):
         free=next(j for j in self.plan['arms'][0]['jobs'] if j['kind']=='free')
         (self.root/'sinks'/free['id']).mkdir();(self.root/'sinks'/free['id']/'trace.ndjson').write_text(TWO_RUNS)
         local=dict(id='job',kind='refeed',stack='B1',source_job=free['id'])
+        recorded=(str(len(TWO_RUNS.encode())),hashlib.sha256(TWO_RUNS.encode()).hexdigest())
         other=next(s for s in self.plan['tuple']['seeds'] if s!=free['seed'])
-        with self.assertRaisesRegex(RuntimeError,'derived-tuple'):self.invoke_load(local,declared={'seed':other})
+        with self.assertRaisesRegex(RuntimeError,'derived-tuple'):self.invoke_load(local,declared={'seed':other},source_sink=recorded)
         shutil.rmtree(self.root/'sinks/job');shutil.rmtree(self.root/'snapshots/job')
-        self.invoke_load(local,declared={'seed':free['seed']})
+        self.invoke_load(local,declared={'seed':free['seed']},source_sink=recorded)
         self.assertFalse(payload.holds_tuple(self.plan,job,derived(self.model,'/sink')))
 
     def test_replay_refuses_a_run_the_trace_does_not_hold(self):
@@ -1016,7 +1031,7 @@ class PayloadTests(unittest.TestCase):
         p=copy.deepcopy(self.plan);p['install_root']=str(self.root);p['files']={}
         def invoke(p,uid=0,sudo='1000',digest=None,step='provision'):
             self.planpath.write_text(json.dumps(p))
-            with patch('sys.argv',['payload',str(self.planpath),digest or order.sha(self.planpath),step]),patch('tb_payload.os.geteuid',return_value=uid),patch.dict(os.environ,{'SUDO_UID':sudo}),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.provision'),patch('tb_payload.installed'),patch('tb_payload.answer'),contextlib.redirect_stdout(io.StringIO()):payload.main()
+            with patch('sys.argv',['payload',str(self.planpath),digest or order.sha(self.planpath),step]),patch('tb_payload.os.geteuid',return_value=uid),patch.dict(os.environ,{'SUDO_UID':sudo}),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.provision'),patch('tb_payload.installed'),patch('tb_payload.answer'),patch('tb_payload.m1_reading',return_value=golden_reading()),contextlib.redirect_stdout(io.StringIO()):payload.main()
         invoke(p)
         for change,kw in [(lambda p:None,dict(uid=1000)),(lambda p:None,dict(digest='wrong')),(lambda p:p.update(agent='karl'),{}),(lambda p:None,dict(sudo='9')),(lambda p:p['files'].update({str(self.planpath):'bad'}),{}),(lambda p:None,dict(step='unload:missing'))]:
             bad=copy.deepcopy(p);change(bad)
@@ -1056,6 +1071,19 @@ class DriverTests(unittest.TestCase):
                                    ESSAY_PROMPT='fixed',extract_run=lambda rows:copy.deepcopy(self.free),
                                    measured_events=lambda rows,run:rows,reading_two=lambda a,b:dict(positions_compared=1),
                                    reading_one=lambda a,b:{},first_divergence=lambda a,b:0)
+        # The interlock the driver reads at each close: m1 absent, as golden's
+        # real capture of this box reads, so no test depends on the host's m1.
+        p=patch('tb_driver.m1_reading',return_value=golden_reading());p.start();self.addCleanup(p.stop)
+
+    def receipts(self):
+        """The measure receipts the coordinator would hand back, one per result
+        in the deposit, each at the digest of the file as it stands."""
+        found={}
+        for part,name in [('runs','run.json'),('refeeds','refeed.json')]:
+            for directory in sorted((Path(self.plan['deposit'])/part).glob('*')):
+                f=directory/name
+                if f.is_file():found[f'measure:{directory.name}']=dict(status='SUCCESS',path=str(f),sha256=order.sha(f))
+        return found
 
     def job(self,kind='free'):
         return dict(id='job',kind=kind,stack='B1',seed=7,source_trace=str(self.source),source_run='r')
@@ -1072,8 +1100,8 @@ class DriverTests(unittest.TestCase):
 
     def test_free_measurement_refusals(self):
         j=self.job()
-        with patch('tb_driver.until_closed',return_value=self.close()):
-            result=driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(self.close())):
+            result,_=driver.measure(self.plan,j,self.probe,{})
             self.assertEqual(json.loads(result.read_text())['run'],'r')
         self.cleanup_job()
         for fault in ['answer','single-turn','seed','weights']:
@@ -1084,14 +1112,14 @@ class DriverTests(unittest.TestCase):
             rows=[e for e in self.close() if e['kind']!='model.measurement'] if fault=='single-turn' else self.close()
             gate=self.probe.base.gate_turn
             if fault=='answer':self.probe.base.gate_turn=lambda *a,**k:json.loads(golden.GATE_REFUSED)
-            with patch('tb_driver.until_closed',return_value=rows),self.assertRaisesRegex(order.Refused,'single-turn' if fault=='single-turn' else '.'):driver.measure(self.plan,j,self.probe)
+            with patch('tb_driver.until_closed',return_value=closed_bytes(rows)),self.assertRaisesRegex(order.Refused,'single-turn' if fault=='single-turn' else '.'):driver.measure(self.plan,j,self.probe,{})
             self.probe.base.gate_turn=gate;self.free=old;self.cleanup_job()
 
     def test_refeed_requires_close_measurement_and_source(self):
         j=self.job('refeed')
         self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
-        with patch('tb_driver.until_closed',return_value=self.close(True)):
-            result=driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(self.close(True))):
+            result,_=driver.measure(self.plan,j,self.probe,{})
             self.assertTrue(json.loads(result.read_text())['exact'])
         self.cleanup_job()
         for fault in ['close','outcome','measurement','double-measurement','source-hash','source-measurement']:
@@ -1104,7 +1132,7 @@ class DriverTests(unittest.TestCase):
             if fault=='source-hash':self.plan['files'][str(self.source)]='bad'
             if fault=='source-measurement':self.source.write_text(ndjson(*[e for e in run_events('r') if e['kind']!='model.measurement'],event(golden.TURN_CLOSED,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
             self.probe.measured_events=(lambda rows,run:None) if fault=='measurement' else (lambda rows,run:rows)
-            with patch('tb_driver.until_closed',return_value=rows),self.assertRaises((order.Refused,KeyError)):driver.measure(self.plan,j,self.probe)
+            with patch('tb_driver.until_closed',return_value=closed_bytes(rows)),self.assertRaises((order.Refused,KeyError)):driver.measure(self.plan,j,self.probe,{})
             self.cleanup_job();self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
 
     def test_assess_control_pass_and_falsifiers(self):
@@ -1113,16 +1141,16 @@ class DriverTests(unittest.TestCase):
             directory=Path(self.plan['deposit'])/('runs' if j['kind']=='free' else 'refeeds')/j['id'];directory.mkdir(parents=True)
             r=dict(self.free,seed=j.get('seed')) if j['kind']=='free' else dict(exact=True,replay_outcome='certified')
             order.atomic(directory/('run.json' if j['kind']=='free' else 'refeed.json'),r)
-        result=driver.assess(self.plan,arm,self.probe)
+        result=driver.assess(self.plan,arm,self.probe,self.receipts())
         self.assertTrue(json.loads(result.read_text())['control_passed'])
         j=arm['jobs'][-1];p=Path(self.plan['deposit'])/'refeeds'/j['id']/'refeed.json'
         order.atomic(p,dict(exact=False,replay_outcome='diverged'))
-        with self.assertRaises(order.Refused):driver.assess(self.plan,arm,self.probe)
+        with self.assertRaises(order.Refused):driver.assess(self.plan,arm,self.probe,self.receipts())
         order.atomic(p,dict(exact=True,replay_outcome='certified'))
         self.probe.first_divergence=lambda a,b:24
-        with self.assertRaises(order.Refused):driver.assess(self.plan,arm,self.probe)
+        with self.assertRaises(order.Refused):driver.assess(self.plan,arm,self.probe,self.receipts())
         shorter=copy.deepcopy(arm);shorter['jobs'].pop(0)
-        with self.assertRaises(order.Refused):driver.assess(self.plan,shorter,self.probe)
+        with self.assertRaises(order.Refused):driver.assess(self.plan,shorter,self.probe,self.receipts())
 
     def test_changed_seeds_compare_one_run_per_distinct_seed(self):
         # #683 finding 16: the validator constrains only the multiset of free
@@ -1137,7 +1165,7 @@ class DriverTests(unittest.TestCase):
             r=dict(self.free,seed=j.get('seed'),output_tokens=[j['seed']%1000]) if j['kind']=='free' else dict(exact=True,replay_outcome='certified')
             order.atomic(directory/('run.json' if j['kind']=='free' else 'refeed.json'),r)
         self.probe.first_divergence=lambda a,b:None if a==b else next((i for i,(x,y) in enumerate(zip(a,b)) if x!=y),min(len(a),len(b)))
-        report=json.loads(driver.assess(self.plan,arm,self.probe).read_text())
+        report=json.loads(driver.assess(self.plan,arm,self.probe,self.receipts()).read_text())
         seeds=self.plan['tuple']['seeds']
         self.assertEqual({(c['a'],c['b']) for c in report['changed_seeds']},{(a,b) for i,a in enumerate(seeds) for b in seeds[i+1:]})
         self.assertTrue(report['changed_seed_prediction'])
@@ -1148,22 +1176,25 @@ class DriverTests(unittest.TestCase):
         arm=dict(name='TB0',jobs=[dict(id='a',kind='free',seed=7),dict(id='b',kind='free',seed=7),dict(id='c',kind='refeed')])
         self.plan['arms']=[arm]
         state=dict(plan=str(self.planpath),review=dict(artifacts={str(self.planpath):'recorded-at-approval'}));seen=[]
-        o=SimpleNamespace(read=lambda:state,approved=lambda s:self.plan,
-                          coding=lambda step,path:seen.append(step),wait=lambda step:seen.append('wait:'+step))
-        def measure(plan,job,probe):
+        # The coordinator answers each wait and record with the receipts as
+        # they stand, which is what the driver reads its evidence against.
+        def coding(step,path,sink=None):seen.append(step);return self.receipts()
+        def wait(step):seen.append('wait:'+step);return self.receipts()
+        o=SimpleNamespace(read=lambda:state,approved=lambda s:self.plan,coding=coding,wait=wait)
+        def measure(plan,job,probe,receipts):
             p=Path(plan['deposit'])/'runs'/job['id']/'run.json';p.parent.mkdir(parents=True,exist_ok=True)
-            order.atomic(p,dict(self.free,exact=False,replay_outcome='diverged'));return p
+            order.atomic(p,dict(self.free,exact=False,replay_outcome='diverged'));return p,None
         with patch('tb_driver.readers',return_value=self.probe),patch('tb_driver.notice'),patch('tb_driver.measure',side_effect=measure),self.assertRaises(order.Refused):driver.drive(o,'TB0')
         self.assertIn('settle:b',seen);self.assertIn('wait:settle:c',seen);self.assertNotIn('settle:c',seen)
         # The start record names the digest the review seat approved, not a re-hash.
         self.assertEqual(json.loads((Path(self.plan['deposit'])/'TB0-start.json').read_text())['plan'],'recorded-at-approval')
         with patch('tb_driver.readers',return_value=self.probe),self.assertRaises(order.Refused):driver.drive(o,'TB0')
         (Path(self.plan['deposit'])/'TB0-start.json').unlink()
-        def bad_pair(plan,job,probe):
-            p=measure(plan,job,probe)
+        def bad_pair(plan,job,probe,receipts):
+            p,_=measure(plan,job,probe,receipts)
             if job['id']=='b':
                 r=json.loads(p.read_text());r['emission']='changed';order.atomic(p,r)
-            return p
+            return p,None
         with patch('tb_driver.readers',return_value=self.probe),patch('tb_driver.notice'),patch('tb_driver.measure',side_effect=bad_pair),self.assertRaisesRegex(order.Refused,'pair-falsifier'):driver.drive(o,'TB0')
 
     def test_reader_hash_and_no_cached_code(self):
@@ -1185,7 +1216,7 @@ class DriverTests(unittest.TestCase):
                 other=dict(copy.deepcopy(self.free),weights_hash='f'*64)
                 self.probe.extract_run=(lambda rows,side=side,other=other:copy.deepcopy(other) if (side=='replay')==any(e['kind']=='replay.closed' for e in rows) else copy.deepcopy(self.free))
                 try:
-                    with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,f'{side}-weights-held'):driver.measure(self.plan,j,self.probe)
+                    with patch('tb_driver.until_closed',return_value=closed_bytes(self.close(True))),self.assertRaisesRegex(order.Refused,f'{side}-weights-held'):driver.measure(self.plan,j,self.probe,{})
                 finally:self.cleanup_job()
 
     def test_a_second_field_event_for_a_position_refuses_on_every_path(self):
@@ -1195,21 +1226,21 @@ class DriverTests(unittest.TestCase):
         # paths, by a name each.
         dup=[event(golden.MODEL_FIELD,run='r'),event(golden.MODEL_FIELD,run='r',sequence='42')]
         j=self.job('free')
-        with patch('tb_driver.until_closed',return_value=dup+self.close()),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(dup+self.close())),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe,{})
         self.cleanup_job()
         j=self.job('refeed')
         self.source.write_text(trace('r',*dup));self.plan['files'][str(self.source)]=order.sha(self.source)
-        with self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.source_record(self.plan,j,self.probe)
+        with self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.source_record(self.plan,j,self.probe,{})
         self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
-        with patch('tb_driver.until_closed',return_value=dup+self.close(True)),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(dup+self.close(True))),self.assertRaisesRegex(order.Refused,'field-duplicated'):driver.measure(self.plan,j,self.probe,{})
         self.cleanup_job()
         # A position beyond the measurement's output length refuses the same way.
         beyond=[event(golden.MODEL_FIELD,run='r',payload=dict(json.loads(golden.MODEL_FIELD)['payload'],position=10**6))]
-        with patch('tb_driver.until_closed',return_value=beyond+self.close(True)),self.assertRaisesRegex(order.Refused,'field-beyond-output'):driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(beyond+self.close(True))),self.assertRaisesRegex(order.Refused,'field-beyond-output'):driver.measure(self.plan,j,self.probe,{})
         self.cleanup_job()
         # One event per position, within the output length, passes.
         one=[event(golden.MODEL_FIELD,run='r')]
-        with patch('tb_driver.until_closed',return_value=one+self.close(True)):driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(one+self.close(True))):driver.measure(self.plan,j,self.probe,{})
 
     def test_each_singular_kind_exactly_once_on_every_path(self):
         # #683 threads 41 and 42, as a class: the pinned extractor keeps the
@@ -1224,14 +1255,14 @@ class DriverTests(unittest.TestCase):
                     base=[e for e in run_events('r') if e['kind']!=kind] if fault=='absent' else run_events('r',event(lines[kind],run='r',sequence='77'))
                     return base+[close]
                 with self.subTest(kind=kind,fault=fault,path='free'):
-                    with patch('tb_driver.until_closed',return_value=rows(event(golden.TURN_CLOSED,run='r'))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('free'),self.probe)
+                    with patch('tb_driver.until_closed',return_value=closed_bytes(rows(event(golden.TURN_CLOSED,run='r')))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('free'),self.probe,{})
                     self.cleanup_job()
                 with self.subTest(kind=kind,fault=fault,path='source'):
                     j=self.job('refeed');self.source.write_text(ndjson(*rows(event(golden.TURN_CLOSED,run='r'))));self.plan['files'][str(self.source)]=order.sha(self.source)
-                    with self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.source_record(self.plan,j,self.probe)
+                    with self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.source_record(self.plan,j,self.probe,{})
                     self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
                 with self.subTest(kind=kind,fault=fault,path='replay'):
-                    with patch('tb_driver.until_closed',return_value=rows(event(golden.REPLAY_CLOSED_CERTIFIED,run='r'))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('refeed'),self.probe)
+                    with patch('tb_driver.until_closed',return_value=closed_bytes(rows(event(golden.REPLAY_CLOSED_CERTIFIED,run='r')))),self.assertRaisesRegex(order.Refused,f'{name}-{fault}'):driver.measure(self.plan,self.job('refeed'),self.probe,{})
                     self.cleanup_job()
 
     def test_exact_holds_the_input_length(self):
@@ -1249,16 +1280,16 @@ class DriverTests(unittest.TestCase):
         other=dict(copy.deepcopy(self.free),input_tokens=self.free['input_tokens']+2)
         self.probe.extract_run=lambda rows:copy.deepcopy(other) if any(e['kind']=='replay.closed' for e in rows) else copy.deepcopy(self.free)
         try:
-            with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,'input-held'):driver.measure(self.plan,j,self.probe)
+            with patch('tb_driver.until_closed',return_value=closed_bytes(self.close(True))),self.assertRaisesRegex(order.Refused,'input-held'):driver.measure(self.plan,j,self.probe,{})
         finally:self.cleanup_job()
         self.probe.extract_run=lambda rows:copy.deepcopy(self.free)
         inside=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=self.free['input_tokens']-1,recorded=1,recomputed=2)))))
         try:
-            with patch('tb_driver.until_closed',return_value=inside),self.assertRaisesRegex(order.Refused,'divergence-in-input'):driver.measure(self.plan,j,self.probe)
+            with patch('tb_driver.until_closed',return_value=closed_bytes(inside)),self.assertRaisesRegex(order.Refused,'divergence-in-input'):driver.measure(self.plan,j,self.probe,{})
         finally:self.cleanup_job()
         # At the boundary the position is the first output token, ordinal 0.
         at=run_events('r',event(golden.REPLAY_CLOSED_CERTIFIED,run='r',payload=dict(outcome=dict(kind='diverged',divergence=dict(kind='token_path',position=self.free['input_tokens'],recorded=1,recomputed=2)))))
-        with patch('tb_driver.until_closed',return_value=at):result=driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(at)):result,_=driver.measure(self.plan,j,self.probe,{})
         self.assertEqual(json.loads(result.read_text())['replay_divergence_ordinal'],0)
 
     def test_refeed_requires_the_source_seed_on_both_sides(self):
@@ -1274,10 +1305,10 @@ class DriverTests(unittest.TestCase):
                     return dict(copy.deepcopy(self.free),declared_seed=r if replay else s)
                 self.probe.extract_run=extract
                 try:
-                    with patch('tb_driver.until_closed',return_value=self.close(True)),self.assertRaisesRegex(order.Refused,guard):driver.measure(self.plan,j,self.probe)
+                    with patch('tb_driver.until_closed',return_value=closed_bytes(self.close(True))),self.assertRaisesRegex(order.Refused,guard):driver.measure(self.plan,j,self.probe,{})
                 finally:self.cleanup_job()
         self.probe.extract_run=lambda rows:dict(copy.deepcopy(self.free),declared_seed=held)
-        with patch('tb_driver.until_closed',return_value=self.close(True)):driver.measure(self.plan,j,self.probe)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(self.close(True))):driver.measure(self.plan,j,self.probe,{})
 
     def test_readers_compile_the_bytes_they_hashed(self):
         # Codex pass 4 class, driver side: a reader rewritten after its hash
@@ -1294,7 +1325,7 @@ class DriverTests(unittest.TestCase):
         j=self.job('refeed');seen=[]
         self.source.write_text(trace('r'));self.plan['files'][str(self.source)]=order.sha(self.source)
         self.probe.extract_run=lambda rows:seen.append(rows) or copy.deepcopy(self.free)
-        with swapped_after_hashing({self.source:trace('r',sequence='99').encode()}):driver.source_record(self.plan,j,self.probe)
+        with swapped_after_hashing({self.source:trace('r',sequence='99').encode()}):driver.source_record(self.plan,j,self.probe,{})
         self.assertEqual(seen,[run_events('r')])
 
     def test_entry_refuses_root(self):
@@ -1302,6 +1333,133 @@ class DriverTests(unittest.TestCase):
             self.assertEqual(driver.main(),1)
         self.assertTrue(self.o.read()['halt'])
 
+
+
+class HoldLiftTests(unittest.TestCase):
+    """#679 items 1, 2 and 6, the probe's hold-lift parts that needed no ruling:
+    a local source sink held to the digest recorded at its run's close, the
+    driver's evidence read once against the coordinator's receipts, and the
+    m1 interlock read again at the measurement's close and at the unload."""
+    save=Fixture.save
+    due=Fixture.due
+
+    def setUp(self):
+        Fixture.setUp(self)
+
+    # 679.1: the sink recorded at the producing run's close, handed to root.
+
+    def test_a_local_refeed_load_carries_its_source_sinks_recorded_digest(self):
+        # Perturbation: remove source-sink-recorded and the unrecorded load is
+        # handed to root with nothing to hold the sink to.
+        source='B1-s451234785645-n1';load='load:own-B1-s451234785645-n1'
+        self.due(load);seen=[]
+        def runner(s,step,log,*sink):seen.append(sink);log.write_text('SUCCESS: '+step+'\n');return 0
+        with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        self.assertEqual(seen,[])
+        sink=dict(path=str(Path(self.plan['install_root'])/'sinks'/source/'trace.ndjson'),length=512,sha256='a'*64)
+        for fault in [dict(sink,path='/elsewhere/trace.ndjson'),dict(sink,length=0),dict(sink,length='512'),dict(sink,sha256='short')]:
+            self.state['done'][f'measure:{source}']['sink']=fault;self.state['halt']=None;self.save()
+            with self.assertRaisesRegex(order.Refused,'source-sink-recorded'),contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        self.state['done'][f'measure:{source}']['sink']=sink;self.state['halt']=None;self.save()
+        with contextlib.redirect_stdout(io.StringIO()):self.o.operator(runner=runner)
+        self.assertEqual(seen,[('512','a'*64)])
+
+    def test_root_is_handed_the_sink_after_the_step(self):
+        seen=[]
+        def as_root(argv,**kw):seen.append(argv[5:]);return subprocess.CompletedProcess(argv,0)
+        with patch('tb_order.subprocess.run',side_effect=as_root):order.payload(self.state,'load:own-x',self.root/'log','512','a'*64)
+        self.assertEqual(seen,[[str(self.planpath),self.state['review']['artifacts'][str(self.planpath)],'load:own-x','512','a'*64]])
+
+    def test_the_driver_records_the_sink_through_its_runs_close(self):
+        # The unload appends after the close, so the recorded prefix stops at
+        # the run's turn.closed line and still verifies once the sink has grown.
+        # Perturbation: remove sink-closed and a sink with no close for the run
+        # records nothing to hold a re-feed to.
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        closing=d.close();tail=[event(golden.TURN_CLOSED,run='other')]
+        with patch('tb_driver.until_closed',return_value=closed_bytes(closing+tail)):
+            result,sink=driver.measure(d.plan,d.job(),d.probe,{})
+        prefix=closed_bytes(closing)
+        self.assertEqual(sink,dict(path=str(Path(d.plan['install_root'])/'sinks/job/trace.ndjson'),length=len(prefix),sha256=hashlib.sha256(prefix).hexdigest()))
+        self.assertEqual(json.loads(result.read_text())['sink'],sink)
+        d.cleanup_job()
+        with patch('tb_driver.until_closed',return_value=closed_bytes([e for e in closing if e['kind']!='turn.closed']+tail)),self.assertRaisesRegex(order.Refused,'sink-closed'):
+            driver.measure(d.plan,d.job(),d.probe,{})
+
+    def test_the_payload_freezes_the_recorded_prefix_and_refuses_another(self):
+        # Perturbation: remove source-sink-given, or snapshot-hash, and a load
+        # with no recorded sink, or a sink changed inside the recorded prefix,
+        # feeds the replay anyway.
+        pt=PayloadTests('test_replay_source_must_hold_the_tuple');pt.setUp();self.addCleanup(pt.doCleanups)
+        free=next(j for j in pt.plan['arms'][0]['jobs'] if j['kind']=='free')
+        pt.setup_load();(pt.root/'sinks'/free['id']).mkdir()
+        sink=pt.root/'sinks'/free['id']/'trace.ndjson'
+        recorded=TWO_RUNS.encode();sink.write_bytes(recorded+ndjson(event(golden.TURN_STARTED,run='unload')).encode())
+        local=dict(id='job',kind='refeed',stack='B1',source_job=free['id'])
+        fed={}
+        def on_run(argv):
+            if 'derive' in argv:fed['bytes']=Path(argv[argv.index('derive')+1]).read_bytes()
+        pt.invoke_load(local,declared={'seed':free['seed']},on_run=on_run,source_sink=(str(len(recorded)),hashlib.sha256(recorded).hexdigest()))
+        self.assertEqual(fed['bytes'],recorded,'the replay is fed the prefix recorded at the close, and not the unload after it')
+        for given,changed in [(None,recorded),((str(len(recorded)),hashlib.sha256(recorded).hexdigest()),recorded.replace(b'r1',b'rX'))]:
+            shutil.rmtree(pt.root/'sinks/job');shutil.rmtree(pt.root/'snapshots/job');sink.write_bytes(changed)
+            with self.assertRaisesRegex(RuntimeError,'source-sink-given' if given is None else 'snapshot-hash'):
+                pt.invoke_load(local,declared={'seed':free['seed']},source_sink=given)
+
+    # 679.2: the driver reads evidence once, against the receipts.
+
+    def test_wait_and_coding_answer_the_receipts_they_verified(self):
+        self.due('measure:B1-s451234785645-n1')
+        self.assertEqual(self.o.wait('measure:B1-s451234785645-n1',timeout=0),self.state['done'])
+
+    def test_the_driver_reads_evidence_against_its_receipt(self):
+        # #683 thread 14: a result substituted after the coordinator verified it
+        # is refused where the driver reads it. Perturbation: remove
+        # receipt-digest and the substitute is read; remove receipt-present and
+        # a missing receipt reads the path alone.
+        d=DriverTests('test_assess_control_pass_and_falsifiers');d.setUp();self.addCleanup(d.doCleanups)
+        p=Path(d.plan['deposit'])/'runs/B1-s7-n1/run.json';p.parent.mkdir(parents=True);order.atomic(p,dict(d.free,seed=7))
+        receipts=d.receipts()
+        self.assertEqual(driver.receipt(receipts,'measure:B1-s7-n1')['seed'],7)
+        order.atomic(p,dict(d.free,seed=8))
+        with self.assertRaisesRegex(order.Refused,'receipt-digest'):driver.receipt(receipts,'measure:B1-s7-n1')
+        with self.assertRaisesRegex(order.Refused,'receipt-present'):driver.receipt(receipts,'measure:absent')
+        # A local re-feed's source is the receipt, never the path alone.
+        j=dict(id='own',kind='refeed',stack='B1',source_job='B1-s7-n1')
+        with self.assertRaisesRegex(order.Refused,'receipt-digest'):driver.source_record(d.plan,j,d.probe,receipts)
+        with self.assertRaisesRegex(order.Refused,'receipt-present'):driver.source_record(d.plan,j,d.probe,{})
+
+    # 679.6: the interlock at the close and at the unload.
+
+    def test_the_driver_refuses_a_reading_m1_stood_at(self):
+        # #683 thread 49. Perturbation: remove m1-unloaded-at-close and a
+        # measurement closed with m1 standing is recorded as a reading.
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        stood=golden_reading(golden.SYSTEMCTL_SHOW_M1.replace('LoadState=not-found','LoadState=loaded').replace('ActiveState=inactive','ActiveState=active'))
+        for rows,job in [(d.close(),d.job()),(d.close(True),d.job('refeed'))]:
+            with patch('tb_driver.until_closed',return_value=closed_bytes(rows)),patch('tb_driver.m1_reading',return_value=stood),self.assertRaisesRegex(order.Refused,'m1-unloaded-at-close'):
+                driver.measure(d.plan,job,d.probe,{})
+            d.cleanup_job()
+        with patch('tb_driver.until_closed',return_value=closed_bytes(d.close())):result,_=driver.measure(d.plan,d.job(),d.probe,{})
+        self.assertEqual(json.loads(result.read_text())['interlock'],golden_reading(),'the reading is recorded beside the result')
+
+    def test_an_unreadable_or_standing_m1_is_never_clear(self):
+        clear=golden_reading();self.assertTrue(payload.m1_clear(clear))
+        for fault in [dict(readable=False),dict(active_state='active'),dict(door=True),dict(door=None),dict(process=True)]:
+            self.assertFalse(payload.m1_clear(dict(clear,**fault)),fault)
+
+    def test_the_unload_refuses_when_m1_stands(self):
+        # Perturbation: remove m1-unloaded-at-unload and the unload succeeds
+        # with m1 standing, settling a reading it may have shared the card with.
+        pt=PayloadTests('test_payload_entry_checks');pt.setUp();self.addCleanup(pt.doCleanups)
+        p=copy.deepcopy(pt.plan);p['install_root']=str(pt.root);p['files']={};pt.planpath.write_text(json.dumps(p))
+        stood=dict(golden_reading(),process=True)
+        def invoke(reading):
+            with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'unload:B1-s7-n1']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.installed'),patch('tb_payload.answer'),patch('tb_payload.m1_reading',return_value=reading),contextlib.redirect_stdout(io.StringIO()) as out:
+                payload.main()
+            return out.getvalue()
+        self.assertIn('INTERLOCK at unload',invoke(golden_reading()))
+        with self.assertRaisesRegex(RuntimeError,'m1-unloaded-at-unload'):invoke(stood)
 
 
 class AdditionalTests(unittest.TestCase):
