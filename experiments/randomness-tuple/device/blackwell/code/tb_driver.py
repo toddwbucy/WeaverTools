@@ -137,7 +137,10 @@ def measure(plan, job, probe):
         outcome = close['payload']['outcome']
         check('replay-completed', outcome['kind'] in ['certified', 'diverged'])
         mine = probe.measured_events(rows, close['run'])
-        check('replay-measurement', mine is not None)
+        # Exactly one, as the free path requires under single-turn: extract_run
+        # takes the last measurement's fields over a run's accumulated field
+        # events, so two measurements make one ambiguous record.
+        check('replay-measurement', mine is not None and sum(e['kind'] == 'model.measurement' for e in mine) == 1)
         refed = probe.extract_run(mine)
         enough(plan['tuple'], refed)
         src = source_record(plan, job, probe)

@@ -932,7 +932,8 @@ class DriverTests(unittest.TestCase):
         return dict(id='job',kind=kind,stack='B1',seed=7,source_trace=str(self.source),source_run='r')
 
     def close(self,replay=False):
-        if replay:return [event(golden.REPLAY_CLOSED_CERTIFIED,run='r')]
+        # A replay run carries its one measurement and its close, as a real one does.
+        if replay:return [event(golden.MODEL_MEASUREMENT,run='r'),event(golden.REPLAY_CLOSED_CERTIFIED,run='r')]
         return [event(golden.MODEL_MEASUREMENT,run='r'),event(golden.TURN_CLOSED,run='r')]
 
     def cleanup_job(self):
@@ -963,10 +964,13 @@ class DriverTests(unittest.TestCase):
             result=driver.measure(self.plan,j,self.probe)
             self.assertTrue(json.loads(result.read_text())['exact'])
         self.cleanup_job()
-        for fault in ['close','outcome','measurement','source-hash','source-measurement']:
+        for fault in ['close','outcome','measurement','double-measurement','source-hash','source-measurement']:
             rows=self.close(True)
-            if fault=='close':rows=rows*2
-            if fault=='outcome':rows[0]['payload']['outcome']=dict(kind='abandoned',reason=dict(kind='replay_ask_unanswered'))
+            if fault=='close':rows=rows+[rows[-1]]  # two closes, one measurement
+            # #683 thread 37: two measurements in the replay run are one
+            # ambiguous record, refused like none.
+            if fault=='double-measurement':rows=[event(golden.MODEL_MEASUREMENT,run='r',sequence='9')]+rows
+            if fault=='outcome':rows[-1]['payload']['outcome']=dict(kind='abandoned',reason=dict(kind='replay_ask_unanswered'))
             if fault=='source-hash':self.plan['files'][str(self.source)]='bad'
             if fault=='source-measurement':self.source.write_text(ndjson(event(golden.TURN_CLOSED,run='r')));self.plan['files'][str(self.source)]=order.sha(self.source)
             self.probe.measured_events=(lambda rows,run:None) if fault=='measurement' else (lambda rows,run:rows)
