@@ -475,15 +475,30 @@ else
   printf '  nothing to install; continuing to reconcile and verify\n'
 fi
 
-# **A refusal is this function's answer, not its failure.** `weaver-admin
-# validate` exits non-zero when it refuses, `tail` exits zero, and under
-# `pipefail` the pipeline carries the refusal's status - so `set -e` killed
-# the script at the first agent that needed reconciling, which is every
-# agent this step exists for. Measured on this box 2026-09-04: the run
+# **Admin's answer on stdout and its cause on stderr, both kept.** Admin
+# prints its answer as the last line on stdout and writes why it refused to
+# stderr before it, as `boundary unverified: <cause>` or `config invalid:
+# <cause>`. The answer is what a caller compares. The cause is what the
+# operator reads beside a rollback, and a `tail -1` over the merged stream
+# kept the one and dropped the other, so a refusal named no reason (#673,
+# measured on the W4a run of 2026-09-25). Every line before the answer is
+# relayed to stderr, marked as admin's.
+# **A refusal is this function's answer, not its failure.** `weaver-admin`
+# exits non-zero when it refuses, and under `set -e` a bare substitution
+# would kill the script at the first agent that needed reconciling, which is
+# every agent step 8 exists for. Measured on this box 2026-09-04: the run
 # printed the step's header, installed binaries already in place, and
 # stopped without reconciling, verifying, or rolling back.
+admin_answer() {
+  local said
+  said=$(sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" "$1" "$2" 2>&1) || true
+  [ -n "$said" ] || return 0
+  printf '%s\n' "$said" | sed '$d' | sed 's/^/  admin: /' >&2
+  printf '%s\n' "$said" | sed -n '$p'
+}
+
 validate() {
-  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" validate "$1" 2>&1 | tail -1 || true
+  admin_answer validate "$1"
 }
 
 # -------------------------------------------------------- 8. reconcile agents
@@ -560,7 +575,7 @@ for AGENT in $ALLOW_LIST; do
   # Claimed before the load rather than after it, so a load that comes up and
   # then dies on its read-back is still a load the restore knows to undo.
   LOADED_AGENT="$AGENT"
-  sudo -n WEAVER_ADMIN_CONFIG="$ADMIN_CONFIG" "$BIN_DIR/weaver-admin" load "$AGENT" 2>&1 | tail -1 || true
+  admin_answer load "$AGENT"
   LATER=$(sink_lines "$SINK") || rollback "$AGENT: $SINK is not a regular file, and this step reads the load event back out of one"
   NEW=$(( LATER - LINES ))
   # **A sink that gained nothing points at the sink, and the fault is rarely

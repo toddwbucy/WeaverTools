@@ -1,6 +1,23 @@
-# The context-injection loop, in Python: the same behavior the compiled
-# dev_loop carries, here to iterate at conversation speed. Edit this file
-# and the NEXT TURN runs the edit - the connector reads it per crossing.
+# The context-injection loop, in Python, to iterate at conversation speed.
+# Edit this file and the NEXT TURN runs the edit - the connector reads it
+# per crossing.
+#
+# **It is not the compiled dev_loop, and it does not claim that loop's
+# behaviour.** The two share the pressure trigger (four fifths), the recall
+# depth (four turns) and a nominal 600 quote budget, and differ where a run
+# can see it. The compiled loop seats its own system prompt at the first
+# turn and at recovery, and this one relies on the declaration's identity.
+# This one detects RECALL:/REMEMBER: lines and can run up to three memory
+# follow-up turns, and the compiled loop runs one turn per request. The
+# budget counts Unicode characters here and UTF-8 bytes there, the empty
+# block and the ellipsis render differently, and the trigger is float
+# arithmetic here and saturating integers there. A run of this loop
+# measures this loop (#673, the W4a comparison of 2026-09-24).
+#
+# **alpha_loop.py and bravo_loop.py are byte-identical by design.** The
+# ablation between the two arms lives in their declarations' `identity:`
+# blocks since 2026-08-20, as the paragraph on the ablation line below
+# says, so an edit made to one arm's file is made to both.
 #
 # The seat offers exactly seven calls:
 #   seat.assembled_empty() -> bool        first-turn test

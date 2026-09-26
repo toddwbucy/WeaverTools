@@ -544,7 +544,11 @@ and a deliberate increase a sentence in the act that takes it. **A new
 `tag: perturbation` node is cited by code in the same act, or its enforcement-table
 row is marked owed**; issue #558 is the backlog of the ones that are neither.
 Landed on the operator's ruling of 2026-09-11, after drift in `weaver-trace-Spec`
-stood three weeks and was found by accident.
+stood three weeks and was found by accident. **The backlog is paused, not the gate**,
+on the operator's ruling of 2026-09-26, after three overnight acts showed the gate
+generating work for itself: acts that exist to clear the backlog stop, the
+no-new-defect rule stands, every new unit carries its header and every new
+perturbation its citation, and the baseline holds where it is.
 
 **`archive_directories` joined the reading on 2026-09-13** and is the instrument for
 section 1's archive rule. It is the one metric that is not a claim measured against a

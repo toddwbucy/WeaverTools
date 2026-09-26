@@ -400,5 +400,76 @@ test() { fixture_args "$@"; builtin test "${fixture_mapped[@]}"; }
         self.assert_unprivileged()
 
 
+STUB_ADMIN = """#!/bin/sh
+printf '%s\\n' "boundary unverified: no store socket at /run/weaver/fixture" >&2
+printf '%s\\n' '{"kind":"refused","reason":"boundary_unverified"}'
+exit 1
+"""
+
+
+def admin_answer_definition(script):
+    """The `admin_answer` function exactly as the deploy script defines it.
+
+    The function is read out of the script's own text and run alone, so the
+    test exercises the code that ships rather than a copy of it, and the
+    install steps before the call sites stay out of the fixture.
+    """
+    lines = script.splitlines()
+    start = lines.index("admin_answer() {")
+    end = next(i for i in range(start, len(lines)) if lines[i] == "}")
+    return "\n".join(lines[start:end + 1]) + "\n"
+
+
+class AdminAnswerTests(unittest.TestCase):
+    """**Admin's refusal cause survives the deploy script** (#673, was #676).
+
+    Perturbation: restore `2>&1 | tail -1` in `admin_answer`, or route either
+    call site back to it, and these fail, the cause no longer reaching
+    stderr or the call site no longer reaching the helper. Watched under
+    exactly those changes.
+    """
+
+    def setUp(self):
+        self.scratch = tempfile.TemporaryDirectory(prefix="weaver-admin-answer-")
+        self.addCleanup(self.scratch.cleanup)
+        root = Path(self.scratch.name)
+        self.bin_dir = root / "bin"
+        self.bin_dir.mkdir()
+        admin = self.bin_dir / "weaver-admin"
+        admin.write_text(STUB_ADMIN)
+        admin.chmod(0o755)
+        # `sudo -n VAR=value command args` runs the command with the
+        # variable set, which `env` does without privilege.
+        sudo = self.bin_dir / "sudo"
+        sudo.write_text('#!/bin/sh\n[ "$1" = "-n" ] && shift\nexec env "$@"\n')
+        sudo.chmod(0o755)
+        self.script = (DEPLOY / "update-stack.sh").read_text()
+
+    def answer(self, verb):
+        program = ("set -euo pipefail\n" + admin_answer_definition(self.script)
+                   + f'admin_answer {verb} m1\n')
+        env = {**os.environ, "PATH": str(self.bin_dir) + os.pathsep + os.environ["PATH"],
+               "BIN_DIR": str(self.bin_dir), "ADMIN_CONFIG": "/nonexistent"}
+        env.pop("BASH_ENV", None)
+        return subprocess.run(["bash", "-c", program], env=env, text=True,
+                              capture_output=True, timeout=20)
+
+    def test_a_refusal_keeps_its_cause_and_its_answer(self):
+        for verb in ("validate", "load"):
+            result = self.answer(verb)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout,
+                             '{"kind":"refused","reason":"boundary_unverified"}\n')
+            self.assertIn("admin: boundary unverified: no store socket at /run/weaver/fixture",
+                          result.stderr)
+
+    def test_both_call_sites_reach_the_helper(self):
+        self.assertIn('validate() {\n  admin_answer validate "$1"\n}', self.script)
+        self.assertIn('  admin_answer load "$AGENT"\n', self.script)
+        admin_lines = [line for line in self.script.splitlines()
+                       if "/weaver-admin\"" in line and not line.lstrip().startswith("#")]
+        self.assertFalse([line for line in admin_lines if "tail -1" in line], admin_lines)
+
+
 if __name__ == "__main__":
     unittest.main()

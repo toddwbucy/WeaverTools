@@ -434,6 +434,12 @@ indexes them, it does not replace them:
    commits, the Spec authoring an assertion that phase three would code later,
    with nothing holding the receipt.
 
+   **The backlog is paused, not the gate**, on the operator's ruling of
+   2026-09-26, after three overnight acts showed the gate generating work for
+   itself: acts that exist to clear the backlog stop, the no-new-defect rule
+   stands, every new unit carries its header and every new perturbation its
+   citation, and the baseline holds where it is.
+
    **Its docstring lists every time this gate has been wrong**, which is
    worth reading before trusting a number it prints. The length of that list
    is not written here, a length copied out of a list arguing with the list

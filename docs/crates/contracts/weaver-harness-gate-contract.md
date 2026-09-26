@@ -189,9 +189,17 @@ states. The tool declares a maximum, the caller's number must be equal to or
 less than that maximum, and the gate adopts the caller's number as the kill
 clock for that invocation. A clock beyond the maximum refuses rather than
 clamps, because a clamped clock silently changes the caller's wait and the
-two-clock disagreement returns by the back door. The tool cannot outlive the
-wait, so no orphaned process survives the exchange and no stale return
-arrives at a decision point that is already gone.
+two-clock disagreement returns by the back door. **What the clock holds is
+the invocation's process group, and no more**, on the operator's ruling of
+2026-09-26 (#642). At the clock the gate kills the whole group, so nothing
+in that group outlives the wait and no stale return arrives at a decision
+point that is already gone. A descendant that leaves the group, by `setsid`
+or a process group of its own, is outside that kill and can outlive the
+exchange, which was measured on 2026-09-21. The gate holds nothing to
+orphan, it is a gate, so this clause promises what process-group supervision
+holds. **Containment beyond the group is owed**, a boundary holding every
+descendant whatever group it enters, and it lands with its own Spec clause
+and lifecycle tests rather than as a promise here.
 
 **Cancel the execution, on the operator's ruling of 2026-09-22.** Sent by
 the harness inside an open execution exchange, at the continue position the
