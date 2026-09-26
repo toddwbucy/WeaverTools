@@ -182,6 +182,36 @@ payload shape, which is what makes reader compatibility a rule rather than a
 coincidence, per section 4. **Four are this record's own**, the `replay.` trio
 and `residual.column`, and no serving record carries any of them.
 
+**Every kind carries a turn rule, and a shared kind keeps its serving one**, as of
+2026-09-26. Keeping the serving meaning includes keeping when the kind belongs to a
+turn, so the recorder applies the rule at admission before the pairing, with the
+serving recorder's own refusals: a turn on a kind that belongs to none refuses as a
+malformed payload, and a missing turn on a kind that belongs to one refuses as the
+required field absent. Until this act the admission judged the pairing alone and
+admitted a turned `flush` or a turnless `model.request`, which a serving recorder
+refuses.
+
+    turnless        replay.opened, replay.identity, replay.closed, flush, recall
+    turn-required   turn.started, turn.closed, message.user, message.assistant,
+                    message.tool_result, model.request, model.output,
+                    model.measurement, model.field, residual.column
+    turn-optional   message.system, refusal, fault
+
+The replay trio belongs to the pass and not to a replayed turn, and `residual.column`
+to the turn whose position it was taken at, which is how the harness authors each.
+**The rule is one exhaustive match in `src/recorder.rs`**, so a kind added to the set
+is not admitted until it is given a rule and a row here.
+
+```graph
+node: diagnostic-turn-rule-per-kind
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-diagnostic
+to: diagnostic-turn-rule-per-kind
+```
+
 **`flush` is carried because the loop is granted the flush by name.**
 `diagnostic-replay-loop` section 1 enumerates what the seat grants it, the state
 port, the decode surface, and the flush, and `weaver-harness-Spec` section 6 has the
@@ -662,6 +692,9 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
   consumes no sequence, watched to fail when the refusal is moved after the write.
+- Every kind carries its turn rule: a turnless kind refuses a turn, a turn-required
+  kind refuses its absence, and a turn-optional kind is admitted both ways, each
+  watched to fail when one kind is moved to another arm of the rule.
 - The divergence position is the resident length at the draw: a re-fed answer whose
   first draw differs from the recorded path closes naming the position the closing
   count places that draw at, watched to fail when the pass names the draw's index in
@@ -679,9 +712,9 @@ sibling crate's participation and is not this document's to elect.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
-section 6. Fifteen sit there and none sits here.
+section 6. Sixteen sit there and none sits here.
 
-**Four of the fifteen take a second `asserts` edge, and it runs from
+**Four of the sixteen take a second `asserts` edge, and it runs from
 `weaver-harness`.** That the record identifies itself at the open, that an absent
 identity is not invented, that an outcome is not manufactured, and that a divergence
 position is the resident length at the draw are four claims **this crate holds no
