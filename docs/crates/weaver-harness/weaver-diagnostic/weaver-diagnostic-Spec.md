@@ -31,13 +31,13 @@ ended and how it says what happened, owed to this document by
 and states that the crate paying for its absence is not the crate that can supply
 it.
 
-**This document declares its crate's assertion records, and four `asserts` edges that
-are `weaver-harness`'s.** The four are the replay claims of sections 3.3 and 4, each
+**This document declares its crate's assertion records, and five `asserts` edges that
+are `weaver-harness`'s.** The five are the replay claims of sections 3.3 and 4, each
 carrying an edge from that crate beside this one's because the instruments stand in
 its suite and none stands here. Section 7 argues it and is the authority, this
 paragraph answering only the question a reader asks here, which is whether this
 document declares anything that is not this crate's. `weaver-harness-Spec` section 0
-carries the other half and says it declares those four nowhere.
+carries the other half and says it declares those five nowhere.
 
 ## 1. The crate
 
@@ -230,9 +230,9 @@ lands inside the bracket after `replay.opened` and before `replay.identity`, nam
 the holdings' first and last events and their count. The replay's enter records
 nothing, as it records no load and no prefix, per the same section. It splices the
 serving payload as the other fourteen shared kinds do. The walk reads the source's
-flush and elision since 2026-09-26, and a source's own `recall` rides the holdings for
-a reader, the cross-check that would read it being owed, per `diagnostic-replay-loop`
-section 2.
+flush and elision since 2026-09-26, and a source's own `recall` since the same day: a
+post-flush request with no recall of the `recall` verb before it refuses at identity on
+a record carrying the kind, per `diagnostic-replay-loop` section 2.
 
 **`elision` is carried because the loop now performs one**, as of 2026-09-26, which
 closes the open election section 8 held. `diagnostic-replay-loop` section 2 reproduces
@@ -361,6 +361,30 @@ template are known from the answered holdings. **Established means read and
 checked, not merely read**: a step one that read the holdings and refused them has
 established nothing, so the pass authors no identity event and closes
 `Abandoned`, which is the distinction this kind exists to keep.
+
+**Step one refuses a source whose record does not account for its model's input**,
+as of 2026-09-26 under epic #690. A certification says the recorded path reproduces
+from the recorded input, so a record that cannot say what the model's input was drawn
+from gives it nothing to stand on. Two cases reach step one, per
+`diagnostic-replay-loop` section 2: an open that recorded an
+`identity_prefix_unrecorded` fault, whose opening prefix is missing, and a post-flush
+request with no seat recall before it on a record carrying the `recall` kind, whose
+re-entry's provenance is missing. Each closes `Abandoned` at identity naming what was
+missing, and authors no `replay.identity`, per the paragraph above.
+
+```graph
+node: diagnostic-identity-refuses-an-unaccounted-input
+kind: assertion
+tag: perturbation
+
+edge: asserts
+from: weaver-diagnostic
+to: diagnostic-identity-refuses-an-unaccounted-input
+
+edge: asserts
+from: weaver-harness
+to: diagnostic-identity-refuses-an-unaccounted-input
+```
 
 **What `reader_elected` separates is the null replay from the pass beside it**, per
 that loop's section 3 step 3, each pass running as its own run under its own
@@ -700,6 +724,11 @@ under gate H2. No async runtime and no socket crate in the resolved tree.
   refused them, watched to fail when either yields an event filled from defaults.
   The second is the case that bites, an absent answer having nothing to build from
   while a refused reading has everything and must still author nothing.
+- An unaccounted input is refused: a source whose open recorded an
+  `identity_prefix_unrecorded` fault, and one whose post-flush request has no seat
+  recall before it on a record carrying the kind, each close abandoned at identity,
+  watched to fail when either refusal is dropped from step one and when a later flush
+  goes untracked once one recall has been seen.
 - No outcome is manufactured: a pass ended without its closing event leaves an
   unclosed bracket, watched to fail when a death path authors a `replay.closed`.
 - Admission precedes the write: a refused submission leaves the sink untouched and
@@ -724,17 +753,18 @@ sibling crate's participation and is not this document's to elect.
 
 **Where the records sit.** The assertion records are at the clauses that argue the
 claims, across sections 1 through 6, rather than gathered here, per Document Format
-section 6. Sixteen sit there and none sits here.
+section 6. Seventeen sit there and none sits here.
 
-**Four of the sixteen take a second `asserts` edge, and it runs from
+**Five of the seventeen take a second `asserts` edge, and it runs from
 `weaver-harness`.** That the record identifies itself at the open, that an absent
-identity is not invented, that an outcome is not manufactured, and that a divergence
-position is the resident length at the draw are four claims **this crate holds no
-instrument that can falsify**: the recorder validates shape and never meaning, per
-`weaver-harness-diagnostic-contract` section 4, and `weaver-diagnostic-PRD` section 1
-has the harness author while this crate is the mechanism it authors through. The
-instruments for all four sit in `crates/weaver-harness/src/replay.rs`, so the second
-edge is what lets apex section 11's chain close on the crate that holds them.
+identity is not invented, that an outcome is not manufactured, that a divergence
+position is the resident length at the draw, and that an unaccounted input is refused
+are five claims **this crate holds no instrument that can falsify**: the recorder
+validates shape and never meaning, per `weaver-harness-diagnostic-contract` section 4,
+and `weaver-diagnostic-PRD` section 1 has the harness author while this crate is the
+mechanism it authors through. The instruments for all five sit in
+`crates/weaver-harness/src/replay.rs`, so the second edge is what lets apex section 11's
+chain close on the crate that holds them.
 **The instrument is the discriminating test and the wording is not.**
 `diagnostic-session-is-the-replays-own` is written the same way and takes no second
 edge, correctly, its instrument standing in this crate's own `tests/recorder.rs`.
@@ -745,14 +775,14 @@ owed to `WeaverTools-Document-Format` under issue #631.** `weaver-types-Spec` se
 living at "the statement both floor Specs share", and that qualifier is the
 load-bearing half: it is what makes the tagging test a case where neither Spec owns
 the node. There is no shared statement here, `weaver-harness-Spec` stating none of the
-four. `weaver-traits-Spec` section 7 runs the other way, moving a record to the crate
+five. `weaver-traits-Spec` section 7 runs the other way, moving a record to the crate
 whose suite holds its test because "an assertion belongs where its test lives", which
 is how the licensed combinations and the close-on-exec test came to be declared in
 `weaver-harness-Spec`, at its section 4 and its section 2.3 and discharged at its
 section 8's sorting. **What moved there was the crate and never the placement.** Each
 of the two landed at the clause arguing it, which is where this rule puts a record
 either way, and the crate moved because the subject moved with it, a claim about the
-harness's own refusal being the harness's to state. The subject of these four is this
+harness's own refusal being the harness's to state. The subject of these five is this
 record, which is this crate's, so the clause that argues them is here and only the
 edge crosses. **That is a third case, and the Format does not carry it**, its section
 4 stating no cardinality for `asserts` and no cross-document case, so until it does
@@ -770,7 +800,7 @@ set of section 3.2 and the failure vocabulary of section 6, which
 Document Format section 4 states and the arguments are this document's**, that
 record's closure resting on a charter and this one's on the seam's own change
 protocol, each argued at its clause. The other three axioms reach none of these
-claims. **Twelve claims grounding in no invariant
+claims. **Fourteen claims grounding in no invariant
 is the expected result and not a gap**, per Document Format section 4: most of this
 document is representation, and representation is what the invariants are not
 about.

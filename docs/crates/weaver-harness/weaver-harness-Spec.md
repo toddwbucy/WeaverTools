@@ -32,12 +32,12 @@ says how it is represented, and per gate G2 it elects against grounds the charte
 and the contracts state rather than developing grounds of its own. Where this
 document and the charter disagree the charter yields nothing.
 
-**This document declares its crate's assertion records, less four claims stated and
+**This document declares its crate's assertion records, less five claims stated and
 declared elsewhere, and no other record,** per Document Format sections 3 and 4 as of
 the notation of 2026-08-03, which retired the no-records sentence this paragraph
-replaces. The exception is the four replay claims this crate asserts and
+replaces. The exception is the five replay claims this crate asserts and
 `weaver-diagnostic-Spec` both states and declares, at its sections 3.3 and 4 and
-sorted at its section 7. This document states none of the four, so it declares neither
+sorted at its section 7. This document states none of the five, so it declares neither
 their nodes nor their edges, and declaring them here would be the duplicate the format
 forbids while dropping them silently would leave part of this crate's assertion set
 with nothing recording where it went. **The rule admitting a second `asserts` edge is
@@ -2731,21 +2731,22 @@ combinations that `weaver-traits-Spec` section 7 owes, at section 4, and the
 second walk's descriptor placement with the fork discipline that
 `weaver-gate-Spec` section 0 cites as this document's, at section 2.2.
 
-**Four claims this crate asserts are declared by another document, and
+**Five claims this crate asserts are declared by another document, and
 `src/replay.rs` is where they are held.** `weaver-diagnostic-Spec` sections 3.3
 and 4 argue that the record identifies itself at the open, that an absent
-identity is not invented, that an outcome is not manufactured, and that a
-divergence position is the resident length at the draw. This crate is the author
-and that one the mechanism, per `weaver-diagnostic-PRD` section 1, and the
-instrument for each stands in this crate's suite, so each of the four carries an
-`asserts` edge from here beside the one from the crate whose record it describes.
-The instruments are the in-file suite of `src/replay.rs`, five tests carrying six
-citations across the four, and the file's own header cites all four for the
-module. **The sixty-eight above does not move**, no record landing here, and
-`weaver-diagnostic-Spec` section 7 is the authority on the four claims' wording,
-on their sorting by instrument, and on why the edge crosses at all.
+identity is not invented, that an outcome is not manufactured, that a divergence
+position is the resident length at the draw, and that an unaccounted input is
+refused at identity. This crate is the author and that one the mechanism, per
+`weaver-diagnostic-PRD` section 1, and the instrument for each stands in this
+crate's suite, so each of the five carries an `asserts` edge from here beside the
+one from the crate whose record it describes. The instruments are the in-file
+suite of `src/replay.rs`, eight tests carrying nine citations across the five, and
+the file's own header cites all five for the module. **The sixty-eight above does
+not move**, no record landing here, and `weaver-diagnostic-Spec` section 7 is the
+authority on the five claims' wording, on their sorting by instrument, and on why
+the edge crosses at all.
 
-**`src/replay.rs` carries ten citation lines and every one of them names a slug
+**`src/replay.rs` carries fourteen citation lines and every one of them names a slug
 this crate does not prefix**, which is why the file is named here rather than
 left to section 1's layout. They cross because the mechanism and its author are
 two crates by the charter's own division rather than because a header reached for

@@ -284,7 +284,8 @@ because `diagnostic-replay-loop` section 2's walk reproduces each where it fell 
 holds the reproduction to them. `fault` is elected with its `case`, because the identity
 step refuses a source whose open recorded `identity_prefix_unrecorded`. `recall` is
 elected with `ask`, `returned` and `count`, bounded to identities, so the destination
-carries what the source's post-flush input was drawn from.
+carries what the source's post-flush input was drawn from and the identity step can
+require a recall between each flush and the next request.
 
 **This document is authoritative for the election's content**, per G5, and
 `diagnostic-replay-loop` section 2's step 2 sketches it for a reader walking the
