@@ -485,12 +485,11 @@ series stopped because a review that long is authoring by another name.
 reviewer's attention on "is this perturbation cited" is attention not on "does
 this fix hold", and the first is deterministic. The order, then, is this. Gates
 including the census come first, then the Planner's verification of the head against a
-clean extract, then out of draft, which fires the Codex pass. The Planner grades every
-finding of that pass. Every finding is answered, fixed or declined, the fixes are
-pushed, and the gates run again on the rework. That push fires a pass and the Planner
-grades it, and the loop repeats until a pass posts no finding that changes behaviour or
-corrects a claim, more than four rounds of it being the bound above. Then the operator's
-merge.
+clean extract, then out of draft, which fires the Codex pass. Every finding of the pass
+is graded and answered, fixed or declined with the reason on the pull request. The fixes
+pass the gates and then are pushed, that push fires a pass and the Planner grades it,
+and the loop repeats until a pass leaves nothing to push, more than four rounds of it
+being the bound above. Then the operator's merge.
 
 ## Police call
 
