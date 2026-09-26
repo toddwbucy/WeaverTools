@@ -31,7 +31,8 @@ It is written from the code as it stood after sixteen review passes on pull requ
 beside this document with #683, which moves it there and cites the assertion
 records declared here from its file headers with `conforms:` lines, read by the
 census as it reads a crate's units. Until that lands, the nineteen perturbation
-records stand uncited and the baseline says so. Results, when a leg has run, sit in `results/`, dated and read by no gate.
+records stand uncited and the baseline says so. Results, when a leg has run, sit in
+`results/`, dated and read by no gate.
 What the probe measures and why is the charter's and is restated in sections 1
 through 3 only as far as the code enforces it. How the seams it drives behave is the
 crate charters' and contracts' and is cited rather than repeated. What this document
