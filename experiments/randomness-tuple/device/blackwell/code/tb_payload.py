@@ -161,29 +161,57 @@ def m1_reading():
     at the load and the unload. No installed admin invocation. A missing unit
     alone is not enough: a surviving coordination door or member/worker process
     also stands. A fact that cannot be read is recorded as unread, never as
-    clear."""
-    answer = subprocess.run(['/usr/bin/systemctl', 'show', 'weaver-worker@m1.service',
-                             '--property=ActiveState', '--property=LoadState'],
-                            stdin=subprocess.DEVNULL, capture_output=True, text=True)
-    values = dict(line.split('=', 1) for line in answer.stdout.splitlines() if '=' in line)
+    clear.
+
+    **Every fact maps any failure to read it to unread** (#693 thread 2): the
+    unit's state to `readable` false, the door and the process scan to None,
+    which m1_clear() rejects. A process that vanished mid-scan is the one
+    failure that reads as absent, since it is. And a /proc mounted with
+    `hidepid` hides other users' processes from an unprivileged reader
+    without any error, so the scan is unread there rather than empty."""
+    try:
+        answer = subprocess.run(['/usr/bin/systemctl', 'show', 'weaver-worker@m1.service',
+                                 '--property=ActiveState', '--property=LoadState'],
+                                stdin=subprocess.DEVNULL, capture_output=True, text=True)
+        values = dict(line.split('=', 1) for line in answer.stdout.splitlines() if '=' in line)
+        readable = answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found']
+    except OSError:
+        values, readable = {}, False
     try:
         door = Path('/run/weaver-m1/coordination.sock').exists()
-    except PermissionError:
+    except OSError:
         door = None
     try:
         uid = pwd.getpwnam('weaver-m1').pw_uid
     except KeyError:
         uid = None
     process = False
-    for entry in Path('/proc').iterdir():
-        if not entry.name.isdigit():
-            continue
-        try:
-            process = process or (uid is not None and entry.stat().st_uid == uid)
-        except FileNotFoundError:
-            pass
-    return dict(readable=answer.returncode == 0 and values.get('LoadState') in ['loaded', 'not-found'],
-                active_state=values.get('ActiveState'), door=door, process=process)
+    try:
+        if os.geteuid() != 0 and proc_hides_processes():
+            process = None
+        else:
+            for entry in Path('/proc').iterdir():
+                if not entry.name.isdigit():
+                    continue
+                try:
+                    process = process or (uid is not None and entry.stat().st_uid == uid)
+                except FileNotFoundError:
+                    pass
+    except OSError:
+        process = None
+    return dict(readable=readable, active_state=values.get('ActiveState'), door=door, process=process)
+
+
+def proc_hides_processes():
+    """Whether /proc is mounted with a hidepid option that hides other users'
+    processes, read from this process's own mount table."""
+    for line in Path('/proc/self/mounts').read_text().splitlines():
+        fields = line.split()
+        if len(fields) >= 4 and fields[1] == '/proc' and fields[2] == 'proc':
+            for option in fields[3].split(','):
+                if option.startswith('hidepid=') and option.split('=', 1)[1] not in ('0', 'off'):
+                    return True
+    return False
 
 
 def m1_clear(reading):

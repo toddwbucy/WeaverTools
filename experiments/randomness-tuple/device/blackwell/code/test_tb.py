@@ -76,7 +76,7 @@ def golden_reading(systemctl=None):
     this box's systemctl answer, no door and no m1 process: m1 absent."""
     with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,systemctl or golden.SYSTEMCTL_SHOW_M1,'')),\
          patch('tb_payload.Path.exists',return_value=False),patch('tb_payload.Path.iterdir',return_value=[]),\
-         patch('tb_payload.pwd.getpwnam',side_effect=KeyError):
+         patch('tb_payload.pwd.getpwnam',side_effect=KeyError),patch('tb_payload.proc_hides_processes',return_value=False):
         return payload.m1_reading()
 
 
@@ -678,7 +678,7 @@ class PayloadTests(unittest.TestCase):
 
     def test_m1_interlock(self):
         def probe(stdout,rc=0,door=False,procs=None):
-            with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],rc,stdout,'')),patch('tb_payload.Path.exists',return_value=door),patch('tb_payload.Path.iterdir',return_value=procs or []),patch('tb_payload.pwd.getpwnam',return_value=self.user):
+            with patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],rc,stdout,'')),patch('tb_payload.Path.exists',return_value=door),patch('tb_payload.Path.iterdir',return_value=procs or []),patch('tb_payload.pwd.getpwnam',return_value=self.user),patch('tb_payload.proc_hides_processes',return_value=False):
                 payload.m1_unloaded()
         # golden.SYSTEMCTL_SHOW_M1 is this box's real reading; the refusals
         # change one value in that real format.
@@ -1460,6 +1460,78 @@ class HoldLiftTests(unittest.TestCase):
             return out.getvalue()
         self.assertIn('INTERLOCK at unload',invoke(golden_reading()))
         with self.assertRaisesRegex(RuntimeError,'m1-unloaded-at-unload'):invoke(stood)
+
+
+class ReviewRoundOneTests(unittest.TestCase):
+    """#693's first Codex pass: the bytes hashed are the bytes the close was
+    seen in, and an interlock fact that cannot be read is unread, never
+    clear, for both readers."""
+
+    def test_the_close_is_returned_from_the_read_it_was_seen_in(self):
+        # Perturbation: detect the close in one read and return a second, as
+        # before, and the bytes returned are the swapped read with no close.
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'trace';closed=ndjson(event(golden.TURN_CLOSED,run='r')).encode();p.write_bytes(closed)
+            swapped=ndjson(event(golden.TURN_STARTED,run='r'),event(golden.TURN_STARTED,run='r')).encode()
+            real=Path.read_bytes;calls=[]
+            def read_bytes(path):
+                calls.append(1)
+                return swapped if len(calls)==1 else real(path)
+            with patch.object(Path,'read_bytes',read_bytes):
+                got=driver.until_closed(p,'turn.closed',5)
+            self.assertIn(b'turn.closed',got,'the returned bytes hold the close they were returned for')
+            self.assertEqual(got,closed)
+
+    def reading(self,**patches):
+        base=dict(run=patch('tb_payload.subprocess.run',return_value=subprocess.CompletedProcess([],0,golden.SYSTEMCTL_SHOW_M1,'')),
+                  exists=patch('tb_payload.Path.exists',return_value=False),
+                  iterdir=patch('tb_payload.Path.iterdir',return_value=[]),
+                  user=patch('tb_payload.pwd.getpwnam',side_effect=KeyError),
+                  hides=patch('tb_payload.proc_hides_processes',return_value=False),
+                  euid=patch('tb_payload.os.geteuid',return_value=1000))
+        base.update(patches)
+        with contextlib.ExitStack() as stack:
+            for p in base.values():stack.enter_context(p)
+            return payload.m1_reading()
+
+    def test_every_fact_that_cannot_be_read_is_unread(self):
+        # Perturbation: catch only a vanished process, or only a refused door,
+        # and the refused read escapes, or reads as clear.
+        self.assertTrue(payload.m1_clear(self.reading()))
+        refused_stat=[SimpleNamespace(name='42',stat=lambda:(_ for _ in ()).throw(PermissionError()))]
+        for name,patches,fact,value in [
+            ('systemctl unrunnable',dict(run=patch('tb_payload.subprocess.run',side_effect=OSError)),'readable',False),
+            ('door refused',dict(exists=patch('tb_payload.Path.exists',side_effect=PermissionError)),'door',None),
+            ('process refused',dict(iterdir=patch('tb_payload.Path.iterdir',return_value=refused_stat),user=patch('tb_payload.pwd.getpwnam',return_value=SimpleNamespace(pw_uid=1000))),'process',None),
+            ('proc unlistable',dict(iterdir=patch('tb_payload.Path.iterdir',side_effect=PermissionError)),'process',None),
+            ('hidepid, unprivileged',dict(hides=patch('tb_payload.proc_hides_processes',return_value=True)),'process',None)]:
+            with self.subTest(name):
+                r=self.reading(**patches)
+                self.assertEqual(r[fact],value,r);self.assertFalse(payload.m1_clear(r))
+        # A process that vanished mid-scan is absent, since it is: the one
+        # failure that reads as clear rather than unread.
+        vanished=[SimpleNamespace(name='42',stat=lambda:(_ for _ in ()).throw(FileNotFoundError()))]
+        r=self.reading(iterdir=patch('tb_payload.Path.iterdir',return_value=vanished),user=patch('tb_payload.pwd.getpwnam',return_value=SimpleNamespace(pw_uid=1000)))
+        self.assertIs(r['process'],False);self.assertTrue(payload.m1_clear(r))
+        # Root sees every process whatever hidepid says, so the scan runs.
+        r=self.reading(hides=patch('tb_payload.proc_hides_processes',return_value=True),euid=patch('tb_payload.os.geteuid',return_value=0))
+        self.assertTrue(payload.m1_clear(r))
+
+    def test_hidepid_is_read_from_the_mount_table(self):
+        for options,hidden in [('rw,nosuid,nodev,noexec,relatime',False),('rw,relatime,hidepid=2',True),
+                               ('rw,hidepid=invisible',True),('rw,hidepid=0',False)]:
+            with patch('tb_payload.Path.read_text',return_value=f'proc /proc proc {options} 0 0\n'):
+                self.assertEqual(payload.proc_hides_processes(),hidden,options)
+
+    def test_both_readers_refuse_an_unread_fact(self):
+        unread=dict(golden_reading(),process=None)
+        d=DriverTests('test_free_measurement_refusals');d.setUp();self.addCleanup(d.doCleanups)
+        with patch('tb_driver.until_closed',return_value=closed_bytes(d.close())),patch('tb_driver.m1_reading',return_value=unread),self.assertRaisesRegex(order.Refused,'m1-unloaded-at-close'):
+            driver.measure(d.plan,d.job(),d.probe,{})
+        pt=PayloadTests('test_payload_entry_checks');pt.setUp();self.addCleanup(pt.doCleanups)
+        p=copy.deepcopy(pt.plan);p['install_root']=str(pt.root);p['files']={};pt.planpath.write_text(json.dumps(p))
+        with patch('sys.argv',['payload',str(pt.planpath),order.sha(pt.planpath),'unload:B1-s7-n1']),patch('tb_payload.os.geteuid',return_value=0),patch.dict(os.environ,{'SUDO_UID':'1000'}),patch('tb_payload.pwd.getpwnam',return_value=pt.user),patch('tb_payload.installed'),patch('tb_payload.answer'),patch('tb_payload.m1_reading',return_value=unread),contextlib.redirect_stdout(io.StringIO()),self.assertRaisesRegex(RuntimeError,'m1-unloaded-at-unload'):
+            payload.main()
 
 
 class AdditionalTests(unittest.TestCase):

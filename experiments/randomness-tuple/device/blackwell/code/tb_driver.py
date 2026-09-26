@@ -75,22 +75,24 @@ def closed_prefix(data, run, kind):
 
 
 def until_closed(path, kind, timeout=3600):
+    """The sink's bytes from the one read the close was seen in (#693 thread
+    1): the caller parses and cuts exactly the bytes the kind was found in,
+    so a sink that changed after the close was seen is never what gets hashed.
+    The sink is read whole only when its size has moved since the last poll,
+    so an idle wait does not re-read a large trace every second."""
     deadline = time.monotonic() + timeout
+    seen = None
     while time.monotonic() < deadline:
-        if path.exists():
+        if path.exists() and path.stat().st_size != seen:
+            data = path.read_bytes()
+            seen = len(data)
             # Ignore only the currently incomplete final line while the writer
             # runs. A malformed complete line is a refusal, not dropped evidence.
-            with path.open('rb') as stream:
-                stream.seek(0, 2)
-                size = stream.tell()
-                stream.seek(max(0, size - 65536))
-                tail = stream.read()
-            lines = tail.split(b'\n')[1:] if size > 65536 else tail.split(b'\n')
+            tail = data[-65536:]
+            lines = tail.split(b'\n')[1:] if len(data) > 65536 else tail.split(b'\n')
             for line in lines[:-1]:
                 if line and json.loads(line).get('kind') == kind:
-                    # The bytes, read once here: the caller parses and cuts
-                    # them, and nothing reads the sink a second time.
-                    return path.read_bytes()
+                    return data
         time.sleep(1)
     raise Refused(f'{kind} not recorded inside bound')
 

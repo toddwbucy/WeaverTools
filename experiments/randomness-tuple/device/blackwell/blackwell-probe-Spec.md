@@ -400,11 +400,13 @@ driver reads the same four facts without privilege and refuses the reading under
 after `bravo` is unloaded and refuses the step under `m1-unloaded-at-unload`, printing
 the reading to its transcript, so a reading taken with `m1` standing at any point the
 probe can see is never settled. A fact that cannot be read is recorded as unread and
-never as clear. **The edge is the window between two readings**: an agent that starts
-and stops wholly between the load and the close, or between the close and the unload, is
-seen by none of them, and the admin guards per agent. The README states the operator's
-rule that no other agent is loaded while a leg runs, and that rule is what covers the
-window.
+never as clear, any failure to read a fact mapping to unread, and a `/proc` mounted with
+`hidepid` counting as an unread process scan for an unprivileged reader, since it hides
+other users' processes without an error. **The edge is the window between two
+readings**: an agent that starts and stops wholly between the load and the close, or
+between the close and the unload, is seen by none of them, and the admin guards per
+agent. The README states the operator's rule that no other agent is loaded while a leg
+runs, and that rule is what covers the window.
 
 ```graph
 node: blackwell-probe-root-receives-bytes-never-a-path
@@ -634,12 +636,13 @@ the validator and its tests in a reviewed rework first.
 `test_tb.py` runs against temporary files, a temporary Unix socket and stubbed admin,
 gate and device calls, and makes no change to any installed stack. The mutation run
 `perturb.py` copies the scripts to a temporary directory, refuses unless the
-unmodified suite passes there, then removes and inverts every named guard of section
-8 in turn and requires each run to fail, recording the failing output, and kills with
-a process-group timeout any mutation that destroys a wait bound. A guard the
-mutation run cannot fail is a guard that enforces nothing, and the count is a
-reading taken at an act and never a fact this document holds: the instrument is the
-run, and an act states the numbers it got in its own body, as #683's does.
+unmodified suite passes there, then removes and inverts every named guard of section 8
+in turn, and makes each exception handler of the interlock's reading catch nothing, and
+requires each run to fail, recording the failing output, and kills with a process-group
+timeout any mutation that destroys a wait bound. A guard the mutation run cannot fail is
+a guard that enforces nothing, and the count is a reading taken at an act and never a
+fact this document holds: the instrument is the run, and an act states the numbers it
+got in its own body, as #683's does.
 
 **Every stub is built from a capture, never from what the code expects.** Each
 constant in `golden.py` is a real tool's output captured unprivileged on this box, a
