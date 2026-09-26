@@ -1,3 +1,5 @@
+//! conforms: analysis-reading-drains-within-a-turn
+//!
 //! The record's events, drained rather than held, per
 //! `weaver-analysis-Spec` section 5.
 //!
@@ -7,6 +9,13 @@
 //! events and a reader trait above it: a reader consumes events as they
 //! land and holds only what its own reading needs. The lens is the first
 //! reader and sets no precedent the next must break.
+//!
+//! **This unit holds the first half of that assertion and names the second.**
+//! The drain hands each line to its reader as it lands and retains none of
+//! them, which is what lets a reader hold only what its own reading needs.
+//! The bound on what a reading holds, one turn's final layers until the
+//! turn's measurement pairs them and the named positions after, is
+//! `capture::Streaming`'s, which cites the assertion at that site.
 //!
 //! A file is a stream that ends, so nothing here is a pipe-only path:
 //! every reading takes this road and the sink's shape decides only where

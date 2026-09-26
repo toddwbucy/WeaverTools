@@ -1,5 +1,6 @@
 //! conforms: gate-dumpable-flag-cleared
 //! conforms: gate-closure-is-death
+//! conforms: gate-agent-uid-denied-by-construction
 //!
 //! The process facts of `weaver-gate-Spec` section 2, exercised as a process.
 //!

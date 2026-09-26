@@ -1,3 +1,6 @@
+//! conforms: harness-restoring-open-seats-the-record
+//! conforms: harness-session-opens-at-enter
+//!
 //! The state seam's ask end, per `weaver-harness-Spec` section 6: a clone
 //! of the standing state channel held on the run beside the tee the enter
 //! attaches, the ask written and the answer awaited on the serving thread
@@ -7,6 +10,11 @@
 //! answers are the only traffic that ever flows toward this crate, so
 //! whatever the wait reads is the answer or is malformed, with no third
 //! case to disambiguate.
+//!
+//! **The open itself is `lifecycle.rs`'s**, which cites `harness-session-
+//! opens-at-enter` for the enter's fan-out. This unit holds the ask the open
+//! makes of the member, the identity material's one rule over its two sources
+//! and the parked ask's bound, and no more of that clause than those.
 
 use std::io::{Read, Write};
 use std::os::fd::AsFd;

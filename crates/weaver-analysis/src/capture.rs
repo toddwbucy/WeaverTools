@@ -1,10 +1,19 @@
 //! conforms: analysis-captures-compare-exactly
 //! conforms: analysis-compare-refuses-across-loops-and-members
+//! conforms: analysis-reading-drains-within-a-turn
 //!
 //! A capture's columns and their comparison, per `weaver-analysis-Spec`
 //! section 5. A capture is a certified diagnostic record kept whole, so
 //! this module adds no format: it reads the record's `residual.column`
 //! events and pairs them by turn.
+//!
+//! **`Streaming` holds the second half of `analysis-reading-drains-within-a-
+//! turn`.** The drain in `stream.rs` retains nothing, and this reader holds
+//! the turn in flight's final layers until its measurement pairs them, drops
+//! them there, and keeps full columns for the named positions alone, so a
+//! reading over a pipe costs one turn's final layers and the named positions
+//! and never the record. `tests/stream.rs` watches both halves through this
+//! reader.
 //!
 //! **The comparison is certification step 3's own check, performed where
 //! both records are held.** Within one device model it is exact, per
