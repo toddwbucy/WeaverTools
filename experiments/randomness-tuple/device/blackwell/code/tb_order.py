@@ -110,6 +110,11 @@ def schedule(plan):
 def validate_plan(plan):
     check('schema', plan.get('version') == 1)
     check('agent', plan.get('agent') == 'bravo')
+    # Two stacks are two roots: resolved, distinct, and neither inside the
+    # other, since a B2 nested under B1 would put its bytes in the B1 install.
+    roots = [Path(plan.get('stacks', {}).get(s, '')).resolve() for s in ['B1', 'B2']]
+    check('stacks-distinct', all(str(plan.get('stacks', {}).get(s)) for s in ['B1', 'B2']) and roots[0] != roots[1] and
+          not roots[0].is_relative_to(roots[1]) and not roots[1].is_relative_to(roots[0]))
     check('isolated-root', plan.get('install_root') == '/var/lib/weaver-tb')
     # Compared as JSON, not as Python values: dict equality reads 1 as True and
     # 7.0 as 7, and series() elects on `is True`, so a tuple that equals this

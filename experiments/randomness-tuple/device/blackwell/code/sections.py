@@ -107,6 +107,11 @@ def inventory():
 
 
 def compare(first, second):
+    # One inventory named twice, by any spelling, is identical to itself; a
+    # hand-run comparison must not be able to produce the identity report the
+    # elected kernel branch reads.
+    if pathlib.Path(first).resolve() == pathlib.Path(second).resolve():
+        raise ValueError(f'compare takes two inventories, not {first} twice')
     raw = [pathlib.Path(p).read_bytes() for p in [first, second]]
     a, b = [json.loads(r) for r in raw]
     inputs = {m['stack']: dict(manifest=str(p), sha256=digest(r)) for m, p, r in zip([a, b], [first, second], raw)}

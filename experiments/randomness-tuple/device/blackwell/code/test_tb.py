@@ -184,6 +184,11 @@ class Fixture(unittest.TestCase):
     def test_plan_validation(self):
         order.validate_plan(self.plan)
         edits=[('schema',lambda p:p.update(version=2)), ('agent',lambda p:p.update(agent='m1')),
+               # #683 thread 48: B1 and B2 are two roots, resolved and disjoint.
+               ('stacks-same',lambda p:p['stacks'].update(B2=p['stacks']['B1'])),
+               ('stacks-dotdot',lambda p:p['stacks'].update(B2=p['stacks']['B1']+'/../'+Path(p['stacks']['B1']).name)),
+               ('stacks-b2-under-b1',lambda p:p['stacks'].update(B2=p['stacks']['B1']+'/inner')),
+               ('stacks-b1-under-b2',lambda p:p['stacks'].update(B1=p['stacks']['B2']+'/inner')),
                ('root',lambda p:p.update(install_root='/etc/weaver/admin')),
                ('tuple',lambda p:p['tuple'].update(context_capacity=100)),
                # #683 thread 44: 1 equals True by value and elects nothing by identity.
@@ -212,7 +217,7 @@ class Fixture(unittest.TestCase):
                ('kernel-identity-truthy-str',lambda p:p['arms'][2].update(executable_identity='true'))]
         for name, edit in edits:
             p=copy.deepcopy(self.plan);edit(p)
-            with self.subTest(name=name),self.assertRaises(order.Refused):order.validate_plan(p)
+            with self.subTest(name=name),self.assertRaisesRegex(order.Refused,'stacks-distinct' if name.startswith('stacks-') else '.'):order.validate_plan(p)
 
     def test_device_arm_measures_each_source_once(self):
         # #683 finding 18: the two cells must not replay one selection, or one
@@ -564,6 +569,9 @@ class ReadingTests(unittest.TestCase):
                     members={'cubin':{'lib.1.sm_120a.cubin':dict(size=4,sha256='a',sections=[section])},'ptx':{'lib.1.sm_75.ptx':dict(size=4,sha256='a')}})
             p.write_text(json.dumps(b1));q.write_text(json.dumps(dict(b1,stack='B2')))
             self.assertEqual(sections.compare(p,q)['stacks'],['B1','B2'])
+            # One inventory named twice, by another spelling, refuses before it is read.
+            same=Path(tmp)/'same';same.write_text(json.dumps(b1))
+            with self.assertRaises(ValueError):sections.compare(same,Path(tmp)/'..'/Path(tmp).name/'same')
             for label,first,second in [('same',b1,b1),('reversed',dict(b1,stack='B2'),b1),
                                        ('no-ptx',b1,dict(b1,stack='B2',members=dict(b1['members'],ptx={}))),
                                        ('no-cubin',b1,dict(b1,stack='B2',members=dict(b1['members'],cubin={}))),
