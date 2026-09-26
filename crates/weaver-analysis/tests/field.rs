@@ -267,6 +267,15 @@ fn the_address_is_turn_colon_position() {
 fn the_verb_answers_one_line_and_refuses_typed() {
     let dir = std::env::temp_dir().join(format!("weaver-analysis-field-{}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("temp dir");
+    // Removed when the test ends, pass or fail: the guard drops on the
+    // unwind a failed assertion takes as on a clean return (#690 item C2.9).
+    struct Guard(std::path::PathBuf);
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    let _guard = Guard(dir.clone());
     let path = dir.join("record.ndjson");
     std::fs::write(&path, record()).expect("the record writes");
     let binary = env!("CARGO_BIN_EXE_weaver-analysis");

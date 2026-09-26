@@ -18,6 +18,21 @@ use weaver_types::{
     Position,
 };
 
+/// A path under the temp directory, removed when the test ends, pass or
+/// fail: the guard drops on the unwind a failed assertion takes as on a clean
+/// return (#690 item C2.9).
+struct Scratch(std::path::PathBuf);
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        match std::fs::symlink_metadata(&self.0) {
+            Ok(meta) if meta.is_dir() => drop(std::fs::remove_dir_all(&self.0)),
+            Ok(_) => drop(std::fs::remove_file(&self.0)),
+            Err(_) => {}
+        }
+    }
+}
+
 fn directive(ordinal: u64, agent: &str) -> OrganEnvelope {
     OrganEnvelope {
         exchange: ExchangeId {
@@ -170,8 +185,12 @@ fn truncation_is_a_fault() {
 fn received_descriptors_are_close_on_exec() {
     let (near, far) = OrganChannel::pair().expect("pair");
     let peer = far.into_channel();
-    let sink =
-        std::fs::File::create(std::env::temp_dir().join("weaver-harness-walk-one")).expect("sink");
+    let sink_path = Scratch(std::env::temp_dir().join(format!(
+        "weaver-harness-walk-one-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    )));
+    let sink = std::fs::File::create(&sink_path.0).expect("sink");
     let sink = OwnedFd::from(sink);
     let (state_end, _member_end) =
         std::os::unix::net::UnixStream::pair().expect("the member's pair");
@@ -283,22 +302,22 @@ fn child_ends_land_from_descriptor_three() {
 fn adoption_clears_the_dumpable_flag() {
     let (report_r, report_w) = nix::unistd::pipe().expect("pipe");
     // SAFETY: the child adopts, reads the flag, reports, and _exits.
+    // The directory is made and guarded here, before the fork: the child
+    // `_exit`s and drops nothing, so the parent's guard is what removes it,
+    // pass or fail. Fresh per run by the clock, so a recycled pid never
+    // meets a stale socket.
+    let dir = Scratch(std::env::temp_dir().join(format!(
+        "weaver-dumpable-{}-{:?}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    )));
+    std::fs::create_dir_all(&dir.0).expect("scratch");
     match unsafe { nix::unistd::fork() }.expect("fork") {
         nix::unistd::ForkResult::Child => {
-            // A fresh directory per run: a pid-named one outlives the run
-            // that made it, and a recycled pid would then meet a stale
-            // socket and fail the bind.
-            let dir = std::env::temp_dir().join(format!(
-                "weaver-dumpable-{}-{:?}",
-                std::process::id(),
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_nanos())
-                    .unwrap_or(0)
-            ));
-            let _ = std::fs::remove_dir_all(&dir);
-            let _ = std::fs::create_dir_all(&dir);
-            let listener = weaver_harness::bind_coordination(&dir.join("c.sock")).expect("bind");
+            let listener = weaver_harness::bind_coordination(&dir.0.join("c.sock")).expect("bind");
             let constructed = Harness::listen(
                 listener,
                 OrganBinaries {

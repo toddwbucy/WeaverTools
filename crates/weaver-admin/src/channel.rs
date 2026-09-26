@@ -266,14 +266,14 @@ mod tests {
     use nix::sys::socket::{bind, listen};
     use weaver_types::{ExchangeId, LifecycleDirective, Opener, Payload, Position};
 
-    fn scratch(tag: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!(
+    fn scratch(tag: &str) -> crate::scratch::Scratch {
+        let dir = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-admin-chan-{tag}-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
+        )));
+        let _ = std::fs::remove_dir_all(&dir.0);
+        std::fs::create_dir_all(&dir.0).expect("scratch");
         dir
     }
 
@@ -388,7 +388,7 @@ mod tests {
     fn the_dial_wins_the_race_when_the_bind_is_late() {
         let dir = scratch("race");
         let path = dir.join("alpha.sock");
-        let bind_dir = dir.clone();
+        let bind_dir = dir.to_path_buf();
         let late = std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(120));
             harness_listener(&bind_dir)

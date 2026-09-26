@@ -1467,14 +1467,14 @@ mod tests {
 
     use std::os::unix::fs::PermissionsExt;
 
-    fn scratch(tag: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!(
+    fn scratch(tag: &str) -> crate::scratch::Scratch {
+        let dir = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-admin-inv-{tag}-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
+        )));
+        let _ = std::fs::remove_dir_all(&dir.0);
+        std::fs::create_dir_all(&dir.0).expect("scratch");
         dir
     }
 
@@ -1554,7 +1554,9 @@ mod tests {
     fn the_store_election_is_judged_before_the_box() {
         let allow = AllowList::new(["alpha".to_string()]);
         let name = AgentName("alpha".into());
-        let root = std::env::temp_dir().join(format!("wt-store-decl-{}", std::process::id()));
+        let root = crate::scratch::Scratch(
+            std::env::temp_dir().join(format!("wt-store-decl-{}", std::process::id())),
+        );
         let _ = std::fs::remove_dir_all(&root);
         let home = root.join("home");
         std::fs::create_dir_all(&home).expect("home");
@@ -1590,7 +1592,9 @@ mod tests {
     fn every_election_but_none_requires_the_member_and_postgres_its_socket() {
         let allow = AllowList::new(["alpha".to_string()]);
         let name = AgentName("alpha".into());
-        let root = std::env::temp_dir().join(format!("wt-store-box-{}", std::process::id()));
+        let root = crate::scratch::Scratch(
+            std::env::temp_dir().join(format!("wt-store-box-{}", std::process::id())),
+        );
         let _ = std::fs::remove_dir_all(&root);
         let home = root.join("home");
         std::fs::create_dir_all(&home).expect("home");
@@ -1653,7 +1657,9 @@ mod tests {
             "weaver-alpha-state",
             "the account deploy/create-agent.sh makes, derived from the same name"
         );
-        let root = std::env::temp_dir().join(format!("wt-member-account-{}", std::process::id()));
+        let root = crate::scratch::Scratch(
+            std::env::temp_dir().join(format!("wt-member-account-{}", std::process::id())),
+        );
         let _ = std::fs::remove_dir_all(&root);
         let sink_dir = root.join("sink");
         std::fs::create_dir_all(&sink_dir).expect("sink");

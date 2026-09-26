@@ -2482,16 +2482,19 @@ mod tests {
     /// A bound listener for tests that exercise `dispatch_on` directly. The
     /// listener is never accepted on: these tests supply the connection, and
     /// the field exists because the type does.
-    fn test_listener() -> CoordinationListener {
+    ///
+    /// **The directory lives as long as the test holds the guard**, because
+    /// the listener keeps its path and an enter names the gate's socket
+    /// beside it, so it is not removed at the bind.
+    fn test_listener() -> (CoordinationListener, crate::scratch::Scratch) {
         static NEXT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let dir =
-            std::env::temp_dir().join(format!("weaver-harness-unit-{}-{n}", std::process::id()));
-        // Removed first: a directory left by an earlier run would hold a
-        // stale socket, and the bind would refuse a name nothing is using.
-        let _ = std::fs::remove_dir_all(&dir);
-        let _ = std::fs::create_dir_all(&dir);
-        crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind")
+        // A directory left by an earlier run would hold a stale socket, and
+        // the bind would refuse a name nothing is using, so `dir` removes it
+        // first.
+        let dir = crate::scratch::dir(format!("weaver-harness-unit-{}-{n}", std::process::id()));
+        let listener = crate::channel::bind_coordination(&dir.join("c.sock")).expect("bind");
+        (listener, dir)
     }
 
     /// **The identity door's refusal reaches the record as a `fault`**, per
@@ -2515,11 +2518,11 @@ mod tests {
     /// conforms: harness-identity-refusal-authored-not-dropped
     #[test]
     fn the_identity_refusal_is_authored_not_dropped() {
-        let path = std::env::temp_dir().join(format!(
+        let path = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-harness-identity-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
+        )));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
         let mut recorder = crate::record::Record::Serving(
@@ -2609,12 +2612,12 @@ mod tests {
         }
     }
 
-    fn entered_run(turn: Option<&str>) -> (Run, OrganChannel, std::path::PathBuf) {
-        let path = std::env::temp_dir().join(format!(
+    fn entered_run(turn: Option<&str>) -> (Run, OrganChannel, crate::scratch::Scratch) {
+        let path = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-harness-stop-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
+        )));
         let sink = OwnedFd::from(File::create(&path).expect("sink"));
         let session = SessionId("s-1".to_string());
         let mut recorder = crate::record::Record::Serving(
@@ -2718,13 +2721,11 @@ mod tests {
     /// watches. Needs no device, no fixture, and no built organs.
     #[test]
     fn the_declared_election_reaches_the_tee() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = crate::scratch::dir(format!(
             "weaver-election-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
         let listener =
             crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
 
@@ -2860,13 +2861,11 @@ mod tests {
     /// second path.
     #[test]
     fn a_refused_enter_leaves_its_reason_in_the_record() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = crate::scratch::dir(format!(
             "weaver-refused-enter-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
         let listener =
             crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
         let sink = OwnedFd::from(File::create(dir.join("trace.ndjson")).expect("sink"));
@@ -3000,11 +2999,10 @@ mod tests {
     #[test]
     fn the_load_names_the_member_it_was_handed_and_the_composer_serve_set() {
         for standing in [false, true] {
-            let dir = std::env::temp_dir().join(format!(
+            let dir = crate::scratch::dir(format!(
                 "weaver-harness-named-{}-{standing}",
                 std::process::id()
             ));
-            std::fs::create_dir_all(&dir).expect("scratch");
             let socket = dir.join("c.sock");
             std::fs::remove_file(&socket).ok();
             let listener = crate::channel::bind_coordination(&socket).expect("bind");
@@ -3109,13 +3107,11 @@ mod tests {
     ) -> Vec<serde_json::Value> {
         use std::io::{BufRead, BufReader, Write};
 
-        let dir = std::env::temp_dir().join(format!(
+        let dir = crate::scratch::dir(format!(
             "weaver-enter-ask-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
         let listener =
             crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
         let sink_path = dir.join("trace.ndjson");
@@ -3377,13 +3373,11 @@ mod tests {
 
     #[test]
     fn the_entered_identity_reaches_the_record() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = crate::scratch::dir(format!(
             "weaver-identity-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
         let listener =
             crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
         let sink_path = dir.join("trace.ndjson");
@@ -3489,13 +3483,11 @@ mod tests {
     #[test]
     fn the_declared_elections_reach_the_load_record() {
         for elected in [false, true] {
-            let dir = std::env::temp_dir().join(format!(
+            let dir = crate::scratch::dir(format!(
                 "weaver-elections-{}-{elected}-{:?}",
                 std::process::id(),
                 std::thread::current().id()
             ));
-            let _ = std::fs::remove_dir_all(&dir);
-            std::fs::create_dir_all(&dir).expect("scratch");
             let listener =
                 crate::channel::bind_coordination(&dir.join("coordination.sock")).expect("bind");
             let sink_path = dir.join("trace.ndjson");
@@ -3634,14 +3626,13 @@ mod tests {
             return;
         }
 
-        let scratch =
-            std::env::temp_dir().join(format!("weaver-diagnostic-{}", std::process::id()));
-        std::fs::create_dir_all(&scratch).expect("scratch");
+        let scratch = crate::scratch::dir(format!("weaver-diagnostic-{}", std::process::id()));
         let sink_path = scratch.join("diagnostic.ndjson");
         let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
 
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: spu.clone(),
@@ -3744,15 +3735,15 @@ mod tests {
             return;
         }
 
-        let scratch = std::env::temp_dir().join(format!("weaver-rehearsal-{}", std::process::id()));
-        std::fs::create_dir_all(&scratch).expect("scratch");
+        let scratch = crate::scratch::dir(format!("weaver-rehearsal-{}", std::process::id()));
         let sink_path = scratch.join("rehearsal.ndjson");
         let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
         let gate_socket = scratch.join("gate.sock");
         std::fs::remove_file(&gate_socket).ok();
 
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: spu.clone(),
@@ -3949,9 +3940,10 @@ mod tests {
     /// count below moves.
     #[test]
     fn observe_answers_from_any_position_and_authors_nothing() {
-        fn harness_at(state: ChannelState) -> Harness {
-            Harness {
-                coordination: test_listener(),
+        fn harness_at(state: ChannelState) -> (Harness, crate::scratch::Scratch) {
+            let (coordination, dir) = test_listener();
+            let harness = Harness {
+                coordination,
                 organs: OrganBinaries {
                     classify: None,
                     spu: "/nonexistent/spu".into(),
@@ -3960,7 +3952,8 @@ mod tests {
                 parameters: OrganParameters::default(),
                 state,
                 composer: Some(weaver_trace::LoopIdentity::compiled("test")),
-            }
+            };
+            (harness, dir)
         }
         fn observed(harness: &mut Harness) -> LifecycleAnswer {
             let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
@@ -3983,14 +3976,14 @@ mod tests {
             load: None,
         };
         assert_eq!(
-            observed(&mut harness_at(ChannelState::BeforeEnter)),
+            observed(&mut harness_at(ChannelState::BeforeEnter).0),
             unloaded
         );
-        assert_eq!(observed(&mut harness_at(ChannelState::Left)), unloaded);
+        assert_eq!(observed(&mut harness_at(ChannelState::Left).0), unloaded);
 
         let (run, _spare, _sink_path) = entered_run(Some("t-1"));
         let before = run.recorder.structure().expect("record").len();
-        let mut harness = harness_at(ChannelState::Entered(Box::new(run)));
+        let (mut harness, _dir) = harness_at(ChannelState::Entered(Box::new(run)));
         match observed(&mut harness) {
             LifecycleAnswer::State {
                 state: weaver_types::AgentState::Active,
@@ -4020,8 +4013,9 @@ mod tests {
     fn stop_records_the_close_and_answers_turn_aborted() {
         let (run, _spare, _sink_path) = entered_run(Some("t-1"));
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4073,8 +4067,9 @@ mod tests {
     #[test]
     fn closure_from_entered_unwinds_the_run() {
         let (run, _spare, sink_path) = entered_run(None);
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4135,8 +4130,9 @@ mod tests {
             .expect("the arm stands")
             .last_word
             .speak(r#"{"decode_fault":"device lost mid-forward"}"#);
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4171,8 +4167,9 @@ mod tests {
     #[test]
     fn no_seat_is_granted_while_a_turn_is_in_flight() {
         let (run, _spare, _path) = entered_run(Some("t-1"));
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4190,8 +4187,9 @@ mod tests {
         // ...and an idle one does, so the guard is the turn and not the
         // position.
         let (idle, _spare, _path) = entered_run(None);
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4248,11 +4246,11 @@ mod tests {
     #[test]
     fn a_diagnostic_run_grants_no_frame_seat() {
         let (mut run, _spare, _path) = entered_run(None);
-        let sink_path = std::env::temp_dir().join(format!(
+        let sink_path = crate::scratch::Scratch(std::env::temp_dir().join(format!(
             "weaver-harness-diag-seat-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
-        ));
+        )));
         let sink = OwnedFd::from(File::create(&sink_path).expect("sink"));
         run.recorder = crate::record::Record::Diagnostic(
             weaver_diagnostic::Recorder::receive(
@@ -4262,8 +4260,9 @@ mod tests {
             )
             .expect("the recorder receives"),
         );
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4286,8 +4285,9 @@ mod tests {
     fn stop_at_rest_answers_at_rest() {
         let (run, _spare, _sink_path) = entered_run(None);
         let (harness_end, peer_end) = OrganChannel::pair().expect("pair");
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent/spu".into(),
@@ -4363,8 +4363,9 @@ mod tests {
                 last_word: crate::spawn::LastWord::quiet(),
             });
             let gate_peer = gate_peer.into_channel();
+            let (coordination, _coordination_dir) = test_listener();
             let mut harness = Harness {
-                coordination: test_listener(),
+                coordination,
                 organs: OrganBinaries {
                     classify: None,
                     spu: "/nonexistent".into(),
@@ -4527,8 +4528,9 @@ mod tests {
             sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send answer");
         });
 
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent".into(),
@@ -4628,8 +4630,9 @@ mod tests {
             last_word: crate::spawn::LastWord::quiet(),
         });
         let gate_peer = gate_peer.into_channel();
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent".into(),
@@ -4794,8 +4797,9 @@ mod tests {
             sock_send(far.as_raw_fd(), &bytes, MsgFlags::empty()).expect("send refusal");
         });
 
+        let (coordination, _coordination_dir) = test_listener();
         let mut harness = Harness {
-            coordination: test_listener(),
+            coordination,
             organs: OrganBinaries {
                 classify: None,
                 spu: "/nonexistent".into(),

@@ -1046,13 +1046,11 @@ mod door_mode_tests {
     #[test]
     fn the_coordination_door_denies_every_uid_but_its_owner() {
         use std::os::unix::fs::PermissionsExt;
-        let dir = std::env::temp_dir().join(format!(
+        let dir = crate::scratch::dir(format!(
             "weaver-coordination-mode-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).expect("scratch");
         let path = dir.join("coordination.sock");
 
         // **The umask is elected rather than read, so this runs everywhere.**
@@ -1078,7 +1076,6 @@ mod door_mode_tests {
             "the door states its mode rather than inheriting one, got {mode:04o}"
         );
         drop(listener);
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 

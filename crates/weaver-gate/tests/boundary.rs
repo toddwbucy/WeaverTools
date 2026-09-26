@@ -19,7 +19,7 @@ use std::os::unix::net::UnixStream;
 use common::{permissive_instruction, scratch as scratch_path};
 use weaver_gate::hook::{AcceptOutcome, Hook};
 
-fn scratch(name: &str) -> std::path::PathBuf {
+fn scratch(name: &str) -> common::Scratch {
     scratch_path("boundary", name)
 }
 

@@ -574,14 +574,43 @@ mod tests {
         );
     }
 
-    fn scratch() -> std::path::PathBuf {
+    /// The store's file inside a directory of its own, the directory and
+    /// everything in it removed when the test ends, pass or fail: the guard
+    /// drops on the unwind a failed assertion takes as on a clean return
+    /// (#690 item C2.9). It reads as the file's path.
+    struct Scratch {
+        dir: std::path::PathBuf,
+        file: std::path::PathBuf,
+    }
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    impl std::ops::Deref for Scratch {
+        type Target = std::path::Path;
+        fn deref(&self) -> &std::path::Path {
+            &self.file
+        }
+    }
+
+    impl AsRef<std::path::Path> for Scratch {
+        fn as_ref(&self) -> &std::path::Path {
+            &self.file
+        }
+    }
+
+    fn scratch() -> Scratch {
         let dir = std::env::temp_dir().join(format!(
             "weaver-state-{}-{:?}",
             std::process::id(),
             std::thread::current().id()
         ));
         std::fs::create_dir_all(&dir).expect("scratch dir");
-        dir.join("state.sql")
+        let file = dir.join("state.sql");
+        Scratch { dir, file }
     }
 
     /// The landing is atomic: a good distillate lands whole, and the store

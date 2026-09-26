@@ -24,17 +24,45 @@ use weaver_trace::{
     StopReason, SubmitRefusal, Subsystem, TurnClose, TurnRef, raw_payload,
 };
 
-fn sink() -> (OwnedFd, std::path::PathBuf) {
-    let path = std::env::temp_dir().join(format!(
+/// A path under the temp directory, removed when the test ends, pass or
+/// fail: the guard drops on the unwind a failed assertion takes as on a clean
+/// return, so no run leaves a sink behind (#690 item C2.9).
+struct Scratch(std::path::PathBuf);
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        match std::fs::symlink_metadata(&self.0) {
+            Ok(meta) if meta.is_dir() => drop(std::fs::remove_dir_all(&self.0)),
+            Ok(_) => drop(std::fs::remove_file(&self.0)),
+            Err(_) => {}
+        }
+    }
+}
+
+impl std::ops::Deref for Scratch {
+    type Target = std::path::Path;
+    fn deref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+impl AsRef<std::path::Path> for Scratch {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+fn sink() -> (OwnedFd, Scratch) {
+    let path = Scratch(std::env::temp_dir().join(format!(
         "weaver-trace-test-{}-{:?}",
         std::process::id(),
         std::thread::current().id()
-    ));
+    )));
     let file = File::create(&path).expect("temp sink");
     (OwnedFd::from(file), path)
 }
 
-fn recorder() -> (Recorder, std::path::PathBuf) {
+fn recorder() -> (Recorder, Scratch) {
     let (fd, path) = sink();
     let r =
         Recorder::receive(fd, RunRef("r-1".into()), SessionRef("s-1".into())).expect("receives");

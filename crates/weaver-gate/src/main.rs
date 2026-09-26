@@ -620,12 +620,13 @@ mod tests {
         test_common::place_inherited(&mut command, &[child_end.as_raw_fd()]);
         let mut child = command.spawn().unwrap();
         drop(child_end);
+        let late_cancel = scratch("late-cancel");
         let ready = test_common::ask(
             &harness,
             1,
             LifecycleDirective::Raise {
                 instruction: instruction(),
-                socket: scratch("late-cancel"),
+                socket: late_cancel.to_path_buf(),
             },
         );
         assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -719,14 +720,43 @@ mod tests {
         }
     }
 
+    /// A socket path inside a directory of its own, the directory removed
+    /// when the test ends, pass or fail: the guard drops on the unwind a
+    /// failed assertion takes as on a clean return (#690 item C2.9). It reads
+    /// as the socket's path, and a caller handing the path to a directive
+    /// holds the guard for as long as the socket is wanted.
+    struct Scratch {
+        dir: std::path::PathBuf,
+        file: std::path::PathBuf,
+    }
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    impl std::ops::Deref for Scratch {
+        type Target = std::path::Path;
+        fn deref(&self) -> &std::path::Path {
+            &self.file
+        }
+    }
+
+    impl AsRef<std::path::Path> for Scratch {
+        fn as_ref(&self) -> &std::path::Path {
+            &self.file
+        }
+    }
+
     /// A scratch socket path, pre-cleaned, matching the boundary and entry
     /// helpers so a previous run's leftover cannot make a raise refuse.
-    fn scratch(name: &str) -> std::path::PathBuf {
+    fn scratch(name: &str) -> Scratch {
         let dir = std::env::temp_dir().join(format!("weaver-gate-{}-{name}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("a scratch dir");
         let path = dir.join("gate.sock");
         std::fs::remove_file(&path).ok();
-        path
+        Scratch { dir, file: path }
     }
 
     /// **A lower before any raise answers `OutOfOrder`.** The order is judged
@@ -749,10 +779,11 @@ mod tests {
     #[test]
     fn any_directive_after_a_lower_answers_out_of_order() {
         let mut state = HookState::Lowered;
+        let terminal = scratch("terminal");
         for case in [
             LifecycleDirective::Raise {
                 instruction: instruction(),
-                socket: scratch("terminal"),
+                socket: terminal.to_path_buf(),
             },
             LifecycleDirective::Lower,
             LifecycleDirective::List,
@@ -779,7 +810,7 @@ mod tests {
             &mut state,
             &opened(LifecycleDirective::Raise {
                 instruction: instruction(),
-                socket: path.clone(),
+                socket: path.to_path_buf(),
             }),
         );
         assert_eq!(ready, Payload::Answer(LifecycleAnswer::GateReady));
@@ -792,7 +823,7 @@ mod tests {
                 &mut state,
                 &opened(LifecycleDirective::Raise {
                     instruction: instruction(),
-                    socket: path.clone(),
+                    socket: path.to_path_buf(),
                 }),
             ),
             Payload::Refusal(LifecycleRefusal::OutOfOrder)
@@ -869,9 +900,10 @@ mod tests {
     #[test]
     fn a_mis_shapen_exchange_refuses_before_the_directive_runs() {
         let mut state = HookState::BeforeRaise;
+        let misshapen = scratch("misshapen");
         let mut closing = opened(LifecycleDirective::Raise {
             instruction: instruction(),
-            socket: scratch("misshapen"),
+            socket: misshapen.to_path_buf(),
         });
         closing.position = Position::Close;
         assert_eq!(

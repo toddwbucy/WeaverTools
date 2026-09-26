@@ -22,6 +22,10 @@ fn recorder() -> Record {
         std::thread::current().id()
     ));
     let file = File::create(&path).expect("sink");
+    // Nothing reads the sink by name, so the name goes at once and the
+    // recorder writes through its descriptor: no run leaves the file behind,
+    // pass or fail (#690 item C2.9).
+    let _ = std::fs::remove_file(&path);
     Record::Serving(
         Recorder::receive(
             OwnedFd::from(file),

@@ -493,6 +493,17 @@ mod tests {
         use std::time::{Duration, Instant};
         let path = std::env::temp_dir().join(format!("weaver-exit-release-{}", std::process::id()));
         let _ = std::fs::remove_file(&path);
+        // Removed when the test ends, pass or fail: the closing unwrap below
+        // is the pass's own removal and asserts the peer wrote the file, and
+        // this guard answers a failure that never reaches it (#690 item
+        // C2.9).
+        struct Release(std::path::PathBuf);
+        impl Drop for Release {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_file(&self.0);
+            }
+        }
+        let _release_guard = Release(path.clone());
         let (entered, waiting) = std::sync::mpsc::sync_channel(1);
         WAIT_ENTERED.with(|slot| *slot.borrow_mut() = Some(entered));
         let release = path.clone();

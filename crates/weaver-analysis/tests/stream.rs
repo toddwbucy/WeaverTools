@@ -390,6 +390,15 @@ fn the_positions_read_stops_at_the_close() {
 fn an_absent_member_is_omitted_at_the_wire_and_never_rendered_null() {
     let dir = std::env::temp_dir().join(format!("weaver-analysis-wire-{}", std::process::id()));
     std::fs::create_dir_all(&dir).expect("temp dir");
+    // Removed when the test ends, pass or fail: the guard drops on the
+    // unwind a failed assertion takes as on a clean return (#690 item C2.9).
+    struct Guard(std::path::PathBuf);
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    let _guard = Guard(dir.clone());
     let binary = env!("CARGO_BIN_EXE_weaver-analysis");
 
     let summary = |text: &str, name: &str| -> serde_json::Value {

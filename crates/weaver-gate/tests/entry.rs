@@ -23,7 +23,6 @@ mod common;
 use std::io::Write;
 use std::os::fd::AsRawFd;
 use std::os::unix::net::UnixStream;
-use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -34,12 +33,12 @@ use weaver_types::{LifecycleAnswer, LifecycleDirective, Payload};
 
 /// Start the gate with its one end at descriptor 3. Standard error goes to a
 /// file rather than a pipe, since nothing drains a pipe until after the wait.
-fn spawn_gate(child_end: std::os::fd::RawFd) -> (Child, PathBuf) {
-    let log_path = std::env::temp_dir().join(format!(
+fn spawn_gate(child_end: std::os::fd::RawFd) -> (Child, common::ScratchFile) {
+    let log_path = common::ScratchFile(std::env::temp_dir().join(format!(
         "weaver-gate-entry-{}-{}.log",
         std::process::id(),
         COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-    ));
+    )));
     let log = std::fs::File::create(&log_path).expect("a child log file");
     let mut command = Command::new(env!("CARGO_BIN_EXE_weaver-gate"));
     command
@@ -52,7 +51,7 @@ fn spawn_gate(child_end: std::os::fd::RawFd) -> (Child, PathBuf) {
 
 static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
-fn socket_path(name: &str) -> PathBuf {
+fn socket_path(name: &str) -> common::Scratch {
     scratch("entry", name)
 }
 
@@ -124,7 +123,7 @@ fn a_closed_channel_ends_the_gate_and_its_listener() {
         1,
         LifecycleDirective::Raise {
             instruction: instruction(),
-            socket: path.clone(),
+            socket: path.to_path_buf(),
         },
     );
     assert_eq!(
@@ -170,7 +169,7 @@ fn raise_then_lower_round_trips_across_the_seam() {
         1,
         LifecycleDirective::Raise {
             instruction: instruction(),
-            socket: path.clone(),
+            socket: path.to_path_buf(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -221,7 +220,7 @@ fn the_harness_teardown_sequence_ends_the_gate_cleanly() {
         1,
         LifecycleDirective::Raise {
             instruction: instruction(),
-            socket: path.clone(),
+            socket: path.to_path_buf(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -289,7 +288,7 @@ fn the_running_gate_refuses_an_unauthorized_dial() {
         1,
         LifecycleDirective::Raise {
             instruction: permissive,
-            socket: path.clone(),
+            socket: path.to_path_buf(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));
@@ -361,7 +360,7 @@ fn a_dial_storm_leaves_the_channel_answering() {
         1,
         LifecycleDirective::Raise {
             instruction: instruction(),
-            socket: path.clone(),
+            socket: path.to_path_buf(),
         },
     );
     assert_eq!(ready.payload, Payload::Answer(LifecycleAnswer::GateReady));

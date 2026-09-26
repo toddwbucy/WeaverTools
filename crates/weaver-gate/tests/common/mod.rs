@@ -41,9 +41,61 @@ pub fn seqpacket_pair() -> (OwnedFd, OwnedFd) {
     .expect("a socketpair")
 }
 
+/// A socket path inside a directory of its own, the directory and everything
+/// in it removed when the test ends, pass or fail: the guard drops on the
+/// unwind a failed assertion takes as on a clean return (#690 item C2.9). It
+/// reads as the socket's path, and a caller handing the path to a directive
+/// holds the guard for as long as the socket is wanted.
+pub struct Scratch {
+    dir: PathBuf,
+    file: PathBuf,
+}
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+impl std::ops::Deref for Scratch {
+    type Target = std::path::Path;
+    fn deref(&self) -> &std::path::Path {
+        &self.file
+    }
+}
+
+impl AsRef<std::path::Path> for Scratch {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.file
+    }
+}
+
+/// A file under the temp directory, removed when the test ends, pass or fail,
+/// as [`Scratch`]'s directory is (#690 item C2.9).
+pub struct ScratchFile(pub PathBuf);
+
+impl Drop for ScratchFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+impl std::ops::Deref for ScratchFile {
+    type Target = std::path::Path;
+    fn deref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
+impl AsRef<std::path::Path> for ScratchFile {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+
 /// A scratch socket path under a directory named for the suite and the test,
 /// pre-cleaned so a previous run's leftover cannot make a raise refuse.
-pub fn scratch(suite: &str, name: &str) -> PathBuf {
+pub fn scratch(suite: &str, name: &str) -> Scratch {
     let dir =
         std::env::temp_dir().join(format!("weaver-gate-{suite}-{}-{name}", std::process::id()));
     // **Created under the umask lock, because the umask is the process's.**
@@ -57,7 +109,7 @@ pub fn scratch(suite: &str, name: &str) -> PathBuf {
     });
     let path = dir.join("gate.sock");
     std::fs::remove_file(&path).ok();
-    path
+    Scratch { dir, file: path }
 }
 
 /// An instruction with an empty rule: nothing is permitted, and the raise adds
