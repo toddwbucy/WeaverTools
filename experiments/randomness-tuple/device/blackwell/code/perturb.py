@@ -36,6 +36,19 @@ def guards(path):
             and len(node.args) == 2 and isinstance(node.args[0], ast.Constant)]
 
 
+# The handlers whose catching is itself a rule: a read the interlock cannot
+# make is unread, never clear (#693 thread 2). Each is made to catch nothing,
+# and the suite must then fail, as a named guard must when removed.
+HANDLERS = {'tb_payload.py': ['m1_reading', 'door_state']}
+
+
+def handlers(path, functions):
+    tree = ast.parse(path.read_text())
+    return [(handler.lineno, function.name) for function in ast.walk(tree)
+            if isinstance(function, ast.FunctionDef) and function.name in functions
+            for handler in ast.walk(function) if isinstance(handler, ast.ExceptHandler)]
+
+
 def suite(target):
     child=subprocess.Popen([sys.executable,'-B','-m','unittest','test_tb'],cwd=target,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True,env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'))
     try:
@@ -74,6 +87,19 @@ def main():
                     records.append(dict(file=name,line=line,guard=label,mode=mode,killed=result.returncode!=0,
                                         evidence=result.stderr[-1800:]))
                     shutil.copy2(source,target/name)
+        for name, functions in HANDLERS.items():
+            source=root/name
+            for line, function in handlers(source, functions):
+                shutil.rmtree(target/'__pycache__',ignore_errors=True)
+                tree=ast.parse(source.read_text())
+                for node in ast.walk(tree):
+                    if isinstance(node,ast.ExceptHandler) and node.lineno==line:
+                        node.type=ast.Tuple(elts=[],ctx=ast.Load())
+                (target/name).write_text(ast.unparse(ast.fix_missing_locations(tree))+'\n')
+                result=suite(target)
+                records.append(dict(file=name,line=line,guard=f'{function} handler',mode='uncaught',
+                                    killed=result.returncode!=0,evidence=result.stderr[-1800:]))
+                shutil.copy2(source,target/name)
         print(json.dumps(records,indent=2))
     return int(any(not r['killed'] for r in records))
 

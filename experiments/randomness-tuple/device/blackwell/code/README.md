@@ -161,6 +161,11 @@ Provisioning adds the operator to bravo's group. Start a fresh login shell with
 that group before running the driver. Every bravo load refuses a non-inactive m1
 unit, an unreadable unit status, a remaining m1 coordination door, or processes
 under m1's uid. It checks the GPU/driver tuple and stack-local CUDA resolution.
+**No other agent is loaded while a leg runs.** The interlock is read at every load,
+again when each measurement closes, and again at each unload, and the reading is
+recorded each time: in the load and unload transcripts, and in the measurement's
+result. m1 standing at any of the three refuses. An agent that starts and stops
+wholly between two readings is not seen, which is why the rule is the operator's.
 Each trace has a fresh directory: retries cannot truncate or relabel old evidence.
 
 An interrupted provisioning or a refusal after load may leave partial resources.

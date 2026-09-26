@@ -238,8 +238,13 @@ owns `start`, `measure`, `settle`, `finish` and `report`. The review seat owns
 `review`, which is its own edit of the state file under the coordinator's lock and
 never a command of this program, as approval is. A step out of order, by the wrong
 seat, or already recorded is refused under `step-order`, `seat` and `not-repeated`,
-and every step first re-verifies every earlier receipt against its recorded digest
-under `prior-success` and `prior-evidence`.
+and every step first re-verifies every earlier receipt against its recorded digest under
+`prior-success` and `prior-evidence`. **A free run's `measure` receipt also holds its
+sink as it stood at the run's `turn.closed`**, the path, the length of the prefix
+through that line and that prefix's digest, recorded by the driver under the
+coordinator's lock as of 2026-09-26 (#679 item 1). A local re-feed's `load` is handed
+that length and digest beside the plan, and refuses under `source-sink-recorded` where
+the source run's receipt holds no well-formed sink at the path its job names.
 
 **Approval gates every step and is not this program's to grant.** `next` waits while
 the hold stands or the review is not `PASS`. Once lifted, every step verifies that
@@ -260,9 +265,10 @@ holder under `driver-owner`. Each wait is bounded at four hours, verifies the dr
 own live lease, and runs the full approval verification only when the state bytes
 have moved and always before returning, so an idle driver does not hash the deposit
 every second under the lock the operator's `next` needs, under `wait-owner`,
-`wait-order` and `wait-deadline`. A falsified control is judged after the operator's
-unload and before the next load becomes due, so the halt lands with the card
-unloaded.
+`wait-order` and `wait-deadline`. A wait that returns, and every record the coding seat
+makes, answers the receipts as they then stand, which is what the driver reads evidence
+against, per section 7. A falsified control is judged after the operator's unload and
+before the next load becomes due, so the halt lands with the card unloaded.
 
 **A halt is evidence.** A refusal records its reason and a transcript in the state and
 never advances the cursor. A timeout, a dead driver, a refused payload or an
@@ -386,8 +392,21 @@ under `m1`'s uid, under `m1-inactive`, `m1-state-readable`, `m1-no-door` and
 the stack's own library directory
 and nowhere else, under `gpu-tuple`, `resolved-libraries` and `cuda-local`. A
 diagnostic load waits for the preload door to stand and for the loader to answer,
-under `preload-door` and `diagnostic-load`, and an admin answer is read for its
-content and never for its exit status alone, under `admin-answer`.
+under `preload-door` and `diagnostic-load`, and an admin answer is read for its content
+and never for its exit status alone, under `admin-answer`. **The interlock is read again
+when the measurement closes and at the unload**, as of 2026-09-26 (#683 thread 49): the
+driver reads the same four facts without privilege and refuses the reading under
+`m1-unloaded-at-close`, recording the reading in the result, and the unload reads them
+after `bravo` is unloaded and refuses the step under `m1-unloaded-at-unload`, printing
+the reading to its transcript, so a reading taken with `m1` standing at any point the
+probe can see is never settled. A fact that cannot be read is recorded as unread and
+never as clear, any failure to read a fact mapping to unread, and a `/proc` mounted with
+`hidepid` counting as an unread process scan for an unprivileged reader, since it hides
+other users' processes without an error. **The edge is the window between two
+readings**: an agent that starts and stops wholly between the load and the close, or
+between the close and the unload, is seen by none of them, and the admin guards per
+agent. The README states the operator's rule that no other agent is loaded while a leg
+runs, and that rule is what covers the window.
 
 ```graph
 node: blackwell-probe-root-receives-bytes-never-a-path
@@ -512,20 +531,37 @@ and must be sufficient per section 2. Each trace has a fresh directory, so a ret
 cannot truncate or relabel earlier evidence.
 
 **A re-feed is one completed replay against one verified source.** The source record is
-the earlier free run's record, read by path from the deposit, which is design item B on
-#679 and is named in section 10 as not yet held, or the reviewed external trace's
-selected run, read once, hashed and parsed, with exactly one measurement, under
-`source-trace` and `source-measurement`. The replay must complete, certified or
-diverged, and carry exactly one measurement, under `replay-completed`, `single-replay`
-and `replay-measurement`. Only the control's own re-feeds must be certified, per section
-3, since a diverged replay is what the device and kernel legs predict. Exactness is the
-output tokens equal, every elected per-token series equal to the bit, and the field
-equal at every position, per `exact`, the input length included: the extractor carries
-the input as a count, so the length is held between source and replay under
-`input-held`, the comparator's report of a divergence inside the input is refused under
-`divergence-in-input` rather than read as a device or kernel effect, and token-by-token
-identity of the input is not a record the instrument carries, and the reading is the
-historical instrument's divergence coordinate with its ordinal.
+the earlier free run's record, read once and parsed only after its bytes match the
+digest of that run's `measure` receipt, under `receipt-present` and `receipt-digest`, or
+the reviewed external trace's selected run, read once, hashed and parsed, with exactly
+one measurement, under `source-trace` and `source-measurement`. The replay must
+complete, certified or diverged, and carry exactly one measurement, under
+`replay-completed`, `single-replay` and `replay-measurement`. Only the control's own
+re-feeds must be certified, per section 3, since a diverged replay is what the device
+and kernel legs predict. Exactness is the output tokens equal, every elected per-token
+series equal to the bit, and the field equal at every position, per `exact`, the input
+length included: the extractor carries the input as a count, so the length is held
+between source and replay under `input-held`, the comparator's report of a divergence
+inside the input is refused under `divergence-in-input` rather than read as a device or
+kernel effect, and token-by-token identity of the input is not a record the instrument
+carries, and the reading is the historical instrument's divergence coordinate with its
+ordinal. **Every result the driver reads, it reads against its receipt**, as of
+2026-09-26 (#679 item 2, #683 thread 14): the free readings a re-feed takes, the record
+a `settle` judges and the records a leg's assessment reads each come from the receipts
+the last wait or record answered, so a file substituted after the coordinator verified
+it is refused where it is read. **A local re-feed replays its source sink as it stood at
+the source run's close**: the driver cuts the sink at that run's `turn.closed` line from
+one read, refusing under `sink-closed` where the line is not there, and records the
+prefix per section 4, and the payload freezes exactly that many bytes and verifies them
+against the recorded digest under `source-sink-given` and `snapshot-hash`, so what the
+unload appended after the close is outside the replay. **The shape refusals precede the
+first write and the content refusal follows it**: a recorded sink whose length is not a
+positive integer or whose digest is not 64 lowercase hex is refused by the coordinator
+under `source-sink-recorded` before root is invoked, and again by the payload under
+`source-sink-given` before it creates any directory, so a corrected state can retry the
+job. A well-formed digest the sink no longer matches is refused under `snapshot-hash`
+after the job's directories stand, the snapshot needing its own, and the rule that a run
+is never reused leaves them as evidence for the review seat.
 
 **Assessment is per leg, and the control's falsifiers halt before it.** The control's
 report carries every same-seed pair with its equality and reading, every own re-feed
@@ -570,18 +606,19 @@ coordinator's: `schema`, `agent`, `stacks-distinct`, `isolated-root`, `tuple`,
 `identity-evidence`, `identity-inputs`, `identity-binds-stacks`, `identity-recomputed`,
 `cursor`, `prior-success`, `prior-evidence`, `step-order`, `seat`, `not-repeated`,
 `driver-live`, `driver-owner`, `no-live-driver`, `report-evidence`, `payload-hash`,
-`payload-exit`, `payload-receipt`, `wait-owner`, `wait-order`, `wait-deadline` and
-`operator-not-root`. The payload's: `root-payload`, `plan-hash`, `fixed-root-agent`,
-`operator`, `source-file-hash`, `job-found`, `model-source`, `existing-model-custody`,
-`existing-model`, `stack-no-symlinks`, `stack-libraries`, `stack-file-coverage`,
-`fresh-install-root`, `no-symlink-destination`, `snapshot-hash`, `new-model-custody`,
-`installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`,
-`installed-stack-hash`, `installation-plan`, `installed-model-custody`,
-`served-directory-custody`, `installed-model`, `m1-inactive`, `m1-state-readable`,
-`m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`,
-`source-run-selected`, `derived-artifact`, `derived-tuple`, `preload-door`,
-`diagnostic-load`, `admin-answer`, `no-bravo-account`, `no-bravo-group`,
-`operator-group`, `model-chain-custody`, `root-chain-custody`, `known-step` and
+`payload-exit`, `payload-receipt`, `wait-owner`, `wait-order`, `wait-deadline`,
+`source-sink-recorded` and `operator-not-root`. The payload's: `root-payload`,
+`plan-hash`, `fixed-root-agent`, `operator`, `source-file-hash`, `job-found`,
+`model-source`, `existing-model-custody`, `existing-model`, `stack-no-symlinks`,
+`stack-libraries`, `stack-file-coverage`, `fresh-install-root`,
+`no-symlink-destination`, `snapshot-hash`, `new-model-custody`, `installed-no-symlinks`,
+`installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`,
+`installation-plan`, `installed-model-custody`, `served-directory-custody`,
+`installed-model`, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`,
+`gpu-tuple`, `resolved-libraries`, `cuda-local`, `source-run-selected`,
+`derived-artifact`, `derived-tuple`, `preload-door`, `diagnostic-load`, `admin-answer`,
+`no-bravo-account`, `no-bravo-group`, `operator-group`, `model-chain-custody`,
+`root-chain-custody`, `source-sink-given`, `m1-unloaded-at-unload`, `known-step` and
 `command-exit`. The driver's: `driver-not-root`, `reader-approved`, `fresh-arm`,
 `gate-answer`, `single-turn`, `nonempty-measurement`, `field-depth`, `seed-held`,
 `weights-held`, `source-trace`, `source-measurement`, `source-weights-held`,
@@ -589,9 +626,10 @@ coordinator's: `schema`, `agent`, `stacks-distinct`, `isolated-root`, `tuple`,
 `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`,
 `field-duplicated`, `field-beyond-output`, `replay-weights-held`, `replay-seed-held`,
 `input-held`, `divergence-in-input`, `pair-count`, `pair-falsifier`,
-`own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction` and
-`report-path`. The inventory raises its refusals as errors on the command line, since it
-runs before any plan exists.
+`own-refeed-falsifier`, `control-falsifier`, `changed-seed-prediction`, `sink-closed`,
+`receipt-present`, `receipt-digest`, `m1-unloaded-at-close` and `report-path`. The
+inventory raises its refusals as errors on the command line, since it runs before any
+plan exists.
 
 **The rulings are refusals too.** A plan whose `hold_lifted`, `cuda_provenance` or
 `control_count` ruling is empty is refused under `rulings`, and each names the URL
@@ -605,12 +643,13 @@ the validator and its tests in a reviewed rework first.
 `test_tb.py` runs against temporary files, a temporary Unix socket and stubbed admin,
 gate and device calls, and makes no change to any installed stack. The mutation run
 `perturb.py` copies the scripts to a temporary directory, refuses unless the
-unmodified suite passes there, then removes and inverts every named guard of section
-8 in turn and requires each run to fail, recording the failing output, and kills with
-a process-group timeout any mutation that destroys a wait bound. A guard the
-mutation run cannot fail is a guard that enforces nothing, and the count is a
-reading taken at an act and never a fact this document holds: the instrument is the
-run, and an act states the numbers it got in its own body, as #683's does.
+unmodified suite passes there, then removes and inverts every named guard of section 8
+in turn, and makes each exception handler of the interlock's reading catch nothing, and
+requires each run to fail, recording the failing output, and kills with a process-group
+timeout any mutation that destroys a wait bound. A guard the mutation run cannot fail is
+a guard that enforces nothing, and the count is a reading taken at an act and never a
+fact this document holds: the instrument is the run, and an act states the numbers it
+got in its own body, as #683's does.
 
 **Every stub is built from a capture, never from what the code expects.** Each
 constant in `golden.py` is a real tool's output captured unprivileged on this box, a
@@ -640,15 +679,15 @@ reads each citation from `code/`.
 | `blackwell-probe-wait-verifies-when-the-state-moves` | perturbation, `wait-owner`, `wait-order`, `wait-deadline` and the state-moves test |
 | `blackwell-probe-halt-is-evidence` | perturbation, `prior-success`, `prior-evidence`, `payload-exit`, `payload-receipt`, `cursor` |
 | `blackwell-probe-root-receives-bytes-never-a-path` | perturbation, `payload-hash`, `plan-hash`, `root-payload`, `fixed-root-agent`, `operator` |
-| `blackwell-probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace` |
+| `blackwell-probe-operator-input-read-once` | perturbation, `snapshot-hash`, `source-file-hash`, `source-run-selected`, `reader-approved`, `source-trace`, `receipt-present`, `receipt-digest` |
 | `blackwell-probe-served-tree-locked-and-verified` | perturbation, `stack-no-symlinks`, `stack-file-coverage`, `installed-no-symlinks`, `installed-stack-custody`, `installed-stack-coverage`, `installed-stack-hash`, `served-directory-custody`, `root-chain-custody` |
 | `blackwell-probe-model-in-custody-on-both-paths` | perturbation, `existing-model-custody`, `new-model-custody`, `installed-model-custody`, `model-source`, `existing-model`, `installed-model`, `model-chain-custody` |
 | `blackwell-probe-installation-refuses-to-adopt` | perturbation, `fresh-install-root`, `no-bravo-account`, `no-bravo-group`, `operator-group`, `no-symlink-destination`, `installation-plan` |
-| `blackwell-probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
+| `blackwell-probe-load-stands-on-the-interlock` | perturbation, `m1-inactive`, `m1-state-readable`, `m1-no-door`, `m1-no-process`, `m1-unloaded-at-close`, `m1-unloaded-at-unload`, `gpu-tuple`, `resolved-libraries`, `cuda-local`, `preload-door`, `diagnostic-load`, `admin-answer` |
 | `blackwell-probe-inventory-covers-every-served-file` | perturbation, the inventory tests and the pin of `STACK_ROOTS` |
 | `blackwell-probe-comparison-takes-b1-then-b2` | perturbation, `compare`'s refusals and the scope test |
 | `blackwell-probe-identity-bound-to-approved-stacks` | perturbation, `kernel-schedule`, `identity-evidence`, `identity-inputs`, `identity-binds-stacks`, `identity-recomputed` |
-| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn`, and `well_formed`'s `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`, `field-duplicated`, `field-beyond-output` on every path |
+| `blackwell-probe-refeed-completes-against-a-verified-source` | perturbation, `source-sink-recorded`, `sink-closed`, `source-sink-given`, `source-measurement`, `replay-completed`, `single-replay`, `replay-measurement`, `gate-answer`, `single-turn`, and `well_formed`'s `request-absent`, `request-duplicated`, `output-absent`, `output-duplicated`, `field-duplicated`, `field-beyond-output` on every path |
 | `blackwell-probe-exactness-is-bitwise-over-elected-readings` | perturbation, the `exact` tests with the empty, absent and one-bit cases, and `input-held`, `divergence-in-input` on the re-feed path, with the input length in `exact` |
 | `blackwell-probe-stubs-are-captures` | review, the citations beside each `golden.py` constant |
 
@@ -672,10 +711,10 @@ to: blackwell-probe-stubs-are-captures
 ## 10. What this document does not carry
 
 The results of any leg, which are #679's evidence and the report's. The design of the
-privileged approval step, design item B on #679 (evidence digests passed from the
-coordinator's state into the driver rather than re-read by path), the re-staging of
-the two stacks without links and with their CUDA libraries, and the `cuda_provenance`
-ruling, all of which are hold-lift items on #679. The historical instrument's readers
-and gate client, which are #516's and are cited by hash rather than restated. And the
-question this document was written to answer, whether operator tooling under
+privileged approval step, the re-staging of the two stacks without links and with their
+CUDA libraries, and the `cuda_provenance` ruling, all of which are hold-lift items on
+#679. The evidence digests passed from the coordinator's state into the driver, design
+item B there, are held in section 7 since 2026-09-26. The historical instrument's
+readers and gate client, which are #516's and are cited by hash rather than restated.
+And the question this document was written to answer, whether operator tooling under
 `deploy/` answers to a document in this corpus: it does, and this is the document.
