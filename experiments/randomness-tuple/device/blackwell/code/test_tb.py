@@ -842,6 +842,11 @@ class PayloadTests(unittest.TestCase):
         with patch.object(payload,'MODEL',deep/'model'),self.assertRaisesRegex(RuntimeError,'model-chain-custody'):self.provision()
         self.assertFalse(self.root.exists());self.assertFalse((deep/'model').exists())
         (self.base/'ancestor').chmod(0o755)
+        # #683 thread 47: ROOT's own ancestry, before ROOT is made.
+        nested=self.base/'under'/'root';nested.parent.mkdir();nested.parent.chmod(0o775)
+        with patch.object(payload,'ROOT',nested),self.assertRaisesRegex(RuntimeError,'root-chain-custody'):self.provision()
+        self.assertFalse(nested.exists());self.assertFalse(self.model.exists())
+        nested.parent.chmod(0o755)
         # What new-model-custody alone still catches: the written file itself,
         # here a second name given to it during the write.
         real=payload.snapshot

@@ -228,6 +228,10 @@ def provision(plan, plan_sha256):
     # snapshot's custody rests on.
     need('operator-group', group_exists(plan['operator']))
     need('model-chain-custody', model_chain_held())
+    # ROOT's own ancestry, held before ROOT is made: a renameable ancestor lets
+    # a same-UID process move the new root out from under the writes that
+    # follow. installed() holds it again before every later step.
+    need('root-chain-custody', chain_custody(ROOT))
     need('model-source', sha(plan['model_source']) == plan['tuple']['weights_sha256'])
     if MODEL.exists() or MODEL.is_symlink():
         # Accepted only as a file already in custody; a link or a shared name
