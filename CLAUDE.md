@@ -310,11 +310,11 @@ indexes them, it does not replace them:
 3. **Perturbation-verified tests** for invariants that are behaviours. Always confirm the
    test fails when the property is removed - a test that passes either way converts
    "unenforced" into "documented as enforced", which is worse than no test.
-4. Human and Codex review. Read the review **body**, not the thread count: a clean
-   Codex pass edits its summary comment in place and posts no review object and no
-   thread, and findings arrive as review threads, sometimes a minute after the
-   summary row flips, so a thread count of zero is not a verdict until the summary
-   row reads completed.
+4. Human and Codex review. Read the review **body**, not the thread count: a clean Codex
+   pass edits its summary comment in place and posts no review object and no thread,
+   and findings arrive as review threads, sometimes a minute after the summary row
+   flips, so a thread count of zero is not a verdict until the summary row reads
+   completed and a read of the threads taken after it still finds none.
 5. **Clippy at `-D warnings`, per crate at the point of an act**, on the
    operator's ruling of 2026-09-06. **The gate is the crate you touched, not the
    workspace**: `cargo clippy -p <crate> --all-targets -- -D warnings` passes
