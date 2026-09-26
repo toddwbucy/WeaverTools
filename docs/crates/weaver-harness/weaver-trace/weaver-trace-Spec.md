@@ -844,13 +844,11 @@ miss. The grants ask returns a surface and no events and is not a recall.
 
 **A recall the recorder will not take at the enter is a fault and not a refused
 enter**, the miss accounting the seated prefix already runs on, named
-`identity_prefix_unrecorded` with `recall-unrecorded` as the miss. **Under the gate as
-it stands that fault does not stop the run certifying**: the diagnostic replay walks
-the source's `model.request` and `model.measurement` pairs and passes turnless kinds
-and faults by, per `diagnostic-replay-loop` section 2. So a run whose opening recall
-went unrecorded can close certified with the prefix's provenance missing from its
-record. **Refusing certification to such a run is owed**, a rule for the replay's
-identity step to read the open's faults, and it is not claimed here.
+`identity_prefix_unrecorded` with `recall-unrecorded` as the miss. **That fault stops
+the run certifying**, as of 2026-09-26: the diagnostic replay's identity step refuses a
+source whose holdings carry an `identity_prefix_unrecorded` fault, per
+`diagnostic-replay-loop` section 2, the analysis crate's diagnostic election carrying a
+fault's case so the fault reaches the holdings at all.
 
 ```graph
 node: trace-recall-records-the-ask-and-its-identities

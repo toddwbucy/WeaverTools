@@ -32,8 +32,8 @@ arrived owed its certification. An earlier
 form of this sentence rested it on the precedent the context-injection loop set, which
 does not carry it: that loop gained a port on a seat a turn had already granted, and a
 turn begins at the gate and nowhere else. The loop composes what the seat grants and
-nothing else - the state port, the decode surface, the flush - and it mints no port, per
-`weaver-harness-Spec` section 6.
+nothing else - the state port, the decode surface, the flush and, since 2026-09-26, the
+elision - and it mints no port, per `weaver-harness-Spec` section 6.
 
 **What it refuses is the substrate's three refusals**, per the charter:
 nothing enters from outside, the working structure is preloaded and read
@@ -89,18 +89,26 @@ The operator sequences three acts, and the loop is the third:
 
 **The walk's unit is the generation, grouped from the envelope, and a
 grouping that does not resolve rejects the replay.** The answer's events
-group by run and turn from their envelopes, in landing order. Turn-bearing
-events feed the walk, and turnless ones, the seated prefix, the run
-brackets, a flush, inform input identity and feed nothing positionally.
-Within a turn, `model.request` and `model.measurement` events pair in
-landing order, each request to the first unpaired measurement after it,
-because a turn holds one pair per generation and tool rounds make several
-generations of one turn the ordinary case. A measurement with no preceding
-unpaired request, a request left unpaired at the turn's end, or counts
-that disagree reject the replay before any forward pass, naming the run
-and turn, and nothing is ever paired across turns: a replay over a
-grouping the record does not determine would be a replay of a conversation
-that never happened.
+group by run and turn from their envelopes, in landing order. Turn-bearing events feed
+the walk, and turnless ones, the seated prefix, the run brackets, a recall, inform input
+identity and feed nothing positionally. **A resident edit is a step of the walk**, as of
+2026-09-26 (#673 item 1): a flush or an elision the source made between two turns is
+driven through the seat's own port with the record's counts before the later turn
+re-feeds, so that turn draws on the resident the source's did, and a reproduction whose
+counts disagree with the record's closes the pass abandoned at identity, naming both. An
+edit landing while a request stands unpaired, or holding no counts, rejects the
+grouping. The M1 run `m1-002` flushed at 255 and re-entered at 259, and a walk that
+passed the flush by re-fed turn 37 onto every earlier turn's tokens and diverged there.
+**A source whose open recorded an `identity_prefix_unrecorded` fault does not certify**:
+the identity step refuses it, the input its run opened under being missing from the
+record, and a fault of any other case passes by. Within a turn, `model.request` and
+`model.measurement` events pair in landing order, each request to the first unpaired
+measurement after it, because a turn holds one pair per generation and tool rounds make
+several generations of one turn the ordinary case. A measurement with no preceding
+unpaired request, a request left unpaired at the turn's end, or counts that disagree
+reject the replay before any forward pass, naming the run and turn, and nothing is ever
+paired across turns: a replay over a grouping the record does not determine would be a
+replay of a conversation that never happened.
 
 **The re-feed is by the record and never by rendering.** The loop feeds the
 rendered contribution `model.request` recorded, per the operator's ruling of
@@ -108,8 +116,13 @@ rendered contribution `model.request` recorded, per the operator's ruling of
 does not re-render through a template that may have changed. Tokenization
 identity is verified against the recorded token identifiers of
 `model.measurement`, which is `weaver-agents-PRD` section 8's reproducible
-claim exercised rather than assumed, and a mismatch is a failed
-certification and not a lesser reading.
+claim exercised rather than assumed, and a mismatch is a failed certification and not a
+lesser reading. **The post-flush input is the recorded rendered delta**: the re-entry a
+loop builds after a flush is inside the later turn's `model.request`, so the replay
+re-feeds it as it re-feeds any turn, and the source's `recall` event, which the holdings
+carry, names the custody events that re-entry was drawn from. **A cross-check is owed**:
+a post-flush turn on a record new enough to carry the `recall` kind should show a recall
+between the flush and its request, and the identity step does not yet read one.
 
 **The re-feed exchange landed 2026-08-31 and this walk runs against it.**
 The serving seam's append-and-generate samples, and a replay samples

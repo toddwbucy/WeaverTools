@@ -21,8 +21,9 @@ pub struct ElectedKind {
 /// The election, composed from what `diagnostic-replay-loop` sections 2 and
 /// 3 read: `load` for the tee's election the state claim rests on,
 /// `model.request` for each generation's rendered contribution and its
-/// identity, and `model.measurement` for the recorded token path the
-/// certification compares against. A step added to that document widens
+/// identity, `model.measurement` for the recorded token path the
+/// certification compares against, the resident edits and a fault's case
+/// the walk and the identity step read, and the recall's account. A step added to that document widens
 /// this election in the act that adds it.
 pub const ELECTION: &[ElectedKind] = &[
     ElectedKind {
@@ -57,6 +58,34 @@ pub const ELECTION: &[ElectedKind] = &[
     ElectedKind {
         kind: "message.tool_result",
         paths: &["role", "content"],
+    },
+    // **The source's two resident edits, with their counts**, as of
+    // 2026-09-26 per `diagnostic-replay-loop` section 2: the walk reproduces
+    // each where it fell, so a turn after a flush or an elision draws on the
+    // resident the source's did, and the counts are what the reproduction
+    // is held to.
+    ElectedKind {
+        kind: "flush",
+        paths: &["resident_before", "resident_after"],
+    },
+    ElectedKind {
+        kind: "elision",
+        paths: &["from", "to", "resident_before", "resident_after"],
+    },
+    // **A fault's case**, so the identity step can refuse a source whose
+    // open recorded `identity_prefix_unrecorded`: without it the fault never
+    // reaches the holdings at all.
+    ElectedKind {
+        kind: "fault",
+        paths: &["case"],
+    },
+    // **The recall's account**, identities only and bounded, so the
+    // destination carries what the source's post-flush input was drawn from
+    // for a reader, and the cross-check the loop document names as owed has
+    // its evidence the day it lands.
+    ElectedKind {
+        kind: "recall",
+        paths: &["ask", "returned", "count"],
     },
 ];
 

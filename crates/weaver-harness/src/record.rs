@@ -26,11 +26,11 @@ pub enum RecordFailure {
     Serving(weaver_trace::Failure),
     Diagnostic(weaver_diagnostic::Failure),
     /// The event's kind or subsystem has no diagnostic counterpart. The
-    /// diagnostic record holds eighteen kinds, per `weaver-diagnostic-Spec`
+    /// diagnostic record holds nineteen kinds, per `weaver-diagnostic-Spec`
     /// section 3, and an authoring that reaches this arm with a kind outside
     /// them is a defect in the caller: the run brackets are the replay's
-    /// own, tools do not execute, and nothing elides or classifies under a
-    /// replay.
+    /// own, tools do not execute, and nothing classifies under a replay. An
+    /// elision does map since 2026-09-26, the replay reproducing a source's.
     OutsideDiagnosticVocabulary,
 }
 
@@ -132,7 +132,7 @@ impl Record {
 }
 
 /// The serving-vocabulary event rendered into the diagnostic one, member
-/// for member. The fourteen shared kinds map by spelling, per
+/// for member. The fifteen shared kinds map by spelling, per
 /// `weaver-diagnostic-Spec` section 3.2, and the payload crosses as the
 /// bytes it would have carried, spliced whole.
 fn convert(event: Event) -> Result<weaver_diagnostic::Event, RecordFailure> {
@@ -151,12 +151,12 @@ fn convert(event: Event) -> Result<weaver_diagnostic::Event, RecordFailure> {
         Kind::Refusal => weaver_diagnostic::Kind::Refusal,
         Kind::Fault => weaver_diagnostic::Kind::Fault,
         Kind::Recall => weaver_diagnostic::Kind::Recall,
+        Kind::Elision => weaver_diagnostic::Kind::Elision,
         Kind::Load
         | Kind::Unload
         | Kind::SessionClosed
         | Kind::ToolCallStarted
         | Kind::ToolCallCompleted
-        | Kind::Elision
         | Kind::ClassifyRequest
         | Kind::ClassifyOutput => {
             return Err(RecordFailure::OutsideDiagnosticVocabulary);
