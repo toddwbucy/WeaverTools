@@ -1316,20 +1316,21 @@ selection is per event and key-based: the envelope crosses whole on every distil
 event and is not electable, session, run, turn, kind, and sequence, so no election can
 produce an unattributable row, and the election ranges over payload keys alone, named as
 paths into the canonical JSON. An elected kind with no payload keys is a meaningful
-election, presence itself being state. **One event crosses whole under every election:
+election, presence itself being state. **Two events cross whole under every election:
 the seated identity prefix**, the turnless `message.system` at the run's opening, per
-the operator's ruling of 2026-09-04 on issue #422. The prefix is the session's first
-bounding and the store is its custodian from that ruling on, so an election that could
-drop its payload could produce a session whose identity the store never held and a
-replay that could not rebuild it. The exception is stated here because the rule it
-excepts is stated here, and it stays selection: the prefix's payload crosses as the
-record rendered it, and no election adds to or subtracts from it. Transformation of what
-was selected is `weaver-state`'s work and decision about what it means is the harness's
-loops', and a tee that computed would smuggle the first into this crate.
-**This charter declares no assertion node.** It argues the claim and Document
-Format section 4 gives the declaration to the Spec, which declares
-`trace-tee-selects-never-computes` at `weaver-trace-Spec` section 11, where the
-rule it rests on is stated.
+the operator's ruling of 2026-09-04 on issue #422, **and a restored message**, the
+conversation a branch's run opened under, as of 2026-09-26 (#697). The prefix is the
+session's first bounding and the store is its custodian from that ruling on, so an
+election that could drop its payload could produce a session whose identity the store
+never held and a replay that could not rebuild it. The exception is stated here because
+the rule it excepts is stated here, and it stays selection: the prefix's payload crosses
+as the record rendered it, and no election adds to or subtracts from it. Transformation
+of what was selected is `weaver-state`'s work and decision about what it means is the
+harness's loops', and a tee that computed would smuggle the first into this crate.
+**This charter declares no assertion node.** It argues the claim and Document Format
+section 4 gives the declaration to the Spec, which declares
+`trace-tee-selects-never-computes` at `weaver-trace-Spec` section 11, where the rule it
+rests on is stated.
 
 **The election is fixed at load and arrives with the declaration.** What the
 operator elected is thereby a load condition the record carries like any

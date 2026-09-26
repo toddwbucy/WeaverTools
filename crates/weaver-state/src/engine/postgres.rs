@@ -1016,14 +1016,33 @@ mod tests {
         assert_eq!(before[0].kinds.len(), 1, "the earlier answer never grew");
     }
 
+    /// **A restore from a branch is answered with the branch's inherited
+    /// conversation**, the embedded engine's test at this engine (#697).
+    ///
+    /// Perturbation: drop `'message.restored'` from `MESSAGE_KINDS` and the
+    /// inherited exchange is missing from the whole answer.
+    #[test]
+    #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
+    fn a_restore_from_a_branch_recalls_its_inherited_conversation() {
+        let scratch = Scratch::new();
+        let mut store = scratch.open();
+        for distillate in crate::store::branch_record() {
+            store.land(&distillate).expect("lands");
+        }
+        crate::store::assert_branch_recall(
+            &store.recall("s-branch", None).expect("recall"),
+            &store.recall("s-branch", Some(1)).expect("bounded recall"),
+        );
+    }
+
     /// **A replay reads what a recall does not**, which is the whole reason
-    /// the ask exists: `recall` serves the four message kinds and a replay
+    /// the ask exists: `recall` serves the message kinds and a replay
     /// walks the rendered contributions and the recorded measurements too.
     /// Perturbation: give `replay` the kind filter `recall` carries and this
     /// fails on the two events it would drop.
     #[test]
     #[ignore = "needs WEAVER_STATE_TEST_PG naming a scratch PostgreSQL socket directory; see the W5a goal"]
-    fn a_replay_reads_every_kind_and_a_recall_reads_four() {
+    fn a_replay_reads_every_kind_and_a_recall_reads_the_messages() {
         let scratch = Scratch::new();
         let mut store = scratch.open();
         for (kind, sequence) in [

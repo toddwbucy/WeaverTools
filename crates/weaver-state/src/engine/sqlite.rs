@@ -838,13 +838,33 @@ mod tests {
     /// The ask vocabulary is closed at two names: both are recognized,
     /// the recall's optional bound parses, and every other frame is not
     /// an ask at all.
+    /// **A restore from a branch is answered with the branch's inherited
+    /// conversation** (#697, answering Codex's finding on #702). The branch's
+    /// record goes through the tee under an election that does not name
+    /// `message.restored`, lands, and is recalled whole and bounded.
+    ///
+    /// Perturbation: drop `'message.restored'` from the recall query's kind
+    /// list and the inherited exchange is missing from the whole answer.
+    #[test]
+    fn a_restore_from_a_branch_recalls_its_inherited_conversation() {
+        let path = scratch();
+        let mut store = Sqlite::open(&path).expect("opens");
+        for distillate in crate::store::branch_record() {
+            store.land(&distillate).expect("lands");
+        }
+        crate::store::assert_branch_recall(
+            &store.recall("s-branch", None).expect("recall"),
+            &store.recall("s-branch", Some(1)).expect("bounded recall"),
+        );
+    }
+
     /// **A replay reads what a recall does not**, which is the whole reason
-    /// the ask exists: `recall` serves the four message kinds and a replay
+    /// the ask exists: `recall` serves the message kinds and a replay
     /// walks the rendered contributions and the recorded measurements too.
     /// Perturbation: give `replay` the kind filter `recall` carries and this
     /// fails on the two events it would drop.
     #[test]
-    fn a_replay_reads_every_kind_and_a_recall_reads_four() {
+    fn a_replay_reads_every_kind_and_a_recall_reads_the_messages() {
         let path = scratch();
         let _ = std::fs::remove_file(&path);
         let mut store = Sqlite::open(&path).expect("opens");

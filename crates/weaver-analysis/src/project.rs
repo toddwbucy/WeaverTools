@@ -42,7 +42,9 @@ pub const ELECTION: &[ElectedKind] = &[
     // section 3 as of 2026-09-06 and issue #432: a session standing from a
     // preloaded record rebuilds its prefix and its conversation from these
     // pairs through the `identity` and `recall` asks, and the replay loop
-    // reads past them untouched, so one election serves both preloads.
+    // reads past them untouched, so one election serves both preloads. A
+    // restored message is not among them: it crosses whole by
+    // `project_with`'s rule, as the identity does (#697).
     ElectedKind {
         kind: "message.system",
         paths: &["role", "content"],
@@ -278,6 +280,37 @@ mod tests {
             r#"{"session":"s-1","run":"r-b","turn":"t-2","sequence":"8","kind":"message.user","payload":{"role":"user","content":[{"type":"text","text":"cut off"}]}}"#, "\n",
         )
         .to_string()
+    }
+
+    /// **A branch's restored conversation crosses a preload whole**, as the
+    /// identity does, under an election that names nothing of it (#697): a
+    /// restore from a preloaded branch rebuilds the inherited exchange from
+    /// these pairs, so no election may thin them. The diagnostic election
+    /// names the four message kinds and not this one, which is what makes the
+    /// rule and not an entry the instrument here.
+    ///
+    /// Perturbation: drop `message.restored` from `project_with`'s whole-line
+    /// rule and the frame crosses with no pairs.
+    #[test]
+    fn a_restored_message_crosses_a_preload_whole() {
+        let record = concat!(
+            r#"{"session":"s-1","run":"r-a","sequence":"1","kind":"message.restored","#,
+            r#""payload":{"role":"user","content":[{"type":"text","text":"inherited"}]}}"#,
+            "\n",
+        );
+        let frames = project_with(
+            &parse_record(record),
+            None,
+            &crate::selection::Election::diagnostic(),
+        );
+        assert_eq!(frames.len(), 1, "the restored row crosses");
+        assert!(
+            frames[0].frame.contains(
+                r#""pairs":{"content":[{"type":"text","text":"inherited"}],"role":"user"}"#
+            ),
+            "whole, role and content: {}",
+            frames[0].frame
+        );
     }
 
     /// **The cut is the named turn's last event in landing order**, per

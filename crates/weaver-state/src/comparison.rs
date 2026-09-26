@@ -410,7 +410,9 @@ impl Record {
                 run,
                 None,
                 SELECTION[7].kind,
-                &format!(r#"{{"content":[{{"text":"inherited {run}","type":"text"}}],"role":"user"}}"#),
+                &format!(
+                    r#"{{"content":[{{"text":"inherited {run}","type":"text"}}],"role":"user"}}"#
+                ),
             );
             for index in 1..=turns {
                 let turn = format!("t-{index}");

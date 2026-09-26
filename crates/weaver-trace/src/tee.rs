@@ -131,7 +131,8 @@ pub fn distill(line: &str, election: &Election) -> Option<String> {
     // `message.restored` line does too**, as of 2026-09-26 (#697): it is the
     // conversation a branch's run opened under, and a restore from that
     // branch rebuilds it from what custody holds, so no election may thin it.
-    if (event.kind == "message.system" && event.turn.is_none()) || event.kind == "message.restored" {
+    if (event.kind == "message.system" && event.turn.is_none()) || event.kind == "message.restored"
+    {
         if let Some(payload) = event.payload {
             let members: BTreeMap<std::borrow::Cow<'_, str>, &RawValue> =
                 serde_json::from_str(payload.get()).ok()?;
@@ -366,6 +367,40 @@ mod tests {
         assert!(
             distill(&turned, &narrowed).is_none(),
             "a system message inside a turn is the election's to keep or drop"
+        );
+    }
+
+    /// **A restored message distills whole under every election**, as the
+    /// seated prefix does (#697): it is the conversation a branch's run opened
+    /// under, and a restore from the branch rebuilds it from what custody
+    /// holds.
+    ///
+    /// Perturbation: drop `message.restored` from the whole-distill arm and
+    /// the narrowed election below refuses the line.
+    #[test]
+    fn a_restored_message_distills_whole_under_every_election() {
+        const RESTORED: &str = concat!(
+            r#"{"session":"alpha-2","run":"r-1","kind":"message.restored","#,
+            r#""sequence":"4","subsystem":"harness","wall_ms":1,"monotonic_ns":"3","#,
+            r#""payload":{"role":"user","content":[{"type":"text","text":"inherited"}]}}"#
+        );
+        let narrowed = Election {
+            all_kinds: false,
+            keys: vec![ElectedKind {
+                kind: "turn.closed".into(),
+                paths: vec![],
+            }],
+        };
+        let frame = distill(RESTORED, &narrowed).expect("the restored message crosses");
+        assert_eq!(
+            frame,
+            concat!(
+                r#"{"envelope":{"session":"alpha-2","run":"r-1","kind":"message.restored","#,
+                r#""sequence":"4"},"pairs":{"content":[{"type":"text","text":"inherited"}],"#,
+                r#""role":"user"}}"#,
+                "\n"
+            ),
+            "one pair per top-level member under an election naming no such kind"
         );
     }
 

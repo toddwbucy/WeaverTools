@@ -1989,25 +1989,28 @@ store for the session's messages whole, the `recall` ask with no bound, the iden
 and this one parking until the driver's seal per the contract's section 2 because the
 holdings are being landed through the door as the enter stands, and the message events
 through the cut, rebuilt as canonical messages in landing order, follow the identity in
-the open's `messages`. **Each answered ask reaches the record as a `recall` before the
-open is built from it**, the identity ask's and the restoring recall's alike, as of
-2026-09-26 per `weaver-trace-Spec` section 3, a recall the recorder will not take being
-named in an `identity_prefix_unrecorded` fault rather than refusing the enter. **Under a
-diagnostic binding the enter records nothing**, its asks being setup the diagnostic
-record does not carry as it carries no load and no prefix: that record opens with
-`replay.opened`, and the ask that feeds the model is the replay port's. They are prefix
-material, permanent for the residency and the floor a flush returns to, because the
-point of standing from a record is to condition the possibility space the way the
-identity does, only longer, and a prefix a flush could drop would not be one. The window
-pays for it and the declaration's capacity is where the operator sees the cost. **The
-turn ordinal starts at the cut**: the first turn of a restoring run is numbered one past
-the turn the enter's lineage names, within the parent run it names, a bare turn number
-recurring across a session's runs and naming nothing on its own, so the derived seeds of
-`weaver-spu-Spec` section 8.5, which fix a generation's stream from the declared seed,
-the turn's reference, and the generation ordinal, continue the parent's streams, and a
-branch that changes nothing draws what the parent drew. **Where the door stands the
-enter's asks wait on the driver's seal**, under the parked ask's bound rather than the
-two seconds a member answering from holdings at rest takes, per
+the open's `messages`. **A restore from a branch carries what the branch inherited**, as
+of 2026-09-26 (#697): the branch recorded that conversation at its own open as
+`message.restored` rows, and those rows are rebuilt beside the turned ones, so a record
+restored from is never the parent's alone. **Each answered ask reaches the record as a
+`recall` before the open is built from it**, the identity ask's and the restoring
+recall's alike, as of 2026-09-26 per `weaver-trace-Spec` section 3, a recall the
+recorder will not take being named in an `identity_prefix_unrecorded` fault rather than
+refusing the enter. **Under a diagnostic binding the enter records nothing**, its asks
+being setup the diagnostic record does not carry as it carries no load and no prefix:
+that record opens with `replay.opened`, and the ask that feeds the model is the replay
+port's. They are prefix material, permanent for the residency and the floor a flush
+returns to, because the point of standing from a record is to condition the possibility
+space the way the identity does, only longer, and a prefix a flush could drop would not
+be one. The window pays for it and the declaration's capacity is where the operator sees
+the cost. **The turn ordinal starts at the cut**: the first turn of a restoring run is
+numbered one past the turn the enter's lineage names, within the parent run it names, a
+bare turn number recurring across a session's runs and naming nothing on its own, so the
+derived seeds of `weaver-spu-Spec` section 8.5, which fix a generation's stream from the
+declared seed, the turn's reference, and the generation ordinal, continue the parent's
+streams, and a branch that changes nothing draws what the parent drew. **Where the door
+stands the enter's asks wait on the driver's seal**, under the parked ask's bound rather
+than the two seconds a member answering from holdings at rest takes, per
 `weaver-harness-state-contract` section 2 and `weaver-state-Spec` section 4 as of
 2026-09-06, and one typed line on standard error names what is waited on and for how
 long before the first ask is written, so an operator who has not started the driver
@@ -2020,10 +2023,12 @@ the driver as its replay already did and refuses without one after the bound**, 
 before this act it opened on the seed while the preload elected no prefix, and the
 answer it now opens on is the record's own. **The instrument is perturbation, as of
 2026-09-06, on two claims this clause makes**: the restored conversation is the turned
-messages the recall answered, the turnless system rows being the identity ask's and
-seated once, watched to fail when the turn filter is dropped and the prefix is seated
-twice, and the first turn of a restoring run is numbered one past the cut, watched to
-fail when the ordinal starts at zero.
+messages and the `message.restored` rows the recall answered, the turnless system rows
+being the identity ask's and seated once, watched to fail when the turn filter is
+dropped and the prefix is seated twice, and since 2026-09-26 when the restored rows are
+filtered out and a restore from a branch loses what the branch inherited, and the first
+turn of a restoring run is numbered one past the cut, watched to fail when the ordinal
+starts at zero.
 
 ```graph
 node: harness-restoring-open-seats-the-record

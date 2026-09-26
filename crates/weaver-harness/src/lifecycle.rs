@@ -3370,7 +3370,7 @@ mod tests {
     /// alone and the inherited exchange is lost, two restored messages
     /// landing where four are asserted.
     ///
-    /// conforms: trace-restored-message-is-turnless-and-whole
+    /// conforms: harness-restoring-open-seats-the-record
     #[test]
     fn a_restore_from_a_branch_reopens_with_its_inherited_conversation() {
         const BRANCH_RECALL: &str = concat!(
