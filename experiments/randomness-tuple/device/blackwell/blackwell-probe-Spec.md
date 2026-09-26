@@ -189,18 +189,22 @@ read against another, so the halt is the finding.
 
 **TB-d, the device cell.** The claim: Blackwell moves the distribution from position
 zero relative to Ampere and to Ada, as Ada moved it against Ampere in #511. The
-prediction: each record re-fed through `B1` has per-position readings that differ
-from the recorded ones, and the divergence is reported in the historical instrument's
-input-plus-output coordinate with the output ordinal beside it. The falsifier: a
-re-feed exact to the bit at every position. The leg carries the driver confound of
-section 1 as a qualifier on every reading.
+prediction: each record re-fed through `B1` has per-position readings that differ from
+the recorded ones, and the divergence is reported in the historical instrument's
+input-plus-output coordinate with the output ordinal beside it. The falsifier: a re-feed
+exact to the bit at every position. A falsifier of this leg is a result and not a halt:
+the leg records it in the reading and completes, since a card whose arithmetic matches
+another's is the finding this leg exists to make or unmake, and only the control's
+falsifier stops the probe. The leg carries the driver confound of section 1 as a
+qualifier on every reading.
 
-**TB-k, the kernel leg.** If every executable section of `B1` and `B2` is identical
-by section 6's verdict, the leg is recorded as the kernel held by executable identity
+**TB-k, the kernel leg.** If every executable section of `B1` and `B2` is identical by
+section 6's verdict, the leg is recorded as the kernel held by executable identity
 across the two toolchains and nothing runs. If sections differ, the claim is that the
 differing kernels move the distribution on one card, the prediction is that a `B1`
-record re-fed through `B2` departs at some position, and the falsifier is every
-record re-feeding exact. `B2` also differs in its CUDA user-space libraries, and the
+record re-fed through `B2` departs at some position, and the falsifier is every record
+re-feeding exact. As for the device leg, that falsifier is recorded and completes the
+leg rather than halting it. `B2` also differs in its CUDA user-space libraries, and the
 reading carries that as part of the kernel stack.
 
 ```graph
@@ -513,15 +517,14 @@ output tokens equal, every elected per-token series equal to the bit, and the fi
 equal at every position, per `exact`, and the reading is the historical instrument's
 divergence coordinate with its ordinal.
 
-**Assessment is per leg and the falsifiers halt before it.** The control's report
-carries every same-seed pair with its equality and reading, every own re-feed with its
-exactness and certification, the first difference for every pair of distinct seeds
-taken one run per seed in the tuple's order, and the two verdicts `control_passed`
-and `changed_seed_prediction`. The device and kernel legs' reports carry each
-re-feed's reading and, for the kernel leg, whether identity emptied it. Each leg's
-result is written whole and recorded as that leg's `finish` receipt, and the report
-step runs only after every earlier receipt, each `finish` included, stands with its
-digest intact.
+**Assessment is per leg, and the control's falsifiers halt before it.** The control's
+report carries every same-seed pair with its equality and reading, every own re-feed
+with its exactness and certification, the first difference for every pair of distinct
+seeds taken one run per seed in the tuple's order, and the two verdicts `control_passed`
+and `changed_seed_prediction`. The device and kernel legs' reports carry each re-feed's
+reading and, for the kernel leg, whether identity emptied it. Each leg's result is
+written whole and recorded as that leg's `finish` receipt, and the report step runs only
+after every earlier receipt, each `finish` included, stands with its digest intact.
 
 ```graph
 node: blackwell-probe-refeed-completes-against-a-verified-source
