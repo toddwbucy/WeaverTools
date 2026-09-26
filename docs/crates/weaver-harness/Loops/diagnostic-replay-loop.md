@@ -120,9 +120,16 @@ claim exercised rather than assumed, and a mismatch is a failed certification an
 lesser reading. **The post-flush input is the recorded rendered delta**: the re-entry a
 loop builds after a flush is inside the later turn's `model.request`, so the replay
 re-feeds it as it re-feeds any turn, and the source's `recall` event, which the holdings
-carry, names the custody events that re-entry was drawn from. **A cross-check is owed**:
-a post-flush turn on a record new enough to carry the `recall` kind should show a recall
-between the flush and its request, and the identity step does not yet read one.
+carry, names the custody events that re-entry was drawn from. **A post-flush request
+with no recall before it does not certify**, as of 2026-09-26 (#690 item C2.10): on a
+record new enough to carry the `recall` kind, the identity step requires a recall of the
+`recall` verb between each flush and the next `model.request`, and refuses the source,
+naming the flush and the turn, where one is missing. The enter's identity recall does
+not stand in for it, being the answer to another ask. **A record is new enough when its
+holdings carry any `recall`**: the schema carries no format marker, by the versionless
+rule, and the kind's presence is what says the record's recorder and seat record
+recalls. A record holding none is read as older than the kind and certifies as before,
+which is also the case of a run with no state member, whose seat has no recall to make.
 
 **The re-feed exchange landed 2026-08-31 and this walk runs against it.**
 The serving seam's append-and-generate samples, and a replay samples

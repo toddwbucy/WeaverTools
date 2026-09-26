@@ -273,6 +273,17 @@ fn refuse_identity(seat: &mut Ports<'_>, detail: String) -> Result<(), TurnError
 /// conversation across a boundary the source never crossed.
 fn group(events: &[Recalled]) -> Result<Grouped, String> {
     let mut edits: Vec<(usize, Edit)> = Vec::new();
+    // **A post-flush request is accounted for by a recall**, per
+    // `diagnostic-replay-loop` section 2 as of 2026-09-26 (#690 item C2.10):
+    // the seat's recall falls between a flush and the re-entry the next
+    // request carries. `flushed` holds the sequence of a flush no recall has
+    // followed yet, and `unaccounted` the first flush a request met instead.
+    // Whether it refuses waits on `carries_recall`, read over the whole
+    // holdings, since the record carries no format marker and the kind's
+    // presence is what says its recorder and seat record recalls.
+    let mut carries_recall = false;
+    let mut flushed: Option<&str> = None;
+    let mut unaccounted: Option<(String, String)> = None;
     let mut run: Option<&str> = None;
     let mut order: Vec<String> = Vec::new();
     let mut pending: std::collections::BTreeMap<String, PendingRequest> = Default::default();
@@ -302,6 +313,9 @@ fn group(events: &[Recalled]) -> Result<Grouped, String> {
                     return Err(format!(
                         "two model.request events stand unpaired in turn {turn}"
                     ));
+                }
+                if let Some(flush) = flushed.take() {
+                    unaccounted.get_or_insert((flush.to_string(), turn.clone()));
                 }
                 pending.insert(turn.clone(), request_members(event, turn)?);
             }
@@ -349,7 +363,23 @@ fn group(events: &[Recalled]) -> Result<Grouped, String> {
                         after: count("resident_after")?,
                     }
                 };
+                if event.kind == "flush" {
+                    flushed = Some(&event.sequence);
+                }
                 edits.push((order.len(), edit));
+            }
+            // Only the seat's own recall accounts for a re-entry: the
+            // enter's identity ask and the replay port's answer are recalls
+            // of other asks, and an ask this walk cannot read accounts for
+            // nothing.
+            "recall" => {
+                carries_recall = true;
+                let verb = pair(event, "ask")
+                    .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+                    .and_then(|ask| ask.get("verb").and_then(|v| v.as_str()).map(str::to_string));
+                if verb.as_deref() == Some("recall") {
+                    flushed = None;
+                }
             }
             // **An open whose prefix went unrecorded does not certify**, per
             // `weaver-trace-Spec` section 3's recall clause: the harness names
@@ -363,8 +393,8 @@ fn group(events: &[Recalled]) -> Result<Grouped, String> {
                     event.sequence
                 ));
             }
-            // Turnless events - the run brackets, the seated prefix, a
-            // recall, the load - inform identity and feed nothing
+            // Turnless events - the run brackets, the seated prefix, the
+            // load - inform identity and feed nothing
             // positionally, and kinds this walk does not read pass by, per
             // the versionless-schema rule.
             _ => {}
@@ -372,6 +402,11 @@ fn group(events: &[Recalled]) -> Result<Grouped, String> {
     }
     if let Some((turn, _)) = pending.iter().next() {
         return Err(format!("a model.request in turn {turn} pairs with nothing"));
+    }
+    if carries_recall && let Some((flush, turn)) = unaccounted {
+        return Err(format!(
+            "the flush at sequence {flush} is followed by turn {turn}'s request with no recall between them, on a record that carries the recall kind, so the post-flush input's provenance is not in the record"
+        ));
     }
     let mut grouped = Vec::new();
     for turn in order {
@@ -1366,6 +1401,74 @@ mod tests {
             lines.last().expect("the close stands")["payload"]["outcome"]["kind"],
             "certified"
         );
+    }
+
+    fn recall_event(sequence: u64, verb: &str) -> String {
+        format!(
+            concat!(
+                r#"{{"envelope":{{"kind":"recall","run":"r-1","sequence":"{s}"}},"#,
+                r#""pairs":{{"ask":{{"verb":"{v}"}},"returned":[],"count":0}}}}"#
+            ),
+            s = sequence,
+            v = verb
+        )
+    }
+
+    /// `m1-002`'s shape on a record new enough to carry the recall kind: the
+    /// enter's identity recall at the open, and between the flush and turn
+    /// 37's request, whatever `between` holds.
+    fn m1_recalled_holdings(between: &[String]) -> String {
+        let mut events = vec![
+            recall_event(1, "identity"),
+            generation("t-36", 250, 252),
+            flush_event(255, 26551, 38),
+        ];
+        events.extend_from_slice(between);
+        events.push(generation("t-37", 259, 261));
+        holdings(&events)
+    }
+
+    /// **A post-flush request with no recall before it does not certify, on
+    /// a record that carries the recall kind** (#690 item C2.10), per
+    /// `diagnostic-replay-loop` section 2: the seat's recall is what the
+    /// re-entry was drawn from, and a record new enough to carry one and
+    /// holding none there cannot say what the post-flush input was. The
+    /// seat's recall certifies, and a recall of another ask does not stand
+    /// in for it. A record carrying no recall at all is read as older than
+    /// the kind and certifies as before, which
+    /// `the_replay_certifies_past_the_flush` holds.
+    ///
+    /// Perturbation: drop the `carries_recall` refusal after the loop in
+    /// `group` and the first holdings certify; clear `flushed` on any recall
+    /// and the third certifies.
+    #[test]
+    fn a_post_flush_request_without_a_recall_refuses_certification() {
+        let (outcome, lines) = run_drive(Some(m1_recalled_holdings(&[])), m1_spu);
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned", "{close}");
+        assert!(
+            close["payload"]["outcome"]["reason"]["detail"]
+                .as_str()
+                .is_some_and(|d| d.contains("flush at sequence 255") && d.contains("t-37")),
+            "names the flush and the turn: {close}"
+        );
+
+        let (outcome, lines) = run_drive(
+            Some(m1_recalled_holdings(&[recall_event(257, "recall")])),
+            m1_spu,
+        );
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "certified", "{close}");
+
+        let (outcome, lines) = run_drive(
+            Some(m1_recalled_holdings(&[recall_event(257, "identity")])),
+            m1_spu,
+        );
+        assert!(outcome.is_ok());
+        let close = lines.last().expect("the close stands");
+        assert_eq!(close["payload"]["outcome"]["kind"], "abandoned", "{close}");
     }
 
     /// conforms: diagnostic-divergence-position-is-the-resident-length

@@ -230,9 +230,9 @@ lands inside the bracket after `replay.opened` and before `replay.identity`, nam
 the holdings' first and last events and their count. The replay's enter records
 nothing, as it records no load and no prefix, per the same section. It splices the
 serving payload as the other fourteen shared kinds do. The walk reads the source's
-flush and elision since 2026-09-26, and a source's own `recall` rides the holdings for
-a reader, the cross-check that would read it being owed, per `diagnostic-replay-loop`
-section 2.
+flush and elision since 2026-09-26, and a source's own `recall` since the same day: a
+post-flush request with no recall of the `recall` verb before it refuses at identity on
+a record carrying the kind, per `diagnostic-replay-loop` section 2.
 
 **`elision` is carried because the loop now performs one**, as of 2026-09-26, which
 closes the open election section 8 held. `diagnostic-replay-loop` section 2 reproduces

@@ -848,7 +848,10 @@ enter**, the miss accounting the seated prefix already runs on, named
 the run certifying**, as of 2026-09-26: the diagnostic replay's identity step refuses a
 source whose holdings carry an `identity_prefix_unrecorded` fault, per
 `diagnostic-replay-loop` section 2, the analysis crate's diagnostic election carrying a
-fault's case so the fault reaches the holdings at all.
+fault's case so the fault reaches the holdings at all. **A seat's recall missing after
+a flush stops it too**: on a record carrying the kind, the same step refuses a source
+whose post-flush request has no recall of the `recall` verb before it, per the same
+section.
 
 ```graph
 node: trace-recall-records-the-ask-and-its-identities
