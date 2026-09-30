@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+# a matrix run killed before restoring its declaration leaves this beside it
+.pre-matrix
