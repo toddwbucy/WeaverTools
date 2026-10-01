@@ -55,9 +55,14 @@ def sh(args, **kw):
     An absent command comes back as exit 127 with the reason on stderr, the
     shell's own convention, so a caller reads a failure rather than catching
     one and the account still says which failure it was.
+
+    **Output that is not UTF-8 is carried, never raised.** A path or a line a
+    command prints need not be UTF-8, and a strict decode raised
+    `UnicodeDecodeError` past the `OSError` catch below, so the bytes are kept
+    as surrogate escapes and the reader judges them as it judges any text.
     """
     try:
-        return subprocess.run(args, capture_output=True, text=True, **kw)
+        return subprocess.run(args, capture_output=True, text=True, errors="surrogateescape", **kw)
     except OSError as error:
         return subprocess.CompletedProcess(args, 127, "", str(error))
 
@@ -1272,10 +1277,14 @@ def _directory_sha256(path):
                 raise LinkInArtifact(f"a symbolic link in the artifact: {full}")
             if not stat.S_ISREG(mode):
                 raise LinkInArtifact(f"neither a directory nor a regular file in the artifact: {full}")
-            entries.append((os.path.relpath(full, root), _sha256(full)))
+            # **A name is its bytes.** Linux names need not be UTF-8, and
+            # `os.walk` carries such bytes as surrogate escapes that
+            # `.encode()` refuses, so a legal name would have raised past the
+            # reader's `OSError` catch rather than being read.
+            entries.append((os.fsencode(os.path.relpath(full, root)), _sha256(full)))
     h = hashlib.sha256()
     for relative, digest in sorted(entries):
-        h.update(f"{relative}\0{digest}\n".encode())
+        h.update(relative + b"\0" + digest.encode() + b"\n")
     return h.hexdigest(), len(entries)
 
 

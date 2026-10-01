@@ -450,6 +450,34 @@ def test_a_config_may_not_name_the_spu_the_run_holds():
         raise AssertionError("a config naming held_spu was accepted")
 
 
+
+def test_a_name_that_is_not_utf8_is_read_by_its_bytes():
+    """A Linux name need not be UTF-8, and `os.walk` carries such bytes as surrogate
+    escapes. The digest takes each name by its bytes, so a legal name is read, and two
+    names differing in one such byte read otherwise. Found by Codex on #7.
+    Perturbation: encode the name as UTF-8, and the walk raises past the reader."""
+    with tempfile.TemporaryDirectory() as tmp:
+        readings = []
+        for byte in (b"\xff", b"\xfe"):
+            root = os.path.join(os.fsencode(tmp), b"m" + byte)
+            os.mkdir(root)
+            with open(os.path.join(root, b"model" + byte + b".safetensors"), "wb") as fh:
+                fh.write(b"weights")
+            reading = base.weights(os.fsdecode(root))(CFG)
+            assert base.is_reading(reading), reading
+            readings.append(reading["artifact"]["sha256"])
+        assert readings[0] != readings[1], readings
+
+
+def test_a_command_printing_bytes_that_are_not_utf8_answers():
+    """`sh` carries output that is not UTF-8 as surrogate escapes, so a reader judges it
+    and never meets a decode error past the `OSError` it catches. Perturbation: drop
+    `errors="surrogateescape"`, and the decode raises out of `sh`."""
+    r = base.sh(["printf", "\\377ok"])
+    assert r.returncode == 0 and r.stdout.endswith("ok"), r
+    assert os.fsencode(r.stdout) == b"\xffok", r.stdout
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 if __name__ == "__main__":
