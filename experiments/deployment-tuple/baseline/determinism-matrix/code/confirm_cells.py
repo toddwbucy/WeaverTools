@@ -1112,19 +1112,64 @@ def _sha256(path):
     return h.hexdigest()
 
 
+class LinkInArtifact(OSError):
+    """A symbolic link inside a directory artifact, which the digest refuses."""
+
+
+def _directory_sha256(path):
+    """A directory artifact's digest, per python-spu-Spec section 5's rule for this
+    reader: every regular file beneath it, by its path relative to the directory in
+    sorted order, each contributing that path and its own sha256, and the whole
+    hashed once more. **A symbolic link anywhere refuses**, since which bytes a link
+    names is a fact of the moment it is followed and not of the artifact; so does
+    anything but a directory or a regular file. Dot-entries are read like any
+    other entry: the reader states what stands, and a model copy the operator made
+    plain carries none."""
+    root = os.path.abspath(path)
+    entries = []
+    def unreadable(error):
+        raise error
+    # A directory the walk cannot read is raised, never skipped as absent.
+    for directory, subdirs, files in os.walk(root, followlinks=False, onerror=unreadable):
+        for name in sorted(subdirs):
+            if os.path.islink(os.path.join(directory, name)):
+                raise LinkInArtifact(f"a symbolic link in the artifact: {os.path.join(directory, name)}")
+        for name in files:
+            full = os.path.join(directory, name)
+            mode = os.lstat(full).st_mode
+            if stat.S_ISLNK(mode):
+                raise LinkInArtifact(f"a symbolic link in the artifact: {full}")
+            if not stat.S_ISREG(mode):
+                raise LinkInArtifact(f"neither a directory nor a regular file in the artifact: {full}")
+            entries.append((os.path.relpath(full, root), _sha256(full)))
+    h = hashlib.sha256()
+    for relative, digest in sorted(entries):
+        h.update(f"{relative}\0{digest}\n".encode())
+    return h.hexdigest(), len(entries)
+
+
 def weights(paths):
     """A provenance reader for the weights field: each artifact by sha256, or
     a note saying why it could not be read, read at the two ends of the
     run's window. One path is keyed `artifact`, as every earlier summary
     keys it, and a mapping keys each artifact by its name, a cells run by
-    the cell's."""
+    the cell's. **A directory artifact**, a safetensors export, is read by
+    `_directory_sha256`, and the reading says it is a directory and how many
+    files it covers; a link at the artifact's own path refuses as a link
+    inside it does."""
     named = {"artifact": paths} if isinstance(paths, str) else dict(paths)
 
     def read(cfg):
         out = {}
         for key, path in named.items():
             try:
-                out[key] = {"path": path, "sha256": _sha256(path)}
+                if os.path.islink(path):
+                    raise LinkInArtifact(f"the artifact's path is a symbolic link: {path}")
+                if os.path.isdir(path):
+                    digest, files = _directory_sha256(path)
+                    out[key] = {"path": path, "sha256": digest, "directory": files}
+                else:
+                    out[key] = {"path": path, "sha256": _sha256(path)}
             except OSError as e:
                 out[key] = {"path": path, "unreadable": _why(e)}
         return out
