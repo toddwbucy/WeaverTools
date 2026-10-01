@@ -43,13 +43,17 @@ def box(invocation, by_invocation, by_window):
     return sh
 
 
-def with_sh(sh, fn):
-    saved = base.sh
+def with_sh(sh, fn, holding=None):
+    """`fn` with `sh` standing for the box, and the unit's processes holding
+    the cards at `holding`, the binding the journal's lines cross-check."""
+    saved = base.sh, base.unit_devices
     base.sh = sh
+    base.unit_devices = lambda cfg, invocation: {"devices": [{"uuid": f"GPU-{bus}", "name": "card",
+                                                              "pci_bus_id": bus} for bus in holding or ()]}
     try:
         return fn()
     finally:
-        base.sh = saved
+        base.sh, base.unit_devices = saved
 
 
 def test_the_device_read_is_the_load_just_started():
@@ -60,10 +64,12 @@ def test_the_device_read_is_the_load_just_started():
     inv = "b" * 32
     previous = [BOUNDARY, device_line(0, "0000:01:00.0")]
     current = [BOUNDARY, device_line(1, "0000:02:00.0"), COMPLETE]
-    seen, invocation = with_sh(box(inv, current, previous), lambda: base.load_devices({"agent": "karl"}, 1, 0))
-    assert invocation == inv and seen == {"devices": [{"ordinal": 1, "name": "NVIDIA RTX PRO 5000 Blackwell"
-                                                        " Generation Laptop GPU", "pci_bus_id": "0000:02:00.0"}],
-                                            "complete": True}, seen
+    seen, invocation = with_sh(box(inv, current, previous), lambda: base.load_devices({"agent": "karl"}, 1, 0),
+                               holding=["0000:02:00.0"])
+    assert invocation == inv and seen["journal"] == {
+        "devices": [{"ordinal": 1, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU",
+                     "pci_bus_id": "0000:02:00.0"}], "complete": True}, seen
+    assert seen["devices"] == [{"uuid": "GPU-0000:02:00.0", "name": "card", "pci_bus_id": "0000:02:00.0"}], seen
 
 
 def test_an_unreadable_or_crowded_invocation_is_refused():
@@ -72,7 +78,8 @@ def test_an_unreadable_or_crowded_invocation_is_refused():
     seen, invocation = with_sh(box("", [], []), lambda: base.load_devices({"agent": "karl"}, 1, 0))
     assert invocation is None and "unreadable" in seen, seen
     two = [BOUNDARY, device_line(0, "0000:01:00.0"), BOUNDARY, device_line(0, "0000:01:00.0")]
-    seen, _ = with_sh(box("c" * 32, two, []), lambda: base.load_devices({"agent": "karl"}, 1, 0))
+    seen, _ = with_sh(box("c" * 32, two, []), lambda: base.load_devices({"agent": "karl"}, 1, 0),
+                      holding=["0000:01:00.0"])
     assert "unreadable" in seen, seen
 
 
@@ -298,7 +305,7 @@ def drive_cell(agent, tmp, artifact="/m.gguf"):
         fh.write(standing)
     cfg = dict(CFG, declaration=decl, trace=os.path.join(tmp, "trace"))
     names = ("admin", "wait_socket", "gate_turn", "await_turns", "run_load", "serving_device",
-             "unit_invocation")
+             "unit_invocation", "unit_devices")
     saved = {n: getattr(base, n) for n in names}
     try:
         for n in names:

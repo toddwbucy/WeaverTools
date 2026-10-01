@@ -46,7 +46,8 @@ def agent_fakes(agent):
     """The agent's own stand-ins for the admin, the gate and the trace, and
     a trace read that finds no whole run to deposit."""
     fakes = {k: getattr(agent, k) for k in ("admin", "wait_socket", "gate_turn", "await_turns",
-                                            "run_load", "serving_device", "unit_invocation")}
+                                            "run_load", "serving_device", "unit_invocation",
+                                            "unit_devices")}
     fakes["read_runs"] = lambda path, keep=None: ([], {})
     return fakes
 
@@ -63,7 +64,7 @@ def varying_toolchain():
     """A toolchain reader answering one pin at the open and another at the
     close."""
     reads = iter(["nightly-a", "nightly-b"])
-    return {"toolchain": lambda c: {"rustc": "rustc stub", "active_toolchain": next(reads)}}
+    return {"toolchain": lambda c, s=None: {"rustc": "rustc stub", "active_toolchain": next(reads)}}
 
 
 GUESSED = {"spu-binary": {"path": "/x", "sha256": "a" * 64,
@@ -159,7 +160,7 @@ def test_the_real_binaries_reader_is_refused_where_admin_names_no_spu():
             fh.write("karl\n")
         cfg = dict(CFG, admin_config=conf, admin_bin=os.path.join(bindir, "weaver-admin"))
         saved = base.engine_libraries, base.toolchain
-        base.engine_libraries, base.toolchain = (lambda c, s: FIXED), (lambda c: {"rustc": "stub"})
+        base.engine_libraries, base.toolchain = (lambda c, s: FIXED), (lambda c, s=None: {"rustc": "stub"})
         try:
             try:
                 base.opening_readings(cfg)

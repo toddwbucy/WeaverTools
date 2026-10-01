@@ -15,6 +15,8 @@ import determinism_matrix as dm  # noqa: E402
 from test_recorded_seed import MODEL, SEED, Reloading, run_main  # noqa: E402
 from test_round_nine import TWO_CELLS, cells_run  # noqa: E402
 
+CARD_ON_BUS = [{"ordinal": 0, "pci_bus_id": "0000:01:00.0"}]
+
 base = dm.base
 OTHER = "e" * 64
 
@@ -51,7 +53,8 @@ def stale_then_current(session, expected, tmp):
         return {"kind": "answered", "run": "r-cell"}
     invocations = iter(f"{i:032x}" for i in range(1, 100))
     fakes = {"admin": admin, "gate_turn": gate, "wait_socket": lambda c, timeout=120: True,
-             "serving_device": lambda c, since, invocation=None: {"devices": [{"ordinal": 0}], "complete": True},
+             "serving_device": lambda c, since, invocation=None: {"devices": CARD_ON_BUS, "complete": True},
+             "unit_devices": lambda c, invocation: {"devices": CARD_ON_BUS},
              "unit_invocation": lambda c: next(invocations),
              "await_turns": lambda *a, **k: ([], [])}
     saved = {k: getattr(base, k) for k in fakes}

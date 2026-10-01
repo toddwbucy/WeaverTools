@@ -22,6 +22,7 @@ import re
 import socket
 import stat
 import subprocess
+import sys
 import time
 import tomllib
 
@@ -54,9 +55,14 @@ def sh(args, **kw):
     An absent command comes back as exit 127 with the reason on stderr, the
     shell's own convention, so a caller reads a failure rather than catching
     one and the account still says which failure it was.
+
+    **Output that is not UTF-8 is carried, never raised.** A path or a line a
+    command prints need not be UTF-8, and a strict decode raised
+    `UnicodeDecodeError` past the `OSError` catch below, so the bytes are kept
+    as surrogate escapes and the reader judges them as it judges any text.
     """
     try:
-        return subprocess.run(args, capture_output=True, text=True, **kw)
+        return subprocess.run(args, capture_output=True, text=True, errors="surrogateescape", **kw)
     except OSError as error:
         return subprocess.CompletedProcess(args, 127, "", str(error))
 
@@ -134,28 +140,156 @@ def serving_device(cfg, since, invocation=None):
     return {"devices": [], "note": "the load named no CUDA device"}
 
 
+# The cgroup v2 hierarchy, where a unit's processes are listed. A module
+# constant so a test can stand a hierarchy of its own.
+CGROUP_ROOT = "/sys/fs/cgroup"
+
+
+def _bus_id(said):
+    """A PCI bus id in llama.cpp's spelling, a four-digit domain, so the
+    driver's eight-digit `00000000:01:00.0` and the engine's `0000:01:00.0`
+    name one card alike. Anything not a bus id raises ValueError."""
+    m = re.fullmatch(r"([0-9a-fA-F]{4,8}):([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7])", said.strip())
+    if m is None:
+        raise ValueError(f"{said.strip()[:40]!r} is not a PCI bus id")
+    return f"{int(m.group(1), 16):04x}:{m.group(2).lower()}"
+
+
+def _csv(result, what, width):
+    """nvidia-smi's `--format=csv,noheader` rows, each split into `width`
+    fields, or ValueError naming what could not be read. No rows is an
+    empty list, the answer for a card no process holds."""
+    if result.returncode != 0:
+        raise ValueError(f"{what} exit {result.returncode}: {result.stderr.strip()[:200] or 'no stderr'}")
+    rows = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        fields = [f.strip() for f in line.split(",")]
+        if len(fields) != width or not all(fields):
+            raise ValueError(f"{what} printed a row this reader cannot read: {line.strip()[:200]!r}")
+        rows.append(fields)
+    return rows
+
+
+def _unit_pids(group):
+    """Every process in the unit's control group and the groups beneath it,
+    by `cgroup.procs`. A walk error raises rather than skipping a group, so
+    a process this reader could not list is never read as absent."""
+    def unreadable(error):
+        raise error
+    root = os.path.join(CGROUP_ROOT, group.lstrip("/"))
+    if not os.path.isdir(root):
+        raise ValueError(f"the unit's control group {group} does not stand under {CGROUP_ROOT}")
+    pids = set()
+    for directory, _, files in os.walk(root, onerror=unreadable):
+        if "cgroup.procs" in files:
+            with open(os.path.join(directory, "cgroup.procs")) as fh:
+                pids.update(int(line) for line in fh.read().split())
+    return pids
+
+
+def unit_devices(cfg, invocation):
+    """The devices the agent's worker unit holds, read from the processes it
+    runs, under the one invocation `invocation`.
+
+    **Read from the driver, not from what an engine chose to print.** The
+    journal's `using device` lines are llama.cpp's, and the native backend
+    and `python-spu` print none, so a run of either recorded no device. The
+    unit's control group lists every process the unit started, the SPU the
+    harness forks among them, and `nvidia-smi` lists each process holding a
+    CUDA context with the card it holds. A card held by a process of the
+    unit is a card the load bound.
+
+    **The read is bound to its invocation.** The unit's InvocationID is read
+    before and after, and must be `invocation` both times, so the processes
+    listed are this load's and not a restart's. A unit holding no process,
+    no process of it on a card, a card the driver lists twice, or any read
+    that fails is unreadable, never an empty binding."""
+    def held_to(when):
+        now = unit_invocation(cfg)
+        if now != invocation:
+            raise ValueError(f"the unit's invocation {when} the device read was {now!r},"
+                             f" not {invocation}")
+    unit = f"weaver-worker@{cfg['agent']}.service"
+    try:
+        held_to("before")
+        r = sh(["systemctl", "show", "-p", "ControlGroup", "--value", unit])
+        group = r.stdout.strip()
+        if r.returncode != 0 or not group.startswith("/"):
+            raise ValueError(f"the unit's control group reads {group!r} (systemctl exit {r.returncode})")
+        pids = _unit_pids(group)
+        if not pids:
+            raise ValueError(f"the unit's control group {group} holds no process")
+        cards = {}
+        for uuid, name, bus in _csv(sh(["nvidia-smi", "--query-gpu=uuid,name,pci.bus_id",
+                                        "--format=csv,noheader"]), "nvidia-smi --query-gpu", 3):
+            if uuid in cards:
+                raise ValueError(f"nvidia-smi lists the card {uuid} twice")
+            cards[uuid] = {"uuid": uuid, "name": name, "pci_bus_id": _bus_id(bus)}
+        apps = _csv(sh(["nvidia-smi", "--query-compute-apps=pid,gpu_uuid,gpu_bus_id",
+                        "--format=csv,noheader"]), "nvidia-smi --query-compute-apps", 3)
+        held = {}
+        for pid, uuid, bus in apps:
+            if not pid.isdigit() or int(pid) not in pids:
+                continue
+            card = cards.get(uuid)
+            if card is None or card["pci_bus_id"] != _bus_id(bus):
+                raise ValueError(f"process {pid} holds {uuid} at {bus.strip()}, which --query-gpu"
+                                 " does not list there")
+            held[uuid] = card
+        if not held:
+            raise ValueError(f"no process of the unit holds a CUDA device: {len(pids)} processes,"
+                             f" {len(apps)} compute processes on the box")
+        held_to("after")
+    except (OSError, ValueError) as e:
+        return {"unreadable": _why(e)}
+    return {"devices": sorted(held.values(), key=lambda d: d["pci_bus_id"])}
+
+
 def load_devices(cfg, tries=15, pause=0.2):
     """The devices the load that now stands bound, read by its unit's
-    invocation, and that invocation (#716 round five). Retried briefly,
-    since journald can trail the load it records, and **accepted only once
-    the block is complete**, the engine's next line seen after it: a block
-    of several cards can reach the journal a line at a time, and a read
-    taken between two lines would record the first card alone. Answers the
-    reading, a `devices` list or an `unreadable` note, and the invocation
-    or None."""
+    invocation, and that invocation (#716 round five).
+
+    **The binding is the unit's processes' cards**, `unit_devices`, which
+    every engine answers. **The engine's own lines are its cross-check**
+    where it prints them: retried briefly, since journald can trail the load
+    it records, and accepted only once the block is complete, the engine's
+    next line seen after it, since a block of several cards can reach the
+    journal a line at a time. A block that names other cards than the
+    processes hold, one that never completes, or a journal read that fails
+    is unreadable. An engine that printed no device line is recorded so,
+    and the binding stands on the driver's read. Answers the reading, the
+    `devices` list with the journal's read beside it or an `unreadable`
+    note, and the invocation or None."""
     invocation = unit_invocation(cfg)
     if not isinstance(invocation, str):
         return invocation, None
+    held = unit_devices(cfg, invocation)
+    if not (isinstance(held, dict) and held.get("devices")):
+        return held, invocation
     seen = None
     for _ in range(tries):
         seen = serving_device(cfg, None, invocation)
         if isinstance(seen, dict) and seen.get("devices") and seen.get("complete"):
-            return seen, invocation
+            break
         time.sleep(pause)
-    if isinstance(seen, dict) and seen.get("devices"):
+    if not isinstance(seen, dict) or "unreadable" in seen:
+        return {"unreadable": f"the engine's journal under invocation {invocation} did not read:"
+                              f" {json.dumps(seen)}"}, invocation
+    if seen.get("devices") and not seen.get("complete"):
         return {"unreadable": f"the device block under invocation {invocation} did not complete"
                               f" within {tries} reads: {json.dumps(seen['devices'])}"}, invocation
-    return seen, invocation
+    if seen.get("devices"):
+        try:
+            printed = sorted(_bus_id(d.get("pci_bus_id") or "") for d in seen["devices"])
+        except ValueError as e:
+            return {"unreadable": f"the engine's device lines: {_why(e)}"}, invocation
+        holding = sorted(d["pci_bus_id"] for d in held["devices"])
+        if printed != holding:
+            return {"unreadable": f"the engine's lines name the cards at {printed} and the unit's"
+                                  f" processes hold the cards at {holding}"}, invocation
+    return {"devices": held["devices"], "journal": seen}, invocation
 
 
 def device_bindings(cfg, since):
@@ -542,7 +676,9 @@ OPTIONAL_KEYS = ("loop_sha256", "build_flags")
 # so the two could differ and the run hash the one that did not serve
 # (#716, the pass on 90b9a8a).
 REFUSED_KEYS = {"spu_bin": "the admin launches the SPU its configuration names,"
-                           " admin_config/spu-binary, and the run reads it there"}
+                           " admin_config/spu-binary, and the run reads it there",
+                "held_spu": "the run reads the SPU it holds every load to at preflight,"
+                            " from the binary the admin names"}
 # **A path the stack resolves is absolute** (#716 round ten). The worker and
 # the admin's units resolve a relative path against their own working
 # directory and this harness against its launch directory, so one spelling
@@ -696,7 +832,7 @@ def opening_readings(cfg):
     spu = _resolve_spu(cfg)
     readings = {"engine_libraries": engine_libraries(cfg, spu),
                 "weaver_binaries": weaver_binaries(cfg, spu),
-                "toolchain": toolchain(cfg)}
+                "toolchain": toolchain(cfg, spu)}
     for field, reading in readings.items():
         if not is_reading(reading):
             raise ValueError(f"the opening {field} is not a reading: {json.dumps(reading)}")
@@ -1112,19 +1248,68 @@ def _sha256(path):
     return h.hexdigest()
 
 
+class LinkInArtifact(OSError):
+    """A symbolic link inside a directory artifact, which the digest refuses."""
+
+
+def _directory_sha256(path):
+    """A directory artifact's digest, per python-spu-Spec section 5's rule for this
+    reader: every regular file beneath it, by its path relative to the directory in
+    sorted order, each contributing that path and its own sha256, and the whole
+    hashed once more. **A symbolic link anywhere refuses**, since which bytes a link
+    names is a fact of the moment it is followed and not of the artifact; so does
+    anything but a directory or a regular file. Dot-entries are read like any
+    other entry: the reader states what stands, and a model copy the operator made
+    plain carries none."""
+    root = os.path.abspath(path)
+    entries = []
+    def unreadable(error):
+        raise error
+    # A directory the walk cannot read is raised, never skipped as absent.
+    for directory, subdirs, files in os.walk(root, followlinks=False, onerror=unreadable):
+        for name in sorted(subdirs):
+            if os.path.islink(os.path.join(directory, name)):
+                raise LinkInArtifact(f"a symbolic link in the artifact: {os.path.join(directory, name)}")
+        for name in files:
+            full = os.path.join(directory, name)
+            mode = os.lstat(full).st_mode
+            if stat.S_ISLNK(mode):
+                raise LinkInArtifact(f"a symbolic link in the artifact: {full}")
+            if not stat.S_ISREG(mode):
+                raise LinkInArtifact(f"neither a directory nor a regular file in the artifact: {full}")
+            # **A name is its bytes.** Linux names need not be UTF-8, and
+            # `os.walk` carries such bytes as surrogate escapes that
+            # `.encode()` refuses, so a legal name would have raised past the
+            # reader's `OSError` catch rather than being read.
+            entries.append((os.fsencode(os.path.relpath(full, root)), _sha256(full)))
+    h = hashlib.sha256()
+    for relative, digest in sorted(entries):
+        h.update(relative + b"\0" + digest.encode() + b"\n")
+    return h.hexdigest(), len(entries)
+
+
 def weights(paths):
     """A provenance reader for the weights field: each artifact by sha256, or
     a note saying why it could not be read, read at the two ends of the
     run's window. One path is keyed `artifact`, as every earlier summary
     keys it, and a mapping keys each artifact by its name, a cells run by
-    the cell's."""
+    the cell's. **A directory artifact**, a safetensors export, is read by
+    `_directory_sha256`, and the reading says it is a directory and how many
+    files it covers; a link at the artifact's own path refuses as a link
+    inside it does."""
     named = {"artifact": paths} if isinstance(paths, str) else dict(paths)
 
     def read(cfg):
         out = {}
         for key, path in named.items():
             try:
-                out[key] = {"path": path, "sha256": _sha256(path)}
+                if os.path.islink(path):
+                    raise LinkInArtifact(f"the artifact's path is a symbolic link: {path}")
+                if os.path.isdir(path):
+                    digest, files = _directory_sha256(path)
+                    out[key] = {"path": path, "sha256": digest, "directory": files}
+                else:
+                    out[key] = {"path": path, "sha256": _sha256(path)}
             except OSError as e:
                 out[key] = {"path": path, "unreadable": _why(e)}
         return out
@@ -1205,8 +1390,9 @@ def weaver_binaries(cfg, spu=None):
     return out
 
 
-def toolchain(cfg):
-    """The Rust toolchain in force at the repository, not the ambient one.
+def toolchain(cfg, spu=None):
+    """The Rust toolchain in force at the repository, not the ambient one,
+    and what runs the SPU.
 
     **`rustc --version` answers differently depending on where it is run.**
     `rust-toolchain.toml` overrides per directory, so a driver launched
@@ -1220,6 +1406,12 @@ def toolchain(cfg):
     Read with `cwd` at the repository so the pin applies, and the active
     toolchain recorded beside it so an override is visible rather than
     silent.
+
+    **The SPU's runtime rides beside it**, under `spu`, for the SPU the caller
+    resolved once for every collector: a binary is the `rustc` above's, and a
+    Python SPU is its interpreter's version and the lock's sha256, without
+    which a run served by `python-spu` would record the compiler of every
+    organ but the one that decodes.
     """
     repo = cfg.get("repo")
     if not repo:
@@ -1267,15 +1459,174 @@ def toolchain(cfg):
             said = active.stderr.strip()[:200]
             out["active_toolchain"] = {"unreadable":
                 f"rustup exit {active.returncode}" + (f": {said}" if said else "")}
+    out["spu"] = _spu_runtime(cfg, (spu if spu is not None else _resolve_spu(cfg))[0])
     return out
 
 
 def _stat_spu(path):
-    """The SPU binary's presence, by `os.stat`: FileNotFoundError where nothing
-    stands, another OSError where something stands and may not be looked at. One
-    function, so a test fixing the SPU's presence replaces this and not
-    `os.stat` for the whole process."""
+    """The SPU binary's presence and its kind, the interpreter it names or None.
+
+    Presence by `os.stat`: FileNotFoundError where nothing stands, another
+    OSError where something stands and may not be looked at. Kind by its first
+    line: a file opening `#!` is a Python SPU, the zipapp python-spu-Spec
+    section 2 ships, whose first line names its pinned interpreter by absolute
+    path, and that interpreter is the answer. Anything else is a binary the
+    loader runs, answered None. One function, so a test fixing the SPU's
+    presence and kind replaces this and not `os.stat` or `open` for the whole
+    process."""
     os.stat(path)
+    with open(path, "rb") as fh:
+        head = fh.readline(4096)
+    if not head.startswith(b"#!"):
+        return None
+    return _interpreter(head, path)
+
+
+def _interpreter(head, path):
+    """The interpreter a zipapp's first line names, held to the form the
+    build writes: `#!` and one absolute path in a prefix's `bin`, nothing
+    else on the line. Any other first line is refused by raising ValueError,
+    never read for the path it most likely meant, since the prefix the
+    readers digest is derived from it."""
+    if not head.endswith(b"\n"):
+        raise ValueError(f"{path}'s first line runs past 4096 bytes or the file ends in it")
+    try:
+        named = head[2:-1].decode("ascii")
+    except UnicodeDecodeError:
+        raise ValueError(f"{path}'s first line is not ASCII") from None
+    if not named or any(c.isspace() for c in named) or not os.path.isabs(named):
+        raise ValueError(f"{path}'s first line names no interpreter by one bare absolute"
+                         f" path: {named[:120]!r}")
+    if os.path.basename(os.path.dirname(named)) != "bin" or os.path.normpath(named) != named:
+        raise ValueError(f"{path}'s interpreter {named} does not stand in a prefix's bin")
+    return named
+
+
+def _python_spu_files(cfg):
+    """The lock and the two readers python-spu carries, in the repository the
+    config names, or None where it names none. The lock states what the prefix
+    should hold, `installed_set.py` holds the prefix to it and `tree_digest.py`
+    digests the prefix, each per python-spu-Spec section 8."""
+    repo = cfg.get("repo")
+    if not repo:
+        return None
+    root = os.path.join(repo, "python-spu")
+    return {"lock": os.path.join(root, "requirements.lock"),
+            "installed_set": os.path.join(root, "scripts", "installed_set.py"),
+            "tree_digest": os.path.join(root, "scripts", "tree_digest.py")}
+
+
+def _installed_lock(files, interpreter):
+    """The lock's sha256, recorded only where the installed set is the lock's.
+
+    **A lock states what should be installed, not what is**, so its hash alone
+    would name a build the prefix may not hold. `installed_set.py`, run by the
+    SPU's own interpreter, isolated, holds every installed distribution to the
+    lock's pins, and a difference is unreadable naming what it said. The lock
+    is hashed before and after, so a lock that moved while it was held is
+    refused rather than recorded under bytes the check never read."""
+    lock = files["lock"]
+    try:
+        before = _sha256(lock)
+    except OSError as e:
+        return {"path": lock, "sha256": None, "unreadable": _why(e)}
+    held = sh([interpreter, "-I", "-B", files["installed_set"], lock])
+    if held.returncode != 0:
+        said = (held.stdout + held.stderr).strip()[:300] or "nothing said"
+        return {"path": lock, "sha256": None,
+                "unreadable": f"the installed set is not held to the lock,"
+                              f" installed_set exit {held.returncode}: {said}"}
+    try:
+        after = _sha256(lock)
+    except OSError as e:
+        return {"path": lock, "sha256": None, "unreadable": _why(e)}
+    if after != before:
+        return {"path": lock, "sha256": None,
+                "unreadable": "the lock changed while the installed set was held to it"}
+    return {"path": lock, "sha256": before}
+
+
+TREE_DIGEST = re.compile(r"([0-9a-f]{64})  (.+)")
+
+
+def _prefix_digest(files, prefix):
+    """The interpreter's prefix, digested whole by python-spu's own
+    `tree_digest.py`: the interpreter, its standard library, every installed
+    package and the CUDA libraries PyTorch brings, which are the Python SPU's
+    kernel stack. The script exits non-zero on any error in its walk and on an
+    empty tree, and its one line must name the prefix asked for, so a digest is
+    never of nothing and never of another tree."""
+    r = sh([sys.executable, files["tree_digest"], prefix])
+    if r.returncode != 0:
+        said = r.stderr.strip()[:300] or "no stderr"
+        return {"path": prefix, "sha256": None,
+                "unreadable": f"tree_digest exit {r.returncode}: {said}"}
+    lines = r.stdout.strip().splitlines()
+    m = TREE_DIGEST.fullmatch(lines[0]) if len(lines) == 1 else None
+    if m is None or m.group(2) != prefix:
+        return {"path": prefix, "sha256": None,
+                "unreadable": f"tree_digest said what this reader cannot hold to {prefix}:"
+                              f" {r.stdout.strip()[:200]!r}"}
+    return {"path": prefix, "sha256": m.group(1)}
+
+
+def _python_engine(cfg, spu, interpreter):
+    """A Python SPU's engine libraries: the zipapp, the lock the prefix is held
+    to, and the prefix's digest.
+
+    `ldd` names nothing a Python engine computes with, PyTorch opening its
+    kernels at run time, and the loaded process's mappings are closed to this
+    reader by the dumpable flag both SPUs clear (weaver-spu-Spec section 2).
+    The prefix holds every library the process can map, so its digest covers
+    them, and python-spu-Spec section 8 faults the process on code mapped from
+    outside it."""
+    files = _python_spu_files(cfg)
+    if files is None:
+        return {"unreadable": "the config names no repo, so the Python SPU's lock"
+                              " and readers are unknown"}
+    out = {}
+    try:
+        out["zipapp"] = {"path": spu, "sha256": _sha256(spu)}
+    except OSError as e:
+        out["zipapp"] = {"path": spu, "sha256": None, "unreadable": _why(e)}
+    out["requirements.lock"] = _installed_lock(files, interpreter)
+    out["prefix"] = _prefix_digest(files, os.path.dirname(os.path.dirname(interpreter)))
+    return out
+
+
+def _spu_runtime(cfg, path):
+    """What runs the SPU: a binary, built by the `rustc` beside this entry, or
+    a Python SPU's interpreter, by its own version and the lock's sha256
+    (python-spu-Spec section 5). A Python SPU's interpreter that does not
+    answer, or a lock that does not read, is unreadable, never the rustc
+    reading standing alone for a toolchain that did not build the SPU."""
+    if path is None:
+        return {"unreadable": "the SPU did not resolve, so what runs it is unknown"}
+    try:
+        interpreter = _stat_spu(path)
+    except (OSError, ValueError) as e:
+        return {"unreadable": f"the SPU at {path}: {_why(e)}"}
+    if interpreter is None:
+        return {"kind": "binary"}
+    files = _python_spu_files(cfg)
+    version = sh([interpreter, "-I", "-c", "import sys; print(sys.version)"])
+    said = _said_or_unreadable(version, f"{interpreter} -I")
+    if isinstance(said, dict):
+        return said
+    try:
+        lock = _sha256(files["lock"])
+    except OSError as e:
+        return {"unreadable": f"the lock: {_why(e)}"}
+    return {"kind": "python", "interpreter": interpreter, "version": said,
+            "lock_sha256": lock}
+
+
+# **The libraries the decode math runs in**: llama.cpp's, and the CUDA
+# runtime, cuBLAS, cuBLASLt, cuRAND, NVRTC and the driver a Rust SPU built
+# with `cuda` links, each `DT_NEEDED` and so named by `ldd`. A Rust SPU's
+# matmuls are cuBLAS's, so a run that left them out could not tell two
+# CUDA releases apart on one card.
+ENGINE_LIBRARY = r"ggml[\w-]*|llama|cudart|cublas(?:Lt)?|curand|nvrtc[\w-]*|cudnn[\w-]*|cuda"
 
 
 def engine_libraries(cfg, spu=None):
@@ -1304,11 +1655,15 @@ def engine_libraries(cfg, spu=None):
     # look at as absent on Python 3.14: nothing there and there-but-unreadable
     # are two findings and each names itself.
     try:
-        _stat_spu(spu)
+        interpreter = _stat_spu(spu)
     except FileNotFoundError:
         return {"unreadable": f"no SPU binary at {spu}"}
     except OSError as e:
         return {"unreadable": f"the SPU binary at {spu} does not stat: {_why(e)}"}
+    except ValueError as e:
+        return {"unreadable": _why(e)}
+    if interpreter is not None:
+        return _python_engine(cfg, spu, interpreter)
     r = sh(["ldd", spu])
     if r.returncode != 0:
         return {"unreadable": f"ldd exit {r.returncode} on {spu}: "
@@ -1317,11 +1672,11 @@ def engine_libraries(cfg, spu=None):
     for line in r.stdout.splitlines():
         # The path runs to ldd's load address, not to the first space, so a
         # path holding a space is read whole rather than cut (#716 round five).
-        m = re.search(r"(lib(?:ggml[\w-]*|llama)\.so[\w.]*)\s+=>\s+(.+?)(?:\s+\(0x[0-9a-fA-F]+\))?\s*$", line)
+        m = re.search(rf"(lib(?:{ENGINE_LIBRARY})\.so[\w.]*)\s+=>\s+(.+?)(?:\s+\(0x[0-9a-fA-F]+\))?\s*$", line)
         if not m:
             # A line naming an engine library that this pattern cannot read
             # is unreadable evidence, kept as such (#716 round three).
-            if re.search(r"lib(?:ggml|llama)", line):
+            if re.search(rf"lib(?:{ENGINE_LIBRARY})\b", line):
                 out[f"unparsed: {line.strip()[:120]}"] = {
                     "path": None, "sha256": None,
                     "unreadable": "ldd named an engine library this reader cannot parse"}
@@ -1346,7 +1701,7 @@ def engine_libraries(cfg, spu=None):
         except OSError as e:
             out[name] = {"path": path, "sha256": None, "unreadable": _why(e)}
     if not out:
-        return {"unreadable": f"{spu} links no ggml or llama library"}
+        return {"unreadable": f"{spu} links no ggml, llama or CUDA library"}
     return out
 
 
@@ -1574,6 +1929,15 @@ def loop_refusal(report, refused, half, log):
     return report
 
 
+def held_spu(opening):
+    """The SPU every load is held to, from the opening `weaver_binaries`
+    reading: its file name, the key admin's load event records it under in
+    `stack`, and its sha256. The matrix sets it on the run's config at
+    preflight, and a config may not carry it."""
+    entry = opening["weaver_binaries"]["spu-binary"]
+    return {"name": os.path.basename(entry["path"]), "sha256": entry["sha256"]}
+
+
 def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     """The loop that composed a half's load and the declaration it served
     are the session's, read from the load event of `run`, the run the half's
@@ -1581,12 +1945,18 @@ def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     `assert_loop` against the config's `loop_sha256`. The declaration is
     checked by the digest the load event records, which is the declaration
     file's sha256, so the artifact path, the seed, the sampling knobs and
-    every other declared field are held per load. The event is awaited,
+    every other declared field are held per load. **The SPU is held too**,
+    where the run set `held_spu`: the digest admin recorded in the event's
+    `stack` under the SPU's file name is the one the run read at preflight,
+    so a binary swapped between the opening reading and a load, which the
+    closing reading may never see if it is swapped back, is a fault of that
+    load's session. The event is awaited,
     since the sink writes behind the close, and its absence is a fault.
     Answers True where both hold, and otherwise sets the verdict and answers
     False. Every load a session makes is held here, one way (#716 rounds two
     and six)."""
-    if cfg.get("loop_sha256") is None and declaration_sha is None:
+    spu = cfg.get("held_spu")
+    if cfg.get("loop_sha256") is None and declaration_sha is None and spu is None:
         return True
     end, delay = time.time() + timeout, 0.02
     event = run_load(cfg["trace"], run)
@@ -1598,16 +1968,24 @@ def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     if refused:
         loop_refusal(rec, refused, half, log or (lambda m: None))
         return False
-    if declaration_sha is None:
+    if declaration_sha is None and spu is None:
         return True
     if event is None:
         rec["verdict"] = f"no load event reached the trace for the {half} run {run}"
         return False
-    served = (event.get("payload") or {}).get("declaration")
-    if served != declaration_sha:
+    payload = event.get("payload") or {}
+    served = payload.get("declaration")
+    if declaration_sha is not None and served != declaration_sha:
         rec["verdict"] = (f"the {half} load served another declaration:"
                           f" declared {declaration_sha}, served {served}")
         return False
+    if spu is not None:
+        stack = payload.get("stack")
+        recorded = stack.get(spu["name"]) if isinstance(stack, dict) else None
+        if recorded != spu["sha256"]:
+            rec["verdict"] = (f"the {half} load's stack records the SPU {spu['name']} as"
+                              f" {recorded!r}, not the {spu['sha256']} the run read at preflight")
+            return False
     return True
 
 

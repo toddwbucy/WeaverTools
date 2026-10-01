@@ -32,6 +32,10 @@ with open(MODEL, "wb") as _fh:
 CFG = {"trace": "/unused/trace", "agent": "karl", "gate_socket": "/unused.sock", "admin_bin": ADMIN,
        "admin_config": "/unused/config", "repo": FIXTURE}
 FIXED = {"lib": {"path": "/lib", "sha256": "f" * 64}}
+# The SPU the opening reading names, which every load's event records in its
+# stack under the file's name, as admin writes it.
+SPU_SHA = "5" * 64
+BINARIES = {"spu-binary": {"path": "/opt/weaver/bin/weaver-spu", "sha256": SPU_SHA}}
 
 
 def answer(verb):
@@ -43,8 +47,8 @@ def stack_fakes(device=None):
     """The stack's readers answering a fixed reading at both ends."""
     card = [{"ordinal": 0, "name": "card", "pci_bus_id": "0000:01:00.0"}]
     return {"_resolve_spu": lambda c: "/spu", "engine_libraries": lambda c, s: FIXED,
-            "weaver_binaries": lambda c, s: FIXED,
-            "toolchain": lambda c: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
+            "weaver_binaries": lambda c, s: BINARIES,
+            "toolchain": lambda c, s=None: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
             "closing_resolution": lambda c: ("/spu", None),
             "device_bindings": lambda c, since: [device if device is not None else card]}
 
@@ -100,6 +104,14 @@ class Agent:
     def invocation(self):
         return f"{self.starts:032x}"
 
+    def unit_devices(self, cfg, invocation):
+        """The cards the unit's processes hold, which on this box are the
+        cards the engine's lines name, or none where those lines name none."""
+        seen = self.serving_device(cfg, None, invocation)
+        if isinstance(seen, dict) and seen.get("devices"):
+            return {"devices": seen["devices"]}
+        return {"unreadable": "no process of the unit holds a CUDA device"}
+
     def unit_invocation(self, cfg):
         """The unit's invocation: a new one at every load, as systemd starts."""
         return self.invocation()
@@ -148,13 +160,14 @@ class Agent:
         half = int(run.rsplit("-", 1)[1]) - 1
         return {"kind": "load", "payload": {
             "declaration": self.served[half],
-            "composer": {"binary": "pyworker", "sha256": self.loops[half]}}}
+            "composer": {"binary": "pyworker", "sha256": self.loops[half]},
+            "stack": {"weaver-spu": SPU_SHA}}}
 
 
 def session(agent, depth=2, declared_seed=None, declaration_sha=None, cfg=CFG):
     saved = {k: getattr(base, k)
              for k in ("admin", "wait_socket", "gate_turn", "await_turns", "run_load",
-                       "serving_device", "unit_invocation")}
+                       "serving_device", "unit_invocation", "unit_devices")}
     try:
         for k in saved:
             setattr(base, k, getattr(agent, k))
@@ -385,7 +398,7 @@ def run_main(agent, device=None, hours="0.00003", extra=(), prepare=None, inspec
             prepare(tmp, decl)
         fakes = dict(stack_fakes(device), **(stack or {}))
         for k in ("admin", "wait_socket", "gate_turn", "await_turns", "run_load",
-                  "serving_device", "unit_invocation"):
+                  "serving_device", "unit_invocation", "unit_devices"):
             fakes[k] = getattr(agent, k)
         saved = {k: getattr(base, k) for k in fakes}
         argv, schedule = sys.argv, dm.matrix_sessions

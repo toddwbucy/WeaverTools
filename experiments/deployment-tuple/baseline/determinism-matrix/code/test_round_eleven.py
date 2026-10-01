@@ -151,7 +151,7 @@ def test_a_declaration_changed_during_preflight_is_refused_in_both_modes():
     def changing_toolchain():
         state = {"done": False}
 
-        def toolchain(cfg):
+        def toolchain(cfg, s=None):
             if not state["done"]:
                 with open(cfg["declaration"], "a") as fh:
                     fh.write("# edited during preflight\n")
