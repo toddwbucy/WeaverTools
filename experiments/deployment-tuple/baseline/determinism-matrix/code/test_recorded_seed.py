@@ -32,6 +32,10 @@ with open(MODEL, "wb") as _fh:
 CFG = {"trace": "/unused/trace", "agent": "karl", "gate_socket": "/unused.sock", "admin_bin": ADMIN,
        "admin_config": "/unused/config", "repo": FIXTURE}
 FIXED = {"lib": {"path": "/lib", "sha256": "f" * 64}}
+# The SPU the opening reading names, which every load's event records in its
+# stack under the file's name, as admin writes it.
+SPU_SHA = "5" * 64
+BINARIES = {"spu-binary": {"path": "/opt/weaver/bin/weaver-spu", "sha256": SPU_SHA}}
 
 
 def answer(verb):
@@ -43,7 +47,7 @@ def stack_fakes(device=None):
     """The stack's readers answering a fixed reading at both ends."""
     card = [{"ordinal": 0, "name": "card", "pci_bus_id": "0000:01:00.0"}]
     return {"_resolve_spu": lambda c: "/spu", "engine_libraries": lambda c, s: FIXED,
-            "weaver_binaries": lambda c, s: FIXED,
+            "weaver_binaries": lambda c, s: BINARIES,
             "toolchain": lambda c, s=None: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
             "closing_resolution": lambda c: ("/spu", None),
             "device_bindings": lambda c, since: [device if device is not None else card]}
@@ -156,7 +160,8 @@ class Agent:
         half = int(run.rsplit("-", 1)[1]) - 1
         return {"kind": "load", "payload": {
             "declaration": self.served[half],
-            "composer": {"binary": "pyworker", "sha256": self.loops[half]}}}
+            "composer": {"binary": "pyworker", "sha256": self.loops[half]},
+            "stack": {"weaver-spu": SPU_SHA}}}
 
 
 def session(agent, depth=2, declared_seed=None, declaration_sha=None, cfg=CFG):

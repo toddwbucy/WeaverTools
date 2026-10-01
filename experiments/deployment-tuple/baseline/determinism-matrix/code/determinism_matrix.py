@@ -492,6 +492,9 @@ def main():
     except ValueError as e:
         refuse(str(e))
     libraries, binaries, tools = (opening[k] for k in base.STACK_WINDOW)
+    # Every load is held to the SPU read here, by the digest admin records in
+    # its load event (confirm_cells.load_held).
+    cfg["held_spu"] = base.held_spu(opening)
 
     deadline = math.inf if args.cells else time.time() + args.hours * 3600.0
     # Opened before the first load so the journal read at the summary

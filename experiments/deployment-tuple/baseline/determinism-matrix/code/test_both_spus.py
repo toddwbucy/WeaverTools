@@ -406,6 +406,50 @@ def test_the_engines_own_lines_cross_check_the_driver():
     assert seen["devices"] == [B] and seen["journal"]["devices"] == [], seen
 
 
+
+def test_every_load_is_held_to_the_spu_read_at_preflight():
+    """The SPU digest admin records in each load event's `stack`, under the SPU's file
+    name, is the one the run read at preflight, so a binary swapped under a load and
+    back before the close is a fault of that load's session. An event recording no
+    stack is refused the same way. Perturbations: drop the hold from `load_held`, or
+    the matrix's setting of `held_spu`, and the swapped replay reproduces."""
+    from test_recorded_seed import SPU_SHA, Reloading, run_main
+
+    class Swapped(Reloading):
+        def __init__(self, stack):
+            Reloading.__init__(self)
+            self.stack = stack
+
+        def run_load(self, trace, run, keep=4):
+            event = Reloading.run_load(self, trace, run, keep)
+            if event is not None and run.endswith("-2"):
+                event["payload"]["stack"] = self.stack
+            return event
+
+    for stack, said in (({"weaver-spu": "6" * 64}, "'" + "6" * 64 + "'"), (None, "None")):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code, records, _ = run_main(Swapped(stack), sessions=1)
+        verdict = records[0]["verdict"]
+        assert code == 1 and "stack records the SPU weaver-spu as " + said in verdict, verdict
+        assert SPU_SHA in verdict, verdict
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        code, records, _ = run_main(Swapped({"weaver-spu": SPU_SHA}), sessions=1)
+    assert records[0]["verdict"] == "REPRODUCED", records[0]["verdict"]
+
+
+def test_a_config_may_not_name_the_spu_the_run_holds():
+    """`held_spu` is the run's own reading, set at preflight, so a config carrying it is
+    refused rather than holding every load to a digest the operator typed. Perturbation:
+    drop it from `REFUSED_KEYS`, and the config passes."""
+    from test_recorded_seed import CFG as RUN
+    try:
+        base.config_values(dict(RUN, declaration="/k.toml", held_spu={"name": "weaver-spu"}))
+    except ValueError as e:
+        assert "held_spu" in str(e), e
+    else:
+        raise AssertionError("a config naming held_spu was accepted")
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 if __name__ == "__main__":

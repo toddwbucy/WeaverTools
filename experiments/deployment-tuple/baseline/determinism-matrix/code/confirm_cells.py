@@ -671,7 +671,9 @@ OPTIONAL_KEYS = ("loop_sha256", "build_flags")
 # so the two could differ and the run hash the one that did not serve
 # (#716, the pass on 90b9a8a).
 REFUSED_KEYS = {"spu_bin": "the admin launches the SPU its configuration names,"
-                           " admin_config/spu-binary, and the run reads it there"}
+                           " admin_config/spu-binary, and the run reads it there",
+                "held_spu": "the run reads the SPU it holds every load to at preflight,"
+                            " from the binary the admin names"}
 # **A path the stack resolves is absolute** (#716 round ten). The worker and
 # the admin's units resolve a relative path against their own working
 # directory and this harness against its launch directory, so one spelling
@@ -1918,6 +1920,15 @@ def loop_refusal(report, refused, half, log):
     return report
 
 
+def held_spu(opening):
+    """The SPU every load is held to, from the opening `weaver_binaries`
+    reading: its file name, the key admin's load event records it under in
+    `stack`, and its sha256. The matrix sets it on the run's config at
+    preflight, and a config may not carry it."""
+    entry = opening["weaver_binaries"]["spu-binary"]
+    return {"name": os.path.basename(entry["path"]), "sha256": entry["sha256"]}
+
+
 def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     """The loop that composed a half's load and the declaration it served
     are the session's, read from the load event of `run`, the run the half's
@@ -1925,12 +1936,18 @@ def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     `assert_loop` against the config's `loop_sha256`. The declaration is
     checked by the digest the load event records, which is the declaration
     file's sha256, so the artifact path, the seed, the sampling knobs and
-    every other declared field are held per load. The event is awaited,
+    every other declared field are held per load. **The SPU is held too**,
+    where the run set `held_spu`: the digest admin recorded in the event's
+    `stack` under the SPU's file name is the one the run read at preflight,
+    so a binary swapped between the opening reading and a load, which the
+    closing reading may never see if it is swapped back, is a fault of that
+    load's session. The event is awaited,
     since the sink writes behind the close, and its absence is a fault.
     Answers True where both hold, and otherwise sets the verdict and answers
     False. Every load a session makes is held here, one way (#716 rounds two
     and six)."""
-    if cfg.get("loop_sha256") is None and declaration_sha is None:
+    spu = cfg.get("held_spu")
+    if cfg.get("loop_sha256") is None and declaration_sha is None and spu is None:
         return True
     end, delay = time.time() + timeout, 0.02
     event = run_load(cfg["trace"], run)
@@ -1942,16 +1959,24 @@ def load_held(cfg, run, declaration_sha, half, rec, log=None, timeout=15.0):
     if refused:
         loop_refusal(rec, refused, half, log or (lambda m: None))
         return False
-    if declaration_sha is None:
+    if declaration_sha is None and spu is None:
         return True
     if event is None:
         rec["verdict"] = f"no load event reached the trace for the {half} run {run}"
         return False
-    served = (event.get("payload") or {}).get("declaration")
-    if served != declaration_sha:
+    payload = event.get("payload") or {}
+    served = payload.get("declaration")
+    if declaration_sha is not None and served != declaration_sha:
         rec["verdict"] = (f"the {half} load served another declaration:"
                           f" declared {declaration_sha}, served {served}")
         return False
+    if spu is not None:
+        stack = payload.get("stack")
+        recorded = stack.get(spu["name"]) if isinstance(stack, dict) else None
+        if recorded != spu["sha256"]:
+            rec["verdict"] = (f"the {half} load's stack records the SPU {spu['name']} as"
+                              f" {recorded!r}, not the {spu['sha256']} the run read at preflight")
+            return False
     return True
 
 
