@@ -77,6 +77,10 @@ LOAD_BOUNDARY = re.compile(r"ggml_cuda_init: found \d+ CUDA device")
 # binds and then constructs `llama_model_loader`, which logs this first
 # (#716, after round twelve). A block is complete only once it is seen.
 LOAD_COMPLETE = re.compile(r"llama_model_loader: loaded meta data")
+# systemd's catalog id for "a unit started", the entry pid 1 writes for every
+# invocation with `INVOCATION_ID` and `UNIT` set: the positive control that the
+# journal is readable for an invocation whose engine printed nothing.
+UNIT_STARTED = "39f53479d3a045ac8e11786248231fbf"
 
 
 def unit_invocation(cfg):
@@ -137,7 +141,7 @@ def serving_device(cfg, since, invocation=None):
         if any("unreadable" in d for d in found[-1]):
             return {"unreadable": f"the load named a device this reader cannot parse: {found[-1]}"}
         return {"devices": found[-1], "complete": groups["complete"][-1]}
-    return {"devices": [], "note": "the load named no CUDA device"}
+    return {"devices": [], "note": "the engine printed no device line"}
 
 
 # The cgroup v2 hierarchy, where a unit's processes are listed. A module
@@ -370,9 +374,21 @@ def _device_groups(cfg, since, invocation=None):
         complete.append(done)
     if groups:
         return {"groups": groups, "complete": complete}
-    # No match. Distinguish a journal this user cannot read from a load that
-    # genuinely bound no CUDA device, by asking whether the unit logged
-    # anything at all. Paid only in the empty case.
+    # **No match is told from no read by a positive control** (the smokes of
+    # 2026-10-01). The engine's silence is not the journal's: the native
+    # backend and python-spu print nothing, so a read that came back empty
+    # said nothing about whether this user can read the journal. systemd's own
+    # entry that it started this invocation must read back, and only then is
+    # the empty read an engine that printed no device line. Paid only in the
+    # empty case.
+    if invocation is not None:
+        probe = sh(["journalctl", f"INVOCATION_ID={invocation}", f"UNIT={unit}",
+                    f"MESSAGE_ID={UNIT_STARTED}", "--no-pager", "-o", "cat"])
+        if probe.returncode != 0 or not probe.stdout.strip():
+            return {"unreadable": f"systemd's start entry for invocation {invocation} of {unit} "
+                                  "does not read back, so the journal is not readable here "
+                                  "(is this user in systemd-journal or adm?)"}
+        return {"groups": [], "complete": []}
     probe = sh(base + ["-n", "1"])
     if probe.returncode != 0 or not probe.stdout.strip():
         return {"unreadable": "the unit's journal read back empty; this user "

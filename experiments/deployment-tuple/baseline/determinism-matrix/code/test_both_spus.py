@@ -478,6 +478,80 @@ def test_a_command_printing_bytes_that_are_not_utf8_answers():
     assert os.fsencode(r.stdout) == b"\xffok", r.stdout
 
 
+
+def box_journal(engine_lines=(), control=True):
+    """journalctl as this box answers (the smokes of 2026-10-01): the engine's
+    lines, where it prints any, under `_SYSTEMD_INVOCATION_ID`, and systemd's
+    own start entry under `INVOCATION_ID` with `UNIT` and the catalog's
+    MESSAGE_ID, present where `control` is."""
+    def journalctl(args):
+        if any(a.startswith("_SYSTEMD_INVOCATION_ID=") for a in args):
+            lines = engine_lines if "-g" in args else engine_lines
+            return subprocess.CompletedProcess(args, 0 if lines else 1, "".join(l + "\n" for l in lines), "")
+        if any(a.startswith("INVOCATION_ID=") for a in args):
+            matched = (control and f"INVOCATION_ID={INVOCATION}" in args
+                       and "UNIT=weaver-worker@alpha.service" in args
+                       and f"MESSAGE_ID={base.UNIT_STARTED}" in args)
+            said = "Started [systemd-run] /opt/weaver/bin/worker ...\n" if matched else ""
+            return subprocess.CompletedProcess(args, 0, said, "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+    return journalctl
+
+
+def journal_read(engine_lines=(), control=True):
+    """serving_device under one invocation, `sh` answering journalctl as
+    `box_journal` does."""
+    saved = base.sh
+    answer = box_journal(engine_lines, control)
+    base.sh = lambda args, **kw: answer(args) if args[0] == "journalctl" else saved(args, **kw)
+    try:
+        return base.serving_device(CFG, None, INVOCATION)
+    finally:
+        base.sh = saved
+
+
+def test_a_quiet_engines_journal_reads_by_systemds_start_entry():
+    """The smokes of 2026-10-01: the native backend and python-spu print nothing
+    to the journal, so an empty read under the invocation said nothing about
+    readability, and every session faulted. Readability is held by a positive
+    control, systemd's start entry for the invocation. Present with no engine
+    lines, the read stands as an engine that printed no device line; absent, it
+    is unreadable; and llama.cpp lines still read as before. Perturbation:
+    restore the probe of `_SYSTEMD_INVOCATION_ID ... -n 1`, and the quiet
+    engine reads unreadable."""
+    quiet = journal_read()
+    assert quiet == {"devices": [], "note": "the engine printed no device line"}, quiet
+    shut = journal_read(control=False)
+    assert set(shut) == {"unreadable"} and "start entry" in shut["unreadable"], shut
+    from test_round_five import BOUNDARY, COMPLETE, device_line
+    printed = journal_read([BOUNDARY, device_line(0, "0000:41:00.0"), COMPLETE])
+    assert printed["complete"] and printed["devices"][0]["pci_bus_id"] == "0000:41:00.0", printed
+
+
+def test_a_quiet_engines_load_stands_on_the_driver_read():
+    """Through load_devices: the binding is the unit's processes' cards, the
+    journal's control-held empty read recorded beside it; with no control the
+    load is unreadable; and llama.cpp lines naming another card than the
+    processes hold are unreadable. Perturbation: accept the empty read without
+    the control, and the shut journal stands."""
+    apps = "200, GPU-bbbb, 00000000:41:00.0\n"
+    from test_round_five import BOUNDARY, COMPLETE, device_line
+    for lines, control, holds in (((), True, True), ((), False, False),
+                                  ((BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE), True, False)):
+        with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
+            answer = box_journal(lines, control)
+            inner = base.sh
+            base.sh = lambda args, **kw: answer(args) if args[0] == "journalctl" else inner(args, **kw)
+            try:
+                seen, _ = base.load_devices(CFG, 2, 0)
+            finally:
+                base.sh = inner
+        if holds:
+            assert seen["devices"] == [B] and seen["journal"]["note"] == "the engine printed no device line", seen
+        else:
+            assert set(seen) == {"unreadable"}, (lines, control, seen)
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 if __name__ == "__main__":

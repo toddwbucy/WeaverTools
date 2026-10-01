@@ -269,7 +269,11 @@ taken only once it is complete, the engine's next line seen after the device lin
 since a block of several cards can reach the journal a line at a time. A block naming
 other cards than the processes hold, or one that never completes, is unreadable. An
 engine that prints none, the native backend and `python-spu` among them, leaves the
-driver's read standing with the journal's empty read recorded beside it.
+driver's read standing with the journal's empty read recorded beside it. **An empty read
+counts only where the journal is shown readable**, by a positive control: systemd's own
+entry that it started the invocation (`INVOCATION_ID`, the unit's `UNIT`, the catalog's
+unit-started `MESSAGE_ID`) must read back. Absent, the read is unreadable, since an
+engine's silence says nothing about whether this user can read the journal.
 
 Both halves of a session are on one binding under two invocations, and no invocation
 recurs in a run. A journal kept by size holds minutes, so a read at the close would
