@@ -22,6 +22,7 @@ import re
 import socket
 import stat
 import subprocess
+import sys
 import time
 import tomllib
 
@@ -696,7 +697,7 @@ def opening_readings(cfg):
     spu = _resolve_spu(cfg)
     readings = {"engine_libraries": engine_libraries(cfg, spu),
                 "weaver_binaries": weaver_binaries(cfg, spu),
-                "toolchain": toolchain(cfg)}
+                "toolchain": toolchain(cfg, spu)}
     for field, reading in readings.items():
         if not is_reading(reading):
             raise ValueError(f"the opening {field} is not a reading: {json.dumps(reading)}")
@@ -1250,8 +1251,9 @@ def weaver_binaries(cfg, spu=None):
     return out
 
 
-def toolchain(cfg):
-    """The Rust toolchain in force at the repository, not the ambient one.
+def toolchain(cfg, spu=None):
+    """The Rust toolchain in force at the repository, not the ambient one,
+    and what runs the SPU.
 
     **`rustc --version` answers differently depending on where it is run.**
     `rust-toolchain.toml` overrides per directory, so a driver launched
@@ -1265,6 +1267,12 @@ def toolchain(cfg):
     Read with `cwd` at the repository so the pin applies, and the active
     toolchain recorded beside it so an override is visible rather than
     silent.
+
+    **The SPU's runtime rides beside it**, under `spu`, for the SPU the caller
+    resolved once for every collector: a binary is the `rustc` above's, and a
+    Python SPU is its interpreter's version and the lock's sha256, without
+    which a run served by `python-spu` would record the compiler of every
+    organ but the one that decodes.
     """
     repo = cfg.get("repo")
     if not repo:
@@ -1312,15 +1320,174 @@ def toolchain(cfg):
             said = active.stderr.strip()[:200]
             out["active_toolchain"] = {"unreadable":
                 f"rustup exit {active.returncode}" + (f": {said}" if said else "")}
+    out["spu"] = _spu_runtime(cfg, (spu if spu is not None else _resolve_spu(cfg))[0])
     return out
 
 
 def _stat_spu(path):
-    """The SPU binary's presence, by `os.stat`: FileNotFoundError where nothing
-    stands, another OSError where something stands and may not be looked at. One
-    function, so a test fixing the SPU's presence replaces this and not
-    `os.stat` for the whole process."""
+    """The SPU binary's presence and its kind, the interpreter it names or None.
+
+    Presence by `os.stat`: FileNotFoundError where nothing stands, another
+    OSError where something stands and may not be looked at. Kind by its first
+    line: a file opening `#!` is a Python SPU, the zipapp python-spu-Spec
+    section 2 ships, whose first line names its pinned interpreter by absolute
+    path, and that interpreter is the answer. Anything else is a binary the
+    loader runs, answered None. One function, so a test fixing the SPU's
+    presence and kind replaces this and not `os.stat` or `open` for the whole
+    process."""
     os.stat(path)
+    with open(path, "rb") as fh:
+        head = fh.readline(4096)
+    if not head.startswith(b"#!"):
+        return None
+    return _interpreter(head, path)
+
+
+def _interpreter(head, path):
+    """The interpreter a zipapp's first line names, held to the form the
+    build writes: `#!` and one absolute path in a prefix's `bin`, nothing
+    else on the line. Any other first line is refused by raising ValueError,
+    never read for the path it most likely meant, since the prefix the
+    readers digest is derived from it."""
+    if not head.endswith(b"\n"):
+        raise ValueError(f"{path}'s first line runs past 4096 bytes or the file ends in it")
+    try:
+        named = head[2:-1].decode("ascii")
+    except UnicodeDecodeError:
+        raise ValueError(f"{path}'s first line is not ASCII") from None
+    if not named or any(c.isspace() for c in named) or not os.path.isabs(named):
+        raise ValueError(f"{path}'s first line names no interpreter by one bare absolute"
+                         f" path: {named[:120]!r}")
+    if os.path.basename(os.path.dirname(named)) != "bin" or os.path.normpath(named) != named:
+        raise ValueError(f"{path}'s interpreter {named} does not stand in a prefix's bin")
+    return named
+
+
+def _python_spu_files(cfg):
+    """The lock and the two readers python-spu carries, in the repository the
+    config names, or None where it names none. The lock states what the prefix
+    should hold, `installed_set.py` holds the prefix to it and `tree_digest.py`
+    digests the prefix, each per python-spu-Spec section 8."""
+    repo = cfg.get("repo")
+    if not repo:
+        return None
+    root = os.path.join(repo, "python-spu")
+    return {"lock": os.path.join(root, "requirements.lock"),
+            "installed_set": os.path.join(root, "scripts", "installed_set.py"),
+            "tree_digest": os.path.join(root, "scripts", "tree_digest.py")}
+
+
+def _installed_lock(files, interpreter):
+    """The lock's sha256, recorded only where the installed set is the lock's.
+
+    **A lock states what should be installed, not what is**, so its hash alone
+    would name a build the prefix may not hold. `installed_set.py`, run by the
+    SPU's own interpreter, isolated, holds every installed distribution to the
+    lock's pins, and a difference is unreadable naming what it said. The lock
+    is hashed before and after, so a lock that moved while it was held is
+    refused rather than recorded under bytes the check never read."""
+    lock = files["lock"]
+    try:
+        before = _sha256(lock)
+    except OSError as e:
+        return {"path": lock, "sha256": None, "unreadable": _why(e)}
+    held = sh([interpreter, "-I", "-B", files["installed_set"], lock])
+    if held.returncode != 0:
+        said = (held.stdout + held.stderr).strip()[:300] or "nothing said"
+        return {"path": lock, "sha256": None,
+                "unreadable": f"the installed set is not held to the lock,"
+                              f" installed_set exit {held.returncode}: {said}"}
+    try:
+        after = _sha256(lock)
+    except OSError as e:
+        return {"path": lock, "sha256": None, "unreadable": _why(e)}
+    if after != before:
+        return {"path": lock, "sha256": None,
+                "unreadable": "the lock changed while the installed set was held to it"}
+    return {"path": lock, "sha256": before}
+
+
+TREE_DIGEST = re.compile(r"([0-9a-f]{64})  (.+)")
+
+
+def _prefix_digest(files, prefix):
+    """The interpreter's prefix, digested whole by python-spu's own
+    `tree_digest.py`: the interpreter, its standard library, every installed
+    package and the CUDA libraries PyTorch brings, which are the Python SPU's
+    kernel stack. The script exits non-zero on any error in its walk and on an
+    empty tree, and its one line must name the prefix asked for, so a digest is
+    never of nothing and never of another tree."""
+    r = sh([sys.executable, files["tree_digest"], prefix])
+    if r.returncode != 0:
+        said = r.stderr.strip()[:300] or "no stderr"
+        return {"path": prefix, "sha256": None,
+                "unreadable": f"tree_digest exit {r.returncode}: {said}"}
+    lines = r.stdout.strip().splitlines()
+    m = TREE_DIGEST.fullmatch(lines[0]) if len(lines) == 1 else None
+    if m is None or m.group(2) != prefix:
+        return {"path": prefix, "sha256": None,
+                "unreadable": f"tree_digest said what this reader cannot hold to {prefix}:"
+                              f" {r.stdout.strip()[:200]!r}"}
+    return {"path": prefix, "sha256": m.group(1)}
+
+
+def _python_engine(cfg, spu, interpreter):
+    """A Python SPU's engine libraries: the zipapp, the lock the prefix is held
+    to, and the prefix's digest.
+
+    `ldd` names nothing a Python engine computes with, PyTorch opening its
+    kernels at run time, and the loaded process's mappings are closed to this
+    reader by the dumpable flag both SPUs clear (weaver-spu-Spec section 2).
+    The prefix holds every library the process can map, so its digest covers
+    them, and python-spu-Spec section 8 faults the process on code mapped from
+    outside it."""
+    files = _python_spu_files(cfg)
+    if files is None:
+        return {"unreadable": "the config names no repo, so the Python SPU's lock"
+                              " and readers are unknown"}
+    out = {}
+    try:
+        out["zipapp"] = {"path": spu, "sha256": _sha256(spu)}
+    except OSError as e:
+        out["zipapp"] = {"path": spu, "sha256": None, "unreadable": _why(e)}
+    out["requirements.lock"] = _installed_lock(files, interpreter)
+    out["prefix"] = _prefix_digest(files, os.path.dirname(os.path.dirname(interpreter)))
+    return out
+
+
+def _spu_runtime(cfg, path):
+    """What runs the SPU: a binary, built by the `rustc` beside this entry, or
+    a Python SPU's interpreter, by its own version and the lock's sha256
+    (python-spu-Spec section 5). A Python SPU's interpreter that does not
+    answer, or a lock that does not read, is unreadable, never the rustc
+    reading standing alone for a toolchain that did not build the SPU."""
+    if path is None:
+        return {"unreadable": "the SPU did not resolve, so what runs it is unknown"}
+    try:
+        interpreter = _stat_spu(path)
+    except (OSError, ValueError) as e:
+        return {"unreadable": f"the SPU at {path}: {_why(e)}"}
+    if interpreter is None:
+        return {"kind": "binary"}
+    files = _python_spu_files(cfg)
+    version = sh([interpreter, "-I", "-c", "import sys; print(sys.version)"])
+    said = _said_or_unreadable(version, f"{interpreter} -I")
+    if isinstance(said, dict):
+        return said
+    try:
+        lock = _sha256(files["lock"])
+    except OSError as e:
+        return {"unreadable": f"the lock: {_why(e)}"}
+    return {"kind": "python", "interpreter": interpreter, "version": said,
+            "lock_sha256": lock}
+
+
+# **The libraries the decode math runs in**: llama.cpp's, and the CUDA
+# runtime, cuBLAS, cuBLASLt, cuRAND, NVRTC and the driver a Rust SPU built
+# with `cuda` links, each `DT_NEEDED` and so named by `ldd`. A Rust SPU's
+# matmuls are cuBLAS's, so a run that left them out could not tell two
+# CUDA releases apart on one card.
+ENGINE_LIBRARY = r"ggml[\w-]*|llama|cudart|cublas(?:Lt)?|curand|nvrtc[\w-]*|cudnn[\w-]*|cuda"
 
 
 def engine_libraries(cfg, spu=None):
@@ -1349,11 +1516,15 @@ def engine_libraries(cfg, spu=None):
     # look at as absent on Python 3.14: nothing there and there-but-unreadable
     # are two findings and each names itself.
     try:
-        _stat_spu(spu)
+        interpreter = _stat_spu(spu)
     except FileNotFoundError:
         return {"unreadable": f"no SPU binary at {spu}"}
     except OSError as e:
         return {"unreadable": f"the SPU binary at {spu} does not stat: {_why(e)}"}
+    except ValueError as e:
+        return {"unreadable": _why(e)}
+    if interpreter is not None:
+        return _python_engine(cfg, spu, interpreter)
     r = sh(["ldd", spu])
     if r.returncode != 0:
         return {"unreadable": f"ldd exit {r.returncode} on {spu}: "
@@ -1362,11 +1533,11 @@ def engine_libraries(cfg, spu=None):
     for line in r.stdout.splitlines():
         # The path runs to ldd's load address, not to the first space, so a
         # path holding a space is read whole rather than cut (#716 round five).
-        m = re.search(r"(lib(?:ggml[\w-]*|llama)\.so[\w.]*)\s+=>\s+(.+?)(?:\s+\(0x[0-9a-fA-F]+\))?\s*$", line)
+        m = re.search(rf"(lib(?:{ENGINE_LIBRARY})\.so[\w.]*)\s+=>\s+(.+?)(?:\s+\(0x[0-9a-fA-F]+\))?\s*$", line)
         if not m:
             # A line naming an engine library that this pattern cannot read
             # is unreadable evidence, kept as such (#716 round three).
-            if re.search(r"lib(?:ggml|llama)", line):
+            if re.search(rf"lib(?:{ENGINE_LIBRARY})\b", line):
                 out[f"unparsed: {line.strip()[:120]}"] = {
                     "path": None, "sha256": None,
                     "unreadable": "ldd named an engine library this reader cannot parse"}
@@ -1391,7 +1562,7 @@ def engine_libraries(cfg, spu=None):
         except OSError as e:
             out[name] = {"path": path, "sha256": None, "unreadable": _why(e)}
     if not out:
-        return {"unreadable": f"{spu} links no ggml or llama library"}
+        return {"unreadable": f"{spu} links no ggml, llama or CUDA library"}
     return out
 
 

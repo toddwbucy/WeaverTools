@@ -44,7 +44,7 @@ def stack_fakes(device=None):
     card = [{"ordinal": 0, "name": "card", "pci_bus_id": "0000:01:00.0"}]
     return {"_resolve_spu": lambda c: "/spu", "engine_libraries": lambda c, s: FIXED,
             "weaver_binaries": lambda c, s: FIXED,
-            "toolchain": lambda c: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
+            "toolchain": lambda c, s=None: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
             "closing_resolution": lambda c: ("/spu", None),
             "device_bindings": lambda c, since: [device if device is not None else card]}
 

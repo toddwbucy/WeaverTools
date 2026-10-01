@@ -176,7 +176,7 @@ def test_the_admin_configuration_names_absolute_binaries():
         assert "relative path" in reading["worker-binary"]["unreadable"], reading
         assert "unreadable" in reading["spu-binary"] and reading["gate-binary"]["sha256"]
         saved = base.engine_libraries, base.toolchain
-        base.engine_libraries, base.toolchain = (lambda c, s: FIXED), (lambda c: {"rustc": "stub"})
+        base.engine_libraries, base.toolchain = (lambda c, s: FIXED), (lambda c, s=None: {"rustc": "stub"})
         try:
             assert refused(base.opening_readings, cfg)
         finally:

@@ -156,7 +156,7 @@ def test_an_interrupt_in_a_closing_reading_marks_the_run():
     tools = {"rustc": {"path": "/rustc", "sha256": "e" * 64}}
     reads = []
 
-    def toolchain(c):
+    def toolchain(c, s=None):
         reads.append(1)
         if len(reads) == 2:
             raise KeyboardInterrupt

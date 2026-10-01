@@ -739,7 +739,8 @@ def main():
     # values being strings, and a difference here is a difference in what
     # built the binaries rather than in the binaries - the hashes above are
     # what would catch a swap, and this catches the pin moving under a run.
-    tools = close(base.toolchain, tools, "toolchain", essence=whole)
+    tools = close(lambda c: spu_note or base.toolchain(c, closing_spu), tools, "toolchain",
+                  essence=whole)
     # The weights field, the artifact's bytes, read like the stack at both
     # ends (#716 round two).
     weights_at_close = close(base.weights(artifacts), weights_open, "weights")

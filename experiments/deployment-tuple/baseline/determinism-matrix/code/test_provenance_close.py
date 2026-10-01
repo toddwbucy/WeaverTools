@@ -92,7 +92,7 @@ def _drive_main(die_second_cell=False, swap_libs=False):
              "engine_libraries": ((lambda cfg, spu=None: lib_seq.pop(0)) if swap_libs
                                   else (lambda cfg, spu=None: json.loads(json.dumps(LIBS)))),
              "weaver_binaries": lambda cfg, spu=None: json.loads(json.dumps(BINS)),
-             "toolchain": lambda cfg: dict(TOOLS)}
+             "toolchain": lambda cfg, s=None: dict(TOOLS)}
     cells = [{"name": "c1", "precision": "q8", "artifact": None}, {"name": "c2", "precision": "bf", "artifact": None}]
     with tempfile.TemporaryDirectory() as td:
         artifact = os.path.join(td, "a")

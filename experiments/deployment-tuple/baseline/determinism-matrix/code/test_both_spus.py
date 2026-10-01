@@ -6,6 +6,7 @@ Run with `python3 test_both_spus.py` or under pytest.
 """
 import contextlib
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -93,6 +94,197 @@ def test_a_directory_the_walk_cannot_read_refuses():
             assert not base.is_reading(reading), reading
         finally:
             os.chmod(os.path.join(root, "shut"), 0o755)
+
+
+
+# The digest script is python-spu's own, in the agent's repository beside this one in
+# the suite workshop's layout; WEAVER_AGENTS_DIR names it where the checkouts sit
+# elsewhere. The real script, so the reader is held to the line it actually prints.
+REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", ".."))
+AGENTS = os.environ.get("WEAVER_AGENTS_DIR", os.path.join(REPO, "..", "WeaverAgents"))
+TREE_DIGEST = os.path.join(AGENTS, "python-spu", "scripts", "tree_digest.py")
+
+
+def python_spu(tmp, installed=0, interpreter_exit=0):
+    """A Python SPU as python-spu installs one: a prefix whose `bin` holds the
+    interpreter (here a shell script running this Python), a zipapp whose first line
+    names it, and a repository carrying the lock, the real `tree_digest.py` and an
+    `installed_set.py` answering `installed`. Answers the config and the SPU."""
+    prefix = os.path.join(tmp, "prefix")
+    os.makedirs(os.path.join(prefix, "bin"))
+    os.makedirs(os.path.join(prefix, "lib", "torch"))
+    interpreter = os.path.join(prefix, "bin", "python3.14")
+    with open(interpreter, "w") as fh:
+        fh.write(f"#!/bin/sh\n[ {interpreter_exit} -eq 0 ] || exit {interpreter_exit}\n"
+                 f"exec {sys.executable} \"$@\"\n")
+    os.chmod(interpreter, 0o755)
+    with open(os.path.join(prefix, "lib", "torch", "libcublas.so.12"), "wb") as fh:
+        fh.write(b"kernels")
+    spu = os.path.join(prefix, "python-spu.pyz")
+    with open(spu, "wb") as fh:
+        fh.write(b"#!" + interpreter.encode() + b"\nPK\x03\x04zip")
+    repo = os.path.join(tmp, "repo")
+    scripts = os.path.join(repo, "python-spu", "scripts")
+    os.makedirs(scripts)
+    shutil.copy(TREE_DIGEST, scripts)
+    with open(os.path.join(scripts, "installed_set.py"), "w") as fh:
+        fh.write(f"import sys\nprint('torch: 2.9.1 installed, lock pins 2.9.0') if {installed} else None\n"
+                 f"sys.exit({installed})\n")
+    with open(os.path.join(repo, "python-spu", "requirements.lock"), "w") as fh:
+        fh.write("torch==2.9.0 \\\n    --hash=sha256:00\n")
+    return {"agent": "alpha", "repo": repo}, (spu, "admin config spu-binary")
+
+
+def lock_sha(cfg):
+    return base._sha256(os.path.join(cfg["repo"], "python-spu", "requirements.lock"))
+
+
+def test_a_python_spu_reads_its_zipapp_lock_and_prefix():
+    """python-spu-Spec sections 2, 5 and 8: a Python SPU's engine libraries are the
+    zipapp, the lock its prefix is held to and the prefix's digest, and a library
+    changed in the prefix reads otherwise. Perturbation: drop the Python branch from
+    `engine_libraries`, and `ldd` on a script names no library, unreadable."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, spu = python_spu(tmp)
+        one = base.engine_libraries(cfg, spu)
+        assert base.is_reading(one), one
+        assert set(one) == {"zipapp", "requirements.lock", "prefix"}, one
+        assert one["zipapp"]["sha256"] == base._sha256(spu[0])
+        assert one["requirements.lock"]["sha256"] == lock_sha(cfg)
+        assert one["prefix"]["path"] == os.path.join(tmp, "prefix")
+        with open(os.path.join(tmp, "prefix", "lib", "torch", "libcublas.so.12"), "ab") as fh:
+            fh.write(b"!")
+        two = base.engine_libraries(cfg, spu)
+        assert base.close_hashes(two)["prefix"] != base.close_hashes(one)["prefix"], (one, two)
+
+
+def test_a_lock_the_prefix_does_not_hold_is_unreadable():
+    """The lock's hash is recorded only where the installed set is the lock's, since a
+    lock states what should be installed and not what is. Perturbation: drop the exit
+    check on `installed_set.py`, and a prefix holding another torch records the lock."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, spu = python_spu(tmp, installed=1)
+        reading = base.engine_libraries(cfg, spu)
+        assert not base.is_reading(reading), reading
+        assert "not held to the lock" in reading["requirements.lock"]["unreadable"], reading
+        assert "2.9.1" in reading["requirements.lock"]["unreadable"], reading
+
+
+def test_a_prefix_digest_is_of_the_prefix_and_never_of_nothing():
+    """The digest is `tree_digest.py`'s line for the prefix asked, and the script's
+    refusal of an empty or unreadable tree is unreadable here. Perturbations: drop the
+    check that the line names the prefix, and a script answering for another tree is
+    recorded; drop the exit check, and an empty prefix records an empty digest."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, spu = python_spu(tmp)
+        script = os.path.join(cfg["repo"], "python-spu", "scripts", "tree_digest.py")
+        with open(script, "w") as fh:
+            fh.write(f"print('{'a' * 64}  /elsewhere')\n")
+        reading = base.engine_libraries(cfg, spu)
+        assert not base.is_reading(reading) and "cannot hold" in reading["prefix"]["unreadable"], reading
+        shutil.copy(TREE_DIGEST, script)
+        files = base._python_spu_files(cfg)
+        empty = os.path.join(tmp, "empty")
+        os.mkdir(empty)
+        reading = base._prefix_digest(files, empty)
+        assert reading["sha256"] is None and "holds no entries" in reading["unreadable"], reading
+
+
+def test_a_zipapp_first_line_is_held_to_one_bare_absolute_path():
+    """The prefix the readers digest is derived from the interpreter the first line
+    names, so a line of any other form than the build writes is unreadable: arguments,
+    a relative path, an interpreter outside a `bin`, a path with `..`, no line end.
+    Perturbation: take the line's first word, and `#!/p/bin/python3 -I` reads as the
+    interpreter `/p/bin/python3`."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, (spu, how) = python_spu(tmp)
+        for head in (b"#!/p/bin/python3 -I\n", b"#!python3\n", b"#!/p/python3\n",
+                     b"#!/p/x/../bin/python3\n", b"#!/p/bin/python3", b"#!\n"):
+            with open(spu, "wb") as fh:
+                fh.write(head)
+            reading = base.engine_libraries(cfg, (spu, how))
+            assert set(reading) == {"unreadable"}, (head, reading)
+            runtime = base._spu_runtime(cfg, spu)
+            assert set(runtime) == {"unreadable"}, (head, runtime)
+
+
+def test_a_rust_spu_records_the_cuda_libraries_it_links():
+    """A Rust SPU built with `cuda` links the CUDA runtime, cuBLAS, cuBLASLt, cuRAND and
+    the driver, `DT_NEEDED` all, and its matmuls are cuBLAS's, so each is read beside
+    llama.cpp's. A library that is not the engine's, libc, is not. Perturbation: restore
+    the llama.cpp-only pattern, and the CUDA libraries are absent from the reading."""
+    with tempfile.TemporaryDirectory() as tmp:
+        names = ("libggml-cuda.so.0", "libllama.so.0", "libcudart.so.13", "libcublas.so.13",
+                 "libcublasLt.so.13", "libcurand.so.10", "libcuda.so.1", "libc.so.6")
+        ldd = ""
+        for name in names:
+            with open(os.path.join(tmp, name), "wb") as fh:
+                fh.write(name.encode())
+            ldd += f"\t{name} => {os.path.join(tmp, name)} (0x00007f0000000000)\n"
+        saved_sh, saved_stat = base.sh, base._stat_spu
+        try:
+            base._stat_spu = lambda p: None
+            base.sh = lambda args, **kw: subprocess.CompletedProcess(args, 0, ldd, "")
+            reading = base.engine_libraries({}, ("/spu", "admin config spu-binary"))
+        finally:
+            base.sh, base._stat_spu = saved_sh, saved_stat
+        assert base.is_reading(reading), reading
+        assert set(reading) == set(names) - {"libc.so.6"}, reading
+
+
+def test_the_toolchain_names_what_runs_the_spu():
+    """python-spu-Spec section 5: the toolchain reads per implementation, `rustc` for
+    the Rust SPU and the interpreter's version with the lock's hash for a Python one,
+    and an interpreter that does not answer is unreadable rather than the `rustc`
+    reading standing alone. Perturbation: drop the `spu` entry from `toolchain`, and
+    neither the interpreter nor the failure is in the reading."""
+    rust = subprocess.CompletedProcess([], 0, "rustc stub\n", "")
+    real = base.sh
+
+    def sh(args, **kw):
+        return rust if args[0] in ("rustc", "rustup") else real(args, **kw)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, spu = python_spu(tmp)
+        base.sh = sh
+        try:
+            tools = base.toolchain(cfg, spu)
+            assert base.is_reading(tools), tools
+            assert tools["spu"]["kind"] == "python", tools
+            assert tools["spu"]["version"] == sys.version, tools
+            assert tools["spu"]["lock_sha256"] == lock_sha(cfg), tools
+            saved = base._stat_spu
+            base._stat_spu = lambda p: None
+            try:
+                assert base.toolchain(cfg, spu)["spu"] == {"kind": "binary"}
+            finally:
+                base._stat_spu = saved
+        finally:
+            base.sh = real
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, spu = python_spu(tmp, interpreter_exit=3)
+        base.sh = sh
+        try:
+            tools = base.toolchain(cfg, spu)
+        finally:
+            base.sh = real
+        assert not base.is_reading(tools), tools
+
+
+def test_the_matrix_reads_the_toolchain_for_the_spu_it_resolved_at_both_ends():
+    """The toolchain is read for the SPU the open and the close each resolved once for
+    every collector. Perturbation: restore the close's `base.toolchain` without the
+    SPU, and the close reads it for no SPU."""
+    from test_recorded_seed import Reloading, run_main
+    seen = []
+
+    def toolchain(cfg, spu=None):
+        seen.append(spu)
+        return {"rustc": "stub"}
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        run_main(Reloading(), stack={"toolchain": toolchain})
+    assert len(seen) == 2 and None not in seen, seen
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
