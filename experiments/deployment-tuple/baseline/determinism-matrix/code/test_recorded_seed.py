@@ -100,6 +100,14 @@ class Agent:
     def invocation(self):
         return f"{self.starts:032x}"
 
+    def unit_devices(self, cfg, invocation):
+        """The cards the unit's processes hold, which on this box are the
+        cards the engine's lines name, or none where those lines name none."""
+        seen = self.serving_device(cfg, None, invocation)
+        if isinstance(seen, dict) and seen.get("devices"):
+            return {"devices": seen["devices"]}
+        return {"unreadable": "no process of the unit holds a CUDA device"}
+
     def unit_invocation(self, cfg):
         """The unit's invocation: a new one at every load, as systemd starts."""
         return self.invocation()
@@ -154,7 +162,7 @@ class Agent:
 def session(agent, depth=2, declared_seed=None, declaration_sha=None, cfg=CFG):
     saved = {k: getattr(base, k)
              for k in ("admin", "wait_socket", "gate_turn", "await_turns", "run_load",
-                       "serving_device", "unit_invocation")}
+                       "serving_device", "unit_invocation", "unit_devices")}
     try:
         for k in saved:
             setattr(base, k, getattr(agent, k))
@@ -385,7 +393,7 @@ def run_main(agent, device=None, hours="0.00003", extra=(), prepare=None, inspec
             prepare(tmp, decl)
         fakes = dict(stack_fakes(device), **(stack or {}))
         for k in ("admin", "wait_socket", "gate_turn", "await_turns", "run_load",
-                  "serving_device", "unit_invocation"):
+                  "serving_device", "unit_invocation", "unit_devices"):
             fakes[k] = getattr(agent, k)
         saved = {k: getattr(base, k) for k in fakes}
         argv, schedule = sys.argv, dm.matrix_sessions

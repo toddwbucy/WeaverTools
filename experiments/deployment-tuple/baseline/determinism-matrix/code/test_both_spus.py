@@ -287,6 +287,125 @@ def test_the_matrix_reads_the_toolchain_for_the_spu_it_resolved_at_both_ends():
     assert len(seen) == 2 and None not in seen, seen
 
 
+
+INVOCATION = "a" * 32
+GPUS = ("GPU-aaaa, NVIDIA RTX A6000, 00000000:01:00.0\n"
+        "GPU-bbbb, NVIDIA RTX A6000, 00000000:41:00.0\n"
+        "GPU-cccc, NVIDIA RTX 2000 Ada Generation, 00000000:86:00.0\n")
+
+
+def driver(tmp, apps, invocations=None, gpus=GPUS, journal=()):
+    """The box as `unit_devices` reads it: a cgroup hierarchy whose unit holds pid 100
+    and, a group beneath it, pid 200; systemctl naming the unit's invocation (each call
+    the next of `invocations`) and group; nvidia-smi listing `gpus` and the compute
+    processes `apps`; the journal holding `journal`'s engine lines."""
+    group = os.path.join(tmp, "system.slice", "worker.service")
+    os.makedirs(os.path.join(group, "spu"))
+    with open(os.path.join(group, "cgroup.procs"), "w") as fh:
+        fh.write("100\n")
+    with open(os.path.join(group, "spu", "cgroup.procs"), "w") as fh:
+        fh.write("200\n")
+    reads = iter(invocations or [INVOCATION] * 8)
+
+    def sh(args, **kw):
+        if args[:2] == ["systemctl", "show"] and "InvocationID" in args:
+            return subprocess.CompletedProcess(args, 0, next(reads) + "\n", "")
+        if args[:2] == ["systemctl", "show"] and "ControlGroup" in args:
+            return subprocess.CompletedProcess(args, 0, "/system.slice/worker.service\n", "")
+        if args[0] == "nvidia-smi" and args[1].startswith("--query-gpu"):
+            return subprocess.CompletedProcess(args, 0, gpus, "")
+        if args[0] == "nvidia-smi":
+            return subprocess.CompletedProcess(args, 0, apps, "")
+        if args[0] == "journalctl" and "-g" in args:
+            # journalctl prints nothing where its pattern matches nothing.
+            return subprocess.CompletedProcess(args, 0 if journal else 1,
+                                               "".join(line + "\n" for line in journal), "")
+        if args[0] == "journalctl":
+            return subprocess.CompletedProcess(args, 0, "a line\n", "")
+        raise AssertionError(f"unexpected command {args}")
+    return sh
+
+
+@contextlib.contextmanager
+def box(tmp, apps, **kw):
+    saved = base.sh, base.CGROUP_ROOT
+    base.sh, base.CGROUP_ROOT = driver(tmp, apps, **kw), tmp
+    try:
+        yield
+    finally:
+        base.sh, base.CGROUP_ROOT = saved
+
+
+B = {"uuid": "GPU-bbbb", "name": "NVIDIA RTX A6000", "pci_bus_id": "0000:41:00.0"}
+
+
+def test_the_serving_device_is_the_card_the_units_processes_hold():
+    """The binding is read from the driver: the cards `nvidia-smi` lists a process of the
+    unit's control group holding, the groups beneath it included, and no other
+    process's. Perturbations: read the unit's own group alone, and the SPU forked into
+    a group beneath it is missed; drop the pid filter, and another user's card is read
+    as this load's."""
+    apps = "200, GPU-bbbb, 00000000:41:00.0\n999, GPU-aaaa, 00000000:01:00.0\n"
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
+        assert base.unit_devices(CFG, INVOCATION) == {"devices": [B]}
+
+
+def test_a_restart_across_the_device_read_is_unreadable():
+    """The read is bound to one invocation, held before and after: a unit restarted while
+    its processes were listed lists another load's processes. Perturbation: drop the
+    after-read, and the restart reads as the load's binding."""
+    apps = "200, GPU-bbbb, 00000000:41:00.0\n"
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, invocations=[INVOCATION, "b" * 32]):
+        reading = base.unit_devices(CFG, INVOCATION)
+    assert set(reading) == {"unreadable"} and "after" in reading["unreadable"], reading
+
+
+def test_no_card_held_or_a_driver_that_does_not_read_is_unreadable():
+    """No process of the unit on a card, a row the reader cannot read, a process on a
+    card `--query-gpu` does not list at that bus, and a driver that does not answer are
+    each unreadable, never an empty binding. Perturbation: return the empty binding
+    where no process of the unit holds a card, and the first case reads as a reading."""
+    for apps, gpus, said in (("999, GPU-aaaa, 00000000:01:00.0\n", GPUS, "no process of the unit"),
+                             ("200, GPU-bbbb\n", GPUS, "cannot read"),
+                             ("200, GPU-bbbb, 00000000:01:00.0\n", GPUS, "does not list there"),
+                             ("200, GPU-dddd, 00000000:41:00.0\n", GPUS, "does not list there"),
+                             ("200, GPU-bbbb, 00000000:41:00.0\n",
+                              GPUS + "GPU-bbbb, NVIDIA RTX A6000, 00000000:41:00.0\n", "twice")):
+        with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, gpus=gpus):
+            reading = base.unit_devices(CFG, INVOCATION)
+        assert set(reading) == {"unreadable"} and said in reading["unreadable"], (apps, reading)
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, ""):
+        saved = base.sh
+        base.sh = lambda args, **kw: (subprocess.CompletedProcess(args, 9, "", "NVML gone")
+                                      if args[0] == "nvidia-smi" else saved(args, **kw))
+        try:
+            reading = base.unit_devices(CFG, INVOCATION)
+        finally:
+            base.sh = saved
+    assert "exit 9: NVML gone" in reading["unreadable"], reading
+
+
+def test_the_engines_own_lines_cross_check_the_driver():
+    """Where the engine prints its device lines they must name the cards the unit's
+    processes hold, the driver's eight-digit domain read as the engine's four; where it
+    prints none, as the native backend and python-spu do, the driver's read stands and
+    the journal's empty read is recorded beside it. Perturbation: drop the comparison,
+    and a journal naming another card is held as this load's."""
+    from test_round_five import BOUNDARY, COMPLETE, device_line
+    apps = "200, GPU-bbbb, 00000000:41:00.0\n"
+    agreeing = [BOUNDARY, device_line(1, "0000:41:00.0"), COMPLETE]
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, journal=agreeing):
+        seen, invocation = base.load_devices(CFG, 2, 0)
+    assert seen["devices"] == [B] and seen["journal"]["complete"], seen
+    other = [BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE]
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, journal=other):
+        seen, invocation = base.load_devices(CFG, 2, 0)
+    assert set(seen) == {"unreadable"} and "0000:01:00.0" in seen["unreadable"], seen
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
+        seen, invocation = base.load_devices(CFG, 2, 0)
+    assert seen["devices"] == [B] and seen["journal"]["devices"] == [], seen
+
+
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
 
 if __name__ == "__main__":

@@ -144,7 +144,8 @@ def _drive_cell(composer_digest, served=None):
     file's digest as it stands at the load, as the admin does, or `served`
     where a test gives one."""
     saved = {n: getattr(g, n) for n in
-             ("admin", "wait_socket", "gate_turn", "serving_device", "unit_invocation", "await_turns")}
+             ("admin", "wait_socket", "gate_turn", "serving_device", "unit_invocation", "unit_devices",
+              "await_turns")}
     td = tempfile.mkdtemp()
     # An older run at the declared digest already stands in the trace, so a
     # check that read the wrong load would pass on it. The fake load below
@@ -182,7 +183,9 @@ def _drive_cell(composer_digest, served=None):
         g.wait_socket = lambda cfg, timeout=120: True
         g.gate_turn = fake_gate
         g.await_turns = fake_await
-        g.serving_device = lambda cfg, since, invocation=None: {"devices": [{"ordinal": 0}], "complete": True}
+        card = [{"ordinal": 0, "pci_bus_id": "0000:01:00.0"}]
+        g.serving_device = lambda cfg, since, invocation=None: {"devices": card, "complete": True}
+        g.unit_devices = lambda cfg, invocation: {"devices": card}
         # Each load its own unit invocation, as systemd starts each.
         invocations = iter(f"{i:032x}" for i in range(1, 1000))
         g.unit_invocation = lambda cfg: next(invocations)

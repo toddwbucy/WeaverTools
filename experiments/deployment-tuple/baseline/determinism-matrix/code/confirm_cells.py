@@ -135,28 +135,156 @@ def serving_device(cfg, since, invocation=None):
     return {"devices": [], "note": "the load named no CUDA device"}
 
 
+# The cgroup v2 hierarchy, where a unit's processes are listed. A module
+# constant so a test can stand a hierarchy of its own.
+CGROUP_ROOT = "/sys/fs/cgroup"
+
+
+def _bus_id(said):
+    """A PCI bus id in llama.cpp's spelling, a four-digit domain, so the
+    driver's eight-digit `00000000:01:00.0` and the engine's `0000:01:00.0`
+    name one card alike. Anything not a bus id raises ValueError."""
+    m = re.fullmatch(r"([0-9a-fA-F]{4,8}):([0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7])", said.strip())
+    if m is None:
+        raise ValueError(f"{said.strip()[:40]!r} is not a PCI bus id")
+    return f"{int(m.group(1), 16):04x}:{m.group(2).lower()}"
+
+
+def _csv(result, what, width):
+    """nvidia-smi's `--format=csv,noheader` rows, each split into `width`
+    fields, or ValueError naming what could not be read. No rows is an
+    empty list, the answer for a card no process holds."""
+    if result.returncode != 0:
+        raise ValueError(f"{what} exit {result.returncode}: {result.stderr.strip()[:200] or 'no stderr'}")
+    rows = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        fields = [f.strip() for f in line.split(",")]
+        if len(fields) != width or not all(fields):
+            raise ValueError(f"{what} printed a row this reader cannot read: {line.strip()[:200]!r}")
+        rows.append(fields)
+    return rows
+
+
+def _unit_pids(group):
+    """Every process in the unit's control group and the groups beneath it,
+    by `cgroup.procs`. A walk error raises rather than skipping a group, so
+    a process this reader could not list is never read as absent."""
+    def unreadable(error):
+        raise error
+    root = os.path.join(CGROUP_ROOT, group.lstrip("/"))
+    if not os.path.isdir(root):
+        raise ValueError(f"the unit's control group {group} does not stand under {CGROUP_ROOT}")
+    pids = set()
+    for directory, _, files in os.walk(root, onerror=unreadable):
+        if "cgroup.procs" in files:
+            with open(os.path.join(directory, "cgroup.procs")) as fh:
+                pids.update(int(line) for line in fh.read().split())
+    return pids
+
+
+def unit_devices(cfg, invocation):
+    """The devices the agent's worker unit holds, read from the processes it
+    runs, under the one invocation `invocation`.
+
+    **Read from the driver, not from what an engine chose to print.** The
+    journal's `using device` lines are llama.cpp's, and the native backend
+    and `python-spu` print none, so a run of either recorded no device. The
+    unit's control group lists every process the unit started, the SPU the
+    harness forks among them, and `nvidia-smi` lists each process holding a
+    CUDA context with the card it holds. A card held by a process of the
+    unit is a card the load bound.
+
+    **The read is bound to its invocation.** The unit's InvocationID is read
+    before and after, and must be `invocation` both times, so the processes
+    listed are this load's and not a restart's. A unit holding no process,
+    no process of it on a card, a card the driver lists twice, or any read
+    that fails is unreadable, never an empty binding."""
+    def held_to(when):
+        now = unit_invocation(cfg)
+        if now != invocation:
+            raise ValueError(f"the unit's invocation {when} the device read was {now!r},"
+                             f" not {invocation}")
+    unit = f"weaver-worker@{cfg['agent']}.service"
+    try:
+        held_to("before")
+        r = sh(["systemctl", "show", "-p", "ControlGroup", "--value", unit])
+        group = r.stdout.strip()
+        if r.returncode != 0 or not group.startswith("/"):
+            raise ValueError(f"the unit's control group reads {group!r} (systemctl exit {r.returncode})")
+        pids = _unit_pids(group)
+        if not pids:
+            raise ValueError(f"the unit's control group {group} holds no process")
+        cards = {}
+        for uuid, name, bus in _csv(sh(["nvidia-smi", "--query-gpu=uuid,name,pci.bus_id",
+                                        "--format=csv,noheader"]), "nvidia-smi --query-gpu", 3):
+            if uuid in cards:
+                raise ValueError(f"nvidia-smi lists the card {uuid} twice")
+            cards[uuid] = {"uuid": uuid, "name": name, "pci_bus_id": _bus_id(bus)}
+        apps = _csv(sh(["nvidia-smi", "--query-compute-apps=pid,gpu_uuid,gpu_bus_id",
+                        "--format=csv,noheader"]), "nvidia-smi --query-compute-apps", 3)
+        held = {}
+        for pid, uuid, bus in apps:
+            if not pid.isdigit() or int(pid) not in pids:
+                continue
+            card = cards.get(uuid)
+            if card is None or card["pci_bus_id"] != _bus_id(bus):
+                raise ValueError(f"process {pid} holds {uuid} at {bus.strip()}, which --query-gpu"
+                                 " does not list there")
+            held[uuid] = card
+        if not held:
+            raise ValueError(f"no process of the unit holds a CUDA device: {len(pids)} processes,"
+                             f" {len(apps)} compute processes on the box")
+        held_to("after")
+    except (OSError, ValueError) as e:
+        return {"unreadable": _why(e)}
+    return {"devices": sorted(held.values(), key=lambda d: d["pci_bus_id"])}
+
+
 def load_devices(cfg, tries=15, pause=0.2):
     """The devices the load that now stands bound, read by its unit's
-    invocation, and that invocation (#716 round five). Retried briefly,
-    since journald can trail the load it records, and **accepted only once
-    the block is complete**, the engine's next line seen after it: a block
-    of several cards can reach the journal a line at a time, and a read
-    taken between two lines would record the first card alone. Answers the
-    reading, a `devices` list or an `unreadable` note, and the invocation
-    or None."""
+    invocation, and that invocation (#716 round five).
+
+    **The binding is the unit's processes' cards**, `unit_devices`, which
+    every engine answers. **The engine's own lines are its cross-check**
+    where it prints them: retried briefly, since journald can trail the load
+    it records, and accepted only once the block is complete, the engine's
+    next line seen after it, since a block of several cards can reach the
+    journal a line at a time. A block that names other cards than the
+    processes hold, one that never completes, or a journal read that fails
+    is unreadable. An engine that printed no device line is recorded so,
+    and the binding stands on the driver's read. Answers the reading, the
+    `devices` list with the journal's read beside it or an `unreadable`
+    note, and the invocation or None."""
     invocation = unit_invocation(cfg)
     if not isinstance(invocation, str):
         return invocation, None
+    held = unit_devices(cfg, invocation)
+    if not (isinstance(held, dict) and held.get("devices")):
+        return held, invocation
     seen = None
     for _ in range(tries):
         seen = serving_device(cfg, None, invocation)
         if isinstance(seen, dict) and seen.get("devices") and seen.get("complete"):
-            return seen, invocation
+            break
         time.sleep(pause)
-    if isinstance(seen, dict) and seen.get("devices"):
+    if not isinstance(seen, dict) or "unreadable" in seen:
+        return {"unreadable": f"the engine's journal under invocation {invocation} did not read:"
+                              f" {json.dumps(seen)}"}, invocation
+    if seen.get("devices") and not seen.get("complete"):
         return {"unreadable": f"the device block under invocation {invocation} did not complete"
                               f" within {tries} reads: {json.dumps(seen['devices'])}"}, invocation
-    return seen, invocation
+    if seen.get("devices"):
+        try:
+            printed = sorted(_bus_id(d.get("pci_bus_id") or "") for d in seen["devices"])
+        except ValueError as e:
+            return {"unreadable": f"the engine's device lines: {_why(e)}"}, invocation
+        holding = sorted(d["pci_bus_id"] for d in held["devices"])
+        if printed != holding:
+            return {"unreadable": f"the engine's lines name the cards at {printed} and the unit's"
+                                  f" processes hold the cards at {holding}"}, invocation
+    return {"devices": held["devices"], "journal": seen}, invocation
 
 
 def device_bindings(cfg, since):
