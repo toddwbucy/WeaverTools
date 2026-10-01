@@ -59,7 +59,7 @@ One JSON file per box. The matrix reads these fields:
 | `trace` | yes | the agent's trace sink, which every comparison is read from |
 | `admin_bin` | yes | the installed `weaver-admin` |
 | `admin_config` | yes | the admin's configuration directory, passed as `WEAVER_ADMIN_CONFIG` |
-| `repo` | yes | the checkout the stack was built from, for the toolchain reading |
+| `repo` | yes | the checkout of the agent's repository the stack was built from, for the toolchain reading, and for a Python SPU the `python-spu/` lock and readers its engine libraries are read by |
 | `loop_sha256` | optional | the sha256 of the loop the agent composes with, 64 lowercase hex digits or refused at preflight, which every load is held to, a load composed by another being a fault. Absent, the loop is unchecked |
 
 **`cells` is read only by `--cells`.** It lists the cross-precision protocol's cells,
@@ -106,7 +106,9 @@ sha256. They must be the ones the box facts name, and its `errors` must be zero.
 
 **Record the journal's retention**, `journalctl --disk-usage` and the oldest entry
 `journalctl -o short | head -1`, in the box facts. The harness reads each load's device
-by its unit invocation as the load stands, so retention does not limit the gate, but the
+from the cards its unit's processes hold, by `nvidia-smi` and the unit's control group,
+under its unit invocation as the load stands, and the engine's own journal lines are a
+cross-check only where it prints them. So retention does not limit the gate, but the
 journal window it also records at the close covers only what the journal still holds,
 and on a box keeping minutes that is the tail of a run.
 
@@ -116,7 +118,7 @@ and on a box keeping minutes that is the tail of a run.
 weights, every cell's artifact in a cells run, the engine libraries, the binaries and
 the toolchain must read the same at the start and the end, the serving device must be
 one binding for the whole run, and every session must bear out its declared seed and
-serve its declared declaration. Anything less exits 1, and the log names the fields that
+serve its declared declaration and the SPU read at preflight. Anything less exits 1, and the log names the fields that
 did not hold. Both modes exit on the one verdict, `run_verdict`, and a cells run short
 of its cells exits 1 naming the cells it did not serve. A session that raises is
 recorded as `error: <type>: <message>`, and an interrupt records the session it cut

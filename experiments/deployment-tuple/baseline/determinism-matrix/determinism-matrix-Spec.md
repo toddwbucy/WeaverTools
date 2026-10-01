@@ -221,15 +221,59 @@ says whether each held.** The artifact the declaration binds, by sha256, the eng
 libraries the SPU links, the worker, SPU and gate binaries, and the toolchain are each
 read when the run opens and again when it closes. A field that reads the same at both
 ends is `unchanged`, and one that differs says so with both readings, a changed claim
-being made only where both sides are readings and not where a closing read failed. The
-serving device is read from the worker's journal for each load as it stands, bound to
-that load by its unit's InvocationID and never by a time window, which a fast reload or
-a trailing journal holds the previous load inside. A binding is taken only once its
-block is complete, the engine's next line seen after the device lines, since a block of
-several cards can reach the journal a line at a time. Both halves of a session are on
-one binding under two invocations, and no invocation recurs in a run. A journal kept by
-size holds minutes, so a read at the close would miss most of a run. The window read at
-the close is kept as a record and not counted. The summary carries these as `weights`,
+being made only where both sides are readings and not where a closing read failed.
+
+**Each reading reads what the SPU actually is.**
+
+- **The weights.** A file artifact is read by its sha256. A directory, the safetensors
+  export the native backend and `python-spu` serve, is read whole: a digest over its
+  files' paths relative to it, sorted, each with its sha256. A symbolic link in it or
+  at its path, anything but a regular file, and a subdirectory the walk cannot list are
+  unreadable rather than followed or skipped.
+- **The engine libraries of a Rust SPU** are what `ldd` resolves for it: llama.cpp's
+  libraries, and the CUDA runtime, cuBLAS, cuBLASLt, cuRAND, NVRTC and the driver that
+  a build with `cuda` links. Each is `DT_NEEDED`, and the native backend's matmuls are
+  cuBLAS's.
+- **The engine libraries of a Python SPU.** A Python SPU is a file whose first line
+  opens `#!`: the zipapp `python-spu-Spec` section 2 ships, whose first line names its
+  pinned interpreter by one absolute path in a prefix's `bin`. Any other first line is
+  unreadable. Its engine libraries are three entries:
+  - the zipapp's sha256;
+  - `python-spu/requirements.lock` in the config's `repo`, recorded by sha256 only
+    where `installed_set.py`, run by the SPU's own interpreter, holds the installed set
+    to it, and only if the lock reads the same before and after that check;
+  - the interpreter's prefix, digested whole by `python-spu`'s `tree_digest.py`, which
+    covers the interpreter, every installed package and the CUDA libraries PyTorch
+    brings.
+
+  `ldd` names nothing a Python engine computes with. The process's own mappings are
+  closed to this reader by the dumpable flag both SPUs clear, and section 8 of
+  `python-spu-Spec` faults the process on code mapped from outside the prefix. So the
+  prefix is the whole of what it can run.
+- **The toolchain** is `rustc` at the repository's pin, and beside it, under `spu`, what
+  runs the SPU: `binary` for a Rust SPU, built by that `rustc`, or a Python SPU's
+  interpreter by its own version and the lock's sha256. Each end reads it for the SPU
+  that end resolved once for every collector.
+
+**The serving device is read from the driver for each load as it stands.** The device
+is the cards that `nvidia-smi` lists a process of the worker unit's control group
+holding, the groups beneath it included, since the harness forks the SPU there. The
+read is bound to the load by its unit's InvocationID, read before and after it and
+never a time window, which a fast reload or a trailing journal holds the previous load
+inside. A unit holding no process, no process of it on a card, a row the reader cannot
+read, and a read that fails are each unreadable, never an empty binding.
+
+Where the engine prints its own device lines, as llama.cpp does, they are the read's
+cross-check, taken from the worker's journal under the same invocation. A block is
+taken only once it is complete, the engine's next line seen after the device lines,
+since a block of several cards can reach the journal a line at a time. A block naming
+other cards than the processes hold, or one that never completes, is unreadable. An
+engine that prints none, the native backend and `python-spu` among them, leaves the
+driver's read standing with the journal's empty read recorded beside it.
+
+Both halves of a session are on one binding under two invocations, and no invocation
+recurs in a run. A journal kept by size holds minutes, so a read at the close would
+miss most of a run. The window read at the close is kept as a record and not counted. The summary carries these as `weights`,
 `engine_libraries`, `weaver_binaries`, `toolchain` and `serving_device`, the window read
 as `serving_device_journal_window`, and the counts as `sessions`, `reproduced`,
 `diverged` and `errors`, the faults, with the verdicts by prompt character and by
@@ -244,11 +288,16 @@ loop that composed it. Once a half's gate closes name the run its turns were ser
 the harness reads that run's load event, never the newest one a trailing sink wrote, and
 holds the first to the declaration the session wrote, which holds the artifact path, the
 seed, the sampling knobs and every other declared field per load, and where the config
-names `loop_sha256` it holds the second to that digest. The declaration the loads are
+names `loop_sha256` it holds the second to that digest. **The SPU is held per load
+too.** Admin records each binary it started in the event's `stack`, by sha256 under the
+file's name. The harness holds the SPU's entry to the sha256 that the opening
+`weaver_binaries` reading took, which the matrix sets on the run's config as
+`held_spu`. An event whose stack records another digest or none is a fault of that
+session. The declaration the loads are
 held to is the bytes the run read at preflight, or the bytes it wrote for the session,
 by the digest of those bytes and never by a read of the file back, and the disk is held
 to them before the run starts. **Every check a session makes is one function**,
-`verify_session` in `confirm_cells.py`: the load, declaration, loop and device holds,
+`verify_session` in `confirm_cells.py`: the load, declaration, loop, SPU and device holds,
 the recorded seed, absence, the comparison and the surplus. The one session function,
 the matrix's `run_session`, calls it for every session in either mode and verifies
 nothing outside it, so no check can hold for one kind of session and be missing from
@@ -269,8 +318,8 @@ record as it closes by `hold_invocations`, which the one session loop calls.
 | --- | --- | --- |
 | weights | the artifact's path held per load by the declaration's digest, and its bytes read at both ends of the run's window, every cell's artifact in a cells run | yes, `weights` must read `unchanged` |
 | precision | fixed by the weights hash | yes, with the weights |
-| device | each load's binding read by its unit invocation as it stands, both halves on one under two invocations, and every session on the same one | yes, `serving_device` must be one binding |
-| kernel stack | the engine libraries, the binaries and the toolchain read at both ends | yes, each must read `unchanged` |
+| device | each load's binding, the cards its unit's processes hold, read by its unit invocation as it stands and cross-checked by the engine's own lines where it prints them, both halves on one under two invocations, and every session on the same one | yes, `serving_device` must be one binding |
+| kernel stack | the engine libraries, the binaries and the toolchain read at both ends, and the SPU held per load by the digest in its load event's stack | yes, each must read `unchanged`, and every load must hold |
 | batch composition | recorded, not held: one caller and one turn at a time by construction, and the record carries nothing a second caller would change | no |
 | sampler and seed | the declared seed on every session's recorded seed, the replay's equal to the source's, the knobs compared per turn and held per load by the declaration's digest | yes, every session's verdict |
 
@@ -284,7 +333,7 @@ the run, and the per-load declaration digest is what holds the declared fields b
 declared stack, matched its source on all eight `CHECKS` fields, and every field counted
 above held across the run's window. Each of those facts rests on evidence the harness
 read itself: the admin's answers with their exit status, each load's unit invocation and
-the device its journal names, each load event's declaration and loop digests, the
+the cards its processes hold, each load event's declaration, loop and SPU digests, the
 recorded seeds and turns from the trace, and the stack and the weights by sha256 at both
 ends. None rests on a party's word that a step happened.
 
@@ -299,9 +348,10 @@ An edit made to a file between two of the harness's reads of it, or an artifact 
 for one load and restored before the window's closing read, is outside what an exit 0
 claims. A window cannot see a swap made and reverted between its two reads, and the
 declaration's digest binds each load to the artifact's path and not to its bytes. A
-finding that needs such a party is declined by citing this section. The instrument that
-would buy the guarantee is a per-load hash of the weights and the stack, read at each
-load and held like the declaration, and this probe has not bought it.
+finding that needs such a party is declined by citing this section. The SPU binary alone
+is held per load, by the digest admin takes as it loads. The instrument that would buy
+the rest of the guarantee is a per-load hash of the weights and the engine libraries,
+read at each load and held like the declaration, and this probe has not bought it.
 
 **The boundary is this measurement's alone.** The custody rule for privileged steps,
 that no privileged step acts on a copy of a fact without verified evidence, is the
@@ -337,7 +387,7 @@ what the values are of.
 | --- | --- | --- |
 | weights | the artifact's path and its sha256 | box facts, and the declaration's `model-binding` |
 | precision | the artifact's quantization, which the weights hash already fixes | the artifact's name, box facts |
-| device | ordinal, card name, PCI bus id, driver version | the summary's `serving_device`, box facts |
+| device | the card's UUID, name and PCI bus id, and the driver version | the summary's `serving_device`, box facts |
 | kernel stack | the engine libraries and the weaver binaries by sha256, the CUDA toolkit, the reduction library, the host compiler, the toolchain, the source commit and the pinned engine and candle revisions | the summary's provenance fields, box facts |
 | batch composition | one caller and one turn at a time, by construction | box facts states it |
 | sampler and seed | the declared seed, and the derived generation seed and sampling knobs per request | the declaration, the session record, `model.request` in the trace |
@@ -387,9 +437,12 @@ weights' opening reading. The declaration is read, and where the run rewrites it
 opened for writing and its directory must be writable for the backup. The admin binary
 must be a regular file with an execute bit, since it runs under `sudo`, and the
 repository a directory. The stack's opening readings are taken there, the admin
-configuration's entries, the binaries they name, the SPU and each library it links, and
-a reading that is not one, or that resolved a binary by a guess, is refused, since the
-exit could never count it held. The trace and the gate socket stand only once a load
+configuration's entries, the binaries they name, the SPU and each library it links, or
+for a Python SPU its zipapp, its lock held to the installed set and its prefix's digest,
+and a reading that is not one, or that resolved a binary by a guess, is refused, since
+the exit could never count it held. A Python SPU's readings need the config's `repo` to
+be a checkout of the agent's repository, whose `python-spu/` carries the lock and the
+two readers. The trace and the gate socket stand only once a load
 has, and each is awaited where it is read. No loop file is opened: the loop is held by
 its digest against each load event.
 
@@ -404,7 +457,8 @@ the declaration file, `admin_bin`, `repo` and the outdir, are its own. A config 
 name an SPU of its own: the admin launches the one its configuration names for the
 agent, the key `agent-spu` gives it in `spu-implementations` where the agent is named
 there and `spu-binary` otherwise, per `weaver-admin-Spec` section 9, and the run reads
-it there, so a config carrying `spu_bin` is refused. **Each file the run reads there is
+it there, so a config carrying `spu_bin` is refused. Nor may a config carry `held_spu`,
+the SPU every load is held to, which the run reads for itself at preflight. **Each file the run reads there is
 classed as admin's loader classes it.** `allow-list`, `worker-binary`, `spu-binary` and
 `gate-binary` are required, and one absent is an unreadable resolution, admin refusing
 every verb without it. `spu-implementations` and `agent-spu` are optional, and only
@@ -431,6 +485,11 @@ whole window without a prompt. This probe does not ask for a standing grant, sin
 grant that passes the admin's configuration through would let any process of the
 operator's uid choose what the admin executes as root. A run lives in the operator's
 own terminal on a fresh ticket, and `code/README.md` gives the shape.
+
+**The device read needs the driver and the unit's control group.** `nvidia-smi` must
+answer the operator's uid for the cards and for the compute processes on them. The
+unit's `cgroup.procs` under the cgroup v2 hierarchy must be readable to that uid. A box
+where either is not answers every load's device unreadable, and its sessions fault.
 
 **Clocks are recorded where they are not held.** A lock needs root per load, so a run
 that holds none records the card's state beside itself with an unprivileged readout
