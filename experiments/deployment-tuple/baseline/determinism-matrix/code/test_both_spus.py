@@ -98,11 +98,11 @@ def test_a_directory_the_walk_cannot_read_refuses():
 
 
 # The digest script is python-spu's own, in the agent's repository beside this one in
-# the suite workshop's layout; WEAVER_AGENTS_DIR names it where the checkouts sit
+# the suite workshop's layout; WEAVER_AGENT_REPO names it where the checkouts sit
 # elsewhere. The real script, so the reader is held to the line it actually prints.
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", ".."))
-AGENTS = os.environ.get("WEAVER_AGENTS_DIR", os.path.join(REPO, "..", "WeaverAgents"))
-TREE_DIGEST = os.path.join(AGENTS, "python-spu", "scripts", "tree_digest.py")
+AGENT = os.environ.get("WEAVER_AGENT_REPO", os.path.join(REPO, "..", "WeaverAgent"))
+TREE_DIGEST = os.path.join(AGENT, "python-spu", "scripts", "tree_digest.py")
 
 
 def python_spu(tmp, installed=0, interpreter_exit=0):

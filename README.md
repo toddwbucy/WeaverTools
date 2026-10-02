@@ -7,7 +7,7 @@ boundaries, one per party a consumer meets across a socket:
 
 | Repository | What it holds |
 |---|---|
-| [WeaverAgents](https://github.com/toddwbucy/WeaverAgents) | The agent: harness, SPU, gate, admin, state, trace and the crates beneath them, with their charters, Specs and contracts. |
+| [WeaverAgent](https://github.com/toddwbucy/WeaverAgent) | The agent: harness, SPU, gate, admin, state, trace and the crates beneath them, with their charters, Specs and contracts. |
 | [WeaverAnalysis](https://github.com/toddwbucy/WeaverAnalysis) | The diagnostic consumer: the tools that read the record the agent's admin hands off, derive and preload a replay, and read what comes back. |
 | [WeaverWeb](https://github.com/toddwbucy/WeaverWeb) | The frontend: the human's surface over running agents and over what the analysis emits. |
 | WeaverTools, this repository | The suite: experiments, and the documents that bind more than one repository. |
@@ -22,7 +22,7 @@ opens at its own root commit.
 **`experiments/`**: the suite's pre-registered measurement acts, each an experiment
 directory holding a charter (`README.md`), one directory per arm, and under each arm one
 per probe with its Spec, `code/` and `results/`. They live here rather than in
-WeaverAgents because their code reads WeaverAnalysis as much as it reads the agent: the
+WeaverAgent because their code reads WeaverAnalysis as much as it reads the agent: the
 determinism matrix under `deployment-tuple/baseline/` drives an installed agent stack and
 checks the declaration WeaverAnalysis derives, and its grammar test reads a WeaverAnalysis
 fixture by path.
@@ -40,7 +40,7 @@ names its deposits and copies no data from them.
 **Still to come**, on the operator's word: the cross-repository contracts
 (`weaver-gate-world`, `weaver-admin-operator`, `weaver-analysis-state`,
 `weaver-analysis-web`), the suite vision, the four process documents, and the paper
-material. Until they land, the contracts stand in WeaverAgents under
+material. Until they land, the contracts stand in WeaverAgent under
 `docs/crates/contracts/` and the process documents under `process/`.
 
 ## Running the experiments' code
@@ -50,7 +50,7 @@ siblings in one directory, which is how the workshop is laid out:
 
 ```text
 <workshop>/
-  WeaverAgents/
+  WeaverAgent/
   WeaverAnalysis/
   WeaverWeb/
   WeaverTools/        this repository
