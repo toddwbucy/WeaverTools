@@ -1,6 +1,6 @@
 # WeaverTools STE100 writing standard
 
-STE100: WeaverTools STE100 writing standard 0.1, lexicon sha256:e59be7e1ee3eb7d17b486a9aee04916bb8e52720daf2cfc2b0054612261eba9d
+STE100: WeaverTools STE100 writing standard 0.1, lexicon sha256:8cb83e623f84519f8f501f67bbe11de6e867f68c047251a4f992c90e5fc3b580
 
 Version 0.1, 2026-11-02. Issue: `toddwbucy/WeaverTools#17`.
 
@@ -8,7 +8,7 @@ Version 0.1, 2026-11-02. Issue: `toddwbucy/WeaverTools#17`.
 
 This standard tells you how to write the PRDs, Specs and workflow documents of WeaverTools.
 
-Each word in a document must have one meaning. On 2026-11-02, an inspection of the documents found words with 2 meanings. When the second meaning came into a document, no person saw it.
+Each word in a document must have one meaning. On 2026-11-02, an inspection of the documents found words with 2 meanings. When the second meaning came into a document, no person saw it. One of these words was restatement. On 2026-11-02, the operator gave it one meaning: the repair. `rulings.md` records this ruling.
 
 ASD-STE100 has a rule: one word, one meaning. WeaverTools uses STE100 for the output of the agent. This standard applies STE100 to the documents of WeaverTools too.
 
@@ -38,6 +38,14 @@ The line gives 3 items: the standard, the version of the standard, and the lexic
 
 The `sha256` of the lexicon identifies it, not a commit. A document in this repository cannot give the commit that contains it. The `sha256` does not have this problem. The checker calculates the `sha256` and compares it with the header line.
 
+This rule applies to the documents of each WeaverTools repository. A document can also give the WeaverTools commit of the lexicon. Add it at the end of the header line, as in this example:
+
+```text
+STE100: WeaverTools STE100 writing standard <version>, lexicon sha256:<64 hex>, WeaverTools commit <hex>
+```
+
+The checker does not examine the commit. It examines only the `sha256`.
+
 To find the commit of a lexicon, find the commit where `ste100/lexicon/` has that `sha256`.
 
 ## 5. The lexicon
@@ -58,7 +66,7 @@ The lexicon is in `ste100/lexicon/` in this repository. It is data. It contains 
 
 Each consumer of the lexicon pins it by commit or by `sha256`. These are the consumers:
 
-- The checker of WeaverTrain, and its file `rewrite-prompt.md`.
+- The checker of WeaverTrain, and its file `rewrite-prompt.md`. WeaverTrain keeps its checker and pins only the lexicon, by `sha256`.
 - The `weaver-state` store of WeaverAgent. The ruling `B` in `toddwbucy/WeaverAgent#433` puts the thesaurus and the verb list there.
 - This standard.
 
@@ -70,13 +78,17 @@ The lexicon that this repository received on 2026-11-02 is the baseline. The lex
 
 Each change after the baseline must have an issue and a pull request for that change only. The issue and the pull request record the change and its cause.
 
+A change can start in WeaverTrain. It must also come to this repository with an issue and a pull request. WeaverTrain does not change its `ste/` directory without this repository.
+
 No entry changes without a record. No consumer changes its copy of the lexicon.
+
+Do not add a word to `terms.toml` only because the checker gives a failure for it. Record the fault of the checker in `toddwbucy/WeaverTools#19`.
 
 ## 7. Copyright
 
 ASD-STE100 has a copyright. Do not commit the dictionary of the standard to a repository.
 
-The approved words come from the local copy of the standard that the operator has. The checker reads the path of that copy from `WEAVER_TRAIN_STE100_SOURCE`. This repository contains only the words and the rulings that WeaverTools adds. It identifies the standard by its issue: ASD-STE100, Issue 9.
+The approved words come from the local copy of the standard that the operator has. The checker reads the path of that copy from `WEAVERTOOLS_STE100_SOURCE`. If that variable has no value, the checker reads `WEAVER_TRAIN_STE100_SOURCE`. The output of the checker tells which variable it used. This repository contains only the words and the rulings that WeaverTools adds. It identifies the standard by its issue: ASD-STE100, Issue 9.
 
 ## 8. Measurement
 
@@ -92,7 +104,7 @@ The checker must have the local copy of the standard. Thus the result is a recor
 
 To get the result, do these steps:
 
-1. Set `WEAVER_TRAIN_STE100_SOURCE` to the path of the local copy of the standard.
+1. Set `WEAVERTOOLS_STE100_SOURCE` to the path of the local copy of the standard.
 2. Do `python3 ste100/checker/ste_extract.py` one time on each computer.
 3. Do `python3 ste100/checker/ste_doc.py <document>` for each document.
 4. Copy the output into the pull request.
@@ -139,31 +151,25 @@ The checker is in `ste100/checker/` in this repository. It is a copy of the chec
 - The checker of WeaverTrain examines segments of training data. A document is not a segment. Thus the checker must have a driver that divides a document into sentences. `ste_doc.py` is that driver, and it is new.
 - The checker uses only the standard library of `Python`. Thus it agrees with the other code in this repository.
 
-The changes to the copy are in `ste100/checker/README.md`.
+WeaverTrain keeps its checker, and the 2 checkers use the same lexicon. A change to one checker does not change the other checker. The changes to the copy are in `ste100/checker/README.md`.
 
 ## 11. Open items
 
 These items are open. The standard keeps them until the operator gives a ruling.
 
-### 11.1 The word `restatement`
-
-The word `restatement` has 2 meanings in the documents of WeaverTools. One meaning is the repair step in `CLASS-9` and in Spec 02. In this step, the model writes its output again after a failure. The other meaning is `restate-then-solve`, from WeaverTrain issue 2.
-
-The operator will give the word one meaning in `toddwbucy/WeaverAgent#432`. Until that ruling, `terms.toml` keeps the word with its 2 meanings and the status `unresolved`. The checker gives a failure for the word in a sentence.
-
-### 11.2 The "I" exception and the hedge forms
+### 11.1 The "I" exception and the hedge forms
 
 The checker accepts "I" for the agent. The hedge forms tell how sure a statement is. These forms are candidates: "possibly", "I think that", "this is an indication that", and "examine if" or "find if".
 
 The candidates are in `rulings.md` and `usage-notes.md`. The operator has not given a ruling on them.
 
-### 11.3 PRDs
+### 11.2 PRDs
 
 A PRD gives more arguments than instructions. The limit of 25 words can make an argument hard to write.
 
 We will measure the effect of this limit on the first PRD that we write to this standard.
 
-### 11.4 How to know that the standard works
+### 11.3 How to know that the standard works
 
 Before the standard starts, we must tell which result shows that it works. These are the candidates:
 

@@ -8,8 +8,9 @@ this artifact, not by each other.
 
 The standard's own dictionary is not here and is never committed (ASD reserves
 reproduction and publication). Approved words come from the operator's local copy,
-whose path the checker reads from `WEAVER_TRAIN_STE100_SOURCE`, and whose sha256 is
-pinned in `ste100-scheme.candidate.json` under `reference`.
+whose path the checker reads from `WEAVERTOOLS_STE100_SOURCE` (or WeaverTrain's
+`WEAVER_TRAIN_STE100_SOURCE` where that is not set), and whose sha256 is pinned in
+`ste100-scheme.candidate.json` under `reference`.
 
 ## Files
 
@@ -32,20 +33,22 @@ That commit, not WeaverTrain's `main` (`f90d9d7c`), was the source because only 
 `fixed-mappings.toml` and the 2026-11-01 rulings on "call" and "should", and because
 toddwbucy/WeaverAgent#433 already names it as the thesaurus of record. `rulings.md`
 copies the three word rulings from WeaverTrain's `docs/decisions.md` at the same commit,
-unchanged. `terms.toml` is new.
+unchanged, and records the operator's two rulings of 2026-11-02 above them. `terms.toml`
+is new.
 
 Not copied: `rewrite-prompt.md` and `rewrite-examples.md`. They are WeaverTrain's
 rewriter, a consumer of this lexicon, not part of it.
 
 ## Consumers
 
-Each pins this directory by commit or by the sha256 that `ste100/checker/ste_doc.py`
-prints (every file here except this README, in name order, each as name, NUL, bytes,
-NUL).
+Each pins this directory by the sha256 that `ste100/checker/ste_doc.py` prints (every
+file here except this README, in name order, each as name, NUL, bytes, NUL). A consumer
+may also name the commit; the sha256 is what is checked (rulings.md, 2026-11-02).
 
-- **WeaverTrain**: its checker (`scripts/ste_check.py`) and rewrite prompt. Today they
-  read WeaverTrain's own `ste/`; they repoint here when this lands (follow-up, not in
-  toddwbucy/WeaverTools#17).
+- **WeaverTrain**: its checker (`scripts/ste_check.py`) and rewrite prompt. WeaverTrain
+  keeps its own checker and reads only this lexicon, pinned by sha256, with no code
+  dependency on this repository. Today they read WeaverTrain's own `ste/`; the repoint
+  is a follow-up issue in WeaverTrain, opened when toddwbucy/WeaverTools#18 merges.
 - **WeaverAgent**: the state store, under ruling B (toddwbucy/WeaverAgent#433, one verb
   artifact for every judge).
 - **The writing standard**: `ste100/writing-standard.md`, whose header line names the
@@ -54,9 +57,14 @@ NUL).
 
 ## Change control
 
-The lexicon as copied on 2026-11-02 is the baseline. Every change after it needs its own
-issue and its own pull request, which state the change and its reason. No entry changes
-silently, and no consumer edits its own copy.
+The lexicon as copied on 2026-11-02 from WeaverTrain `ab63a918` is the baseline, with
+the entries of `terms.toml` as accepted that day. Every change after it needs its own
+issue and its own pull request in this repository, which state the change and its
+reason, even when the change starts in WeaverTrain: WeaverTrain's `ste/` no longer
+changes by its own act. No entry changes silently, and no consumer edits its own copy.
+
+`terms.toml` is not the way around checker faults. A word the checker misreads goes to
+the checker (toddwbucy/WeaverTools#19), not into the lexicon to quiet it.
 
 A pull request that changes any file here also re-runs the checker over
 `ste100/writing-standard.md`, puts the new sha256 in its header line, and records the

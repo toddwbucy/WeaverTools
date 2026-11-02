@@ -1,13 +1,51 @@
 # Rulings on words
 
-The operator's rulings on words that the lexicon carries, newest first. The three
-entries below are copied unchanged from WeaverTrain's `docs/decisions.md` at
-`ab63a918b569e5b8673dc2e78e66575ee9df1bd7` (branch `ste/500-run`), which holds them
-among that repository's other decisions. Paths in them are WeaverTrain's: `ste/` there
-is `ste100/lexicon/` here, and `scripts/ste_check.py` there is `ste100/checker/` here.
+The operator's rulings on words that the lexicon carries, newest first. The two
+2026-11-02 entries are recorded here. The three entries after them are copied unchanged
+from WeaverTrain's `docs/decisions.md` at `ab63a918b569e5b8673dc2e78e66575ee9df1bd7`
+(branch `ste/500-run`), which holds them among that repository's other decisions. Paths
+in them are WeaverTrain's: `ste/` there is `ste100/lexicon/` here, and
+`scripts/ste_check.py` there is `ste100/checker/` here.
 
 A ruling made after the baseline (2026-11-02) is added here by its own issue and PR,
 with the lexicon change it makes (README.md, change control).
+
+## 2026-11-02: "restatement" is the repair; restate-then-solve is "preface, then solve"
+
+The operator's ruling (toddwbucy/WeaverAgent#437, answer to Q4), recorded here in
+toddwbucy/WeaverTools#18. It reverses the morning's wording rule that "restatement"
+meant restate-then-solve only.
+
+- **restatement** keeps one sense, the repair: the model writes its output again after
+  the checker's notes, as in CLASS-9 of the state-management primitives PRD and in
+  Spec 02 (WeaverAgent). `terms.toml` holds it with that sense, resolved.
+- Restate-then-solve is renamed **preface, then solve**. A **preface** is the model's
+  first emission each turn, an STE100 statement of the input, before the solution.
+  `terms.toml` holds it.
+- Reason: one word, one meaning. The term drift that toddwbucy/WeaverTools#17 opens
+  with is this word.
+
+## 2026-11-02: the header line, the baseline, the terms and the checker
+
+The operator's answers to the four questions of toddwbucy/WeaverTools#18, given in the
+review of that PR.
+
+- **The header line names the lexicon by sha256, in every repository.** A document
+  cannot name the commit that holds it, and the checker verifies a hash mechanically.
+  A document outside this repository may also name the WeaverTools commit, but the
+  sha256 is what is checked.
+- **The baseline is the copy of WeaverTrain at `ab63a918`.** From toddwbucy/WeaverTools#18
+  on, a change to the lexicon goes through an issue and a PR in this repository, even
+  when the change starts in WeaverTrain. WeaverTrain's `ste/` stops changing by its own
+  act. If WeaverTrain PR #4 changes `ste/` before it merges, that change comes here as
+  its own issue and PR.
+- **The 32 entries of `terms.toml` are accepted as the baseline.** `terms.toml` must not
+  become the way around checker faults: those are collected in
+  toddwbucy/WeaverTools#19, and each entry whose only reason is a checker fault is
+  reviewed when that fix lands. Until then the entries stand.
+- **WeaverTrain keeps its own checker and reads only this lexicon, pinned by sha256.**
+  WeaverTrain stays standalone, with no code dependency on another repository. A data
+  pin is enough.
 
 ## 2026-11-01: "call" is not admitted; "should" has three senses
 

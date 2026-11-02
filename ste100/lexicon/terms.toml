@@ -12,8 +12,10 @@
 # unresolved word in its prose: ste_doc.py fails the sentence (rule unresolved-term).
 # Written as a technical name (in backticks) it is masked, so a document can name it.
 #
-# Baseline: 2026-11-02, toddwbucy/WeaverTools#17. Every later change needs its own issue
-# and PR (README.md, change control).
+# Baseline: 2026-11-02, toddwbucy/WeaverTools#17, accepted by the operator (rulings.md).
+# Every later change needs its own issue and PR (README.md, change control). An entry
+# whose reason is a checker fault is reviewed when toddwbucy/WeaverTools#19 lands:
+# terms.toml is not the way around checker faults.
 
 # --- Words of the writing field. The standard is for equipment text and has no nouns
 # for its own subject; a standard about writing needs them. Added for the writing
@@ -26,7 +28,7 @@ added = "toddwbucy/WeaverTools#17"
 
 [terms.meaning]
 sense = "the one sense in which a document uses a word"
-reason = "writing field; the subject of the one-word, one-meaning rule. Without it the checker reads it as an -ing form"
+reason = "writing field; the subject of the one-word, one-meaning rule. Without it the checker reads it as an -ing form (checker fault, reviewed under toddwbucy/WeaverTools#19)"
 added = "toddwbucy/WeaverTools#17"
 
 [terms.sentence]
@@ -123,7 +125,7 @@ added = "toddwbucy/WeaverTools#17"
 
 [terms.ruling]
 sense = "a decision of the operator that a document or an issue records, with its date and cause"
-reason = "program; rulings set the lexicon and the scope. Without it the checker reads it as an -ing form"
+reason = "program; rulings set the lexicon and the scope. Without it the checker reads it as an -ing form (checker fault, reviewed under toddwbucy/WeaverTools#19)"
 added = "toddwbucy/WeaverTools#17"
 
 [terms.candidate]
@@ -176,13 +178,14 @@ sense = "a test of a document by synthetic readers, recorded under the program's
 reason = "program; a candidate measure of the writing standard"
 added = "toddwbucy/WeaverTools#17"
 
-# --- Words that wait on a ruling.
+# --- Words ruled to one sense after a drift.
 
 [terms.restatement]
-status = "unresolved"
-senses = [
-  "the repair round: CLASS-9 of the state-management primitives PRD and Spec 02 (WeaverAgent)",
-  "restate-then-solve: WeaverTrain #2, rulings 6 and 9",
-]
-ruling = "toddwbucy/WeaverAgent#432. On 2026-11-02 the operator gave restate-then-solve as the one sense; whether the repair round is renamed across the corpus is still to rule."
+sense = "the repair: the model writes its output again after the checker's notes (CLASS-9 of the state-management primitives PRD, and Spec 02, in WeaverAgent)"
+reason = "program; had two senses until the operator's ruling of 2026-11-02 (WeaverAgent#437, Q4). The other sense is now preface"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.preface]
+sense = "the model's first emission each turn: an STE100 statement of the input, before the solution. The pattern is preface, then solve"
+reason = "program; the operator's ruling of 2026-11-02 (WeaverAgent#437, Q4) names it, in place of restate-then-solve (WeaverTrain #2, rulings 6 and 9)"
 added = "toddwbucy/WeaverTools#17"
