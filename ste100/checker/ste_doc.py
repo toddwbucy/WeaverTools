@@ -28,6 +28,9 @@ order, each as its name, a NUL byte, its bytes and a NUL byte. The header line i
 
     STE100: WeaverTools STE100 writing standard <version>, lexicon sha256:<64 hex>
 
+A document may add ", WeaverTools commit <hex>" for a reader to find the lexicon by. The
+commit is not checked: the sha256 is (ruling of 2026-11-02, lexicon/rulings.md).
+
 Exit 0: every sentence passes and the header holds. Exit 1: any failure. Exit 2: the
 local lexicon (var/approved-verbs.json, made by ste_extract.py) or the document is
 missing. Unapproved and unknown words are reported as a measure and do not fail.
@@ -52,7 +55,8 @@ import ste_mask  # noqa: E402
 ROOT = HERE.parent  # ste100/
 LEXICON_DIR = ROOT / "lexicon"
 STANDARD_VERSION = "0.1"
-HEADER = re.compile(r"^STE100: WeaverTools STE100 writing standard (\S+), lexicon sha256:([0-9a-f]{64})\s*$")
+HEADER = re.compile(r"^STE100: WeaverTools STE100 writing standard (\S+), lexicon sha256:([0-9a-f]{64})"
+                    r"(?:, WeaverTools commit ([0-9a-f]{7,40}))?\s*$")
 BANNED = ("genuinely", "honestly", "actually")
 FENCE = re.compile(r"^\s*(```|~~~)")
 UNIT_START = re.compile(r"^\s*(#{1,6}\s+|[-*+]\s+|\d+(\.\d+)*[.)]\s+|>\s*)")
@@ -192,8 +196,16 @@ def check_document(text: str, lex: ste_check.Lexicon, unresolved: set[str], lexi
             "soft": {k: sorted(v) for k, v in soft.items()}}
 
 
+def source_note(verbs_json: dict) -> str:
+    """Which copy of the standard the local lexicon came from, and by which variable."""
+    var = verbs_json.get("source_variable")
+    found = f"found by ${var}" if var else "variable not recorded (rebuild with ste_extract.py)"
+    return f"sha256 {verbs_json.get('source_sha256', '?')}, {found}"
+
+
 def report(path: str, r: dict) -> str:
     lines = [f"document: {path}",
+             f"standard copy: {r.get('source', 'not recorded')}",
              f"standard: WeaverTools STE100 writing standard {r['standard_version']}",
              f"lexicon sha256: {r['lexicon_sha256']}",
              f"sentences checked: {r['sentences_checked']}",
@@ -227,6 +239,7 @@ def main(argv=None) -> int:
     lex = ste_check.Lexicon.load(verbs)
     r = check_document(doc.read_text(encoding="utf-8", errors="replace"), lex, unresolved_terms(),
                        lexicon_sha256())
+    r["source"] = source_note(json.loads(verbs.read_text()))
     print(report(a.document, r))
     if a.json:
         Path(a.json).write_text(json.dumps(r, indent=1) + "\n")

@@ -2,9 +2,10 @@
 
     python3 ste100/checker/ste_extract.py [--out ste100/var/approved-verbs.json]
 
-Reads $WEAVER_TRAIN_STE100_SOURCE (the Issue 9 PDF), checks its sha256 against the
-reference in lexicon/ste100-scheme.candidate.json, converts it with `pdftotext -layout` and
-parses Part 2. The output holds text from the standard, so it is written under var/
+Reads $WEAVERTOOLS_STE100_SOURCE (the Issue 9 PDF), or $WEAVER_TRAIN_STE100_SOURCE where
+the first is not set (WeaverTrain's name, kept so its setup works), checks its sha256
+against the reference in lexicon/ste100-scheme.candidate.json, converts it with
+`pdftotext -layout` and parses Part 2. The output records which variable it used. The output holds text from the standard, so it is written under var/
 (gitignored) and never committed: ASD reserves reproduction and publication.
 
 A census, not the checked extraction O02-1 owes: the headword count must equal the
@@ -30,14 +31,26 @@ FORM = re.compile(r"^([A-Z][A-Z-]+(?: [A-Z]+)*),?$")
 NUM = re.compile(r"^(\d+)\.\s+")
 
 
-def source_text() -> tuple[str, str]:
-    src = Path(os.environ["WEAVER_TRAIN_STE100_SOURCE"])
+SOURCE_VARS = ("WEAVERTOOLS_STE100_SOURCE", "WEAVER_TRAIN_STE100_SOURCE")
+
+
+def source_path(env=os.environ) -> tuple[Path, str]:
+    """The local copy's path and the variable it came from: the suite's name first,
+    WeaverTrain's as a fallback."""
+    for var in SOURCE_VARS:
+        if env.get(var):
+            return Path(env[var]), var
+    sys.exit(f"set {SOURCE_VARS[0]} to the path of the local copy of ASD-STE100")
+
+
+def source_text() -> tuple[str, str, str]:
+    src, var = source_path()
     want = json.loads((REPO / "lexicon" / "ste100-scheme.candidate.json").read_text())["reference"]["copy_sha256"]
     got = hashlib.sha256(src.read_bytes()).hexdigest()
     if got != want:
         sys.exit(f"ASD source sha256 {got} != reference {want}")
     out = subprocess.run(["pdftotext", "-layout", str(src), "-"], check=True, capture_output=True, text=True)
-    return out.stdout, got
+    return out.stdout, got, var
 
 
 def dictionary_lines(text: str) -> list[str]:
@@ -183,7 +196,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=str(REPO / "var" / "approved-verbs.json"))
     a = ap.parse_args(argv)
-    text, sha = source_text()
+    text, sha, var = source_text()
     verbs = parse(dictionary_lines(text))
     if len(verbs) != EXPECT_VERBS:
         sys.exit(f"found {len(verbs)} approved verb headwords, expected {EXPECT_VERBS}")
@@ -191,9 +204,10 @@ def main(argv=None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     unapproved = parse_unapproved_verbs(dictionary_lines(text))
     words, unwords = parse_words(dictionary_lines(text))
-    out.write_text(json.dumps({"source_sha256": sha, "verbs": verbs, "unapproved_verbs": unapproved,
+    out.write_text(json.dumps({"source_sha256": sha, "source_variable": var, "verbs": verbs, "unapproved_verbs": unapproved,
                                "approved_words": words, "unapproved_words": unwords,
                                "technical_noun_examples": technical_noun_examples(text)}, indent=1) + "\n")
+    print(f"source: ${var} (sha256 {sha})")
     print(f"{len(verbs)} approved verbs, {len(unapproved)} unapproved verbs -> {out}")
     return 0
 

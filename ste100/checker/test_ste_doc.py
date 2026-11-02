@@ -94,6 +94,38 @@ def test_header_missing_wrong_version_wrong_hash():
     assert rules(run("Examine the file.", header="STE100: some other form")) == ["header"]
 
 
+def test_header_may_name_a_commit_and_only_the_sha256_is_checked():
+    assert run("Examine the file.", header=HEAD + ", WeaverTools commit fbab640")["failures"] == []
+    assert run("Examine the file.", header=HEAD + ", WeaverTools commit " + "0" * 40)["failures"] == []
+    wrong_hash = HEAD.replace("a" * 64, "b" * 64) + ", WeaverTools commit fbab640"
+    assert rules(run("Examine the file.", header=wrong_hash)) == ["header"]
+    assert rules(run("Examine the file.", header=HEAD + ", commit fbab640")) == ["header"]
+
+
+def test_source_variable_prefers_the_suite_name_and_falls_back():
+    import ste_extract
+    suite, train = ste_extract.SOURCE_VARS
+    assert suite == "WEAVERTOOLS_STE100_SOURCE" and train == "WEAVER_TRAIN_STE100_SOURCE"
+    assert ste_extract.source_path({suite: "/a", train: "/b"}) == (Path("/a"), suite)
+    assert ste_extract.source_path({train: "/b"}) == (Path("/b"), train)
+    assert ste_extract.source_path({suite: "", train: "/b"}) == (Path("/b"), train)
+    try:
+        ste_extract.source_path({})
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("no variable set must stop the extraction")
+
+
+def test_report_names_the_variable_the_copy_came_from():
+    assert ste_doc.source_note({"source_sha256": "d1f4", "source_variable": "WEAVERTOOLS_STE100_SOURCE"}) \
+        == "sha256 d1f4, found by $WEAVERTOOLS_STE100_SOURCE"
+    assert "not recorded" in ste_doc.source_note({"source_sha256": "d1f4"})
+    r = run("Examine the file.")
+    r["source"] = "sha256 d1f4, found by $X"
+    assert "standard copy: sha256 d1f4, found by $X" in ste_doc.report("d.md", r)
+
+
 def test_code_and_quotations_are_masked_whole():
     body = "Examine the file.\n\n```python\nrun_and_fix()  # fix running\n```\n\n> I will fix it; run it."
     assert run(body)["failures"] == []

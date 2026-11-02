@@ -11,9 +11,14 @@ The checker needs the approved words of ASD-STE100, which are never committed. B
 them once per computer from the operator's local copy:
 
 ```sh
-export WEAVER_TRAIN_STE100_SOURCE=/path/to/ASD-STE100_ISSUE9.pdf
+export WEAVERTOOLS_STE100_SOURCE=/path/to/ASD-STE100_ISSUE9.pdf
 python3 ste100/checker/ste_extract.py          # writes ste100/var/approved-verbs.json (gitignored)
 ```
+
+Where `WEAVERTOOLS_STE100_SOURCE` is not set, the extraction reads WeaverTrain's
+`WEAVER_TRAIN_STE100_SOURCE`, so a box set up for WeaverTrain needs nothing new. The
+variable it used is printed, recorded in the local lexicon, and printed again by
+`ste_doc.py` on its `standard copy:` line.
 
 The extraction refuses a copy whose sha256 is not the one pinned in
 `ste100/lexicon/ste100-scheme.candidate.json`. On this workshop's boxes the copy is on
@@ -52,7 +57,7 @@ Copied from toddwbucy/WeaverTrain at `ab63a918b569e5b8673dc2e78e66575ee9df1bd7` 
 | Here | There | Changes |
 |---|---|---|
 | `ste_check.py` | `scripts/ste_check.py` | Paths: `ste/` is `lexicon/`, `var/ste/` is `var/`, both under `ste100/`. Loads `lexicon/terms.toml` as technical nouns. The curly apostrophe written as `\u2019` (ASCII only). |
-| `ste_extract.py` | `scripts/ste_extract.py` | The same path changes. |
+| `ste_extract.py` | `scripts/ste_extract.py` | The same path changes. Reads `WEAVERTOOLS_STE100_SOURCE`, with `WEAVER_TRAIN_STE100_SOURCE` as a fallback, and records which in its output. |
 | `ste_mask.py` | `scripts/ste_convert.py`, lines 47-180 | Only the masking functions, without the converter. `mask(text, prose_parens=True)` keeps a parenthesis that follows a space as prose, so a parenthetical sentence is checked and not hidden. The default is the copied behaviour. The curly apostrophe as above. |
 | `test_ste_check.py` | `tests/test_ste_check.py` | A plain script in place of pytest. The curly apostrophe as above. |
 | `test_lexicon.py` | `tests/test_ste_thesaurus.py` | The thesaurus check, as a plain script, beside new checks on the lexicon. |
@@ -65,18 +70,20 @@ masks it without a source, checks the header line and reports by line, and no su
 driver exists in WeaverTrain to point at. The driver needs the checker beside it at a
 fixed version, and the checker reads its lexicon by path, so the standard, the lexicon
 and the checker are kept in one place and versioned together. The code is stdlib Python,
-which fits this repository. The cost is two copies of `ste_check.py`. They are the same
-code at `ab63a918` apart from paths, and both read this lexicon once WeaverTrain
-repoints to it. A change to the checking rules lands here first, by its own issue and
-PR, as a change to the lexicon does.
+which fits this repository. The cost is two copies of `ste_check.py`, the same code at
+`ab63a918` apart from paths. By the operator's ruling of 2026-11-02 they stay
+independent: WeaverTrain keeps its own checker, with no code dependency on this
+repository, and shares only the lexicon, pinned by sha256. A change to this checker
+lands by its own issue and PR here (the open faults are toddwbucy/WeaverTools#19), and
+whether WeaverTrain takes it is WeaverTrain's call.
 
 ## Known limits
 
-- **The extraction misses some approved words.** `ste_extract.py` reads 1135 approved
-  word strings from the standard's Part 2, and words whose entry is laid out differently
-  are missed: `immediately`, approved as an adverb, is reported unknown. A missed word
-  is a soft report, never a failure, unless it ends in "-ing" or is read as a verb. This
-  is WeaverTrain's extractor as copied. Measured 2026-11-02, not repaired here.
+- **Open faults, toddwbucy/WeaverTools#19.** An unknown noun ending in "-ing" fails as a
+  verb form ("meaning", "ruling"). A noun after a modifier that is not an article or a
+  preposition reads as a verb ("a second attempt"). The extraction misses some approved
+  entries (17 of 748 headwords in a rough count, `immediately` among them), which are
+  then reported unknown.
 - **Quoted text is masked.** The conversion masks double-quoted strings, so a quotation
   in a document is not checked. Use quotation marks for words named as words, not for
   prose.
