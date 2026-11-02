@@ -1,0 +1,191 @@
+# The program's own technical nouns (rule 1.5: technical nouns of the subject field):
+# words that the program's documents use with one sense, which neither the standard nor
+# technical-nouns.toml holds. Each entry gives its one sense, why it is here, and the
+# issue that added it. Our own words; no text of the standard.
+#
+# The checker reads every key here as a technical noun (ste_check.Lexicon.load), so a
+# key is never judged as a verb or as an "-ing" form. A technical noun is never used as
+# a verb.
+#
+# status = "unresolved" marks a word that has more than one sense in the program's
+# documents and waits on an operator ruling. A document that complies does not use an
+# unresolved word in its prose: ste_doc.py fails the sentence (rule unresolved-term).
+# Written as a technical name (in backticks) it is masked, so a document can name it.
+#
+# Baseline: 2026-11-02, toddwbucy/WeaverTools#17, accepted by the operator (rulings.md).
+# Every later change needs its own issue and PR (README.md, change control). An entry
+# whose reason is a checker fault is reviewed when toddwbucy/WeaverTools#19 lands:
+# terms.toml is not the way around checker faults.
+
+# --- Words of the writing field. The standard is for equipment text and has no nouns
+# for its own subject; a standard about writing needs them. Added for the writing
+# standard (ste100/writing-standard.md), which uses each.
+
+[terms.word]
+sense = "a unit of text between spaces or marks"
+reason = "writing field; the standard's own rule is one word, one meaning"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.meaning]
+sense = "the one sense in which a document uses a word"
+reason = "writing field; the subject of the one-word, one-meaning rule. Without it the checker reads it as an -ing form (checker fault, reviewed under toddwbucy/WeaverTools#19)"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.sentence]
+sense = "a unit of text that ends with a full stop, a question mark or a colon"
+reason = "writing field; the unit that the checker examines and that the length limits count"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.rule]
+sense = "a requirement of the standard or of the Working Rules on how to write"
+reason = "writing field; each checker failure names the rule it breaks"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.verb]
+sense = "a word that tells an action or a condition, as a part of speech"
+reason = "writing field; the standard's lists are lists of verbs"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.noun]
+sense = "a word that names a thing, as a part of speech"
+reason = "writing field; technical nouns are a category of the standard"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.document]
+sense = "a file of text that a repository keeps: a PRD, a Spec, a workflow document or a paper"
+reason = "writing field; the unit that the writing standard applies to"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.clause]
+sense = "a numbered requirement in a PRD or a Spec, with its own name, for example CLASS-9"
+reason = "program; clause names are technical names under the writing standard"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.identifier]
+sense = "a name in code: a variable, a function, a type or a module"
+reason = "software field; identifiers are technical names under the writing standard"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.backtick]
+sense = "the mark ` that starts and ends a technical name in Markdown"
+reason = "writing field; text in backticks is masked by the checker"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.semicolon]
+sense = "the mark ;"
+reason = "writing field; the Working Rules and the checker do not permit it"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.dash]
+sense = "a long horizontal mark between words"
+reason = "writing field; the Working Rules do not permit it as a mark between words"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.capitals]
+sense = "letters in their upper-case form"
+reason = "writing field; words in capitals are technical names only when technical-names.toml lists them"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.placeholder]
+sense = "a token of the form [[Cn]] that the checker puts in place of a technical name"
+reason = "program; the masking replaces technical names with placeholders"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.segment]
+sense = "one unit of training data that WeaverTrain converts to STE100"
+reason = "program; WeaverTrain's checker examines segments, the writing standard's driver examines documents"
+added = "toddwbucy/WeaverTools#17"
+
+[terms."hedge form"]
+sense = "a form of words that tells how sure a statement is: possibly, I think that"
+reason = "program; the hedge forms are candidates in usage-notes.md, owed a ruling"
+added = "toddwbucy/WeaverTools#17"
+
+# --- Words of the program's process.
+
+[terms.PRD]
+sense = "a product requirements document: the charter of a part of the program"
+reason = "program; one of the three kinds of document in the writing standard's scope"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.Spec]
+sense = "a specification: the document that code under it conforms to"
+reason = "program; one of the three kinds of document in the writing standard's scope"
+added = "toddwbucy/WeaverTools#17"
+
+[terms."workflow document"]
+sense = "the document that governs a workflow loop, and that loop code traces to"
+reason = "program; one of the three kinds of document in the writing standard's scope (WeaverAgent#437, ruling T)"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.paper]
+sense = "a research text for publication, in the author's own voice"
+reason = "program; papers are outside the writing standard's scope"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.ruling]
+sense = "a decision of the operator that a document or an issue records, with its date and cause"
+reason = "program; rulings set the lexicon and the scope. Without it the checker reads it as an -ing form (checker fault, reviewed under toddwbucy/WeaverTools#19)"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.candidate]
+sense = "an entry or a form that is proposed and has no ruling"
+reason = "program; most lexicon entries are candidates until the operator rules"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.lexicon]
+sense = "the program's additions to the standard, held as data in ste100/lexicon/"
+reason = "program; the shared artifact of the writing standard"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.thesaurus]
+sense = "the lexicon file that tells, sense by sense, how to write a verb that is not approved"
+reason = "program; names thesaurus.toml, one of the two artifacts of ruling B (WeaverAgent#433)"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.baseline]
+sense = "the lexicon as this repository received it on 2026-11-02, from which every change is recorded"
+reason = "program; change control counts from it"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.consumer]
+sense = "a program or a document that reads the lexicon at a pinned commit or sha256"
+reason = "program; the lexicon couples its consumers"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.checker]
+sense = "the script that examines text against the standard and the lexicon: ste_check.py and its document driver"
+reason = "program; the measurement of a document is the checker result"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.driver]
+sense = "a script that runs another script over its input: ste_doc.py runs the checker over a document"
+reason = "program; names ste_doc.py's part"
+added = "toddwbucy/WeaverTools#17"
+
+[terms."header line"]
+sense = "the one line below a document's name that names the standard, its version and the lexicon sha256"
+reason = "program; ruling 3 of toddwbucy/WeaverTools#17"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.copyright]
+sense = "the legal right of ASD to the text of the standard"
+reason = "program; the reason the standard's dictionary is never committed"
+added = "toddwbucy/WeaverTools#17"
+
+[terms."transmission test"]
+sense = "a test of a document by synthetic readers, recorded under the program's Transmission Test Convention"
+reason = "program; a candidate measure of the writing standard"
+added = "toddwbucy/WeaverTools#17"
+
+# --- Words ruled to one sense after a drift.
+
+[terms.restatement]
+sense = "the repair: the model writes its output again after the checker's notes (CLASS-9 of the state-management primitives PRD, and Spec 02, in WeaverAgent)"
+reason = "program; had two senses until the operator's ruling of 2026-11-02 (WeaverAgent#437, Q4). The other sense is now preface"
+added = "toddwbucy/WeaverTools#17"
+
+[terms.preface]
+sense = "the model's first emission each turn: an STE100 statement of the input, before the solution. The pattern is preface, then solve"
+reason = "program; the operator's ruling of 2026-11-02 (WeaverAgent#437, Q4) names it, in place of restate-then-solve (WeaverTrain #2, rulings 6 and 9)"
+added = "toddwbucy/WeaverTools#17"

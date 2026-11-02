@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 # a matrix run killed before restoring its declaration leaves this beside it
 .pre-matrix
+# the local lexicon ste_extract.py makes holds text of the standard: never committed
+ste100/var/

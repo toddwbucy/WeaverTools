@@ -37,6 +37,18 @@ A run's evidence lives in its deposit on the shared bulk store, and the reposito
 carries only the result note and the scripts that produced its figures. A result note
 names its deposits and copies no data from them.
 
+**`ste100/`**: the STE100 writing standard and the lexicon it shares with its other
+consumers, two of the documents that bind more than one repository.
+
+- `ste100/writing-standard.md`: new PRDs, Specs and workflow documents in every
+  WeaverTools repository are written in ASD-STE100. Written in STE100 itself.
+- `ste100/lexicon/`: the program's additions to the standard (thesaurus, technical
+  verbs, nouns and names, fixed mappings, terms, usage notes, word rulings) as data. The
+  standard, WeaverTrain's checker and rewriter, and WeaverAgent's state store each pin it
+  by commit or sha256. Changes go one issue and one pull request at a time.
+- `ste100/checker/`: the checker that measures a document against the standard. It
+  needs the operator's local copy of the standard, which is never committed.
+
 **Still to come**, on the operator's word: the cross-repository contracts
 (`weaver-gate-world`, `weaver-admin-operator`, `weaver-analysis-state`,
 `weaver-analysis-web`), the suite vision, the four process documents, and the paper
