@@ -168,6 +168,7 @@ that moves a contract is ordered by that fact.
 ## 9. What this document does not do
 
 It does not set a repository's gates, commands or boundaries. It does not say what shape a
-document takes or how prose is written. Those belong to the repository's `CLAUDE.md`, the
-Document Format and the Working Rules. It does not replace the Working Process, which
-stands in WeaverAgent until it is revised and moved here.
+document takes or how prose is written. Those belong to the repository's `CLAUDE.md` and
+to whatever documents that file names as binding the repository. The Document Format and
+the Working Rules bind WeaverAgent and do not bind WeaverWeb. It does not replace the
+Working Process, which stands in WeaverAgent until it is revised and moved here.
