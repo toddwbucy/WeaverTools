@@ -37,6 +37,11 @@ A run's evidence lives in its deposit on the shared bulk store, and the reposito
 carries only the result note and the scripts that produced its figures. A result note
 names its deposits and copies no data from them.
 
+**`process/`**: the documents that say how work moves through every repository of the
+suite. `WeaverTools-Suite-Workflow.md` is the first: the seats, the pull request path,
+review, merges, and how an act across repositories is ordered. A repository's `CLAUDE.md`
+cites it and keeps only what is its own.
+
 **Still to come**, on the operator's word: the cross-repository contracts
 (`weaver-gate-world`, `weaver-admin-operator`, `weaver-analysis-state`,
 `weaver-analysis-web`), the suite vision, the four process documents, and the paper
