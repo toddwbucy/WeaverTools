@@ -279,13 +279,15 @@ finish() {
     # The host loopback guard, kept by the guest from boot rather than by cloud-init.
     sudo tee /etc/nftables.conf >/dev/null <<'EOF'
 #!/usr/sbin/nft -f
-# User-mode networking maps 10.0.2.2 onto the host's loopback; no new connection to it.
+# User-mode networking maps 10.0.2.2 (and fec0::2, where IPv6 is on) onto the host's
+# loopback; no new connection to either.
 flush ruleset
 table inet hostguard {
   chain out {
     type filter hook output priority 0; policy accept;
     ct state established,related accept
     ip daddr 10.0.2.2 counter drop
+    ip6 daddr fec0::2 counter drop
   }
 }
 EOF

@@ -76,6 +76,8 @@ run() {
     seed
     local net=(--network "$NET")
     if [ "$NET" = user-fwd ]; then
+        # As run on 2026-11-11: IPv6 on, and the loopback probe IPv4 only. The IPv6 alias
+        # (fec0::2 onto the host's ::1) was measured later from the clone (README).
         net=(--network none --qemu-commandline="-netdev user,id=un0,hostfwd=tcp:127.0.0.1:$SSH_PORT-:22 -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a")
     fi
     virt-install --connect "$URI" --name "$NAME" --memory 2048 --vcpus 2 \

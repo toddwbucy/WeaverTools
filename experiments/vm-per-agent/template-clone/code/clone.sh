@@ -6,6 +6,7 @@
 #   VM_ROOT=<dir> MODELS_DIR=<dir> code/clone.sh create
 #   VM_ROOT=<dir> code/clone.sh step NAME [ARGS]    (GUEST_ENV="VAR=value ..." sets its env)
 #   VM_ROOT=<dir> code/clone.sh virtiofsd       the host side of the share, as running
+#   VM_ROOT=<dir> code/clone.sh netdev VALUE    shut down, set the -netdev argument, start
 #   VM_ROOT=<dir> code/clone.sh destroy
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -64,6 +65,35 @@ step() {
     run_step "$PORT" "$LOG" "$1" "${GUEST_ENV:+env $GUEST_ENV }clone-steps $*"
 }
 
+# netdev VALUE: the clone's user-mode -netdev argument replaced by VALUE (it must keep
+# id=un0 and the SSH hostfwd), the domain shut down first and started after, so the
+# loopback probe can be run against each backend option.
+netdev() {
+    local value=$1 x t=0
+    case $value in user,id=un0,*hostfwd=*) ;; *) die "VALUE must start user,id=un0, and keep the SSH hostfwd" ;; esac
+    if [ "$(virsh_ domstate "$NAME")" != "shut off" ]; then
+        virsh_ shutdown "$NAME" >/dev/null
+        until [ "$(virsh_ domstate "$NAME")" = "shut off" ]; do
+            t=$((t + 3)); [ "$t" -lt 180 ] || die "$NAME did not shut off"; sleep 3
+        done
+    fi
+    x=$(mktemp)
+    virsh_ dumpxml --inactive "$NAME" >"$x"
+    python3 - "$x" "$value" <<'PY'
+import re, sys
+p, val = sys.argv[1], sys.argv[2]
+s = open(p).read()
+s, n = re.subn(r"<qemu:arg value='user,id=un0[^']*'/>", "<qemu:arg value='%s'/>" % val, s)
+if n != 1:
+    sys.exit("expected one user-mode -netdev argument, found %d" % n)
+open(p, "w").write(s)
+PY
+    virsh_ define "$x" >/dev/null; rm -f "$x"
+    virsh_ dumpxml --inactive "$NAME" | grep "qemu:arg value='user" | tee -a "$LOG/netdev.txt"
+    virsh_ start "$NAME" >/dev/null
+    wait_ssh "$PORT" 300
+}
+
 destroy() {
     if virsh_ dominfo "$NAME" >/dev/null 2>&1; then
         virsh_ destroy "$NAME" >/dev/null 2>&1 || true
@@ -76,6 +106,7 @@ case ${1:-} in
 create) create ;;
 step) shift; step "$@" ;;
 virtiofsd) virtiofsd_args ;;
+netdev) shift; netdev "$1" ;;
 destroy) destroy ;;
-*) sed -n '2,10p' "$0" >&2; exit 2 ;;
+*) sed -n '2,11p' "$0" >&2; exit 2 ;;
 esac

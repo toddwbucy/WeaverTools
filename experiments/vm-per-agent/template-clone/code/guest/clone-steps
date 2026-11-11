@@ -151,6 +151,32 @@ test_step() {
     return "$rc"
 }
 
+# loopback-probe PORT...: a TCP connect, no protocol, to each port at the host's two
+# user-mode aliases (10.0.2.2, and fec0::2 for IPv6), an outbound control, and an
+# endpoint a guestfwd may name (10.0.2.100:8080); with the guard's counters.
+loopback_probe() {
+    section addresses; ip -o addr show scope global | awk '{print $2, $3, $4}'
+    ip -6 route show 2>/dev/null | head -3
+    section connects
+    python3 - "$@" <<'PY'
+import socket, sys
+def probe(host, port, fam):
+    s = socket.socket(fam, socket.SOCK_STREAM); s.settimeout(3)
+    try:
+        s.connect((host, port)); return "connects"
+    except Exception as e:
+        return "no-connect (%s)" % type(e).__name__
+    finally:
+        s.close()
+for port in map(int, sys.argv[1:]):
+    print("10.0.2.2:%d %s" % (port, probe("10.0.2.2", port, socket.AF_INET)))
+    print("[fec0::2]:%d %s" % (port, probe("fec0::2", port, socket.AF_INET6)))
+print("github.com:443 (outbound control) %s" % probe("github.com", 443, socket.AF_INET))
+print("10.0.2.100:8080 (a guestfwd, where one is set) %s" % probe("10.0.2.100", 8080, socket.AF_INET))
+PY
+    section guard; sudo nft list table inet hostguard 2>&1
+}
+
 lifecycle_plan() {
     cd "$WA" && bash deploy/verify-lifecycle.sh --agent "$1"
 }
@@ -191,6 +217,7 @@ coreutils-probe) coreutils_probe ;;
 gnu-test) gnu_test ;;
 sudo-ws) sudo_ws ;;
 test-step) relaxed test_step ;;
+loopback-probe) shift; loopback_probe "$@" ;;
 lifecycle-plan) lifecycle_plan "$2" ;;
 lifecycle) lifecycle "$2" ;;
 lifecycle-relaxed) relaxed lifecycle "$2" ;;

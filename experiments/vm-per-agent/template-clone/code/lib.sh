@@ -48,10 +48,11 @@ ensure_key() {
 
 # write_seed DIR NAME INSTANCE: a NoCloud seed at DIR/seed.iso. The guest's one login
 # is GUEST_USER with the measurement key and passwordless sudo. Before any network
-# service starts, the guest drops every new connection it would open to the address
-# user-mode networking maps onto the host's loopback (10.0.2.2), so the guest cannot
-# reach a service the host binds to 127.0.0.1; replies on connections the host opens
-# (the SSH forward) still pass.
+# service starts, the guest drops every new connection it would open to the addresses
+# user-mode networking maps onto the host's loopback (10.0.2.2, and fec0::2 where IPv6
+# is on), so the guest cannot reach a service the host binds to 127.0.0.1 or ::1;
+# replies on connections the host opens (the SSH forward) still pass. The template and
+# clone of 2026-11-11 were built with the IPv4 line alone (README, "The network").
 write_seed() {
     local dir=$1 name=$2 instance=$3 pub
     pub=$(cat "$KEY.pub")
@@ -60,7 +61,7 @@ write_seed() {
     cat >"$dir/seed/user-data" <<EOF
 #cloud-config
 bootcmd:
-  - [sh, -c, "nft list table inet hostguard >/dev/null 2>&1 || nft -f - <<'NFT'\ntable inet hostguard {\n  chain out {\n    type filter hook output priority 0; policy accept;\n    ct state established,related accept\n    ip daddr 10.0.2.2 counter drop\n  }\n}\nNFT"]
+  - [sh, -c, "nft list table inet hostguard >/dev/null 2>&1 || nft -f - <<'NFT'\ntable inet hostguard {\n  chain out {\n    type filter hook output priority 0; policy accept;\n    ct state established,related accept\n    ip daddr 10.0.2.2 counter drop\n    ip6 daddr fec0::2 counter drop\n  }\n}\nNFT"]
 users:
   - name: $GUEST_USER
     shell: /bin/bash
@@ -82,7 +83,9 @@ EOF
 # (libvirt's <vcpu cpuset>), so the guest stays off CPUs another measurement holds.
 # User-mode networking given to QEMU directly, with SSH forwarded from host loopback
 # port SSH_PORT: libvirt's NAT network gets no DHCP, DNS or forwarding on the measuring
-# host (README, "The network"), and libvirt's own port forwarding needs passt.
+# host (README, "The network"), and libvirt's own port forwarding needs passt. IPv6 is
+# off: QEMU's user-mode IPv6 maps fec0::2 onto the host's ::1. The template and clone of
+# 2026-11-11 were defined before ipv6=off was added and had it on.
 define_guest() {
     local name=$1 disk=$2 seed=$3 vcpus=$4 mem=$5 port=$6 nvram=$7
     shift 7
@@ -93,7 +96,7 @@ define_guest() {
         --disk "path=$disk,format=qcow2,bus=virtio,discard=unmap" \
         --disk "path=$seed,device=cdrom,bus=sata" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,hostfwd=tcp:127.0.0.1:$port-:22 -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,hostfwd=tcp:127.0.0.1:$port-:22 -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a" \
         --graphics none --console pty,target.type=serial --noautoconsole --import "$@"
 }
 
