@@ -110,7 +110,25 @@ code/clone.sh step validate vmagent1
 code/clone.sh step load vmagent1
 
 GUEST_ENV="$G" code/clone.sh step test-step     # the test step alone, rerun with the host's load recorded
+
+# the host's loopback over IPv4 and IPv6, against each backend option
+P="<the five loopback ports>"                   # as in the network probe above
+code/clone.sh step loopback-probe $P            # as built: IPv6 on, the IPv4 guard
+#   then, in the guest: sudo nft add rule inet hostguard out ip6 daddr fec0::2 counter drop
+code/clone.sh step loopback-probe $P
+code/clone.sh netdev 'user,id=un0,ipv6=off,hostfwd=tcp:127.0.0.1:2231-:22'
+code/clone.sh step loopback-probe $P
+# a temporary listener on host loopback as the guestfwd endpoint, stopped after
+python3 -I -m http.server 18080 --bind 127.0.0.1 &
+code/clone.sh netdev 'user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:2231-:22,guestfwd=tcp:10.0.2.100:8080-tcp:127.0.0.1:18080'
+#   then, in the guest: sudo nft delete table inet hostguard
+code/clone.sh step loopback-probe $P
+code/clone.sh netdev 'user,id=un0,hostfwd=tcp:127.0.0.1:2231-:22'   # back as created
 ```
+
+The first three netdev settings were made with a helper doing what `clone.sh netdev`
+does, which was then added to `clone.sh`; the last, setting the clone back, was made
+with `clone.sh netdev` itself.
 
 The lifecycle runs were driven by a loop that reran `lifecycle-relaxed` while it failed
 only at step 0's test step and stopped at anything else, recording each run's start,

@@ -45,9 +45,12 @@ beside this note in `code/`, and `COMMANDS.md` gives how each was run.
   passed 3 of 17 runs under heavy host load, 2 of 6 after that load was confined away
   from the guest's CPUs, 3 of 6 in the clone's lifecycle runs, and 4 of 10 in test-only
   runs: 12 of 39 in all.
-- **User-mode networking reaches the host's loopback, and no host-side option in this
-  QEMU refuses it.** A rule inside the guest is the only stop. NAT, which the brief
-  named, was blocked by the host's firewall and is the operator's ruling.
+- **User-mode networking reaches the host's loopback over IPv4 and IPv6, and the
+  guest's guard as built covered IPv4 alone,** so the guest could reach three host
+  services over IPv6 throughout. Turning IPv6 off on the domain closes that; and
+  `restrict=on` with one `guestfwd` refuses everything but the named endpoint from the
+  host side, a fit for a loaded agent but not for the build. NAT, which the brief named,
+  was blocked by the host's firewall and is the operator's ruling.
 
 ## The network
 
@@ -66,28 +69,56 @@ is the operator's ruling, and nothing on the host was changed. The template was 
 on user-mode networking instead, which needs no host change: the guest's traffic leaves
 as the QEMU process's own.
 
-**User-mode networking gives the guest a path to the host's loopback.** It maps the
-guest's gateway address, 10.0.2.2, onto the host's 127.0.0.1, so a guest reaches
-whatever the host binds to loopback. Five such ports were probed from a guest with a
-bare TCP connect and no protocol: five connected.
+**User-mode networking gives the guest a path to the host's loopback, over IPv4 and
+IPv6.** It maps the guest's gateway address, 10.0.2.2, onto the host's 127.0.0.1, and
+with IPv6 on (QEMU's default) fec0::2 onto the host's ::1, so a guest reaches whatever
+the host binds to loopback. Five such ports were probed with a bare TCP connect and no
+protocol: over IPv4 five connected; over IPv6 the three the host also binds on ::1
+connected, and the other two answered "refused", which tells the guest they are bound
+on IPv4.
 
-**No host-side option refuses it in this QEMU.** libslirp 4.9.5 carries the switch
+**The guest's guard, as the template and clone were built, covered IPv4 alone.** From
+first boot an nftables rule drops every new connection the guest opens to 10.0.2.2,
+replies on connections the host opens (the SSH forward) passing. It is laid twice, by
+the seed's `bootcmd` before SSH starts and by the template's `/etc/nftables.conf`. With
+it none of the five connected over IPv4 and outbound traffic was unchanged. The IPv6
+alias was not measured until after the clone's lifecycle, prompted by a review of the
+committed scripts: with the guard as built, the clone still reached the host's three
+::1 services over fec0::2. **So through the template's build and the clone's runs the
+guest had a path to those three host services.** Nothing in the measurement used it,
+and no agent served.
+
+Each option against the same five ports, measured in the clone (`clone.sh netdev`, then
+the `loopback-probe` step; IPv4 and IPv6 each):
+
+| Domain's `-netdev user` | Guard in the guest | Host loopback reached | Internet | A named endpoint |
+|---|---|---|---|---|
+| as built (IPv6 on) | IPv4 line | 3 of 10 (the ::1 services) | yes | none set |
+| as built (IPv6 on) | IPv4 and `ip6 daddr fec0::2 drop` | 0 of 10 | yes | none set |
+| `ipv6=off` | IPv4 line | 0 of 10 (IPv6 unreachable) | yes | none set |
+| `ipv6=off,restrict=on` plus one `guestfwd` | none: the guard deleted | 0 of 10 (IPv4 refused, IPv6 unreachable) | no, nor DNS | the `guestfwd` endpoint answered 200 |
+
+`code/lib.sh` now gives every new domain `ipv6=off` and lays the IPv6 line in both
+copies of the guard; the sealed template predates both, so its `/etc/nftables.conf`
+carries the IPv4 line alone, which is enough once the domain has IPv6 off.
+
+**This QEMU can refuse the guest's path to the host's loopback from the host side only
+by refusing everything but named endpoints.** libslirp 4.9.5 carries a narrower switch
 (`bool disable_host_loopback; /* Prohibit connecting to 127.0.0.1:* */` in
 `libslirp.h`), and QEMU 11.1.1 does not expose it: `-netdev user,...,disable-host-loopback=on`
 answers `Invalid parameter 'disable-host-loopback'`, as do the underscore form and
-`map-host-loopback=`. `restrict=on` is accepted and isolates the guest from the outside
-as well, which the build cannot have. The one loopback option the QEMU binary carries is
-the passt backend's `map-host-loopback`, and passt is not installed on the measuring
-host (`-netdev passt` answers that it cannot execute `passt`); installing it is a host
-package, the operator's ruling.
-
-So the guest guards itself: from first boot, an nftables rule drops every new
-connection the guest opens to 10.0.2.2, replies on connections the host opens (the SSH
-forward) passing. With it none of the five connected, the rule's counter read 51
-packets dropped, and outbound traffic was unchanged. The rule is laid twice, by the
-seed's `bootcmd` before SSH starts and by the template's `/etc/nftables.conf`, and the
-clone's identity step shows it standing. A rule a guest's root can remove is a guard,
-not a boundary.
+`map-host-loopback=`. The passt backend has `map-host-loopback`, and passt is not
+installed on the measuring host (`-netdev passt` answers that it cannot execute
+`passt`); installing it is a host package, the operator's ruling. What this QEMU does
+offer is `restrict=on`, which isolates the guest from the host and the outside, with
+`guestfwd` entries as the only ways out: each names one host endpoint that QEMU itself
+connects to when the guest dials a virtual address. The build cannot run that way (it
+downloads), but a loaded agent whose connectors dial one WeaverWeb endpoint could, with
+the connector's server set to the virtual address and its TLS name to the server's own.
+That is a host-side boundary needing no host change beyond the domain's arguments; the
+guard inside the guest is not one, since the guest's root can remove it. Running QEMU in
+a network namespace of its own is another host-side shape, which needs privileged host
+steps and was not measured.
 
 **This fixes a condition of the method.** User-mode networking carried the template's
 build and the clone below. In the clone the load was attempted twice and refused at the
@@ -284,7 +315,11 @@ on those. The per-run logs are in the deposit.
 - The guest's virtual CPUs and QEMU's own threads were pinned (libvirt `cpuset`) to the
   host CPUs the Planner left for this work, away from another seat's measurement.
 - User-mode networking for the template's build and the card-less clone only, by the
-  overnight ruling; the loopback guard in every guest. No agent served.
+  overnight ruling; the loopback guard in every guest, covering IPv4 alone until the
+  IPv6 measurement above. No agent served.
+- For the netdev measurements, a temporary HTTP listener on host loopback served as the
+  `guestfwd` endpoint and was stopped after; the clone's `-netdev` was set back to the
+  value it was created with.
 - No host package, service, firewall rule, kernel parameter or device binding was
   changed; no GPU was touched.
 
