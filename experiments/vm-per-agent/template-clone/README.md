@@ -50,7 +50,7 @@ beside this note in `code/`, and `COMMANDS.md` gives how each was run.
   services over IPv6 throughout. Turning IPv6 off on the domain closes that; and
   `restrict=on` with one `guestfwd` refuses everything but the named endpoint from the
   host side, a fit for a loaded agent but not for the build. NAT, which the brief named,
-  was blocked by the host's firewall and is the operator's ruling.
+  was blocked by the host's firewall and is the operator's to rule.
 
 ## The network
 
@@ -65,9 +65,10 @@ reaches (`code/net-probe.sh`, `code/guest/net-probe`).
 On the measuring host, libvirt's NAT network is blocked by the host's own firewall
 policy, which drops what the guest sends to the host and what it sends through it; the
 guest's DHCP requests reached the bridge and no offer came back. Changing that policy
-is the operator's ruling, and nothing on the host was changed. The template was built
+is the operator's to rule, and nothing on the host was changed. The template was built
 on user-mode networking instead, which needs no host change: the guest's traffic leaves
-as the QEMU process's own.
+as the QEMU process's own. That, and the conditions on it below, are the Planner's
+overnight decision, not yet the operator's ruling.
 
 **User-mode networking gives the guest a path to the host's loopback, over IPv4 and
 IPv6.** It maps the guest's gateway address, 10.0.2.2, onto the host's 127.0.0.1, and
@@ -109,7 +110,7 @@ by refusing everything but named endpoints.** libslirp 4.9.5 carries a narrower 
 answers `Invalid parameter 'disable-host-loopback'`, as do the underscore form and
 `map-host-loopback=`. The passt backend has `map-host-loopback`, and passt is not
 installed on the measuring host (`-netdev passt` answers that it cannot execute
-`passt`); installing it is a host package, the operator's ruling. What this QEMU does
+`passt`); installing it is a host package, the operator's to rule. What this QEMU does
 offer is `restrict=on`, which isolates the guest from the host and the outside, with
 `guestfwd` entries as the only ways out: each names one host endpoint that QEMU itself
 connects to when the guest dials a virtual address. The build cannot run that way (it
@@ -120,8 +121,8 @@ guard inside the guest is not one, since the guest's root can remove it. Running
 a network namespace of its own is another host-side shape, which needs privileged host
 steps and was not measured.
 
-**This fixes a condition of the method.** User-mode networking carried the template's
-build and the clone below. In the clone the load was attempted twice and refused at the
+**This fixes a condition of the method**, set by the Planner and not yet the operator's
+ruling. User-mode networking carried the template's build and the clone below. In the clone the load was attempted twice and refused at the
 device before any agent served; its worker started and ended inside admin's rollback.
 No agent is loaded on user-mode networking, in this measurement or later, without the
 operator's ruling: a loaded agent's processes with a path to the host's loopback
@@ -153,7 +154,8 @@ secure boot. The steps, in order, are in `COMMANDS.md`. What it holds:
 - An fstab line mounting the host's models over virtiofs, read-only and `nofail`, and
   the loopback guard in `/etc/nftables.conf`.
 
-Beyond the operator's list (the brief's rulings allow it as a stated deviation), the
+Beyond the operator's list (the Planner's rulings in the brief allow it as a stated
+deviation), the
 template carries the Rust toolchain (616 MB), the cargo registry (975 MB), both source
 trees (43 MB and 7 MB), both target directories (2.1 GB and 693 MB), the CUDA toolkit
 (5.2 GB), the build packages, the bundle, and the guest operator account with
@@ -161,9 +163,10 @@ passwordless sudo. 20 GB of its 120 GB disk is used. The deploy scripts need all
 build material on the box (draft 10).
 
 **The seal**, as the template's last step: the machine id emptied to `uninitialized`,
-the SSH host keys and the operator's `authorized_keys` removed, the DKMS module-signing
-pair removed, `cloud-init clean --logs --seed --machine-id --configs network`, the
-journal vacuumed, `fstrim`, power off, the domain undefined and the disk made read-only.
+the SSH host keys and the guest operator account's `authorized_keys` removed, the DKMS
+module-signing pair removed, `cloud-init clean --logs --seed --machine-id --configs
+network`, the journal vacuumed, `fstrim`, power off, the domain undefined and the disk
+made read-only.
 Its last section lists every key-named file left on the disk.
 
 **The first seal missed a per-machine key.** That list showed fwupd's client pair
@@ -315,7 +318,8 @@ on those. The per-run logs are in the deposit.
 - The guest's virtual CPUs and QEMU's own threads were pinned (libvirt `cpuset`) to the
   host CPUs the Planner left for this work, away from another seat's measurement.
 - User-mode networking for the template's build and the card-less clone only, by the
-  overnight ruling; the loopback guard in every guest, covering IPv4 alone until the
+  Planner's overnight decision, not yet the operator's ruling; the loopback guard in
+  every guest, covering IPv4 alone until the
   IPv6 measurement above. No agent served.
 - For the netdev measurements, a temporary HTTP listener on host loopback served as the
   `guestfwd` endpoint and was stopped after; the clone's `-netdev` was set back to the
