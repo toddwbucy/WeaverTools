@@ -43,8 +43,9 @@ beside this note in `code/`, and `COMMANDS.md` gives how each was run.
 - **Tests in the stack scripts' test step fail run to run, two of them often, and every
   script that installs or verifies refuses on any.** On one unchanged tree the step
   passed 3 of 17 runs under heavy host load, 2 of 6 after that load was confined away
-  from the guest's CPUs, 3 of 6 in the clone's lifecycle runs, and 4 of 10 in test-only
-  runs: 12 of 39 in all.
+  from the guest's CPUs, 3 of 6 in the clone's lifecycle runs, 4 of 10 in test-only
+  runs beside a confined stress, and 1 of 10 with no stressor on the host (0 of the 4
+  that started at a host load under 5): 13 of 49 in all.
 - **User-mode networking reaches the host's loopback over IPv4 and IPv6, and the
   guest's guard as built covered IPv4 alone,** so the guest could reach three host
   services over IPv6 throughout. Turning IPv6 off on the domain closes that; and
@@ -133,6 +134,13 @@ guard matches nothing on another network.
 
 SSH reaches each guest through a QEMU port forward on host loopback, given as the
 domain's own QEMU arguments, since libvirt's port forwarding needs the passt backend.
+**The scripts do not pin the guest's host key** (`StrictHostKeyChecking=no`, no known
+hosts file, in `code/lib.sh`): a local process holding the forward's port first would be
+answered as the guest, take what the scripts send and could answer for it. The key the
+scripts log in with is not exposed by that, since public-key authentication does not
+send it. A host key made per guest, handed in through its seed and pinned in a known
+hosts file of its own, would close it; that is left for the next phase, where a new
+clone can show it working, rather than changed untested here.
 
 ## The template
 
@@ -282,9 +290,13 @@ The two that fail most are `flow::coordinator::tests::trace_backpressure_holds_v
 (`coordinator_tests.rs:454`, "bounded fixture did not finish ordered filing") and the
 preload door's user-namespace test, whose inner
 `preload_door::recorded_rule_three_way_at_matched_cuts` panics at `preload_door.rs:883`
-("three-way shape disagreement"). Once each, two others failed:
-`capture_tests::queued_release_...` in the template and a `pre_enter` test in the clone.
-Every guest virtual CPU is a host thread, so host load is given beside each figure:
+("three-way shape disagreement"). Three others failed now and then:
+`capture_tests::queued_release_...` once in the template, a `pre_enter` test twice in the
+clone, and `lifecycle::tests::an_organ_that_never_exits_is_killed_then_reaped`
+(`lifecycle/tests.rs:4226`) once in the clone. Every guest virtual CPU is a host thread,
+so host load is given beside each figure. It is the host's whole load average, the
+guest's own threads among it: twelve virtual CPUs running the test step lift it by up to
+about twelve on their own.
 
 | Where | Runs (UTC) | Host load | Test step passed |
 |---|---|---|---|
@@ -293,6 +305,7 @@ Every guest virtual CPU is a host thread, so host load is given beside each figu
 | template, plan runs 19-22 and install runs 1-2 | 09:19-09:30 | that stress confined to host CPUs the guest does not use | 2 of 6 (19: preload door; 20, 21, install 1: backpressure) |
 | clone, lifecycle runs 1-6 | 09:38-09:46 | 3.4 to 38, per run in the lifecycle table | 3 of 6 (each failure backpressure) |
 | clone, test-only runs 1-10 | 09:48-09:52 | 12.7 to 40.2, per run below | 4 of 10 |
+| clone, test-only runs 11-20 | 10:10-10:13 | no stressor; 2.7 to 27.1, per run below | 1 of 10 (0 of 4 under a host load of 5) |
 
 The clone's test-only runs, each with the host's load average as it started; from
 09:45:27Z another seat ran a CPU stress confined to host CPUs the guest does not use:
@@ -309,6 +322,26 @@ The clone's test-only runs, each with the host's load average as it started; fro
 | 8 | 09:51:17 | 23.8 | preload door |
 | 9 | 09:51:43 | 16.9 | passed |
 | 10 | 09:52:12 | 12.7 | a third test: `flow::context::worker_startup::pre_enter::tests::pending_answer_waits_for_capacity_without_reading_a_second_packet_or_inventing_a_bound`, at `context_worker_pre_enter_owner_tests.rs:256` ("actual admin EOF retires the connection") |
+
+Runs 11-20, after the other seat's stress had ended: the clone restarted with
+`ipv6=off`, nothing on the host but other seats' builds pinned to host CPUs the guest
+does not use, and the load rising from run 15 mostly with the guest's own runs:
+
+| Run | Start (UTC) | Host load (1 min) | Outcome |
+|---|---|---|---|
+| 11 | 10:10:22 | 2.7 | backpressure |
+| 12 | 10:10:37 | 3.3 | preload door (both three-way tests) |
+| 13 | 10:11:04 | 4.6 | preload door |
+| 14 | 10:11:31 | 4.1 | backpressure |
+| 15 | 10:11:46 | 11.6 | backpressure |
+| 16 | 10:12:10 | 24.6 | backpressure and the `pre_enter` test |
+| 17 | 10:12:26 | 22.4 | backpressure |
+| 18 | 10:12:41 | 18.1 | `an_organ_that_never_exits_is_killed_then_reaped` (`lifecycle/tests.rs:4226`) |
+| 19 | 10:12:57 | 21.8 | backpressure |
+| 20 | 10:13:19 | 27.1 | passed |
+
+So host load is not what makes these tests fail: on the quietest host this measurement
+had, the test step failed four runs out of four inside the guest.
 
 Template plan run 1 is left out: it ran before the settings of breaks 4 and 5 and failed
 on those. The per-run logs are in the deposit.
