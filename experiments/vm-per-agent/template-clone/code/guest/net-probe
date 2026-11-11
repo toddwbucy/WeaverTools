@@ -1,0 +1,53 @@
+#!/bin/bash
+# Measure what a guest on libvirt's default NAT network reaches: its DHCP lease, name
+# resolution through the gateway, and outbound ICMP, TCP, HTTP and HTTPS. Prints one
+# section per check; never stops on a failed check.
+set +e
+gw=$(ip -4 route show default | awk '{print $3; exit}')
+section() { printf '\n== %s\n' "$*"; }
+probe_url() {
+    printf '%s ' "$1"
+    curl -sS -o /dev/null -w '%{http_code} %{remote_ip} %{time_total}s\n' --max-time 15 "$1" 2>&1
+}
+
+section time
+date -u +%FT%TZ
+cut -d' ' -f1 /proc/uptime
+section address
+ip -4 -o addr show scope global
+section route
+ip -4 route
+section resolver
+resolvectl dns 2>&1
+section gateway-icmp
+ping -n -c 3 -W 2 "$gw"
+section dns-through-resolver
+for h in archive.ubuntu.com github.com index.crates.io developer.download.nvidia.com busybox.net; do
+    getent ahostsv4 "$h" | awk -v h="$h" 'NR==1 {print h, $1; found=1} END {if (!found) print h, "NO-ANSWER"}'
+done
+section dns-direct-to-gateway
+if command -v dig >/dev/null; then
+    dig +time=3 +tries=1 +short @"$gw" archive.ubuntu.com A || echo "dig rc=$?"
+else
+    echo "no dig"
+fi
+section outside-icmp
+ping -n -c 3 -W 2 1.1.1.1
+section outside-tcp
+for t in 1.1.1.1:443 9.9.9.9:443; do
+    if timeout 8 bash -c "exec 3<>/dev/tcp/${t%:*}/${t#*:}" 2>/dev/null; then
+        echo "$t open"
+    else
+        echo "$t no-connect rc=$?"
+    fi
+done
+section outside-http
+probe_url http://archive.ubuntu.com/ubuntu/dists/resolute/Release
+section outside-https
+for u in https://github.com/ https://index.crates.io/config.json \
+    https://static.rust-lang.org/rustup/release-stable.toml \
+    https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64/ \
+    https://busybox.net/; do
+    probe_url "$u"
+done
+section end

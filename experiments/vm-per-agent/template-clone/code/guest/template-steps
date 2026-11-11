@@ -1,0 +1,357 @@
+#!/bin/bash
+# Guest side of build-template.sh: one function per step, run as the guest's operator
+# account over SSH. Each step prints what it measured; a step that fails exits non-zero
+# and the host keeps its output. Nothing here is a WeaverAgent or WeaverWeb script; the
+# deploy scripts run unmodified from their checkouts.
+set -uo pipefail
+
+# The pins.
+WA_COMMIT=fba665b67c087c7f1ff004fc5946b5abb64c1fb5  # WeaverAgent, the connector accounts stack
+WA_BUNDLE=$HOME/bundles/weaveragent.bundle           # its origin: a bundle, not GitHub
+WW_COMMIT=c8b9c0101e449827d1ba9ed81b005d78ca8f4a86  # WeaverWeb main on 2026-11-11
+WW_URL=https://github.com/toddwbucy/WeaverWeb.git
+TOOLCHAIN=nightly-2026-02-13
+DRIVER=615.71.09-2ubuntu1                           # nvidia-open, the bare-metal driver release
+CUDA=13.4.2-1                                       # cuda-toolkit-13-4; nvcc V13.4.92
+NV_REPO=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64
+PACKAGES="build-essential gcc-15 g++-15 git curl ca-certificates cmake clang libclang-dev
+  pkg-config python3 bzip2 make acl libssl-dev dkms linux-headers-$(uname -r) jq sqlite3"
+
+WA=$HOME/WeaverAgent
+WW=$HOME/WeaverWeb
+export CARGO_TARGET_DIR=$HOME/target/weaveragent
+export PATH=$HOME/.cargo/bin:$PATH
+export DEBIAN_FRONTEND=noninteractive
+cuda_env() {
+    export PATH=/usr/local/cuda/bin:$PATH
+    export CUDA_LIB_DIR=/usr/local/cuda/lib64
+}
+section() { printf '\n== %s\n' "$*"; }
+
+facts() {
+    section os; cat /etc/os-release
+    section kernel; uname -a
+    section cpu-memory-disk; nproc; free -g; df -h / /tmp
+    section compilers; gcc --version 2>&1 | head -1; ls /usr/bin/g++-* 2>&1
+    section init; systemctl --version | head -1; stat -fc %T /sys/fs/cgroup
+    section python; python3 --version
+    section identity; cat /etc/machine-id
+    for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k"; done
+    section sudo; sudo -n true && echo "passwordless sudo"
+    grep -E '^@?includedir' /etc/sudoers
+    section network; ip -4 -o addr show scope global; ip -4 route; resolvectl dns
+    section hostguard; sudo nft list table inet hostguard
+    section tools-the-scripts-name
+    for t in getfacl setfacl tar bzip2 make gcc python3 sha256sum curl git cmake clang pkg-config \
+        visudo useradd groupadd runuser setpriv systemd-run nvidia-smi nvcc pacman; do
+        printf '%-12s %s\n' "$t" "$(command -v "$t" || echo absent)"
+    done
+}
+
+packages() {
+    sudo apt-get update -q || return 1
+    # shellcheck disable=SC2086
+    sudo apt-get install -y -q --no-install-recommends $PACKAGES || return 1
+    section installed
+    # shellcheck disable=SC2086
+    dpkg-query -W -f '${Package} ${Version}\n' $PACKAGES 2>&1
+    section default-compiler; gcc --version | head -1; ls -l /usr/bin/g++-15
+    section static-libc; ls -l /usr/lib/x86_64-linux-gnu/libc.a
+}
+
+rustup_install() {
+    curl -fsS --proto '=https' https://sh.rustup.rs -o /tmp/rustup-init.sh || return 1
+    sha256sum /tmp/rustup-init.sh
+    sh /tmp/rustup-init.sh -y --no-modify-path --profile minimal \
+        --default-toolchain "$TOOLCHAIN" -c rustfmt -c clippy || return 1
+    rustup --version; rustc -V; cargo -V
+}
+
+trees() {
+    [ -f "$WA_BUNDLE" ] || { echo "no bundle at $WA_BUNDLE"; return 1; }
+    git -C /tmp init -q bundle-check 2>/dev/null; git -C /tmp/bundle-check bundle verify "$WA_BUNDLE" 2>&1 | tail -2
+    git clone -q "$WA_BUNDLE" "$WA" 2>&1 || return 1
+    git -C "$WA" checkout -q --detach "$WA_COMMIT" || return 1
+    git clone -q "$WW_URL" "$WW" || return 1
+    git -C "$WW" checkout -q --detach "$WW_COMMIT" || return 1
+    for t in "$WA" "$WW"; do
+        section "$(basename "$t")"
+        git -C "$t" rev-parse HEAD; git -C "$t" remote -v; git -C "$t" status --short | head
+    done
+    section toolchain-file; cat "$WA/rust-toolchain.toml" | grep -E '^(channel|components)'
+}
+
+# The bootstrap before the CUDA toolkit stands: phase 0 predicted it refuses on nvcc.
+bootstrap_no_toolkit() {
+    cd "$WA" && bash deploy/bootstrap-stack.sh
+}
+
+nvidia() {
+    cd /tmp || return 1
+    curl -fsS --proto '=https' -O "$NV_REPO/cuda-keyring_1.1-1_all.deb" || return 1
+    sha256sum cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb || return 1
+    sudo apt-get update -q || return 1
+    # The driver pin is NVIDIA's own package, installed in an apt run of its own: the
+    # nvidia-open metapackage depends on nvidia-driver-open (>= its version), so in the
+    # same run as the pin apt takes the newest driver the repository carries (measured
+    # 2026-11-11: 620.70.06 for nvidia-open=615.71.09).
+    section driver-pin
+    sudo apt-get install -y -q "nvidia-driver-pinning-615.71.09=$DRIVER" || return 1
+    # The CUDA metapackages pinned to one release the same way; the 13.4.3 metapackages
+    # otherwise satisfy the 13.4.2 ones' (>=) dependencies and conflict with them.
+    sudo tee /etc/apt/preferences.d/cuda-13-4-2 >/dev/null <<EOF
+Package: cuda-13-4 cuda-command-line-tools-13-4 cuda-compiler-13-4 cuda-libraries-13-4 cuda-libraries-dev-13-4 cuda-minimal-build-13-4 cuda-nsight-compute-13-4 cuda-nsight-systems-13-4 cuda-runtime-13-4 cuda-toolkit-13-4 cuda-tools-13-4 cuda-visual-tools-13-4 nvidia-gds-13-4
+Pin: version $CUDA
+Pin-Priority: 1001
+EOF
+    section driver
+    sudo apt-get install -y -q --no-install-recommends "nvidia-open=$DRIVER" || return 1
+    section toolkit
+    sudo apt-get install -y -q --no-install-recommends "cuda-toolkit-13-4=$CUDA" || return 1
+    section pinned-releases-hold
+    dpkg-query -W -f '${Version}\n' nvidia-driver-open | grep -qx "$DRIVER" \
+        || { echo "nvidia-driver-open is not $DRIVER"; return 1; }
+    dpkg-query -W -f '${Version}\n' cuda-toolkit-13-4 | grep -qx "$CUDA" \
+        || { echo "cuda-toolkit-13-4 is not $CUDA"; return 1; }
+    echo "nvidia-driver-open $DRIVER, cuda-toolkit-13-4 $CUDA"
+    section installed
+    dpkg-query -W -f '${Package} ${Version}\n' 'nvidia-*' 'libnvidia-*' 'cuda-*' 'cccl-*' \
+        'libcublas*' 2>/dev/null | awk '$2 != ""' | sort
+    section layout
+    ls -l /usr/local/ | grep -i cuda
+    /usr/local/cuda/bin/nvcc --version
+    grep -hE 'define CCCL_(MAJOR|MINOR|PATCH)_VERSION|define CCCL_VERSION ' \
+        /usr/local/cuda/include/cuda/std/__cccl/version.h \
+        /usr/local/cuda/targets/x86_64-linux/include/cccl/cuda/std/__cccl/version.h 2>/dev/null
+    section dkms; dkms status
+}
+
+# A CCCL inside the 3.1.4-3.3.4 window the stack scripts state: CUDA 13.4.2's own is
+# 3.4.3, and with it llama.cpp's argsort.cu does not compile (README, "Breaks"). The
+# cccl-13-3 package holds 3.3.4 in a directory of its own; nvcc is pointed at it ahead
+# of the toolkit's (NVCC_PREPEND_FLAGS, given to the build steps by the host).
+CCCL_PKG="cccl-13-3=13.3.3.4.1-1"
+CCCL_INCLUDE=/usr/local/cuda-13.3/targets/x86_64-linux/include/cccl
+cccl_in_window() {
+    sudo apt-get install -y -q --no-install-recommends "$CCCL_PKG" || return 1
+    section package; dpkg -L cccl-13-3 | grep -E 'version.h$' | head -3
+    section versions
+    for d in /usr/local/cuda/targets/x86_64-linux/include/cccl "$CCCL_INCLUDE"; do
+        printf '%s: ' "$d"; grep -h 'define CCCL_VERSION ' "$d/cuda/std/__cccl/version.h"
+    done
+    section what-nvcc-compiles-against
+    local d; d=$(mktemp -d)
+    printf '#include <cuda/std/version>\n#include <cstdio>\nint main(){std::printf("%%d\\n", CCCL_VERSION);}\n' >"$d/v.cu"
+    /usr/local/cuda/bin/nvcc -ccbin /usr/bin/g++-15 -o "$d/v" "$d/v.cu" && printf 'default: ' && "$d/v"
+    NVCC_PREPEND_FLAGS="-I$CCCL_INCLUDE" /usr/local/cuda/bin/nvcc -ccbin /usr/bin/g++-15 \
+        -o "$d/w" "$d/v.cu" && printf 'NVCC_PREPEND_FLAGS=-I%s: ' "$CCCL_INCLUDE" && "$d/w"
+    rm -rf "$d"
+}
+
+# The engine and the CUDA crates rebuilt from clean, so no object compiled against
+# the toolkit's CCCL stays in the target directory.
+clean_cuda_crates() {
+    cd "$WA" && cargo clean --release -p llama-cpp-sys-2 -p llama-cpp-2 -p candle-kernels \
+        -p candle-core -p weaver-spu
+}
+
+# Where the driver stops without a card.
+gpu_state() {
+    section modules-before; lsmod | grep -E '^(nvidia|nouveau)' || echo "none loaded"
+    section modprobe; sudo modprobe nvidia; echo "modprobe exit $?"
+    section kernel-log; sudo dmesg | grep -iE 'nvidia|nvrm' | tail -20
+    section modules-after; lsmod | grep -E '^nvidia' || echo "none loaded"
+    section nvidia-smi; nvidia-smi; echo "nvidia-smi exit $?"
+    section devices; ls -l /dev/nvidia* 2>&1
+    section pci; lspci -nn | grep -iE 'nvidia|vga|3d' || echo "no NVIDIA PCI function"
+}
+
+# The bootstrap with nvcc on PATH and CUDA_LIB_DIR left at the scripts' default, which
+# names an Arch layout; Ubuntu's toolkit is under /usr/local/cuda.
+bootstrap_default_cuda_dir() {
+    export PATH=/usr/local/cuda/bin:$PATH
+    unset CUDA_LIB_DIR
+    cd "$WA" && bash deploy/bootstrap-stack.sh
+}
+
+bootstrap_plan() {
+    cuda_env; cd "$WA" && bash deploy/bootstrap-stack.sh
+}
+
+bootstrap_install() {
+    cuda_env; cd "$WA" && bash deploy/bootstrap-stack.sh --install
+}
+
+# The lock gate on a fresh box: process/gates/lock.sh resolves offline, and a cache
+# only a build has filled lacks other platforms' packages, so it answers unchecked
+# until a fetch of the whole lock.
+lock_gate() {
+    cd "$WA" || return 1
+    process/gates/lock.sh; echo "lock.sh exit $? before fetch"
+    cargo fetch --locked -q || return 1
+    process/gates/lock.sh; echo "lock.sh exit $? after fetch"
+}
+
+# relaxed COMMAND...: runs COMMAND with the two guest settings the WeaverAgent test
+# step needs and Ubuntu does not give by default (README, "Breaks"), and puts both back
+# after it whatever COMMAND answers, so the sealed template keeps Ubuntu's defaults:
+# unprivileged user namespaces with a uid map (AppArmor restricts them), and /bin/sh
+# as bash (a gate test's stand-in is a /bin/sh script and allows bash's fd 255 only;
+# dash holds 10 and 11).
+relaxed() {
+    local rc=0 userns sh
+    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
+    sh=$(readlink /bin/sh)
+    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || return 1
+    sudo ln -sfn bash /bin/sh || return 1
+    echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
+    "$@" || rc=$?
+    sudo ln -sfn "$sh" /bin/sh
+    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
+    echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    return "$rc"
+}
+
+# The two box accounts, laid as create-agent.sh lays them where absent.
+accounts() {
+    for a in weaver-gatecon weaver-admincon; do
+        getent passwd "$a" >/dev/null ||
+            sudo useradd --system --shell /usr/sbin/nologin --no-create-home --user-group "$a" ||
+            return 1
+        getent passwd "$a"; id "$a"
+        printf 'home %s stands: ' "$(getent passwd "$a" | cut -d: -f6)"
+        [ -e "$(getent passwd "$a" | cut -d: -f6)" ] && echo yes || echo no
+    done
+}
+
+# The connectors, built from WeaverWeb, with measurement-only service definitions:
+# WeaverWeb ships no unit and names no install location (issue draft). Units stand
+# disabled and start only where a config stands.
+connectors() {
+    local t=$HOME/target/weaverweb
+    (cd "$WW" && CARGO_TARGET_DIR=$t cargo build --locked --release --no-default-features \
+        --bin gate-con --bin admin-con) || return 1
+    sudo install -d -o root -g root -m 0755 /opt/weaver-web /opt/weaver-web/bin /etc/weaver-web
+    sudo install -o root -g root -m 0755 "$t/release/gate-con" "$t/release/admin-con" \
+        /opt/weaver-web/bin/ || return 1
+    unit gate-con weaver-gatecon "the data plane's connector" "NoNewPrivileges=yes"
+    # admin-con drives weaver-admin through its sudo rule, so it keeps the right to
+    # gain privilege through sudo.
+    unit admin-con weaver-admincon "the admin plane's connector" ""
+    sudo systemctl daemon-reload
+    section installed
+    sha256sum /opt/weaver-web/bin/*
+    for c in gate-con admin-con; do
+        /opt/weaver-web/bin/$c --help | head -3
+        systemctl is-enabled weaver-$c.service || true
+    done
+}
+unit() { # unit NAME ACCOUNT DESCRIPTION EXTRA
+    sudo tee "/etc/systemd/system/weaver-$1.service" >/dev/null <<EOF
+# Measurement-only unit (WeaverTools experiments/vm-per-agent/template-clone);
+# WeaverWeb defines none.
+[Unit]
+Description=WeaverWeb $1, $3
+ConditionPathExists=/etc/weaver-web/$1.toml
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=$2
+ExecStart=/opt/weaver-web/bin/$1 --config /etc/weaver-web/$1.toml
+Restart=on-failure
+RestartSec=5
+$4
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
+finish() {
+    # The models: a read-only virtiofs share the domain may offer under the tag
+    # weaver-models; a clone without the share boots without it.
+    sudo install -d -o root -g root -m 0755 /opt/weaver/models
+    grep -q '^weaver-models ' /etc/fstab ||
+        echo 'weaver-models /opt/weaver/models virtiofs ro,nofail,x-systemd.device-timeout=10s 0 0' |
+        sudo tee -a /etc/fstab
+    # The host loopback guard, kept by the guest from boot rather than by cloud-init.
+    sudo tee /etc/nftables.conf >/dev/null <<'EOF'
+#!/usr/sbin/nft -f
+# User-mode networking maps 10.0.2.2 onto the host's loopback; no new connection to it.
+flush ruleset
+table inet hostguard {
+  chain out {
+    type filter hook output priority 0; policy accept;
+    ct state established,related accept
+    ip daddr 10.0.2.2 counter drop
+  }
+}
+EOF
+    sudo systemctl enable nftables.service
+    section stack
+    ls -l /opt/weaver /opt/weaver/bin /opt/weaver/lib /etc/weaver /etc/weaver/stack
+    cat /etc/ld.so.conf.d/weaver.conf
+    for k in /etc/weaver/stack/*; do printf '%s = %s\n' "${k##*/}" "$(head -1 "$k")"; done
+    section install-tuple; cat /etc/weaver/stack/install-tuple
+    section beyond-the-operators-list
+    du -sh "$HOME/.rustup" "$HOME/.cargo" "$WA" "$WW" "$HOME/target"/* "$HOME/bundles" \
+        /usr/local/cuda-13.4 2>/dev/null
+    df -h /
+}
+
+# Seal: no operator key, no machine identity, no cloud-init instance, then power off.
+seal() {
+    section before
+    cat /etc/machine-id
+    for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k"; done
+    cloud-init --version
+    rm -f "$HOME/.bash_history" "$HOME/.ssh/authorized_keys"
+    sudo rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed
+    # The module signing pair DKMS made when it built the driver: a private key every
+    # clone would share. DKMS makes a new pair at its next build in a clone.
+    sudo rm -f /var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
+    # fwupd's client pair, made at its first start: another private key every clone
+    # would share. fwupd makes a new pair at its next start in a clone.
+    sudo rm -f /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem
+    # --configs network: the netplan file cloud-init rendered matches the build NIC by
+    # MAC; each clone renders its own for the interface its domain gives it.
+    sudo cloud-init clean --logs --seed --machine-id --configs network || return 1
+    sudo journalctl --rotate -q; sudo journalctl --vacuum-time=1s -q
+    sudo apt-get clean
+    sudo fstrim -av
+    section after
+    printf 'machine-id: [%s]\n' "$(cat /etc/machine-id)"
+    ls /etc/ssh/ssh_host_* 2>&1 | head -2
+    ls /var/lib/cloud/ 2>&1
+    section private-key-files-left
+    sudo find /etc /var /home /root /opt -xdev -type f \( -name '*.priv' -o -name '*.key' \
+        -o -name '*_key' -o -name 'id_rsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' \
+        -o -name '*.pem' \) -not -path '/etc/ssl/certs/*' 2>/dev/null | head -40
+    sudo systemd-run --on-active=3 systemctl poweroff
+    echo "powering off in 3s"
+}
+
+case ${1:-} in
+facts) facts ;;
+packages) packages ;;
+rustup) rustup_install ;;
+trees) trees ;;
+bootstrap-no-toolkit) bootstrap_no_toolkit ;;
+nvidia) nvidia ;;
+gpu-state) gpu_state ;;
+bootstrap-plan) bootstrap_plan ;;
+bootstrap-install) bootstrap_install ;;
+lock-gate) lock_gate ;;
+bootstrap-default-cuda-dir) bootstrap_default_cuda_dir ;;
+cccl-in-window) cccl_in_window ;;
+clean-cuda-crates) clean_cuda_crates ;;
+bootstrap-plan-relaxed) relaxed bootstrap_plan ;;
+bootstrap-install-relaxed) relaxed bootstrap_install ;;
+accounts) accounts ;;
+connectors) connectors ;;
+finish) finish ;;
+seal) seal ;;
+*) echo "unknown step: ${1:-}" >&2; exit 2 ;;
+esac

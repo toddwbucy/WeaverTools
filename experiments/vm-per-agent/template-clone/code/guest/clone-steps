@@ -1,0 +1,203 @@
+#!/bin/bash
+# Guest side of clone.sh: one function per step, run as the guest's operator account.
+# The deploy scripts run unmodified from the WeaverAgent checkout the template carries.
+set -uo pipefail
+
+WA=$HOME/WeaverAgent
+MODEL=qwen2.5-0.5b-instruct-q6_k.gguf
+ARTIFACT=/opt/weaver/models/$MODEL
+export CARGO_TARGET_DIR=$HOME/target/weaveragent
+export PATH=/usr/local/cuda/bin:$HOME/.cargo/bin:$PATH
+export CUDA_LIB_DIR=/usr/local/cuda/lib64
+section() { printf '\n== %s\n' "$*"; }
+
+# The clone's identity, against the template's as the template's facts step read it.
+identity() {
+    section hostname; hostname
+    section machine-id; cat /etc/machine-id
+    section host-keys
+    for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k"; done
+    section cloud-init; cloud-init status --long | head -6
+    section network; ip -4 -o addr show scope global; sudo nft list ruleset
+    section stack; head -3 /etc/weaver/stack/install-tuple; ls /etc/weaver/admin | wc -l
+    section trees; git -C "$WA" rev-parse HEAD; git -C "$WA" status --porcelain | head
+}
+
+# The models share as the guest sees it.
+models() {
+    section mount; findmnt /opt/weaver/models || echo "not mounted"
+    section listing; ls -ln /opt/weaver/models | head -20
+    section artifact; stat -c '%n uid %u gid %g mode %a size %s' "$ARTIFACT"
+    section held-closed
+    for p in "$ARTIFACT" /opt/weaver/models /opt/weaver /opt /; do
+        stat -c '%n uid %u gid %g mode %a' "$p"
+    done
+    section read; time sha256sum "$ARTIFACT"
+    section write-refused-by-the-guest-mount
+    sudo touch /opt/weaver/models/.write-probe 2>&1; echo "touch exit $?"
+}
+
+# Only where the host's virtiofsd was confirmed to run read-only: remount the share
+# read-write in the guest and try a write as root, which the host side must refuse.
+models_host_refusal() {
+    sudo mount -o remount,rw /opt/weaver/models 2>&1; echo "remount exit $?"
+    findmnt -no OPTIONS /opt/weaver/models
+    sudo touch /opt/weaver/models/.write-probe 2>&1; echo "touch exit $?"
+    sudo rm -f /opt/weaver/models/.write-probe 2>/dev/null
+    sudo mount -o remount,ro /opt/weaver/models 2>&1
+    findmnt -no OPTIONS /opt/weaver/models
+}
+
+# relaxed COMMAND...: as guest/template-steps states it. verify-lifecycle.sh's step 0
+# runs update-stack.sh's plan, whose test step needs both settings.
+relaxed() {
+    local rc=0 userns sh
+    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
+    sh=$(readlink /bin/sh)
+    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || return 1
+    sudo ln -sfn bash /bin/sh || return 1
+    echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
+    "$@" || rc=$?
+    sudo ln -sfn "$sh" /bin/sh
+    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
+    echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    return "$rc"
+}
+
+# The `test` the deploy scripts run as another account (`sudo -u <account> test -r`),
+# against a file the account reads through its primary group and one it reads through
+# a supplementary group, beside an actual read and bash's builtin test. Run as the box's
+# admin-con account, which create-agent.sh joins to an agent's groups.
+coreutils_probe() {
+    local d acct=weaver-admincon g
+    section coreutils
+    readlink -f /usr/bin/test; /usr/bin/test --version 2>&1 | head -1
+    dpkg-query -W -f '${Package} ${Version}\n' coreutils-from-uutils coreutils-from-gnu \
+        rust-coreutils gnu-coreutils 2>/dev/null
+    section account; sudo -u "$acct" id
+    d=$(mktemp -d); sudo chmod 0755 "$d"
+    for g in "$acct" $(id -Gn "$acct" | tr ' ' '\n' | grep -vx "$acct" | head -1); do
+        sudo install -o root -g "$g" -m 0640 /dev/null "$d/f"
+        section "file root:$g 0640, $acct's $( [ "$g" = "$acct" ] && echo primary || echo supplementary) group"
+        sudo -u "$acct" /usr/bin/test -r "$d/f"; echo "/usr/bin/test -r: exit $?"
+        sudo -u "$acct" bash -c "test -r '$d/f'"; echo "bash builtin test -r: exit $?"
+        sudo -u "$acct" cat "$d/f" >/dev/null; echo "cat (an actual read): exit $?"
+    done
+    sudo rm -rf "$d"
+}
+
+# GNU's test ahead of the Rust coreutils' one, in this clone only. Ubuntu's own switch
+# (coreutils-from-gnu in place of coreutils-from-uutils) would remove the packages
+# listed first, so instead GNU's test, which Ubuntu ships as gnutest, is linked into
+# /usr/local/bin, which sudo's secure_path searches before /usr/bin. No file a package
+# owns is changed.
+gnu_test() {
+    section what-the-package-switch-would-remove
+    sudo apt-get install -s coreutils-from-gnu coreutils-from-uutils- 2>&1 | grep -E '^Remv' | awk '{print $2}'
+    sudo grep -rh secure_path /etc/sudoers /etc/sudoers.d/ 2>/dev/null
+    sudo ln -sfn /usr/bin/gnutest /usr/local/bin/test
+    sudo ln -sfn '/usr/bin/gnu[' '/usr/local/bin/['
+    ls -l /usr/local/bin/test '/usr/local/bin/['
+    sudo -u weaver-admincon sh -c 'command -v test; type test'
+    coreutils_probe_as_sudo_path
+}
+
+# coreutils_probe, with test found as `sudo -u <account> test` finds it.
+coreutils_probe_as_sudo_path() {
+    local d acct=weaver-admincon g
+    d=$(mktemp -d); sudo chmod 0755 "$d"
+    for g in "$acct" $(id -Gn "$acct" | tr ' ' '\n' | grep -vx "$acct" | head -1); do
+        sudo install -o root -g "$g" -m 0640 /dev/null "$d/f"
+        section "file root:$g 0640, $acct's $( [ "$g" = "$acct" ] && echo primary || echo supplementary) group"
+        sudo -u "$acct" test -r "$d/f"; echo "sudo -u $acct test -r: exit $?"
+        sudo -u "$acct" cat "$d/f" >/dev/null; echo "cat (an actual read): exit $?"
+    done
+    sudo rm -rf "$d"
+}
+
+# The sudo rule create-agent.sh renders for an agent (its Defaults line and one grant),
+# checked by each visudo Ubuntu ships; then Ubuntu's own switch of the sudo alternative
+# from sudo-rs to the original sudo, in this clone only.
+sudo_ws() {
+    local f
+    f=$(mktemp)
+    printf '%s\n' '# the shape deploy/create-agent.sh renders' \
+        'Defaults:weaver-admincon !pam_session' \
+        'weaver-admincon ALL=(root) NOPASSWD: /opt/weaver/bin/weaver-admin show probe1, /opt/weaver/bin/weaver-admin load probe1' >"$f"
+    section before; update-alternatives --query sudo | grep -E '^(Value|Best)'
+    sudo --version | head -1
+    for v in /usr/lib/cargo/bin/visudo /usr/sbin/visudo.ws; do
+        section "$v -cf"; sudo "$v" -cf "$f" 2>&1; echo "exit $?"
+    done
+    rm -f "$f"
+    sudo update-alternatives --set sudo /usr/bin/sudo.ws || return 1
+    section after; update-alternatives --query sudo | grep -E '^(Value|Best)'
+    sudo --version | head -1; readlink -f /usr/sbin/visudo
+}
+
+# The stack scripts' test step alone (update-stack.sh run_tests, the same command and
+# target directory), once, with the guest's load beside it.
+test_step() {
+    local log rc=0
+    log=$(mktemp)
+    printf 'guest load before: %s\n' "$(cut -d' ' -f1-3 /proc/loadavg)"
+    (cd "$WA" && cargo test --release --locked -p weaver-trace -p weaver-harness -p weaver-state \
+        --features weaver-state/sqlite) >"$log" 2>&1 || rc=$?
+    printf 'guest load after: %s\n' "$(cut -d' ' -f1-3 /proc/loadavg)"
+    echo "cargo exit $rc"
+    grep -E '^test result: FAILED|panicked at' "$log" | head -8
+    awk '/^test result: (ok|FAILED)\. [0-9]+ passed; [0-9]+ failed;/ {p+=$4; f+=$6} END {print "passed", p+0, "failed", f+0}' "$log"
+    rm -f "$log"
+    return "$rc"
+}
+
+lifecycle_plan() {
+    cd "$WA" && bash deploy/verify-lifecycle.sh --agent "$1"
+}
+
+lifecycle() {
+    cd "$WA" && bash deploy/verify-lifecycle.sh --agent "$1" --artifact "$ARTIFACT" --apply
+}
+
+lifecycle_cleanup() {
+    cd "$WA" && bash deploy/verify-lifecycle.sh --agent "$1" --cleanup --apply
+}
+
+create_plan() {
+    cd "$WA" && bash deploy/create-agent.sh "$1" --artifact "$ARTIFACT"
+}
+
+create_apply() {
+    cd "$WA" && bash deploy/create-agent.sh "$1" --artifact "$ARTIFACT" --apply
+}
+
+validate() {
+    sudo /opt/weaver/bin/weaver-admin validate "$1"
+}
+
+# The load, as admin's verb runs it; expected to refuse on a box without a card.
+load() {
+    sudo /opt/weaver/bin/weaver-admin load "$1"; echo "load exit $?"
+    section admin-log; sudo tail -40 "/var/lib/weaver-agent/weaver-$1/admin.log" 2>&1
+    section worker-log; sudo tail -40 "/var/lib/weaver-agent/weaver-$1/worker.log" 2>&1
+    section show; sudo /opt/weaver/bin/weaver-admin show "$1" 2>&1 | head -30
+}
+
+case ${1:-} in
+identity) identity ;;
+models) models ;;
+models-host-refusal) models_host_refusal ;;
+coreutils-probe) coreutils_probe ;;
+gnu-test) gnu_test ;;
+sudo-ws) sudo_ws ;;
+test-step) relaxed test_step ;;
+lifecycle-plan) lifecycle_plan "$2" ;;
+lifecycle) lifecycle "$2" ;;
+lifecycle-relaxed) relaxed lifecycle "$2" ;;
+lifecycle-cleanup) lifecycle_cleanup "$2" ;;
+create-plan) create_plan "$2" ;;
+create-apply) create_apply "$2" ;;
+validate) validate "$2" ;;
+load) load "$2" ;;
+*) echo "unknown step: ${1:-}" >&2; exit 2 ;;
+esac
