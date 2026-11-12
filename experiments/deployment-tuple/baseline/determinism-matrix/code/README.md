@@ -58,7 +58,7 @@ One JSON file per box. The matrix reads these fields:
 | `gate_socket` | yes | the agent's gate socket, under the admin's coordination root |
 | `trace` | yes | the agent's trace sink, which every comparison is read from |
 | `admin_bin` | yes | the installed `weaver-admin` |
-| `admin_config` | yes | the admin's configuration directory, passed as `WEAVER_ADMIN_CONFIG` |
+| `admin_config` | yes | the base of the admin's configuration, passed as `WEAVER_ADMIN_CONFIG`; the run reads the agent's own root beneath it, `<admin_config>/<agent>/`, as the admin does |
 | `repo` | yes | the checkout of the agent's repository the stack was built from, for the toolchain reading, and for a Python SPU the `python-spu/` lock and readers its engine libraries are read by |
 | `loop_sha256` | optional | the sha256 of the loop the agent composes with, 64 lowercase hex digits or refused at preflight, which every load is held to, a load composed by another being a fault. Absent, the loop is unchecked |
 
@@ -104,13 +104,20 @@ python3 determinism_matrix.py --config <deposit>/config.json \
 Its `summary.json` names the worker, SPU and gate binaries and every engine library by
 sha256. They must be the ones the box facts name, and its `errors` must be zero.
 
-**Record the journal's retention**, `journalctl --disk-usage` and the oldest entry
-`journalctl -o short | head -1`, in the box facts. The harness reads each load's device
-from the cards its unit's processes hold, by `nvidia-smi` and the unit's control group,
-under its unit invocation as the load stands, and the engine's own journal lines are a
-cross-check only where it prints them. So retention does not limit the gate, but the
-journal window it also records at the close covers only what the journal still holds,
-and on a box keeping minutes that is the tail of a run.
+**The run's uid must reach the agent.** The harness dials the gate itself, so the
+agent's `allowed-uids` must name the uid the run runs under, and the rule
+`create-agent.sh` writes names `weaver-gatecon` alone. That uid also needs the agent's
+own group for the gate socket's directory, its state group to pass the territory, its
+trace group for the trace, and its admin access group for the worker's log.
+
+**The engine's lines are read from the worker's log.** The harness reads each load's
+device from the cards its scope's processes hold, by `nvidia-smi` and the scope's
+control group, under the scope's invocation as the load stands. The engine's own lines
+in `<territory>/worker.log`, read from the log's size before the load's verb, are a
+cross-check only where it prints them, and the window recorded at the close reads the
+log from its size before the run's first load. The harness no longer reads the journal.
+The box facts still record its retention, as the Spec's section 6.2 declares for every
+probe.
 
 ## What the exit code says
 

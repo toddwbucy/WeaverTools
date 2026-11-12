@@ -35,6 +35,21 @@ its own by sha256 where its box facts record one. The two files keep their own
 docstrings and comments, and this document restates only what a reader needs to hold a
 result against.
 
+**The stack it drives is the agent's as of WeaverAgent main `61d99dce`.** The matrix
+last ran on 2026-10-01, on the stack at `9608e5b`. On 2026-11-12 it was moved onto four
+changes of the stack since then:
+- each agent has its own root of admin's configuration, and the allow-list and the SPU
+  map are retired (WeaverAgent #45);
+- the agent left systemd's service units, and admin's start step sends the worker's
+  output to `worker.log` in the agent's territory (#72, its start step #77);
+- each load stands in its own transient scope (#166, by #518 and #524);
+- the box has two connector accounts, `weaver-gatecon` and `weaver-admincon`, and the
+  access rule `create-agent.sh` writes names `weaver-gatecon` alone (#533).
+
+Sections 5 and 7 state what each change moved. The names the earlier deposits carry are
+kept: the per-load read's key `journal`, the summary's `serving_device_journal_window`,
+and the closing step's label in `matrix.log`, "the journal's device read".
+
 **Words.** The charter's cell is a card family a device probe runs on. This probe's
 code calls one combination of a prompt and a depth a cell, and in this document that
 combination is a **matrix cell**. A **session** is one matrix cell served, replayed
@@ -255,29 +270,42 @@ being made only where both sides are readings and not where a closing read faile
   interpreter by its own version and the lock's sha256. Each end reads it for the SPU
   that end resolved once for every collector.
 
-**The serving device is read from the driver for each load as it stands.** The device
-is the cards that `nvidia-smi` lists a process of the worker unit's control group
-holding, the groups beneath it included, since the harness forks the SPU there. The
-read is bound to the load by its unit's InvocationID, read before and after it and
-never a time window, which a fast reload or a trailing journal holds the previous load
-inside. A unit holding no process, no process of it on a card, a row the reader cannot
-read, and a read that fails are each unreadable, never an empty binding.
+**The serving device is read from the driver for each load as it stands.** Admin's start
+step stands each load in the transient scope `weaver-<agent>.scope` in `weaver.slice`,
+one scope per load (WeaverAgent #166, by #518 and #524), and a scope is a unit with an
+InvocationID and a control group. The device is the cards that `nvidia-smi` lists a
+process of the scope's control group holding, the groups beneath it included, since the
+harness forks the SPU there. The read is bound to the load by the scope's InvocationID,
+read before and after it and never a time window, which a fast reload or a log trailing
+its writer holds the previous load inside. A scope holding no process, no process of it
+on a card, a row the reader cannot read, and a read that fails are each unreadable,
+never an empty binding.
 
 Where the engine prints its own device lines, as llama.cpp does, they are the read's
-cross-check, taken from the worker's journal under the same invocation. A block is
-taken only once it is complete, the engine's next line seen after the device lines,
-since a block of several cards can reach the journal a line at a time. A block naming
+cross-check, taken from the worker's log, `worker.log` in the territory the agent's root
+names, where admin's start step sends the worker's output (WeaverAgent #72, its start
+step #77). The journal holds none of it. **The read starts at the log's size before the
+load's verb.** Admin appends to the log and never truncates it, its run end kills the
+agent's control group and waits for it to empty before an unload answers, and a load
+takes the run lock, so the lines after that offset are the load's own. A log shorter
+than the offset was cut or replaced, and an offset that is not a byte offset was not
+read; each is unreadable. A line still being written, the last one without its newline,
+is left for the next read. Only the engine's own lines are read, the load's boundary,
+its device lines and the loader's line after the block, and the other lines the worker
+and its organs print are not. A block is taken only once it is complete, the engine's
+next line seen after the device lines, since a block of several cards can reach the log
+a line at a time, and more than one load after the offset is unreadable. A block naming
 other cards than the processes hold, or one that never completes, is unreadable. An
 engine that prints none, the native backend and `python-spu` among them, leaves the
-driver's read standing with the journal's empty read recorded beside it. **An empty read
-counts only where the journal is shown readable**, by a positive control: systemd's own
-entry that it started the invocation (`INVOCATION_ID`, the unit's `UNIT`, the catalog's
-unit-started `MESSAGE_ID`) must read back. Absent, the read is unreadable, since an
-engine's silence says nothing about whether this user can read the journal.
+driver's read standing with the log's empty read recorded beside it. **A log read whole
+is its own control.** A log this run may not open refuses at the open and is unreadable,
+so an empty read after the offset is an engine that printed no device line. The journal
+answered a reader outside its groups with nothing rather than a refusal, which is why
+its empty read needed systemd's start entry beside it to count.
 
 Both halves of a session are on one binding under two invocations, and no invocation
-recurs in a run. A journal kept by size holds minutes, so a read at the close would
-miss most of a run. The window read at the close is kept as a record and not counted. The summary carries these as `weights`,
+recurs in a run. The window read at the close, the log from its size before the run's
+first load, is kept as a record and not counted. The summary carries these as `weights`,
 `engine_libraries`, `weaver_binaries`, `toolchain` and `serving_device`, the window read
 as `serving_device_journal_window`, and the counts as `sessions`, `reproduced`,
 `diverged` and `errors`, the faults, with the verdicts by prompt character and by
@@ -322,7 +350,7 @@ record as it closes by `hold_invocations`, which the one session loop calls.
 | --- | --- | --- |
 | weights | the artifact's path held per load by the declaration's digest, and its bytes read at both ends of the run's window, every cell's artifact in a cells run | yes, `weights` must read `unchanged` |
 | precision | fixed by the weights hash | yes, with the weights |
-| device | each load's binding, the cards its unit's processes hold, read by its unit invocation as it stands and cross-checked by the engine's own lines where it prints them, both halves on one under two invocations, and every session on the same one | yes, `serving_device` must be one binding |
+| device | each load's binding, the cards its scope's processes hold, read by its scope's invocation as it stands and cross-checked by the engine's own lines where it prints them, both halves on one under two invocations, and every session on the same one | yes, `serving_device` must be one binding |
 | kernel stack | the engine libraries, the binaries and the toolchain read at both ends, and the SPU held per load by the digest in its load event's stack | yes, each must read `unchanged`, and every load must hold |
 | batch composition | recorded, not held: one caller and one turn at a time by construction, and the record carries nothing a second caller would change | no |
 | sampler and seed | the declared seed on every session's recorded seed, the replay's equal to the source's, the knobs compared per turn and held per load by the declaration's digest | yes, every session's verdict |
@@ -367,14 +395,14 @@ writes it, in either mode: the session it cut short is recorded as `interrupted`
 wherever in the session the interrupt lands, the window is read at the close, and the
 run exits 1, since a session it began did not complete. Every step between the session
 loop and the summary, the declaration's restore, the run's last unload, the closing
-readings of the stack and the weights, the SPU's closing resolution, the journal's
+readings of the stack and the weights, the SPU's closing resolution, the window's
 device read and the summary's write, is guarded: an interrupt there marks the run
 interrupted and the step is tried once more, and any other failure is logged, a restore
 that failed leaving the backup standing. A summary that could not be written, or a
 restore that did not land, fails the exit, since the run's result rests on both. A
 session's record joins the summary's counts only with its line in `matrix.jsonl`, so the
 two agree, and a line that could not be written fails the exit too. The run's last
-unload and the journal's device read are notes and do not, no session resting on either.
+unload and the window's device read are notes and do not, no session resting on either.
 A hangup, which is what closing the operator's terminal sends, ends the process before
 it does, and the per-session record written as each session closes is then the whole of
 what the run left.
@@ -450,8 +478,8 @@ two readers. The trace and the gate socket stand only once a load
 has, and each is awaited where it is read. No loop file is opened: the loop is held by
 its digest against each load event.
 
-**Every path the stack resolves is absolute.** The worker and the admin's units resolve
-a relative path against their own working directory and the harness against its launch
+**Every path the stack resolves is absolute.** The worker and admin resolve a relative
+path against their own working directory and the harness against its launch
 directory, so one spelling would name two files and the run would record the bytes of
 one while the stack served the other. The declaration's artifact, `--artifact`, each
 cell's artifact, the config's `trace`, `gate_socket` and `admin_config`, and every
@@ -459,19 +487,33 @@ binary the admin configuration names are refused at preflight unless absolute, a
 library `ldd` names by any other path is unreadable. The paths only the harness opens,
 the declaration file, `admin_bin`, `repo` and the outdir, are its own. A config may not
 name an SPU of its own: the admin launches the one its configuration names for the
-agent, the key `agent-spu` gives it in `spu-implementations` where the agent is named
-there and `spu-binary` otherwise, per `weaver-admin-Spec` section 9, and the run reads
-it there, so a config carrying `spu_bin` is refused. Nor may a config carry `held_spu`,
-the SPU every load is held to, which the run reads for itself at preflight. **Each file the run reads there is
-classed as admin's loader classes it.** `allow-list`, `worker-binary`, `spu-binary` and
-`gate-binary` are required, and one absent is an unreadable resolution, admin refusing
-every verb without it. `spu-implementations` and `agent-spu` are optional, and only
-their absence stands the default. A file of either class that stands and does not read,
-a dangling link, a directory or a file this run may not read, is an unreadable
-resolution the exit gates, never the default, since admin launches what the file says
-and not what this run could see. Both maps are judged whole by admin's rules before any
-default is taken, whichever agent they name, and a `spu-binary` naming no path is
-unreadable rather than guessed.
+agent, `spu-binary` in the agent's root, per `weaver-admin-Spec` section 9, and the run
+reads it there, so a config carrying `spu_bin` is refused. Nor may a config carry
+`held_spu`, the SPU every load is held to, which the run reads for itself at preflight.
+
+**The run reads the agent's own root of admin's configuration.** `admin_config` names
+the base, which the run passes to admin as `WEAVER_ADMIN_CONFIG`. Admin reads the root
+named for the agent beneath it, `<admin_config>/<agent>/`, and nothing shared
+(WeaverAgent #45), and the run reads the same root, the agent being a plain name.
+`allow-list`, `agent-spu` and `spu-implementations`, which admin no longer reads, are
+not read. **Each file the run reads there is classed as admin's loader classes it.**
+`worker-binary`, `spu-binary`, `gate-binary`, `coordination-root`, `territory`,
+`operator` and `roles.toml` are required, and one absent is an unreadable resolution,
+admin refusing every verb without it. `headroom-bytes`, `library-path`,
+`load-bound-seconds` and `shell-binary` are optional, and only their absence stands the
+default. A file of either class that stands and does not read, a dangling link, a
+directory or a file this run may not read, is an unreadable resolution the exit gates,
+never the default, since admin launches what the file says and not what this run could
+see. The root is judged whole by admin's rules, in admin's order, before anything is
+taken from it: the worker, the SPU and the gate binaries each name an absolute path; the
+worker, the state member beside it, the gate and the SPU differ pairwise by file name,
+the name the load event keys their digests by; `operator` is a uid;
+`load-bound-seconds`, where it names one, is a positive count of seconds; and
+`coordination-root`, `territory`, and `library-path` and `shell-binary` where they name
+a path, are absolute. The first refusal admin would meet is the one the run reports, and
+a `spu-binary` naming no path is unreadable rather than guessed. The grammar of
+`roles.toml` and the territory's ownership and modes are not judged here: admin refuses
+them at the verb, and the session faults.
 
 **Every file a run writes is its own.** A run in either mode writes three fixed names
 into its outdir, and its declaration backup beside the declaration.
@@ -490,10 +532,20 @@ grant that passes the admin's configuration through would let any process of the
 operator's uid choose what the admin executes as root. A run lives in the operator's
 own terminal on a fresh ticket, and `code/README.md` gives the shape.
 
-**The device read needs the driver and the unit's control group.** `nvidia-smi` must
-answer the operator's uid for the cards and for the compute processes on them. The
-unit's `cgroup.procs` under the cgroup v2 hierarchy must be readable to that uid. A box
-where either is not answers every load's device unreadable, and its sessions fault.
+**The run dials the gate as its own uid.** The harness opens the agent's gate socket
+itself and sends each turn there, so the agent's access rule, `allowed-uids` in its
+declaration, must name the uid the run runs under, or the gate refuses every turn. The
+rule `create-agent.sh` writes names `weaver-gatecon` alone (WeaverAgent #533). That uid
+must also hold the agent's own group, which opens the socket's directory, the agent's
+state group, which passes the territory the trace and the worker's log lie in, and the
+agent's trace group, which reads the trace.
+
+**The device read needs the driver, the scope's control group and the worker's log.**
+`nvidia-smi` must answer the run's uid for the cards and for the compute processes on
+them. The scope's `cgroup.procs` under the cgroup v2 hierarchy must be readable to that
+uid, and so must the worker's log, which is the agent's admin access group's at mode
+`0640` and is reached through the territory by the state group. A box where any of the
+three is not answers every load's device unreadable, and its sessions fault.
 
 **Clocks are recorded where they are not held.** A lock needs root per load, so a run
 that holds none records the card's state beside itself with an unprivileged readout

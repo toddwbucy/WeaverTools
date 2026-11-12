@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import determinism_matrix as dm  # noqa: E402
 from test_recorded_seed import CFG, Reloading, cells_main, run_main  # noqa: E402
+from test_agent_spu import write_root  # noqa: E402
 
 base = dm.base
 WANT = "the config's spu_bin is refused: the admin launches the SPU its configuration names"
@@ -20,7 +21,7 @@ WANT = "the config's spu_bin is refused: the admin launches the SPU its configur
 
 def test_a_config_naming_an_spu_is_refused_before_any_load_in_both_modes():
     # Codex's pass on 90b9a8a: `spu_bin` was hashed by both provenance
-    # readers while the admin launched admin_config/spu-binary, so a
+    # readers while the admin launched the agent root's spu-binary, so a
     # mismatch passed open. Perturbation: drop `spu_bin` from REFUSED_KEYS,
     # and both modes start.
     def with_spu(tmp, decl):
@@ -43,11 +44,8 @@ def test_the_resolver_reads_the_admin_configuration_alone():
     # Perturbation: put the override back into _resolve_spu, and the
     # config's own path is hashed in place of the admin's.
     with tempfile.TemporaryDirectory() as tmp:
-        for key, value in (("spu-binary", "/opt/weaver/bin/weaver-spu"), ("allow-list", "karl"),
-                           ("worker-binary", "/opt/weaver/bin/worker"),
-                           ("gate-binary", "/opt/weaver/bin/weaver-gate")):
-            with open(os.path.join(tmp, key), "w") as fh:
-                fh.write(value)
+        # The agent's own root beneath the base, as admin reads it.
+        write_root(tmp, CFG["agent"], {})
         cfg = dict(CFG, admin_config=tmp, spu_bin="/elsewhere/weaver-spu")
         assert base._resolve_spu(cfg) == ("/opt/weaver/bin/weaver-spu", "admin config spu-binary")
     assert "spu_bin" not in base.OPTIONAL_KEYS and "spu_bin" not in base.STACK_PATH_KEYS
