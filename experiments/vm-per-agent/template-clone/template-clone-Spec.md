@@ -28,7 +28,9 @@ word.
 **Words.** The **host** runs libvirt and QEMU. A **guest** is a virtual machine: the
 **template** while it is built, or a **clone**, an overlay naming the sealed template. A
 **step** is one named command run in a guest over SSH, with its output and exit status kept
-in the guest's log directory. A **round** of the driver step is one apt install: the
+in the guest's log directory. In a clone, `guest/gpu-steps` runs the steps of sections 6
+and 7 and hands any other step to `guest/clone-steps`. The guest steps' parameters go with
+each step, each value quoted whole. A **round** of the driver step is one apt install: the
 **pin** round installs the repository's pin package, and the **open** round installs the
 driver.
 
@@ -54,8 +56,11 @@ default where a default would be a box path, a host name, an account, an address
 | `NAME`, `PORT`, `VCPUS`, `MEMORY` | a clone's name, its SSH forward's host loopback port, its size | as `clone.sh` states |
 | `CPUSET` | host CPUs the guest's vCPUs and QEMU's threads stay on | unset: no pinning |
 | `DRIVER_PIN`, `DRIVER_OPEN` | the apt package specifications of the driver step's two rounds | none |
+| `DEB_CACHE` | the host directory holding the driver rounds' checked files | `$VM_ROOT/debs` |
+| `DEB_ORIGINS` | the URL prefixes a driver round may fetch from, space-separated, each ending `/` | the template's NVIDIA repository, which served every file of the slice's two rounds |
 | `HARNESS_DIR` | the determinism matrix's `code/` directory inside the guest | none |
 | `TOOLCHAIN_READING` | the `rustc --version` line the harness preflight must read | none |
+| `APT_LISTS`, `APT_CACHE` | the guest's apt lists and archive cache, which `gpu-steps` reads and fills; the offline mock (section 8) points them at its own | apt's own directories |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -168,7 +173,7 @@ engine library directory arrived as full copies, found in the rehearsal on run 3
 **A clone's driver moves by a round the host fetches and the guest installs.** The guest
 cannot download during it (section 4, and `restrict=on` where set). Every file is checked
 on the host against the SHA256 in the guest's own signed apt index before the guest
-installs it. Each round runs these steps:
+installs it. `clone.sh driver ROUND` runs one round's four steps:
 
 1. **`driver-uris ROUND` (guest).** apt's `--print-uris` lines for the round's packages
    (`DRIVER_PIN` or `DRIVER_OPEN`), each with its hash replaced.
@@ -178,17 +183,41 @@ installs it. Each round runs these steps:
    - The stanzas come from apt's lists, which apt checked against the signed `InRelease`
      at its last update. apt 3.2.0 prints each file's MD5Sum (the slice's run 2 stopped
      on it), and the host does not check MD5.
+   - **The step relies on this template keeping apt's lists uncompressed.** The slice's
+     run 4 read its NVIDIA list uncompressed, as its own `driver-uris` log names it. A
+     compressed `Packages` list (apt's `Acquire::GzipIndexes`) would leave its
+     repository out of the lookup. So the step stops, naming each one, where it finds any
+     compressed `Packages` list, among uncompressed ones or alone, and where it finds no
+     list at all.
    - The step stops where the stanzas naming one file disagree on `Size` or SHA256, where
      their `Size` is not apt's, or where a stanza does not carry apt's own hash under the
      same name, or carries a different value.
    - A line that no stanza names, or whose stanza carries no SHA256, goes out as apt
-     printed it, and the host refuses its hash type.
+     printed it. The host checks only SHA256 and SHA512, and refuses any other hash type.
 2. **The fetch (host).** For each line:
-   - The file name is checked: one path component ending `.deb`.
-   - A copy in the host's cache is used only if its SHA256 and size match the line.
-     Otherwise the file is fetched to a temporary name, checked, and only then moved into
-     the cache.
+   - **The URL must lie under one of `DEB_ORIGINS`**: it starts with one of those
+     prefixes, and the rest is a plain path with no `..`, query, fragment or user part.
+     Otherwise the round stops before anything is fetched. The guest names every URL a
+     round fetches, so the host takes the origins from its own parameter, never from the
+     guest. A redirect is followed only to https. A percent-encoded dot segment in the
+     rest (`%2e%2e`) can at most name another path on the same host, because each origin
+     fixes the scheme, host and port; the hash check still decides what is kept.
+   - The file name is checked: one path component ending `.deb`. The size must be a
+     number.
+   - **Each file is checked in the round's own stage directory**, so the bytes put into
+     the guest are the bytes checked. A cached copy is used only if its copy in the stage
+     matches the line's hash and size.
+   - Otherwise the file is fetched to a temporary name of its own in the cache, so two
+     rounds sharing a cache never share one. It is checked, copied into the stage, and
+     only then renamed into the cache, and the rename's exit is checked. A round never
+     removes a file that another round names.
    - Any mismatch stops the round, and no unchecked file stands in the cache.
+   - The round's temporary file and stage are removed on every exit: a refusal, or INT,
+     TERM or HUP. A temporary file left by a round killed outright (SIGKILL, power loss)
+     is never read, because no other round uses its name. Removing it is the operator's,
+     since a sweep could remove another round's download in progress.
+   - Two rounds sharing a cache may fetch the same file twice. No lock is needed for
+     correctness, so none is taken.
    - A round that names no file stops.
 3. **`put` (host)** puts the round's files into a new `~/debs` in the guest (section 5).
 4. **`driver-install ROUND` (guest).**
@@ -200,7 +229,10 @@ installs it. Each round runs these steps:
      with `--no-install-recommends`.
 
 The pin round runs before the open round, because the template's old pin package holds
-the open round's resolution until the new pin is installed.
+the open round's resolution until the new pin is installed. After the open round,
+`clone.sh reboot` restarts the clone onto the new module, and the boot is judged as in
+section 3. Each round's checked files are listed, with their size and hash, as
+`debs-ROUND.txt` in the guest's log directory.
 
 ## 7. The harness run on the template's toolchain (slice)
 
@@ -242,31 +274,74 @@ these steps (section 9).
 
 ## 8. The offline mock
 
-**`code/test/offline-mock.sh` runs the real `put`, the real `driver-install` and the real
-harness preflight, with no virtual machine, no network and no sudo.**
+**`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
+`uris_sha256`, `ci_judge` and harness preflight, with no virtual machine, no sudo and no
+network beyond loopback.**
 
-- The mock's guest is a temporary home directory on the host.
-- The SSH helper runs each command locally in it.
-- `sudo`, `apt-get`, `install` and `rustc` are stubs that record what they are asked to do.
-- It exits non-zero on the first check that fails.
+- The mock's guest is a temporary home directory on the host. The SSH helper runs each
+  guest command there, in an emptied environment. Its PATH holds the stubs, then the host
+  tools the steps need, and no `rustc`.
+- `sudo`, `apt-get` and `install` are stubs that record what they are asked to do:
+  - `sudo` runs the command as the caller;
+  - `apt-get --print-uris` answers from the mock's fixtures, and an install succeeds;
+  - `install` copies.
+- `APT_LISTS` and `APT_CACHE` (section 1) point at the mock's own index and cache.
+- A Python HTTP server on loopback stands in for the archive, and `DEB_ORIGINS` names it.
+- The guest's toolchain is a stub `rustc` and `rustup` in `$HOME/.cargo/bin`.
+- It exits non-zero on the first check that fails. With `KEEP` set, its temporary
+  directory stays for reading.
 
 Each of the slice's three script defects has a check that reproduces it against the
 behaviour that had it, and shows that this behaviour catches it:
 
 | Defect | The check |
 |---|---|
-| D1, the nested `~/debs` | Two rounds back to back. After the first `driver-install`, no `~/debs` stands. The second `put` lands its files directly in `~/debs`. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. |
+| D1, the nested `~/debs` | Two rounds back to back through `fetch_round`. After the first `driver-install`, no `~/debs` stands. The second round's `put` makes a new `~/debs`, and its install passes. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. The old copy (`cp -r`, the stand-in for `scp -r`) nests, as run 3 found. |
 | D2, links flattened | A source holding links arrives with the same links. The same source copied by `cp -rL` (the stand-in for `scp -r`) arrives as plain files, and the check tells them apart. |
-| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. |
+| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes, reading in that repository with `RUSTUP_AUTO_INSTALL=0`. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. |
 
-The mock also runs the `uris_sha256` cases from the slice:
+The fetch (section 6, step 2):
+- each round installs with `--no-download`, the open round without recommends, and each
+  round's files are listed with their SHA256;
+- a second round takes the cached copy;
+- a file whose SHA256 is not the index's stops the round, and leaves no file and no
+  partial file in the cache;
+- a line left with apt's MD5Sum is refused;
+- a round that names no file stops;
+- a URL from an origin not in `DEB_ORIGINS`, or climbing out of one with `..`, is refused
+  and never fetched, though its file and hash are good;
+- an origin not ending in `/` is refused.
+
+apt's lists (section 6, step 1): lists kept only compressed, a compressed list among
+uncompressed ones, and no list at all each stop `driver-uris`, naming what was found. The
+uncompressed list alone passes.
+
+A round's own files, in a cache two rounds share (section 6, step 2):
+- a round that fetches leaves another round's download in progress alone, whether it
+  has the old fixed name or one of its own, and leaves no temporary file or stage of its
+  own;
+- a cached copy of the right size that is not the file is fetched again, and the checked
+  file replaces it in the cache and reaches the guest's apt cache;
+- a refusal in `put` leaves no stage behind;
+- a TERM during a fetch removes the round's temporary file and stage.
+
+Two rounds actually running at once are not staged. The mock checks the mechanism that
+keeps them apart, because a race between them depends on timing.
+
+`uris_sha256`, on synthetic lists shaped like the slice's:
 - a stanza found by exact `Filename`;
 - two stanzas that agree;
 - disagreeing stanzas;
 - a size mismatch;
 - no SHA256;
 - no stanza;
-- apt's own hash differing.
+- apt's own hash differing;
+- a stanza found by `Filename`, never by package name.
+
+`ci_judge` (section 3): exit 2 with `network-wait` alone passes, and so does `done` with no
+item. A schema warning, a status other than `done`, and an unreadable status each stop.
+
+`put` (section 5) refuses a destination that stands, and a path holding `..`.
 
 Before a mock passed, the slice's own offline test stubbed `put` and every guest step,
 which is how all three defects reached a run.
@@ -282,6 +357,11 @@ slice, not to the template, and the result note names them.
 **They do not rebuild the template.** The template of 2026-11-11 stands until the rebuild
 act, which also decides the driver pin with the operator: the template holds 615.71.09,
 and the slice moved its clone to 620.70.06 by hand.
+
+**They do not read compressed apt lists.** Reading them through apt's own helper
+(`apt-helper cat-file`, which decompresses) is a later change. It is to be measured in a
+guest when a template needs it, because the measuring host has no apt and could only stub
+that path (section 6, step 1).
 
 **`net-probe.sh` is a record, not a path a guest takes.** It measured the two network
 backends with a throwaway guest before any template, on 2026-11-11, with a seed and SSH

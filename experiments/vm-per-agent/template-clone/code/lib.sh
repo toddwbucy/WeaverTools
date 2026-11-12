@@ -19,6 +19,10 @@ OS_VARIANT=ubuntu26.04
 IMAGE=$VM_ROOT/images/$IMAGE_NAME
 KEY=${KEY:-$VM_ROOT/keys/measure_ed25519}
 GUEST_USER=op
+# The URL prefixes a driver round may fetch from (Spec section 6), space-separated, each
+# ending "/": by default the template's NVIDIA repository (guest/template-steps' NV_REPO),
+# which served every file of the 2026-11-12 slice's two rounds.
+DEB_ORIGINS=${DEB_ORIGINS:-https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64/}
 
 virsh_() { virsh -c "$URI" "$@"; }
 say() { printf '\n== %s\n' "$*"; }
@@ -269,6 +273,114 @@ boot_ok() {
     fi
     cloud_init_verdict "$port" "$log" "$tag" | tee -a "$log/boot.txt" \
         || die "SSH is up, but cloud-init's verdict on this boot stops here; see $log/boot.txt"
+}
+
+# guest_env VAR...: an `env VAR=value ...` prefix for a guest command, each value quoted
+# for the guest's shell, naming only the variables that are set here. The guest steps'
+# parameters (gpu-steps' DRIVER_PIN, DRIVER_OPEN, HARNESS_DIR, TOOLCHAIN_READING) reach
+# them this way, and a value with spaces arrives whole.
+guest_env() {
+    local v out=""
+    for v in "$@"; do
+        [[ "$v" =~ ^[A-Z_][A-Z0-9_]*$ ]] || die "guest_env takes variable names, not '$v'"
+        [ -n "${!v+set}" ] || continue
+        out+=" $v=$(printf '%q' "${!v}")"
+    done
+    [ -z "$out" ] || printf 'env%s ' "$out"
+}
+
+# step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.
+step_ok() {
+    [ -f "$1/$2.txt" ] && tail -n 1 "$1/$2.txt" | grep -qE "^# step $2, exit 0, [0-9]+s\$"
+}
+
+# origin_ok URL: 0 when URL starts with one of DEB_ORIGINS and the rest is a plain path,
+# with no "..", query, fragment or user part. The guest names each URL a round fetches, so
+# the host fetches only under the origins it was given.
+origin_ok() {
+    local o rest
+    for o in $DEB_ORIGINS; do
+        [[ "$o" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?/([A-Za-z0-9._+~%-]+/)*$ ]] \
+            || die "DEB_ORIGINS holds '$o', not an http(s) URL prefix ending in /"
+        [ "${1#"$o"}" != "$1" ] || continue
+        rest=${1#"$o"}
+        [[ "$rest" =~ ^[A-Za-z0-9._+~%/-]+$ ]] && [[ "/$rest/" != */../* ]]
+        return
+    done
+    return 1
+}
+
+# hash_ok FILE SUM WANT SIZE: 0 when FILE's digest by SUM is WANT and its size is SIZE;
+# sets GOT_HASH and GOT_SIZE. FILE is a file no other round names, so both readings are
+# of the same bytes.
+hash_ok() {
+    GOT_HASH=$($2 "$1" | cut -d' ' -f1)
+    GOT_SIZE=$(stat -c %s "$1")
+    [ "$GOT_HASH" = "$3" ] && [ "$GOT_SIZE" = "$4" ]
+}
+
+# fetch_round PORT LOG CACHE ROUND: the host's half of one driver round (Spec section 6).
+# The guest's driver-uris-ROUND names each file with its SHA256 from the guest's signed
+# index. A URL outside DEB_ORIGINS is refused before anything is fetched. Each file is
+# checked by SHA256 (or SHA512) and size in the round's own stage, so the bytes put into
+# the guest are the bytes checked. A cached copy is used when its copy in the stage
+# matches; otherwise the file is fetched to a temporary name of this fetch's own in CACHE,
+# checked, copied into the stage, and renamed into CACHE. Two rounds sharing CACHE never
+# share a temporary name, and nothing another round names is removed; a rename puts only
+# a checked file in CACHE. The round's temporary file and stage go on every exit, a
+# refusal or a signal. The round's files go into a new ~/debs by put, and
+# driver-install-ROUND installs them. Any refusal stops the caller.
+fetch_round() {
+    local port=$1 log=$2 cache=$3 round=$4 n=0 url file size hash want sum part="" list stage="" staged
+    case $round in pin|open) ;; *) die "a round is pin or open, not '$round'" ;; esac
+    mkdir -p "$cache"
+    run_step "$port" "$log" "driver-uris-$round" "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-uris $round"
+    step_ok "$log" "driver-uris-$round" || die "driver-uris $round did not pass; see $log/driver-uris-$round.txt"
+    stage=$(mktemp -d) || die "no stage directory for the $round round"
+    trap '[ -z "${part:-}" ] || rm -f -- "$part"; [ -z "${stage:-}" ] || rm -rf -- "$stage"' EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
+    list=$log/debs-$round.txt
+    : >"$list"
+    while read -r url file size hash; do
+        url=${url//\'/}
+        [[ "$url" =~ ^https?:// ]] || continue
+        origin_ok "$url" || die "$url is not under DEB_ORIGINS ($DEB_ORIGINS); nothing is fetched from it"
+        case ${hash%%:*} in
+            SHA256) sum=sha256sum ;;
+            SHA512) sum=sha512sum ;;
+            *) die "$file carries a hash this script does not check: ${hash%%:*}" ;;
+        esac
+        want=${hash#*:}
+        [[ "$file" =~ ^[A-Za-z0-9][A-Za-z0-9._+~%-]*\.deb$ ]] || die "apt named a file this script will not write: $file"
+        [[ "$size" =~ ^[0-9]+$ ]] || die "$file has no size: $size"
+        staged=$stage/$file
+        if [ -f "$cache/$file" ] && cp -- "$cache/$file" "$staged" && hash_ok "$staged" "$sum" "$want" "$size"; then
+            echo "$file: the cached copy matches the index's hash and size"
+        else
+            rm -f -- "$staged"
+            [ ! -e "$cache/$file" ] || echo "$file: the cached copy does not match; fetching it again"
+            part=$(mktemp "$cache/.$file.XXXXXX.part") || die "no temporary file in $cache"
+            curl -fsS -L --proto '=https,http' --proto-redir '=https' -o "$part" "$url" || die "$url did not fetch"
+            hash_ok "$part" "$sum" "$want" "$size" \
+                || die "$file hashes $GOT_HASH and is $GOT_SIZE bytes; the index says $want and $size"
+            cp -- "$part" "$staged" || die "$file did not copy into the round's stage"
+            mv -f -- "$part" "$cache/$file" || die "$file did not move into $cache"
+            part=""
+            echo "$file: fetched; it matches the index's hash and size"
+        fi
+        echo "$file $size ${hash%%:*} $want" >>"$list"
+        n=$((n + 1))
+    done < <(grep -E "^'https?://" "$log/driver-uris-$round.txt")
+    [ "$n" -gt 0 ] || die "apt named no .deb for the $round round"
+    echo "$round round: $n .debs checked against the index's hashes ($list)"
+    put "$port" "$stage" debs
+    rm -rf -- "${stage:?}"
+    stage=""
+    trap - EXIT INT TERM HUP
+    run_step "$port" "$log" "driver-install-$round" "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-install $round"
+    step_ok "$log" "driver-install-$round" || die "driver-install $round did not pass; see $log/driver-install-$round.txt"
 }
 
 # run_step PORT LOG NAME command: runs a guest command, its output and exit status
