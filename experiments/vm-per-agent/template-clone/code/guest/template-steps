@@ -310,6 +310,11 @@ seal() {
     for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k"; done
     cloud-init --version
     rm -f "$HOME/.bash_history" "$HOME/.ssh/authorized_keys"
+    # sshd-keygen.service makes every missing host key type at a guest's first boot. A
+    # clone's seed hands in its one pinned ed25519 key, so the unit is masked and that key
+    # is the clone's only one (template-clone-Spec.md, section 2). The template of
+    # 2026-11-11 predates this; a rebuild measures it.
+    sudo systemctl mask sshd-keygen.service || return 1
     sudo rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed
     # The module signing pair DKMS made when it built the driver: a private key every
     # clone would share. DKMS makes a new pair at its next build in a clone.
@@ -326,6 +331,7 @@ seal() {
     section after
     printf 'machine-id: [%s]\n' "$(cat /etc/machine-id)"
     ls /etc/ssh/ssh_host_* 2>&1 | head -2
+    printf 'sshd-keygen.service: %s\n' "$(systemctl is-enabled sshd-keygen.service 2>&1)"
     ls /var/lib/cloud/ 2>&1
     section private-key-files-left
     sudo find /etc /var /home /root /opt -xdev -type f \( -name '*.priv' -o -name '*.key' \

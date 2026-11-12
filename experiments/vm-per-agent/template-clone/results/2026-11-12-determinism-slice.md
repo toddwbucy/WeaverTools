@@ -55,9 +55,10 @@ graded head of #23, whose tree reached `main` with #22. Each run lasted 0.12 hou
 a floor of 64 sessions; the matrix has 32 matrix cells and 464 turn slots. The harness
 tests passed before each half's first load.
 
-**The host half** ran first, by the operator, on the host's own driver, 620.70.06. Two scratch agents were laid by
-`HowToDeployANewAgent.md` section 3, the operator's account alone in each gate rule (the
-operator's ruling of 2026-11-11, for these scratch agents only), and taken down after:
+**The host half** ran first, on the operator's word, on the host's own driver, 620.70.06.
+Two scratch agents were laid by `HowToDeployANewAgent.md` section 3, the operator's
+account alone in each gate rule (the operator's ruling of 2026-11-11, for these scratch
+agents only), and taken down after:
 
 | Run | Card | Sessions | Reproduced | Diverged | Errors |
 |---|---|---|---|---|---|
