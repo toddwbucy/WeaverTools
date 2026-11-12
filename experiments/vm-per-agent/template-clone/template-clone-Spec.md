@@ -183,6 +183,12 @@ installs it. `clone.sh driver ROUND` runs one round's four steps:
    - The stanzas come from apt's lists, which apt checked against the signed `InRelease`
      at its last update. apt 3.2.0 prints each file's MD5Sum (the slice's run 2 stopped
      on it), and the host does not check MD5.
+   - **The step relies on this template keeping apt's lists uncompressed.** The slice's
+     run 4 read its NVIDIA list uncompressed, as its own `driver-uris` log names it. A
+     compressed `Packages` list (apt's `Acquire::GzipIndexes`) would leave its
+     repository out of the lookup. So the step stops, naming each one, where it finds any
+     compressed `Packages` list, among uncompressed ones or alone, and where it finds no
+     list at all.
    - The step stops where the stanzas naming one file disagree on `Size` or SHA256, where
      their `Size` is not apt's, or where a stanza does not carry apt's own hash under the
      same name, or carries a different value.
@@ -296,6 +302,11 @@ slice, not to the template, and the result note names them.
 **They do not rebuild the template.** The template of 2026-11-11 stands until the rebuild
 act, which also decides the driver pin with the operator: the template holds 615.71.09,
 and the slice moved its clone to 620.70.06 by hand.
+
+**They do not read compressed apt lists.** Reading them through apt's own helper
+(`apt-helper cat-file`, which decompresses) is a later change. It is to be measured in a
+guest when a template needs it, because the measuring host has no apt and could only stub
+that path (section 6, step 1).
 
 **`net-probe.sh` is a record, not a path a guest takes.** It measured the two network
 backends with a throwaway guest before any template, on 2026-11-11, with a seed and SSH
