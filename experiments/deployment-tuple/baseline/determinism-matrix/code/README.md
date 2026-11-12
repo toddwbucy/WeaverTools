@@ -107,8 +107,8 @@ sha256. They must be the ones the box facts name, and its `errors` must be zero.
 **The run's uid must reach the agent.** The harness dials the gate itself, so the
 agent's `allowed-uids` must name the uid the run runs under, and the rule
 `create-agent.sh` writes names `weaver-gatecon` alone. That uid also needs the agent's
-own group for the gate socket's directory, its trace group for the trace, and its admin
-access group for the worker's log.
+own group for the gate socket's directory, its state group to pass the territory, its
+trace group for the trace, and its admin access group for the worker's log.
 
 **The engine's lines are read from the worker's log.** The harness reads each load's
 device from the cards its scope's processes hold, by `nvidia-smi` and the scope's

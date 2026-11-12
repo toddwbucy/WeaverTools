@@ -504,10 +504,16 @@ admin refusing every verb without it. `headroom-bytes`, `library-path`,
 default. A file of either class that stands and does not read, a dangling link, a
 directory or a file this run may not read, is an unreadable resolution the exit gates,
 never the default, since admin launches what the file says and not what this run could
-see. The root is judged whole by admin's rules before anything is taken from it: the
+see. The root is judged whole by admin's rules, in admin's order, before anything is
+taken from it: the worker, the SPU and the gate binaries each name an absolute path; the
 worker, the state member beside it, the gate and the SPU differ pairwise by file name,
-the name the load event keys their digests by, and a `spu-binary` naming no path is
-unreadable rather than guessed.
+the name the load event keys their digests by; `operator` is a uid;
+`load-bound-seconds`, where it names one, is a positive count of seconds; and
+`coordination-root`, `territory`, and `library-path` and `shell-binary` where they name
+a path, are absolute. The first refusal admin would meet is the one the run reports, and
+a `spu-binary` naming no path is unreadable rather than guessed. The grammar of
+`roles.toml` and the territory's ownership and modes are not judged here: admin refuses
+them at the verb, and the session faults.
 
 **Every file a run writes is its own.** A run in either mode writes three fixed names
 into its outdir, and its declaration backup beside the declaration.
@@ -530,15 +536,16 @@ own terminal on a fresh ticket, and `code/README.md` gives the shape.
 itself and sends each turn there, so the agent's access rule, `allowed-uids` in its
 declaration, must name the uid the run runs under, or the gate refuses every turn. The
 rule `create-agent.sh` writes names `weaver-gatecon` alone (WeaverAgent #533). That uid
-must also hold the agent's own group, which opens the socket's directory, and the
+must also hold the agent's own group, which opens the socket's directory, the agent's
+state group, which passes the territory the trace and the worker's log lie in, and the
 agent's trace group, which reads the trace.
 
 **The device read needs the driver, the scope's control group and the worker's log.**
 `nvidia-smi` must answer the run's uid for the cards and for the compute processes on
 them. The scope's `cgroup.procs` under the cgroup v2 hierarchy must be readable to that
 uid, and so must the worker's log, which is the agent's admin access group's at mode
-`0640`. A box where any of the three is not answers every load's device unreadable, and
-its sessions fault.
+`0640` and is reached through the territory by the state group. A box where any of the
+three is not answers every load's device unreadable, and its sessions fault.
 
 **Clocks are recorded where they are not held.** A lock needs root per load, so a run
 that holds none records the card's state beside itself with an unprivileged readout

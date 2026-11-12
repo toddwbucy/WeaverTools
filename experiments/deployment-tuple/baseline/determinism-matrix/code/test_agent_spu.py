@@ -113,6 +113,55 @@ def test_an_unreadable_value_is_unreadable_never_the_default():
             assert name in why, (name, form, why)
 
 
+def test_an_optional_file_that_stands_and_does_not_read_refuses():
+    """Admin's `optional` reads a file absent only where nothing stands, so an
+    optional file that stands and does not read refuses every verb, as a
+    required one does. Perturbation: skip reading the optional files, and each
+    form here passes."""
+    for name in g._ADMIN_OPTIONAL:
+        probe = tempfile.mkdtemp()
+        for form, _ in unreadable_forms(probe, name):
+            base = tempfile.mkdtemp()
+            root = write_root(base, "karl", {})
+            dict(unreadable_forms(root, name))[form]()
+            path, why = g._resolve_spu({"admin_config": base, "agent": "karl",
+                                        "admin_bin": "/opt/weaver/bin/weaver-admin"})
+            assert path is None and name in why, (name, form, path, why)
+        assert resolve({name: None})[0] == "/opt/weaver/bin/weaver-spu", name
+
+
+def test_each_value_is_judged_as_admin_judges_it():
+    """Admin's loader parses `operator` as a u32 and `load-bound-seconds` as a
+    positive u64 that forms a deadline, and refuses a relative path in every
+    key naming one. Perturbation: drop any one check, and its case passes."""
+    cases = [({"operator": "ada\n"}, "operator is not a uid"),
+             ({"operator": "-1\n"}, "operator is not a uid"),
+             ({"operator": "4294967296\n"}, "operator is not a uid"),
+             ({"load-bound-seconds": "0\n"}, "not a positive count of seconds"),
+             ({"load-bound-seconds": "ten\n"}, "not a positive count of seconds"),
+             ({"load-bound-seconds": f"{2**63}\n"}, "not a positive count of seconds"),
+             ({"coordination-root": "run\n"}, "coordination-root names a relative path"),
+             ({"territory": "var/lib/x\n"}, "territory names a relative path"),
+             ({"library-path": "lib\n"}, "library-path names a relative path"),
+             ({"shell-binary": "sh\n"}, "shell-binary names a relative path"),
+             ({"gate-binary": "weaver-gate\n"}, "gate-binary names a relative path")]
+    for change, said in cases:
+        path, why = resolve(change)
+        assert path is None and said in why, (change, path, why)
+    for change in ({"operator": "+4242\n"}, {"load-bound-seconds": "120\n"},
+                   {"library-path": "\n"}, {"headroom-bytes": "1\n"}):
+        assert resolve(change)[0] == "/opt/weaver/bin/weaver-spu", change
+
+
+def test_the_refusal_is_the_first_admin_meets():
+    """Admin judges the file names right after the three binaries, before it
+    reads `operator`, so a root with both a clash and no `operator` refuses on
+    the clash. Perturbation: read every required file before the names, and
+    the missing operator is named instead."""
+    path, why = resolve({"spu-binary": "/opt/other/worker", "operator": None})
+    assert path is None and "share the file name" in why, why
+
+
 def test_a_required_file_absent_is_unreadable():
     """Admin's loader reads each of the seven as required, refusing every verb
     where one is absent, so each one's absence is an unreadable resolution, never

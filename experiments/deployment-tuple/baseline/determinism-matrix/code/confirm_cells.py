@@ -17,6 +17,7 @@ config.
 import copy
 import hashlib
 import json
+import math
 import os
 import re
 import socket
@@ -291,6 +292,11 @@ def load_devices(cfg, tries=15, pause=0.2, *, since=None):
         seen = serving_device(cfg, since, invocation)
         if isinstance(seen, dict) and seen.get("devices") and seen.get("complete"):
             break
+        # A log read that is unreadable reads so on every try: a file this
+        # run may not open, one cut short of the offset, or two loads after
+        # it. Only a block still arriving is worth the wait.
+        if not isinstance(seen, dict) or "unreadable" in seen:
+            break
         time.sleep(pause)
     if not isinstance(seen, dict) or "unreadable" in seen:
         return {"unreadable": f"the engine's log for the load under invocation {invocation}"
@@ -400,14 +406,18 @@ def _device_groups(cfg, since):
                 return {"unreadable": f"{path} holds {size} bytes, fewer than the {since} it held"
                                       " where the read began, so it was cut or replaced"}
             fh.seek(since)
-            data = fh.read()
+            # Read a line at a time and only the engine's kept, since the
+            # window read at a run's close covers every line of its hours.
+            lines = []
+            for raw in fh:
+                # A line without its newline is still being written.
+                if not raw.endswith(b"\n"):
+                    break
+                line = raw[:-1].decode("utf-8", "surrogateescape")
+                if ENGINE_LINES.search(line):
+                    lines.append(line)
     except OSError as e:
         return {"unreadable": f"{path}: {_why(e)}"}
-    text = data.decode("utf-8", "surrogateescape")
-    lines = text.split("\n")
-    # The last piece is a line still being written, or empty after a final
-    # newline: either way not a whole line.
-    lines = [line for line in lines[:-1] if ENGINE_LINES.search(line)]
     groups, complete, current, done = [], [], None, False
     for line in lines:
         if LOAD_BOUNDARY.search(line):
@@ -746,7 +756,7 @@ OPTIONAL_KEYS = ("loop_sha256", "build_flags")
 # so the two could differ and the run hash the one that did not serve
 # (#716, the pass on 90b9a8a).
 REFUSED_KEYS = {"spu_bin": "the admin launches the SPU its configuration names,"
-                           " admin_config/spu-binary, and the run reads it there",
+                           " <admin_config>/<agent>/spu-binary, and the run reads it there",
                 "held_spu": "the run reads the SPU it holds every load to at preflight,"
                             " from the binary the admin names"}
 # **A path the stack resolves is absolute** (#716 round ten). The worker and
@@ -1080,33 +1090,82 @@ def _trim(text):
 
 
 def _judge_root(directory):
-    """Admin's section 9 judgment of the agent's root, rule for rule, as
-    None or the refusal: every required file read, in admin's order
-    (`load_service_config_from`, `crates/weaver-admin/src/main.rs`), and the
-    four binaries the stack records by file name, the worker, the state
-    member beside it, the gate and the SPU, differing pairwise
-    (`crates/weaver-admin/src/stack.rs`), since the load event keys its
-    `stack` digests by file name.
+    """Admin's judgment of the agent's root, as None or the refusal, step for
+    step in the order of admin's loader (`load_service_config_from`,
+    `crates/weaver-admin/src/main.rs`): `worker-binary`, `spu-binary` and
+    `gate-binary`, each read and absolute; the four binaries the stack records
+    by file name, the worker, the state member beside it, the gate and the
+    SPU, differing pairwise (`crates/weaver-admin/src/stack.rs`), since the
+    load event keys its `stack` digests by file name; `operator` a uid;
+    `load-bound-seconds`, where it names one, a positive count that forms a
+    deadline; `coordination-root` absolute; `headroom-bytes` read;
+    `library-path` and `shell-binary`, where they name a path, absolute;
+    `territory` absolute; and `roles.toml` read. An optional file that stands
+    and does not read refuses as a required one does.
 
     **Judged whole on every call**, as admin judges it before any verb: a
     root admin would refuse is an unreadable resolution here, since admin
-    launches nothing on it.
+    launches nothing on it. Not judged here, and refused by admin at the
+    verb, where the session then faults: the grammar of `roles.toml`, and the
+    territory's ownership and modes.
     """
-    required = {}
-    for name in _ADMIN_REQUIRED:
+    def value(name):
         text, why = _read_admin(directory, name)
         if why is not None:
-            return why
-        required[name] = _trim(text)
-    named = [("the worker", _file_name(required["worker-binary"])),
-             ("the state member", "weaver-state"),
-             ("the gate", _file_name(required["gate-binary"])),
-             ("the SPU", _file_name(required["spu-binary"]))]
-    for i, (one, name) in enumerate(named):
-        for other, other_name in named[i + 1:]:
-            if name == other_name:
-                return f"{one} and {other} share the file name {name!r}, which the stack keys by"
+            raise _Refusal(why)
+        return None if text is None else _trim(text)
+
+    def absolute(name, text):
+        stated = os.path.join(directory, name)
+        if not text:
+            raise _Refusal(f"{stated} names no path")
+        if not os.path.isabs(text):
+            raise _Refusal(f"{stated} names a relative path {text!r}")
+        return text
+
+    def count(text, bound):
+        # Rust's `parse::<u32>` and `parse::<u64>`: digits, one leading `+`
+        # allowed, within the type.
+        if re.fullmatch(r"\+?[0-9]+", text) is None or int(text) > bound:
+            return None
+        return int(text)
+
+    try:
+        worker = absolute("worker-binary", value("worker-binary"))
+        spu = absolute("spu-binary", value("spu-binary"))
+        gate = absolute("gate-binary", value("gate-binary"))
+        named = [("the worker", _file_name(worker)), ("the state member", "weaver-state"),
+                 ("the gate", _file_name(gate)), ("the SPU", _file_name(spu))]
+        for i, (one, name) in enumerate(named):
+            for other, other_name in named[i + 1:]:
+                if name == other_name:
+                    raise _Refusal(f"{one} and {other} share the file name {name!r},"
+                                   " which the stack keys by")
+        if count(value("operator"), 2**32 - 1) is None:
+            raise _Refusal(f"{os.path.join(directory, 'operator')} is not a uid")
+        bound = value("load-bound-seconds")
+        if bound:
+            # Admin adds the count to the monotonic clock, whose seconds are
+            # an i64, and refuses a sum that does not form.
+            seconds = count(bound, 2**64 - 1)
+            if not seconds or seconds > 2**63 - 1 - math.ceil(time.monotonic()):
+                raise _Refusal(f"{os.path.join(directory, 'load-bound-seconds')}"
+                               " is not a positive count of seconds")
+        absolute("coordination-root", value("coordination-root"))
+        value("headroom-bytes")
+        for name in ("library-path", "shell-binary"):
+            text = value(name)
+            if text:
+                absolute(name, text)
+        absolute("territory", value("territory"))
+        value("roles.toml")
+    except _Refusal as refusal:
+        return str(refusal)
     return None
+
+
+class _Refusal(Exception):
+    """A refusal `_judge_root` met, carried to its one return."""
 
 
 def _file_name(path):

@@ -38,18 +38,19 @@ def box(invocation):
     return sh
 
 
-def agent_log(lines=()):
-    """karl's root beneath an admin base, naming a territory that holds the
-    worker's log with `lines`: the config the device readers read, and the
-    log's path."""
+def agent_log(lines=(), agent="karl", tmp=None):
+    """`agent`'s root beneath an admin base in `tmp`, naming a territory that
+    holds the worker's log with `lines`: the config the device readers read,
+    and the log's path. The one fixture of that layout, which test_both_spus
+    reads too."""
     from test_agent_spu import write_root
-    tmp = tempfile.mkdtemp()
+    tmp = tmp or tempfile.mkdtemp()
     territory = os.path.join(tmp, "territory")
     os.makedirs(territory)
-    write_root(os.path.join(tmp, "admin"), "karl", {"territory": territory + "\n"})
+    write_root(os.path.join(tmp, "admin"), agent, {"territory": territory + "\n"})
     log = os.path.join(territory, "worker.log")
     append(log, lines)
-    return {"agent": "karl", "admin_config": os.path.join(tmp, "admin")}, log
+    return {"agent": agent, "admin_config": os.path.join(tmp, "admin")}, log
 
 
 def append(log, lines):
@@ -128,6 +129,25 @@ def test_the_log_is_read_from_where_the_load_began():
         "pci_bus_id": "0000:01:00.0"}]]
     os.remove(log)
     assert base.log_offset(cfg) == 0
+
+
+def test_an_unreadable_log_is_read_once():
+    # An unreadable log read reads so on every try, so the load's read stops
+    # at the first. Perturbation: drop the break, and the read is tried
+    # `tries` times.
+    cfg, log = agent_log([BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE])
+    reads, real = [], base.serving_device
+
+    def counting(cfg, since, invocation=None):
+        reads.append(since)
+        return real(cfg, since, invocation)
+    base.serving_device = counting
+    try:
+        seen, _ = with_sh(box("d" * 32), lambda: base.load_devices(cfg, 5, 0, since=10**6),
+                          holding=["0000:01:00.0"])
+    finally:
+        base.serving_device = real
+    assert "unreadable" in seen and len(reads) == 1, (seen, reads)
 
 
 def test_an_offset_that_is_not_one_is_unreadable():

@@ -327,14 +327,9 @@ def agent_log(tmp, lines=()):
     """The agent's root beneath an admin base in `tmp`, naming a territory that
     holds the worker's log with the engine's `lines`: the config the device readers
     read, and the log's path."""
-    from test_agent_spu import write_root
-    territory = os.path.join(tmp, "territory")
-    os.makedirs(territory)
-    write_root(os.path.join(tmp, "admin"), CFG["agent"], {"territory": territory + "\n"})
-    log = os.path.join(territory, "worker.log")
-    with open(log, "w") as fh:
-        fh.write("".join(line + "\n" for line in lines))
-    return dict(CFG, admin_config=os.path.join(tmp, "admin")), log
+    from test_round_five import agent_log as laid
+    cfg, log = laid(lines, agent=CFG["agent"], tmp=tmp)
+    return dict(CFG, admin_config=cfg["admin_config"]), log
 
 
 @contextlib.contextmanager
