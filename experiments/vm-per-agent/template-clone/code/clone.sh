@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Make one clone of the sealed template, an overlay naming it, with its own seed,
-# firmware variables and SSH port, and the host's models offered read-only over
-# virtiofs; then run guest/clone-steps in it, one step at a time.
+# firmware variables, SSH port and pinned host key, and the host's models offered
+# read-only over virtiofs; then run guest/clone-steps in it, one step at a time.
 #
 #   VM_ROOT=<dir> MODELS_DIR=<dir> code/clone.sh create
 #   VM_ROOT=<dir> code/clone.sh step NAME [ARGS]    (GUEST_ENV="VAR=value ..." sets its env)
@@ -21,23 +21,26 @@ TEMPLATE=$VM_ROOT/template/template.qcow2
 DIR=$VM_ROOT/clones/$NAME
 DISK=$DIR/disk.qcow2
 LOG=${LOG:-$VM_ROOT/logs/$NAME}
+KNOWN_HOSTS=$DIR/known_hosts
 mkdir -p "$LOG"
 
 create() {
     : "${MODELS_DIR:?set MODELS_DIR to the host directory holding the model artifacts}"
     virsh_ dominfo "$NAME" >/dev/null 2>&1 && die "$NAME is already defined"
     [ -r "$TEMPLATE" ] && [ ! -w "$TEMPLATE" ] || die "$TEMPLATE is not a sealed, read-only template"
+    [ ! -e "$DIR" ] || die "$DIR already stands; destroy it first"
     ensure_key
     mkdir -p "$DIR"
+    guest_keys "$DIR" "$PORT"
     qemu-img create -q -f qcow2 -F qcow2 -b "$TEMPLATE" "$DISK"
-    write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)"
+    write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)" "$LOG"
     define_guest "$NAME" "$DISK" "$DIR/seed.iso" "$VCPUS" "$MEMORY" "$PORT" "$DIR/VARS.fd" \
         --memorybacking source.type=memfd,access.mode=shared \
         --filesystem "type=mount,accessmode=passthrough,driver.type=virtiofs,source.dir=$MODELS_DIR,target.dir=weaver-models,readonly=on" \
         >"$LOG/virt-install.txt" 2>&1
     virsh_ dumpxml "$NAME" >"$LOG/domain.xml"
     virtiofsd_args | tee "$LOG/virtiofsd.txt"
-    wait_ssh "$PORT" 600 | tee "$LOG/first-boot.txt"
+    boot_ok "$PORT" "$LOG" "first-boot-$(date -u +%Y%m%dT%H%M%SZ)" 600
     gscp "$PORT" "$HERE/guest/clone-steps" /tmp/clone-steps
     gssh "$PORT" 'sudo install -m 0755 /tmp/clone-steps /usr/local/sbin/clone-steps'
 }
@@ -91,7 +94,7 @@ PY
     virsh_ define "$x" >/dev/null; rm -f "$x"
     virsh_ dumpxml --inactive "$NAME" | grep "qemu:arg value='user" | tee -a "$LOG/netdev.txt"
     virsh_ start "$NAME" >/dev/null
-    wait_ssh "$PORT" 300
+    boot_ok "$PORT" "$LOG" "netdev-$(date -u +%Y%m%dT%H%M%SZ)" 300
 }
 
 destroy() {
