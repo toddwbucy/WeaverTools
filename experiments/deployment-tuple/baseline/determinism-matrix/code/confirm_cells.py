@@ -70,26 +70,37 @@ def sh(args, **kw):
 DEVICE_LINE = re.compile(
     r"using device CUDA(\d+) \(([^)]*)\) \(([0-9a-fA-F:.]+)\)")
 # One per load, printed ahead of the device block, so it marks the boundary
-# that grepping the journal would otherwise destroy.
+# that keeping only the matched lines would otherwise destroy.
 LOAD_BOUNDARY = re.compile(r"ggml_cuda_init: found \d+ CUDA device")
 # The line the engine prints once its device block has ended: at the pinned
 # rev `ecce255`, `llama_model_load_from_file_impl` names every device it
 # binds and then constructs `llama_model_loader`, which logs this first
 # (#716, after round twelve). A block is complete only once it is seen.
 LOAD_COMPLETE = re.compile(r"llama_model_loader: loaded meta data")
-# systemd's catalog id for "a unit started", the entry pid 1 writes for every
-# invocation with `INVOCATION_ID` and `UNIT` set: the positive control that the
-# journal is readable for an invocation whose engine printed nothing.
-UNIT_STARTED = "39f53479d3a045ac8e11786248231fbf"
+# The engine's lines the device read keeps, the three above, matched in the
+# worker's log before they are grouped. The log holds every line the worker
+# and its organs print, and llama.cpp is verbose.
+ENGINE_LINES = re.compile(r"ggml_cuda_init: found|using device CUDA|llama_model_loader: loaded meta data")
+
+
+def agent_scope(cfg):
+    """The systemd unit a load of the agent stands in: the transient scope
+    `weaver-<agent>.scope` in `weaver.slice`, which admin's start step asks
+    PID1 for, one per load. The agent left systemd's service units with
+    WeaverAgent #72, and the scope per load is #166, by #518 and #524
+    (`crates/weaver-admin/src/scope.rs`). A scope is a unit: it has an
+    InvocationID and a control group, and both are read here as the worker
+    unit's were."""
+    return f"weaver-{cfg['agent']}.scope"
 
 
 def unit_invocation(cfg):
-    """The InvocationID of the agent's worker unit as it stands now, the
-    identity a device read is bound to (#716 round five). A time window is
-    not an identity: a fast reload or a journal trailing its writer leaves
-    the previous load inside any slack. Empty while the unit is inactive,
-    and anything but 32 hex digits is refused by name."""
-    unit = f"weaver-worker@{cfg['agent']}.service"
+    """The InvocationID of the agent's scope as it stands now, the identity
+    a device read is bound to (#716 round five). A time window is not an
+    identity: a fast reload or a log trailing its writer leaves the previous
+    load inside any slack. Empty while no load stands, and anything but 32
+    hex digits is refused by name."""
+    unit = agent_scope(cfg)
     r = sh(["systemctl", "show", "-p", "InvocationID", "--value", unit])
     said = r.stdout.strip()
     if r.returncode != 0 or re.fullmatch(r"[0-9a-f]{32}", said) is None:
@@ -99,7 +110,10 @@ def unit_invocation(cfg):
 
 
 def serving_device(cfg, since, invocation=None):
-    """The devices that actually answered, read from the worker's own load.
+    """The devices that actually answered, read from the worker's own load:
+    the engine's lines in the worker's log after the byte `since`, the log's
+    size before the load's verb. `invocation`, where given, names the load
+    the read is for, and the read is then one load's.
 
     `nvidia-smi` reports the machine, not the run. On a box holding more
     than one card its output names every device and the one that served
@@ -118,23 +132,21 @@ def serving_device(cfg, since, invocation=None):
     them: the engine emits the block from one loop with nothing
     interleaved.
 
-    **An unreadable journal is not an absent device.** `journalctl` exits 0
-    with empty output when the invoking user is in neither `systemd-journal`
-    nor `adm`, and this script runs it unprivileged while running admin
-    under `sudo -n`. Reporting that as "no CUDA device" would hide the
-    wrong-device defect this reader exists to catch, on exactly the boxes
-    whose provisioning is least careful. The unit logged copiously during a
-    load that succeeded, so zero lines of any kind means the read failed,
-    and that is recorded as its own answer.
+    **An unreadable log is not an absent device.** A log this run may not
+    open, one shorter than the offset the read began at, or an offset that is
+    not one is unreadable, never "no CUDA device", which would hide the
+    wrong-device defect this reader exists to catch. A log read whole that
+    holds no device line after the offset is an engine that printed none.
     """
-    groups = _device_groups(cfg, since, invocation)
+    groups = _device_groups(cfg, since)
     if "unreadable" in groups:
         return groups
     found = groups["groups"]
-    # Bound to one invocation, the read is one load's, and a second load
-    # under it is not a shape this reader can attribute.
+    # Bound to one load, the read is that load's, and a second load after
+    # the offset is not a shape this reader can attribute.
     if invocation is not None and len(found) > 1:
-        return {"unreadable": f"invocation {invocation} logged {len(found)} loads"}
+        return {"unreadable": f"the worker log after byte {since} holds {len(found)} loads,"
+                              f" read for the load under invocation {invocation}"}
     if found:
         # A device this reader could not parse is no device at all, and two
         # of them would otherwise compare equal across the halves.
@@ -194,16 +206,16 @@ def _unit_pids(group):
 
 
 def unit_devices(cfg, invocation):
-    """The devices the agent's worker unit holds, read from the processes it
+    """The devices the agent's scope holds, read from the processes it
     runs, under the one invocation `invocation`.
 
     **Read from the driver, not from what an engine chose to print.** The
-    journal's `using device` lines are llama.cpp's, and the native backend
+    log's `using device` lines are llama.cpp's, and the native backend
     and `python-spu` print none, so a run of either recorded no device. The
-    unit's control group lists every process the unit started, the SPU the
-    harness forks among them, and `nvidia-smi` lists each process holding a
-    CUDA context with the card it holds. A card held by a process of the
-    unit is a card the load bound.
+    scope's control group lists every process of the load, the agent's
+    cgroup beneath it with the SPU the harness forks, and `nvidia-smi` lists
+    each process holding a CUDA context with the card it holds. A card held
+    by a process of the scope is a card the load bound.
 
     **The read is bound to its invocation.** The unit's InvocationID is read
     before and after, and must be `invocation` both times, so the processes
@@ -215,7 +227,7 @@ def unit_devices(cfg, invocation):
         if now != invocation:
             raise ValueError(f"the unit's invocation {when} the device read was {now!r},"
                              f" not {invocation}")
-    unit = f"weaver-worker@{cfg['agent']}.service"
+    unit = agent_scope(cfg)
     try:
         held_to("before")
         r = sh(["systemctl", "show", "-p", "ControlGroup", "--value", unit])
@@ -251,21 +263,23 @@ def unit_devices(cfg, invocation):
     return {"devices": sorted(held.values(), key=lambda d: d["pci_bus_id"])}
 
 
-def load_devices(cfg, tries=15, pause=0.2):
+def load_devices(cfg, tries=15, pause=0.2, *, since=None):
     """The devices the load that now stands bound, read by its unit's
     invocation, and that invocation (#716 round five).
 
     **The binding is the unit's processes' cards**, `unit_devices`, which
     every engine answers. **The engine's own lines are its cross-check**
-    where it prints them: retried briefly, since journald can trail the load
-    it records, and accepted only once the block is complete, the engine's
-    next line seen after it, since a block of several cards can reach the
-    journal a line at a time. A block that names other cards than the
-    processes hold, one that never completes, or a journal read that fails
-    is unreadable. An engine that printed no device line is recorded so,
-    and the binding stands on the driver's read. Answers the reading, the
-    `devices` list with the journal's read beside it or an `unreadable`
-    note, and the invocation or None."""
+    where it prints them, read from the worker's log after `since`, the
+    log's size `log_offset` read before the load's verb: retried briefly,
+    since the engine can still be writing the load it records, and accepted
+    only once the block is complete, the engine's next line seen after it,
+    since a block of several cards can reach the log a line at a time. A
+    block that names other cards than the processes hold, one that never
+    completes, or a log read that fails is unreadable. An engine that
+    printed no device line is recorded so, and the binding stands on the
+    driver's read. Answers the reading, the `devices` list with the log's
+    read beside it under `journal`, the key the earlier deposits carry, or
+    an `unreadable` note, and the invocation or None."""
     invocation = unit_invocation(cfg)
     if not isinstance(invocation, str):
         return invocation, None
@@ -274,13 +288,13 @@ def load_devices(cfg, tries=15, pause=0.2):
         return held, invocation
     seen = None
     for _ in range(tries):
-        seen = serving_device(cfg, None, invocation)
+        seen = serving_device(cfg, since, invocation)
         if isinstance(seen, dict) and seen.get("devices") and seen.get("complete"):
             break
         time.sleep(pause)
     if not isinstance(seen, dict) or "unreadable" in seen:
-        return {"unreadable": f"the engine's journal under invocation {invocation} did not read:"
-                              f" {json.dumps(seen)}"}, invocation
+        return {"unreadable": f"the engine's log for the load under invocation {invocation}"
+                              f" did not read: {json.dumps(seen)}"}, invocation
     if seen.get("devices") and not seen.get("complete"):
         return {"unreadable": f"the device block under invocation {invocation} did not complete"
                               f" within {tries} reads: {json.dumps(seen['devices'])}"}, invocation
@@ -313,41 +327,97 @@ def device_bindings(cfg, since):
     return seen
 
 
-def _device_groups(cfg, since, invocation=None):
-    """The window's `using device` blocks, one list of devices per load.
+def log_offset(cfg):
+    """The worker's log's size now, in bytes, the place a device read of the
+    next load starts: the load's lines are the ones written after it. Read
+    before the load's verb, and before a run's first load for the window
+    read at the close. An absent log is 0, since admin opens it at the first
+    verb. A log that does not read answers its `unreadable` note, which the
+    device read then carries, and nothing here raises."""
+    path, why = worker_log(cfg)
+    if why is not None:
+        return {"unreadable": why}
+    try:
+        return os.stat(path).st_size
+    except FileNotFoundError:
+        return 0
+    except OSError as e:
+        return {"unreadable": f"{path}: {_why(e)}"}
+
+
+def worker_log(cfg):
+    """The worker's log, `<territory>/worker.log`, as `(path, None)` or
+    `(None, why)`. Admin opens it for the worker's output, the engine's
+    included, at every load (WeaverAgent #72, the start step of #77), in the
+    territory the agent's root names, and the journal holds none of it. The
+    operator reads it through the agent's access group, the log being the
+    access group's (WeaverAgent #533 names the groups)."""
+    root, why = _admin_root(cfg)
+    if why is not None:
+        return None, why
+    text, why = _read_admin(root, "territory")
+    if why is not None:
+        return None, why
+    territory = _trim(text)
+    stated = os.path.join(root, "territory")
+    if not territory:
+        return None, f"{stated} names no path"
+    if not os.path.isabs(territory):
+        return None, f"{stated} names a relative path {territory!r}"
+    return os.path.join(territory, "worker.log"), None
+
+
+def _device_groups(cfg, since):
+    """The `using device` blocks in the worker's log after the byte `since`,
+    one list of devices per load.
 
     **The load boundary is read explicitly and not inferred from adjacency.**
     An earlier draft grouped on contiguity, which is correct against the raw
-    journal and wrong the moment the read is grepped: `-g` drops every
-    non-matching line, so four single-device loads arrive as four adjacent
-    lines and read as one four-device binding. The engine prints
+    log and wrong the moment the read keeps only the matched lines: four
+    single-device loads arrive as four adjacent lines and read as one
+    four-device binding. The engine prints
     `ggml_cuda_init: found N CUDA devices` once per load ahead of the block,
     so that line is matched too and starts a new group.
 
-    **Exit 1 is "no matches" and not a failure.** `journalctl -g` exits 1
-    when its pattern matches nothing, which is the ordinary answer for a
-    window holding no load.
+    **The read is bound by where it starts, not by a time.** Admin's run end
+    kills the agent's cgroup before an unload answers, and a load takes the
+    run lock, so no process of an earlier load writes after the offset read
+    before a load's verb. A log shorter than that offset was cut or replaced,
+    and is unreadable rather than read from its start. A line still being
+    written, the last one without its newline, is left for the next read.
     """
-    unit = f"weaver-worker@{cfg['agent']}.service"
-    base = ["journalctl", "-u", unit, "--since", since, "--no-pager", "-o", "cat"]
-    if invocation is not None:
-        base = ["journalctl", f"_SYSTEMD_INVOCATION_ID={invocation}", "--no-pager", "-o", "cat"]
-    # Grepped in the journal rather than in this process: an unfiltered read
-    # spans every load in the window and llama.cpp is verbose.
-    r = sh(base + ["-g", "ggml_cuda_init: found|using device CUDA|llama_model_loader: loaded meta data"])
-    if r.returncode not in (0, 1):
-        return {"unreadable": f"journalctl exit {r.returncode}: "
-                              f"{r.stderr.strip()[:200]}"}
+    if isinstance(since, dict) and "unreadable" in since:
+        return {"unreadable": since["unreadable"]}
+    if not isinstance(since, int) or isinstance(since, bool) or since < 0:
+        return {"unreadable": f"the worker log's offset {since!r} is not a byte offset"}
+    path, why = worker_log(cfg)
+    if why is not None:
+        return {"unreadable": why}
+    try:
+        with open(path, "rb") as fh:
+            size = os.fstat(fh.fileno()).st_size
+            if size < since:
+                return {"unreadable": f"{path} holds {size} bytes, fewer than the {since} it held"
+                                      " where the read began, so it was cut or replaced"}
+            fh.seek(since)
+            data = fh.read()
+    except OSError as e:
+        return {"unreadable": f"{path}: {_why(e)}"}
+    text = data.decode("utf-8", "surrogateescape")
+    lines = text.split("\n")
+    # The last piece is a line still being written, or empty after a final
+    # newline: either way not a whole line.
+    lines = [line for line in lines[:-1] if ENGINE_LINES.search(line)]
     groups, complete, current, done = [], [], None, False
-    for line in r.stdout.splitlines():
+    for line in lines:
         if LOAD_BOUNDARY.search(line):
             if current is not None:
                 groups.append(current)
                 complete.append(done)
             current, done = [], False
             continue
-        # The block's end, which journald can deliver after the device lines
-        # it follows, and a device line after it undoes it.
+        # The block's end, which can follow the device lines it closes, and a
+        # device line after it undoes it.
         if LOAD_COMPLETE.search(line):
             if current is None:
                 current = []
@@ -355,8 +425,8 @@ def _device_groups(cfg, since, invocation=None):
             continue
         # **No evidence is dropped** (#716 round three). A device line met
         # before any boundary is a load whose boundary fell before the
-        # window, and it opens its own group rather than vanishing. A line
-        # the grep matched and this pattern cannot read is kept as an
+        # offset, and it opens its own group rather than vanishing. A line
+        # the match kept and this pattern cannot read is kept as an
         # unreadable device, and a load that named no device keeps its empty
         # group, so either leaves the binding unheld rather than unread.
         if current is None:
@@ -372,28 +442,12 @@ def _device_groups(cfg, since, invocation=None):
     if current is not None:
         groups.append(current)
         complete.append(done)
-    if groups:
-        return {"groups": groups, "complete": complete}
-    # **No match is told from no read by a positive control** (the smokes of
-    # 2026-10-01). The engine's silence is not the journal's: the native
-    # backend and python-spu print nothing, so a read that came back empty
-    # said nothing about whether this user can read the journal. systemd's own
-    # entry that it started this invocation must read back, and only then is
-    # the empty read an engine that printed no device line. Paid only in the
-    # empty case.
-    if invocation is not None:
-        probe = sh(["journalctl", f"INVOCATION_ID={invocation}", f"UNIT={unit}",
-                    f"MESSAGE_ID={UNIT_STARTED}", "--no-pager", "-o", "cat"])
-        if probe.returncode != 0 or not probe.stdout.strip():
-            return {"unreadable": f"systemd's start entry for invocation {invocation} of {unit} "
-                                  "does not read back, so the journal is not readable here "
-                                  "(is this user in systemd-journal or adm?)"}
-        return {"groups": [], "complete": []}
-    probe = sh(base + ["-n", "1"])
-    if probe.returncode != 0 or not probe.stdout.strip():
-        return {"unreadable": "the unit's journal read back empty; this user "
-                              "is likely in neither systemd-journal nor adm"}
-    return {"groups": [], "complete": []}
+    # **A log read whole is its own control.** The journal answered an
+    # unprivileged reader with nothing rather than a refusal, so its empty
+    # read needed systemd's start entry to count (the smokes of 2026-10-01).
+    # A file this run may not read refuses at the open above, so an empty
+    # read here is an engine that printed no device line.
+    return {"groups": groups, "complete": complete}
 
 
 # **The declaration is read as the TOML document it is** (#716 round five,
@@ -884,8 +938,8 @@ def with_artifact(declaration, path):
 def spu_binary(cfg):
     """The SPU binary path, from the authority that already holds it.
 
-    `weaver-admin` reads `spu-binary` from its config directory, required
-    rather than defaulted, on the stated ground that a missing one refuses
+    `weaver-admin` reads `spu-binary` from the agent's root of its
+    configuration, `<admin_config>/<agent>/`, required rather than defaulted, on the stated ground that a missing one refuses
     and names itself rather than being searched for
     (`weaver-admin/src/main.rs`, per Spec section 9). Guessing it beside
     `admin_bin` would re-introduce the search that rule exists to forbid,
@@ -915,16 +969,18 @@ def _resolve_spu(cfg):
     # called `spu-binary` sitting there would be taken for the admin config
     # and reported as an authoritative reading - a cwd artifact wearing the
     # source that the `resolved_by` marker suppresses.
-    directory = cfg.get("admin_config")
-    if directory:
-        # **The agent's own SPU first**, per weaver-admin-Spec section 9: where
-        # `agent-spu` names the run's agent, the key it gives chooses the path
-        # in `spu-implementations`, and `spu-binary` stands only where the map
-        # does not name the agent. A map this reader cannot follow is reported
-        # rather than passed over, admin itself failing every verb on it.
-        chosen = _agent_spu(directory, cfg.get("agent"))
-        if chosen is not None:
-            return chosen
+    if cfg.get("admin_config"):
+        # **The agent's own root, judged whole first**, per weaver-admin-Spec
+        # section 9: admin reads `<admin_config>/<agent>/` and nothing shared
+        # (WeaverAgent #45, which retired the allow-list and the SPU map), and
+        # refuses every verb on a root missing a required file or naming two
+        # binaries under one file name. A root this reader cannot follow is
+        # reported rather than passed over.
+        directory, why = _admin_root(cfg)
+        if why is None:
+            why = _judge_root(directory)
+        if why is not None:
+            return None, why
         stated = os.path.join(directory, "spu-binary")
         text, why = _read_admin(directory, "spu-binary")
         # **Nothing falls through to the guess once the directory is named.**
@@ -959,8 +1015,26 @@ def _resolve_spu(cfg):
 # `read`, whose absence refuses every verb, and optional ones through its
 # `optional`, whose absence stands a default. A name in neither is refused by
 # `_read_admin`, so a new reader classes its file before it can read it.
-_ADMIN_REQUIRED = ("allow-list", "worker-binary", "spu-binary", "gate-binary")
-_ADMIN_OPTIONAL = ("spu-implementations", "agent-spu")
+_ADMIN_REQUIRED = ("worker-binary", "spu-binary", "gate-binary", "coordination-root",
+                   "territory", "operator", "roles.toml")
+_ADMIN_OPTIONAL = ("headroom-bytes", "library-path", "load-bound-seconds", "shell-binary")
+
+
+def _admin_root(cfg):
+    """The agent's root of admin's configuration, `<admin_config>/<agent>/`,
+    as `(path, None)` or `(None, why)`. `admin_config` names the base, which
+    the run passes to admin as `WEAVER_ADMIN_CONFIG`, and admin reads the
+    root named for the agent beneath it and nothing shared (WeaverAgent #45,
+    weaver-admin-Spec section 9). The agent is a plain name, so the root is
+    one directory beneath the base and never another path."""
+    base = cfg.get("admin_config")
+    if not base:
+        return None, "the config names no admin_config"
+    agent = cfg.get("agent")
+    if not isinstance(agent, str) or SAFE_NAME.fullmatch(agent) is None:
+        return None, (f"the config's agent {agent!r} is not a plain name, and admin reads"
+                      " the root named for it beneath admin_config")
+    return os.path.join(base, agent), None
 
 
 def _read_admin(directory, name):
@@ -996,13 +1070,7 @@ def _read_admin(directory, name):
         return None, f"{path}: {_why(e)}"
 
 
-_KEY = re.compile(r"[a-z0-9-]+")
-
-# Rust's `char::is_whitespace`, which `trim`, `split_whitespace` and admin's
-# every read use. Python's `str.strip` and `str.split` also take \x1c-\x1f,
-# which Rust does not, so they are not used where admin's reading is mirrored.
 _WS = "\t\n\x0b\x0c\r \x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000"
-_WHITESPACE = re.compile(f"[{_WS}]+")
 _EDGES = re.compile(f"^[{_WS}]+|[{_WS}]+$")
 
 
@@ -1011,89 +1079,34 @@ def _trim(text):
     return _EDGES.sub("", text)
 
 
-def _lines(text):
-    """Admin's `lines` in `spu_choice.rs` and its allow-list reading: `str::lines`,
-    each trimmed, blank ones dropped, numbered from one."""
-    for number, line in enumerate(text.split("\n"), 1):
-        line = _trim(line)
-        if line:
-            yield number, line
+def _judge_root(directory):
+    """Admin's section 9 judgment of the agent's root, rule for rule, as
+    None or the refusal: every required file read, in admin's order
+    (`load_service_config_from`, `crates/weaver-admin/src/main.rs`), and the
+    four binaries the stack records by file name, the worker, the state
+    member beside it, the gate and the SPU, differing pairwise
+    (`crates/weaver-admin/src/stack.rs`), since the load event keys its
+    `stack` digests by file name.
 
-
-def _judge_spu_map(directory):
-    """Admin's section 9 judgment of its SPU map, rule for rule
-    (`crates/weaver-admin/src/spu_choice.rs`), as `(agents, implementations,
-    None)` or `(None, None, why)`.
-
-    **Judged whole on every call, before any default is taken**, as admin judges
-    it before any verb: a map admin would refuse is an unreadable resolution here,
-    whether or not it names the run's agent, since admin launches nothing on it.
-    The rules, each admin's: a line of two fields in either file, a key of
-    lowercase letters, digits and hyphens, an absolute path, no key named twice, an
-    agent on the allow-list, a key `spu-implementations` holds, no agent named
-    twice, and no file name shared by two binaries the stack records, the worker,
-    the state member and the gate pairwise and each SPU against those three.
+    **Judged whole on every call**, as admin judges it before any verb: a
+    root admin would refuse is an unreadable resolution here, since admin
+    launches nothing on it.
     """
-    # **Admin's order**: the four required files first, each refusing where it
-    # is absent, then the two optional maps read, then every line of
-    # `spu-implementations` judged before any of `agent-spu`, so the failure
-    # named here is the one admin names.
     required = {}
     for name in _ADMIN_REQUIRED:
         text, why = _read_admin(directory, name)
         if why is not None:
-            return None, None, why
+            return why
         required[name] = _trim(text)
-    texts = {}
-    for name in _ADMIN_OPTIONAL:
-        text, why = _read_admin(directory, name)
-        if why is not None:
-            return None, None, why
-        texts[name] = _trim(text or "")
-
-    def rows_of(name):
-        for number, line in _lines(texts[name]):
-            fields = _WHITESPACE.split(line)
-            yield number, fields if len(fields) == 2 else None, (
-                f"{name} line {number}: expected two fields")
-
-    chosen = {}
-    for number, fields, malformed in rows_of("spu-implementations"):
-        if fields is None:
-            return None, None, malformed
-        key, path = fields
-        if not _KEY.fullmatch(key):
-            return None, None, f"spu-implementations line {number}: the key {key!r} is not lowercase letters, digits and hyphens"
-        if not os.path.isabs(path):
-            return None, None, f"spu-implementations line {number}: the path {path!r} is not absolute"
-        if key in chosen:
-            return None, None, f"spu-implementations line {number}: the key {key!r} is named twice"
-        chosen[key] = path
-    allowed = {line for _, line in _lines(required["allow-list"])}
-    agents = {}
-    for number, fields, malformed in rows_of("agent-spu"):
-        if fields is None:
-            return None, None, malformed
-        agent, key = fields
-        if agent not in allowed:
-            return None, None, f"agent-spu line {number}: the agent {agent!r} is not on the allow-list"
-        if key not in chosen:
-            return None, None, f"agent-spu line {number}: the key {key!r} is not in spu-implementations"
-        if agent in agents:
-            return None, None, f"agent-spu line {number}: the agent {agent!r} is named twice"
-        agents[agent] = key
-    fixed = [("the worker", _file_name(required["worker-binary"])),
+    named = [("the worker", _file_name(required["worker-binary"])),
              ("the state member", "weaver-state"),
-             ("the gate", _file_name(required["gate-binary"]))]
-    for i, (one, name) in enumerate(fixed):
-        for other, other_name in fixed[i + 1:]:
+             ("the gate", _file_name(required["gate-binary"])),
+             ("the SPU", _file_name(required["spu-binary"]))]
+    for i, (one, name) in enumerate(named):
+        for other, other_name in named[i + 1:]:
             if name == other_name:
-                return None, None, f"{one} and {other} share the file name {name!r}"
-    for spu in [required["spu-binary"]] + list(chosen.values()):
-        clash = [one for one, name in fixed if name == _file_name(spu)]
-        if clash:
-            return None, None, f"the SPU binary {spu} shares its file name with {clash[0]}"
-    return agents, chosen, None
+                return f"{one} and {other} share the file name {name!r}, which the stack keys by"
+    return None
 
 
 def _file_name(path):
@@ -1104,19 +1117,6 @@ def _file_name(path):
     where admin keys the stack by the name before it."""
     parts = [p for p in path.split("/") if p not in ("", ".")]
     return parts[-1] if parts and parts[-1] != ".." else ""
-
-
-def _agent_spu(directory, agent):
-    """The SPU `agent-spu` chooses for the agent, as `_resolve_spu`'s pair, or
-    None where the map does not name the agent, the whole map having been judged
-    first as admin judges it."""
-    agents, chosen, why = _judge_spu_map(directory)
-    if why is not None:
-        return None, why
-    if agent not in agents:
-        return None
-    key = agents[agent]
-    return chosen[key], f"admin config agent-spu key {key}"
 
 
 def _why(error):
@@ -1366,14 +1366,14 @@ def weaver_binaries(cfg, spu=None):
                 out[key] = {"path": None, "sha256": None, "unreadable": source}
                 continue
         else:
-            directory = cfg.get("admin_config")
-            if not directory:
+            # The agent's root, as `_resolve_spu` reads it.
+            directory, why = _admin_root(cfg)
+            if why is not None:
                 # Not a bare relative name read against this process's cwd:
                 # `_resolve_spu` and `toolchain` both refuse rather than
                 # guessing when their directory is unnamed, and three readers
                 # in one file may not disagree about that.
-                out[key] = {"path": None, "sha256": None,
-                            "unreadable": "the config names no admin_config"}
+                out[key] = {"path": None, "sha256": None, "unreadable": why}
                 continue
             stated = os.path.join(directory, key)
             text, why = _read_admin(directory, key)
@@ -2046,14 +2046,16 @@ def verify_session(cfg, texts, rec, declared_seed, declaration_sha,
 
     def hold_load(half):
         """One half's load: the load itself, its socket, and its device read
-        by its own unit invocation. Its declaration and loop are held once
-        the half's closes name its run."""
+        by its own unit invocation, the engine's lines read from the worker's
+        log after the size it had before the verb. Its declaration and loop
+        are held once the half's closes name its run."""
+        offset = log_offset(cfg)
         loaded = step("load")
         if not admin_answered(loaded, states=("idle",)):
             return f"{'load' if half == 'source' else 'reload'} refused: {canonical(loaded)}"
         if not wait_socket(cfg):
             return "gate socket never stood" if half == "source" else "gate socket never stood after reload"
-        seen, invocation = load_devices(cfg)
+        seen, invocation = load_devices(cfg, since=offset)
         evidence[f"{half}_read"] = seen
         log(f"{half} devices: {json.dumps(seen)}")
         if invocation is None:

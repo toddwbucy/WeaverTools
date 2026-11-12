@@ -26,26 +26,41 @@ def device_line(ordinal, bus):
             f" Blackwell Generation Laptop GPU) ({bus}) - 23322 MiB free")
 
 
-def box(invocation, by_invocation, by_window):
-    """`sh` as the box answers: systemctl names the unit's invocation, the
-    journal read by invocation returns that load's lines, and a window read
-    returns what the window holds."""
+def box(invocation):
+    """`sh` as the box answers: systemctl names the invocation of karl's
+    scope, and nothing for any other unit. The engine's lines are the worker's
+    log's, so any other command fails."""
     def sh(args, **kw):
         if args[0] == "systemctl":
-            return subprocess.CompletedProcess(args, 0, invocation + "\n", "")
-        if any(a.startswith("_SYSTEMD_INVOCATION_ID=") for a in args):
-            lines = by_invocation
-        else:
-            lines = by_window
-        if "-g" in args:
-            return subprocess.CompletedProcess(args, 0 if lines else 1, "\n".join(lines) + "\n", "")
-        return subprocess.CompletedProcess(args, 0, "a line\n", "")
+            said = invocation if "weaver-karl.scope" in args else ""
+            return subprocess.CompletedProcess(args, 0, said + "\n", "")
+        raise AssertionError(f"the device read ran {args}, where it reads the worker's log")
     return sh
 
 
+def agent_log(lines=()):
+    """karl's root beneath an admin base, naming a territory that holds the
+    worker's log with `lines`: the config the device readers read, and the
+    log's path."""
+    from test_agent_spu import write_root
+    tmp = tempfile.mkdtemp()
+    territory = os.path.join(tmp, "territory")
+    os.makedirs(territory)
+    write_root(os.path.join(tmp, "admin"), "karl", {"territory": territory + "\n"})
+    log = os.path.join(territory, "worker.log")
+    append(log, lines)
+    return {"agent": "karl", "admin_config": os.path.join(tmp, "admin")}, log
+
+
+def append(log, lines):
+    """The engine writing `lines` into the worker's log."""
+    with open(log, "a") as fh:
+        fh.write("".join(line + "\n" for line in lines))
+
+
 def with_sh(sh, fn, holding=None):
-    """`fn` with `sh` standing for the box, and the unit's processes holding
-    the cards at `holding`, the binding the journal's lines cross-check."""
+    """`fn` with `sh` standing for the box, and the scope's processes holding
+    the cards at `holding`, the binding the log's lines cross-check."""
     saved = base.sh, base.unit_devices
     base.sh = sh
     base.unit_devices = lambda cfg, invocation: {"devices": [{"uuid": f"GPU-{bus}", "name": "card",
@@ -58,13 +73,15 @@ def with_sh(sh, fn, holding=None):
 
 def test_the_device_read_is_the_load_just_started():
     # Codex round four, thread 1: a window with slack held the previous load,
-    # whose group the read took. Bound to the invocation, the read is this
-    # load's. Perturbation: _device_groups ignoring `invocation`, and the
-    # previous load's CUDA0 is returned for a load that bound CUDA1.
+    # whose group the read took. Bound to the log's size before the load's
+    # verb, the read is this load's. Perturbation: _device_groups reading
+    # the log from its start, and the previous load's block is read with
+    # this one's.
     inv = "b" * 32
-    previous = [BOUNDARY, device_line(0, "0000:01:00.0")]
-    current = [BOUNDARY, device_line(1, "0000:02:00.0"), COMPLETE]
-    seen, invocation = with_sh(box(inv, current, previous), lambda: base.load_devices({"agent": "karl"}, 1, 0),
+    cfg, log = agent_log([BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE])
+    offset = base.log_offset(cfg)
+    append(log, [BOUNDARY, device_line(1, "0000:02:00.0"), COMPLETE])
+    seen, invocation = with_sh(box(inv), lambda: base.load_devices(cfg, 1, 0, since=offset),
                                holding=["0000:02:00.0"])
     assert invocation == inv and seen["journal"] == {
         "devices": [{"ordinal": 1, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU",
@@ -74,13 +91,56 @@ def test_the_device_read_is_the_load_just_started():
 
 def test_an_unreadable_or_crowded_invocation_is_refused():
     # Perturbation: accept any systemctl answer, or more than one load
-    # under an invocation, and a case here returns devices.
-    seen, invocation = with_sh(box("", [], []), lambda: base.load_devices({"agent": "karl"}, 1, 0))
+    # after the offset, and a case here returns devices.
+    cfg, log = agent_log()
+    seen, invocation = with_sh(box(""), lambda: base.load_devices(cfg, 1, 0, since=0))
     assert invocation is None and "unreadable" in seen, seen
-    two = [BOUNDARY, device_line(0, "0000:01:00.0"), BOUNDARY, device_line(0, "0000:01:00.0")]
-    seen, _ = with_sh(box("c" * 32, two, []), lambda: base.load_devices({"agent": "karl"}, 1, 0),
+    append(log, [BOUNDARY, device_line(0, "0000:01:00.0"), BOUNDARY, device_line(0, "0000:01:00.0")])
+    seen, _ = with_sh(box("c" * 32), lambda: base.load_devices(cfg, 1, 0, since=0),
                       holding=["0000:01:00.0"])
-    assert "unreadable" in seen, seen
+    assert "unreadable" in seen and "holds 2 loads" in seen["unreadable"], seen
+
+
+def test_the_log_is_read_from_where_the_load_began():
+    # The worker's log is read from the size it had before the load's verb.
+    # Perturbations: read a log shorter than the offset from its start, and a
+    # replaced log's lines are taken for this load's; take a line still being
+    # written, and half a device line is read as a device; read an absent log
+    # as unreadable at the offset, and an agent's first load cannot start.
+    cfg, log = agent_log([BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE])
+    offset = base.log_offset(cfg)
+    assert offset == os.path.getsize(log) and offset > 0, offset
+    with open(log, "w") as fh:
+        fh.write(BOUNDARY + "\n")
+    cut = base._device_groups(cfg, offset)
+    assert set(cut) == {"unreadable"} and "cut or replaced" in cut["unreadable"], cut
+    cfg, log = agent_log()
+    line = device_line(0, "0000:01:00.0")
+    cut = line.index("(NVIDIA")
+    with open(log, "a") as fh:
+        fh.write(BOUNDARY + "\n" + line[:cut])
+    assert base.ENGINE_LINES.search(line[:cut]), line[:cut]
+    assert base._device_groups(cfg, 0) == {"groups": [[]], "complete": [False]}
+    with open(log, "a") as fh:
+        fh.write(line[cut:] + "\n" + COMPLETE + "\n")
+    assert base._device_groups(cfg, 0)["groups"] == [[{
+        "ordinal": 0, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU",
+        "pci_bus_id": "0000:01:00.0"}]]
+    os.remove(log)
+    assert base.log_offset(cfg) == 0
+
+
+def test_an_offset_that_is_not_one_is_unreadable():
+    # Perturbation: read from 0 where the offset is not a byte offset, and a
+    # load whose log could not be sized reads the whole log as its own.
+    cfg, _ = agent_log([BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE])
+    for since in (None, -1, True, "0", 1.5):
+        got = base._device_groups(cfg, since)
+        assert set(got) == {"unreadable"} and "not a byte offset" in got["unreadable"], (since, got)
+    carried = base._device_groups(cfg, {"unreadable": "the log did not size"})
+    assert carried == {"unreadable": "the log did not size"}, carried
+    no_root = base.log_offset({"agent": "karl", "admin_config": tempfile.mkdtemp()})
+    assert set(no_root) == {"unreadable"} and "territory" in no_root["unreadable"], no_root
 
 
 class Unrestarted(Agent):

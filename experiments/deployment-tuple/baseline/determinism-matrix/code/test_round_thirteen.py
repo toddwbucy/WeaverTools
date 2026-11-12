@@ -8,7 +8,6 @@ import contextlib
 import io
 import os
 import stat
-import subprocess
 import sys
 import tempfile
 
@@ -16,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import determinism_matrix as dm  # noqa: E402
 from test_recorded_seed import Reloading, cells_main, run_main, session  # noqa: E402
-from test_round_five import BOUNDARY, COMPLETE, device_line, with_sh  # noqa: E402
+from test_round_five import BOUNDARY, COMPLETE, agent_log, box, device_line, with_sh  # noqa: E402
 
 base = dm.base
 TWO = [{"ordinal": 0, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU", "pci_bus_id": "0000:01:00.0"},
@@ -24,21 +23,25 @@ TWO = [{"ordinal": 0, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop G
 BUSES = [d["pci_bus_id"] for d in TWO]
 
 
-def arriving(reads, invocation="c" * 32):
-    """`sh` as the box answers while journald delivers a load's lines one
-    read at a time: each journal read returns the next of `reads`, the last
-    repeating."""
-    served = []
+@contextlib.contextmanager
+def arriving(reads):
+    """karl's worker log while the engine writes a load's lines one read at a
+    time: before each device read the log holds the next of `reads`, the
+    last repeating. Yields the config and the readings served."""
+    cfg, log = agent_log()
+    served, real = [], base.serving_device
 
-    def sh(args, **kw):
-        if args[0] == "systemctl":
-            return subprocess.CompletedProcess(args, 0, invocation + "\n", "")
-        if "-g" in args:
-            lines = reads[min(len(served), len(reads) - 1)]
-            served.append(lines)
-            return subprocess.CompletedProcess(args, 0, "\n".join(lines) + "\n", "")
-        return subprocess.CompletedProcess(args, 0, "a line\n", "")
-    return sh, served
+    def serving_device(cfg, since, invocation=None):
+        lines = reads[min(len(served), len(reads) - 1)]
+        served.append(lines)
+        with open(log, "w") as fh:
+            fh.write("".join(line + "\n" for line in lines))
+        return real(cfg, since, invocation)
+    base.serving_device = serving_device
+    try:
+        yield cfg, served
+    finally:
+        base.serving_device = real
 
 
 def test_a_two_card_block_split_over_two_reads_records_both():
@@ -48,16 +51,16 @@ def test_a_two_card_block_split_over_two_reads_records_both():
     # first read's one card is recorded.
     first = [BOUNDARY, device_line(0, "0000:01:00.0")]
     whole = first + [device_line(1, "0000:02:00.0"), COMPLETE]
-    sh, served = arriving([first, whole])
-    seen, invocation = with_sh(sh, lambda: base.load_devices({"agent": "karl"}, 5, 0), BUSES)
+    with arriving([first, whole]) as (cfg, served):
+        seen, invocation = with_sh(box("c" * 32), lambda: base.load_devices(cfg, 5, 0, since=0), BUSES)
     assert seen["journal"] == {"devices": TWO, "complete": True} and len(served) == 2, (seen, len(served))
 
 
 def test_a_block_that_never_completes_is_unreadable():
     # Perturbation: return the last reading when the tries run out, and the
     # one card stands as the binding.
-    sh, _ = arriving([[BOUNDARY, device_line(0, "0000:01:00.0")]])
-    seen, invocation = with_sh(sh, lambda: base.load_devices({"agent": "karl"}, 3, 0), BUSES[:1])
+    with arriving([[BOUNDARY, device_line(0, "0000:01:00.0")]]) as (cfg, _):
+        seen, invocation = with_sh(box("c" * 32), lambda: base.load_devices(cfg, 3, 0, since=0), BUSES[:1])
     assert "did not complete within 3 reads" in seen["unreadable"] and invocation == "c" * 32, seen
 
 
@@ -67,9 +70,9 @@ def test_a_device_line_after_the_marker_undoes_it():
     # leave a group complete once its marker is read, and the late card's
     # block is accepted.
     late = [BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE, device_line(1, "0000:02:00.0")]
-    sh, _ = arriving([late])
-    groups = with_sh(sh, lambda: base._device_groups({"agent": "karl"}, None, "c" * 32))
-    seen, invocation = with_sh(sh, lambda: base.load_devices({"agent": "karl"}, 3, 0), BUSES)
+    with arriving([late]) as (cfg, _):
+        seen, invocation = with_sh(box("c" * 32), lambda: base.load_devices(cfg, 3, 0, since=0), BUSES)
+        groups = base._device_groups(cfg, 0)
     assert groups == {"groups": [TWO], "complete": [False]}, groups
     assert "did not complete within 3 reads" in seen["unreadable"], seen
 

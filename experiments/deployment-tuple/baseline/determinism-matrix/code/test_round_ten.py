@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import determinism_matrix as dm  # noqa: E402
 from test_recorded_seed import CFG, FIXED, MODEL, SEED, Agent, Reloading, cells_main, declaration, run_main, session  # noqa: E402
+from test_agent_spu import write_root  # noqa: E402
 from test_round_nine import TWO_CELLS, agent_fakes, cells_run  # noqa: E402
 
 base = dm.base
@@ -165,11 +166,9 @@ def test_the_admin_configuration_names_absolute_binaries():
     # the relative binary is hashed from this directory.
     with tempfile.TemporaryDirectory() as tmp:
         conf = os.path.join(tmp, "admin")
-        os.makedirs(conf)
-        for key, value in (("worker-binary", "worker"), ("gate-binary", MODEL), ("spu-binary", "spu"),
-                           ("allow-list", "karl")):
-            with open(os.path.join(conf, key), "w") as fh:
-                fh.write(value)
+        # The agent's own root beneath the base, as admin reads it.
+        write_root(conf, CFG["agent"], {"worker-binary": "worker", "gate-binary": MODEL,
+                                        "spu-binary": "spu"})
         cfg = dict(CFG, admin_config=conf)
         assert base._resolve_spu(cfg)[0] is None and "relative path" in base._resolve_spu(cfg)[1]
         reading = base.weaver_binaries(cfg)

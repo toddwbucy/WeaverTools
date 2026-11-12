@@ -145,13 +145,10 @@ def test_each_load_reads_its_own_device():
     assert unheld(devices=[CARD, other]) == ["serving_device"]
 
 
-def journal(lines, probe="-- some line --"):
-    """`sh` answering the device grep with these lines and the probe read."""
-    def sh(args, **kw):
-        if "-g" in args:
-            return subprocess.CompletedProcess(args, 0 if lines else 1, "\n".join(lines) + "\n", "")
-        return subprocess.CompletedProcess(args, 0, probe, "")
-    return sh
+def logged(lines):
+    """A config whose agent's worker log holds `lines`."""
+    from test_round_five import agent_log
+    return agent_log(lines)[0]
 
 
 BOUNDARY = "ggml_cuda_init: found 1 CUDA devices (Total VRAM: 24075 MiB):"
@@ -162,24 +159,33 @@ DEVICE = ("llama_model_load_from_file_impl: using device CUDA0 (NVIDIA RTX PRO 5
 def test_the_device_reader_drops_no_load():
     # D1-D3: an empty group was filtered out, a device line before any
     # boundary was dropped, and a line the pattern could not read vanished.
-    # The first two lines are today's journal, verbatim, which parses to one
-    # clean binding. Perturbation: restore `[g for g in groups if g]`, or the
+    # The first two lines are the engine's, verbatim, which parse to one clean
+    # binding. Perturbation: restore `[g for g in groups if g]`, or the
     # `current is not None` guard, or the silent skip, and a case fails.
-    saved = base.sh
-    try:
-        base.sh = journal([BOUNDARY, DEVICE, BOUNDARY, DEVICE])
-        assert base._device_groups({"agent": "karl"}, "t")["groups"] == [[CARD_ON_BOX], [CARD_ON_BOX]]
-        base.sh = journal([BOUNDARY, DEVICE, BOUNDARY])
-        assert base._device_groups({"agent": "karl"}, "t")["groups"][-1] == []
-        base.sh = journal([DEVICE, BOUNDARY, DEVICE])
-        assert base._device_groups({"agent": "karl"}, "t")["groups"] == [[CARD_ON_BOX], [CARD_ON_BOX]]
-        base.sh = journal([BOUNDARY, "using device CUDA0 in a shape nobody wrote"])
-        groups = base._device_groups({"agent": "karl"}, "t")["groups"]
-        assert "unreadable" in groups[0][0], groups
-        assert "unreadable" in base.serving_device({"agent": "karl"}, "t")
-        assert unheld(devices=[groups[0]]) == ["serving_device"]
-    finally:
-        base.sh = saved
+    assert base._device_groups(logged([BOUNDARY, DEVICE, BOUNDARY, DEVICE]), 0)["groups"] == [
+        [CARD_ON_BOX], [CARD_ON_BOX]]
+    assert base._device_groups(logged([BOUNDARY, DEVICE, BOUNDARY]), 0)["groups"][-1] == []
+    assert base._device_groups(logged([DEVICE, BOUNDARY, DEVICE]), 0)["groups"] == [
+        [CARD_ON_BOX], [CARD_ON_BOX]]
+    odd = logged([BOUNDARY, "using device CUDA0 in a shape nobody wrote"])
+    groups = base._device_groups(odd, 0)["groups"]
+    assert "unreadable" in groups[0][0], groups
+    assert "unreadable" in base.serving_device(odd, 0)
+    assert unheld(devices=[groups[0]]) == ["serving_device"]
+
+
+def test_the_workers_other_lines_are_not_the_engines():
+    # The worker's log holds every line the worker and its organs print. Only
+    # the engine's three are read, so the worker's own lines between them
+    # neither open a group nor read as a device. Perturbation: drop the
+    # ENGINE_LINES filter, and the worker's line reads as an unparsed device.
+    cfg = logged(["worker: load requested", BOUNDARY, "llama_model_loader: - kv 0: general.architecture",
+                  DEVICE, "spu: admitted on 1 device", "llama_model_loader: loaded meta data with 26 pairs",
+                  "worker: idle"])
+    assert base._device_groups(cfg, 0) == {"groups": [[CARD_ON_BOX]], "complete": [True]}
+    assert base._device_groups(logged(["worker: idle"]), 0) == {"groups": [], "complete": []}
+    assert base.serving_device(logged(["worker: idle"]), 0) == {
+        "devices": [], "note": "the engine printed no device line"}
 
 
 CARD_ON_BOX = {"ordinal": 0, "name": "NVIDIA RTX PRO 5000 Blackwell Generation Laptop GPU",
