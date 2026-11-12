@@ -199,7 +199,9 @@ installs it. `clone.sh driver ROUND` runs one round's four steps:
      prefixes, and the rest is a plain path with no `..`, query, fragment or user part.
      Otherwise the round stops before anything is fetched. The guest names every URL a
      round fetches, so the host takes the origins from its own parameter, never from the
-     guest. A redirect is followed only to https.
+     guest. A redirect is followed only to https. A percent-encoded dot segment in the
+     rest (`%2e%2e`) can at most name another path on the same host, because each origin
+     fixes the scheme, host and port; the hash check still decides what is kept.
    - The file name is checked: one path component ending `.deb`. The size must be a
      number.
    - A copy in the host's cache is used only if its hash and size match the line.
@@ -262,31 +264,62 @@ these steps (section 9).
 
 ## 8. The offline mock
 
-**`code/test/offline-mock.sh` runs the real `put`, the real `driver-install` and the real
-harness preflight, with no virtual machine, no network and no sudo.**
+**`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
+`uris_sha256`, `ci_judge` and harness preflight, with no virtual machine, no sudo and no
+network beyond loopback.**
 
-- The mock's guest is a temporary home directory on the host.
-- The SSH helper runs each command locally in it.
-- `sudo`, `apt-get`, `install` and `rustc` are stubs that record what they are asked to do.
-- It exits non-zero on the first check that fails.
+- The mock's guest is a temporary home directory on the host. The SSH helper runs each
+  guest command there, in an emptied environment. Its PATH holds the stubs, then the host
+  tools the steps need, and no `rustc`.
+- `sudo`, `apt-get` and `install` are stubs that record what they are asked to do:
+  - `sudo` runs the command as the caller;
+  - `apt-get --print-uris` answers from the mock's fixtures, and an install succeeds;
+  - `install` copies.
+- `APT_LISTS` and `APT_CACHE` (section 1) point at the mock's own index and cache.
+- A Python HTTP server on loopback stands in for the archive, and `DEB_ORIGINS` names it.
+- The guest's toolchain is a stub `rustc` and `rustup` in `$HOME/.cargo/bin`.
+- It exits non-zero on the first check that fails. With `KEEP` set, its temporary
+  directory stays for reading.
 
 Each of the slice's three script defects has a check that reproduces it against the
 behaviour that had it, and shows that this behaviour catches it:
 
 | Defect | The check |
 |---|---|
-| D1, the nested `~/debs` | Two rounds back to back. After the first `driver-install`, no `~/debs` stands. The second `put` lands its files directly in `~/debs`. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. |
+| D1, the nested `~/debs` | Two rounds back to back through `fetch_round`. After the first `driver-install`, no `~/debs` stands. The second round's `put` makes a new `~/debs`, and its install passes. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. The old copy (`cp -r`, the stand-in for `scp -r`) nests, as run 3 found. |
 | D2, links flattened | A source holding links arrives with the same links. The same source copied by `cp -rL` (the stand-in for `scp -r`) arrives as plain files, and the check tells them apart. |
-| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. |
+| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes, reading in that repository with `RUSTUP_AUTO_INSTALL=0`. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. |
 
-The mock also runs the `uris_sha256` cases from the slice:
+The fetch (section 6, step 2):
+- each round installs with `--no-download`, the open round without recommends, and each
+  round's files are listed with their SHA256;
+- a second round takes the cached copy;
+- a file whose SHA256 is not the index's stops the round, and leaves no file and no
+  partial file in the cache;
+- a line left with apt's MD5Sum is refused;
+- a round that names no file stops;
+- a URL from an origin not in `DEB_ORIGINS`, or climbing out of one with `..`, is refused
+  and never fetched, though its file and hash are good;
+- an origin not ending in `/` is refused.
+
+apt's lists (section 6, step 1): lists kept only compressed, a compressed list among
+uncompressed ones, and no list at all each stop `driver-uris`, naming what was found. The
+uncompressed list alone passes.
+
+`uris_sha256`, on synthetic lists shaped like the slice's:
 - a stanza found by exact `Filename`;
 - two stanzas that agree;
 - disagreeing stanzas;
 - a size mismatch;
 - no SHA256;
 - no stanza;
-- apt's own hash differing.
+- apt's own hash differing;
+- a stanza found by `Filename`, never by package name.
+
+`ci_judge` (section 3): exit 2 with `network-wait` alone passes, and so does `done` with no
+item. A schema warning, a status other than `done`, and an unreadable status each stop.
+
+`put` (section 5) refuses a destination that stands, and a path holding `..`.
 
 Before a mock passed, the slice's own offline test stubbed `put` and every guest step,
 which is how all three defects reached a run.
