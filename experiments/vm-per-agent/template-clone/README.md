@@ -134,13 +134,14 @@ guard matches nothing on another network.
 
 SSH reaches each guest through a QEMU port forward on host loopback, given as the
 domain's own QEMU arguments, since libvirt's port forwarding needs the passt backend.
-**The scripts do not pin the guest's host key** (`StrictHostKeyChecking=no`, no known
-hosts file, in `code/lib.sh`): a local process holding the forward's port first would be
-answered as the guest, take what the scripts send and could answer for it. The key the
-scripts log in with is not exposed by that, since public-key authentication does not
-send it. A host key made per guest, handed in through its seed and pinned in a known
-hosts file of its own, would close it; that is left for the next phase, where a new
-clone can show it working, rather than changed untested here.
+**This measurement ran with the guest's host key unpinned** (`StrictHostKeyChecking=no`,
+no known-hosts file): a local process holding the forward's port first would have been
+answered as the guest, taken what the scripts sent and could have answered for it. The
+key the scripts log in with was not exposed by that, since public-key authentication
+does not send it. The scripts now make each guest's host key on the host, hand it in
+through the seed and pin it in a known-hosts file of the guest's own
+(`template-clone-Spec.md`, section 2). The determinism slice's clone of 2026-11-12 ran
+that way from its first boot.
 
 ## The template
 

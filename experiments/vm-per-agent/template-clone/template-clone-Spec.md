@@ -82,6 +82,10 @@ been answered as the guest. The slice's clone of 2026-11-12 ran pinned from its 
   made. The image is made 0600.
 - A copy of the user-data, with the private key replaced by a placeholder line, is kept
   in the guest's log directory.
+- When the template is sealed, the build guest's key pair, its known-hosts file and its
+  seed image are removed from the host. The sealed template is never booted again.
+- A guest made before these scripts pinned (the clone of 2026-11-11) has no known-hosts
+  file of its own, and the scripts refuse to reach it.
 
 **The template masks `sshd-keygen.service` before the seal (rebuild)**, so that the pinned
 key is a clone's only host key. The journal of the slice's first boot shows that unit, and
@@ -278,6 +282,11 @@ slice, not to the template, and the result note names them.
 **They do not rebuild the template.** The template of 2026-11-11 stands until the rebuild
 act, which also decides the driver pin with the operator: the template holds 615.71.09,
 and the slice moved its clone to 620.70.06 by hand.
+
+**`net-probe.sh` is a record, not a path a guest takes.** It measured the two network
+backends with a throwaway guest before any template, on 2026-11-11, with a seed and SSH
+of its own (`README.md`, "The network"). Sections 2 and 3 do not apply to it, and nothing
+else calls it.
 
 **They do not choose the network for a loaded agent.** `restrict=on` with one `guestfwd` is
 a domain argument a caller passes. That network is the operator's to rule (`README.md`,
