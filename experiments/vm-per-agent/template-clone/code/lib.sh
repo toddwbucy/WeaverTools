@@ -48,8 +48,11 @@ fetch_image() {
     echo "$IMAGE_SHA256  $IMAGE" | sha256sum -c --quiet || die "$IMAGE is not the pinned image"
 }
 
+# ensure_key: the measurement's login key, made once where absent, its directory 0700.
 ensure_key() {
-    [ -f "$KEY" ] || ssh-keygen -q -t ed25519 -N '' -C weaver-measure -f "$KEY"
+    [ -f "$KEY" ] && return 0
+    ( umask 077; mkdir -p -- "$(dirname -- "$KEY")" ) || die "no directory for $KEY"
+    ssh-keygen -q -t ed25519 -N '' -C weaver-measure -f "$KEY"
 }
 
 # guest_keys DIR PORT: the guest's host key pair, made here under DIR/hostkey (the private
@@ -242,10 +245,14 @@ PY
 # LOG/cloud-init-TAG.txt (long, with its exit) and .json, and on exit 2 the schema's error
 # lines as -schema.txt for the record, with no line that could carry key text: the stored
 # user-data holds the guest's private host key. Exit 0 passes; exit 2 passes on ci_judge;
-# any other exit stops.
+# any other exit stops. The wait has a deadline, CI_WAIT seconds (900 by default): past it
+# the step exits 124 and stops, since a cloud-init still running would read exit 0.
 cloud_init_verdict() {
-    local port=$1 out=$2/cloud-init-$3 rc=0
-    gssh "$port" 'cloud-init status --wait >/dev/null 2>&1; cloud-init status --long' >"$out.txt" 2>&1 || rc=$?
+    local port=$1 out=$2/cloud-init-$3 rc=0 wait=${CI_WAIT:-900}
+    [[ "$wait" =~ ^[0-9]+$ ]] || die "CI_WAIT is a number of seconds, not '$wait'"
+    gssh "$port" "timeout $wait cloud-init status --wait >/dev/null 2>&1; w=\$?; cloud-init status --long; s=\$?
+                  [ \$w -ne 124 ] || { echo \"the wait passed its deadline, $wait s\"; exit 124; }; exit \$s" \
+        >"$out.txt" 2>&1 || rc=$?
     printf 'exit %s\n' "$rc" >>"$out.txt"
     gssh "$port" 'cloud-init status --format json' >"$out.json" 2>/dev/null || true
     echo "cloud-init ($3): $(grep -m1 -E '^(extended_status|status):' "$out.txt"), exit $rc ($out.txt)"
@@ -275,6 +282,24 @@ boot_ok() {
         || die "SSH is up, but cloud-init's verdict on this boot stops here; see $log/boot.txt"
 }
 
+# netdev_ok VALUE PORT: 0 when VALUE is a user-mode -netdev argument the scripts accept:
+# it starts user,id=un0, every hostfwd in it binds the host's 127.0.0.1, and one of them is
+# the SSH forward, hostfwd=tcp:127.0.0.1:PORT-:22. A forward bound to any other host
+# address would offer the guest's port beyond this host.
+netdev_ok() {
+    local value=$1 port=$2 opt ssh=no
+    [[ "$value" == user,id=un0,* ]] || return 1
+    local IFS=,
+    for opt in $value; do
+        case $opt in
+            hostfwd=*)
+                [[ "$opt" =~ ^hostfwd=(tcp|udp):127\.0\.0\.1:[0-9]+-[^,]*:[0-9]+$ ]] || return 1
+                [ "$opt" != "hostfwd=tcp:127.0.0.1:$port-:22" ] || ssh=yes ;;
+        esac
+    done
+    [ "$ssh" = yes ]
+}
+
 # guest_env VAR...: an `env VAR=value ...` prefix for a guest command, each value quoted
 # for the guest's shell, naming only the variables that are set here. The guest steps'
 # parameters (gpu-steps' DRIVER_PIN, DRIVER_OPEN, HARNESS_DIR, TOOLCHAIN_READING) reach
@@ -296,7 +321,8 @@ step_ok() {
 
 # origin_ok URL: 0 when URL starts with one of DEB_ORIGINS and the rest is a plain path,
 # with no "..", query, fragment or user part. The guest names each URL a round fetches, so
-# the host fetches only under the origins it was given.
+# the host fetches only under the origins it was given. fetch_round follows no redirect:
+# a redirect would take the host to a URL these origins never allowed.
 origin_ok() {
     local o rest
     for o in $DEB_ORIGINS; do
@@ -330,8 +356,9 @@ hash_ok() {
 # a checked file in CACHE. The round's temporary file and stage go on every exit, a
 # refusal or a signal. The round's files go into a new ~/debs by put, and
 # driver-install-ROUND installs them. Any refusal stops the caller.
+# It sets, then clears, the shell's EXIT, INT, TERM and HUP traps: a caller's own are lost.
 fetch_round() {
-    local port=$1 log=$2 cache=$3 round=$4 n=0 url file size hash want sum part="" list stage="" staged
+    local port=$1 log=$2 cache=$3 round=$4 n=0 url file size hash want sum part="" list stage="" staged code
     case $round in pin|open) ;; *) die "a round is pin or open, not '$round'" ;; esac
     mkdir -p "$cache"
     run_step "$port" "$log" "driver-uris-$round" "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-uris $round"
@@ -362,7 +389,9 @@ fetch_round() {
             rm -f -- "$staged"
             [ ! -e "$cache/$file" ] || echo "$file: the cached copy does not match; fetching it again"
             part=$(mktemp "$cache/.$file.XXXXXX.part") || die "no temporary file in $cache"
-            curl -fsS -L --proto '=https,http' --proto-redir '=https' -o "$part" "$url" || die "$url did not fetch"
+            # No redirect is followed (no -L); anything but HTTP 200 stops the round.
+            code=$(curl -fsS --proto '=https,http' -o "$part" -w '%{http_code}' "$url") || die "$url did not fetch"
+            [ "$code" = 200 ] || die "$url answered HTTP $code; redirects are not followed"
             hash_ok "$part" "$sum" "$want" "$size" \
                 || die "$file hashes $GOT_HASH and is $GOT_SIZE bytes; the index says $want and $size"
             cp -- "$part" "$staged" || die "$file did not copy into the round's stage"

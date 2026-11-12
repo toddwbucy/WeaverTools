@@ -78,6 +78,8 @@ step() {
     # GUEST_ENV, as in build-template.sh: the step's environment, named on its command line.
     # gpu-steps' parameters, where set here, go with it, each quoted whole.
     run_step "$PORT" "$LOG" "$1" "${GUEST_ENV:+env $GUEST_ENV }$(guest_env DRIVER_PIN DRIVER_OPEN HARNESS_DIR TOOLCHAIN_READING)gpu-steps $*"
+    # run_step never stops its caller; a failed guest step exits non-zero here, its log kept.
+    step_ok "$LOG" "$1" || die "step $1 did not pass; see $LOG/$1.txt"
 }
 
 # reboot: the guest restarts; SSH under the pinned key and cloud-init's verdict are judged
@@ -96,7 +98,7 @@ reboot_() {
 # loopback probe can be run against each backend option.
 netdev() {
     local value=$1 x t=0
-    case $value in user,id=un0,*hostfwd=*) ;; *) die "VALUE must start user,id=un0, and keep the SSH hostfwd" ;; esac
+    netdev_ok "$value" "$PORT" || die "VALUE must start user,id=un0, bind every hostfwd to 127.0.0.1, and keep hostfwd=tcp:127.0.0.1:$PORT-:22"
     if [ "$(virsh_ domstate "$NAME")" != "shut off" ]; then
         virsh_ shutdown "$NAME" >/dev/null
         until [ "$(virsh_ domstate "$NAME")" = "shut off" ]; do

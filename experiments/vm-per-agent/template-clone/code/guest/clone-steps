@@ -52,15 +52,30 @@ models_host_refusal() {
 # runs update-stack.sh's plan, whose test step needs both settings.
 relaxed() {
     local rc=0 userns sh
-    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
+    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
     sh=$(readlink /bin/sh)
-    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || return 1
-    sudo ln -sfn bash /bin/sh || return 1
+    [ -n "$sh" ] || { echo "/bin/sh is not a link; nothing relaxed"; return 1; }
+    # Both settings come back on every exit path the step sees: a failed change, the
+    # wrapped command's end, or INT, HUP or TERM sent to the step, so an interrupted step
+    # does not leave /bin/sh -> bash in an image that is then sealed. A dropped SSH session
+    # with no terminal sends no signal: the step runs on and restores when COMMAND ends.
+    relaxed_restore() {
+        sudo ln -sfn "$sh" /bin/sh
+        sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
+        echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    }
+    trap 'relaxed_restore; exit 130' INT
+    trap 'relaxed_restore; exit 129' HUP
+    trap 'relaxed_restore; exit 143' TERM
+    if ! sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || ! sudo ln -sfn bash /bin/sh; then
+        relaxed_restore
+        trap - INT HUP TERM
+        return 1
+    fi
     echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
     "$@" || rc=$?
-    sudo ln -sfn "$sh" /bin/sh
-    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
-    echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    relaxed_restore
+    trap - INT HUP TERM
     return "$rc"
 }
 

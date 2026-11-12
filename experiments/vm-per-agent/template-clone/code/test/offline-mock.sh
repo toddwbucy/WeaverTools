@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The offline mock of template-clone-Spec.md section 8: the real put, fetch_round,
-# driver-install, uris_sha256, ci_judge and harness preflight, with no virtual machine, no
+# driver-install, uris_sha256, ci_judge, cloud_init_verdict, netdev_ok, ensure_key, harness
+# preflight and relaxed, and the host scripts' step and seal, with no virtual machine, no
 # network beyond loopback and no sudo.
 #
 #   code/test/offline-mock.sh        exit 0 when every check passes; the first failure stops
@@ -39,7 +40,7 @@ LOG=$T/log
 CACHE=$T/cache  # the host's checked .debs (DEB_CACHE)
 mkdir -p "$G" "$B" "$S" "$LOG" "$CACHE" "$T/lists" "$T/archives" "$T/www/pool"
 for t in bash sh env cat cp rm mkdir find tar sed awk grep cut tail sort id basename \
-         chmod python3 sha256sum stat; do
+         chmod python3 sha256sum stat sleep timeout; do
     p=$(command -v "$t") || no "the host has no $t"
     ln -s "$p" "$S/$t"
 done
@@ -156,6 +157,48 @@ check "a schema warning stops" refused judge "$(j "{\"status\":\"done\",\"errors
 check "a status not done stops" refused judge '{"status":"running","errors":[]}'
 check "an unreadable status stops" refused judge '{not json'
 
+echo "== cloud-init's wait has a deadline (Spec section 3)"
+cat >"$B/cloud-init" <<'EOF'
+#!/bin/bash
+# status --wait sleeps MOCK/ci-wait seconds; --long and --format json answer MOCK/ci-status,
+# exit 0, as cloud-init does while it is still running
+case "$*" in
+"status --wait") sleep "$(cat "$MOCK/ci-wait")" ;;
+"status --long") echo "status: $(cat "$MOCK/ci-status")" ;;
+"status --format json") printf '{"status": "%s", "errors": []}\n' "$(cat "$MOCK/ci-status")" ;;
+*) exit 9 ;;
+esac
+EOF
+chmod 0755 "$B/cloud-init"
+echo 3 >"$T/ci-wait"; echo running >"$T/ci-status"
+( CI_WAIT=1 cloud_init_verdict 1 "$LOG" deadline ) >"$T/ci-deadline.out" 2>&1
+check "a wait past CI_WAIT is recorded as exit 124 and stops, though status still answers 0" \
+    test $? != 0 -a "$(grep -c '^the wait passed its deadline, 1 s$' "$LOG/cloud-init-deadline.txt")" = 1 \
+         -a "$(tail -1 "$LOG/cloud-init-deadline.txt")" = "exit 124"
+echo 0 >"$T/ci-wait"; echo done >"$T/ci-status"
+( CI_WAIT=1 cloud_init_verdict 1 "$LOG" in-time ) >"$T/ci-in-time.out" 2>&1
+check "a wait that ends in time, status done, passes" test $? = 0
+check "a CI_WAIT that is not a number of seconds is refused" refused env CI_WAIT=1s bash -c \
+    "source $(printf '%q' "$CODE/lib.sh"); gssh() { :; }; cloud_init_verdict 1 $(printf '%q' "$LOG") bad"
+
+echo "== clone.sh netdev keeps every forward on the host's loopback (Spec section 4)"
+nd() { netdev_ok "$1" 5022; }
+check "the SSH forward alone passes" nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5022-:22'
+check "restrict=on with a guestfwd passes" \
+    nd 'user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:5022-:22,guestfwd=tcp:10.0.2.100:8080-tcp:127.0.0.1:18080'
+check "a second forward on loopback passes" \
+    nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5022-:22,hostfwd=udp:127.0.0.1:5053-10.0.2.15:53'
+check "the SSH forward bound to every address is refused" refused nd 'user,id=un0,hostfwd=tcp::5022-:22'
+check "a second forward bound to every address is refused" \
+    refused nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5022-:22,hostfwd=tcp:0.0.0.0:8080-:80'
+check "no SSH forward on PORT is refused" refused nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5023-:22'
+check "an argument not starting user,id=un0 is refused" refused nd 'user,id=un1,hostfwd=tcp:127.0.0.1:5022-:22'
+
+echo "== ensure_key (Spec section 1)"
+( KEY=$T/keys/sub/measure_ed25519; ensure_key ) >/dev/null 2>&1
+check "ensure_key makes the key's directory, 0700, and the key in it" \
+    test -f "$T/keys/sub/measure_ed25519" -a "$(stat -c %a "$T/keys/sub")" = 700
+
 echo "== D1: two driver rounds back to back (Spec sections 5 and 6)"
 guest_reset
 ( fetch_round 1 "$LOG" "$CACHE" pin ) >"$T/pin.out" 2>&1
@@ -224,6 +267,17 @@ uri pinpkg_1.0_all.deb >"$T/uris-pin.txt"
 ( DEB_ORIGINS="http://127.0.0.1:$PORT/pool"; fetch_round 1 "$LOG" "$CACHE" pin ) >"$T/badorigin.out" 2>&1
 check "an origin not ending in / is refused" \
     test $? != 0 -a "$(grep -c 'not an http(s) URL prefix ending in /' "$T/badorigin.out")" = 1
+guest_reset
+mkdir -p "$T/www/pool/redir_1.0_all.deb"   # a directory: the server answers 301 to the same path with "/"
+printf "'http://127.0.0.1:%s/pool/redir_1.0_all.deb' redir_1.0_all.deb 3000 SHA256:%s\n" \
+    "$PORT" "$(sha pinpkg_1.0_all.deb)" >"$T/uris-pin.txt"
+( fetch_round 1 "$LOG" "$CACHE" pin ) >"$T/redir.out" 2>&1
+check "a URL answered with a redirect is refused, naming its status" \
+    test $? != 0 -a "$(grep -c 'answered HTTP 301; redirects are not followed' "$T/redir.out")" = 1
+check "and the redirect is never requested, and nothing of it stays in the cache" \
+    test "$(grep -c '"GET /pool/redir_1.0_all.deb/ ' "$T/srv.log")" = 0 \
+         -a -z "$(find "$CACHE" -name '*redir*' -print -quit)"
+uri pinpkg_1.0_all.deb >"$T/uris-pin.txt"
 
 echo "== apt's lists, uncompressed only (Spec section 6, step 1)"
 uris() { gssh 1 "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-uris pin"; }
@@ -310,17 +364,21 @@ HD=$G/harness
 mkdir -p "$REPO" "$HD" "$G/.cargo/bin"
 : >"$HD/determinism_matrix.py"
 READING='rustc 1.95.0-nightly (47611e160 2026-02-12)'
+# The stub writes to the mock's own path: the preflight reads in an emptied environment,
+# which has no MOCK. Under an inherited RUSTUP_TOOLCHAIN it reads that toolchain's line.
 cat >"$G/.cargo/bin/rustc" <<EOF
 #!/bin/bash
-echo "rustc \$* in \$PWD, RUSTUP_AUTO_INSTALL=\${RUSTUP_AUTO_INSTALL-unset}" >>"\$MOCK/calls"
-echo '$READING'
+echo "rustc \$* in \$PWD, RUSTUP_AUTO_INSTALL=\${RUSTUP_AUTO_INSTALL-unset}" >>"$T/calls"
+if [ -n "\${RUSTUP_TOOLCHAIN:-}" ]; then echo "rustc for \$RUSTUP_TOOLCHAIN"; else echo '$READING'; fi
 EOF
 cat >"$G/.cargo/bin/rustup" <<'EOF'
 #!/bin/bash
 echo "nightly-2026-02-13-x86_64-unknown-linux-gnu (overridden by '$PWD/rust-toolchain.toml')"
 EOF
 chmod 0755 "$G/.cargo/bin/rustc" "$G/.cargo/bin/rustup"
-pre() { gssh 1 "env TOOLCHAIN_READING=$(printf '%q' "$1") HARNESS_DIR=$(printf '%q' "$HD") gpu-steps harness-preflight $(printf '%q' "$REPO")"; }
+# pre READING: the preflight as clone.sh step runs it; XENV, where set, is more of the
+# step's environment (as GUEST_ENV gives it)
+pre() { gssh 1 "env ${XENV:-} TOOLCHAIN_READING=$(printf '%q' "$1") HARNESS_DIR=$(printf '%q' "$HD") gpu-steps harness-preflight $(printf '%q' "$REPO")"; }
 gssh 1 'rustc --version' >/dev/null 2>&1
 check "the inherited PATH alone answers 127, as the rehearsal read" test $? = 127
 pre "$READING" >"$T/pre.out" 2>&1
@@ -330,8 +388,112 @@ check "it reads in the repository, with RUSTUP_AUTO_INSTALL=0" \
     test "$(grep -c "^rustc --version in $REPO, RUSTUP_AUTO_INSTALL=0\$" "$T/calls")" = 1
 pre 'rustc 1.96.0-nightly (0000000 2026-03-01)' >"$T/pre2.out" 2>&1
 check "a rustc reading another line is refused" test $? != 0 -a "$(grep -c 'not .rustc 1.96' "$T/pre2.out")" = 1
+XENV=RUSTUP_TOOLCHAIN=nightly-other pre "$READING" >"$T/pre-tc.out" 2>&1
+check "an inherited RUSTUP_TOOLCHAIN does not reach the readings, so the matrix's line passes" test $? = 0
+XENV=RUSTUP_TOOLCHAIN=nightly-other pre 'rustc for nightly-other' >"$T/pre-tc2.out" 2>&1
+check "a line only that inherited setting gives is refused, since the matrix runs without it" \
+    test $? != 0 -a "$(grep -c "not 'rustc for nightly-other'" "$T/pre-tc2.out")" = 1
 rm "$G/.cargo/bin/rustc"
 pre "$READING" >"$T/pre3.out" 2>&1
 check "no rustc in ~/.cargo/bin is refused" test $? != 0 -a "$(grep -c 'no rustc on PATH' "$T/pre3.out")" = 1
+
+echo "== a guest step that fails stops the host script (Spec section 0)"
+# host_fn SCRIPT FN: FN as the host script defines it. The copy-in lines (gscp, and the
+# guest's sudo install of the steps) are stubbed; each run is a subshell under the
+# scripts' own set -euo pipefail.
+host_fn() { eval "$(sed -n "/^$2() {/,/^}/p" "$CODE/$1")"; declare -F "$2" >/dev/null || no "no $2 in $1"; }
+copy_in_stubbed() {
+    gscp() { :; }
+    install_steps() { :; }
+    eval "mock_gssh() $(declare -f gssh | tail -n +2)"
+    gssh() { case $2 in 'sudo install '*) return 0 ;; esac; mock_gssh "$@"; }
+}
+cat >"$B/template-steps" <<'EOF'
+#!/bin/bash
+echo "template-steps $*" >>"$MOCK/calls"
+[ ! -e "$MOCK/steps-fail" ] || { echo "the step failed"; exit 3; }
+echo "the step passed"
+EOF
+chmod 0755 "$B/template-steps"
+guest_reset
+touch "$T/steps-fail"
+( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep.out" 2>&1
+check "build-template.sh step: a failed guest step exits non-zero, and nothing after it runs" \
+    test $? = 1 -a "$(grep -c '^after the step' "$T/bstep.out")" = 0 \
+         -a "$(grep -c 'REFUSED: step packages did not pass' "$T/bstep.out")" = 1
+rm "$T/steps-fail"
+( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep2.out" 2>&1
+check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/bstep2.out")" = 1
+( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step harness-preflight "$G"; echo "after the step" ) >"$T/cstep.out" 2>&1
+check "clone.sh step: a failed guest step exits non-zero, and nothing after it runs" \
+    test $? = 1 -a "$(grep -c '^after the step' "$T/cstep.out")" = 0 \
+         -a "$(grep -c 'REFUSED: step harness-preflight did not pass' "$T/cstep.out")" = 1
+( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step driver-uris pin; echo "after the step" ) >"$T/cstep2.out" 2>&1
+check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/cstep2.out")" = 1
+# seal: virsh_ and qemu-img recorded, the template's directory a stand-in
+TD=$T/template
+sealrun() {
+    rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
+    head -c 4096 /dev/zero >"$TD/template.qcow2"; : >"$T/host-calls"; rm -f "$LOG/template-sha256.txt"
+    ( set -euo pipefail; host_fn build-template.sh seal; copy_in_stubbed
+      NAME=mock-template DIR=$TD DISK=$TD/template.qcow2
+      virsh_() { echo "virsh_ $*" >>"$T/host-calls"; [ "$1" != domstate ] || echo "shut off"; }
+      qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+      seal; echo "after the seal" )
+}
+touch "$T/steps-fail"
+sealrun >"$T/seal.out" 2>&1
+check "a seal that fails stops before the undefine, the read-only disk and the checksum" \
+    test $? = 1 -a ! -s "$T/host-calls" -a -w "$TD/template.qcow2" -a -e "$TD/hostkey" \
+         -a ! -e "$LOG/template-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
+rm "$T/steps-fail"
+sealrun >"$T/seal2.out" 2>&1
+check "a seal that passes goes on to all three" \
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-template --nvram$' "$T/host-calls")" = 1 \
+         -a ! -w "$TD/template.qcow2" -a ! -e "$TD/hostkey" -a -s "$LOG/template-sha256.txt"
+chmod 0644 "$TD/template.qcow2"
+
+echo "== relaxed puts both settings back (template-steps and clone-steps)"
+# relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions
+# over two files: R/userns, the sysctl's value, and R/sh, where /bin/sh points (empty: not
+# a link). R/ln-fails makes the change to bash fail.
+R=$T/relaxed
+mkdir -p "$R"
+relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prints the state after
+    local f=$1; shift
+    (
+        eval "$(sed -n '/^relaxed() {/,/^}/p' "$CODE/guest/$f")"
+        declare -F relaxed >/dev/null || exit 99
+        sudo() { "$@"; }
+        sysctl() { case $1 in -n) cat "$R/userns" ;; -q) printf '%s\n' "${3#*=}" >"$R/userns" ;; esac; }
+        readlink() { [ "$1" = /bin/sh ] && cat "$R/sh"; }
+        ln() { [ "$3" = /bin/sh ] || return 9; [ ! -e "$R/ln-fails" ] || [ "$2" != bash ] || return 1; printf '%s\n' "$2" >"$R/sh"; }
+        during() { echo "$(cat "$R/userns") $(cat "$R/sh")" >"$R/during"; }
+        relaxed "$@"
+        rc=$?
+        [ -z "$(trap -p TERM)" ] || { echo "the TERM trap outlived relaxed"; exit 98; }
+        exit "$rc"
+    )
+}
+relaxed_state() { echo "$(cat "$R/userns") $(cat "$R/sh")"; }
+for f in template-steps clone-steps; do
+    rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails"; }
+    rr; relaxed_in "$f" during >/dev/null 2>&1
+    check "$f: relaxed runs the command relaxed and restores both, its traps gone" \
+        test $? = 0 -a "$(cat "$R/during")" = "0 bash" -a "$(relaxed_state)" = "1 dash"
+    rr; relaxed_in "$f" false >/dev/null 2>&1
+    check "$f: a command that fails is answered, both restored" test $? = 1 -a "$(relaxed_state)" = "1 dash"
+    rr; touch "$R/ln-fails"; relaxed_in "$f" during >/dev/null 2>&1
+    check "$f: a change to /bin/sh that fails restores the sysctl, and the command never runs" \
+        test $? = 1 -a "$(relaxed_state)" = "1 dash" -a ! -e "$R/during"
+    rr; relaxed_in "$f" bash -c 'kill -TERM $PPID; sleep 0.2' >/dev/null 2>&1
+    check "$f: a TERM during the command restores both, exit 143" test $? = 143 -a "$(relaxed_state)" = "1 dash"
+    rr; relaxed_in "$f" bash -c 'kill -HUP $PPID; sleep 0.2' >/dev/null 2>&1
+    check "$f: a HUP during the command restores both, exit 129" test $? = 129 -a "$(relaxed_state)" = "1 dash"
+    rr; : >"$R/sh"; relaxed_in "$f" during >"$T/relaxed-nolink.out" 2>&1
+    check "$f: a /bin/sh that is not a link is refused, nothing changed" \
+        test $? = 1 -a "$(cat "$R/userns")" = 1 -a ! -e "$R/during" \
+             -a "$(grep -c 'not a link; nothing relaxed' "$T/relaxed-nolink.out")" = 1
+done
 
 echo "== $pass checks passed"

@@ -18,6 +18,7 @@
 set -uo pipefail
 APT_LISTS=${APT_LISTS:-/var/lib/apt/lists}
 APT_CACHE=${APT_CACHE:-/var/cache/apt/archives}
+BASE_PATH=$PATH
 
 section() { printf '\n== %s\n' "$*"; }
 fail() { printf 'REFUSED: %s\n' "$*" >&2; exit 1; }
@@ -161,33 +162,45 @@ driver_install() {
         || fail "the $1 round did not install"
 }
 
+# matrix_env: sets MATRIX_ENV to the emptied environment the matrix runs in: HOME, USER,
+# LOGNAME, LANG, RUSTUP_AUTO_INSTALL=0, and a PATH with ~/.cargo/bin ahead of the PATH this
+# step was given. The preflight takes its readings in it too, so nothing the step inherited
+# (RUSTUP_TOOLCHAIN, RUSTUP_HOME, CARGO_HOME, a GUEST_ENV setting) can make the preflight
+# read a toolchain the matrix does not run.
+matrix_env() {
+    MATRIX_ENV=(env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" LANG=C.UTF-8
+        RUSTUP_AUTO_INSTALL=0 PATH="$HOME/.cargo/bin:$BASE_PATH")
+}
+
 # harness-preflight REPO: the matrix reads `rustc --version` in the repository it names and
 # refuses a run without a reading. The template installs rustup with --no-modify-path, so a
 # non-interactive command's PATH has no ~/.cargo/bin; the slice's rehearsal read exit 127
-# there and carried a compiler in, which was not needed. Here ~/.cargo/bin goes first, and
-# the reading is taken in REPO, where a pinned toolchain file decides it. A toolchain REPO
-# pins and the guest lacks refuses, never downloads (RUSTUP_AUTO_INSTALL=0). Exports the
-# PATH it checked.
+# there and carried a compiler in, which was not needed. Here the readings are taken in
+# REPO, where a pinned toolchain file decides them, in the matrix's own environment
+# (matrix_env), with ~/.cargo/bin first. A toolchain REPO pins and the guest lacks refuses,
+# never downloads (RUSTUP_AUTO_INSTALL=0).
 harness_preflight() {
     local repo=${1:-} r reading active
     [ -n "${TOOLCHAIN_READING:-}" ] || fail "TOOLCHAIN_READING is not set"
     [ -n "${HARNESS_DIR:-}" ] && [ -f "$HARNESS_DIR/determinism_matrix.py" ] \
         || fail "HARNESS_DIR ('${HARNESS_DIR:-}') holds no determinism_matrix.py"
     [ -n "$repo" ] && [ -d "$repo" ] || fail "no repository at '$repo'"
-    export PATH="$HOME/.cargo/bin:$PATH" RUSTUP_AUTO_INSTALL=0
-    r=$(command -v rustc) || fail "no rustc on PATH, even with $HOME/.cargo/bin first"
+    matrix_env
+    r=$(cd "$repo" && "${MATRIX_ENV[@]}" sh -c 'command -v rustc') \
+        || fail "no rustc on PATH, even with $HOME/.cargo/bin first"
     [ "$r" = "$HOME/.cargo/bin/rustc" ] || fail "rustc resolves to $r, not the template's $HOME/.cargo/bin/rustc"
-    reading=$(cd "$repo" && rustc --version 2>&1) || fail "rustc --version in $repo did not answer: $reading"
+    reading=$(cd "$repo" && "${MATRIX_ENV[@]}" rustc --version 2>&1) || fail "rustc --version in $repo did not answer: $reading"
     [ "$reading" = "$TOOLCHAIN_READING" ] || fail "rustc in $repo reads '$reading', not '$TOOLCHAIN_READING'"
-    active=$(cd "$repo" && rustup show active-toolchain 2>&1) || fail "rustup show active-toolchain in $repo did not answer: $active"
+    active=$(cd "$repo" && "${MATRIX_ENV[@]}" rustup show active-toolchain 2>&1) \
+        || fail "rustup show active-toolchain in $repo did not answer: $active"
     echo "toolchain in $repo: $reading; active: $active; rustc: $r"
 }
 
 # harness-run CONFIG OUTDIR HOURS: the preflight in the repository CONFIG names, then the
 # matrix, detached from the SSH session (setsid -w, output to a file), as this account with
-# a fresh group list, in an emptied environment whose PATH has ~/.cargo/bin first.
+# a fresh group list, in the environment the preflight read in (matrix_env).
 harness_run() {
-    local config=${1:-} out=${2:-} hours=${3:-} base=$PATH repo rc
+    local config=${1:-} out=${2:-} hours=${3:-} repo rc
     [ -f "$config" ] || fail "no config at '$config'"
     [ -n "$out" ] || fail "harness-run CONFIG OUTDIR HOURS"
     [ ! -e "$out" ] || fail "$out already stands"
@@ -197,8 +210,7 @@ harness_run() {
     harness_preflight "$repo"
     mkdir -p "$out" || fail "$out was not made"
     sudo setsid -w setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups -- \
-        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" LANG=C.UTF-8 RUSTUP_AUTO_INSTALL=0 \
-        PATH="$HOME/.cargo/bin:$base" \
+        "${MATRIX_ENV[@]}" \
         python3 "$HARNESS_DIR/determinism_matrix.py" --config "$config" --outdir "$out" --hours "$hours" \
         >"$out/run-console.log" 2>&1 </dev/null
     rc=$?

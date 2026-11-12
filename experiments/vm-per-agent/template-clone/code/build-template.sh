@@ -63,6 +63,8 @@ step() {
     # GUEST_ENV, where set, is given to the step as its environment (env VAR=value ...),
     # so a workaround a step needed is named on the command line that ran it.
     run_step "$PORT" "$LOG" "$1" "${GUEST_ENV:+env $GUEST_ENV }template-steps $*"
+    # run_step never stops its caller; a failed guest step stops here, after its log is kept.
+    step_ok "$LOG" "$1" || die "step $1 did not pass; see $LOG/$1.txt"
 }
 
 seal() {
@@ -70,6 +72,9 @@ seal() {
     gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
     run_step "$PORT" "$LOG" seal-identity "template-steps seal"
     tail -3 "$LOG/seal-identity.txt"
+    # A seal that did not pass is never followed by the undefine, the read-only disk or the
+    # checksum.
+    step_ok "$LOG" seal-identity || die "the seal did not pass; see $LOG/seal-identity.txt"
     # The guest powers itself off at the end of the seal step.
     local t=0
     until [ "$(virsh_ domstate "$NAME")" = "shut off" ]; do

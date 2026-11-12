@@ -201,15 +201,30 @@ lock_gate() {
 # dash holds 10 and 11).
 relaxed() {
     local rc=0 userns sh
-    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
+    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
     sh=$(readlink /bin/sh)
-    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || return 1
-    sudo ln -sfn bash /bin/sh || return 1
+    [ -n "$sh" ] || { echo "/bin/sh is not a link; nothing relaxed"; return 1; }
+    # Both settings come back on every exit path the step sees: a failed change, the
+    # wrapped command's end, or INT, HUP or TERM sent to the step, so an interrupted step
+    # does not leave /bin/sh -> bash in an image that is then sealed. A dropped SSH session
+    # with no terminal sends no signal: the step runs on and restores when COMMAND ends.
+    relaxed_restore() {
+        sudo ln -sfn "$sh" /bin/sh
+        sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
+        echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    }
+    trap 'relaxed_restore; exit 130' INT
+    trap 'relaxed_restore; exit 129' HUP
+    trap 'relaxed_restore; exit 143' TERM
+    if ! sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || ! sudo ln -sfn bash /bin/sh; then
+        relaxed_restore
+        trap - INT HUP TERM
+        return 1
+    fi
     echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
     "$@" || rc=$?
-    sudo ln -sfn "$sh" /bin/sh
-    sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
-    echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+    relaxed_restore
+    trap - INT HUP TERM
     return "$rc"
 }
 
@@ -315,13 +330,13 @@ seal() {
     # is the clone's only one (template-clone-Spec.md, section 2). The template of
     # 2026-11-11 predates this; a rebuild measures it.
     sudo systemctl mask sshd-keygen.service || return 1
-    sudo rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed
+    sudo rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed || return 1
     # The module signing pair DKMS made when it built the driver: a private key every
     # clone would share. DKMS makes a new pair at its next build in a clone.
-    sudo rm -f /var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
+    sudo rm -f /var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd || return 1
     # fwupd's client pair, made at its first start: another private key every clone
     # would share. fwupd makes a new pair at its next start in a clone.
-    sudo rm -f /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem
+    sudo rm -f /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem || return 1
     # --configs network: the netplan file cloud-init rendered matches the build NIC by
     # MAC; each clone renders its own for the interface its domain gives it.
     sudo cloud-init clean --logs --seed --machine-id --configs network || return 1
@@ -337,6 +352,16 @@ seal() {
     sudo find /etc /var /home /root /opt -xdev -type f \( -name '*.priv' -o -name '*.key' \
         -o -name '*_key' -o -name 'id_rsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' \
         -o -name '*.pem' \) -not -path '/etc/ssl/certs/*' 2>/dev/null | head -40
+    # The keys removed above are judged gone before the guest powers off: the listing alone
+    # stops nothing, and a key left here is in every clone. A step that returns non-zero
+    # stops build-template.sh seal before the undefine and the checksum.
+    section named-private-keys
+    local k left=0
+    for k in /etc/ssh/ssh_host_* /var/lib/shim-signed/mok/MOK.priv /var/lib/fwupd/pki/secret.key; do
+        if sudo test -e "$k"; then echo "still present: $k"; left=1; fi
+    done
+    [ "$left" = 0 ] || return 1
+    echo "none of the named private keys is left"
     sudo systemd-run --on-active=3 systemctl poweroff
     echo "powering off in 3s"
 }
