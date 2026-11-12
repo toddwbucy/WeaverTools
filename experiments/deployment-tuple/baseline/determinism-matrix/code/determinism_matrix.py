@@ -475,6 +475,15 @@ def main():
             raise ValueError(f"the artifact cannot be read: {json.dumps(weights_open)}")
         opening = base.opening_readings(cfg)
         base.held_declaration(cfg, held)
+        # **The worker's log opened at preflight** (CodeRabbit's pass on
+        # WeaverTools #22): a log that stands and does not open started a run
+        # whose every load's device read was unreadable. Its size is the run's
+        # start, so the device read at the summary starts where this run's
+        # loads do and cannot reach back past it. An absent log is 0, admin
+        # opening it at the first load.
+        run_started = base.log_offset(cfg)
+        if isinstance(run_started, dict):
+            raise ValueError(f"the worker's log cannot be read: {run_started['unreadable']}")
         # **Every output the run writes is created at preflight, last**
         # (#716, after round twelve): an outdir the operator cannot write
         # passed `makedirs` and failed at the first record, after a whole
@@ -497,10 +506,6 @@ def main():
     cfg["held_spu"] = base.held_spu(opening)
 
     deadline = math.inf if args.cells else time.time() + args.hours * 3600.0
-    # Opened before the first load so the journal read at the summary
-    # cannot reach back past this run.
-    run_started = time.strftime(
-        "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 1))
     # The closing steps a run's result rests on, where one failed.
     results, invocations, interrupted, unclosed = [], set(), False, []
     logpath = os.path.join(args.outdir, "matrix.log")
@@ -675,7 +680,7 @@ def main():
     # is what a reader needs to know before trusting a rate over the run.
     # Guarded for the same reason: these facts exist to make the deposit
     # worth trusting, so they must never be the reason there is no deposit.
-    # A box without `journalctl` on PATH raises here, and losing a
+    # A worker log that cannot be read is a note here, and losing a
     # seven-hour matrix over a missing box fact would be the wrong trade.
     # **The binaries are read twice and compared**, per finding 7 of the
     # olympus seat. `--hours` lets a run reach seven and `run_session` loads
@@ -748,17 +753,17 @@ def main():
     # ends (#716 round two).
     weights_at_close = close(base.weights(artifacts), weights_open, "weights")
 
-    # Through `closing` too: `journalctl` over a seven-hour window is a call
-    # a Ctrl-C can land in, and an interrupt caught here into an unreadable
-    # window left the run unmarked, the window not being gated (#716, after
-    # the fold).
+    # Through `closing` too: reading the worker's log over a seven-hour
+    # window is a call a Ctrl-C can land in, and an interrupt caught here into
+    # an unreadable window left the run unmarked, the window not being gated
+    # (#716, after the fold).
     done, bindings = closing("the journal's device read", lambda: base.device_bindings(cfg, run_started))
     if not done:
         bindings = [{"unreadable": "the journal's device read did not complete"}]
     summary = {
         # Held from every session's own per-load read (#716 round three).
-        # The journal window over the whole run is kept as a record and not
-        # gated: a journal that keeps minutes cannot answer for hours.
+        # The window over the whole run, read from the worker's log under the
+        # key the earlier deposits carry, is kept as a record and not gated.
         "serving_device": base.run_binding(results),
         "serving_device_journal_window": (bindings[0] if len(bindings) == 1
                                           else {"varied": bindings}),

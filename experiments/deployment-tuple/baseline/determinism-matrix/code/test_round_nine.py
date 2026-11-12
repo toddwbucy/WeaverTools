@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import determinism_matrix as dm  # noqa: E402
 from test_recorded_seed import (CARD, CFG, FIXED, MODEL, SEED, Agent, Reloading,  # noqa: E402
                                 cells_main, run_main, session)
+from test_agent_spu import write_root  # noqa: E402
 from test_round_five import drive_cell  # noqa: E402
 
 base = dm.base
@@ -148,16 +149,15 @@ def test_the_real_binaries_reader_is_refused_where_admin_names_no_spu():
     # `_read_admin`, and the guess is resolved and refused only as a guess.
     with tempfile.TemporaryDirectory() as tmp:
         conf, bindir = os.path.join(tmp, "admin"), os.path.join(tmp, "bin")
-        os.makedirs(conf)
         os.makedirs(bindir)
         for name in ("worker", "gate", "weaver-spu"):
             with open(os.path.join(bindir, name), "w") as fh:
                 fh.write(name)
-        for key, name in (("worker-binary", "worker"), ("gate-binary", "gate")):
-            with open(os.path.join(conf, key), "w") as fh:
-                fh.write(os.path.join(bindir, name))
-        with open(os.path.join(conf, "allow-list"), "w") as fh:
-            fh.write("karl\n")
+        # The agent's own root beneath the base, as admin reads it, with no
+        # spu-binary in it.
+        root = write_root(conf, CFG["agent"], {"worker-binary": os.path.join(bindir, "worker"),
+                                               "gate-binary": os.path.join(bindir, "gate"),
+                                               "spu-binary": None})
         cfg = dict(CFG, admin_config=conf, admin_bin=os.path.join(bindir, "weaver-admin"))
         saved = base.engine_libraries, base.toolchain
         base.engine_libraries, base.toolchain = (lambda c, s: FIXED), (lambda c, s=None: {"rustc": "stub"})
@@ -168,7 +168,7 @@ def test_the_real_binaries_reader_is_refused_where_admin_names_no_spu():
             except ValueError as e:
                 assert "is not a reading" in str(e) and "absent, and admin requires it" in str(e), e
                 assert "guess" not in str(e), e
-            with open(os.path.join(conf, "spu-binary"), "w") as fh:
+            with open(os.path.join(root, "spu-binary"), "w") as fh:
                 fh.write(os.path.join(bindir, "weaver-spu"))
             assert set(base.opening_readings(cfg)["weaver_binaries"]) == {"worker-binary", "spu-binary", "gate-binary"}
         finally:
@@ -344,6 +344,24 @@ def test_the_matrix_opens_every_file_at_preflight():
     # The control: the declaration read-only is refused only where the run
     # rewrites it.
     code, records, _ = run_main(Reloading(), prepare=read_only)
+    assert code == 0 and records, code
+
+
+def test_a_worker_log_that_does_not_open_is_refused_at_preflight():
+    # CodeRabbit's pass on WeaverTools #22: the worker's log was never opened
+    # at preflight, so a log this run may not read started a run whose every
+    # load's device read was unreadable. Perturbation: drop the preflight's
+    # log read, and both modes load the agent.
+    shut = {"log_offset": lambda c: {"unreadable": "worker.log: [Errno 13] Permission denied"}}
+    refused_without_writing("the worker's log cannot be read: worker.log", stack=shut)
+    err = io.StringIO()
+    with tempfile.TemporaryDirectory() as tmp, contextlib.redirect_stderr(err):
+        code, called, *_ = cells_main(tmp, fakes=shut)
+        assert code == 2 and called == [] and not os.path.exists(os.path.join(tmp, "out")) \
+            and not os.path.exists(os.path.join(tmp, "karl.toml.pre-matrix")), (code, called)
+    assert "the worker's log cannot be read" in err.getvalue(), err.getvalue()
+    # The control: an absent log sizes 0, and the run goes on from it.
+    code, records, _ = run_main(Reloading(), stack={"log_offset": lambda c: 0})
     assert code == 0 and records, code
 
 

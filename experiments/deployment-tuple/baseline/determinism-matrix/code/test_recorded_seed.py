@@ -50,6 +50,7 @@ def stack_fakes(device=None):
             "weaver_binaries": lambda c, s: BINARIES,
             "toolchain": lambda c, s=None: {"rustc": {"path": "/rustc", "sha256": "e" * 64}},
             "closing_resolution": lambda c: ("/spu", None),
+            "log_offset": lambda c: 0,
             "device_bindings": lambda c, since: [device if device is not None else card]}
 
 

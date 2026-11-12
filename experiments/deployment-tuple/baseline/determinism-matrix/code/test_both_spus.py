@@ -294,44 +294,54 @@ GPUS = ("GPU-aaaa, NVIDIA RTX A6000, 00000000:01:00.0\n"
         "GPU-cccc, NVIDIA RTX 2000 Ada Generation, 00000000:86:00.0\n")
 
 
-def driver(tmp, apps, invocations=None, gpus=GPUS, journal=()):
-    """The box as `unit_devices` reads it: a cgroup hierarchy whose unit holds pid 100
-    and, a group beneath it, pid 200; systemctl naming the unit's invocation (each call
-    the next of `invocations`) and group; nvidia-smi listing `gpus` and the compute
-    processes `apps`; the journal holding `journal`'s engine lines."""
-    group = os.path.join(tmp, "system.slice", "worker.service")
-    os.makedirs(os.path.join(group, "spu"))
+def driver(tmp, apps, invocations=None, gpus=GPUS):
+    """The box as `unit_devices` reads it: a cgroup hierarchy whose agent's scope
+    holds pid 100 and, in the agent's cgroup beneath it, pid 200; systemctl naming
+    the scope's invocation (each call the next of `invocations`) and group, and
+    nothing for any other unit; nvidia-smi listing `gpus` and the compute processes
+    `apps`. The journal is not read: a command this box does not answer fails."""
+    group = os.path.join(tmp, "weaver.slice", "weaver-alpha.scope")
+    os.makedirs(os.path.join(group, "weaver-alpha"))
     with open(os.path.join(group, "cgroup.procs"), "w") as fh:
         fh.write("100\n")
-    with open(os.path.join(group, "spu", "cgroup.procs"), "w") as fh:
+    with open(os.path.join(group, "weaver-alpha", "cgroup.procs"), "w") as fh:
         fh.write("200\n")
     reads = iter(invocations or [INVOCATION] * 8)
 
     def sh(args, **kw):
+        if args[:2] == ["systemctl", "show"] and "weaver-alpha.scope" not in args:
+            return subprocess.CompletedProcess(args, 0, "\n", "")
         if args[:2] == ["systemctl", "show"] and "InvocationID" in args:
             return subprocess.CompletedProcess(args, 0, next(reads) + "\n", "")
         if args[:2] == ["systemctl", "show"] and "ControlGroup" in args:
-            return subprocess.CompletedProcess(args, 0, "/system.slice/worker.service\n", "")
+            return subprocess.CompletedProcess(args, 0, "/weaver.slice/weaver-alpha.scope\n", "")
         if args[0] == "nvidia-smi" and args[1].startswith("--query-gpu"):
             return subprocess.CompletedProcess(args, 0, gpus, "")
         if args[0] == "nvidia-smi":
             return subprocess.CompletedProcess(args, 0, apps, "")
-        if args[0] == "journalctl" and "-g" in args:
-            # journalctl prints nothing where its pattern matches nothing.
-            return subprocess.CompletedProcess(args, 0 if journal else 1,
-                                               "".join(line + "\n" for line in journal), "")
-        if args[0] == "journalctl":
-            return subprocess.CompletedProcess(args, 0, "a line\n", "")
         raise AssertionError(f"unexpected command {args}")
     return sh
 
 
+def agent_log(tmp, lines=()):
+    """The agent's root beneath an admin base in `tmp`, naming a territory that
+    holds the worker's log with the engine's `lines`: the config the device readers
+    read, and the log's path."""
+    from test_round_five import agent_log as laid
+    cfg, log = laid(lines, agent=CFG["agent"], tmp=tmp)
+    return dict(CFG, admin_config=cfg["admin_config"]), log
+
+
 @contextlib.contextmanager
-def box(tmp, apps, **kw):
+def box(tmp, apps, log=(), **kw):
+    """The box, and the config whose agent's worker log holds `log`."""
     saved = base.sh, base.CGROUP_ROOT
-    base.sh, base.CGROUP_ROOT = driver(tmp, apps, **kw), tmp
+    cgroups = os.path.join(tmp, "cgroup")
+    os.makedirs(cgroups)
+    cfg, _ = agent_log(tmp, log)
+    base.sh, base.CGROUP_ROOT = driver(cgroups, apps, **kw), cgroups
     try:
-        yield
+        yield cfg
     finally:
         base.sh, base.CGROUP_ROOT = saved
 
@@ -341,13 +351,16 @@ B = {"uuid": "GPU-bbbb", "name": "NVIDIA RTX A6000", "pci_bus_id": "0000:41:00.0
 
 def test_the_serving_device_is_the_card_the_units_processes_hold():
     """The binding is read from the driver: the cards `nvidia-smi` lists a process of the
-    unit's control group holding, the groups beneath it included, and no other
-    process's. Perturbations: read the unit's own group alone, and the SPU forked into
-    a group beneath it is missed; drop the pid filter, and another user's card is read
-    as this load's."""
+    agent's scope holding, the agent's cgroup beneath it included, and no other
+    process's. Perturbations: read the scope's own group alone, and the SPU in the
+    agent's cgroup beneath it is missed; drop the pid filter, and another user's card
+    is read as this load's; read the worker unit of the stack before #72, and the
+    invocation reads empty."""
     apps = "200, GPU-bbbb, 00000000:41:00.0\n999, GPU-aaaa, 00000000:01:00.0\n"
     with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
+        assert base.agent_scope(CFG) == "weaver-alpha.scope"
         assert base.unit_devices(CFG, INVOCATION) == {"devices": [B]}
+        assert base.unit_invocation(CFG) == INVOCATION
 
 
 def test_a_restart_across_the_device_read_is_unreadable():
@@ -386,23 +399,24 @@ def test_no_card_held_or_a_driver_that_does_not_read_is_unreadable():
 
 
 def test_the_engines_own_lines_cross_check_the_driver():
-    """Where the engine prints its device lines they must name the cards the unit's
-    processes hold, the driver's eight-digit domain read as the engine's four; where it
-    prints none, as the native backend and python-spu do, the driver's read stands and
-    the journal's empty read is recorded beside it. Perturbation: drop the comparison,
-    and a journal naming another card is held as this load's."""
+    """Where the engine prints its device lines into the worker's log they must name
+    the cards the scope's processes hold, the driver's eight-digit domain read as the
+    engine's four; where it prints none, as the native backend and python-spu do, the
+    driver's read stands and the log's empty read is recorded beside it.
+    Perturbation: drop the comparison, and a log naming another card is held as this
+    load's."""
     from test_round_five import BOUNDARY, COMPLETE, device_line
     apps = "200, GPU-bbbb, 00000000:41:00.0\n"
     agreeing = [BOUNDARY, device_line(1, "0000:41:00.0"), COMPLETE]
-    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, journal=agreeing):
-        seen, invocation = base.load_devices(CFG, 2, 0)
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, log=agreeing) as cfg:
+        seen, invocation = base.load_devices(cfg, 2, 0, since=0)
     assert seen["devices"] == [B] and seen["journal"]["complete"], seen
     other = [BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE]
-    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, journal=other):
-        seen, invocation = base.load_devices(CFG, 2, 0)
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, log=other) as cfg:
+        seen, invocation = base.load_devices(cfg, 2, 0, since=0)
     assert set(seen) == {"unreadable"} and "0000:01:00.0" in seen["unreadable"], seen
-    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
-        seen, invocation = base.load_devices(CFG, 2, 0)
+    with tempfile.TemporaryDirectory() as tmp, box(tmp, apps) as cfg:
+        seen, invocation = base.load_devices(cfg, 2, 0, since=0)
     assert seen["devices"] == [B] and seen["journal"]["devices"] == [], seen
 
 
@@ -479,77 +493,61 @@ def test_a_command_printing_bytes_that_are_not_utf8_answers():
 
 
 
-def box_journal(engine_lines=(), control=True):
-    """journalctl as this box answers (the smokes of 2026-10-01): the engine's
-    lines, where it prints any, under `_SYSTEMD_INVOCATION_ID`, and systemd's
-    own start entry under `INVOCATION_ID` with `UNIT` and the catalog's
-    MESSAGE_ID, present where `control` is."""
-    def journalctl(args):
-        if any(a.startswith("_SYSTEMD_INVOCATION_ID=") for a in args):
-            lines = engine_lines if "-g" in args else engine_lines
-            return subprocess.CompletedProcess(args, 0 if lines else 1, "".join(l + "\n" for l in lines), "")
-        if any(a.startswith("INVOCATION_ID=") for a in args):
-            matched = (control and f"INVOCATION_ID={INVOCATION}" in args
-                       and "UNIT=weaver-worker@alpha.service" in args
-                       and f"MESSAGE_ID={base.UNIT_STARTED}" in args)
-            said = "Started [systemd-run] /opt/weaver/bin/worker ...\n" if matched else ""
-            return subprocess.CompletedProcess(args, 0, said, "")
-        return subprocess.CompletedProcess(args, 0, "", "")
-    return journalctl
+def log_read(engine_lines=(), since=0, shut=False):
+    """serving_device for one load, the worker's log holding `engine_lines`, read
+    from `since`; `shut` makes the log one this run may not open."""
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg, log = agent_log(tmp, engine_lines)
+        if shut:
+            os.chmod(log, 0o000)
+        try:
+            return base.serving_device(cfg, since, INVOCATION)
+        finally:
+            os.chmod(log, 0o600)
 
 
-def journal_read(engine_lines=(), control=True):
-    """serving_device under one invocation, `sh` answering journalctl as
-    `box_journal` does."""
-    saved = base.sh
-    answer = box_journal(engine_lines, control)
-    base.sh = lambda args, **kw: answer(args) if args[0] == "journalctl" else saved(args, **kw)
-    try:
-        return base.serving_device(CFG, None, INVOCATION)
-    finally:
-        base.sh = saved
-
-
-def test_a_quiet_engines_journal_reads_by_systemds_start_entry():
-    """The smokes of 2026-10-01: the native backend and python-spu print nothing
-    to the journal, so an empty read under the invocation said nothing about
-    readability, and every session faulted. Readability is held by a positive
-    control, systemd's start entry for the invocation. Present with no engine
-    lines, the read stands as an engine that printed no device line; absent, it
-    is unreadable; and llama.cpp lines still read as before. Perturbation:
-    restore the probe of `_SYSTEMD_INVOCATION_ID ... -n 1`, and the quiet
-    engine reads unreadable."""
-    quiet = journal_read()
+def test_a_quiet_engines_log_reads_as_an_engine_that_printed_none():
+    """The native backend and python-spu print no device line. The worker's log is
+    a file, so a log this run may not read refuses at its open, and a log read whole
+    with no device line after the offset is an engine that printed none, with no
+    control needed (the journal's empty answer to an unprivileged reader needed
+    systemd's start entry). llama.cpp's lines still read as before. Perturbation:
+    read an empty read as unreadable, and every load of a quiet engine faults; read
+    a refused open as empty, and the shut log reads as a quiet engine."""
+    quiet = log_read(["a line the worker printed"])
     assert quiet == {"devices": [], "note": "the engine printed no device line"}, quiet
-    shut = journal_read(control=False)
-    assert set(shut) == {"unreadable"} and "start entry" in shut["unreadable"], shut
+    if os.geteuid() != 0:
+        shut = log_read(shut=True)
+        assert set(shut) == {"unreadable"} and "worker.log" in shut["unreadable"], shut
     from test_round_five import BOUNDARY, COMPLETE, device_line
-    printed = journal_read([BOUNDARY, device_line(0, "0000:41:00.0"), COMPLETE])
+    printed = log_read([BOUNDARY, device_line(0, "0000:41:00.0"), COMPLETE])
     assert printed["complete"] and printed["devices"][0]["pci_bus_id"] == "0000:41:00.0", printed
 
 
 def test_a_quiet_engines_load_stands_on_the_driver_read():
-    """Through load_devices: the binding is the unit's processes' cards, the
-    journal's control-held empty read recorded beside it; with no control the
-    load is unreadable; and llama.cpp lines naming another card than the
-    processes hold are unreadable. Perturbation: accept the empty read without
-    the control, and the shut journal stands."""
+    """Through load_devices: the binding is the scope's processes' cards, the log's
+    empty read recorded beside it; a log this run may not open leaves the load
+    unreadable; and llama.cpp lines naming another card than the processes hold are
+    unreadable. Perturbation: read a refused open as an empty read, and the shut log
+    stands."""
     apps = "200, GPU-bbbb, 00000000:41:00.0\n"
     from test_round_five import BOUNDARY, COMPLETE, device_line
-    for lines, control, holds in (((), True, True), ((), False, False),
-                                  ((BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE), True, False)):
-        with tempfile.TemporaryDirectory() as tmp, box(tmp, apps):
-            answer = box_journal(lines, control)
-            inner = base.sh
-            base.sh = lambda args, **kw: answer(args) if args[0] == "journalctl" else inner(args, **kw)
+    cases = [((), False, True), ((BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE), False, False)]
+    if os.geteuid() != 0:
+        cases.append(((), True, False))
+    for lines, shut, holds in cases:
+        with tempfile.TemporaryDirectory() as tmp, box(tmp, apps, log=lines) as cfg:
+            log = os.path.join(tmp, "territory", "worker.log")
+            if shut:
+                os.chmod(log, 0o000)
             try:
-                seen, _ = base.load_devices(CFG, 2, 0)
+                seen, _ = base.load_devices(cfg, 2, 0, since=0)
             finally:
-                base.sh = inner
+                os.chmod(log, 0o600)
         if holds:
             assert seen["devices"] == [B] and seen["journal"]["note"] == "the engine printed no device line", seen
         else:
-            assert set(seen) == {"unreadable"}, (lines, control, seen)
+            assert set(seen) == {"unreadable"}, (lines, shut, seen)
 
 
 TESTS = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
