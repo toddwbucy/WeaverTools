@@ -299,9 +299,12 @@ other cards than the processes hold, or one that never completes, is unreadable.
 engine that prints none, the native backend and `python-spu` among them, leaves the
 driver's read standing with the log's empty read recorded beside it. **A log read whole
 is its own control.** A log this run may not open refuses at the open and is unreadable,
-so an empty read after the offset is an engine that printed no device line. The journal
-answered a reader outside its groups with nothing rather than a refusal, which is why
-its empty read needed systemd's start entry beside it to count.
+so an empty read after the offset is an engine that printed no device line. **The run
+opens the log at preflight**, its size the run's start, and refuses a log that stands
+and does not open, since a size taken by `stat` alone answers for a log this run may not
+read; an absent log is 0, admin opening it at the first load. The journal answered a
+reader outside its groups with nothing rather than a refusal, which is why its empty
+read needed systemd's start entry beside it to count.
 
 Both halves of a session are on one binding under two invocations, and no invocation
 recurs in a run. The window read at the close, the log from its size before the run's
@@ -494,12 +497,19 @@ reads it there, so a config carrying `spu_bin` is refused. Nor may a config carr
 **The run reads the agent's own root of admin's configuration.** `admin_config` names
 the base, which the run passes to admin as `WEAVER_ADMIN_CONFIG`. Admin reads the root
 named for the agent beneath it, `<admin_config>/<agent>/`, and nothing shared
-(WeaverAgent #45), and the run reads the same root, the agent being a plain name.
+(WeaverAgent #45), and the run reads the same root. **The agent's name is judged first,
+by admin's rule** (`well_formed`, weaver-admin-Spec section 4): ASCII letters, digits,
+`-` and `_`, ending in none of the suffixes the agent's derived accounts and groups take,
+and naming neither of the box's two connector accounts. Admin refuses any other name
+before it reads a root, so a root standing under one is refused here too.
 `allow-list`, `agent-spu` and `spu-implementations`, which admin no longer reads, are
 not read. **Each file the run reads there is classed as admin's loader classes it.**
 `worker-binary`, `spu-binary`, `gate-binary`, `coordination-root`, `territory`,
-`operator` and `roles.toml` are required, and one absent is an unreadable resolution,
-admin refusing every verb without it. `headroom-bytes`, `library-path`,
+`operator` and `roles.toml` are required, and one absent is an unreadable resolution.
+Admin refuses every verb without one of the first six. Without `roles.toml`, the
+boundary file, it refuses `validate` and `load` and still runs `unload`, `stop` and
+`show`; every session loads, so the run refuses it at preflight.
+`headroom-bytes`, `library-path`,
 `load-bound-seconds` and `shell-binary` are optional, and only their absence stands the
 default. A file of either class that stands and does not read, a dangling link, a
 directory or a file this run may not read, is an unreadable resolution the exit gates,

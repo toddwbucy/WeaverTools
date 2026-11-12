@@ -475,6 +475,15 @@ def main():
             raise ValueError(f"the artifact cannot be read: {json.dumps(weights_open)}")
         opening = base.opening_readings(cfg)
         base.held_declaration(cfg, held)
+        # **The worker's log opened at preflight** (CodeRabbit's pass on
+        # WeaverTools #22): a log that stands and does not open started a run
+        # whose every load's device read was unreadable. Its size is the run's
+        # start, so the device read at the summary starts where this run's
+        # loads do and cannot reach back past it. An absent log is 0, admin
+        # opening it at the first load.
+        run_started = base.log_offset(cfg)
+        if isinstance(run_started, dict):
+            raise ValueError(f"the worker's log cannot be read: {run_started['unreadable']}")
         # **Every output the run writes is created at preflight, last**
         # (#716, after round twelve): an outdir the operator cannot write
         # passed `makedirs` and failed at the first record, after a whole
@@ -497,10 +506,6 @@ def main():
     cfg["held_spu"] = base.held_spu(opening)
 
     deadline = math.inf if args.cells else time.time() + args.hours * 3600.0
-    # The worker's log's size before the first load, so the device read at
-    # the summary starts where this run's loads do and cannot reach back past
-    # it. A log that does not read is carried to that read as its note.
-    run_started = base.log_offset(cfg)
     # The closing steps a run's result rests on, where one failed.
     results, invocations, interrupted, unclosed = [], set(), False, []
     logpath = os.path.join(args.outdir, "matrix.log")

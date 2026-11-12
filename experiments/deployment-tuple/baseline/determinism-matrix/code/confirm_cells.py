@@ -336,15 +336,22 @@ def device_bindings(cfg, since):
 def log_offset(cfg):
     """The worker's log's size now, in bytes, the place a device read of the
     next load starts: the load's lines are the ones written after it. Read
-    before the load's verb, and before a run's first load for the window
+    before the load's verb, and at preflight for the run's start, the window
     read at the close. An absent log is 0, since admin opens it at the first
     verb. A log that does not read answers its `unreadable` note, which the
-    device read then carries, and nothing here raises."""
+    device read then carries, and nothing here raises.
+
+    **The size is the opened log's**, never `stat`'s alone: `stat` sizes a log
+    this run may not read, which then passed preflight and failed every load's
+    device read (CodeRabbit's pass on WeaverTools #22). Opened, the log this
+    run may not read is unreadable here, and the matrix refuses it at
+    preflight."""
     path, why = worker_log(cfg)
     if why is not None:
         return {"unreadable": why}
     try:
-        return os.stat(path).st_size
+        with open(path, "rb") as fh:
+            return os.fstat(fh.fileno()).st_size
     except FileNotFoundError:
         return 0
     except OSError as e:
@@ -984,7 +991,8 @@ def _resolve_spu(cfg):
         # section 9: admin reads `<admin_config>/<agent>/` and nothing shared
         # (WeaverAgent #45, which retired the allow-list and the SPU map), and
         # refuses every verb on a root missing a required file or naming two
-        # binaries under one file name. A root this reader cannot follow is
+        # binaries under one file name (its `validate` and `load` alone where
+        # the file is `roles.toml`). A root this reader cannot follow is
         # reported rather than passed over.
         directory, why = _admin_root(cfg)
         if why is None:
@@ -1023,11 +1031,31 @@ def _resolve_spu(cfg):
 # **Admin's class of every file this module reads**, as `load_service_config_from`
 # in `crates/weaver-admin/src/main.rs` classes it: required ones through its
 # `read`, whose absence refuses every verb, and optional ones through its
-# `optional`, whose absence stands a default. A name in neither is refused by
+# `optional`, whose absence stands a default. `roles.toml`, the boundary file,
+# is read apart and required at `validate` and `load` alone, so `unload`,
+# `stop` and `show` still run without it; every session loads, so the run
+# requires it as it requires the rest. A name in neither is refused by
 # `_read_admin`, so a new reader classes its file before it can read it.
 _ADMIN_REQUIRED = ("worker-binary", "spu-binary", "gate-binary", "coordination-root",
                    "territory", "operator", "roles.toml")
 _ADMIN_OPTIONAL = ("headroom-bytes", "library-path", "load-bound-seconds", "shell-binary")
+
+# **Admin's rule for an agent's name**, `well_formed` in
+# `crates/weaver-admin/src/main.rs`, judged before admin builds the root's path
+# (weaver-admin-Spec section 4): ASCII letters, digits, `-` and `_`; no name
+# ending in a suffix the agent's derived accounts and groups append; and
+# neither of the box's two connector accounts, which an agent of that name
+# would own. A cell's name keeps `SAFE_NAME`, being the run's own.
+_ADMIN_NAME = re.compile(r"[A-Za-z0-9_-]+")
+_ADMIN_RESERVED_SUFFIXES = ("-state", "-trace", "-relay", "-admin", "-admincon")
+_ADMIN_CONNECTOR_NAMES = ("gatecon", "admincon")
+
+
+def admin_admits(agent):
+    """Whether admin admits `agent` as an agent's name, by its `well_formed`."""
+    return (isinstance(agent, str) and _ADMIN_NAME.fullmatch(agent) is not None
+            and not agent.endswith(_ADMIN_RESERVED_SUFFIXES)
+            and agent not in _ADMIN_CONNECTOR_NAMES)
 
 
 def _admin_root(cfg):
@@ -1035,15 +1063,19 @@ def _admin_root(cfg):
     as `(path, None)` or `(None, why)`. `admin_config` names the base, which
     the run passes to admin as `WEAVER_ADMIN_CONFIG`, and admin reads the
     root named for the agent beneath it and nothing shared (WeaverAgent #45,
-    weaver-admin-Spec section 9). The agent is a plain name, so the root is
-    one directory beneath the base and never another path."""
+    weaver-admin-Spec section 9). The agent's name is judged first by admin's
+    rule, `admin_admits`, so the root is one directory beneath the base, never
+    another path, and never a root standing under a name admin refuses before
+    it reads any root (CodeRabbit's pass on WeaverTools #22)."""
     base = cfg.get("admin_config")
     if not base:
         return None, "the config names no admin_config"
     agent = cfg.get("agent")
-    if not isinstance(agent, str) or SAFE_NAME.fullmatch(agent) is None:
-        return None, (f"the config's agent {agent!r} is not a plain name, and admin reads"
-                      " the root named for it beneath admin_config")
+    if not admin_admits(agent):
+        return None, (f"the config's agent {agent!r} is not a plain name admin admits:"
+                      " ASCII letters, digits, '-' and '_', ending in no derived account's"
+                      " suffix and naming neither connector account. Admin judges the name"
+                      " before it reads the root named for it beneath admin_config")
     return os.path.join(base, agent), None
 
 
@@ -1053,8 +1085,10 @@ def _read_admin(directory, name):
     not read or a required file is absent, per weaver-admin-Spec section 9.
 
     **A required file's absence is a failure, never an absence**, admin's loader
-    refusing every verb without it: reading it as absent passed a preflight on a
-    configuration admin launches nothing on (#734, the pass on 9d1853a).
+    refusing every verb without it (`validate` and `load` alone without
+    `roles.toml`, the load every session makes): reading it as absent passed a
+    preflight on a configuration admin launches nothing on (#734, the pass on
+    9d1853a).
 
     **Presence is `lstat`'s answer and nothing else's.** Only nothing at the path
     is absence: a dangling link, a directory, a file this process may not read,

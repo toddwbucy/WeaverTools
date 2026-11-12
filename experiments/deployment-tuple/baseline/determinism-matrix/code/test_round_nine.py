@@ -347,6 +347,24 @@ def test_the_matrix_opens_every_file_at_preflight():
     assert code == 0 and records, code
 
 
+def test_a_worker_log_that_does_not_open_is_refused_at_preflight():
+    # CodeRabbit's pass on WeaverTools #22: the worker's log was never opened
+    # at preflight, so a log this run may not read started a run whose every
+    # load's device read was unreadable. Perturbation: drop the preflight's
+    # log read, and both modes load the agent.
+    shut = {"log_offset": lambda c: {"unreadable": "worker.log: [Errno 13] Permission denied"}}
+    refused_without_writing("the worker's log cannot be read: worker.log", stack=shut)
+    err = io.StringIO()
+    with tempfile.TemporaryDirectory() as tmp, contextlib.redirect_stderr(err):
+        code, called, *_ = cells_main(tmp, fakes=shut)
+        assert code == 2 and called == [] and not os.path.exists(os.path.join(tmp, "out")) \
+            and not os.path.exists(os.path.join(tmp, "karl.toml.pre-matrix")), (code, called)
+    assert "the worker's log cannot be read" in err.getvalue(), err.getvalue()
+    # The control: an absent log sizes 0, and the run goes on from it.
+    code, records, _ = run_main(Reloading(), stack={"log_offset": lambda c: 0})
+    assert code == 0 and records, code
+
+
 def test_a_cells_run_opens_every_file_and_reads_every_key_at_preflight():
     # Codex round eight's thread 4: a key read after preflight but not
     # checked there. `build_flags`, the key it named, is no longer read,

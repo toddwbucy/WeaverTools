@@ -131,6 +131,26 @@ def test_the_log_is_read_from_where_the_load_began():
     assert base.log_offset(cfg) == 0
 
 
+def test_a_log_this_run_may_not_open_is_unreadable_at_its_size():
+    # CodeRabbit's pass on WeaverTools #22: `stat` sized a log this run may not
+    # read, so the run passed preflight and every load's device read was
+    # unreadable. Perturbation: size the log by `os.stat` again, and the
+    # mode-000 log and the directory each answer a size.
+    cfg, log = agent_log([BOUNDARY, device_line(0, "0000:01:00.0"), COMPLETE])
+    if os.geteuid() != 0:
+        os.chmod(log, 0o000)
+        got = base.log_offset(cfg)
+        assert isinstance(got, dict) and set(got) == {"unreadable"} \
+            and "worker.log" in got["unreadable"], got
+        os.chmod(log, 0o644)
+    assert base.log_offset(cfg) == os.path.getsize(log) > 0
+    os.remove(log)
+    os.mkdir(log)
+    got = base.log_offset(cfg)
+    assert isinstance(got, dict) and set(got) == {"unreadable"} \
+        and "worker.log" in got["unreadable"], got
+
+
 def test_an_unreadable_log_is_read_once():
     # An unreadable log read reads so on every try, so the load's read stops
     # at the first. Perturbation: drop the break, and the read is tried

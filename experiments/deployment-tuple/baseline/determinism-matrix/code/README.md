@@ -115,7 +115,8 @@ device from the cards its scope's processes hold, by `nvidia-smi` and the scope'
 control group, under the scope's invocation as the load stands. The engine's own lines
 in `<territory>/worker.log`, read from the log's size before the load's verb, are a
 cross-check only where it prints them, and the window recorded at the close reads the
-log from its size before the run's first load. The harness no longer reads the journal.
+log from its size before the run's first load. The log is opened at preflight, and one
+that stands and does not open is refused there. The harness no longer reads the journal.
 The box facts still record its retention, as the Spec's section 6.2 declares for every
 probe.
 

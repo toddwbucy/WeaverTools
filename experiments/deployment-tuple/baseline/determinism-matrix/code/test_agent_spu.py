@@ -81,6 +81,21 @@ def test_an_agent_that_is_not_a_plain_name_is_refused():
         cfg = {"admin_config": os.path.join(base, "x"), "agent": agent, "admin_bin": "/x/weaver-admin"}
         path, why = g._resolve_spu(cfg)
         assert path is None and "not a plain name" in why, (agent, path, why)
+    # Admin's own rule, `well_formed` (CodeRabbit's pass on WeaverTools #22): a
+    # dot, a reserved suffix or a connector account's name is refused even where
+    # a root stands under it, since admin refuses the name before it reads any
+    # root. Perturbation: judge the agent by SAFE_NAME again, and each resolves.
+    for agent in ("a.b", "karl.d", "gatecon", "admincon", "x-state", "x-trace", "x-relay",
+                  "x-admin", "x-admincon", "k\u00e4rl"):
+        write_root(base, agent, {})
+        path, why = g._resolve_spu({"admin_config": base, "agent": agent, "admin_bin": "/x/weaver-admin"})
+        assert path is None and "not a plain name admin admits" in why, (agent, path, why)
+    # The control: names admin admits resolve, a suffix's stem and a connector
+    # account's name inside a longer name among them.
+    for agent in ("karl", "k_2", "_k", "x-statex", "state", "admin", "gatecon2", "my-admincon-x"):
+        write_root(base, agent, {"spu-binary": f"/opt/{agent}/weaver-spu\n"})
+        assert g._resolve_spu({"admin_config": base, "agent": agent, "admin_bin": "/x/weaver-admin"}) == (
+            f"/opt/{agent}/weaver-spu", "admin config spu-binary"), agent
 
 
 def unreadable_forms(root, name):
@@ -164,8 +179,9 @@ def test_the_refusal_is_the_first_admin_meets():
 
 def test_a_required_file_absent_is_unreadable():
     """Admin's loader reads each of the seven as required, refusing every verb
-    where one is absent, so each one's absence is an unreadable resolution, never
-    the default and never the guess beside admin_bin."""
+    where one of the six is absent and `validate` and `load` where `roles.toml`
+    is, the load every session makes, so each one's absence is an unreadable
+    resolution, never the default and never the guess beside admin_bin."""
     assert set(g._ADMIN_REQUIRED) == set(REQUIRED), g._ADMIN_REQUIRED
     for name in g._ADMIN_REQUIRED:
         path, why = resolve({name: None})
