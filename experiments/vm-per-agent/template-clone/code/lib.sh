@@ -271,6 +271,83 @@ boot_ok() {
         || die "SSH is up, but cloud-init's verdict on this boot stops here; see $log/boot.txt"
 }
 
+# guest_env VAR...: an `env VAR=value ...` prefix for a guest command, each value quoted
+# for the guest's shell, naming only the variables that are set here. The guest steps'
+# parameters (gpu-steps' DRIVER_PIN, DRIVER_OPEN, HARNESS_DIR, TOOLCHAIN_READING) reach
+# them this way, and a value with spaces arrives whole.
+guest_env() {
+    local v out=""
+    for v in "$@"; do
+        [[ "$v" =~ ^[A-Z_][A-Z0-9_]*$ ]] || die "guest_env takes variable names, not '$v'"
+        [ -n "${!v+set}" ] || continue
+        out+=" $v=$(printf '%q' "${!v}")"
+    done
+    [ -z "$out" ] || printf 'env%s ' "$out"
+}
+
+# step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.
+step_ok() {
+    [ -f "$1/$2.txt" ] && tail -n 1 "$1/$2.txt" | grep -qE "^# step $2, exit 0, [0-9]+s\$"
+}
+
+# fetch_round PORT LOG CACHE ROUND: the host's half of one driver round (Spec section 6).
+# The guest's driver-uris-ROUND names each file with its SHA256 from the guest's signed
+# index; each is checked here by SHA256 (or SHA512) and size, taken from CACHE when the
+# copy there matches, else fetched to a temporary name and moved into CACHE only once both
+# agree. The round's files go into a new ~/debs by put, and driver-install-ROUND installs
+# them. Any refusal stops the caller; no unchecked file stands in CACHE.
+fetch_round() {
+    local port=$1 log=$2 cache=$3 round=$4 n=0 url file size hash want got gotsize sum part list stage
+    case $round in pin|open) ;; *) die "a round is pin or open, not '$round'" ;; esac
+    mkdir -p "$cache"
+    run_step "$port" "$log" "driver-uris-$round" "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-uris $round"
+    step_ok "$log" "driver-uris-$round" || die "driver-uris $round did not pass; see $log/driver-uris-$round.txt"
+    stage=$(mktemp -d)
+    list=$log/debs-$round.txt
+    : >"$list"
+    while read -r url file size hash; do
+        url=${url//\'/}
+        [[ "$url" =~ ^https?:// ]] || continue
+        case ${hash%%:*} in
+            SHA256) sum=sha256sum ;;
+            SHA512) sum=sha512sum ;;
+            *) rm -rf -- "${stage:?}"; die "$file carries a hash this script does not check: ${hash%%:*}" ;;
+        esac
+        want=${hash#*:}
+        [[ "$file" =~ ^[A-Za-z0-9][A-Za-z0-9._+~%-]*\.deb$ ]] \
+            || { rm -rf -- "${stage:?}"; die "apt named a file this script will not write: $file"; }
+        [[ "$size" =~ ^[0-9]+$ ]] || { rm -rf -- "${stage:?}"; die "$file has no size: $size"; }
+        if [ -f "$cache/$file" ] && [ "$($sum "$cache/$file" | cut -d' ' -f1)" = "$want" ] \
+           && [ "$(stat -c %s "$cache/$file")" = "$size" ]; then
+            echo "$file: the cached copy matches the index's hash and size"
+        else
+            [ ! -f "$cache/$file" ] || echo "$file: the cached copy does not match; fetching it again"
+            part=$cache/.$file.part
+            rm -f -- "$part"
+            if ! curl -fsS -L --proto '=https,http' --proto-redir '=https' -o "$part" "$url"; then
+                rm -f -- "$part"; rm -rf -- "${stage:?}"; die "$url did not fetch"
+            fi
+            got=$($sum "$part" | cut -d' ' -f1)
+            gotsize=$(stat -c %s "$part")
+            if [ "$got" != "$want" ] || [ "$gotsize" != "$size" ]; then
+                rm -f -- "$part"; rm -rf -- "${stage:?}"
+                die "$file hashes $got and is $gotsize bytes; the index says $want and $size"
+            fi
+            mv -f -- "$part" "$cache/$file"
+            echo "$file: fetched; it matches the index's hash and size"
+        fi
+        cp -- "$cache/$file" "$stage/"
+        echo "$file $size ${hash%%:*} $want" >>"$list"
+        n=$((n + 1))
+    done < <(grep -E "^'https?://" "$log/driver-uris-$round.txt")
+    [ "$n" -gt 0 ] || { rm -rf -- "${stage:?}"; die "apt named no .deb for the $round round"; }
+    echo "$round round: $n .debs checked against the index's hashes ($list)"
+    put "$port" "$stage" debs
+    rm -rf -- "${stage:?}"
+    run_step "$port" "$log" "driver-install-$round" "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-install $round"
+    step_ok "$log" "driver-install-$round" || die "driver-install $round did not pass; see $log/driver-install-$round.txt"
+}
+
 # run_step PORT LOG NAME command: runs a guest command, its output and exit status
 # kept in LOG/NAME.txt; prints the status line. Never stops the caller.
 run_step() {

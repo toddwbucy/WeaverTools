@@ -1,0 +1,195 @@
+#!/bin/bash
+# Guest steps for a clone's driver round and its harness run (template-clone-Spec.md,
+# sections 6 and 7), run as the guest's operator account through clone.sh step. Any other
+# step name is handed to clone-steps.
+#
+#   driver-uris pin|open       apt's --print-uris lines, each hash set to the index's SHA256
+#   driver-install pin|open    the .debs the host put in ~/debs, installed with no download
+#   harness-preflight REPO     the template's own toolchain, read as the matrix will read it
+#   harness-run CONFIG OUTDIR HOURS   the preflight, then the determinism matrix
+#
+# Parameters, from the environment (clone.sh step passes them):
+#   DRIVER_PIN, DRIVER_OPEN    each round's apt package specifications, space-separated
+#   HARNESS_DIR                the determinism matrix's code/ directory in the guest
+#   TOOLCHAIN_READING          the `rustc --version` line the preflight must read
+#   APT_LISTS, APT_CACHE       apt's lists and its archive cache; apt's own directories
+#                              unless the offline mock (code/test/offline-mock.sh) points
+#                              them at its own
+set -uo pipefail
+APT_LISTS=${APT_LISTS:-/var/lib/apt/lists}
+APT_CACHE=${APT_CACHE:-/var/cache/apt/archives}
+
+section() { printf '\n== %s\n' "$*"; }
+fail() { printf 'REFUSED: %s\n' "$*" >&2; exit 1; }
+
+# round_args ROUND: sets PKGS (the round's package specifications, each checked) and REC
+# (the open round installs without recommends; the pin round as apt resolves it).
+round_args() {
+    local p
+    case $1 in
+    pin) PKGS=${DRIVER_PIN:-}; REC=() ;;
+    open) PKGS=${DRIVER_OPEN:-}; REC=(--no-install-recommends) ;;
+    *) fail "a round is pin or open, not '$1'" ;;
+    esac
+    [ -n "$PKGS" ] || fail "no package specification for the $1 round (DRIVER_PIN or DRIVER_OPEN)"
+    for p in $PKGS; do
+        [[ "$p" =~ ^[a-z0-9][a-z0-9.+-]*(=[A-Za-z0-9.+~:-]+)?$ ]] || fail "'$p' is not an apt package specification"
+    done
+}
+
+# driver-uris ROUND: each .deb apt would fetch for the round, as `'URI' file size HASH`,
+# HASH being the SHA256 that apt's lists carry for that file. apt 3.2's --print-uris names
+# each file's MD5Sum, which the host does not check (the 2026-11-12 slice, run 2), so its
+# lines go through uris_sha256 against every Packages list apt holds. apt checked those
+# lists against the signed InRelease at its last update.
+driver_uris() {
+    local out
+    round_args "$1"
+    # shellcheck disable=SC2086
+    out=$(sudo apt-get install --print-uris -qq "${REC[@]}" $PKGS) || fail "apt-get --print-uris did not answer for $PKGS"
+    printf '%s\n' "$out" | uris_sha256 "$APT_LISTS"/*_Packages \
+        || fail "the .debs apt named do not agree with its lists; see the STOP lines"
+}
+
+# uris_sha256 LIST...: print-uris lines on stdin; out, the same lines with each hash set to
+# the SHA256 of the stanza whose Filename the URI ends with ("/" and the whole Filename).
+# A stanza is found by its Filename, never by package name, so two versions of a package
+# never mix. It stops (STOP lines, exit 1) when the stanzas naming one file disagree on
+# Size or SHA256, when their Size is not apt's, or when a stanza does not carry apt's own
+# hash under the same name. A line no stanza names, or whose stanza carries no SHA256,
+# goes out as apt printed it, and the host stops on its hash type. Other lines pass.
+uris_sha256() {
+    local l uris
+    [ $# -gt 0 ] || { echo "STOP: no Packages list named"; return 1; }
+    for l in "$@"; do
+        [ -f "$l" ] && [ -r "$l" ] || { echo "STOP: $l is not a readable Packages list"; return 1; }
+    done
+    uris=$(cat)
+    URIS=$uris awk -v q="'" '
+    function rtrim(s) { sub(/[ \t\r]+$/, "", s); return s }
+    function stop(i, m) { err[i] = (i in err) ? err[i] "; " m : m }
+    BEGIN {
+        n = split(ENVIRON["URIS"], ln, "\n")
+        for (i = 1; i <= n; i++) {
+            if (split(ln[i], f, " ") != 4 || length(f[1]) < 3) continue
+            if (substr(f[1], 1, 1) != q || substr(f[1], length(f[1])) != q) continue
+            u = substr(f[1], 2, length(f[1]) - 2)
+            if (u !~ /^https?:\/\//) continue
+            uri[i] = u; file[i] = f[2]; size[i] = f[3]
+            t = f[4]; sub(/:.*$/, "", t); atype[i] = tolower(t)
+            v = f[4]; sub(/^[^:]*:/, "", v); aval[i] = v
+        }
+        RS = ""; FS = "\n"
+    }
+    {
+        fn = ""; sz = ""; split("", hv)
+        for (k = 1; k <= NF; k++) {
+            c = index($k, ": ")
+            if (c < 2 || $k ~ /^[ \t]/) continue
+            name = tolower(substr($k, 1, c - 1)); val = rtrim(substr($k, c + 2))
+            if (name == "filename") fn = val
+            else if (name == "size") sz = val
+            else if (name == "md5sum" || name == "sha1" || name == "sha256" || name == "sha512") hv[name] = val
+        }
+        if (fn == "") next
+        sha = ("sha256" in hv) ? hv["sha256"] : ""
+        for (i in uri) {
+            L = length(uri[i])
+            if (L <= length(fn) + 1 || substr(uri[i], L - length(fn)) != "/" fn) continue
+            if (!(atype[i] in hv))
+                stop(i, file[i] ": apt printed " atype[i] ", which the stanza in " FILENAME " does not carry")
+            else if (hv[atype[i]] != aval[i])
+                stop(i, file[i] ": apt printed " atype[i] " " aval[i] ", the stanza in " FILENAME " carries " hv[atype[i]])
+            if (!(i in cnt)) { cnt[i] = 1; csz[i] = sz; csha[i] = sha; where[i] = FILENAME; continue }
+            cnt[i]++
+            if (sz != csz[i] || sha != csha[i])
+                stop(i, file[i] ": the stanzas in " where[i] " and " FILENAME " disagree on Size or SHA256")
+        }
+    }
+    END {
+        bad = 0
+        for (i = 1; i <= n; i++) {
+            if (!(i in uri)) { print ln[i]; continue }
+            if (i in err) { print "STOP: " err[i]; bad = 1; continue }
+            if (!(i in cnt)) { print ln[i]; print "  " file[i] ": no stanza names it; the line is as apt printed it"; continue }
+            if (csz[i] != size[i]) { print "STOP: " file[i] ": apt says " size[i] " bytes, " where[i] " says " csz[i]; bad = 1; continue }
+            if (csha[i] == "") { print ln[i]; print "  " file[i] ": " where[i] " carries no SHA256; the line is as apt printed it"; continue }
+            if (length(csha[i]) != 64 || csha[i] ~ /[^0-9a-f]/) { print "STOP: " file[i] ": the SHA256 in " where[i] " is not 64 hex digits"; bad = 1; continue }
+            print q uri[i] q " " file[i] " " size[i] " SHA256:" csha[i]
+            print "  " file[i] ": SHA256 from " where[i] " (" cnt[i] " stanza" (cnt[i] > 1 ? "s agree" : "") ", Size as apt says, apt " atype[i] " matches)"
+        }
+        exit bad
+    }' "$@"
+}
+
+# driver-install ROUND: the .debs the host put in ~/debs into apt's cache, then the install
+# with no download; apt checks each file against its signed lists. ~/debs goes whole once
+# the files are in the cache, so the next round's put makes it afresh: put refuses a
+# directory that stands, and the slice's run 3 stopped on .debs nested in a ~/debs the pin
+# round left behind.
+driver_install() {
+    local debs=${HOME:?}/debs extra
+    round_args "$1"
+    [ -d "$debs" ] || fail "no $debs"
+    extra=$(find "$debs" -mindepth 1 -maxdepth 1 ! \( -type f -name '*.deb' \) -printf '%f ' 2>/dev/null)
+    [ -z "$extra" ] || fail "$debs holds more than .deb files: $extra"
+    compgen -G "$debs/*.deb" >/dev/null || fail "no .deb in $debs"
+    sudo install -o root -g root -m 0644 "$debs"/*.deb "$APT_CACHE/" || fail "the .debs did not go into the cache"
+    rm -rf -- "${debs:?}"
+    # shellcheck disable=SC2086
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-download -y "${REC[@]}" $PKGS \
+        || fail "the $1 round did not install"
+}
+
+# harness-preflight REPO: the matrix reads `rustc --version` in the repository it names and
+# refuses a run without a reading. The template installs rustup with --no-modify-path, so a
+# non-interactive command's PATH has no ~/.cargo/bin; the slice's rehearsal read exit 127
+# there and carried a compiler in, which was not needed. Here ~/.cargo/bin goes first, and
+# the reading is taken in REPO, where a pinned toolchain file decides it. A toolchain REPO
+# pins and the guest lacks refuses, never downloads (RUSTUP_AUTO_INSTALL=0). Exports the
+# PATH it checked.
+harness_preflight() {
+    local repo=${1:-} r reading active
+    [ -n "${TOOLCHAIN_READING:-}" ] || fail "TOOLCHAIN_READING is not set"
+    [ -n "${HARNESS_DIR:-}" ] && [ -f "$HARNESS_DIR/determinism_matrix.py" ] \
+        || fail "HARNESS_DIR ('${HARNESS_DIR:-}') holds no determinism_matrix.py"
+    [ -n "$repo" ] && [ -d "$repo" ] || fail "no repository at '$repo'"
+    export PATH="$HOME/.cargo/bin:$PATH" RUSTUP_AUTO_INSTALL=0
+    r=$(command -v rustc) || fail "no rustc on PATH, even with $HOME/.cargo/bin first"
+    [ "$r" = "$HOME/.cargo/bin/rustc" ] || fail "rustc resolves to $r, not the template's $HOME/.cargo/bin/rustc"
+    reading=$(cd "$repo" && rustc --version 2>&1) || fail "rustc --version in $repo did not answer: $reading"
+    [ "$reading" = "$TOOLCHAIN_READING" ] || fail "rustc in $repo reads '$reading', not '$TOOLCHAIN_READING'"
+    active=$(cd "$repo" && rustup show active-toolchain 2>&1) || fail "rustup show active-toolchain in $repo did not answer: $active"
+    echo "toolchain in $repo: $reading; active: $active; rustc: $r"
+}
+
+# harness-run CONFIG OUTDIR HOURS: the preflight in the repository CONFIG names, then the
+# matrix, detached from the SSH session (setsid -w, output to a file), as this account with
+# a fresh group list, in an emptied environment whose PATH has ~/.cargo/bin first.
+harness_run() {
+    local config=${1:-} out=${2:-} hours=${3:-} base=$PATH repo rc
+    [ -f "$config" ] || fail "no config at '$config'"
+    [ -n "$out" ] || fail "harness-run CONFIG OUTDIR HOURS"
+    [ ! -e "$out" ] || fail "$out already stands"
+    [[ "$hours" =~ ^[0-9]+(\.[0-9]+)?$ ]] || fail "HOURS is a number, not '$hours'"
+    repo=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1]))["repo"])' "$config") \
+        || fail "$config names no repo"
+    harness_preflight "$repo"
+    mkdir -p "$out" || fail "$out was not made"
+    sudo setsid -w setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups -- \
+        env -i HOME="$HOME" USER="$(id -un)" LOGNAME="$(id -un)" LANG=C.UTF-8 RUSTUP_AUTO_INSTALL=0 \
+        PATH="$HOME/.cargo/bin:$base" \
+        python3 "$HARNESS_DIR/determinism_matrix.py" --config "$config" --outdir "$out" --hours "$hours" \
+        >"$out/run-console.log" 2>&1 </dev/null
+    rc=$?
+    [ "$rc" = 0 ] || { tail -20 "$out/run-console.log"; fail "the matrix exited $rc"; }
+    echo "the matrix exited 0; its output is in $out"
+}
+
+case ${1:-} in
+driver-uris) driver_uris "${2:-}" ;;
+driver-install) driver_install "${2:-}" ;;
+harness-preflight) harness_preflight "${2:-}" ;;
+harness-run) harness_run "${2:-}" "${3:-}" "${4:-}" ;;
+*) exec clone-steps "$@" ;;
+esac
