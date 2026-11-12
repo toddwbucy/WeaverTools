@@ -316,6 +316,18 @@ apt's lists (section 6, step 1): lists kept only compressed, a compressed list a
 uncompressed ones, and no list at all each stop `driver-uris`, naming what was found. The
 uncompressed list alone passes.
 
+A round's own files, in a cache two rounds share (section 6, step 2):
+- a round that fetches leaves another round's download in progress alone, whether it
+  has the old fixed name or one of its own, and leaves no temporary file or stage of its
+  own;
+- a cached copy of the right size that is not the file is fetched again, and the checked
+  file replaces it in the cache and reaches the guest's apt cache;
+- a refusal in `put` leaves no stage behind;
+- a TERM during a fetch removes the round's temporary file and stage.
+
+Two rounds actually running at once are not staged. The mock checks the mechanism that
+keeps them apart, because a race between them depends on timing.
+
 `uris_sha256`, on synthetic lists shaped like the slice's:
 - a stanza found by exact `Filename`;
 - two stanzas that agree;
