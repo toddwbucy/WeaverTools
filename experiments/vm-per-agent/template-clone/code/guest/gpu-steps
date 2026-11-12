@@ -37,6 +37,25 @@ round_args() {
     done
 }
 
+# packages_lists: sets LISTS to the Packages lists apt holds. The steps rely on this
+# template keeping them uncompressed: the 2026-11-12 slice's run 4 read its NVIDIA list so.
+# A compressed list (apt's Acquire::GzipIndexes, as container images set) would leave its
+# repository out of the hash lookup, so any compressed Packages list stops the step,
+# named, and so does no list at all. Reading compressed lists through apt's own helper is a
+# later change, to be measured in a guest when a template needs it (Spec section 9).
+packages_lists() {
+    local f packed=()
+    LISTS=()
+    for f in "$APT_LISTS"/*_Packages; do
+        [ -e "$f" ] && LISTS+=("$f")
+    done
+    for f in "$APT_LISTS"/*_Packages.{gz,bz2,xz,lzma,lz4,zst}; do
+        [ -e "$f" ] && packed+=("${f##*/}")
+    done
+    [ "${#packed[@]}" = 0 ] || fail "apt keeps compressed Packages lists in $APT_LISTS (${packed[*]}); this template keeps its lists uncompressed, and these steps read only uncompressed lists"
+    [ "${#LISTS[@]}" -gt 0 ] || fail "apt holds no Packages list in $APT_LISTS; this template keeps its lists there, uncompressed"
+}
+
 # driver-uris ROUND: each .deb apt would fetch for the round, as `'URI' file size HASH`,
 # HASH being the SHA256 that apt's lists carry for that file. apt 3.2's --print-uris names
 # each file's MD5Sum, which the host does not check (the 2026-11-12 slice, run 2), so its
@@ -45,9 +64,10 @@ round_args() {
 driver_uris() {
     local out
     round_args "$1"
+    packages_lists
     # shellcheck disable=SC2086
     out=$(sudo apt-get install --print-uris -qq "${REC[@]}" $PKGS) || fail "apt-get --print-uris did not answer for $PKGS"
-    printf '%s\n' "$out" | uris_sha256 "$APT_LISTS"/*_Packages \
+    printf '%s\n' "$out" | uris_sha256 "${LISTS[@]}" \
         || fail "the .debs apt named do not agree with its lists; see the STOP lines"
 }
 
