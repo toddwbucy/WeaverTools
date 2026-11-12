@@ -245,6 +245,49 @@ mv "$T/mock_Packages.kept" "$T/lists/mock_Packages"
 uris >"$T/lists-ok.out" 2>&1
 check "the uncompressed list alone passes" test $? = 0 -a "$(grep -c " SHA256:$(sha pinpkg_1.0_all.deb)\$" "$T/lists-ok.out")" = 1
 
+echo "== a round's own files, in a cache two rounds share (Spec section 6, step 2)"
+mkdir -p "$T/tmp"   # the rounds' TMPDIR, where each makes its stage
+round() { ( export TMPDIR=$T/tmp; fetch_round 1 "$LOG" "$CACHE" pin ); }
+guest_reset
+rm -f "$CACHE/pinpkg_1.0_all.deb"
+printf 'other' >"$CACHE/.pinpkg_1.0_all.deb.part"         # another round's download, by the old fixed name
+printf 'other' >"$CACHE/.pinpkg_1.0_all.deb.Zq81xT.part"  # and by a name of its own
+round >"$T/share.out" 2>&1
+check "a round that fetches leaves another round's download in progress alone" \
+    test $? = 0 -a "$(cat "$CACHE/.pinpkg_1.0_all.deb.part")" = other -a "$(cat "$CACHE/.pinpkg_1.0_all.deb.Zq81xT.part")" = other
+check "and leaves no temporary file or stage of its own" \
+    test "$(find "$CACHE" -name '.pinpkg*.part' | wc -l)" = 2 -a -z "$(ls -A "$T/tmp")"
+rm -f "$CACHE"/.pinpkg_1.0_all.deb*.part
+guest_reset
+head -c 3000 /dev/zero >"$CACHE/pinpkg_1.0_all.deb"     # a cached copy of the right size, not the file
+round >"$T/corrupt.out" 2>&1
+check "a cached copy that does not match is fetched again, and the checked file replaces it" \
+    test $? = 0 -a "$(grep -c 'the cached copy does not match; fetching it again' "$T/corrupt.out")" = 1 \
+         -a "$(sha256sum <"$CACHE/pinpkg_1.0_all.deb" | cut -d' ' -f1)" = "$(sha pinpkg_1.0_all.deb)"
+check "and what reached the guest's apt cache is the checked file" \
+    test "$(sha256sum <"$T/archives/pinpkg_1.0_all.deb" | cut -d' ' -f1)" = "$(sha pinpkg_1.0_all.deb)"
+guest_reset
+mkdir -p "$G/debs"                                       # a ~/debs that stands: put refuses
+round >"$T/putrefused.out" 2>&1
+check "a refusal in put leaves no stage behind" test $? != 0 -a -z "$(ls -A "$T/tmp")"
+guest_reset
+rm -f "$CACHE/pinpkg_1.0_all.deb"
+mkdir -p "$T/slow"
+cat >"$T/slow/curl" <<EOF
+#!/bin/bash
+sleep 2
+exec $(command -v curl) "\$@"
+EOF
+chmod 0755 "$T/slow/curl"
+( export TMPDIR=$T/tmp PATH="$T/slow:$PATH"; fetch_round 1 "$LOG" "$CACHE" pin ) >"$T/term.out" 2>&1 &
+pid=$!
+for _ in $(seq 50); do [ -n "$(find "$CACHE" -name '.pinpkg*.part' -print -quit)" ] && break; sleep 0.1; done
+kill -TERM "$pid"
+wait "$pid"
+rc=$?
+check "a TERM during a fetch removes the round's temporary file and stage" \
+    test "$rc" = 143 -a -z "$(find "$CACHE" -name '.pinpkg*.part' -print -quit)" -a -z "$(ls -A "$T/tmp")"
+
 echo "== D2: links (Spec section 5)"
 guest_reset
 mkdir -p "$T/lib"
