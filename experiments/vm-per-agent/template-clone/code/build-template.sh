@@ -24,6 +24,7 @@ SIZE=${SIZE:-120G}
 DIR=$VM_ROOT/template
 DISK=$DIR/template.qcow2
 LOG=${LOG:-$VM_ROOT/logs/template}
+KNOWN_HOSTS=$DIR/known_hosts
 mkdir -p "$LOG"
 
 create() {
@@ -32,15 +33,16 @@ create() {
     fetch_image
     ensure_key
     mkdir -p "$DIR"
+    guest_keys "$DIR" "$PORT"
     # A standalone disk, not an overlay on the cloud image: the sealed template is the
     # one backing file every clone names.
     qemu-img convert -O qcow2 "$IMAGE" "$DISK"
     qemu-img resize -q "$DISK" "$SIZE"
-    write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)"
+    write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)" "$LOG"
     define_guest "$NAME" "$DISK" "$DIR/seed.iso" "$VCPUS" "$MEMORY" "$PORT" \
         "$DIR/template_VARS.fd" >"$LOG/virt-install.txt" 2>&1
     virsh_ dumpxml "$NAME" >"$LOG/domain.xml"
-    wait_ssh "$PORT" 600 | tee "$LOG/first-boot.txt"
+    boot_ok "$PORT" "$LOG" "first-boot-$(date -u +%Y%m%dT%H%M%SZ)" 600
     gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
     gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
 }
@@ -78,6 +80,9 @@ seal() {
     # made read-only, so every clone is an overlay naming it.
     virsh_ undefine "$NAME" --nvram >/dev/null
     chmod 0444 "$DISK"
+    # The build guest's host key pair, its pin and its seed image, which carries the private
+    # key, go with it: the sealed template is never booted again.
+    rm -rf -- "${DIR:?}/hostkey" "${DIR:?}/known_hosts" "${DIR:?}/seed.iso"
     sha256sum "$DISK" | tee "$LOG/template-sha256.txt"
     qemu-img info "$DISK" >"$LOG/template-qemu-img-info.txt"
 }

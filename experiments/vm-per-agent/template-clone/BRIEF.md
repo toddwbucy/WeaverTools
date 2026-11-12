@@ -90,3 +90,51 @@ Scripts and the result note here, in `experiments/vm-per-agent/template-clone/`
 (`README.md` the result note, `COMMANDS.md`, `code/`). Bulk evidence and logs go to a
 deposit under `weaver-testing/` on the shared bulk store. No push until the Planner says
 so.
+
+## The brief of 2026-11-12: the slice folded into the scripts
+
+The suite Planner's second brief to the virtualization Executor, on the operator's rulings
+of the evening of 2026-11-12, for this same stack.
+
+**The job.** Repository work only: no virtual machine started, no template rebuilt, no
+card touched. Fold into these scripts what the determinism slice of 2026-11-12 proved
+(`results/2026-11-12-determinism-slice.md`), and what the slice's scratch scripts carry
+that the repository does not:
+
+- the cloud-init verdict with its named allow-list, in place of `wait_ssh`'s exit;
+- the step that takes each driver file's SHA256 from the guest's signed index;
+- `put` as a tar stream;
+- the harness run with the template's own toolchain on its PATH, not a carried compiler;
+- the seed naming the pinned key type in `ssh_genkeytypes`, and the template masking
+  `sshd-keygen.service` before the seal, so that no other host key is made;
+- the IPv6 line in the guard the template carries;
+- an offline mock that exercises `put`, the driver install and the harness preflight in the
+  ways that would have caught each of the slice's three script defects.
+
+**The 2026-11-12 slice ran on the scratch versions of these scripts**, which hold the
+measuring host's facts. The repository's versions take every such fact as a parameter. No
+box path, host name, account, address or key is committed.
+
+**The template itself is rebuilt and re-measured in a later act, on the operator's word.**
+Until then the sealed template of 2026-11-11 stands as it is. Changes that act only in a
+template build (the guard's IPv6 line in `/etc/nftables.conf`, the `sshd-keygen.service`
+mask) are measured there. The first question that act puts to the operator is the driver
+pin: the template holds 615.71.09, and the slice moved its clone to 620.70.06 by hand.
+
+**Not folded.** The scratch agent's lay and take-down, the carry of the host's stack, the
+carry check and the CUDA comparison stay with the measurement. They belong to the slice,
+not to the template.
+
+**Sub-acts**, each a draft pull request against `act/vm-template`, in this order:
+
+1. The Spec of these scripts (`template-clone-Spec.md`), this brief, and the slice's
+   result note.
+2. `lib.sh`, `clone.sh`, `build-template.sh`: the pinned host key and the seed, SSH as the
+   gate with the recorded cloud-init verdict, and `put`.
+3. `guest/gpu-steps` and the host's fetch round: the offline driver round, and the harness
+   preflight and run.
+4. `code/test/offline-mock.sh`: the offline mock.
+
+The operator's rulings of the same evening put GPU1 back on the host for the first real
+agent, ahead of any further virtual machine stage. The A/B result is banked, and the stage
+resumes later.
