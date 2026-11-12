@@ -204,10 +204,20 @@ installs it. `clone.sh driver ROUND` runs one round's four steps:
      fixes the scheme, host and port; the hash check still decides what is kept.
    - The file name is checked: one path component ending `.deb`. The size must be a
      number.
-   - A copy in the host's cache is used only if its hash and size match the line.
-     Otherwise the file is fetched to a temporary name, checked, and only then moved into
-     the cache.
+   - **Each file is checked in the round's own stage directory**, so the bytes put into
+     the guest are the bytes checked. A cached copy is used only if its copy in the stage
+     matches the line's hash and size.
+   - Otherwise the file is fetched to a temporary name of its own in the cache, so two
+     rounds sharing a cache never share one. It is checked, copied into the stage, and
+     only then renamed into the cache, and the rename's exit is checked. A round never
+     removes a file that another round names.
    - Any mismatch stops the round, and no unchecked file stands in the cache.
+   - The round's temporary file and stage are removed on every exit: a refusal, or INT,
+     TERM or HUP. A temporary file left by a round killed outright (SIGKILL, power loss)
+     is never read, because no other round uses its name. Removing it is the operator's,
+     since a sweep could remove another round's download in progress.
+   - Two rounds sharing a cache may fetch the same file twice. No lock is needed for
+     correctness, so none is taken.
    - A round that names no file stops.
 3. **`put` (host)** puts the round's files into a new `~/debs` in the guest (section 5).
 4. **`driver-install ROUND` (guest).**
