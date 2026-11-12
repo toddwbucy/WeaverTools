@@ -12,6 +12,14 @@ Each step's output and exit status land in `$VM_ROOT/logs/<guest>/<step>.txt`, w
 the deposit holds. A step rerun after a break was copied aside first as
 `<step>-attempt<n>.txt`, so every attempt is kept.
 
+The runs below predate 2026-11-12. On that date the scripts changed: a step whose guest
+command exits non-zero now also makes the script that ran it exit non-zero, after its log
+is kept (`template-clone-Spec.md`, section 0). The steps below that recorded a failure
+would stop their script today: `bootstrap-no-toolkit` and `bootstrap-default-cuda-dir`,
+run to record their refusals (breaks 2 and 3), and the `lifecycle-relaxed` runs of breaks
+12 and 13. A recipe that reruns a failing step, as the lifecycle loop below did, must
+allow for that exit.
+
 ## The network, before any template
 
 ```bash
@@ -65,6 +73,11 @@ record its refusals (breaks 2 and 3); `lock-gate` records `process/gates/lock.sh
 and after `cargo fetch --locked` (break 8); `cccl-in-window` installs `cccl-13-3` and
 compiles a probe reading `CCCL_VERSION` with and without the prepended path (break 6).
 The `-relaxed` steps set the two test-step settings of breaks 4 and 5 and restore them.
+In the runs recorded here they restored only after the wrapped command returned. Since
+2026-11-12 they also restore when a change fails and on INT, HUP or TERM sent to the
+step, so an interrupted step does not leave `/bin/sh` as bash in an image that is then
+sealed. A dropped SSH session with no terminal sends the step no signal; the step runs
+on and restores when the wrapped command ends.
 
 The first attempt stopped at `nvidia`, which installed driver 620.70.06 for
 `nvidia-open=615.71.09`; the step was corrected (README, break 1) and the template

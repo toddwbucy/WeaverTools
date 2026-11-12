@@ -28,11 +28,13 @@ word.
 **Words.** The **host** runs libvirt and QEMU. A **guest** is a virtual machine: the
 **template** while it is built, or a **clone**, an overlay naming the sealed template. A
 **step** is one named command run in a guest over SSH, with its output and exit status kept
-in the guest's log directory. In a clone, `guest/gpu-steps` runs the steps of sections 6
-and 7 and hands any other step to `guest/clone-steps`. The guest steps' parameters go with
-each step, each value quoted whole. A **round** of the driver step is one apt install: the
-**pin** round installs the repository's pin package, and the **open** round installs the
-driver.
+in the guest's log directory. A step whose guest command exits non-zero stops the host
+script that ran it, once its log is kept: `build-template.sh step` and `seal`, and
+`clone.sh step` and `driver`, each exit non-zero there. In a clone, `guest/gpu-steps` runs
+the steps of sections 6 and 7 and hands any other step to `guest/clone-steps`. The guest
+steps' parameters go with each step, each value quoted whole. A **round** of the driver
+step is one apt install: the **pin** round installs the repository's pin package, and the
+**open** round installs the driver.
 
 ```graph
 node: template-clone
@@ -55,6 +57,7 @@ default where a default would be a box path, a host name, an account, an address
 | `MODELS_DIR` | the host directory shared read-only into a clone | none |
 | `NAME`, `PORT`, `VCPUS`, `MEMORY` | a clone's name, its SSH forward's host loopback port, its size | as `clone.sh` states |
 | `CPUSET` | host CPUs the guest's vCPUs and QEMU's threads stay on | unset: no pinning |
+| `CI_WAIT` | the seconds a boot waits for cloud-init to finish (section 3) | 900 |
 | `DRIVER_PIN`, `DRIVER_OPEN` | the apt package specifications of the driver step's two rounds | none |
 | `DEB_CACHE` | the host directory holding the driver rounds' checked files | `$VM_ROOT/debs` |
 | `DEB_ORIGINS` | the URL prefixes a driver round may fetch from, space-separated, each ending `/` | the template's NVIDIA repository, which served every file of the slice's two rounds |
@@ -100,6 +103,13 @@ reach that unit. The mask acts only in a rebuilt template and is measured there.
 of today's template still presents the two extra keys.** Neither key is pinned, and the
 scripts refuse a guest that answers with either.
 
+**The seal judges its private keys gone before the guest powers off (rebuild).** It
+removes the SSH host keys, the module signing pair DKMS made (`MOK.priv`) and fwupd's
+client pair (`secret.key`), and each removal's exit is checked. It then fails if any of
+those files is still present. A seal that fails is never followed on the host by the
+undefine, the read-only disk or the checksum, so no checksum is recorded for a template
+whose seal did not pass.
+
 ## 3. SSH is the gate; cloud-init's verdict is judged apart (slice)
 
 **A boot passes once a command runs over SSH under the pinned key, within a bound in
@@ -112,8 +122,12 @@ For each boot (the first boot, and each reboot):
 
 1. The scripts wait until a command runs under the pinned key, or the bound passes. A
    bound that passes stops the caller, with one attempt's SSH error shown.
-2. They record `cloud-init status --long` with its exit status, and `cloud-init status
+2. They wait for cloud-init to finish, for at most `CI_WAIT` seconds (section 1). Then
+   they record `cloud-init status --long` with its exit status, and `cloud-init status
    --format json`, as `cloud-init-<tag>.txt` and `.json` in the guest's log directory.
+   - A wait that passes its bound is recorded as exit 124, and it stops the caller.
+     `cloud-init status` exits 0 while cloud-init is still running, so a status read
+     after a plain timeout would pass a boot that was never judged.
 3. On exit 2, they also record the lines of `cloud-init schema --system` that name an
    error, with no line that could carry key text, as `cloud-init-<tag>-schema.txt`.
 4. The verdict:
@@ -152,6 +166,17 @@ alone. Its clones also skip the seed's copy, because the template's table alread
 at that point. A clone of today's template therefore relies on `ipv6=off` for the IPv6
 path (`README.md`, "The network"). Only a rebuilt template carries the IPv6 line.
 
+**`clone.sh netdev VALUE` takes only a user-mode argument whose forwards all stay on the
+host's loopback.**
+- VALUE must start `user,id=un0,`.
+- Every `hostfwd` in it must bind the host's `127.0.0.1`:
+  `hostfwd=tcp:127.0.0.1:N-GUESTADDR:M`, or the same with `udp`.
+- One of them must be the SSH forward, `hostfwd=tcp:127.0.0.1:PORT-:22`.
+
+The check of 2026-11-11 asked only for `user,id=un0,` and some `hostfwd`. A forward with no
+host address binds every address, so `hostfwd=tcp::N-:22` would have offered the guest's
+port beyond the host.
+
 ## 5. put (slice)
 
 **`put` copies a host directory's contents into a guest directory that does not yet
@@ -171,9 +196,12 @@ engine library directory arrived as full copies, found in the rehearsal on run 3
 ## 6. The offline driver round (slice)
 
 **A clone's driver moves by a round the host fetches and the guest installs.** The guest
-cannot download during it (section 4, and `restrict=on` where set). Every file is checked
-on the host against the SHA256 in the guest's own signed apt index before the guest
-installs it. `clone.sh driver ROUND` runs one round's four steps:
+installs with apt's `--no-download` (step 4), so apt takes no file from the network for
+it. That does not make the guest offline. The guard (section 4) drops only connections to
+the host's loopback. `restrict=on`, which leaves the guest only the domain's named
+`guestfwd`, is a domain argument the caller passes (section 9). Every file is checked on
+the host against the SHA256 in the guest's own signed apt index before the guest installs
+it. `clone.sh driver ROUND` runs one round's four steps:
 
 1. **`driver-uris ROUND` (guest).** apt's `--print-uris` lines for the round's packages
    (`DRIVER_PIN` or `DRIVER_OPEN`), each with its hash replaced.
@@ -199,9 +227,13 @@ installs it. `clone.sh driver ROUND` runs one round's four steps:
      prefixes, and the rest is a plain path with no `..`, query, fragment or user part.
      Otherwise the round stops before anything is fetched. The guest names every URL a
      round fetches, so the host takes the origins from its own parameter, never from the
-     guest. A redirect is followed only to https. A percent-encoded dot segment in the
-     rest (`%2e%2e`) can at most name another path on the same host, because each origin
-     fixes the scheme, host and port; the hash check still decides what is kept.
+     guest. A percent-encoded dot segment in the rest (`%2e%2e`) can at most name another
+     path on the same host, because each origin fixes the scheme, host and port; the hash
+     check still decides what is kept.
+   - **No redirect is followed.** Any answer but HTTP 200 stops the round, because a
+     redirect would take the host to a URL that no origin allowed. The template's NVIDIA
+     repository answered a request for one of the slice's files with 200 and no redirect
+     (2026-11-12).
    - The file name is checked: one path component ending `.deb`. The size must be a
      number.
    - **Each file is checked in the round's own stage directory**, so the bytes put into
@@ -252,15 +284,17 @@ PATH.** No compiler is carried in.
 
 The steps:
 
-1. **`harness-preflight REPO` (guest).** With `$HOME/.cargo/bin` first on PATH, and in
-   REPO, the repository whose toolchain the matrix reads, it refuses before any load
-   unless:
+1. **`harness-preflight REPO` (guest).** In the environment the run gets (step 2), with
+   `$HOME/.cargo/bin` first on its PATH, and in REPO, the repository whose toolchain the
+   matrix reads, it refuses before any load unless:
    - `rustc` resolves to `$HOME/.cargo/bin/rustc`;
    - `rustc --version` reads `TOOLCHAIN_READING` exactly;
    - `rustup show active-toolchain` answers;
    - `HARNESS_DIR` holds the matrix's entry point.
    `RUSTUP_AUTO_INSTALL=0` is set, so a toolchain that REPO pins and the guest lacks
-   refuses rather than starting a download.
+   refuses rather than starting a download. Nothing the step inherits reaches the
+   readings (`RUSTUP_TOOLCHAIN`, `RUSTUP_HOME`, `CARGO_HOME`, a `GUEST_ENV` setting), so
+   the preflight cannot read a toolchain that the matrix does not run.
 2. **`harness-run CONFIG OUTDIR HOURS` (guest).** The preflight first, in the repository
    that CONFIG names. Then the matrix runs, detached from the SSH session, as the guest's
    operator account with a fresh group list.
@@ -275,8 +309,9 @@ these steps (section 9).
 ## 8. The offline mock
 
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
-`uris_sha256`, `ci_judge` and harness preflight, with no virtual machine, no sudo and no
-network beyond loopback.**
+`uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `ensure_key`, harness
+preflight and `relaxed`, and the host scripts' `step` and `seal`, with no virtual machine,
+no sudo and no network beyond loopback.**
 
 - The mock's guest is a temporary home directory on the host. The SSH helper runs each
   guest command there, in an emptied environment. Its PATH holds the stubs, then the host
@@ -287,7 +322,13 @@ network beyond loopback.**
   - `install` copies.
 - `APT_LISTS` and `APT_CACHE` (section 1) point at the mock's own index and cache.
 - A Python HTTP server on loopback stands in for the archive, and `DEB_ORIGINS` names it.
-- The guest's toolchain is a stub `rustc` and `rustup` in `$HOME/.cargo/bin`.
+- The guest's toolchain is a stub `rustc` and `rustup` in `$HOME/.cargo/bin`. Under an
+  inherited `RUSTUP_TOOLCHAIN`, the stub `rustc` reads that toolchain's line.
+- `cloud-init` and `template-steps` are stubs too. The host scripts' `step` and `seal` run
+  as the scripts define them, under their `set -euo pipefail`, with the copy of the steps
+  into the guest stubbed, and `virsh_` and `qemu-img` recorded.
+- `relaxed` runs as each guest file defines it, with `sysctl`, `readlink`, `ln` and `sudo`
+  as functions over two files in the mock's directory, so no setting of the host moves.
 - It exits non-zero on the first check that fails. With `KEEP` set, its temporary
   directory stays for reading.
 
@@ -298,7 +339,7 @@ behaviour that had it, and shows that this behaviour catches it:
 |---|---|
 | D1, the nested `~/debs` | Two rounds back to back through `fetch_round`. After the first `driver-install`, no `~/debs` stands. The second round's `put` makes a new `~/debs`, and its install passes. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. The old copy (`cp -r`, the stand-in for `scp -r`) nests, as run 3 found. |
 | D2, links flattened | A source holding links arrives with the same links. The same source copied by `cp -rL` (the stand-in for `scp -r`) arrives as plain files, and the check tells them apart. |
-| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes, reading in that repository with `RUSTUP_AUTO_INSTALL=0`. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. |
+| D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes, reading in that repository with `RUSTUP_AUTO_INSTALL=0`. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. An inherited `RUSTUP_TOOLCHAIN` does not reach the readings: the matrix's line passes under it, and a line that only it gives is refused. |
 
 The fetch (section 6, step 2):
 - each round installs with `--no-download`, the open round without recommends, and each
@@ -310,7 +351,9 @@ The fetch (section 6, step 2):
 - a round that names no file stops;
 - a URL from an origin not in `DEB_ORIGINS`, or climbing out of one with `..`, is refused
   and never fetched, though its file and hash are good;
-- an origin not ending in `/` is refused.
+- an origin not ending in `/` is refused;
+- a URL answered with a redirect is refused, naming its status; the redirect is never
+  requested, and nothing of it stays in the cache.
 
 apt's lists (section 6, step 1): lists kept only compressed, a compressed list among
 uncompressed ones, and no list at all each stop `driver-uris`, naming what was found. The
@@ -341,7 +384,35 @@ keeps them apart, because a race between them depends on timing.
 `ci_judge` (section 3): exit 2 with `network-wait` alone passes, and so does `done` with no
 item. A schema warning, a status other than `done`, and an unreadable status each stop.
 
+`cloud_init_verdict` (section 3): a wait past `CI_WAIT`, while `cloud-init status` still
+answers 0, is recorded as exit 124 and stops. A wait that ends in time with status `done`
+passes. A `CI_WAIT` that is not a number of seconds is refused.
+
+`netdev_ok` (section 4): the SSH forward alone, `restrict=on` with a `guestfwd`, and a
+second forward on loopback each pass. A forward bound to every address, the SSH forward or
+another, is refused, as are an argument with no SSH forward on `PORT` and one not starting
+`user,id=un0`.
+
+`ensure_key` (section 1) makes the key's directory, 0700, and the key in it.
+
 `put` (section 5) refuses a destination that stands, and a path holding `..`.
+
+The host scripts' steps (section 0):
+- `build-template.sh step` and `clone.sh step` each exit non-zero on a guest step that
+  fails, and nothing after them runs; a step that passes goes on;
+- a seal that fails stops before the undefine, the read-only disk and the checksum; a
+  seal that passes goes on to all three.
+
+`relaxed`, in `guest/template-steps` and in `guest/clone-steps`:
+- it runs the command with both settings relaxed and restores both, and its traps are
+  gone after it;
+- a command that fails is answered, with both restored;
+- a change to `/bin/sh` that fails restores the sysctl, and the command never runs;
+- a TERM or a HUP during the command restores both, and the step exits 143 or 129;
+- a `/bin/sh` that is not a link is refused, with nothing changed.
+
+The seal's own check of its private keys (section 2) runs only in a guest. The mock does
+not reach it; a rebuild measures it.
 
 Before a mock passed, the slice's own offline test stubbed `put` and every guest step,
 which is how all three defects reached a run.
