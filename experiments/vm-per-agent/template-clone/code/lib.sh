@@ -19,6 +19,10 @@ OS_VARIANT=ubuntu26.04
 IMAGE=$VM_ROOT/images/$IMAGE_NAME
 KEY=${KEY:-$VM_ROOT/keys/measure_ed25519}
 GUEST_USER=op
+# The URL prefixes a driver round may fetch from (Spec section 6), space-separated, each
+# ending "/": by default the template's NVIDIA repository (guest/template-steps' NV_REPO),
+# which served every file of the 2026-11-12 slice's two rounds.
+DEB_ORIGINS=${DEB_ORIGINS:-https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2604/x86_64/}
 
 virsh_() { virsh -c "$URI" "$@"; }
 say() { printf '\n== %s\n' "$*"; }
@@ -290,9 +294,26 @@ step_ok() {
     [ -f "$1/$2.txt" ] && tail -n 1 "$1/$2.txt" | grep -qE "^# step $2, exit 0, [0-9]+s\$"
 }
 
+# origin_ok URL: 0 when URL starts with one of DEB_ORIGINS and the rest is a plain path,
+# with no "..", query, fragment or user part. The guest names each URL a round fetches, so
+# the host fetches only under the origins it was given.
+origin_ok() {
+    local o rest
+    for o in $DEB_ORIGINS; do
+        [[ "$o" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?/([A-Za-z0-9._+~%-]+/)*$ ]] \
+            || die "DEB_ORIGINS holds '$o', not an http(s) URL prefix ending in /"
+        [ "${1#"$o"}" != "$1" ] || continue
+        rest=${1#"$o"}
+        [[ "$rest" =~ ^[A-Za-z0-9._+~%/-]+$ ]] && [[ "/$rest/" != */../* ]]
+        return
+    done
+    return 1
+}
+
 # fetch_round PORT LOG CACHE ROUND: the host's half of one driver round (Spec section 6).
 # The guest's driver-uris-ROUND names each file with its SHA256 from the guest's signed
-# index; each is checked here by SHA256 (or SHA512) and size, taken from CACHE when the
+# index. A URL outside DEB_ORIGINS is refused before anything is fetched. Each file is
+# checked here by SHA256 (or SHA512) and size, taken from CACHE when the
 # copy there matches, else fetched to a temporary name and moved into CACHE only once both
 # agree. The round's files go into a new ~/debs by put, and driver-install-ROUND installs
 # them. Any refusal stops the caller; no unchecked file stands in CACHE.
@@ -308,6 +329,7 @@ fetch_round() {
     while read -r url file size hash; do
         url=${url//\'/}
         [[ "$url" =~ ^https?:// ]] || continue
+        origin_ok "$url" || { rm -rf -- "${stage:?}"; die "$url is not under DEB_ORIGINS ($DEB_ORIGINS); nothing is fetched from it"; }
         case ${hash%%:*} in
             SHA256) sum=sha256sum ;;
             SHA512) sum=sha512sum ;;
