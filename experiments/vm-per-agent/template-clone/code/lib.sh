@@ -180,6 +180,9 @@ put() {
 # SSH is a boot's gate; cloud-init is judged apart (Spec section 3).
 ssh_up() {
     local port=$1 limit=$2 t=0
+    # Here, not inside the loop: the probe's stderr goes to /dev/null, and a refusal there
+    # would end the caller without a word.
+    known_hosts_set
     until gssh "$port" true 2>/dev/null; do
         t=$((t + 5)); [ "$t" -lt "$limit" ] || return 1; sleep 5
     done

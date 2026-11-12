@@ -5,6 +5,7 @@
 #
 #   VM_ROOT=<dir> MODELS_DIR=<dir> code/clone.sh create
 #   VM_ROOT=<dir> code/clone.sh step NAME [ARGS]    (GUEST_ENV="VAR=value ..." sets its env)
+#   VM_ROOT=<dir> code/clone.sh put SRCDIR GDEST    a host directory into a new guest directory
 #   VM_ROOT=<dir> code/clone.sh virtiofsd       the host side of the share, as running
 #   VM_ROOT=<dir> code/clone.sh netdev VALUE    shut down, set the -netdev argument, start
 #   VM_ROOT=<dir> code/clone.sh destroy
@@ -108,8 +109,9 @@ destroy() {
 case ${1:-} in
 create) create ;;
 step) shift; step "$@" ;;
+put) shift; [ "$#" = 2 ] || die "put SRCDIR GUEST_DEST"; put "$PORT" "$1" "$2" ;;
 virtiofsd) virtiofsd_args ;;
 netdev) shift; netdev "$1" ;;
 destroy) destroy ;;
-*) sed -n '2,11p' "$0" >&2; exit 2 ;;
+*) sed -n '2,12p' "$0" >&2; exit 2 ;;
 esac
