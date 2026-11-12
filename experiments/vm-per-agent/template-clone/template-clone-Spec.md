@@ -57,6 +57,7 @@ default where a default would be a box path, a host name, an account, an address
 | `CPUSET` | host CPUs the guest's vCPUs and QEMU's threads stay on | unset: no pinning |
 | `DRIVER_PIN`, `DRIVER_OPEN` | the apt package specifications of the driver step's two rounds | none |
 | `DEB_CACHE` | the host directory holding the driver rounds' checked files | `$VM_ROOT/debs` |
+| `DEB_ORIGINS` | the URL prefixes a driver round may fetch from, space-separated, each ending `/` | the template's NVIDIA repository, which served every file of the slice's two rounds |
 | `HARNESS_DIR` | the determinism matrix's `code/` directory inside the guest | none |
 | `TOOLCHAIN_READING` | the `rustc --version` line the harness preflight must read | none |
 | `APT_LISTS`, `APT_CACHE` | the guest's apt lists and archive cache, which `gpu-steps` reads and fills; the offline mock (section 8) points them at its own | apt's own directories |
@@ -188,6 +189,11 @@ installs it. `clone.sh driver ROUND` runs one round's four steps:
    - A line that no stanza names, or whose stanza carries no SHA256, goes out as apt
      printed it. The host checks only SHA256 and SHA512, and refuses any other hash type.
 2. **The fetch (host).** For each line:
+   - **The URL must lie under one of `DEB_ORIGINS`**: it starts with one of those
+     prefixes, and the rest is a plain path with no `..`, query, fragment or user part.
+     Otherwise the round stops before anything is fetched. The guest names every URL a
+     round fetches, so the host takes the origins from its own parameter, never from the
+     guest. A redirect is followed only to https.
    - The file name is checked: one path component ending `.deb`. The size must be a
      number.
    - A copy in the host's cache is used only if its hash and size match the line.
