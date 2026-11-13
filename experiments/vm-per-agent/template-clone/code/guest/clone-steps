@@ -51,7 +51,28 @@ models_host_refusal() {
 # relaxed COMMAND...: as guest/template-steps states it. verify-lifecycle.sh's step 0
 # runs update-stack.sh's plan, whose test step needs both settings.
 relaxed() {
-    local rc=0
+    local rc=0 mask lock=${RELAXED_LOCK:-$HOME/.weaver-relaxed.lock}
+    # One relaxed step at a time in this guest. A second step that started while the
+    # first had both settings relaxed would save the relaxed values as its own and put
+    # them back after the first restored, and both would pass. So the lock is taken
+    # before the two reads and never given back by hand: its descriptor stays open for
+    # this shell's life, the restore runs under it on every way out, and the kernel frees
+    # it however the shell ends. A step that finds it held, or cannot open or take it, is
+    # refused at once with nothing changed; it never runs unlocked. The file is 0600 in
+    # the operator's home, where the checkout and cargo's target are, so its directory is
+    # there, and no other account can open the file to hold the lock.
+    mask=$(umask)
+    umask 077
+    if ! exec {relaxed_lock_fd}>>"$lock"; then
+        umask "$mask"
+        echo "relaxed: cannot open the lock $lock; nothing relaxed" >&2
+        return 1
+    fi
+    umask "$mask"
+    flock -n "$relaxed_lock_fd" || {
+        echo "relaxed: the lock $lock is held by another relaxed step or cannot be taken; nothing relaxed" >&2
+        return 1
+    }
     # The two settings as they were, kept global: after an unset variable under set -u,
     # bash unwinds every function before the EXIT trap runs, and a local would be gone.
     relaxed_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
@@ -101,7 +122,9 @@ relaxed() {
         return 1
     fi
     echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
-    "$@" || rc=$?
+    # The command runs with the lock's descriptor closed, so nothing it leaves running
+    # holds the lock after this shell ends; the shell keeps it meanwhile.
+    "$@" {relaxed_lock_fd}>&- || rc=$?
     relaxed_restore || [ "$rc" != 0 ] || rc=1
     trap - EXIT INT HUP TERM PIPE
     return "$rc"

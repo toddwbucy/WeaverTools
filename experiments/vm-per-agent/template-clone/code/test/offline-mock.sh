@@ -467,7 +467,8 @@ chmod 0644 "$TD/template.qcow2"
 echo "== relaxed puts both settings back (template-steps and clone-steps)"
 # relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions
 # over two files: R/userns, the sysctl's value, and R/sh, where /bin/sh points (empty: not
-# a link). R/ln-fails makes the change to bash fail.
+# a link). R/ln-fails makes the change to bash fail. The lock is R/lock, held with the
+# real flock.
 R=$T/relaxed
 mkdir -p "$R"
 relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prints the state after
@@ -476,6 +477,7 @@ relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prin
         # The subshell's own trap table, empty: until a subshell sets a trap, `trap -p`
         # still prints the parent's (the mock's cleanup).
         trap - EXIT INT HUP TERM PIPE
+        RELAXED_LOCK=${RELAXED_MOCK_LOCK:-$R/lock}
         eval "$(sed -n '/^relaxed() {/,/^}/p' "$CODE/guest/$f")"
         declare -F relaxed >/dev/null || exit 99
         sudo() { "$@"; }
@@ -496,10 +498,11 @@ relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prin
 }
 relaxed_state() { echo "$(cat "$R/userns") $(cat "$R/sh")"; }
 for f in template-steps clone-steps; do
-    rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails" "$R/restore-fails" "$R/restore-silent"; }
+    rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails" "$R/restore-fails" "$R/restore-silent" "$R/child-fds" "$R/held-during" "$R/lock"; }
     rr; relaxed_in "$f" during >/dev/null 2>&1
-    check "$f: relaxed runs the command relaxed and restores both, its traps gone" \
-        test $? = 0 -a "$(cat "$R/during")" = "0 bash" -a "$(relaxed_state)" = "1 dash"
+    check "$f: relaxed runs the command relaxed and restores both, its traps gone, its lock 0600" \
+        test $? = 0 -a "$(cat "$R/during")" = "0 bash" -a "$(relaxed_state)" = "1 dash" \
+             -a "$(stat -c %a "$R/lock")" = 600
     rr; relaxed_in "$f" false >/dev/null 2>&1
     check "$f: a command that fails is answered, both restored" test $? = 1 -a "$(relaxed_state)" = "1 dash"
     rr; touch "$R/ln-fails"; relaxed_in "$f" during >/dev/null 2>&1
@@ -529,6 +532,23 @@ for f in template-steps clone-steps; do
     check "$f: a /bin/sh that is not a link is refused, nothing changed" \
         test $? = 1 -a "$(cat "$R/userns")" = 1 -a ! -e "$R/during" \
              -a "$(grep -c 'not a link; nothing relaxed' "$T/relaxed-nolink.out")" = 1
+    rr; exec {hold}>>"$R/lock"; flock -n "$hold"
+    relaxed_in "$f" during >"$T/relaxed-held.out" 2>&1
+    check "$f: a step started while another holds the lock is refused, nothing changed" \
+        test $? = 1 -a "$(relaxed_state)" = "1 dash" -a ! -e "$R/during" \
+             -a "$(grep -c 'is held by another relaxed step' "$T/relaxed-held.out")" = 1 \
+             -a "$(grep -c -e '^relaxed: kernel' -e '^restored: ' "$T/relaxed-held.out")" = 0
+    exec {hold}>&-
+    rr; RELAXED_MOCK_LOCK=$R/absent/lock relaxed_in "$f" during >"$T/relaxed-nolock.out" 2>&1
+    check "$f: a lock that cannot be opened is refused, nothing changed, never run unlocked" \
+        test $? = 1 -a "$(relaxed_state)" = "1 dash" -a ! -e "$R/during" \
+             -a "$(grep -c 'cannot open the lock' "$T/relaxed-nolock.out")" = 1 \
+             -a "$(grep -c -e '^relaxed: kernel' -e '^restored: ' "$T/relaxed-nolock.out")" = 0
+    rr; relaxed_in "$f" bash -c 'ls -l /proc/self/fd/ >"$1"; flock -n "$2" true; echo $? >"$3"' \
+        _ "$R/child-fds" "$R/lock" "$R/held-during" >/dev/null 2>&1
+    check "$f: the step holds the lock while the command runs, and nothing the command starts holds it" \
+        test $? = 0 -a "$(cat "$R/held-during")" = 1 -a -s "$R/child-fds" \
+             -a "$(grep -c -- "-> $R/lock\$" "$R/child-fds")" = 0
 done
 
 echo "== $pass checks passed"
