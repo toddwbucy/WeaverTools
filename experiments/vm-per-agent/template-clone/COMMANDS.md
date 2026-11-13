@@ -81,7 +81,10 @@ exit inside the wrapped command and SIGPIPE. A restore that does not read back b
 settings fails the step. A dropped SSH session with no terminal sends the step no signal,
 but sshd closes its pipes. The wrapped command is a shell function in the step's own
 shell, so its next write (`test-step` prints after cargo ends) ends that shell with
-SIGPIPE, and the restore runs then.
+SIGPIPE, and the restore runs then. Also since 2026-11-13, a `-relaxed` step holds a lock
+in the operator's home from before it reads the two settings to the end of its shell, and
+a second `-relaxed` step started in the same guest meanwhile is refused with nothing
+changed.
 
 The first attempt stopped at `nvidia`, which installed driver 620.70.06 for
 `nvidia-open=615.71.09`; the step was corrected (README, break 1) and the template

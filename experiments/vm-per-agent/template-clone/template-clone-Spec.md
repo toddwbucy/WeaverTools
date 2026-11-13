@@ -64,6 +64,7 @@ default where a default would be a box path, a host name, an account, an address
 | `HARNESS_DIR` | the determinism matrix's `code/` directory inside the guest | none |
 | `TOOLCHAIN_READING` | the `rustc --version` line the harness preflight must read | none |
 | `APT_LISTS`, `APT_CACHE` | the guest's apt lists and archive cache, which `gpu-steps` reads and fills; the offline mock (section 8) points them at its own | apt's own directories |
+| `RELAXED_LOCK` | the lock file that keeps a guest to one `-relaxed` step at a time (section 8); the offline mock points it at its own | `$HOME/.weaver-relaxed.lock`, in the operator's home |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -330,6 +331,7 @@ no sudo and no network beyond loopback.**
   into the guest stubbed, and `virsh_` and `qemu-img` recorded.
 - `relaxed` runs as each guest file defines it, with `sysctl`, `readlink`, `ln` and `sudo`
   as functions over two files in the mock's directory, so no setting of the host moves.
+  Its lock is a file in the mock's directory, taken with the real `flock`.
 - It exits non-zero on the first check that fails. With `KEEP` set, its temporary
   directory stays for reading.
 
@@ -420,7 +422,26 @@ The host scripts' steps (section 0):
   kept in global variables;
 - a write to a closed pipe, which is what the step meets after a dropped SSH session,
   restores both, and the step exits 141;
-- a `/bin/sh` that is not a link is refused, with nothing changed.
+- a `/bin/sh` that is not a link is refused, with nothing changed;
+- a step started while another holds the lock is refused at once: nothing is relaxed or
+  restored, and the command never runs. A lock that cannot be opened is refused the same
+  way, so a step never runs unlocked;
+- the step holds the lock while the command runs, and the command runs without the
+  lock's descriptor, so nothing it leaves running holds the lock after the step's shell
+  ends. The lock file is made 0600.
+
+The lock keeps one `relaxed` at a time in a guest. Without it, a second step that started
+while the first had both settings relaxed would save the relaxed values as its own and put
+them back after the first restored, and both steps would pass. The lock is taken before
+the two settings are read. Its descriptor stays open for the step shell's life, so the
+restore runs under it on every way out, the EXIT trap included, and the kernel frees it
+however the shell ends. The file is in the operator's home, where the steps keep the
+WeaverAgent checkout and cargo's target directory, so its directory is there on the
+template as built; an empty file stays there after the
+step. No other local account can use the lock to block a step: it can neither create nor
+open a 0600 file in the operator's home, and root on a single-operator guest is the
+operator. Two steps actually running at once are not staged. The mock checks the lock
+that keeps them apart, because a race between them depends on timing.
 
 Bash runs the EXIT trap itself when a terminating signal ends the shell (measured on bash
 5.3.20 for TERM, HUP, INT and PIPE). So the mock cannot tell the explicit signal traps from
