@@ -51,31 +51,59 @@ models_host_refusal() {
 # relaxed COMMAND...: as guest/template-steps states it. verify-lifecycle.sh's step 0
 # runs update-stack.sh's plan, whose test step needs both settings.
 relaxed() {
-    local rc=0 userns sh
-    userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
-    sh=$(readlink /bin/sh)
-    [ -n "$sh" ] || { echo "/bin/sh is not a link; nothing relaxed"; return 1; }
-    # Both settings come back on every exit path the step sees: a failed change, the
-    # wrapped command's end, or INT, HUP or TERM sent to the step, so an interrupted step
-    # does not leave /bin/sh -> bash in an image that is then sealed. A dropped SSH session
-    # with no terminal sends no signal: the step runs on and restores when COMMAND ends.
+    local rc=0
+    # The two settings as they were, kept global: after an unset variable under set -u,
+    # bash unwinds every function before the EXIT trap runs, and a local would be gone.
+    relaxed_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
+    relaxed_sh=$(readlink /bin/sh)
+    [ -n "$relaxed_sh" ] || { echo "/bin/sh is not a link; nothing relaxed"; return 1; }
+    # Both settings come back on every way out of this shell once the traps are set,
+    # so a step that stops does not leave /bin/sh -> bash in an image that is then
+    # sealed:
+    #   - a failed change, and the wrapped command's end;
+    #   - an exit inside the wrapped command, which is a shell function in this shell
+    #     (an `exit`, or an unset variable under set -u);
+    #   - INT, HUP or TERM sent to the step;
+    #   - SIGPIPE, the dropped SSH session. sshd sends a command without a terminal no
+    #     signal when the client goes away, but it closes the command's pipes, and the
+    #     next write by this shell (a wrapped function's printf) would end it untrapped.
+    # Each signal exits with its own status, and the EXIT trap restores. A restore that
+    # does not read back both settings as they were fails the step, even after a
+    # command that passed.
     relaxed_restore() {
-        sudo ln -sfn "$sh" /bin/sh
-        sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$userns"
-        echo "restored: kernel.apparmor_restrict_unprivileged_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns), /bin/sh -> $(readlink /bin/sh)"
+        local bad=0 now_sh now_userns
+        sudo ln -sfn "$relaxed_sh" /bin/sh || bad=1
+        sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$relaxed_userns" || bad=1
+        now_sh=$(readlink /bin/sh)
+        now_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
+        [ "$now_sh" = "$relaxed_sh" ] && [ "$now_userns" = "$relaxed_userns" ] || bad=1
+        if [ "$bad" = 0 ]; then
+            echo "restored: kernel.apparmor_restrict_unprivileged_userns=$now_userns, /bin/sh -> $now_sh"
+        else
+            echo "NOT RESTORED: kernel.apparmor_restrict_unprivileged_userns=$now_userns (was $relaxed_userns), /bin/sh -> $now_sh (was $relaxed_sh)" >&2
+        fi
+        return "$bad"
     }
-    trap 'relaxed_restore; exit 130' INT
-    trap 'relaxed_restore; exit 129' HUP
-    trap 'relaxed_restore; exit 143' TERM
+    # On the way out: the exit status stands, but a 0 becomes 1 when the restore fails.
+    relaxed_on_exit() {
+        local st=$1
+        relaxed_restore || [ "$st" != 0 ] || st=1
+        exit "$st"
+    }
+    trap 'relaxed_on_exit $?' EXIT
+    trap 'exit 130' INT
+    trap 'exit 129' HUP
+    trap 'exit 143' TERM
+    trap 'exit 141' PIPE
     if ! sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || ! sudo ln -sfn bash /bin/sh; then
         relaxed_restore
-        trap - INT HUP TERM
+        trap - EXIT INT HUP TERM PIPE
         return 1
     fi
     echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
     "$@" || rc=$?
-    relaxed_restore
-    trap - INT HUP TERM
+    relaxed_restore || [ "$rc" != 0 ] || rc=1
+    trap - EXIT INT HUP TERM PIPE
     return "$rc"
 }
 

@@ -155,7 +155,9 @@ driver_install() {
     extra=$(find "$debs" -mindepth 1 -maxdepth 1 ! \( -type f -name '*.deb' \) -printf '%f ' 2>/dev/null)
     [ -z "$extra" ] || fail "$debs holds more than .deb files: $extra"
     compgen -G "$debs/*.deb" >/dev/null || fail "no .deb in $debs"
-    sudo install -o root -g root -m 0644 "$debs"/*.deb "$APT_CACHE/" || fail "the .debs did not go into the cache"
+    # ~/debs goes on failure as on success: the round's next put refuses a ~/debs that stands.
+    sudo install -o root -g root -m 0644 "$debs"/*.deb "$APT_CACHE/" \
+        || { rm -rf -- "${debs:?}"; fail "the .debs did not go into the cache; $debs is removed, so the round can be put again"; }
     rm -rf -- "${debs:?}"
     # shellcheck disable=SC2086
     sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-download -y "${REC[@]}" $PKGS \

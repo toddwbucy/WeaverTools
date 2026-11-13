@@ -180,6 +180,8 @@ echo 0 >"$T/ci-wait"; echo done >"$T/ci-status"
 check "a wait that ends in time, status done, passes" test $? = 0
 check "a CI_WAIT that is not a number of seconds is refused" refused env CI_WAIT=1s bash -c \
     "source $(printf '%q' "$CODE/lib.sh"); gssh() { :; }; cloud_init_verdict 1 $(printf '%q' "$LOG") bad"
+check "a CI_WAIT of 0, which would set no deadline, is refused" refused env CI_WAIT=0 bash -c \
+    "source $(printf '%q' "$CODE/lib.sh"); gssh() { :; }; cloud_init_verdict 1 $(printf '%q' "$LOG") zero"
 
 echo "== clone.sh netdev keeps every forward on the host's loopback (Spec section 4)"
 nd() { netdev_ok "$1" 5022; }
@@ -222,6 +224,14 @@ cp "$CACHE/pinpkg_1.0_all.deb" "$G/debs/"
 gssh 1 "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-install pin" >"$T/di.out" 2>&1
 check "driver-install refuses a ~/debs holding a directory" \
     test $? != 0 -a "$(grep -c 'holds more than .deb files' "$T/di.out")" = 1
+guest_reset
+mkdir -p "$G/debs"; cp "$CACHE/pinpkg_1.0_all.deb" "$G/debs/"
+rm -rf -- "${T:?}/archives"; : >"$T/archives"      # apt's cache not a directory: the copy fails
+gssh 1 "$(guest_env DRIVER_PIN DRIVER_OPEN)gpu-steps driver-install pin" >"$T/di2.out" 2>&1
+check "a cache copy that fails removes ~/debs and says so, so the round can be put again" \
+    test $? != 0 -a ! -e "$G/debs" -a "$(grep -c 'is removed, so the round can be put again' "$T/di2.out")" = 1 \
+         -a "$(grep -c -- '--no-download' "$T/calls")" = 0
+rm -f -- "${T:?}/archives"
 guest_reset
 mkdir -p "$T/round1" "$T/round2"
 cp "$CACHE/pinpkg_1.0_all.deb" "$T/round1/"
@@ -434,7 +444,8 @@ check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the ste
 TD=$T/template
 sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
-    head -c 4096 /dev/zero >"$TD/template.qcow2"; : >"$T/host-calls"; rm -f "$LOG/template-sha256.txt"
+    head -c 4096 /dev/zero >"$TD/template.qcow2"; chmod 0644 "$TD/template.qcow2"
+    : >"$T/host-calls"; rm -f "$LOG/template-sha256.txt"
     ( set -euo pipefail; host_fn build-template.sh seal; copy_in_stubbed
       NAME=mock-template DIR=$TD DISK=$TD/template.qcow2
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"; [ "$1" != domstate ] || echo "shut off"; }
@@ -444,13 +455,13 @@ sealrun() {
 touch "$T/steps-fail"
 sealrun >"$T/seal.out" 2>&1
 check "a seal that fails stops before the undefine, the read-only disk and the checksum" \
-    test $? = 1 -a ! -s "$T/host-calls" -a -w "$TD/template.qcow2" -a -e "$TD/hostkey" \
+    test $? = 1 -a ! -s "$T/host-calls" -a "$(stat -c %a "$TD/template.qcow2")" = 644 -a -e "$TD/hostkey" \
          -a ! -e "$LOG/template-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
 rm "$T/steps-fail"
 sealrun >"$T/seal2.out" 2>&1
 check "a seal that passes goes on to all three" \
     test $? = 0 -a "$(grep -c '^virsh_ undefine mock-template --nvram$' "$T/host-calls")" = 1 \
-         -a ! -w "$TD/template.qcow2" -a ! -e "$TD/hostkey" -a -s "$LOG/template-sha256.txt"
+         -a "$(stat -c %a "$TD/template.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/template-sha256.txt"
 chmod 0644 "$TD/template.qcow2"
 
 echo "== relaxed puts both settings back (template-steps and clone-steps)"
@@ -462,22 +473,30 @@ mkdir -p "$R"
 relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prints the state after
     local f=$1; shift
     (
+        # The subshell's own trap table, empty: until a subshell sets a trap, `trap -p`
+        # still prints the parent's (the mock's cleanup).
+        trap - EXIT INT HUP TERM PIPE
         eval "$(sed -n '/^relaxed() {/,/^}/p' "$CODE/guest/$f")"
         declare -F relaxed >/dev/null || exit 99
         sudo() { "$@"; }
         sysctl() { case $1 in -n) cat "$R/userns" ;; -q) printf '%s\n' "${3#*=}" >"$R/userns" ;; esac; }
         readlink() { [ "$1" = /bin/sh ] && cat "$R/sh"; }
-        ln() { [ "$3" = /bin/sh ] || return 9; [ ! -e "$R/ln-fails" ] || [ "$2" != bash ] || return 1; printf '%s\n' "$2" >"$R/sh"; }
+        ln() { [ "$3" = /bin/sh ] || return 9; [ ! -e "$R/ln-fails" ] || [ "$2" != bash ] || return 1
+               [ ! -e "$R/restore-fails" ] || [ "$2" = bash ] || return 1
+               [ ! -e "$R/restore-silent" ] || [ "$2" = bash ] || return 0; printf '%s\n' "$2" >"$R/sh"; }
         during() { echo "$(cat "$R/userns") $(cat "$R/sh")" >"$R/during"; }
+        quits() { exit "$1"; }
+        unset_var() { echo "$RELAXED_MOCK_UNSET"; }
+        writes() { sleep 0.3; printf 'after the client went away\n'; printf 'more\n'; }
         relaxed "$@"
         rc=$?
-        [ -z "$(trap -p TERM)" ] || { echo "the TERM trap outlived relaxed"; exit 98; }
+        [ -z "$(trap -p EXIT INT HUP TERM PIPE)" ] || { echo "a trap outlived relaxed"; exit 98; }
         exit "$rc"
     )
 }
 relaxed_state() { echo "$(cat "$R/userns") $(cat "$R/sh")"; }
 for f in template-steps clone-steps; do
-    rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails"; }
+    rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails" "$R/restore-fails" "$R/restore-silent"; }
     rr; relaxed_in "$f" during >/dev/null 2>&1
     check "$f: relaxed runs the command relaxed and restores both, its traps gone" \
         test $? = 0 -a "$(cat "$R/during")" = "0 bash" -a "$(relaxed_state)" = "1 dash"
@@ -490,6 +509,22 @@ for f in template-steps clone-steps; do
     check "$f: a TERM during the command restores both, exit 143" test $? = 143 -a "$(relaxed_state)" = "1 dash"
     rr; relaxed_in "$f" bash -c 'kill -HUP $PPID; sleep 0.2' >/dev/null 2>&1
     check "$f: a HUP during the command restores both, exit 129" test $? = 129 -a "$(relaxed_state)" = "1 dash"
+    rr; touch "$R/restore-fails"; relaxed_in "$f" during >"$T/relaxed-nores.out" 2>&1
+    check "$f: a restore that fails after a command that passed fails the step, and says so" \
+        test $? = 1 -a "$(cat "$R/sh")" = bash -a "$(grep -c '^NOT RESTORED: ' "$T/relaxed-nores.out")" = 1
+    rr; touch "$R/restore-silent"; relaxed_in "$f" during >"$T/relaxed-silent.out" 2>&1
+    check "$f: a restore whose command answers 0 but does not read back fails the step" \
+        test $? = 1 -a "$(grep -c '^NOT RESTORED: .*/bin/sh -> bash (was dash)' "$T/relaxed-silent.out")" = 1
+    rr; relaxed_in "$f" quits 3 >/dev/null 2>&1
+    check "$f: an exit inside the command restores both, its status kept" test $? = 3 -a "$(relaxed_state)" = "1 dash"
+    rr; touch "$R/restore-fails"; relaxed_in "$f" quits 0 >/dev/null 2>&1
+    check "$f: an exit 0 inside the command with a restore that fails exits 1" test $? = 1
+    rr; ( relaxed_in "$f" unset_var ) >/dev/null 2>&1   # the fatal error unwinds the call's own redirection
+    check "$f: an unset variable under set -u inside the command restores both" \
+        test $? != 0 -a "$(relaxed_state)" = "1 dash"
+    rr; ( set -u; relaxed_in "$f" writes 2>/dev/null | true; exit "${PIPESTATUS[0]}" )
+    check "$f: a write to a closed pipe (the dropped SSH session) restores both, exit 141" \
+        test $? = 141 -a "$(relaxed_state)" = "1 dash"
     rr; : >"$R/sh"; relaxed_in "$f" during >"$T/relaxed-nolink.out" 2>&1
     check "$f: a /bin/sh that is not a link is refused, nothing changed" \
         test $? = 1 -a "$(cat "$R/userns")" = 1 -a ! -e "$R/during" \

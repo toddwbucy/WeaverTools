@@ -249,7 +249,7 @@ PY
 # the step exits 124 and stops, since a cloud-init still running would read exit 0.
 cloud_init_verdict() {
     local port=$1 out=$2/cloud-init-$3 rc=0 wait=${CI_WAIT:-900}
-    [[ "$wait" =~ ^[0-9]+$ ]] || die "CI_WAIT is a number of seconds, not '$wait'"
+    [[ "$wait" =~ ^[1-9][0-9]*$ ]] || die "CI_WAIT is a positive number of seconds, not '$wait' (timeout 0 sets no deadline)"
     gssh "$port" "timeout $wait cloud-init status --wait >/dev/null 2>&1; w=\$?; cloud-init status --long; s=\$?
                   [ \$w -ne 124 ] || { echo \"the wait passed its deadline, $wait s\"; exit 124; }; exit \$s" \
         >"$out.txt" 2>&1 || rc=$?
