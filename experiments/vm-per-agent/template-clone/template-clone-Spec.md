@@ -57,7 +57,7 @@ default where a default would be a box path, a host name, an account, an address
 | `MODELS_DIR` | the host directory shared read-only into a clone | none |
 | `NAME`, `PORT`, `VCPUS`, `MEMORY` | a clone's name, its SSH forward's host loopback port, its size | as `clone.sh` states |
 | `CPUSET` | host CPUs the guest's vCPUs and QEMU's threads stay on | unset: no pinning |
-| `CI_WAIT` | the seconds a boot waits for cloud-init to finish (section 3) | 900 |
+| `CI_WAIT` | the seconds a boot waits for cloud-init to finish, a positive number (section 3) | 900 |
 | `DRIVER_PIN`, `DRIVER_OPEN` | the apt package specifications of the driver step's two rounds | none |
 | `DEB_CACHE` | the host directory holding the driver rounds' checked files | `$VM_ROOT/debs` |
 | `DEB_ORIGINS` | the URL prefixes a driver round may fetch from, space-separated, each ending `/` | the template's NVIDIA repository, which served every file of the slice's two rounds |
@@ -255,7 +255,8 @@ it. `clone.sh driver ROUND` runs one round's four steps:
 4. **`driver-install ROUND` (guest).**
    - It refuses unless `~/debs` holds `.deb` files and nothing else.
    - It puts them into apt's cache, then **removes `~/debs` whole**, so that the next
-     round's `put` makes it afresh.
+     round's `put` makes it afresh. A copy into the cache that fails removes `~/debs` as
+     well, and says so, so the round can be put again.
    - It installs the round's packages with `--no-download`, and apt checks each file
      against its signed lists. The pin round installs with recommends; the open round
      with `--no-install-recommends`.
@@ -337,7 +338,7 @@ behaviour that had it, and shows that this behaviour catches it:
 
 | Defect | The check |
 |---|---|
-| D1, the nested `~/debs` | Two rounds back to back through `fetch_round`. After the first `driver-install`, no `~/debs` stands. The second round's `put` makes a new `~/debs`, and its install passes. A `~/debs` holding a directory is refused by `driver-install`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. The old copy (`cp -r`, the stand-in for `scp -r`) nests, as run 3 found. |
+| D1, the nested `~/debs` | Two rounds back to back through `fetch_round`. After the first `driver-install`, no `~/debs` stands. The second round's `put` makes a new `~/debs`, and its install passes. A `~/debs` holding a directory is refused by `driver-install`, and a copy into apt's cache that fails removes `~/debs`. Under the old install, which left `~/debs`, the second `put` is refused instead of nesting. The old copy (`cp -r`, the stand-in for `scp -r`) nests, as run 3 found. |
 | D2, links flattened | A source holding links arrives with the same links. The same source copied by `cp -rL` (the stand-in for `scp -r`) arrives as plain files, and the check tells them apart. |
 | D3, the toolchain reading | With an inherited PATH that has no `$HOME/.cargo/bin`, the preflight, run in a stand-in repository, finds the stub rustc there and passes, reading in that repository with `RUSTUP_AUTO_INSTALL=0`. With no `$HOME/.cargo/bin/rustc`, or a stub reading another line, it refuses. The bare inherited PATH alone reproduces the exit 127. An inherited `RUSTUP_TOOLCHAIN` does not reach the readings: the matrix's line passes under it, and a line that only it gives is refused. |
 
@@ -386,7 +387,8 @@ item. A schema warning, a status other than `done`, and an unreadable status eac
 
 `cloud_init_verdict` (section 3): a wait past `CI_WAIT`, while `cloud-init status` still
 answers 0, is recorded as exit 124 and stops. A wait that ends in time with status `done`
-passes. A `CI_WAIT` that is not a number of seconds is refused.
+passes. A `CI_WAIT` that is not a positive number of seconds is refused, 0 among them,
+since `timeout 0` sets no deadline.
 
 `netdev_ok` (section 4): the SSH forward alone, `restrict=on` with a `guestfwd`, and a
 second forward on loopback each pass. A forward bound to every address, the SSH forward or
@@ -409,7 +411,21 @@ The host scripts' steps (section 0):
 - a command that fails is answered, with both restored;
 - a change to `/bin/sh` that fails restores the sysctl, and the command never runs;
 - a TERM or a HUP during the command restores both, and the step exits 143 or 129;
+- a restore that fails after a command that passed fails the step and says so, and so
+  does a restore whose commands answer 0 while a setting does not read back;
+- an exit inside the command restores both and keeps its status, and an exit 0 with a
+  restore that fails exits 1. The command is a shell function in the step's shell, so
+  this covers an `exit` and an unset variable under `set -u`. After the unset variable,
+  bash unwinds every function before the EXIT trap runs, so the two saved settings are
+  kept in global variables;
+- a write to a closed pipe, which is what the step meets after a dropped SSH session,
+  restores both, and the step exits 141;
 - a `/bin/sh` that is not a link is refused, with nothing changed.
+
+Bash runs the EXIT trap itself when a terminating signal ends the shell (measured on bash
+5.3.20 for TERM, HUP, INT and PIPE). So the mock cannot tell the explicit signal traps from
+the EXIT trap. Removing the TERM or PIPE trap alone leaves every check passing. The explicit
+traps stay, so the step does not depend on that behaviour.
 
 The seal's own check of its private keys (section 2) runs only in a guest. The mock does
 not reach it; a rebuild measures it.

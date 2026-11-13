@@ -76,8 +76,12 @@ The `-relaxed` steps set the two test-step settings of breaks 4 and 5 and restor
 In the runs recorded here they restored only after the wrapped command returned. Since
 2026-11-12 they also restore when a change fails and on INT, HUP or TERM sent to the
 step, so an interrupted step does not leave `/bin/sh` as bash in an image that is then
-sealed. A dropped SSH session with no terminal sends the step no signal; the step runs
-on and restores when the wrapped command ends.
+sealed. Since 2026-11-13 they restore on every way out of the step's shell, including an
+exit inside the wrapped command and SIGPIPE. A restore that does not read back both
+settings fails the step. A dropped SSH session with no terminal sends the step no signal,
+but sshd closes its pipes. The wrapped command is a shell function in the step's own
+shell, so its next write (`test-step` prints after cargo ends) ends that shell with
+SIGPIPE, and the restore runs then.
 
 The first attempt stopped at `nvidia`, which installed driver 620.70.06 for
 `nvidia-open=615.71.09`; the step was corrected (README, break 1) and the template
