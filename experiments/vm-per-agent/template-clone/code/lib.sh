@@ -362,6 +362,16 @@ image_close() {
     rm -f -- "$1/whole.raw" "$1/root.raw" "$1/qsd-whole.pid" "$1/qsd-root.pid"
 }
 
+# qemu_file FILE: an empty FILE that its owner and QEMU's account (QEMU_USER) alone may
+# write, for a file QEMU opens from its own command line (a serial console, a capture).
+# A file libvirt opens for a device becomes its own, unreadable here without root; a mode
+# open to every local account would let any of them write the console that trust on first
+# use is read from. The grant is a POSIX ACL, which the filesystem must support.
+qemu_file() {
+    : >"$1" && chmod 0600 "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
+        || die "cannot make $1 writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
+}
+
 # pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
 # undefined (virt-install makes one for each directory a --disk path names).
 pool_drop() {

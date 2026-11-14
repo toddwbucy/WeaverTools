@@ -70,6 +70,7 @@ default where a default would be a box path, a host name, an account, an address
 | `WA_COMMIT`, `WW_COMMIT` | the WeaverAgent and WeaverWeb commits the image is compiled from, each in full | none |
 | `SEAL_WAIT` | the seconds the host waits for the guest's final seal step to power it off | 1200 |
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
+| `QEMU_USER` | the account QEMU runs as under libvirt's system connection; `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -171,6 +172,17 @@ template of 2026-11-11 predates 78bde86, so its `/etc/nftables.conf` carries the
 alone. Its clones also skip the seed's copy, because the template's table already stands
 at that point. A clone of today's template therefore relies on `ipv6=off` for the IPv6
 path (`README.md`, "The network"). Only a rebuilt template carries the IPv6 line.
+
+**The appliance image of section 10 carries no copy of the guard.** The image's firewall
+belongs to the operator: admin owns one named table in it and never the whole firewall,
+as the operator ratified on 2026-11-14. This guard's file opens with `flush ruleset`, and
+10.0.2.2 means the host only under QEMU's user-mode networking. So the rig guards its own
+boots instead:
+- the build VM gets the guard from its seed's `bootcmd`, as above;
+- `proof`'s boot with no seed and its first boot both run on `restrict=on`, so neither
+  boot of the sealed image can reach the host or anything beyond it.
+
+The second, third and fourth builds ran their no-seed boot without `restrict=on`.
 
 **`clone.sh netdev VALUE` takes only a user-mode argument whose forwards all stay on the
 host's loopback.**
@@ -587,7 +599,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
     FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC
-    sends captured and counted by kind. Then a second overlay booted as a first boot: a
+    sends captured and counted by kind. That NIC is `restrict=on` (section 4), because the sealed image carries no guard of its own and the second build's no-seed boot, unrestricted, reached public time servers and resolved their names through the host's resolver. The capture
+    still holds every frame the guest sends, and past QEMU's own DHCP none is answered.
+    Then a second overlay booted as a first boot: a
     seed whose meta-data names an SSH key and a hostname, with no host key; whose
     network-config names a static address, gateway and resolver; and whose user-data asks
     for a bootcmd, a runcmd, a package and an account, all of which must be discarded. Its
@@ -604,8 +618,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     under those keys, as the default account, and read cloud-init's verdict and the
     modules it ran, what became of each user-data ask, the hostname, the network and its
     wait, `ubuntu.sources`, SSH's units, the stamp's commits and the MANIFEST entries the
-    boot changed. Each boot's serial console is written by QEMU to a file the proof makes;
-    a file libvirt opens for a serial device is its own, and is not readable without root.
+    boot changed. Each boot's serial console, and the no-seed boot's capture, is written by
+    QEMU to a file the proof makes. Only the file's owner and `QEMU_USER` may write it, by a
+    POSIX ACL. QEMU writing through the ACL is unproved until the next build. A file libvirt opens for a serial device becomes libvirt's, unreadable
+    without root, and a file every local account could write would let any of them write
+    the console that trust on first use is read from.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
 (cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it; kept until a carded load

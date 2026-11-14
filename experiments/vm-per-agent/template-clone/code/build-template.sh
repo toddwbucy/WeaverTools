@@ -123,7 +123,11 @@ seal() {
 #  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
 #     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
 #     The capture is summarized by kind: an image that configures no network sends no
-#     DHCP and no DNS.
+#     DHCP and no DNS. The NIC is restrict=on: the sealed image carries no guard against
+#     the host (the build VM's guard is its seed's, section 4, and the image's firewall is
+#     the operator's), so the rig isolates the boot itself. The capture still holds every
+#     frame the guest sends; past QEMU's own DHCP, none is answered. The second, third
+#     and fourth builds' no-seed boots ran without restrict=on.
 proof() {
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
     local out=$LOG/proof r=$VM_ROOT/proof-read f p
@@ -151,20 +155,20 @@ proof() {
     else
         echo "no MANIFEST in the image"; [ ! -f "$out/SEAL-REFUSED" ] || cat "$out/SEAL-REFUSED"
     fi
-    # The overlay boot. The capture and console files are made here, writable by QEMU's own
-    # account; libvirt's own serial file would be its to own, and unreadable here.
+    # The overlay boot. The capture and console files are made here, writable by their
+    # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
     virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
     mkdir -p "$pdir"
     qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
-    : >"$pdir/boot.pcap"; chmod 0666 "$pdir/boot.pcap"
-    : >"$pdir/console.log"; chmod 0666 "$pdir/console.log"
+    qemu_file "$pdir/boot.pcap"
+    qemu_file "$pdir/console.log"
     virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
         --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
         --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,ipv6=off -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/proof-virt-install.txt" 2>&1
     sleep "${PROOF_BOOT:-180}"
@@ -221,7 +225,7 @@ proof_first_boot() {
     virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
     mkdir -p "$pdir/seed"
     qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
-    : >"$pdir/console.log"; chmod 0666 "$pdir/console.log"
+    qemu_file "$pdir/console.log"
     printf 'instance-id: %s\nlocal-hostname: %s\npublic-keys:\n  - %s\n' \
         "$pn-1" "$pn" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
     cat >"$pdir/seed/user-data" <<'EOF'
