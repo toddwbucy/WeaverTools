@@ -3,15 +3,14 @@
 # boots and log each step. template-clone-Spec.md states what they do.
 #
 # VM_ROOT names the directory that holds images/, template/, appliance/, clones/, logs/ and
-# keys/.
-# It has no default here: a default would be a box path in the repository. Each script
-# sets KNOWN_HOSTS to its guest's own known-hosts file before it reaches the guest.
+# keys/. It has no default here: a default would be a box path in the repository. Each
+# script sets KNOWN_HOSTS to its guest's own known-hosts file before it reaches the guest.
 
-: "${VM_ROOT:?set VM_ROOT to the directory holding images/ template/ clones/ logs/ keys/}"
-# Absolute and without its trailing slashes, so that the paths built on it compare equal to
-# the ones libvirt reports (a storage pool's path, a domain's disk).
-case $VM_ROOT in /*) ;; *) VM_ROOT=$PWD/$VM_ROOT ;; esac
-while [[ "$VM_ROOT" == */ && "$VM_ROOT" != / ]]; do VM_ROOT=${VM_ROOT%/}; done
+: "${VM_ROOT:?set VM_ROOT to the directory holding images/ template/ appliance/ clones/ logs/ keys/}"
+# Canonical (absolute, with no ., .., symbolic link or trailing slash), so that the paths
+# built on it compare equal to the ones libvirt reports (a storage pool's path, a domain's
+# disk) and to each other.
+VM_ROOT=$(realpath -m -- "$VM_ROOT") || { printf '\nREFUSED: VM_ROOT %s cannot be made canonical\n' "$VM_ROOT" >&2; exit 1; }
 
 URI=qemu:///system
 # The guest operating system, a named input (OS): its cloud image by digest, checked
@@ -337,7 +336,7 @@ guest_env() {
 # The root partition is the one GPT names "Linux root (x86-64)". image_cat and image_ls
 # read through debugfs, which follows no symbolic link; image_close stops the export.
 image_open() {
-    local disk=$1 dir=$2 part start size
+    local disk=$1 dir=$2 part start size pid
     mkdir -p -- "$dir"
     : >"$dir/whole.raw"; : >"$dir/root.raw"
     qemu-storage-daemon \
@@ -350,7 +349,7 @@ import json, sys
 p = [p for p in json.load(sys.stdin)["partitiontable"]["partitions"]
      if p["type"].upper() == "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"]
 print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
-    kill "$(cat "$dir/qsd-whole.pid" 2>/dev/null)" 2>/dev/null || true; sleep 1
+    { pid=$(qsd_pid "$dir" qsd-whole) && kill "$pid"; } 2>/dev/null || true; sleep 1
     [ -n "$part" ] || die "$disk has no single Linux root partition"
     read -r start size <<<"$part"
     qemu-storage-daemon \
@@ -442,12 +441,26 @@ image_late_writes() {
         image_files "$dir" "$p" | sed 's/^/  /'
     done
 }
-# image_close stops both exports where they still run, unmounts one whose daemon is gone,
-# and never fails its caller (it runs from cleanup traps).
+# qsd_pid DIR NAME: the PID DIR/NAME.pid names, printed only where that process is a
+# qemu-storage-daemon whose command line exports this directory's file (DIR/whole.raw for
+# qsd-whole, DIR/root.raw for qsd-root). A pidfile left by a crash or a SIGKILL may name
+# another process by now, which is never sent a signal.
+qsd_pid() {
+    local pid f a0
+    pid=$(cat "$1/$2.pid" 2>/dev/null) && [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    case $2 in qsd-whole) f=$1/whole.raw ;; qsd-root) f=$1/root.raw ;; *) return 1 ;; esac
+    [ -r "/proc/$pid/cmdline" ] || return 1
+    a0=$(tr '\0' '\n' 2>/dev/null <"/proc/$pid/cmdline" | head -1) || return 1
+    [ "${a0##*/}" = qemu-storage-daemon ] || return 1
+    tr '\0' '\n' 2>/dev/null <"/proc/$pid/cmdline" | grep -qF "mountpoint=$f," || return 1
+    printf '%s\n' "$pid"
+}
+# image_close stops both exports where they still run (each only through qsd_pid), unmounts
+# one whose daemon is gone, and never fails its caller (it runs from cleanup traps).
 image_close() {
-    local f
+    local f pid
     for f in qsd-whole qsd-root; do
-        [ ! -f "$1/$f.pid" ] || kill "$(cat "$1/$f.pid" 2>/dev/null)" 2>/dev/null || true
+        { pid=$(qsd_pid "$1" "$f") && kill "$pid"; } 2>/dev/null || true
     done
     sleep 1
     for f in whole.raw root.raw; do
@@ -460,10 +473,14 @@ image_close() {
 # write, for a file QEMU opens from its own command line (a serial console, a capture).
 # A file libvirt opens for a device becomes its own, unreadable here without root; a mode
 # open to every local account would let any of them write the console that trust on first
-# use is read from. The grant is a POSIX ACL, which the filesystem must support.
+# use is read from. The grant is a POSIX ACL, which the filesystem must support. The file
+# is made new, exclusively and without following a link: an existing file or a symbolic
+# link at that path is refused, never reused or written through.
 qemu_file() {
-    : >"$1" && chmod 0600 "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
-        || die "cannot make $1 writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
+    [ ! -e "$1" ] && [ ! -L "$1" ] || die "$1 already stands, or is a symbolic link: qemu_file makes a new file only"
+    python3 -I -c 'import os, sys; os.close(os.open(sys.argv[1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600))' "$1" \
+        && chmod 0600 "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
+        || die "cannot make $1, new, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 
 # The MANIFEST's form has one definition, guest/template-steps' LINKS_MARK and
