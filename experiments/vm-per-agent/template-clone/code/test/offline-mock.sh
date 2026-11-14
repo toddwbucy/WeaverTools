@@ -412,6 +412,9 @@ echo "== a guest step that fails stops the host script (Spec section 0)"
 # guest's sudo install of the steps) are stubbed; each run is a subshell under the
 # scripts' own set -euo pipefail.
 host_fn() { eval "$(sed -n "/^$2() {/,/^}/p" "$CODE/$1")"; declare -F "$2" >/dev/null || no "no $2 in $1"; }
+# host_fns SCRIPT FN...: each FN as host_fn takes it. build-template.sh's step and seal call
+# inputs_ok, inputs_env and steps_in, which are extracted with them.
+host_fns() { local f=$1 fn; shift; for fn in "$@"; do host_fn "$f" "$fn"; done; }
 copy_in_stubbed() {
     gscp() { :; }
     install_steps() { :; }
@@ -427,12 +430,12 @@ EOF
 chmod 0755 "$B/template-steps"
 guest_reset
 touch "$T/steps-fail"
-( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep.out" 2>&1
+( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep.out" 2>&1
 check "build-template.sh step: a failed guest step exits non-zero, and nothing after it runs" \
     test $? = 1 -a "$(grep -c '^after the step' "$T/bstep.out")" = 0 \
          -a "$(grep -c 'REFUSED: step packages did not pass' "$T/bstep.out")" = 1
 rm "$T/steps-fail"
-( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep2.out" 2>&1
+( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep2.out" 2>&1
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/bstep2.out")" = 1
 ( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step harness-preflight "$G"; echo "after the step" ) >"$T/cstep.out" 2>&1
 check "clone.sh step: a failed guest step exits non-zero, and nothing after it runs" \
@@ -440,29 +443,65 @@ check "clone.sh step: a failed guest step exits non-zero, and nothing after it r
          -a "$(grep -c 'REFUSED: step harness-preflight did not pass' "$T/cstep.out")" = 1
 ( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step driver-uris pin; echo "after the step" ) >"$T/cstep2.out" 2>&1
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/cstep2.out")" = 1
-# seal: virsh_ and qemu-img recorded, the template's directory a stand-in
-TD=$T/template
+# seal: virsh_ and qemu-img recorded, the appliance's directory a stand-in. The final
+# step's verdict is read from IMG, a stand-in for the sealed image's root filesystem, by
+# image_open, image_cat and image_close as functions.
+TD=$T/appliance
+IMG=$T/sealed-image
+A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
+verdict() { # verdict passed|refused|no-manifest|one-commit: what the final step left
+    rm -rf -- "${IMG:?}"; mkdir -p "$IMG/etc/weaver-appliance"
+    case $1 in
+        refused) echo "1 hit(s)" >"$IMG/etc/weaver-appliance/SEAL-REFUSED" ;;
+        no-manifest) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
+        one-commit) printf 'weaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
+                    echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        passed) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+    esac
+}
 sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
-    head -c 4096 /dev/zero >"$TD/template.qcow2"; chmod 0644 "$TD/template.qcow2"
-    : >"$T/host-calls"; rm -f "$LOG/template-sha256.txt"
-    ( set -euo pipefail; host_fn build-template.sh seal; copy_in_stubbed
-      NAME=mock-template DIR=$TD DISK=$TD/template.qcow2
+    head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
+    : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
+    ( set -euo pipefail; host_fns build-template.sh inputs_env steps_in seal; copy_in_stubbed
+      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"; [ "$1" != domstate ] || echo "shut off"; }
       qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+      image_open() { echo "image_open $*" >>"$T/host-calls"; }
+      image_cat() { cat "$IMG$2" 2>/dev/null; }
+      image_close() { :; }
       seal; echo "after the seal" )
 }
+sealed_not() { # the seal stopped before the undefine, the read-only disk and the checksum
+    [ "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 ] && [ "$(stat -c %a "$TD/appliance.qcow2")" = 644 ] \
+        && [ -e "$TD/hostkey" ] && [ ! -e "$LOG/appliance-sha256.txt" ]
+}
+verdict passed
 touch "$T/steps-fail"
 sealrun >"$T/seal.out" 2>&1
 check "a seal that fails stops before the undefine, the read-only disk and the checksum" \
-    test $? = 1 -a ! -s "$T/host-calls" -a "$(stat -c %a "$TD/template.qcow2")" = 644 -a -e "$TD/hostkey" \
-         -a ! -e "$LOG/template-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
+    test $? = 1 -a ! -s "$T/host-calls" -a "$(stat -c %a "$TD/appliance.qcow2")" = 644 -a -e "$TD/hostkey" \
+         -a ! -e "$LOG/appliance-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
 rm "$T/steps-fail"
+verdict refused
+sealrun >"$T/seal-refused.out" 2>&1
+check "a final step that refused stops the seal before the undefine, the read-only disk and the checksum" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the seal refused' "$T/seal-refused.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict no-manifest
+sealrun >"$T/seal-nomanifest.out" 2>&1
+check "an image with no MANIFEST stops the seal likewise" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the image holds no MANIFEST' "$T/seal-nomanifest.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict one-commit
+sealrun >"$T/seal-onecommit.out" 2>&1
+check "a stamp that names one commit stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no weaverweb.commit" "$T/seal-onecommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict passed
 sealrun >"$T/seal2.out" 2>&1
 check "a seal that passes goes on to all three" \
-    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-template --nvram$' "$T/host-calls")" = 1 \
-         -a "$(stat -c %a "$TD/template.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/template-sha256.txt"
-chmod 0644 "$TD/template.qcow2"
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
+         -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/appliance-sha256.txt"
+chmod 0644 "$TD/appliance.qcow2"
 
 echo "== relaxed puts both settings back (template-steps and clone-steps)"
 # relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions

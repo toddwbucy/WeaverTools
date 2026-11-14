@@ -364,8 +364,11 @@ no sudo and no network beyond loopback.**
 - The guest's toolchain is a stub `rustc` and `rustup` in `$HOME/.cargo/bin`. Under an
   inherited `RUSTUP_TOOLCHAIN`, the stub `rustc` reads that toolchain's line.
 - `cloud-init` and `template-steps` are stubs too. The host scripts' `step` and `seal` run
-  as the scripts define them, under their `set -euo pipefail`, with the copy of the steps
-  into the guest stubbed, and `virsh_` and `qemu-img` recorded.
+  as the scripts define them, with the functions they call (`inputs_ok`, `inputs_env`,
+  `steps_in`), under their `set -euo pipefail`, with the copy of the steps into the guest
+  stubbed, and `virsh_` and `qemu-img` recorded. The seal's offline read of its verdict
+  (`image_open`, `image_cat`, `image_close`) is replaced by functions over a stand-in
+  directory for the sealed image's root filesystem.
 - `relaxed` runs as each guest file defines it, with `sysctl`, `readlink`, `ln` and `sudo`
   as functions over two files in the mock's directory, so no setting of the host moves.
   Its lock is a file in the mock's directory, taken with the real `flock`.
@@ -441,8 +444,9 @@ another, is refused, as are an argument with no SSH forward on `PORT` and one no
 The host scripts' steps (section 0):
 - `build-template.sh step` and `clone.sh step` each exit non-zero on a guest step that
   fails, and nothing after them runs; a step that passes goes on;
-- a seal that fails stops before the undefine, the read-only disk and the checksum; a
-  seal that passes goes on to all three.
+- a seal that fails stops before the undefine, the read-only disk and the checksum, and
+  so does one whose image holds `SEAL-REFUSED`, holds no MANIFEST, or has a stamp that
+  names one commit; a seal that passes goes on to all three.
 
 `relaxed`, in `guest/template-steps` and in `guest/clone-steps`:
 - it runs the command with both settings relaxed and restores both, and its traps are
