@@ -9,13 +9,25 @@
 : "${VM_ROOT:?set VM_ROOT to the directory holding images/ template/ clones/ logs/ keys/}"
 
 URI=qemu:///system
-# The guest operating system: Ubuntu Server 26.04 LTS, its cloud image as released on
-# 2026-10-20, checked against SHA256SUMS signed by the Ubuntu cloud image key.
-IMAGE_NAME=ubuntu-26.04-server-cloudimg-amd64.img
-IMAGE_URL=https://cloud-images.ubuntu.com/releases/resolute/release
-IMAGE_SHA256=5645d0318ad21f643ebb1ac4567514620e9893380b07b0201fda163baa5b7eb5
+# The guest operating system, a named input (OS): its cloud image by digest, checked
+# against SHA256SUMS signed by the Ubuntu cloud image key. 26.04 is the cloud image as
+# released on 2026-10-20. 24.04 is named and refused until its image is pinned
+# (template-clone-Spec.md, section 10). clone.sh names no OS and gets 26.04.
+OS=${OS:-26.04}
 IMAGE_KEY=D2EB44626FDDC30B513D5BB71A5D6C4C7DB87C81
-OS_VARIANT=ubuntu26.04
+case $OS in
+    26.04)
+        IMAGE_NAME=ubuntu-26.04-server-cloudimg-amd64.img
+        IMAGE_URL=https://cloud-images.ubuntu.com/releases/resolute/release
+        IMAGE_SHA256=5645d0318ad21f643ebb1ac4567514620e9893380b07b0201fda163baa5b7eb5
+        OS_VARIANT=ubuntu26.04 ;;
+    24.04)
+        printf '\nREFUSED: no Ubuntu 24.04 cloud image is pinned yet (template-clone-Spec.md, section 10)\n' >&2
+        exit 1 ;;
+    *)
+        printf '\nREFUSED: OS is 26.04 (or 24.04 once pinned), not %s\n' "$OS" >&2
+        exit 1 ;;
+esac
 IMAGE=$VM_ROOT/images/$IMAGE_NAME
 KEY=${KEY:-$VM_ROOT/keys/measure_ed25519}
 GUEST_USER=op
@@ -312,6 +324,54 @@ guest_env() {
         out+=" $v=$(printf '%q' "${!v}")"
     done
     [ -z "$out" ] || printf 'env%s ' "$out"
+}
+
+# image_open DISK DIR: DISK's root filesystem, read-only, as the file DIR/root.raw, which
+# qemu-storage-daemon exports over FUSE as this user (no root, no loop device, no mount).
+# The root partition is the one GPT names "Linux root (x86-64)". image_cat and image_ls
+# read through debugfs, which follows no symbolic link; image_close stops the export.
+image_open() {
+    local disk=$1 dir=$2 part start size
+    mkdir -p -- "$dir"
+    : >"$dir/whole.raw"; : >"$dir/root.raw"
+    qemu-storage-daemon \
+        --blockdev "driver=file,node-name=f,filename=$disk,read-only=on,locking=off" \
+        --blockdev driver=qcow2,node-name=q,file=f,read-only=on \
+        --export "type=fuse,id=w,node-name=q,mountpoint=$dir/whole.raw,writable=off,allow-other=off" \
+        --pidfile "$dir/qsd-whole.pid" --daemonize || die "no export of $disk"
+    part=$(sfdisk -J "$dir/whole.raw" | python3 -I -c '
+import json, sys
+p = [p for p in json.load(sys.stdin)["partitiontable"]["partitions"]
+     if p["type"].upper() == "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"]
+print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
+    kill "$(cat "$dir/qsd-whole.pid")"; sleep 1
+    [ -n "$part" ] || die "$disk has no single Linux root partition"
+    read -r start size <<<"$part"
+    qemu-storage-daemon \
+        --blockdev "driver=file,node-name=f,filename=$disk,read-only=on,locking=off" \
+        --blockdev driver=qcow2,node-name=q,file=f,read-only=on \
+        --blockdev "driver=raw,node-name=p,file=q,offset=$((start * 512)),size=$((size * 512)),read-only=on" \
+        --export "type=fuse,id=r,node-name=p,mountpoint=$dir/root.raw,writable=off,allow-other=off" \
+        --pidfile "$dir/qsd-root.pid" --daemonize || die "no export of $disk's root partition"
+}
+image_cat() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
+image_ls() { debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null; }
+image_close() {
+    [ ! -f "$1/qsd-root.pid" ] || kill "$(cat "$1/qsd-root.pid")" 2>/dev/null || true
+    sleep 1
+    rm -f -- "$1/whole.raw" "$1/root.raw" "$1/qsd-whole.pid" "$1/qsd-root.pid"
+}
+
+# pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
+# undefined (virt-install makes one for each directory a --disk path names).
+pool_drop() {
+    local pool path
+    for pool in $(virsh_ pool-list --all --name); do
+        path=$(virsh_ pool-dumpxml "$pool" | sed -n 's:.*<path>\(.*\)</path>.*:\1:p')
+        [ "$path" = "$1" ] || continue
+        virsh_ pool-destroy "$pool" >/dev/null 2>&1 || true
+        virsh_ pool-undefine "$pool" >/dev/null && echo "pool $pool ($path) undefined"
+    done
 }
 
 # step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.

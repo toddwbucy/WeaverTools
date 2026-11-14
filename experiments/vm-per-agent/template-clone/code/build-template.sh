@@ -1,25 +1,35 @@
 #!/usr/bin/env bash
-# Build the template guest from the Ubuntu cloud image, one step at a time, each
-# step's output and status kept under logs/.
+# Build the appliance image from the Ubuntu cloud image, one step at a time, each step's
+# output and status kept under logs/. The binaries are compiled inside this guest from the
+# two named commits; nothing built on the host enters the image (template-clone-Spec.md,
+# section 10).
 #
-#   VM_ROOT=<dir> code/build-template.sh create            disk, seed, define and boot
-#   VM_ROOT=<dir> code/build-template.sh ship BUNDLE       copy the WeaverAgent bundle in
-#   VM_ROOT=<dir> code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
-#                                                         (GUEST_ENV="VAR=value ..." sets its env)
-#   VM_ROOT=<dir> code/build-template.sh seal              seal, shut down, mark read-only
-#   VM_ROOT=<dir> code/build-template.sh destroy           undefine and remove the template
+#   VM_ROOT=<dir> OS=26.04 DRIVER=<release> WA_COMMIT=<sha> WW_COMMIT=<sha> \
+#     code/build-template.sh create            disk, seed, define and boot
+#   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
+#                                              (GUEST_ENV="VAR=value ..." adds to its env)
+#   ... code/build-template.sh seal              seal, shut down, mark read-only
+#   ... code/build-template.sh proof             read the sealed image; boot an overlay
+#                                              with no seed, then one as a first boot
+#   ... code/build-template.sh destroy           undefine and remove the build guest
 #
-# The step names, in order, are in COMMANDS.md. A step that breaks is rerun after the
-# break is recorded and got past; nothing here retries on its own.
+# The four inputs are named, never defaulted: OS, DRIVER (the NVIDIA driver release),
+# WA_COMMIT and WW_COMMIT (the WeaverAgent and WeaverWeb commits, in full). create needs
+# all four; every step is given those that are set, and a guest step that needs one
+# refuses where it is not. The step names, in order, are in COMMANDS.md. A step that
+# breaks is rerun after the break is recorded and got past; nothing here retries.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
+OS_GIVEN=${OS:-}
 # shellcheck source=lib.sh
 source "$HERE/lib.sh"
 
 NAME=${NAME:-weaver-template}
 PORT=${PORT:-2230}
-VCPUS=${VCPUS:-16}
-MEMORY=${MEMORY:-32768}
+# The build's own size: 24 vCPUs for the compile (the operator's word of 2026-11-14). A
+# box is later run under the operator's own definition; this rig's default there is 8.
+VCPUS=${VCPUS:-24}
+MEMORY=${MEMORY:-65536}
 SIZE=${SIZE:-120G}
 DIR=$VM_ROOT/template
 DISK=$DIR/template.qcow2
@@ -27,15 +37,37 @@ LOG=${LOG:-$VM_ROOT/logs/template}
 KNOWN_HOSTS=$DIR/known_hosts
 mkdir -p "$LOG"
 
+# inputs_ok all|set: each input that is set has its form; with "all", each is set.
+inputs_ok() {
+    if [ "$1" = all ]; then
+        [ -n "$OS_GIVEN" ] || die "name OS (26.04)"
+        local v; for v in DRIVER WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
+    fi
+    [ -z "${WA_COMMIT:-}" ] || [[ "$WA_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WA_COMMIT is a commit in full, 40 hex digits"
+    [ -z "${WW_COMMIT:-}" ] || [[ "$WW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WW_COMMIT is a commit in full, 40 hex digits"
+    [ -z "${DRIVER:-}" ] || [[ "$DRIVER" =~ ^[0-9]{3}\.[0-9]{2,3}(\.[0-9]{2})?$ ]] || die "DRIVER is a driver release such as 620.70.06"
+}
+# inputs_env: the guest command's environment prefix: the inputs that are set, and the base
+# image by name and digest, which the stamp records.
+inputs_env() {
+    BASE_IMAGE="$IMAGE_NAME $IMAGE_SHA256"
+    guest_env WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE BASE_IMAGE
+}
+steps_in() {
+    gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
+    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
+}
+
 create() {
+    inputs_ok all
     virsh_ dominfo "$NAME" >/dev/null 2>&1 && die "$NAME is already defined"
     [ -e "$DISK" ] && die "$DISK already stands"
     fetch_image
     ensure_key
     mkdir -p "$DIR"
     guest_keys "$DIR" "$PORT"
-    # A standalone disk, not an overlay on the cloud image: the sealed template is the
-    # one backing file every clone names.
+    # A standalone disk, not an overlay on the cloud image: the sealed image names no
+    # backing file.
     qemu-img convert -O qcow2 "$IMAGE" "$DISK"
     qemu-img resize -q "$DISK" "$SIZE"
     write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)" "$LOG"
@@ -43,53 +75,258 @@ create() {
         "$DIR/template_VARS.fd" >"$LOG/virt-install.txt" 2>&1
     virsh_ dumpxml "$NAME" >"$LOG/domain.xml"
     boot_ok "$PORT" "$LOG" "first-boot-$(date -u +%Y%m%dT%H%M%SZ)" 600
-    gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
-    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
-}
-
-ship() { # ship BUNDLE: the bundle reaches the guest and stays on this host's disk
-    local bundle=$1
-    [ -f "$bundle" ] || die "no bundle at $bundle"
-    gssh "$PORT" 'mkdir -p ~/bundles'
-    gscp "$PORT" "$bundle" "bundles/$(basename "$bundle")"
-    gssh "$PORT" "sha256sum ~/bundles/$(basename "$bundle")" | tee "$LOG/bundle.txt"
-    sha256sum "$bundle" | tee -a "$LOG/bundle.txt"
+    steps_in
 }
 
 step() {
+    inputs_ok set
     # Refresh the guest's copy of the steps first, so a step edited after create runs.
-    gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
-    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
-    # GUEST_ENV, where set, is given to the step as its environment (env VAR=value ...),
-    # so a workaround a step needed is named on the command line that ran it.
-    run_step "$PORT" "$LOG" "$1" "${GUEST_ENV:+env $GUEST_ENV }template-steps $*"
+    steps_in
+    # The inputs, and GUEST_ENV where set, are the step's environment (env VAR=value ...),
+    # so what a step was given is named on the command line that ran it.
+    run_step "$PORT" "$LOG" "$1" "$(inputs_env)${GUEST_ENV:+env $GUEST_ENV }template-steps $*"
     # run_step never stops its caller; a failed guest step stops here, after its log is kept.
     step_ok "$LOG" "$1" || die "step $1 did not pass; see $LOG/$1.txt"
 }
 
 seal() {
-    gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
-    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
-    run_step "$PORT" "$LOG" seal-identity "template-steps seal"
+    steps_in
+    run_step "$PORT" "$LOG" seal-identity "$(inputs_env)template-steps seal"
     tail -3 "$LOG/seal-identity.txt"
     # A seal that did not pass is never followed by the undefine, the read-only disk or the
     # checksum.
     step_ok "$LOG" seal-identity || die "the seal did not pass; see $LOG/seal-identity.txt"
-    # The guest powers itself off at the end of the seal step.
+    # The guest's final step runs as root after the SSH session ends: it removes the build
+    # account, re-runs the probes, writes the stamp and the MANIFEST last, and powers off.
+    # Its verdict is read from the sealed image by `proof`.
     local t=0
     until [ "$(virsh_ domstate "$NAME")" = "shut off" ]; do
-        t=$((t + 5)); [ "$t" -lt 300 ] || die "$NAME did not shut off"; sleep 5
+        t=$((t + 5)); [ "$t" -lt "${SEAL_WAIT:-1200}" ] || die "$NAME did not shut off"; sleep 5
     done
+    echo "shut off after ${t}s"
     virsh_ dumpxml "$NAME" >"$LOG/domain-sealed.xml"
-    # The sealed template is never booted again: its domain is undefined and the disk
-    # made read-only, so every clone is an overlay naming it.
+    # The sealed image is never booted again as itself: its domain is undefined and the
+    # disk made read-only; proof boots an overlay.
     virsh_ undefine "$NAME" --nvram >/dev/null
     chmod 0444 "$DISK"
     # The build guest's host key pair, its pin and its seed image, which carries the private
-    # key, go with it: the sealed template is never booted again.
+    # key, go with it.
     rm -rf -- "${DIR:?}/hostkey" "${DIR:?}/known_hosts" "${DIR:?}/seed.iso"
     sha256sum "$DISK" | tee "$LOG/template-sha256.txt"
     qemu-img info "$DISK" >"$LOG/template-qemu-img-info.txt"
+}
+
+# proof: what the sealed image holds, read offline, and what one boot of it sends.
+#  1. The stamp, the MANIFEST (its sha256 is the image's identity), the seal's probe
+#     record or its refusal, and the network and update configuration, read out of the
+#     image through image_open.
+#  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
+#     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
+#     The capture is summarized by kind: an image that configures no network sends no
+#     DHCP and no DNS.
+proof() {
+    [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
+    local out=$LOG/proof r=$VM_ROOT/proof-read f p
+    mkdir -p "$out"
+    image_open "$DISK" "$r"
+    for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
+        image_cat "$r" "/etc/weaver-appliance/$f" >"$out/$f" || true
+        [ -s "$out/$f" ] || rm -f "$out/$f"
+    done
+    {
+        echo "== /etc/weaver-appliance"; image_ls "$r" /etc/weaver-appliance
+        for p in /etc/netplan /etc/systemd/network /etc/NetworkManager/system-connections \
+                 /etc/apt/sources.list.d /etc/apt/apt.conf.d /etc/cloud/cloud.cfg.d \
+                 /etc/systemd/system /home /root; do
+            echo "== $p"; image_ls "$r" "$p" || echo "(absent)"
+        done
+        echo "== /etc/systemd/resolved.conf, uncommented lines"
+        image_cat "$r" /etc/systemd/resolved.conf | grep -vE '^[[:space:]]*(#|$)' || echo "(none)"
+        echo "== /etc/apt/sources.list.d/ubuntu.sources, Enabled lines"
+        image_cat "$r" /etc/apt/sources.list.d/ubuntu.sources | grep -i '^Enabled' || echo "(none)"
+    } >"$out/network-and-updates.txt" 2>&1
+    image_close "$r"
+    if [ -f "$out/MANIFEST" ]; then
+        sha256sum "$out/MANIFEST" | tee "$out/identity.txt"
+    else
+        echo "no MANIFEST in the image"; [ ! -f "$out/SEAL-REFUSED" ] || cat "$out/SEAL-REFUSED"
+    fi
+    # The overlay boot. The capture and console files are made here, writable by QEMU's own
+    # account; libvirt's own serial file would be its to own, and unreadable here.
+    local pn=$NAME-proof pdir=$VM_ROOT/proof
+    virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
+    mkdir -p "$pdir"
+    qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
+    : >"$pdir/boot.pcap"; chmod 0666 "$pdir/boot.pcap"
+    : >"$pdir/console.log"; chmod 0666 "$pdir/console.log"
+    virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
+        --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
+        --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
+        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio" \
+        --network none \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --graphics none --console none --noautoconsole --import \
+        >"$out/proof-virt-install.txt" 2>&1
+    sleep "${PROOF_BOOT:-180}"
+    virsh_ destroy "$pn" >/dev/null
+    virsh_ undefine "$pn" --nvram >/dev/null
+    cp "$pdir/boot.pcap" "$out/boot.pcap"
+    tr -d '\r' <"$pdir/console.log" >"$out/boot-console.log" || true
+    pool_drop "$pdir"
+    rm -rf -- "${pdir:?}"
+    python3 -I - "$out/boot.pcap" <<'PY' | tee "$out/boot-frames.txt"
+import struct, sys
+from collections import Counter
+data = open(sys.argv[1], "rb").read()
+if len(data) < 24:
+    print("capture: empty (no frame header written)"); sys.exit(0)
+endian = "<" if data[:4] in (b"\xd4\xc3\xb2\xa1", b"\x4d\x3c\xb2\xa1") else ">"
+off, kinds = 24, Counter()
+while off + 16 <= len(data):
+    _, _, incl, _ = struct.unpack(endian + "IIII", data[off:off + 16])
+    f = data[off + 16:off + 16 + incl]; off += 16 + incl
+    et = struct.unpack("!H", f[12:14])[0] if len(f) >= 14 else 0
+    if et == 0x0806: kinds["ARP"] += 1
+    elif et == 0x86DD: kinds["IPv6 " + {58: "ICMPv6"}.get(f[20], f"proto {f[20]}")] += 1
+    elif et == 0x0800:
+        proto, ihl = f[23], (f[14] & 15) * 4
+        sport, dport = struct.unpack("!HH", f[14 + ihl:18 + ihl]) if proto in (6, 17) else (0, 0)
+        name = {67: "DHCP", 68: "DHCP", 53: "DNS", 123: "NTP"}.get(dport) or {67: "DHCP", 53: "DNS"}.get(sport)
+        kinds["IPv4 " + (name or {1: "ICMP", 6: f"TCP to {dport}", 17: f"UDP to {dport}"}.get(proto, f"proto {proto}"))] += 1
+    else: kinds[f"ethertype {et:#06x}"] += 1
+print(f"capture: {sum(kinds.values())} frames")
+for k, n in sorted(kinds.items()): print(f"  {k}: {n}")
+PY
+    proof_first_boot "$out"
+}
+
+# proof_first_boot OUT: a second overlay, booted as an operator's first boot is: a seed
+# whose meta-data names an SSH key and a hostname and whose network-config names a static
+# address, gateway and resolver, with no host key. Its user-data asks for a bootcmd, a runcmd, a package and an
+# account, which the image's cloud-init must discard (the operator's ruling of 2026-11-14:
+# SSH key, network and hostname only). It measures what trust on first use rests on: the
+# host keys' fingerprints keys_to_console prints on the serial console, set against the
+# keys SSH presents. Only on a match does it log in, under those keys, as the default
+# account, and read cloud-init's verdict and modules, what became of the user-data's
+# asks, the network as the seed named it, SSH's units, the stamp's commits and the
+# MANIFEST entries the boot changed. The network is QEMU's restrict=on: the guest reaches
+# neither the host nor beyond it, and the SSH forward still answers. restrict=on's DHCP
+# offers no gateway and no resolver, and netplan's wait for the network on 26.04 waits for
+# a resolver (--dns), so a seed with no network-config waited 120 s on every boot and
+# cloud-init judged the boot degraded (measured on the fourth build); the seed's static
+# network is also the third setting the operator ruled cloud-init takes.
+proof_first_boot() {
+    local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 1))}
+    local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
+    virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
+    mkdir -p "$pdir/seed"
+    qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
+    : >"$pdir/console.log"; chmod 0666 "$pdir/console.log"
+    printf 'instance-id: %s\nlocal-hostname: %s\npublic-keys:\n  - %s\n' \
+        "$pn-1" "$pn" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
+    cat >"$pdir/seed/user-data" <<'EOF'
+#cloud-config
+bootcmd:
+  - [sh, -c, "echo bootcmd ran > /var/tmp/weaver-proof-bootcmd"]
+runcmd:
+  - [sh, -c, "echo runcmd ran > /var/tmp/weaver-proof-runcmd"]
+packages:
+  - hello
+users:
+  - default
+  - name: weaver-proof-extra
+    lock_passwd: true
+EOF
+    cat >"$pdir/seed/network-config" <<'EOF'
+version: 2
+ethernets:
+  nic0:
+    match:
+      macaddress: "52:54:00:57:45:01"
+    set-name: nic0
+    addresses: [10.0.2.15/24]
+    routes:
+      - to: default
+        via: 10.0.2.2
+    nameservers:
+      addresses: [10.0.2.3]
+EOF
+    cp "$pdir/seed/meta-data" "$out/first-boot-meta-data.txt"
+    cp "$pdir/seed/user-data" "$out/first-boot-user-data.txt"
+    cp "$pdir/seed/network-config" "$out/first-boot-network-config.txt"
+    xorriso -as mkisofs -quiet -o "$pdir/seed.iso" -V cidata -J -r \
+        "$pdir/seed/user-data" "$pdir/seed/meta-data" "$pdir/seed/network-config" 2>/dev/null
+    virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
+        --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
+        --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
+        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio" \
+        --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
+        --network none \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22 -device virtio-net-pci,netdev=un0,mac=52:54:00:57:45:01,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --graphics none --console none --noautoconsole --import \
+        >"$out/first-boot-virt-install.txt" 2>&1
+    # Wait for the console's fingerprint block, then scan once. Each scan connection leaves
+    # without authenticating, and OpenSSH's PerSourcePenalties (on by default since 9.8)
+    # counts each against its source; through QEMU's user network every host connection
+    # comes from one address, so polling with scans got the host refused and lost a key
+    # type (measured on the fourth build). The scan names the three types the image's
+    # cloud-init makes; one short scan is made again after the penalty lapses.
+    until grep -q 'END SSH HOST KEY FINGERPRINTS' "$pdir/console.log" 2>/dev/null; do
+        t=$((t + 2)); [ "$t" -lt "$limit" ] || break; sleep 2
+    done
+    local want n=0
+    want=$(sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" \
+           | grep -cE 'SHA256:' || true)
+    ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
+    if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "${want:-0}" ]; then
+        sleep 30; n=1
+        ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
+    fi
+    {
+        echo "== first boot, $t s to the console block (bound $limit s); $n more scans"
+        echo "== the console's fingerprint block"
+        sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" | tr -d '\r'
+        cfp=$(sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" \
+              | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
+        sfp=$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
+        echo "== the keys SSH presents"; ssh-keygen -lf "$pdir/scanned" 2>&1 || true
+        # The operator's check: every key SSH presents is named on the console. Whether
+        # SSH presents all of them is reported beside it.
+        if [ -n "$sfp" ] && [ -z "$(comm -13 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp"))" ]; then
+            if [ "$cfp" = "$sfp" ]; then
+                echo "trust on first use: MATCH, the console names each key SSH presents, and SSH presents each the console names ($(wc -l <<<"$cfp") keys)"
+            else
+                echo "trust on first use: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the console's $(wc -l <<<"$cfp")); SSH did not present: $(comm -23 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
+            fi
+            KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" '
+                echo "== cloud-init status"; cloud-init status --long; echo "(exit $?)"
+                echo "== user-data and vendor-data"; sudo grep -E "allow_userdata|vendordata2? consumption|vendor_data" /var/log/cloud-init.log | tail -4
+                echo "== modules cloud-init ran"; sudo grep -oE "running (config|modules)-[a-z_]+" /var/log/cloud-init.log | sort -u
+                echo "== the user-data asks"
+                for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do [ -e "$m" ] && echo "RAN: $m" || echo "not run: ${m##*-}"; done
+                dpkg-query -W -f "\${db:Status-Abbrev} \${Package}\n" hello 2>/dev/null | grep -q "^ii" && echo "INSTALLED: hello" || echo "not installed: hello"
+                getent passwd weaver-proof-extra >/dev/null && echo "MADE: weaver-proof-extra" || echo "not made: weaver-proof-extra"
+                echo "== the hostname"; hostname
+                echo "== the network as the seed named it"; ip -br addr show nic0; ip route; resolvectl dns nic0 2>&1
+                echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
+                echo "== ubuntu.sources after the first boot"; grep -i "^Enabled" /etc/apt/sources.list.d/ubuntu.sources || echo "(no Enabled line)"
+                echo "== keys_to_console in cloud-init.log"; sudo grep -E "keys_to_console|keys-to-console" /var/log/cloud-init.log | grep -iE "running|ran" | tail -3
+                echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
+                echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
+                echo "== MANIFEST entries the first boot changed or removed"; sudo sha256sum --quiet -c /etc/weaver-appliance/MANIFEST 2>&1 | head -60
+                echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
+                || echo "(the login exited $?)"
+        else
+            echo "trust on first use: NO MATCH; no login"
+            echo "console: ${cfp:-none}"; echo "ssh: ${sfp:-none}"
+        fi
+    } >"$out/first-boot.txt" 2>&1
+    cat "$out/first-boot.txt"
+    virsh_ destroy "$pn" >/dev/null 2>&1 || true
+    virsh_ undefine "$pn" --nvram >/dev/null
+    tr -d '\r' <"$pdir/console.log" >"$out/first-boot-console.log" || true
+    pool_drop "$pdir"
+    rm -rf -- "${pdir:?}"
 }
 
 destroy() {
@@ -97,14 +334,16 @@ destroy() {
         virsh_ destroy "$NAME" >/dev/null 2>&1 || true
         virsh_ undefine "$NAME" --nvram >/dev/null
     fi
+    pool_drop "$DIR"
+    chmod -R u+w "$DIR" 2>/dev/null || true
     rm -rf "$DIR"
 }
 
 case ${1:-} in
 create) create ;;
-ship) shift; ship "$@" ;;
 step) shift; step "$@" ;;
 seal) seal ;;
+proof) proof ;;
 destroy) destroy ;;
-*) sed -n '2,13p' "$0" >&2; exit 2 ;;
+*) sed -n '2,20p' "$0" >&2; exit 2 ;;
 esac
