@@ -9,6 +9,7 @@
 #                                              disk, seed, define and boot
 #   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
 #                                              (GUEST_ENV="VAR=value ..." adds to its env)
+#   ... code/build-template.sh mock              the offline mock, run inside the build guest
 #   ... code/build-template.sh seal              seal, shut down, mark read-only
 #   ... code/build-template.sh proof             read the sealed image; boot an overlay
 #                                              with no seed, then one as a first boot
@@ -157,6 +158,21 @@ seal() {
 #     the operator's), so the rig isolates the boot itself. The capture still holds every
 #     frame the guest sends; past QEMU's own DHCP, none is answered. The second, third
 #     and fourth builds' no-seed boots ran without restrict=on.
+# mock: the offline mock (code/test/offline-mock.sh), which stubs sudo and so runs only
+# inside the build guest, never on a host. The code tree is copied in, the guest marked as a
+# build guest (/run/weaver-build-guest, root's, in /run so it is gone at the next boot and
+# never in the sealed image), the mock run, and the copy removed. Its output and count are
+# LOG/mock.txt. It runs before the cleanup, while the guest still has the tools it uses.
+mock() {
+    tar -C "$HERE" -cf - . | gssh "$PORT" 'rm -rf ~/mock-code && mkdir ~/mock-code && tar -C ~/mock-code -xf -' \
+        || die "the code tree did not copy into the guest"
+    run_step "$PORT" "$LOG" mock 'sudo install -o root -g root -m 0644 /dev/null /run/weaver-build-guest || exit 1
+        bash ~/mock-code/test/offline-mock.sh; rc=$?; rm -rf ~/mock-code; exit $rc'
+    grep -E '^(ok|FAIL) ' "$LOG/mock.txt" | sed -n '$p'
+    echo "checks passed: $(grep -c '^ok ' "$LOG/mock.txt")"
+    step_ok "$LOG" mock || die "the offline mock did not pass; see $LOG/mock.txt"
+}
+
 # proof_cleanup: on any exit of proof, what its boots and its offline read would leave:
 # each overlay domain (only where it stands on its own overlay), its directory and pool,
 # and the FUSE export. A console or capture not yet kept is kept first, as
@@ -456,6 +472,7 @@ destroy() {
 case ${1:-} in
 create) create ;;
 step) shift; step "$@" ;;
+mock) mock ;;
 seal) seal ;;
 proof) proof ;;
 destroy) destroy ;;

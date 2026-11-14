@@ -13,6 +13,19 @@
 # archive. Each of the 2026-11-12 slice's three script defects (D1, D2, D3) is reproduced
 # against the behaviour that had it, and shown caught by this one.
 set -uo pipefail
+# Where the mock runs (template-clone-Spec.md, section 8): it stubs sudo, so it starts only
+# inside a build guest it can recognise, a virtual machine (systemd-detect-virt --vm) that
+# carries the build harness's marker /run/weaver-build-guest, owned by root. Anywhere else,
+# a host above all, it refuses before it makes anything: there a stub that missed would
+# reach the real sudo. build-template.sh mock runs it in the build guest.
+mock_guest_ok() {
+    command -v systemd-detect-virt >/dev/null 2>&1 && systemd-detect-virt --vm --quiet 2>/dev/null \
+        && [ -f /run/weaver-build-guest ] && [ "$(stat -c %u /run/weaver-build-guest 2>/dev/null)" = 0 ]
+}
+if ! mock_guest_ok; then
+    printf 'REFUSED: offline-mock.sh runs only inside a build guest: a virtual machine carrying /run/weaver-build-guest, owned by root. It stubs sudo, and outside such a guest a stub that missed would reach the real sudo. Run it with build-template.sh mock.\n' >&2
+    exit 2
+fi
 HERE=$(cd "$(dirname "$0")" && pwd)
 CODE=$(cd "$HERE/.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/template-mock.XXXXXX")

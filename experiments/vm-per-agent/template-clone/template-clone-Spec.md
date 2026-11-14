@@ -347,6 +347,16 @@ these steps (section 9).
 
 ## 8. The offline mock
 
+**Where the mock runs, and why.** The mock stubs `sudo`, so it runs only inside a build
+guest, never on a host. On a host, a stub that missed would reach the real `sudo`. It
+starts only where `systemd-detect-virt --vm` names a virtual machine and
+`/run/weaver-build-guest` stands, owned by root, and anywhere else it refuses with a
+sentence before it makes anything. `build-template.sh mock` runs it in the build guest:
+it copies the code tree in, writes that marker (in `/run`, so it is gone at the next boot
+and never reaches the sealed image), runs the mock, records its output and count in
+`mock.txt`, and removes the copy. It runs before `cleanup`, while the guest still has the
+tools the mock uses. Its count is taken there.
+
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
 `uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `ensure_key`, harness
 preflight and `relaxed`, and the host scripts' `step` and `seal`, with no virtual machine,

@@ -174,6 +174,8 @@ code/build-template.sh create
 for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
   code/build-template.sh step "$s" || break
 done
+# From the next build on, the offline mock runs in the guest between connectors and
+# cleanup (it refuses on a host): code/build-template.sh mock
 code/build-template.sh seal
 code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
 code/build-template.sh destroy
