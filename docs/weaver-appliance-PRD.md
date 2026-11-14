@@ -119,6 +119,13 @@ build tooling and the source trees are removed and the image is sealed. Two reas
 hold. The image then states by commit what code it carries. The binaries are built
 against the libraries they run with.
 
+**A commit does not yet name every byte of an image.** Repeated builds of the image from
+the same commits on 2026-11-14 gave byte-identical files, with two exceptions: the SPU
+and the CUDA engine library, which are the two files that the CUDA compiler produces.
+Those two differed in every build, and the install record moved with them. So the
+identity of an image is its own manifest and its hash. A rebuild from the same commits
+does not confirm an image. Section 13 carries the open cell.
+
 **The image states the commits it was compiled from**, where a reader can find them
 without the build log. WeaverAgent also records, for each released version of the image,
 the commit that the version was compiled from. How WeaverAgent records it is open, per
@@ -441,6 +448,11 @@ These are the operator's to rule. Each states the proposal on the table.
   fix to the C library replaces the math library, and a fix to the kernel brings a new
   build of the driver module. Settled by one respin: compare the binaries by digest and
   the output by the probe set.
+- **The CUDA objects across builds.** Whether a build setting makes the two files of
+  section 3.1 reproducible, or whether the identity of an image stays its manifest
+  alone. This bears on the cell above: a respin that recompiles changes those two files
+  even where no code changed. Settled by two builds of one commit in one place, compared
+  by section and then by output on the probe set.
 - **The sealed-image run.** Section 11.4. Settled by the cells of issue 28.
 - **Which table holds the default policy on an appliance.** Section 7 leaves two shapes.
   In the first, the image ships no table that drops input, and the table of admin
@@ -459,6 +471,9 @@ These are the operator's to rule. Each states the proposal on the table.
   console.
 - **The console as the model store.** The model count or fleet size at which its cache
   stops being tolerable. No measurement exists, because the fleet is one.
+- **The time source.** Section 8 says that the appliance never reaches the internet. The
+  stock time service of the operating system points at a public time pool. Which source
+  an appliance takes its time from is not ruled. Settled by the operator's ruling.
 - **Hypervisor formats after KVM, and where images are published for the console to
   find.** Later, and named as later.
 - **The GPU architectures that the stack inside the image is compiled for.** Later, and
