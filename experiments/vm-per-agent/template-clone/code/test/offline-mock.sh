@@ -551,13 +551,16 @@ chmod 0644 "$TD/appliance.qcow2"
 echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
 # decides.
-ddrun() { # ddrun STATE [list-fails]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
+ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
     : >"$T/host-calls"
-    ( DD_STATE=$1 DD_LIST=${2:-}
+    ( DD_STATE=$1 DD_FAIL=${2:-}
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
-                     list) [ "$DD_LIST" != list-fails ] || return 1; printf 'other\nmock-proof\n\n' ;;
-                     dumpxml) printf "<domain><devices><disk type='file' device='disk'><source file='/mock/overlay.qcow2'/></disk></devices></domain>\n" ;;
+                     list) [ "$DD_FAIL" != list-fails ] || return 1
+                           [ "$DD_FAIL" != list-fails-after ] || ! grep -q '^virsh_ destroy' "$T/host-calls" || return 1
+                           printf 'other\nmock-proof\n\n' ;;
+                     dumpxml) [ "$DD_FAIL" != xml-fails ] || return 1
+                              printf "<domain><devices><disk type='file' device='disk'><source file='/mock/overlay.qcow2'/></disk></devices></domain>\n" ;;
                      domstate) echo "$DD_STATE" ;;
                      destroy) return 1 ;;
                  esac; }
@@ -572,6 +575,12 @@ check "dom_drop undefines a domain that is shut off, though destroy failed" \
 ddrun running list-fails >"$T/dd-nolist.out" 2>&1
 check "dom_drop refuses (2) where the domain list cannot be read, and neither stops nor undefines" \
     test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: the domain list could not be read' "$T/dd-nolist.out")" = 1
+ddrun "shut off" list-fails-after >"$T/dd-nolist-after.out" 2>&1
+check "dom_drop refuses (2) where the domain list cannot be read after destroy, and does not undefine" \
+    test $? = 2 -a "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: the domain list could not be read after destroy' "$T/dd-nolist-after.out")" = 1
+ddrun running xml-fails >"$T/dd-noxml.out" 2>&1
+check "dom_drop refuses (2) where the domain's definition cannot be read, and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read" "$T/dd-noxml.out")" = 1
 
 echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
 # The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.

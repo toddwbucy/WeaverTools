@@ -468,8 +468,9 @@ The host scripts' steps (section 0):
   name on another disk, changing nothing, though that disk's path ends with the build
   disk's. A seal that passes goes on to all three.
 - `dom_drop` refuses to undefine a domain still running after its stop, and undefines one
-  that is shut off, though the stop failed. Where the domain list cannot be read, it
-  neither stops nor undefines.
+  that is shut off, though the stop failed. Where the domain list or the domain's
+  definition cannot be read, it neither stops nor undefines, and where the list cannot be
+  read after the stop, it does not undefine.
 
 The MANIFEST (section 10):
 - `LINKS_MARK` and `MANIFEST_SCOPE` are each defined once, in `guest/template-steps`, the
