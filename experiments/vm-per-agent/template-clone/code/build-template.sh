@@ -4,8 +4,9 @@
 # two named commits; nothing built on the host enters the image (template-clone-Spec.md,
 # section 10).
 #
-#   VM_ROOT=<dir> OS=26.04 DRIVER=<release> DRIVER_ROUTE=<route> WA_COMMIT=<sha> \
-#     WW_COMMIT=<sha> code/build-template.sh create   disk, seed, define and boot
+#   VM_ROOT=<dir> OS=26.04 DRIVER=<release> DRIVER_ROUTE=<route> COMPUTE_CAP=<cc> \
+#     WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create
+#                                              disk, seed, define and boot
 #   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
 #                                              (GUEST_ENV="VAR=value ..." adds to its env)
 #   ... code/build-template.sh seal              seal, shut down, mark read-only
@@ -13,9 +14,10 @@
 #                                              with no seed, then one as a first boot
 #   ... code/build-template.sh destroy           undefine and remove the build guest
 #
-# The five inputs are named, never defaulted: OS, DRIVER (the NVIDIA driver release),
-# DRIVER_ROUTE (the route it comes by), WA_COMMIT and WW_COMMIT (the WeaverAgent and
-# WeaverWeb commits, in full). create needs all five. Every step is given those that are
+# The six inputs are named, never defaulted: OS, DRIVER (the NVIDIA driver release),
+# DRIVER_ROUTE (the route it comes by), COMPUTE_CAP (the compute capability the CUDA
+# kernels are compiled for, without its dot), WA_COMMIT and WW_COMMIT (the WeaverAgent and
+# WeaverWeb commits, in full). create needs all six. Every step is given those that are
 # set, and a guest step that needs one refuses where it is not. The step names, in order, are in COMMANDS.md. A step that
 # breaks is rerun after the break is recorded and got past; nothing here retries.
 set -euo pipefail
@@ -41,19 +43,20 @@ mkdir -p "$LOG"
 inputs_ok() {
     if [ "$1" = all ]; then
         [ -n "$OS_GIVEN" ] || die "name OS (26.04)"
-        local v; for v in DRIVER DRIVER_ROUTE WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
+        local v; for v in DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
     fi
     [ -z "${WA_COMMIT:-}" ] || [[ "$WA_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WA_COMMIT is a commit in full, 40 hex digits"
     [ -z "${WW_COMMIT:-}" ] || [[ "$WW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WW_COMMIT is a commit in full, 40 hex digits"
     # One form for DRIVER, the same regex guest/template-steps' driver step checks.
     [ -z "${DRIVER:-}" ] || [[ "$DRIVER" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || die "DRIVER is a driver release such as 615.71.09"
     [ -z "${DRIVER_ROUTE:-}" ] || [ "$DRIVER_ROUTE" = ubuntu-prebuilt ] || die "DRIVER_ROUTE is a route this tree builds: ubuntu-prebuilt"
+    [ -z "${COMPUTE_CAP:-}" ] || [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || die "COMPUTE_CAP is a compute capability without its dot, such as 86"
 }
 # inputs_env: the guest command's environment prefix: the inputs that are set, and the base
 # image by name and digest, which the stamp records.
 inputs_env() {
     BASE_IMAGE="$IMAGE_NAME $IMAGE_SHA256"
-    guest_env WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE BASE_IMAGE
+    guest_env WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE COMPUTE_CAP BASE_IMAGE
 }
 steps_in() {
     gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps

@@ -21,9 +21,10 @@ CCCL_INCLUDE=/usr/local/cuda-13.3/targets/x86_64-linux/include/cccl
 # The canonical CUDA library directory, not reached through the alternatives' links, which
 # a package removal can take away (the WeaverAgent seat's read of 2026-11-14).
 CUDA_LIBS=/usr/local/cuda-13.4/targets/x86_64-linux/lib
-# candle's kernels read the compute capability from a card; with none it is named. 8.6 is
-# this box's A6000s, as the host's own build read it.
-COMPUTE_CAP=86
+# candle's kernels read the compute capability from a card. The build guest has none, so it
+# is a named input, COMPUTE_CAP (the capability without its dot, such as 86 for 8.6), which
+# the stack step refuses without and the stamp records.
+COMPUTE_CAP=${COMPUTE_CAP:-}
 # shellcheck source=/dev/null
 . /etc/os-release
 case $VERSION_ID in
@@ -32,6 +33,10 @@ case $VERSION_ID in
     *) echo "no build for Ubuntu $VERSION_ID" >&2; exit 2 ;;
 esac
 NV_REPO=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${VERSION_ID//./}/x86_64
+# The repository's keyring package, installed as root, pinned by digest (the same file in
+# all four builds of 2026-11-14).
+CUDA_KEYRING=cuda-keyring_1.1-1_all.deb
+CUDA_KEYRING_SHA256=f7f474b5f6a4adf987aa587920df00e713285958ef6a913dda1945a544a3099e
 KVER=$(uname -r)
 # No dkms and no kernel headers: the driver's module comes prebuilt (driver, below).
 PACKAGES="build-essential gcc-$CXX_MAJOR g++-$CXX_MAJOR git curl ca-certificates cmake clang
@@ -97,13 +102,13 @@ facts() {
         dpkg-query -W -f '${Package}\n' | sort | sudo tee "$BUILD/base-packages" >/dev/null || return 1
     fi
     section base-packages; wc -l <"$BUILD/base-packages"
-    record base.image "${BASE_IMAGE:-unknown}"
-    record os "$PRETTY_NAME"
-    record kernel "$KVER"
-    record build.vcpus "$(nproc)"
-    record build.memory-mib "$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo)"
-    record build.account "$(id -un) $HOME"
-    record size.base-used-bytes "$(used_bytes)"
+    record base.image "${BASE_IMAGE:-unknown}" || return 1
+    record os "$PRETTY_NAME" || return 1
+    record kernel "$KVER" || return 1
+    record build.vcpus "$(nproc)" || return 1
+    record build.memory-mib "$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo)" || return 1
+    record build.account "$(id -un) $HOME" || return 1
+    record size.base-used-bytes "$(used_bytes)" || return 1
 }
 
 # The two OS reads the WeaverAgent seat asked of a fresh 26.04.1 build: whether `test` run
@@ -143,7 +148,9 @@ packages() {
 
 rustup_install() {
     curl -fsS --proto '=https' https://sh.rustup.rs -o /tmp/rustup-init.sh || return 1
-    sha256sum /tmp/rustup-init.sh
+    # Stamped, not pinned: sh.rustup.rs serves the current installer under one unversioned
+    # name, which changes with each rustup release. It runs as the build account.
+    record build.rustup-init "sh.rustup.rs sha256 $(sha /tmp/rustup-init.sh)" || return 1
     sh /tmp/rustup-init.sh -y --no-modify-path --profile minimal \
         --default-toolchain "$TOOLCHAIN" || return 1
     rm -f /tmp/rustup-init.sh
@@ -170,21 +177,23 @@ trees() {
         git -C "$t" log -1 --format='%H %cI %s'
         echo "toolchain file: $ch"
     done
-    record weaveragent.commit "$WA_COMMIT"
-    record weaveragent.origin "$WA_URL"
-    record weaverweb.commit "$WW_COMMIT"
-    record weaverweb.origin "$WW_URL"
-    record toolchain "$(rustc -vV | awk '/^release:/{r=$2} /^commit-hash:/{c=$2} /^host:/{h=$2} /^LLVM version:/{l=$3} END{print r, c, h, "LLVM", l}')"
+    record weaveragent.commit "$WA_COMMIT" || return 1
+    record weaveragent.origin "$WA_URL" || return 1
+    record weaverweb.commit "$WW_COMMIT" || return 1
+    record weaverweb.origin "$WW_URL" || return 1
+    record toolchain "$(rustc -vV | awk '/^release:/{r=$2} /^commit-hash:/{c=$2} /^host:/{h=$2} /^LLVM version:/{l=$3} END{print r, c, h, "LLVM", l}')" || return 1
 }
 
 # NVIDIA's repository and the CUDA toolkit, with no driver: the stack's build needs nvcc,
 # not a module. The CUDA metapackages are pinned to one release, as #21's template did.
 toolkit() {
     cd /tmp || return 1
-    curl -fsS --proto '=https' -O "$NV_REPO/cuda-keyring_1.1-1_all.deb" || return 1
-    sha256sum cuda-keyring_1.1-1_all.deb
-    sudo dpkg -i cuda-keyring_1.1-1_all.deb || return 1
-    rm -f cuda-keyring_1.1-1_all.deb
+    curl -fsS --proto '=https' -O "$NV_REPO/$CUDA_KEYRING" || return 1
+    [ "$(sha "$CUDA_KEYRING")" = "$CUDA_KEYRING_SHA256" ] \
+        || { echo "$CUDA_KEYRING is not the pinned file (sha256 $(sha "$CUDA_KEYRING"))"; rm -f "$CUDA_KEYRING"; return 1; }
+    record build.cuda-keyring "$CUDA_KEYRING sha256 $CUDA_KEYRING_SHA256" || return 1
+    sudo dpkg -i "$CUDA_KEYRING" || return 1
+    rm -f "$CUDA_KEYRING"
     sudo apt-get update -q || return 1
     sudo tee /etc/apt/preferences.d/cuda-13-4-2 >/dev/null <<EOF
 Package: cuda-13-4 cuda-command-line-tools-13-4 cuda-compiler-13-4 cuda-libraries-13-4 cuda-libraries-dev-13-4 cuda-minimal-build-13-4 cuda-nsight-compute-13-4 cuda-nsight-systems-13-4 cuda-runtime-13-4 cuda-toolkit-13-4 cuda-tools-13-4 cuda-visual-tools-13-4 nvidia-gds-13-4
@@ -198,15 +207,17 @@ EOF
     section cccl
     grep -h 'define CCCL_VERSION ' "$CCCL_INCLUDE/cuda/std/__cccl/version.h"
     section driver-packages; dpkg-query -W -f '${Package} ${Version}\n' 'nvidia-*' 'libnvidia-*' 2>/dev/null | awk '$2 != ""' || true
-    record cuda.toolkit "cuda-toolkit-13-4 $CUDA"
-    record nvcc "$(/usr/local/cuda-13.4/bin/nvcc --version | tail -1 | sed 's/^Build //')"
-    record cccl "$CCCL_PKG, by NVCC_PREPEND_FLAGS=-I$CCCL_INCLUDE"
+    record cuda.toolkit "cuda-toolkit-13-4 $CUDA" || return 1
+    record nvcc "$(/usr/local/cuda-13.4/bin/nvcc --version | tail -1 | sed 's/^Build //')" || return 1
+    record cccl "$CCCL_PKG, by NVCC_PREPEND_FLAGS=-I$CCCL_INCLUDE" || return 1
 }
 
 # The agent stack, as its deploy script builds and installs it: bootstrap-stack.sh
 # --install, unmodified, from the checkout, under relaxed (its test step needs both
 # settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable.
 stack_build() {
+    [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || { echo "COMPUTE_CAP is not named (the compute capability without its dot, such as 86)"; return 1; }
+    record build.compute-cap "$COMPUTE_CAP" || return 1
     cuda_env
     export NVCC_PREPEND_FLAGS="-I$CCCL_INCLUDE"
     export NVCC_CCBIN=/usr/bin/g++-$CXX_MAJOR
@@ -230,8 +241,8 @@ stack() {
     section install-tuple; cat "$tuple"
     c=$(sed -n 's/^commit = //p' "$tuple")
     [ "$c" = "${WA_COMMIT:-}" ] || { echo "the tuple's commit is '$c', not $WA_COMMIT"; return 1; }
-    record stack.install-tuple "$(sha "$tuple") (as written at image build; see the build's note)"
-    record stack.peak-memory-mib "$(sort -n "$HOME/mem-samples" | tail -1)"
+    record stack.install-tuple "$(sha "$tuple") (as written at image build; see the build's note)" || return 1
+    record stack.peak-memory-mib "$(sort -n "$HOME/mem-samples" | tail -1)" || return 1
     local f k
     for f in /opt/weaver/bin/* /opt/weaver/lib/*; do
         [ -f "$f" ] && [ ! -L "$f" ] || continue
@@ -261,9 +272,9 @@ connectors() {
     sudo install -d -o root -g root -m 0755 /opt/weaver-web /opt/weaver-web/bin || return 1
     sudo install -o root -g root -m 0755 "$t/release/gate-con" "$t/release/admin-con" /opt/weaver-web/bin/ || return 1
     section installed; sha256sum /opt/weaver-web/bin/*
-    record connectors.command "$CONNECTORS_CMD"
-    record connectors.gate-con "$(sha /opt/weaver-web/bin/gate-con)"
-    record connectors.admin-con "$(sha /opt/weaver-web/bin/admin-con)"
+    record connectors.command "$CONNECTORS_CMD" || return 1
+    record connectors.gate-con "$(sha /opt/weaver-web/bin/gate-con)" || return 1
+    record connectors.admin-con "$(sha /opt/weaver-web/bin/admin-con)" || return 1
     for f in $WW_TEMPLATES; do record "connectors.template.${f##*/}" "$(sha "$WW/$f") (not laid)"; done
 }
 
@@ -306,13 +317,13 @@ driver_ubuntu_prebuilt() {
         # The archive pocket and component the installed version came from, as apt reads it.
         origin=$(apt-cache policy "$p" | awk '/^ \*\*\* /{f=1; next} f && /http/ {print $2, $3; exit}')
         printf '%s %s from %s\n' "$p" "$(dpkg-query -W -f '${Version}' "$p")" "$origin"
-        record "driver.package.$p" "$(dpkg-query -W -f '${Version}' "$p") $origin"
+        record "driver.package.$p" "$(dpkg-query -W -f '${Version}' "$p") $origin" || return 1
     done
     printf '%s\n' $names | sudo tee "$BUILD/keep-driver" >/dev/null
     sudo apt-mark hold "linux-image-$KVER" "linux-modules-$KVER" "linux-modules-nvidia-$b-open-$KVER" >/dev/null || return 1
     section held; apt-mark showhold
-    record driver.route "ubuntu-prebuilt (Canonical-signed module, restricted; userspace, multiverse)"
-    record driver.cuda-minimum "CUDA 13.4 needs an R615 or later driver (NVIDIA, CUDA 13.4.2 release notes, table 2); 13.x minor-version compatibility >= 580 (table 3); installed $DRIVER"
+    record driver.route "ubuntu-prebuilt (Canonical-signed module, restricted; userspace, multiverse)" || return 1
+    record driver.cuda-minimum "CUDA 13.4 needs an R615 or later driver (NVIDIA, CUDA 13.4.2 release notes, table 2); 13.x minor-version compatibility >= 580 (table 3); installed $DRIVER" || return 1
 }
 # driver_check: the module's preconditions to load, read with no card: present for the
 # image's one kernel, modinfo's version and vermagic, its dependencies resolved, every
@@ -332,13 +343,13 @@ driver_check() {
         if ls /lib/firmware/"$fw"* >/dev/null 2>&1; then echo "firmware: $fw present"; else echo "firmware: $fw MISSING"; bad=1; fi
     done
     [ "$bad" = 0 ] || return 1
-    record driver.version "$DRIVER"
-    record driver.vermagic "$(modinfo -k "$KVER" -F vermagic nvidia)"
+    record driver.version "$DRIVER" || return 1
+    record driver.vermagic "$(modinfo -k "$KVER" -F vermagic nvidia)" || return 1
     # The driver's own module directory, not the kernel's in-tree nvidiafb and its kin.
     for file in $(find "$(dirname "$(modinfo -k "$KVER" -F filename nvidia)")" -name '*.ko*' | sort); do
-        record "driver.module.${file##*/}" "$(sha "$file")"
+        record "driver.module.${file##*/}" "$(sha "$file")" || return 1
     done
-    record driver.signer "$(modinfo -k "$KVER" -F signer nvidia 2>/dev/null || echo none)"
+    record driver.signer "$(modinfo -k "$KVER" -F signer nvidia 2>/dev/null || echo none)" || return 1
 }
 
 # relaxed COMMAND...: runs COMMAND with the two guest settings the WeaverAgent test
@@ -469,7 +480,7 @@ cleanup() {
     if [ -s "$BUILD/stamp.d/size.before-cleanup-used-bytes" ]; then
         echo "kept from the first run: size.before-cleanup-used-bytes = $(cat "$BUILD/stamp.d/size.before-cleanup-used-bytes")"
     else
-        record size.before-cleanup-used-bytes "$before"
+        record size.before-cleanup-used-bytes "$before" || return 1
     fi
 
     section "1-2. the source trees, their build directories, the Rust toolchain and cargo's caches"
@@ -577,7 +588,7 @@ EOF
     sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/*.bin /var/cache/debconf/*-old /var/crash/* /tmp/* /var/tmp/* 2>/dev/null
 
     section after; df -h /
-    record size.after-cleanup-used-bytes "$(used_bytes)"
+    record size.after-cleanup-used-bytes "$(used_bytes)" || return 1
     sudo fstrim -v /
 }
 
@@ -732,6 +743,10 @@ driver_check_quiet() {
 # seal: the probes over SSH, then the final step handed to root, to run once this session
 # has ended: it cannot remove the account it is logged in as.
 seal() {
+    local k
+    for k in weaveragent.commit weaverweb.commit; do
+        grep -qxE '[0-9a-f]{40}' "$BUILD/stamp.d/$k" 2>/dev/null || { echo "the stamp has no $k (the trees step records it)"; return 1; }
+    done
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
@@ -823,8 +838,15 @@ seal_final() {
         for k in $(ls "$BUILD/stamp.d" | sort); do printf '%s = %s\n' "$k" "$(cat "$BUILD/stamp.d/$k")"; done
         printf 'manifest.scope = %s\n' "$MANIFEST_SCOPE, regular files less the MANIFEST and /boot/grub/grubenv, then symbolic links (path and target)"
     } >"$RECORD/stamp.part"
+    # The stamp must name both commits: an image whose stamp does not cannot say what code
+    # it was compiled from.
+    local commits=1
+    for k in weaveragent.commit weaverweb.commit; do
+        grep -qE "^$k = [0-9a-f]{40}\$" "$RECORD/stamp.part" || commits=0
+    done
     rm -rf -- "$BUILD" /usr/local/sbin/template-steps
-    if ! probes final >"$RECORD/seal-probes" 2>&1; then
+    if ! probes final >"$RECORD/seal-probes" 2>&1 || [ "$commits" = 0 ]; then
+        [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name both weaveragent.commit and weaverweb.commit" >>"$RECORD/seal-probes"
         rm -f "$RECORD/stamp.part"
         cp "$RECORD/seal-probes" "$RECORD/SEAL-REFUSED"
         echo "SEAL REFUSED; no stamp, no MANIFEST"

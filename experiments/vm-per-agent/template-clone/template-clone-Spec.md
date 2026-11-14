@@ -67,6 +67,7 @@ default where a default would be a box path, a host name, an account, an address
 | `RELAXED_LOCK` | the lock file that keeps a guest to one `-relaxed` step at a time (section 8); the offline mock points it at its own | `$HOME/.weaver-relaxed.lock`, in the operator's home |
 | `OS` | the appliance image's operating system (section 10): `26.04`; `24.04` is named and refused until its cloud image is pinned | none for `build-template.sh create`; `clone.sh` gets 26.04 |
 | `DRIVER`, `DRIVER_ROUTE` | the driver release the image carries and the route it comes by (section 10) | none |
+| `COMPUTE_CAP` | the compute capability the image's CUDA kernels are compiled for, without its dot (section 10) | none |
 | `WA_COMMIT`, `WW_COMMIT` | the WeaverAgent and WeaverWeb commits the image is compiled from, each in full | none |
 | `SEAL_WAIT` | the seconds the host waits for the guest's final seal step to power it off | 1200 |
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
@@ -504,8 +505,10 @@ guest from two named commits, in place, and the guest is then cleaned by a check
 and sealed. Nothing built on the host enters the image.
 
 **Inputs, all named.** `OS` (the cloud image by digest, section 1), `DRIVER` and
-`DRIVER_ROUTE`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses unless all five are
-set. `DRIVER` has one form on the host and in the guest, one regex in both scripts (a
+`DRIVER_ROUTE`, `COMPUTE_CAP`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses
+unless all six are set. `COMPUTE_CAP` is the compute capability the CUDA kernels are
+compiled for, without its dot. The build guest has no card to read it from, so it is
+named, and the stamp records it. `DRIVER` has one form on the host and in the guest, one regex in both scripts (a
 release such as `615.71.09`), and `DRIVER_ROUTE` is `ubuntu-prebuilt`, the one route this
 tree builds. Each guest step is given those that are set on its command line, and a step
 that needs one refuses where it is unset. The build guest has 24 vCPUs and 64 GiB by
@@ -690,18 +693,26 @@ The final pass adds:
 - private-key files, the seal's own removals included.
 
 **The stamp and the MANIFEST.** `/etc/weaver-appliance/stamp` holds one `key = value` per
-line, sorted:
-- the base image, the OS and kernel;
-- both commits and their origins, and the toolchain;
-- nvcc, CCCL and the CUDA toolkit;
-- each driver package with its version and the pocket and component it came from;
-- the module's version, vermagic, signer and each file's sha256, and the CUDA runtime's
-  minimum driver;
-- the install tuple's digest, each stack file's, each deploy script's and each
-  connector's sha256, the connectors' build command and the two unit templates' digests;
-- the C library, the math library, the loader, the C++ runtime and `libgcc_s`, each by
-  package version and sha256 (for setting the image against a host, WeaverTools#28);
-- the build's vCPUs, memory and peak memory, and the sizes before and after the cleanup.
+line. `sealed` (the time of the seal) comes first, then the build's records sorted by key,
+then `manifest.scope` (which form the MANIFEST has) last. The records are these.
+- The base image, the OS and kernel.
+- Both commits and their origins, and the toolchain. The seal refuses a stamp without
+  both commits.
+- nvcc, CCCL, the CUDA toolkit and the compute capability compiled for.
+- The two downloaded installers: the CUDA repository's keyring package, pinned by digest,
+  and rustup's installer, stamped by digest (it is served under one unversioned name and
+  changes with each rustup release).
+- Each driver package with its version and the pocket and component it came from.
+- The module's version, vermagic, signer and each file's sha256, and the CUDA runtime's
+  minimum driver.
+- The install tuple's digest, each stack file's, each deploy script's and each
+  connector's sha256, the connectors' build command and the two unit templates' digests.
+- The C library, the math library, the loader, the C++ runtime and `libgcc_s`, each by
+  package version and sha256 (for setting the image against a host, WeaverTools#28).
+- The build's vCPUs, memory and peak memory, and the sizes before and after the cleanup.
+
+Every record is checked when written, and a record that cannot be written fails its
+step.
 
 The stamp is where a later reader finds the commits the image was compiled from, with no
 build log: `weaveragent.commit` and `weaverweb.commit`, with their origins.
