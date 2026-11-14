@@ -369,9 +369,37 @@ image_ls() {
     [ -n "$o" ] || return 1
     printf '%s\n' "$o"
 }
-# image_has DIR PATH: whether PATH is in the image (debugfs stat prints nothing for a path
-# that is not).
-image_has() { [ -n "$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>/dev/null | head -1)" ]; }
+# image_state DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where the image
+# could not be read (no debugfs, a filesystem it cannot open, any other error), the cause on
+# stderr. debugfs exits 0 in each case, so the three are told apart by what it prints:
+# "Inode:" for a path it found, "File not found by ext2_lookup" for one it did not.
+image_state() {
+    local o
+    command -v debugfs >/dev/null 2>&1 || { echo "image_state: no debugfs on this host" >&2; return 2; }
+    o=$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>&1) || { printf 'image_state: debugfs: %s\n' "$(tail -1 <<<"$o")" >&2; return 2; }
+    if grep -q '^Inode: ' <<<"$o"; then return 0; fi
+    if grep -q 'File not found by ext2_lookup' <<<"$o"; then return 1; fi
+    printf 'image_state: %s: %s\n' "$2" "$(grep -v '^debugfs [0-9]' <<<"$o" | tail -1)" >&2
+    return 2
+}
+# image_get DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 0 when copied
+# whole, 1 when PATH is absent (no OUT), 2 when it could not be read, the cause on stderr
+# (image_state's, a PATH that is not a regular file, or a copy short of the inode's size).
+image_get() {
+    local dir=$1 path=$2 out=$3 rc=0 o size
+    rm -f -- "$out"
+    image_state "$dir" "$path" || rc=$?
+    [ "$rc" = 0 ] || return "$rc"
+    o=$(debugfs -c -R "stat \"$path\"" "$dir/root.raw" 2>/dev/null)
+    grep -q 'Type: regular' <<<"$o" || { echo "image_get: $path is not a regular file" >&2; return 2; }
+    size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | head -1)
+    debugfs -c -R "dump \"$path\" \"$out\"" "$dir/root.raw" >/dev/null 2>&1
+    if [ ! -f "$out" ] || [ -z "$size" ] || [ "$(stat -c %s "$out")" != "$size" ]; then
+        echo "image_get: $path: copied $(stat -c %s "$out" 2>/dev/null || echo 0) of ${size:-unknown} bytes" >&2
+        rm -f -- "$out"
+        return 2
+    fi
+}
 # image_files DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
 # bounded at 12. debugfs ls -p prints /inode/mode/uid/gid/name/size/ per entry, the mode in
 # six octal digits (040 a directory, 100 a regular file). Nothing where PATH is absent.
@@ -392,17 +420,23 @@ image_files() {
 # and any non-empty file under /var/log. Each is a PROOF-FAIL line. The login records under
 # /var/lib (wtmpdb, lastlog) are listed for the measure and not judged.
 image_late_writes() {
-    local dir=$1 f p
+    local dir=$1 f p rc
     for f in /var/lib/systemd/random-seed /var/lib/systemd/credential.secret; do
-        if image_has "$dir" "$f"; then
-            echo "PROOF-FAIL: $f is in the sealed image, written after the final probe"
-        else
-            echo "absent: $f"
-        fi
+        rc=0; image_state "$dir" "$f" 2>&1 || rc=$?
+        case $rc in
+            0) echo "PROOF-FAIL: $f is in the sealed image, written after the final probe" ;;
+            1) echo "absent: $f" ;;
+            *) echo "PROOF-FAIL: the offline read could not tell whether $f is in the sealed image" ;;
+        esac
     done
-    image_files "$dir" /var/log | awk '$1 > 0 { s = $1; sub(/^[0-9]+ /, "")
-        print "PROOF-FAIL: a log written after the final probe: " $0 " (" s " bytes)"; n++ }
-        END { if (!n) print "no non-empty file under /var/log" }'
+    rc=0; image_state "$dir" /var/log 2>&1 || rc=$?
+    if [ "$rc" != 0 ]; then
+        echo "PROOF-FAIL: the offline read could not list /var/log in the sealed image"
+    else
+        image_files "$dir" /var/log | awk '$1 > 0 { s = $1; sub(/^[0-9]+ /, "")
+            print "PROOF-FAIL: a log written after the final probe: " $0 " (" s " bytes)"; n++ }
+            END { if (!n) print "no non-empty file under /var/log" }'
+    fi
     for p in /var/lib/wtmpdb /var/lib/lastlog; do
         echo "== $p, listed and not judged"
         image_files "$dir" "$p" | sed 's/^/  /'

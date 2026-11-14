@@ -178,6 +178,7 @@ done
 # From the next build on, the offline mock runs in the guest between connectors and
 # cleanup (it refuses on a host): code/build-template.sh mock
 code/build-template.sh seal
+# where seal's own read of the verdict failed (it says so): code/build-template.sh verdict
 code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
 code/build-template.sh destroy
 ```

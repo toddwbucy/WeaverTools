@@ -651,7 +651,12 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
     followed by the undefine, the read-only disk and the sha256. The seal's removals
     cannot be undone, so a refused image is destroyed and the build begins again from
-    `create`.
+    `create`. The read tells a file that is absent from one it could not read (no
+    debugfs, a filesystem it cannot open, a copy short of the file's size). A read that
+    fails stops `seal` with nothing changed. `seal` cannot run twice, because the guest
+    is off and its account gone, so `build-template.sh verdict` reads the verdict again
+    from the shut-off guest and goes on from there. `proof` tells the two apart in the
+    same way.
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
     FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC

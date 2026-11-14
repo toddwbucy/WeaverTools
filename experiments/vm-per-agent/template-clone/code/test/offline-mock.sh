@@ -458,7 +458,8 @@ check "clone.sh step: a failed guest step exits non-zero, and nothing after it r
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/cstep2.out")" = 1
 # seal: virsh_ and qemu-img recorded, the appliance's directory a stand-in. The final
 # step's verdict is read from IMG, a stand-in for the sealed image's root filesystem, by
-# image_open, image_cat and image_close as functions.
+# image_open, image_get and image_close as functions. T/read-fails makes image_get fail as
+# a read error (2), not an absent file (1).
 TD=$T/appliance
 IMG=$T/sealed-image
 A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
@@ -477,14 +478,15 @@ sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
     head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
     : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
-    ( set -euo pipefail; host_fns build-template.sh inputs_env steps_in seal; copy_in_stubbed
-      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2
+    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict; copy_in_stubbed
+      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"; [ "$1" != domstate ] || echo "shut off"; }
       qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
-      image_cat() { cat "$IMG$2" 2>/dev/null; }
+      image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
+                    [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
       image_close() { :; }
-      seal; echo "after the seal" )
+      ${SEAL_ENTRY:-seal}; echo "after the seal" )
 }
 sealed_not() { # the seal stopped before the undefine, the read-only disk and the checksum
     [ "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 ] && [ "$(stat -c %a "$TD/appliance.qcow2")" = 644 ] \
@@ -509,6 +511,20 @@ verdict one-commit
 sealrun >"$T/seal-onecommit.out" 2>&1
 check "a stamp that names one commit stops the seal likewise" \
     test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no weaverweb.commit" "$T/seal-onecommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict passed
+touch "$T/read-fails"
+sealrun >"$T/seal-readfails.out" 2>&1
+check "a read error is not taken for an absent MANIFEST: the seal stops, says so, and names verdict" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the image could not be read at /etc/weaver-appliance/SEAL-REFUSED (above). Nothing is marked sealed: build-template.sh verdict reads it again' "$T/seal-readfails.out")" = 1 \
+         -a "$(grep -c 'holds no MANIFEST' "$T/seal-readfails.out")" = 0 -a "$(sealed_not && echo y)" = y
+rm "$T/read-fails"
+: >"$T/calls"
+( SEAL_ENTRY=seal_verdict; sealrun ) >"$T/seal-verdict.out" 2>&1
+check "verdict alone, run again after the read error, reads the verdict and marks the image sealed" \
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
+         -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a -s "$LOG/appliance-sha256.txt" \
+         -a "$(grep -c 'template-steps seal' "$T/calls" || true)" = 0
+chmod 0644 "$TD/appliance.qcow2"
 verdict passed
 sealrun >"$T/seal2.out" 2>&1
 check "a seal that passes goes on to all three" \

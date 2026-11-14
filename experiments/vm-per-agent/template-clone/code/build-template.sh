@@ -10,7 +10,10 @@
 #   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
 #                                              (GUEST_ENV="VAR=value ..." adds to its env)
 #   ... code/build-template.sh mock              the offline mock, run inside the build guest
-#   ... code/build-template.sh seal              seal, shut down, mark read-only
+#   ... code/build-template.sh seal              seal, shut down, read the verdict, mark
+#                                              read-only
+#   ... code/build-template.sh verdict           read the verdict again from the shut-off
+#                                              guest, where seal's own read failed
 #   ... code/build-template.sh proof             read the sealed image; boot an overlay
 #                                              with no seed, then one as a first boot
 #   ... code/build-template.sh destroy           undefine and remove the build guest
@@ -99,6 +102,8 @@ step() {
 }
 
 seal() {
+    inputs_ok set
+    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] || die "name WA_COMMIT and WW_COMMIT: the verdict sets the stamp's commits against them"
     steps_in
     run_step "$PORT" "$LOG" seal-identity "$(inputs_env)template-steps seal"
     tail -3 "$LOG/seal-identity.txt"
@@ -114,18 +119,33 @@ seal() {
     done
     echo "shut off after ${t}s"
     virsh_ dumpxml "$NAME" >"$LOG/domain-sealed.xml"
-    # The final step's verdict, read out of the image before anything marks it sealed: a
-    # MANIFEST, no SEAL-REFUSED, and a stamp naming both commits. A refused or incomplete
-    # seal stops here, with the domain defined and the disk writable, for destroy.
-    local r=$VM_ROOT/seal-read v
+    seal_verdict
+}
+
+# seal_verdict: the final step's verdict, read out of the shut-off guest's disk before
+# anything marks it sealed: a MANIFEST, no SEAL-REFUSED, and a stamp naming both commits.
+# A refused or incomplete seal stops here, with the domain defined and the disk writable,
+# for destroy. A read that fails is told apart from a file that is absent and stops here
+# too, with nothing changed: seal cannot be run again (the guest is off and its account
+# gone), so `build-template.sh verdict` runs this read again on its own.
+seal_verdict() {
+    inputs_ok set
+    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] || die "name WA_COMMIT and WW_COMMIT: the verdict sets the stamp's commits against them"
+    [ "$(virsh_ domstate "$NAME" 2>/dev/null)" = "shut off" ] || die "$NAME is not a defined, shut-off build guest: the verdict reads a powered-off guest's disk"
+    [ -f "$DISK" ] && [ -w "$DISK" ] || die "$DISK is not a writable disk: absent, or already marked sealed"
+    local r=$VM_ROOT/seal-read v rc
+    [ ! -e "$r" ] || die "$r stands: another seal or verdict is reading the image, or one was cut short (destroy removes it)"
+    mkdir -- "$r"
     trap 'trap "" INT TERM HUP PIPE; image_close "$VM_ROOT/seal-read"; rm -rf -- "${VM_ROOT:?}/seal-read" || true' EXIT
     trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
-    image_open "$DISK" "$r"
-    for v in SEAL-REFUSED MANIFEST stamp seal-final.log; do
-        image_cat "$r" "/etc/weaver-appliance/$v" >"$LOG/sealed-$v" || true
-        [ -s "$LOG/sealed-$v" ] || rm -f "$LOG/sealed-$v"
+    ( image_open "$DISK" "$r" ) || die "the image could not be opened (above). Nothing is marked sealed: build-template.sh verdict reads it again"
+    rm -f "$LOG"/sealed-*
+    for v in SEAL-REFUSED MANIFEST stamp seal-final.log seal-probes; do
+        rc=0; image_get "$r" "/etc/weaver-appliance/$v" "$LOG/sealed-$v" || rc=$?
+        [ "$rc" != 2 ] || die "the image could not be read at /etc/weaver-appliance/$v (above). Nothing is marked sealed: build-template.sh verdict reads it again"
     done
     image_close "$r"; rm -rf -- "${r:?}"
+    trap - EXIT INT TERM HUP
     if [ -f "$LOG/sealed-SEAL-REFUSED" ]; then
         cat "$LOG/sealed-SEAL-REFUSED"
         die "the seal refused (above, and $LOG/sealed-seal-final.log); the image is not sealed"
@@ -199,12 +219,12 @@ proof() {
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
     trap proof_cleanup EXIT
     trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
-    local out=$LOG/proof r=$VM_ROOT/proof-read f p
+    local out=$LOG/proof r=$VM_ROOT/proof-read f p rc
     mkdir -p "$out"
     image_open "$DISK" "$r"
     for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
-        image_cat "$r" "/etc/weaver-appliance/$f" >"$out/$f" || true
-        [ -s "$out/$f" ] || rm -f "$out/$f"
+        rc=0; image_get "$r" "/etc/weaver-appliance/$f" "$out/$f" || rc=$?
+        [ "$rc" != 2 ] || die "the sealed image could not be read at /etc/weaver-appliance/$f (above); nothing booted"
     done
     {
         echo "== /etc/weaver-appliance"; image_ls "$r" /etc/weaver-appliance || echo "(absent)"
@@ -477,6 +497,7 @@ create) create ;;
 step) shift; step "$@" ;;
 mock) mock ;;
 seal) seal ;;
+verdict) seal_verdict ;;
 proof) proof ;;
 destroy) destroy ;;
 *) sed -n '2,20p' "$0" >&2; exit 2 ;;
