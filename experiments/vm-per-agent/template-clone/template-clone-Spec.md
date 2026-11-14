@@ -687,6 +687,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     operator's ruling 4 (SSH only): the first boot lists every listening TCP and UDP
     socket with its process, and fails on any bound beyond loopback but SSH. It is first
     tested at the next build.
+    **What the power-off wrote.** The seal's final probe runs before the guest powers
+    off, and a power-off can write. So the offline read also looks in the sealed image,
+    without booting it, for systemd's random seed (`/var/lib/systemd/random-seed`), its
+    credential secret (`/var/lib/systemd/credential.secret`) and any non-empty file
+    under `/var/log`. Each one found fails the proof with the first boot's findings,
+    because no secret ships in every copy of the image. The login records under
+    `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. These reads were
+    checked against scratch filesystem images and are first exercised on a sealed image
+    at the next build. If one hits there, the seal prevents that write.
     **What an interrupted proof or seal leaves.** `proof` keeps a cleanup for every exit,
     and for INT, TERM and HUP. It removes each overlay domain (only where the domain
     stands on its own overlay), its directory and pool, and the FUSE export of the

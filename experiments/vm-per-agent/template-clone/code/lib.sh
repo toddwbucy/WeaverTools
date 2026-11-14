@@ -369,6 +369,45 @@ image_ls() {
     [ -n "$o" ] || return 1
     printf '%s\n' "$o"
 }
+# image_has DIR PATH: whether PATH is in the image (debugfs stat prints nothing for a path
+# that is not).
+image_has() { [ -n "$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>/dev/null | head -1)" ]; }
+# image_files DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
+# bounded at 12. debugfs ls -p prints /inode/mode/uid/gid/name/size/ per entry, the mode in
+# six octal digits (040 a directory, 100 a regular file). Nothing where PATH is absent.
+image_files() {
+    local dir=$1 path=${2%/} depth=${3:-0} ino mode uid gid name size rest
+    [ "$depth" -lt 12 ] || return 0
+    debugfs -c -R "ls -p \"$path\"" "$dir/root.raw" 2>/dev/null |
+        while IFS=/ read -r _ ino mode uid gid name size rest; do
+            case $name in '' | . | ..) continue ;; esac
+            case $mode in
+                040*) image_files "$dir" "$path/$name" $((depth + 1)) ;;
+                100*) printf '%s %s\n' "${size:-0}" "$path/$name" ;;
+            esac
+        done
+}
+# image_late_writes DIR: what a sealed image holds that its seal's final probe refuses, so
+# written after that probe (at the power-off): systemd's random seed, its credential secret,
+# and any non-empty file under /var/log. Each is a PROOF-FAIL line. The login records under
+# /var/lib (wtmpdb, lastlog) are listed for the measure and not judged.
+image_late_writes() {
+    local dir=$1 f p
+    for f in /var/lib/systemd/random-seed /var/lib/systemd/credential.secret; do
+        if image_has "$dir" "$f"; then
+            echo "PROOF-FAIL: $f is in the sealed image, written after the final probe"
+        else
+            echo "absent: $f"
+        fi
+    done
+    image_files "$dir" /var/log | awk '$1 > 0 { s = $1; sub(/^[0-9]+ /, "")
+        print "PROOF-FAIL: a log written after the final probe: " $0 " (" s " bytes)"; n++ }
+        END { if (!n) print "no non-empty file under /var/log" }'
+    for p in /var/lib/wtmpdb /var/lib/lastlog; do
+        echo "== $p, listed and not judged"
+        image_files "$dir" "$p" | sed 's/^/  /'
+    done
+}
 # image_close stops both exports where they still run, unmounts one whose daemon is gone,
 # and never fails its caller (it runs from cleanup traps).
 image_close() {

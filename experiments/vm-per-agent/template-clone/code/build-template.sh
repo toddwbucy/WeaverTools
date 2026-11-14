@@ -148,8 +148,9 @@ seal() {
 
 # proof: what the sealed image holds, read offline, and what one boot of it sends.
 #  1. The stamp, the MANIFEST (its sha256 is the image's identity), the seal's probe
-#     record or its refusal, and the network and update configuration, read out of the
-#     image through image_open.
+#     record or its refusal, the network and update configuration, and what the seal's
+#     power-off wrote after its final probe (image_late_writes: a random seed, systemd's
+#     credential secret, a non-empty log), read out of the image through image_open.
 #  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
 #     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
 #     The capture is summarized by kind: an image that configures no network sends no
@@ -217,6 +218,8 @@ proof() {
         echo "== /etc/apt/sources.list.d/ubuntu.sources, Enabled lines"
         image_cat "$r" /etc/apt/sources.list.d/ubuntu.sources | grep -i '^Enabled' || echo "(none)"
     } >"$out/network-and-updates.txt" 2>&1
+    # Judged with the first boot's findings, after both boots (finding 10 of the review).
+    image_late_writes "$r" >"$out/late-writes.txt" 2>&1 || die "the offline read of late writes failed"
     image_close "$r"
     # An image with no MANIFEST, or with a refusal, is not sealed: nothing is booted.
     if [ -f "$out/SEAL-REFUSED" ] || [ ! -f "$out/MANIFEST" ]; then
@@ -282,12 +285,12 @@ print(f"capture: {sum(kinds.values())} frames")
 for k, n in sorted(kinds.items()): print(f"  {k}: {n}")
 PY
     proof_first_boot "$out"
-    # The verdict: every finding the first boot recorded fails the proof, after both boots'
-    # records are kept.
-    grep '^PROOF-FAIL: ' "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
+    # The verdict: every finding of the offline read's late writes and of the first boot
+    # fails the proof, after both boots' records are kept.
+    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/first-boot.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt and $out/first-boot.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
