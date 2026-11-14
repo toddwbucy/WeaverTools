@@ -777,6 +777,11 @@ seal() {
         record "$key" "${real##*/} $(dpkg -S "$real" | cut -d: -f1)=$(dpkg-query -W -f '${Version}' "$(dpkg -S "$real" | cut -d: -f1)") sha256 $(sha "$real")" || return 1
     done
     sudo install -d -m 0700 /run/weaver-seal || return 1
+    # The MANIFEST's file list and links list run here first, as root, to a scratch file in
+    # /run: seal_final runs them again only after removals that cannot be undone, so a find
+    # or a formatter that fails must fail here, with the guest intact and this step rerun.
+    sudo /usr/local/sbin/template-steps manifest-dry /run/weaver-seal/MANIFEST.dry || return 1
+    sudo rm -f /run/weaver-seal/MANIFEST.dry
     sudo install -m 0755 /usr/local/sbin/template-steps /run/weaver-seal/template-steps || return 1
     sudo systemd-run --unit=weaver-seal-final --no-block --property=Type=oneshot \
         --setenv=HOME=/root --setenv=DRIVER="${DRIVER:-$(cat "$BUILD/stamp.d/driver.version")}" \
@@ -795,10 +800,11 @@ LINKS_MARK='# links: path TAB target, C-locale order'
 MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
 
 # links_list: the links section's lines, from find's NUL-separated path and target pairs.
+# find's errors are not discarded: in seal_final they reach seal-final.log.
 links_list() {
     local p t
     # shellcheck disable=SC2086
-    find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' 2>/dev/null |
+    find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' |
         while IFS= read -r -d '' p && IFS= read -r -d '' t; do
             p=${p//\\/\\\\}; p=${p//$'\t'/\\t}; p=${p//$'\n'/\\n}
             t=${t//\\/\\\\}; t=${t//$'\t'/\\t}; t=${t//$'\n'/\\n}
@@ -811,10 +817,28 @@ manifest_write() {
     {
         # shellcheck disable=SC2086
         find $MANIFEST_SCOPE -xdev -type f -not -path "$RECORD/MANIFEST*" \
-            -not -path /boot/grub/grubenv -print0 2>/dev/null | LC_ALL=C sort -zu | xargs -0 sha256sum &&
+            -not -path /boot/grub/grubenv -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum &&
             printf '%s\n' "$LINKS_MARK" && links_list
     } >"$1"
 }
+
+# manifest_dry OUT: the MANIFEST written to OUT and its form checked, as root, from the seal
+# step and before anything is removed: each file line a digest and a path (sha256sum puts a
+# backslash first where it escapes the name), the marker once, each link line a path, one
+# tab and a target, and at least one of each.
+manifest_dry() {
+    local out=$1 files links bad
+    manifest_write "$out" || { echo "the MANIFEST's dry run failed (find, sort, sha256sum or the links list; errors above)"; return 1; }
+    [ "$(grep -cxF "$LINKS_MARK" "$out")" = 1 ] || { echo "the dry run's MANIFEST does not carry the marker once"; return 1; }
+    files=$(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } 1' "$out" | wc -l)
+    links=$(manifest_links "$out" | wc -l)
+    bad=$(( $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } 1' "$out" | grep -cvE '^\\?[0-9a-f]{64}  .' || true)
+            + $(manifest_links "$out" | awk -F '\t' 'NF != 2' | wc -l) ))
+    echo "MANIFEST dry run: $files files, $links links, $bad lines out of form"
+    [ "$files" -gt 0 ] && [ "$links" -gt 0 ] && [ "$bad" = 0 ]
+}
+# manifest_links FILE: the MANIFEST's links section (lib.sh has the same function).
+manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
 
 # seal_final: as root, from /run. Waits for the build account's sessions to end, removes
 # the account, the identity and the logs, runs the probes again, and writes the stamp and
@@ -910,5 +934,6 @@ cleanup) cleanup ;;
 probes) probes pre ;;
 seal) seal ;;
 seal-final) seal_final ;;
+manifest-dry) manifest_dry "${2:?manifest-dry OUT}" ;;
 *) echo "unknown step: ${1:-}" >&2; exit 2 ;;
 esac

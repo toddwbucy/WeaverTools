@@ -628,10 +628,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     again without networkd, and last the update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
     cleanup.
-11. `seal`: the probes over SSH, the system libraries' records, then a root oneshot once
-    the session ends. It removes the build account and its sudoers rule, the SSH host
-    keys, the machine identity (with systemd's random seed and credential secret),
-    cloud-init's state and the logs, assembles the stamp from the build's records, removes
+11. `seal`: the probes over SSH, the system libraries' records, a dry run of the MANIFEST,
+    then a root oneshot once the session ends. The dry run writes the MANIFEST as root to a
+    scratch file in `/run` and checks its form (each file line a digest and a path, the
+    marker once, each link line a path, one tab and a target, at least one of each). The
+    oneshot writes the MANIFEST again only after removals that cannot be undone, so a find
+    or a formatter that fails must fail in the dry run, with the guest intact and the step
+    rerun. find's errors are kept, in the step's log and in `seal-final.log`. The oneshot
+    removes the build account and its sudoers rule, the SSH host keys, the machine
+    identity (with systemd's random seed and credential secret), cloud-init's state and the logs, assembles the stamp from the build's records, removes
     those records and this script, and runs the probes again. SSH stays enabled with no
     host key and no account, and `sshd-keygen.service` is
     masked: at first boot cloud-init makes the account and the host keys from the
