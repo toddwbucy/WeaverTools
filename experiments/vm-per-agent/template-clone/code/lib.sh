@@ -332,7 +332,8 @@ guest_env() {
 }
 
 # image_open DISK DIR: DISK's root filesystem, read-only, as the file DIR/root.raw, which
-# qemu-storage-daemon exports over FUSE as this user (no root, no loop device, no mount).
+# qemu-storage-daemon exports over FUSE as this user: a FUSE mount this user owns, with no
+# root and no loop device.
 # The root partition is the one GPT names "Linux root (x86-64)". image_cat and image_ls
 # read through debugfs, which follows no symbolic link; image_close stops the export.
 image_open() {
@@ -360,7 +361,14 @@ print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
         --pidfile "$dir/qsd-root.pid" --daemonize || die "no export of $disk's root partition"
 }
 image_cat() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
-image_ls() { debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null; }
+# image_ls DIR PATH fails where PATH is absent. debugfs exits 0 on a missing path and prints
+# nothing to stdout, and a directory always lists . and .., so no output is the absence.
+image_ls() {
+    local o
+    o=$(debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null)
+    [ -n "$o" ] || return 1
+    printf '%s\n' "$o"
+}
 # image_close stops both exports where they still run, unmounts one whose daemon is gone,
 # and never fails its caller (it runs from cleanup traps).
 image_close() {

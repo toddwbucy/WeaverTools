@@ -580,8 +580,8 @@ EOF
 
     section "the initramfs's catch-all network masked"
     # The 26.04 initramfs carries dracut's systemd-networkd module, which leaves
-    # zzzz-dracut-default.network (DHCP on every link) in /run; the first proof boot with no
-    # seed took a lease and reached Ubuntu's NTP pool through it. A file of the same name in
+    # zzzz-dracut-default.network (DHCP on every link) in /run; the second build's proof boot
+    # with no seed took a lease and reached Ubuntu's NTP pool through it. A file of the same name in
     # /etc outranks /run, so a link to /dev/null leaves the network to the seed alone.
     sudo install -d -m 0755 /etc/systemd/network || return 1
     sudo ln -sfn /dev/null /etc/systemd/network/zzzz-dracut-default.network || return 1

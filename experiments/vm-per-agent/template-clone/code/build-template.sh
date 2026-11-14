@@ -30,7 +30,7 @@ source "$HERE/lib.sh"
 NAME=${NAME:-weaver-appliance-build}
 PORT=${PORT:-2230}
 # The build's own size: 24 vCPUs for the compile (the operator's word of 2026-11-14). A
-# box is later run under the operator's own definition; this rig's default there is 8.
+# box is later run under the operator's own definition.
 VCPUS=${VCPUS:-24}
 MEMORY=${MEMORY:-65536}
 SIZE=${SIZE:-120G}
@@ -206,7 +206,7 @@ proof() {
         [ -s "$out/$f" ] || rm -f "$out/$f"
     done
     {
-        echo "== /etc/weaver-appliance"; image_ls "$r" /etc/weaver-appliance
+        echo "== /etc/weaver-appliance"; image_ls "$r" /etc/weaver-appliance || echo "(absent)"
         for p in /etc/netplan /etc/systemd/network /etc/NetworkManager/system-connections \
                  /etc/apt/sources.list.d /etc/apt/apt.conf.d /etc/cloud/cloud.cfg.d \
                  /etc/systemd/system /home /root; do

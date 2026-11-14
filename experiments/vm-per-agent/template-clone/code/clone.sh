@@ -37,7 +37,7 @@ appliance_refuse() {
     local r=$VM_ROOT/clone-read-$NAME found
     trap 'image_close "$VM_ROOT/clone-read-$NAME"; rm -rf -- "$VM_ROOT/clone-read-$NAME"' EXIT
     image_open "$1" "$r"
-    found=$(image_ls "$r" /etc/weaver-appliance)
+    found=$(image_ls "$r" /etc/weaver-appliance) || found=
     image_close "$r"; rm -rf -- "${r:?}"
     trap - EXIT
     [ -z "$found" ] || die "$1 is an appliance image (it holds /etc/weaver-appliance). clone.sh makes clones of the #21 template only: the appliance's cloud-init discards the clone seed's user-data, so the seed's account, pinned host key and guard would never apply and the clone could not be reached. No script in this tree rebuilds the template (template-clone-Spec.md, section 0)."
