@@ -699,8 +699,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     an error, 2 degraded), a stamp that does not name both commits, and any listening
     socket beyond loopback other than SSH on TCP 22. The last is the measure of the
     operator's ruling 4 (SSH only): the first boot lists every listening TCP and UDP
-    socket with its process, and fails on any bound beyond loopback but SSH. It is first
-    tested at the next build.
+    socket with its process, and fails on any bound beyond loopback but SSH. A socket
+    bound to the loopback device (`%lo`) counts as loopback. A listing that fails, or
+    that is empty though SSH listens, fails the proof too, and the record says the listing
+    ran and how many sockets it found. It is first tested at the fifth build.
     **What the power-off wrote.** The seal's final probe runs before the guest powers
     off, and a power-off can write. So the offline read also looks in the sealed image,
     without booting it, for systemd's random seed (`/var/lib/systemd/random-seed`), its

@@ -464,13 +464,26 @@ EOF
                 echo "== keys_to_console in cloud-init.log"; sudo grep -E "keys_to_console|keys-to-console" /var/log/cloud-init.log | grep -iE "running|ran" | tail -3
                 echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
                 echo "== listening sockets (ruling 4: nothing but SSH listens beyond loopback)"
-                sudo ss -Hltunp 2>&1
-                sudo ss -Hltun | while read -r net state rq sq local peer rest; do
-                    port=${local##*:}; host=${local%:*}
-                    case "$host" in 127.*|"[::1]"|"[::1]%"*|"[::ffff:127."*) continue ;; esac
-                    [ "$net" = tcp ] && [ "$port" = 22 ] && continue
-                    echo "PROOF-FAIL: a listener beyond loopback other than SSH: $net $local"
-                done
+                # One listing, judged as printed. A listing that fails, or lists nothing (SSH
+                # itself listens), fails the proof: a check that did not run never passes.
+                if lsk=$(sudo ss -Hltunp 2>&1); then
+                    printf "%s\n" "$lsk"
+                    n=$(printf "%s\n" "$lsk" | grep -c .)
+                    echo "the listing ran: $n listening sockets"
+                    [ "$n" -gt 0 ] || echo "PROOF-FAIL: the listing of listening sockets is empty, though SSH listens"
+                    printf "%s\n" "$lsk" | while read -r net state rq sq local peer rest; do
+                        [ -n "$local" ] || continue
+                        port=${local##*:}; host=${local%:*}
+                        # A socket bound to the loopback device (%lo) is loopback, whatever
+                        # its address.
+                        case "$host" in 127.*|"[::1]"|"[::1]%"*|"[::ffff:127."*|*%lo) continue ;; esac
+                        [ "$net" = tcp ] && [ "$port" = 22 ] && continue
+                        echo "PROOF-FAIL: a listener beyond loopback other than SSH: $net $local"
+                    done
+                else
+                    printf "%s\n" "$lsk"
+                    echo "PROOF-FAIL: the listening sockets could not be listed (sudo ss exited non-zero)"
+                fi
                 echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
                 n=$(grep -cE "^(weaveragent|weaverweb)\.commit = [0-9a-f]{40}$" /etc/weaver-appliance/stamp)
                 [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
