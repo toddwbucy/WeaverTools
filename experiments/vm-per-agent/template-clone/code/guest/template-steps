@@ -114,9 +114,26 @@ facts() {
 # The two OS reads the WeaverAgent seat asked of a fresh 26.04.1 build: whether `test` run
 # through sudo honours supplementary groups (rust-coreutils did not), and whether visudo
 # takes the connector rule's Defaults line (sudo-rs did not). A throwaway account and file,
-# removed in the same step.
+# removed in the same step, on any exit: a failure, an interrupt or a dropped session (HUP).
+# /root's mode as found is kept in the build's records, so that a rerun after a cut-short
+# run restores the first run's, and a rerun first removes whatever that run left.
+OSP_U=weaver-probe OSP_G=weaver-probe-g OSP_F=/root/probe-0640 OSP_RULE=
+os_probes_undo() {
+    trap '' INT TERM HUP
+    sudo rm -f "$OSP_F"
+    [ -z "$OSP_RULE" ] || rm -f "$OSP_RULE"
+    [ ! -s "$BUILD/os-probes.root-mode" ] || sudo chmod "$(cat "$BUILD/os-probes.root-mode")" /root
+    ! getent passwd "$OSP_U" >/dev/null || sudo userdel "$OSP_U"
+    ! getent group "$OSP_G" >/dev/null || sudo groupdel "$OSP_G"
+    trap - INT TERM HUP
+}
 os_probes() {
-    local u=weaver-probe g=weaver-probe-g f=/root/probe-0640 rule
+    local u=$OSP_U g=$OSP_G f=$OSP_F rule
+    [ -d "$BUILD" ] || { echo "no $BUILD; run facts first"; return 1; }
+    [ -s "$BUILD/os-probes.root-mode" ] || stat -c %a /root | sudo tee "$BUILD/os-probes.root-mode" >/dev/null || return 1
+    os_probes_undo
+    trap os_probes_undo EXIT
+    trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM
     sudo groupadd "$g" && sudo useradd --system --no-create-home --shell /usr/sbin/nologin -G "$g" "$u" || return 1
     sudo touch "$f" && sudo chown "root:$g" "$f" && sudo chmod 0640 "$f" && sudo chmod 0711 /root
     section sudo-test-supplementary-group
@@ -124,16 +141,16 @@ os_probes() {
     printf '/usr/bin/test is %s; coreutils packages: %s\n' "$(readlink -f /usr/bin/test)" \
         "$(dpkg-query -W -f '${Package} ${Version}, ' 'coreutils*' 'rust-coreutils*' 2>/dev/null)"
     section visudo-defaults-line
-    rule=$(mktemp)
+    rule=$(mktemp); OSP_RULE=$rule
     printf 'Defaults:%s !pam_session\n' "$u" >"$rule"
     sudo visudo -cf "$rule"; echo "visudo -cf: exit $?"
     printf 'sudo is %s; packages: %s\n' "$(readlink -f "$(command -v sudo)")" \
         "$(dpkg-query -W -f '${Package} ${Version}, ' 'sudo*' 2>/dev/null)"
-    rm -f "$rule"
-    sudo rm -f "$f"; sudo chmod 0700 /root
-    sudo userdel "$u"; sudo groupdel "$g"
+    os_probes_undo; trap - EXIT HUP INT TERM
     getent passwd "$u" >/dev/null && { echo "the probe account remains"; return 1; }
-    echo "probe account and file removed"
+    getent group "$g" >/dev/null && { echo "the probe group remains"; return 1; }
+    sudo test -e "$f" && { echo "the probe file remains"; return 1; }
+    echo "probe account, group and file removed; /root is $(stat -c %a /root) again"
 }
 
 packages() {
