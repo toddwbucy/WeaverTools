@@ -33,14 +33,25 @@ mkdir -p "$LOG"
 # with a sentence, read offline before anything is made. The appliance's cloud-init
 # discards user-data, so a clone seed's account, pinned host key and guard would never
 # apply and the clone could not be reached: create would wait out boot_ok's 600 s and die.
+# The read needs qemu-storage-daemon's FUSE export, sfdisk and debugfs on the host. Where
+# it fails, clone.sh cannot tell the template from an appliance image, and it stops with
+# a sentence rather than risk that wait. Its read directory is refused where one stands,
+# and its cleanup, for every exit and for INT, TERM and HUP, removes only its own.
 appliance_refuse() {
-    local r=$VM_ROOT/clone-read-$NAME found
-    trap 'image_close "$VM_ROOT/clone-read-$NAME"; rm -rf -- "$VM_ROOT/clone-read-$NAME"' EXIT
-    image_open "$1" "$r"
-    found=$(image_ls "$r" /etc/weaver-appliance) || found=
+    local r=$VM_ROOT/clone-read-$NAME rc=0
+    [ ! -e "$r" ] || die "$r stands, left by a create cut short; remove it and run create again"
+    mkdir -- "$r"
+    trap 'trap "" INT TERM HUP PIPE; image_close "$VM_ROOT/clone-read-$NAME"; rm -rf -- "$VM_ROOT/clone-read-$NAME"' EXIT
+    trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
+    if ( image_open "$1" "$r" ); then
+        image_state "$r" /etc/weaver-appliance || rc=$?
+    else
+        rc=2
+    fi
     image_close "$r"; rm -rf -- "${r:?}"
-    trap - EXIT
-    [ -z "$found" ] || die "$1 is an appliance image (it holds /etc/weaver-appliance). clone.sh makes clones of the #21 template only: the appliance's cloud-init discards the clone seed's user-data, so the seed's account, pinned host key and guard would never apply and the clone could not be reached. No script in this tree rebuilds the template (template-clone-Spec.md, section 0)."
+    trap - EXIT INT TERM HUP
+    [ "$rc" != 2 ] || die "$1 could not be read (above), so clone.sh cannot tell whether it is the #21 template or an appliance image, on which create would wait out boot_ok's 600 s and fail. It stops. The read uses qemu-storage-daemon's FUSE export, sfdisk and debugfs on this host."
+    [ "$rc" != 0 ] || die "$1 is an appliance image (it holds /etc/weaver-appliance). clone.sh makes clones of the #21 template only: the appliance's cloud-init discards the clone seed's user-data, so the seed's account, pinned host key and guard would never apply and the clone could not be reached. No script in this tree rebuilds the template (template-clone-Spec.md, section 0)."
 }
 
 create() {

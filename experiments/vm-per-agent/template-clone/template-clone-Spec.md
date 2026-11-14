@@ -36,8 +36,10 @@ guard's `/etc/nftables.conf` (section 4) and the models' `fstab` line. `clone.sh
 makes clones of a template built before that act, the sealed template of 2026-11-11 at
 `$VM_ROOT/template/template.qcow2`. It refuses an appliance image with a sentence, read
 offline before anything is made, because the appliance's cloud-init discards the clone
-seed's user-data: the seed's account, pinned host key and guard would never apply. The
-behaviours marked **(rebuild)** wait for an act that brings the template's build back, if
+seed's user-data: the seed's account, pinned host key and guard would never apply. The read
+uses qemu-storage-daemon's FUSE export, `sfdisk` and `debugfs` on the host. Where it fails,
+`clone.sh` says it could not read the image and stops, rather than wait out its 600 s
+boot gate on what might be an appliance image. The behaviours marked **(rebuild)** wait for an act that brings the template's build back, if
 one is ruled.
 
 **Words.** The **host** runs libvirt and QEMU. A **guest** is a virtual machine: the
