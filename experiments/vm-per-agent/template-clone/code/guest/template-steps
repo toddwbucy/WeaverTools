@@ -864,7 +864,12 @@ seal_final() {
     # presents.
     systemctl mask sshd-keygen.service 2>&1
     # systemd's random seed and its credential secret are per machine: no copy of the image
-    # ships either, whether or not the power-off writes one (proof reads for that).
+    # ships either. systemd-random-seed.service saves a seed when it stops, so left running
+    # it would write one at the power-off, after the final probe. It is stopped first (its
+    # stop saves a seed, removed next), and a stopped unit is not stopped again at the
+    # power-off. proof reads the sealed image for both files.
+    systemctl stop systemd-random-seed.service 2>&1
+    echo "systemd-random-seed.service: $(systemctl is-active systemd-random-seed.service 2>&1)"
     rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret
     # shellcheck disable=SC2086
     rm -f $SEAL_KEYS

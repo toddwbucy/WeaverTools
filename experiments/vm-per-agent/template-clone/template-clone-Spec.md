@@ -636,7 +636,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     or a formatter that fails must fail in the dry run, with the guest intact and the step
     rerun. find's errors are kept, in the step's log and in `seal-final.log`. The oneshot
     removes the build account and its sudoers rule, the SSH host keys, the machine
-    identity (with systemd's random seed and credential secret), cloud-init's state and the logs, assembles the stamp from the build's records, removes
+    identity (with systemd's random seed and credential secret, after it stops the
+    random-seed service), cloud-init's state and the logs, assembles the stamp from the build's records, removes
     those records and this script, and runs the probes again. SSH stays enabled with no
     host key and no account, and `sshd-keygen.service` is
     masked: at first boot cloud-init makes the account and the host keys from the
@@ -701,9 +702,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     because no secret ships in every copy of the image. The login records under
     `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. These reads were
     checked against scratch filesystem images and are first exercised on a sealed image
-    at the next build. The seal removes both files before its final probe, which names
-    them, so a seed or a secret found here was written after it. If one is found, the
-    fix at the seal is its own act.
+    at the fifth build. The seal removes both files before its final probe, which names
+    them. `systemd-random-seed.service` saves a seed when it stops, so left running it
+    would write one at the power-off, after that probe. The seal stops it first (that
+    stop saves a seed, which the seal then removes), and a stopped unit is not stopped
+    again at the power-off. The proof's read confirms it.
     **What an interrupted proof or seal leaves.** `proof` keeps a cleanup for every exit,
     and for INT, TERM and HUP. It removes each overlay domain (only where the domain
     stands on its own overlay), its directory and pool, and the FUSE export of the
