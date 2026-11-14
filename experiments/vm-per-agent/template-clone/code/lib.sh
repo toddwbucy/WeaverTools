@@ -578,30 +578,66 @@ pool_drop() {
     done
 }
 
-# dom_on_disk NAME DISK: 0 when domain NAME is defined and one of its disks is DISK (an
-# absolute path, as libvirt reports it). dom_drop and seal_verdict act on a domain only
-# through it, so a domain of the same name on another disk is never stopped or undefined.
+# dom_known NAME: 0 where domain NAME is defined, 1 where a domain list that was read does
+# not name it, 2 where the list could not be read. A query that fails (libvirt out of
+# reach) is never taken for a domain that is gone.
+dom_known() {
+    local names
+    names=$(virsh_ list --all --name 2>/dev/null) || return 2
+    printf '%s\n' "$names" | grep -qxF -- "$1" && return 0
+    return 1
+}
+
+# dom_on_disk NAME DISK: 0 where one of domain NAME's disks (device "disk") has DISK, an
+# absolute path, as its whole source file; 1 where none has; 2 where the domain's XML
+# cannot be read. The source is read from the domain's XML and compared whole, never as
+# the end of a listing's line, so a path that holds a space cannot pass for DISK.
+# dom_drop and seal_verdict act on a domain only through it, so a domain of the same name
+# on another disk is never stopped or undefined.
 dom_on_disk() {
-    virsh_ domblklist "$1" --details 2>/dev/null | D=$2 awk '
-        $2 == "disk" && substr($0, length($0) - length(ENVIRON["D"])) == " " ENVIRON["D"] { f = 1 }
-        END { exit !f }'
+    local x
+    x=$(virsh_ dumpxml "$1" 2>/dev/null) && [ -n "$x" ] || return 2
+    printf '%s' "$x" | python3 -I -c '
+import sys, xml.etree.ElementTree as E
+try:
+    r = E.fromstring(sys.stdin.read())
+except E.ParseError:
+    sys.exit(2)
+for d in r.iter("disk"):
+    s = d.find("source")
+    if d.get("device") == "disk" and s is not None and s.get("file") == sys.argv[1]:
+        sys.exit(0)
+sys.exit(1)' "$2"
 }
 
 # dom_drop NAME DISK: domain NAME, where one is defined, stopped and undefined with its
 # firmware store, only when one of its disks is DISK (an absolute path, as libvirt reports
 # it). A domain of that name on any other disk is refused and left alone (exit 1). A
-# domain still running after the stop, or an undefine that fails, is exit 2, its cause on
-# stderr, and the caller keeps the domain's directory: an undefined domain that still runs
-# goes on writing its disk.
+# domain list or definition that cannot be read, a domain still running after the stop,
+# or an undefine that fails, is exit 2, its cause on stderr, and the caller keeps the
+# domain's directory: an undefined domain that still runs goes on writing its disk.
 dom_drop() {
     [[ "$2" == /* ]] || { echo "REFUSED: dom_drop takes an absolute disk path, not '$2'" >&2; return 1; }
-    virsh_ dominfo "$1" >/dev/null 2>&1 || return 0
-    dom_on_disk "$1" "$2" || { echo "REFUSED: $1 is defined, but on no disk $2; left alone" >&2; return 1; }
+    local rc=0 st
+    dom_known "$1" || rc=$?
+    case $rc in
+        1) return 0 ;;
+        2) echo "REFUSED: the domain list could not be read, so $1 is not taken for gone" >&2; return 2 ;;
+    esac
+    rc=0; dom_on_disk "$1" "$2" || rc=$?
+    case $rc in
+        1) echo "REFUSED: $1 is defined, but on no disk $2; left alone" >&2; return 1 ;;
+        2) echo "REFUSED: $1's definition could not be read; left alone" >&2; return 2 ;;
+    esac
     # destroy fails on a domain that is already shut off, so its exit is not the test: the
     # domain's state after it is.
     virsh_ destroy "$1" >/dev/null 2>&1 || true
-    virsh_ dominfo "$1" >/dev/null 2>&1 || return 0
-    local st; st=$(virsh_ domstate "$1" 2>/dev/null) || st=unknown
+    rc=0; dom_known "$1" || rc=$?
+    case $rc in
+        1) return 0 ;;
+        2) echo "REFUSED: the domain list could not be read after destroy, so $1 is not taken for gone" >&2; return 2 ;;
+    esac
+    st=$(virsh_ domstate "$1" 2>/dev/null) || st=unknown
     [ "$st" = "shut off" ] || { echo "REFUSED: $1 is not shut off after destroy (${st:-unknown}); not undefined" >&2; return 2; }
     virsh_ undefine "$1" --nvram >/dev/null || { echo "REFUSED: $1 could not be undefined" >&2; return 2; }
 }

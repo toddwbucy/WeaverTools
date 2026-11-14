@@ -486,7 +486,7 @@ sealrun() {
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
                      domstate) echo "shut off" ;;
-                     domblklist) printf ' Type   Device   Target   Source\n file   disk     vda      %s\n' "${MOCK_DOMDISK:-$DISK}" ;;
+                     dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk><disk type='file' device='cdrom'><source file='%s'/></disk></devices></domain>\n" "$2" "${MOCK_DOMDISK:-$DISK}" "$DISK" ;;
                  esac; }
       qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
@@ -536,8 +536,10 @@ check "verdict alone, run again after the read error, reads the verdict and mark
          -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a -s "$LOG/appliance-sha256.txt" \
          -a "$(grep -c 'template-steps seal' "$T/calls" || true)" = 0
 chmod 0644 "$TD/appliance.qcow2"
-( SEAL_ENTRY=seal_verdict; MOCK_DOMDISK=/elsewhere/other.qcow2; sealrun ) >"$T/seal-otherdisk.out" 2>&1
-check "verdict refuses a shut-off domain of that name on another disk, and changes nothing" \
+# The other disk's path ends with the build disk's after a space, which a listing's line
+# cannot tell apart, and the build disk is the domain's CD-ROM, which is not a disk.
+( SEAL_ENTRY=seal_verdict; MOCK_DOMDISK="/archive $TD/appliance.qcow2"; sealrun ) >"$T/seal-otherdisk.out" 2>&1
+check "verdict refuses a shut-off domain of that name on another disk (one whose path ends with the build disk's), and changes nothing" \
     test $? = 1 -a "$(grep -c 'REFUSED: mock-appliance is not the build guest' "$T/seal-otherdisk.out")" = 1 -a "$(sealed_not && echo y)" = y
 verdict passed
 sealrun >"$T/seal2.out" 2>&1
@@ -549,12 +551,13 @@ chmod 0644 "$TD/appliance.qcow2"
 echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
 # decides.
-ddrun() { # ddrun STATE: dom_drop on a stand-in domain on its own disk, in STATE after destroy
+ddrun() { # ddrun STATE [list-fails]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
     : >"$T/host-calls"
-    ( DD_STATE=$1
+    ( DD_STATE=$1 DD_LIST=${2:-}
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
-                     domblklist) printf ' Type   Device   Target   Source\n file   disk     vda      /mock/overlay.qcow2\n' ;;
+                     list) [ "$DD_LIST" != list-fails ] || return 1; printf 'other\nmock-proof\n\n' ;;
+                     dumpxml) printf "<domain><devices><disk type='file' device='disk'><source file='/mock/overlay.qcow2'/></disk></devices></domain>\n" ;;
                      domstate) echo "$DD_STATE" ;;
                      destroy) return 1 ;;
                  esac; }
@@ -566,6 +569,9 @@ check "dom_drop refuses (2) to undefine a domain still running after destroy" \
 ddrun "shut off" >"$T/dd-off.out" 2>&1
 check "dom_drop undefines a domain that is shut off, though destroy failed" \
     test $? = 0 -a "$(grep -c '^virsh_ undefine mock-proof --nvram$' "$T/host-calls")" = 1
+ddrun running list-fails >"$T/dd-nolist.out" 2>&1
+check "dom_drop refuses (2) where the domain list cannot be read, and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: the domain list could not be read' "$T/dd-nolist.out")" = 1
 
 echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
 # The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.

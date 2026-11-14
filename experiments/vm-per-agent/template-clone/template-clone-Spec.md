@@ -465,9 +465,11 @@ The host scripts' steps (section 0):
   commit or a commit other than its input. A read error stops it too, and is not taken
   for an absent MANIFEST. `build-template.sh verdict`, run again after it, reads the
   verdict and marks the image sealed, and refuses a shut-off domain of the build guest's
-  name on another disk, changing nothing. A seal that passes goes on to all three.
+  name on another disk, changing nothing, though that disk's path ends with the build
+  disk's. A seal that passes goes on to all three.
 - `dom_drop` refuses to undefine a domain still running after its stop, and undefines one
-  that is shut off, though the stop failed.
+  that is shut off, though the stop failed. Where the domain list cannot be read, it
+  neither stops nor undefines.
 
 The MANIFEST (section 10):
 - `LINKS_MARK` and `MANIFEST_SCOPE` are each defined once, in `guest/template-steps`, the
@@ -669,8 +671,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     the seal step refuses unless each commit the build recorded is the input the host
     names (`WA_COMMIT`, `WW_COMMIT`). On the host, `seal` then reads the verdict out of
     the image before it marks anything sealed. It first refuses unless one of the
-    domain's disks is the build's disk, so a shut-off domain of that name on another disk
-    is never undefined. A refusal, a missing MANIFEST, or a stamp
+    domain's disks has the build's disk as its whole source path, read from the domain's
+    XML, so a shut-off domain of that name on another disk is never undefined. A refusal,
+    a missing MANIFEST, or a stamp
     that does not name both commits, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
     followed by the undefine, the read-only disk and the sha256. The seal's removals
@@ -762,9 +765,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     while it runs, so a second proof refuses instead of tearing the first down. It also
     refuses where an overlay domain or a directory of its names stands, left by a run cut
     short, and only after those refusals does it set its cleanup, for every exit and for
-    INT, TERM and HUP. A domain is undefined only once it is shut off. One still running
-    after its stop, or one that cannot be undefined, keeps its directory, since an
-    undefined domain that still runs goes on writing its disk. Each boot ends that way,
+    INT, TERM and HUP. A domain is undefined only once it is shut off, and taken for gone
+    only from a domain list that was read. One still running after its stop, one that
+    cannot be undefined, or one whose list or definition cannot be read keeps its
+    directory, since an undefined domain that still runs goes on writing its disk. Each
+    boot ends that way,
     and so do the cleanup and `destroy`. The cleanup removes only what that run made:
     each overlay domain (only where the domain stands on its own overlay), its directory
     and pool, and the
