@@ -199,15 +199,20 @@ mock() {
     step_ok "$LOG" mock || die "the offline mock did not pass; see $LOG/mock.txt"
 }
 
-# proof_cleanup: on any exit of proof, what its boots and its offline read would leave:
-# each overlay domain (only where it stands on its own overlay), its directory and pool,
-# and the FUSE export. A console or capture not yet kept is kept first, as
-# interrupted-*. Signals are ignored while it runs, so a second one cannot cut it short,
-# and no step of it can stop the rest.
+# PROOF_OWN: what this run of proof made, as words (read, proof, first), each added as soon
+# as its directory is made, so that proof_cleanup removes only those. destroy names all
+# three.
+PROOF_OWN=""
+# proof_cleanup: on any exit of proof, what its boots and its offline read would leave,
+# of what PROOF_OWN names: each overlay domain (only where it stands on its own overlay),
+# its directory and pool, and the offline read's FUSE export and directory. A console or
+# capture not yet kept is kept first, as interrupted-*. Signals are ignored while it runs,
+# so a second one cannot cut it short, and no step of it can stop the rest.
 proof_cleanup() {
     local d f
     trap '' INT TERM HUP PIPE
     for d in proof first; do
+        case " $PROOF_OWN " in *" $d "*) ;; *) continue ;; esac
         dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || true
         [ -d "$VM_ROOT/$d" ] || continue
         for f in console.log boot.pcap; do
@@ -216,16 +221,34 @@ proof_cleanup() {
         pool_drop "$VM_ROOT/$d" || true
         rm -rf -- "${VM_ROOT:?}/$d" || true
     done
+    case " $PROOF_OWN " in *" read "*) ;; *) return 0 ;; esac
     image_close "$VM_ROOT/proof-read" || true
     rm -rf -- "${VM_ROOT:?}/proof-read" || true
 }
 
+# proof_lock: proof and destroy each hold VM_ROOT/proof.lock while they run, so a second
+# proof, or a destroy, refuses while one runs instead of tearing it down.
+proof_lock() {
+    exec {PROOF_LOCK_FD}>>"$VM_ROOT/proof.lock" || die "cannot open $VM_ROOT/proof.lock"
+    flock -n "$PROOF_LOCK_FD" || die "a proof is running (it holds $VM_ROOT/proof.lock); $1"
+}
+
 proof() {
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
+    proof_lock "this one refuses rather than tear it down"
+    # What a cut-short run left is refused, not reused or removed: destroy removes it. The
+    # cleanup is set only after these refusals, and removes only what this run makes.
+    local d
+    for d in proof first; do
+        ! virsh_ dominfo "$NAME-$d" >/dev/null 2>&1 || die "$NAME-$d is already defined, left by a run cut short (destroy removes it)"
+        [ ! -e "$VM_ROOT/$d" ] || die "$VM_ROOT/$d stands, left by a run cut short (destroy removes it)"
+    done
+    [ ! -e "$VM_ROOT/proof-read" ] || die "$VM_ROOT/proof-read stands, left by a run cut short (destroy removes it)"
     trap proof_cleanup EXIT
     trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
     local out=$LOG/proof r=$VM_ROOT/proof-read f p rc
     mkdir -p "$out"
+    mkdir -- "$r"; PROOF_OWN="read"
     image_open "$DISK" "$r"
     for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
         rc=0; image_get "$r" "/etc/weaver-appliance/$f" "$out/$f" || rc=$?
@@ -256,8 +279,7 @@ proof() {
     # The overlay boot. The capture and console files are made here, writable by their
     # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
-    virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
-    mkdir -p "$pdir"
+    mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN proof"
     qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
     qemu_file "$pdir/boot.pcap"
     qemu_file "$pdir/console.log"
@@ -269,13 +291,14 @@ proof() {
         --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/proof-virt-install.txt" 2>&1
-    sleep "${PROOF_BOOT:-180}"
+    # In the background and waited on, so a TERM or INT reaches the trap at once.
+    sleep "${PROOF_BOOT:-180}" & wait "$!"
     virsh_ destroy "$pn" >/dev/null 2>&1 || true
     virsh_ undefine "$pn" --nvram >/dev/null
     cp "$pdir/boot.pcap" "$out/boot.pcap"
     tr -d '\r' <"$pdir/console.log" >"$out/boot-console.log" || true
     pool_drop "$pdir"
-    rm -rf -- "${pdir:?}"
+    rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ proof/}
     python3 -I - "$out/boot.pcap" <<'PY' | tee "$out/boot-frames.txt"
 import struct, sys
 from collections import Counter
@@ -339,8 +362,8 @@ PY
 proof_first_boot() {
     local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 100))}
     local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
-    virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
-    mkdir -p "$pdir/seed"
+    mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN first"
+    mkdir -- "$pdir/seed"
     qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
     qemu_file "$pdir/console.log"
     printf 'instance-id: %s\nlocal-hostname: %s\npublic-keys:\n  - %s\n' \
@@ -400,7 +423,7 @@ EOF
            | grep -cE 'SHA256:' || true)
     ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
     if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "${want:-0}" ]; then
-        sleep 30; n=1
+        sleep 30 & wait "$!"; n=1
         ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
     fi
     {
@@ -478,19 +501,20 @@ EOF
     virsh_ undefine "$pn" --nvram >/dev/null
     tr -d '\r' <"$pdir/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
-    rm -rf -- "${pdir:?}"
+    rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
 }
 
 # destroy: the build guest, only where its domain stands on DISK, then what a proof or a
 # seal left (proof_cleanup's objects and the seal's offline read), then the build's
 # directory and its pool.
 destroy() {
+    proof_lock "destroy waits until it ends"
     dom_drop "$NAME" "$DISK" || die "$NAME is defined on another disk than $DISK; nothing removed"
     local d
     for d in proof first; do
         dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || die "$NAME-$d is defined on another disk; nothing more removed"
     done
-    proof_cleanup
+    PROOF_OWN="read proof first"; proof_cleanup
     image_close "$VM_ROOT/seal-read"; rm -rf -- "${VM_ROOT:?}/seal-read"
     pool_drop "$DIR"
     chmod -R u+w "$DIR" 2>/dev/null || true

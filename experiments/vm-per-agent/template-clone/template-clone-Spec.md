@@ -714,13 +714,19 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     would write one at the power-off, after that probe. The seal stops it first (that
     stop saves a seed, which the seal then removes), and a stopped unit is not stopped
     again at the power-off. The proof's read confirms it.
-    **What an interrupted proof or seal leaves.** `proof` keeps a cleanup for every exit,
-    and for INT, TERM and HUP. It removes each overlay domain (only where the domain
-    stands on its own overlay), its directory and pool, and the FUSE export of the
-    offline read, and keeps any console or capture not yet copied as `interrupted-*`.
-    `seal` closes its own offline read the same way. `destroy` removes the build guest
-    only where its domain stands on the build's disk, and refuses a domain of that name
-    on any other disk. It then removes whatever a proof or a seal left.
+    **What an interrupted proof or seal leaves.** `proof` holds a lock file in `VM_ROOT`
+    while it runs, so a second proof refuses instead of tearing the first down. It also
+    refuses where an overlay domain or a directory of its names stands, left by a run cut
+    short, and only after those refusals does it set its cleanup, for every exit and for
+    INT, TERM and HUP. The cleanup removes only what that run made: each overlay domain
+    (only where the domain stands on its own overlay), its directory and pool, and the
+    offline read's FUSE export and directory. It keeps any console or capture not yet
+    copied as `interrupted-*`. The boot's wait runs in the background, so a signal
+    reaches the cleanup at once. `seal`'s verdict read refuses where its read directory
+    stands and closes only its own. `destroy` takes the same lock, so it refuses while a
+    proof runs. It removes the build guest only where its domain stands on the build's
+    disk, and refuses a domain of that name on any other disk. It then removes whatever
+    a proof or a seal left.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
 (cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it, and it is kept until a carded
