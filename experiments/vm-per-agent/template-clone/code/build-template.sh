@@ -22,8 +22,9 @@
 # DRIVER_ROUTE (the route it comes by), COMPUTE_CAP (the compute capability the CUDA
 # kernels are compiled for, without its dot), WA_COMMIT and WW_COMMIT (the WeaverAgent and
 # WeaverWeb commits, in full). create needs all six. Every step is given those that are
-# set, and a guest step that needs one refuses where it is not. The step names, in order, are in COMMANDS.md. A step that
-# breaks is rerun after the break is recorded and got past; nothing here retries.
+# set, and a guest step that needs one refuses where it is not. The step names, in order,
+# are in COMMANDS.md. A step that breaks is rerun after the break is recorded and got
+# past; nothing here retries.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 OS_GIVEN=${OS:-}
@@ -580,5 +581,5 @@ seal) seal ;;
 verdict) seal_verdict ;;
 proof) proof ;;
 destroy) destroy ;;
-*) sed -n '2,20p' "$0" >&2; exit 2 ;;
+*) awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" >&2; exit 2 ;;   # the header, to its end
 esac

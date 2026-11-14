@@ -175,7 +175,7 @@ code/build-template.sh create
 for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
   code/build-template.sh step "$s" || break
 done
-# From the next build on, the offline mock runs in the guest between connectors and
+# From the fifth build on, the offline mock runs in the guest between connectors and
 # cleanup (it refuses on a host): code/build-template.sh mock
 code/build-template.sh seal
 # where seal's own read of the verdict failed (it says so): code/build-template.sh verdict

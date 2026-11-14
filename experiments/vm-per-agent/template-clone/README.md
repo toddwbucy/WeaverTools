@@ -145,8 +145,8 @@ that way from its first boot.
 
 ## The template
 
-**Since 2026-11-14 the tree cannot rebuild this template.** `code/build-template.sh` now
-builds the appliance image instead (`template-clone-Spec.md`, section 10), at its own path.
+**Since 2026-11-14 the tree cannot rebuild this template.** Since then
+`code/build-template.sh` builds the appliance image instead (`template-clone-Spec.md`, section 10), at its own path.
 This section records the template of 2026-11-11 as it was built then. `code/clone.sh`
 still clones that sealed template, and refuses an appliance image (Spec, section 0).
 

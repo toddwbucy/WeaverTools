@@ -9,8 +9,8 @@
 set -uo pipefail
 
 # The inputs, named by the host on each step's command line: WA_COMMIT and WW_COMMIT in
-# full, DRIVER, DRIVER_ROUTE, and BASE_IMAGE (the cloud image's name and digest). A step
-# that needs one refuses where it is unset.
+# full, DRIVER, DRIVER_ROUTE, COMPUTE_CAP, and BASE_IMAGE (the cloud image's name and
+# digest). A step that needs one refuses where it is unset.
 WA_URL=https://github.com/toddwbucy/WeaverAgent.git
 WW_URL=https://github.com/toddwbucy/WeaverWeb.git
 # The pins this file holds.

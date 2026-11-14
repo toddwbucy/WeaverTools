@@ -14,7 +14,7 @@ appliance build's changes elsewhere are on the `act/appliance-build` stack.
 ## 0. What this document is
 
 The Spec of the scripts in `code/` beside it, which built the template virtual machine
-and now build the appliance image (section 10), make clones of the template, and run steps
+and since 2026-11-14 build the appliance image (section 10), make clones of the template, and run steps
 inside a clone. It states what the scripts do and what
 the offline mock pins. The result notes say what the scripts measured: `README.md` for the
 template and clone of 2026-11-11, and `results/2026-11-12-determinism-slice.md` for the
@@ -27,7 +27,7 @@ marked **(rebuild)**. Today's sealed template, of 2026-11-11, predates every suc
 behaviour, and the later act that rebuilds the template measures them, on the operator's
 word.
 
-**What the tree can and cannot rebuild now.** Since the appliance act of 2026-11-14,
+**What the tree can and cannot rebuild, as of 2026-11-14.** Since the appliance act of that day,
 `build-template.sh` builds the appliance image of section 10, at
 `$VM_ROOT/appliance/appliance.qcow2` under the domain name `weaver-appliance-build`. It no
 longer builds the template, and no script in this tree rebuilds the template of sections 1
@@ -43,7 +43,8 @@ boot gate on what might be an appliance image. The behaviours marked **(rebuild)
 one is ruled.
 
 **Words.** The **host** runs libvirt and QEMU. A **guest** is a virtual machine: the
-**template** while it is built, or a **clone**, an overlay naming the sealed template. A
+**build guest**, the appliance image while `build-template.sh` builds it (section 10), the
+**template** while it was built, or a **clone**, an overlay naming the sealed template. A
 **step** is one named command run in a guest over SSH, with its output and exit status kept
 in the guest's log directory. A step whose guest command exits non-zero stops the host
 script that ran it, once its log is kept: `build-template.sh step` and `seal`, and
@@ -69,7 +70,7 @@ default where a default would be a box path, a host name, an account, an address
 
 | Parameter | What it names | Default |
 |---|---|---|
-| `VM_ROOT` | the directory holding `images/`, `template/`, `clones/`, `logs/`, `keys/` | none |
+| `VM_ROOT` | the directory holding `images/`, `template/`, `appliance/`, `clones/`, `logs/`, `keys/`, made canonical (`realpath -m`) | none |
 | `KEY` | the measurement's login key | `$VM_ROOT/keys/measure_ed25519` |
 | `MODELS_DIR` | the host directory shared read-only into a clone | none |
 | `NAME`, `PORT`, `VCPUS`, `MEMORY` | a clone's name, its SSH forward's host loopback port, its size | as `clone.sh` states |
@@ -187,7 +188,7 @@ pass. Every new domain is also defined with `ipv6=off`. The guard is laid twice:
   already stand;
 - by the template's `/etc/nftables.conf` **(rebuild)**.
 
-No script in this tree lays the template's copy now. The step that wrote it went with the
+No script in this tree has laid the template's copy since 2026-11-14. The step that wrote it went with the
 template's build (section 0).
 
 Both copies carry the IPv4 line and the IPv6 line (WeaverTools commit 78bde86). The sealed
@@ -201,7 +202,7 @@ belongs to the operator: admin owns one named table in it and never the whole fi
 as the operator ratified on 2026-11-14. This guard's file opens with `flush ruleset`, and
 10.0.2.2 means the host only under QEMU's user-mode networking. So the rig guards its own
 boots instead:
-- the build VM gets the guard from its seed's `bootcmd`, as above;
+- the build VM gets the guard from its seed's `bootcmd`, as above.
 - `proof`'s boot with no seed and its first boot both run on `restrict=on`, so neither
   boot of the sealed image can reach the host or anything beyond it.
 
@@ -362,10 +363,12 @@ tools the mock uses. Its count is taken there.
 
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
 `uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `ensure_key`, harness
-preflight and `relaxed`, and the host scripts' `step` and `seal`, with no virtual machine,
-no sudo and no network beyond loopback.**
+preflight and `relaxed`, the host scripts' `step`, `seal` and `seal_verdict`, the seal's
+MANIFEST functions and proof's comparison, with no virtual machine of its own, no sudo and
+no network beyond loopback.**
 
-- The mock's guest is a temporary home directory on the host. The SSH helper runs each
+- The mock's guest is a temporary home directory inside the build guest it runs in. The
+  SSH helper runs each
   guest command there, in an emptied environment. Its PATH holds the stubs, then the host
   tools the steps need, and no `rustc`.
 - `sudo`, `apt-get` and `install` are stubs that record what they are asked to do:
@@ -457,9 +460,20 @@ another, is refused, as are an argument with no SSH forward on `PORT` and one no
 The host scripts' steps (section 0):
 - `build-template.sh step` and `clone.sh step` each exit non-zero on a guest step that
   fails, and nothing after them runs; a step that passes goes on;
-- a seal that fails stops before the undefine, the read-only disk and the checksum, and
-  so does one whose image holds `SEAL-REFUSED`, holds no MANIFEST, or has a stamp that
-  names one commit; a seal that passes goes on to all three.
+- a seal that fails stops before the undefine, the read-only disk and the checksum. So
+  does one whose image holds `SEAL-REFUSED` or no MANIFEST, or whose stamp names one
+  commit or a commit other than its input. A read error stops it too, and is not taken
+  for an absent MANIFEST. `build-template.sh verdict`, run again after it, reads the
+  verdict and marks the image sealed. A seal that passes goes on to all three.
+
+The MANIFEST (section 10):
+- `LINKS_MARK` and `MANIFEST_SCOPE` are each defined once, in `guest/template-steps`, the
+  marker's text is in no other code file, and `lib.sh` reads the same values.
+- `links_format`'s two copies, `lib.sh`'s and `guest/template-steps`', are the same text.
+- The seal's dry run passes on a stand-in scope with an escaped name and a link to
+  `/dev/null`, and fails, with find's error shown, where a scope directory is missing.
+- proof's comparison passes a change and an addition on the expected lists, and fails a
+  change, a removal and a link beyond them. A MANIFEST without its marker fails it.
 
 `relaxed`, in `guest/template-steps` and in `guest/clone-steps`:
 - it runs the command with both settings relaxed and restores both, and its traps are
@@ -615,7 +629,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    copied to `/opt/weaver/deploy` before the checkout goes.
 9. `connectors`: `gate-con` and `admin-con` built with no default features and installed.
    No unit is laid: the image half of WeaverWeb's staging is that repository's act. From
-   the next build on, `build-template.sh mock` runs the offline mock after this step
+   the fifth build on, `build-template.sh mock` runs the offline mock after this step
    (section 8).
 10. `cleanup`: the source trees and build directories, the Rust toolchain and cargo's
     caches, every package the build added but the runtime set, the CUDA repository,
@@ -639,7 +653,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     rerun. find's errors are kept, in the step's log and in `seal-final.log`. The oneshot
     removes the build account and its sudoers rule, the SSH host keys, the machine
     identity (with systemd's random seed and credential secret, after it stops the
-    random-seed service), cloud-init's state and the logs, assembles the stamp from the build's records, removes
+    random-seed service), cloud-init's state and the logs, assembles the stamp from the
+    build's records, removes
     those records and this script, and runs the probes again. SSH stays enabled with no
     host key and no account, and `sshd-keygen.service` is
     masked: at first boot cloud-init makes the account and the host keys from the
@@ -670,7 +685,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     resolver. The capture still holds every frame the guest sends, and past QEMU's own DHCP
     none is answered. An image that configures no network sends nothing, so any frame the
     guest sends fails the proof (the fourth build's five boots sent none), and so does a
-    capture with no header, which did not run. Then a second overlay booted as a first boot, with no host key, from
+    capture with no header, which did not run. Then a second overlay booted as a first
+    boot, with no host key, from
     a seed in three parts. Its meta-data names an SSH key and a hostname. Its
     network-config names a static address, gateway and resolver. Its user-data asks for a
     bootcmd, a runcmd, a package and an account, all of which must be discarded. That
@@ -706,7 +722,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     owner and `QEMU_USER` may write it, by a POSIX ACL. The file is made new and
     exclusively, so a file or a symbolic link already at that path is refused, never
     reused or written through. QEMU writing through the ACL is
-    unproved until the next build. A file libvirt opens for a serial device becomes
+    unproved until the fifth build. A file libvirt opens for a serial device becomes
     libvirt's, unreadable without root, and a file every local account could write would
     let any of them write the console that trust on first use is read from.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
