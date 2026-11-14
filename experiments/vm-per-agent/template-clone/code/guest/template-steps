@@ -279,7 +279,8 @@ UBUNTU_DRIVER=615.71.09-0ubuntu0.26.04.2
 UBUNTU_MODULES=7.0.0-38.38+2
 UBUNTU_MODPROBE=570.133.07-1   # Ubuntu's, not NVIDIA's repository's newer one
 driver() {
-    [[ "${DRIVER:-}" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || { echo "DRIVER is not named"; return 1; }
+    # One form for DRIVER, the same regex build-template.sh's inputs_ok checks.
+    [[ "${DRIVER:-}" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || { echo "DRIVER is not named, or not a release such as 615.71.09"; return 1; }
     one_kernel || return 1
     case ${DRIVER_ROUTE:-} in
         ubuntu-prebuilt) driver_ubuntu_prebuilt ;;

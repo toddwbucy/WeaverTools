@@ -504,10 +504,12 @@ guest from two named commits, in place, and the guest is then cleaned by a check
 and sealed. Nothing built on the host enters the image.
 
 **Inputs, all named.** `OS` (the cloud image by digest, section 1), `DRIVER` and
-`DRIVER_ROUTE`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses unless all are set;
-each guest step is given those that are set on its command line, and a step that needs
-one refuses where it is unset. The build guest has 24 vCPUs and 64 GiB by default; the
-domain a box later runs under is the operator's own.
+`DRIVER_ROUTE`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses unless all five are
+set. `DRIVER` has one form on the host and in the guest, one regex in both scripts (a
+release such as `615.71.09`), and `DRIVER_ROUTE` is `ubuntu-prebuilt`, the one route this
+tree builds. Each guest step is given those that are set on its command line, and a step
+that needs one refuses where it is unset. The build guest has 24 vCPUs and 64 GiB by
+default. The domain a box later runs under is the operator's own.
 
 **The network.** The build guest uses QEMU user-mode networking, as the template did
 (`README.md`, "The network"). The sealed image configures no network: no netplan file, no
