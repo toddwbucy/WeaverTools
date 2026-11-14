@@ -352,8 +352,8 @@ PY
 # host keys' fingerprints keys_to_console prints on the serial console, set against the
 # keys SSH presents. Only on a match does it log in, under those keys, as the default
 # account, and read cloud-init's verdict and modules, what became of the user-data's
-# asks, the network as the seed named it, SSH's units, the stamp's commits and the
-# MANIFEST entries the boot changed. The network is QEMU's restrict=on: the guest reaches
+# asks, the network as the seed named it, SSH's units and the stamp's commits, and it sets
+# the MANIFEST against the booted guest's files and links (manifest_compare). The network is QEMU's restrict=on: the guest reaches
 # neither the host nor beyond it, and the SSH forward still answers. restrict=on's DHCP
 # offers no gateway and no resolver, and netplan's wait for the network on 26.04 waits for
 # a resolver (--dns), so a seed with no network-config waited 120 s on every boot and
@@ -495,21 +495,25 @@ EOF
                 echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
                 n=$(grep -cE "^(weaveragent|weaverweb)\.commit = [0-9a-f]{40}$" /etc/weaver-appliance/stamp)
                 [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
-                echo "== MANIFEST files the first boot changed or removed"; awk "/^# links: /{exit} 1" /etc/weaver-appliance/MANIFEST | sudo sha256sum --quiet -c - 2>&1 | head -60
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
                 || echo "PROOF-FAIL: the login as the default account, or its reads, exited $?"
-            # The links section set against the booted guest's links, formatted here as the
-            # seal formats them; a format that drifted would show every link.
-            echo "== MANIFEST links the first boot changed, added or removed (- sealed, + booted)"
-            if [ -n "$(manifest_links "$out/MANIFEST" | head -1)" ]; then
-                KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
-                    "sudo find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>/dev/null \
-                    | links_format >"$pdir/links-booted" || echo "(the links read exited non-zero)"
-                diff <(manifest_links "$out/MANIFEST") "$pdir/links-booted" \
-                    | sed -n 's/^</-/p; s/^>/+/p' | head -60 || true
-                echo "(sealed $(manifest_links "$out/MANIFEST" | wc -l), booted $(wc -l <"$pdir/links-booted"))"
+            # The MANIFEST set against the booted guest, judged here: its files listed as the
+            # seal lists them, less the host keys' private halves (no digest of a private key
+            # is made), and its links formatted here as the seal formats them. A listing that
+            # fails, a difference outside the first boot's expected list, and a MANIFEST
+            # without its links section each fail the proof (manifest_compare). The booted
+            # listings stay in the overlay's directory and go with it.
+            echo "== the MANIFEST against the booted guest"
+            if ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
+                    "sudo bash -c 'find $MANIFEST_SCOPE -xdev -type f -not -path \"/etc/weaver-appliance/MANIFEST*\" -not -path /boot/grub/grubenv -not -name \"ssh_host_*_key\" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum'" \
+                    >"$pdir/files-booted" 2>"$pdir/files-booted.err"; then
+                echo "PROOF-FAIL: the booted guest's files could not be listed: $(tail -2 "$pdir/files-booted.err" | tr '\n' ' ')"
+            elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
+                    "sudo find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>"$pdir/links-booted.err" \
+                    | links_format >"$pdir/links-booted"; then
+                echo "PROOF-FAIL: the booted guest's links could not be listed: $(tail -2 "$pdir/links-booted.err" | tr '\n' ' ')"
             else
-                echo "(no links section: a MANIFEST of the earlier form)"
+                manifest_compare "$out/MANIFEST" "$pdir/files-booted" "$pdir/links-booted"
             fi
         else
             echo "trust on first use: NO MATCH; no login"

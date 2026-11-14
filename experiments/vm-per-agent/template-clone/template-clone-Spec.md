@@ -682,10 +682,22 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     key (the fourth build's proof runs 2 to 4). Only on a match does the proof log in,
     under those keys, as the default account, and read cloud-init's verdict and the
     modules it ran, what became of each user-data ask, the hostname, the network and its
-    wait, `ubuntu.sources`, SSH's units, the stamp's commits, the MANIFEST files the boot
-    changed, and the links it changed, added or removed. For the links, the booted guest's
-    links are formatted on the host the way the seal formats them, so a format that drifted
-    between the two copies would show every link. Each boot's serial console, and the
+    wait, `ubuntu.sources`, SSH's units and the stamp's commits. It then sets the MANIFEST
+    against the booted guest, on the host. The guest's files are listed as the seal lists
+    them, less the host keys' private halves, so no digest of a private key is made. Its
+    links are formatted on the host by the seal's own formatter text. Each file or link
+    removed, added or changed is printed by its path, never with a digest. A difference
+    the first boot makes by design is marked expected. The changed files of that list
+    were measured on the fourth build: the account files and their backups, the hostname
+    and the machine identity. Its added files follow cloud-init's documented behaviour and
+    are first measured at the fifth build: the host keys' public halves, its netplan file,
+    its sudoers rule for the default account and the account tools' lock file. No link is
+    expected to change. On the fourth build's first boot, systemd ran its first-boot
+    preset of all units, and the masks held against it, so a link it changes is a finding.
+    Every other difference fails the proof, as do a listing that fails and a MANIFEST
+    that does not carry the marker once. The marker and the scope have one definition, in
+    `guest/template-steps`, which `lib.sh` reads, and the offline mock checks that the two
+    copies of the formatter are the same text. Each boot's serial console, and the
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
     owner and `QEMU_USER` may write it, by a POSIX ACL. QEMU writing through the ACL is
     unproved until the next build. A file libvirt opens for a serial device becomes
@@ -694,7 +706,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
     refusal, is not booted at all. After both boots, each finding the first boot recorded
     fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
-    are a fingerprint mismatch, a failed login, a user-data ask carried out (the
+    are a fingerprint mismatch, a failed login, a MANIFEST difference outside the first
+    boot's expected list, a user-data ask carried out (the
     command, the package or the account), cloud-init not done (the proof waits up to
     600 s with `cloud-init status --wait`, then requires the status text `done` and exit
     0, since the status exits 0 for running, disabled and not started too, 1 an error, 2

@@ -466,12 +466,16 @@ qemu_file() {
         || die "cannot make $1 writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 
-# The MANIFEST's links section (guest/template-steps, links_list and LINKS_MARK; the two
-# copies change together). links_format takes find's NUL-separated path and target pairs
-# on stdin and writes the section's lines; manifest_links prints a MANIFEST's section, empty
-# for a MANIFEST of the earlier form (regular files only).
-LINKS_MARK='# links: path TAB target, C-locale order'
-MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
+# The MANIFEST's form has one definition, guest/template-steps' LINKS_MARK and
+# MANIFEST_SCOPE, read from that file here. links_format is the formatter text that file
+# carries, word for word (the offline mock checks that the two copies are equal): it takes
+# find's NUL-separated path and target pairs on stdin and writes the links section's lines.
+# manifest_links prints a MANIFEST's links section.
+LIB_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+LINKS_MARK=$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+MANIFEST_SCOPE=$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+[ -n "$LINKS_MARK" ] && [ -n "$MANIFEST_SCOPE" ] \
+    || die "no LINKS_MARK or MANIFEST_SCOPE in $LIB_DIR/guest/template-steps"
 links_format() {
     local p t
     while IFS= read -r -d '' p && IFS= read -r -d '' t; do
@@ -481,6 +485,68 @@ links_format() {
     done | LC_ALL=C sort -u
 }
 manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
+
+# What an operator's first boot changes in the MANIFEST's scope by design. The changed files
+# were measured on the fourth build: the account files and their backups, the hostname and
+# the machine identity. The added files are cloud-init's by its documented behaviour and are
+# first measured on the fifth build: the host keys' public halves (the private halves are
+# never listed), its netplan file, its sudoers rule for the default account, and the account
+# tools' lock file. No link is expected to change. The offline mock names its own.
+FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/group /etc/group- /etc/gshadow /etc/gshadow- /etc/hostname /etc/machine-id /etc/passwd /etc/passwd- /etc/shadow /etc/shadow- /etc/subgid /etc/subgid- /etc/subuid /etc/subuid-}
+FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub /etc/netplan/50-cloud-init.yaml /etc/sudoers.d/90-cloud-init-users /etc/.pwd.lock}
+# manifest_compare SEALED FILES LINKS: the sealed MANIFEST set against a booted guest's
+# listing of the same scope: FILES as sha256sum writes them, LINKS as links_format writes
+# them. Each difference is printed by its path, never with a digest: a file or link
+# removed, added or changed, marked "(expected)" where FIRST_BOOT_CHANGES names a changed
+# file or FIRST_BOOT_ADDS (shell patterns) an added one. Every other difference is a
+# PROOF-FAIL line, as are a MANIFEST that does not carry the marker once (an earlier form,
+# or a marker that drifted) and a line out of form on either side.
+manifest_compare() {
+    M=$LINKS_MARK FB_CHANGES=$FIRST_BOOT_CHANGES FB_ADDS=$FIRST_BOOT_ADDS python3 -I - "$1" "$2" "$3" <<'PY'
+import fnmatch, os, re, sys
+mark, changes, adds = os.environ["M"], set(os.environ["FB_CHANGES"].split()), os.environ["FB_ADDS"].split()
+def read(p):
+    t = open(p, encoding="utf-8", errors="surrogateescape").read().split("\n")
+    return t[:-1] if t and t[-1] == "" else t
+sealed = read(sys.argv[1])
+if sealed.count(mark) != 1:
+    print("PROOF-FAIL: the sealed MANIFEST does not carry the links marker once (an earlier form, or a marker that drifted)")
+    sys.exit(0)
+k, form, fails = sealed.index(mark), re.compile(r"^(\\?)([0-9a-f]{64})  (.+)$"), 0
+def fail(msg):
+    global fails
+    print("PROOF-FAIL: " + msg); fails += 1
+def files(lines, side):
+    d = {}
+    for l in lines:
+        m = form.match(l)
+        if m: d[m.group(1) + m.group(3)] = m.group(2)
+        else: fail(f"a line of the {side} file list is out of form")
+    return d
+def links(lines, side):
+    d = {}
+    for l in lines:
+        f = l.split("\t")
+        if len(f) == 2: d[f[0]] = f[1]
+        else: fail(f"a line of the {side} links list is out of form")
+    return d
+sf, sl = files(sealed[:k], "sealed"), links(sealed[k + 1:], "sealed")
+bf, bl = files(read(sys.argv[2]), "booted"), links(read(sys.argv[3]), "booted")
+def report(what, kind, path, expected, extra=""):
+    print(f"{kind} {what}: {path}{extra}" + (" (expected)" if expected else ""))
+    if not expected: fail(f"the first boot {kind} a MANIFEST {what} outside the expected list: {path}")
+for p in sorted(sf.keys() | bf.keys()):
+    if p not in bf: report("file", "removed", p, False)
+    elif p not in sf: report("file", "added", p, any(fnmatch.fnmatchcase(p, g) for g in adds))
+    elif sf[p] != bf[p]: report("file", "changed", p, p in changes)
+for p in sorted(sl.keys() | bl.keys()):
+    if p not in bl: report("link", "removed", p, False, f" (sealed -> {sl[p]})")
+    elif p not in sl: report("link", "added", p, False, f" (booted -> {bl[p]})")
+    elif sl[p] != bl[p]: report("link", "changed", p, False, f" (sealed -> {sl[p]}, booted -> {bl[p]})")
+print(f"MANIFEST against the booted guest: {len(sf)} files and {len(sl)} links sealed, "
+      f"{len(bf)} files and {len(bl)} links booted, {fails} finding(s)")
+PY
+}
 
 # pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
 # undefined (virt-install makes one for each directory a --disk path names).

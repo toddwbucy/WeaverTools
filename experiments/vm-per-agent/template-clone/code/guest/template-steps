@@ -799,22 +799,26 @@ seal() {
 # writes it; then the marker line LINKS_MARK; then one line per symbolic link in the same
 # scope: its path, a tab, and its target as stored, each with backslash, tab and newline
 # escaped as \\, \t and \n. Both parts in C-locale order. A mask is a link, so the links
-# section is what lets the identity see a unit masked or unmasked. build-template.sh's
-# proof writes the same form (links_format) and must change with it.
+# section is what lets the identity see a unit masked or unmasked. The two lines below are
+# the form's one definition: lib.sh reads both from this file. links_format is the one
+# formatter text, which lib.sh carries word for word for proof's read of a booted guest;
+# the offline mock checks that the two copies are equal.
 LINKS_MARK='# links: path TAB target, C-locale order'
 MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
 
+links_format() {
+    local p t
+    while IFS= read -r -d '' p && IFS= read -r -d '' t; do
+        p=${p//\\/\\\\}; p=${p//$'\t'/\\t}; p=${p//$'\n'/\\n}
+        t=${t//\\/\\\\}; t=${t//$'\t'/\\t}; t=${t//$'\n'/\\n}
+        printf '%s\t%s\n' "$p" "$t"
+    done | LC_ALL=C sort -u
+}
 # links_list: the links section's lines, from find's NUL-separated path and target pairs.
 # find's errors are not discarded: in seal_final they reach seal-final.log.
 links_list() {
-    local p t
     # shellcheck disable=SC2086
-    find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' |
-        while IFS= read -r -d '' p && IFS= read -r -d '' t; do
-            p=${p//\\/\\\\}; p=${p//$'\t'/\\t}; p=${p//$'\n'/\\n}
-            t=${t//\\/\\\\}; t=${t//$'\t'/\\t}; t=${t//$'\n'/\\n}
-            printf '%s\t%s\n' "$p" "$t"
-        done | LC_ALL=C sort -u
+    find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' | links_format
 }
 
 # manifest_write OUT: the MANIFEST in the form above.

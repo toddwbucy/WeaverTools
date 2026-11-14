@@ -539,6 +539,54 @@ check "a seal that passes goes on to all three" \
          -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/appliance-sha256.txt"
 chmod 0644 "$TD/appliance.qcow2"
 
+echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
+# The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.
+# links_format's two copies, lib.sh's for proof's read of a booted guest and
+# guest/template-steps' for the seal, are the same text.
+check "LINKS_MARK and MANIFEST_SCOPE are defined once, in guest/template-steps, and lib.sh reads the same" \
+    test "$(grep -c '^LINKS_MARK=' "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -c '^MANIFEST_SCOPE=' "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -l -F '# links: ' "$CODE"/*.sh "$CODE"/guest/* | wc -l)" = 1 \
+         -a "$LINKS_MARK" = "$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")" \
+         -a "$MANIFEST_SCOPE" = "$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
+fmt_lib=$(sed -n '/^links_format() {/,/^}/p' "$CODE/lib.sh")
+fmt_ts=$(sed -n '/^links_format() {/,/^}/p' "$CODE/guest/template-steps")
+check "links_format's two copies, lib.sh's and guest/template-steps', are the same text" \
+    test -n "$fmt_lib" -a "$fmt_lib" = "$fmt_ts"
+# The seal's own functions on a stand-in scope, run with this guest's find, sort and
+# sha256sum: the dry run, then a "booted" copy changed as a first boot would, and beyond.
+MS=$T/mscope
+mkdir -p "$MS/usr/lib" "$MS/etc/netplan" "$MS/rec"
+echo a >"$MS/usr/lib/a"; echo p >"$MS/etc/passwd"; echo o >"$MS/etc/other"; echo g >"$MS/etc/gone"
+printf 'b\n' >"$MS/etc/back\\slash"; ln -s ../usr/lib/a "$MS/etc/link1"; ln -s /dev/null "$MS/etc/masked.service"
+manifest_fns() {
+    eval "$(sed -n "/^LINKS_MARK=/p; /^links_format() {/,/^}/p; /^links_list() {/,/^}/p; /^manifest_write() {/,/^}/p; /^manifest_dry() {/,/^}/p; /^manifest_links() /p" "$CODE/guest/template-steps")"
+    RECORD=$MS/rec; MANIFEST_SCOPE="$MS/usr $MS/etc"
+}
+( manifest_fns; manifest_dry "$T/m.sealed" ) >"$T/mdry.out" 2>&1
+check "the seal's dry run passes on a stand-in scope with an escaped name and a link to /dev/null" \
+    test $? = 0 -a "$(grep -c '^MANIFEST dry run: 5 files, 2 links, 0 lines out of form$' "$T/mdry.out")" = 1
+( manifest_fns; MANIFEST_SCOPE="$MS/usr $MS/absent"; manifest_dry "$T/m.absent" ) >"$T/mdry2.out" 2>&1
+check "and fails, with find's error shown, where a scope directory is missing" \
+    test $? = 1 -a "$(grep -c 'No such file or directory' "$T/mdry2.out")" -ge 1
+echo p2 >"$MS/etc/passwd"; echo o2 >"$MS/etc/other"; rm "$MS/etc/gone"
+echo n >"$MS/etc/netplan/50-cloud-init.yaml"; ln -s /x "$MS/etc/newlink"
+( manifest_fns
+  # shellcheck disable=SC2086
+  find $MANIFEST_SCOPE -xdev -type f -not -path "$RECORD/MANIFEST*" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum >"$T/m.files"
+  links_list >"$T/m.links" )
+( FIRST_BOOT_CHANGES="$MS/etc/passwd" FIRST_BOOT_ADDS="$MS/etc/netplan/*"
+  manifest_compare "$T/m.sealed" "$T/m.files" "$T/m.links" ) >"$T/mcmp.out" 2>&1
+check "proof's comparison passes a change and an addition on the expected lists, and fails a change, a removal and a link beyond them" \
+    test "$(grep -c '^PROOF-FAIL: ' "$T/mcmp.out")" = 3 -a "$(grep -c '(expected)$' "$T/mcmp.out")" = 2 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot changed a MANIFEST file outside the expected list: $MS/etc/other" "$T/mcmp.out")" = 1 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot removed a MANIFEST file outside the expected list: $MS/etc/gone" "$T/mcmp.out")" = 1 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot added a MANIFEST link outside the expected list: $MS/etc/newlink" "$T/mcmp.out")" = 1
+grep -v -F -x "$LINKS_MARK" "$T/m.sealed" >"$T/m.earlier"
+manifest_compare "$T/m.earlier" "$T/m.files" "$T/m.links" >"$T/mcmp2.out" 2>&1
+check "a MANIFEST without its marker (an earlier form, or a marker that drifted) fails the comparison" \
+    test "$(grep -c '^PROOF-FAIL: the sealed MANIFEST does not carry the links marker once' "$T/mcmp2.out")" = 1
+
 echo "== relaxed puts both settings back (template-steps and clone-steps)"
 # relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions
 # over two files: R/userns, the sysctl's value, and R/sh, where /bin/sh points (empty: not
