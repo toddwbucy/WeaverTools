@@ -194,9 +194,17 @@ mock() {
         || die "the code tree did not copy into the guest"
     run_step "$PORT" "$LOG" mock 'sudo install -o root -g root -m 0644 /dev/null /run/weaver-build-guest || exit 1
         bash ~/mock-code/test/offline-mock.sh; rc=$?; rm -rf ~/mock-code; exit $rc'
-    grep -E '^(ok|FAIL) ' "$LOG/mock.txt" | sed -n '$p'
-    echo "checks passed: $(grep -c '^ok ' "$LOG/mock.txt")"
-    step_ok "$LOG" mock || die "the offline mock did not pass; see $LOG/mock.txt"
+    # The last check line, or, where the mock printed none (its refusal outside a build
+    # guest, or a stop before its first check), its last lines: never a silent exit.
+    local last
+    last=$(grep -E '^(ok|FAIL) ' "$LOG/mock.txt" | sed -n '$p' || true)
+    if [ -n "$last" ]; then
+        echo "$last"
+    else
+        echo "the mock printed no ok or FAIL line; its last lines:"; tail -5 "$LOG/mock.txt"
+    fi
+    echo "checks passed: $(grep -c '^ok ' "$LOG/mock.txt" || true)"
+    step_ok "$LOG" mock || die "the offline mock did not pass (a refusal, or a check that failed); see $LOG/mock.txt"
 }
 
 # PROOF_OWN: what this run of proof made, as words (read, proof, first), each added as soon
@@ -542,10 +550,20 @@ EOF
 # directory and its pool.
 destroy() {
     proof_lock "destroy waits until it ends"
-    dom_drop "$NAME" "$DISK" || die "$NAME is defined on another disk than $DISK; nothing removed"
-    local d
+    local d rc=0
+    dom_drop "$NAME" "$DISK" || rc=$?
+    case $rc in
+        0) ;;
+        1) die "$NAME is defined on another disk than $DISK; nothing removed" ;;
+        *) die "$NAME could not be undefined (above); nothing removed" ;;
+    esac
     for d in proof first; do
-        dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || die "$NAME-$d is defined on another disk; nothing more removed"
+        rc=0; dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || rc=$?
+        case $rc in
+            0) ;;
+            1) die "$NAME-$d is defined on another disk than its overlay; nothing more removed" ;;
+            *) die "$NAME-$d could not be undefined (above); nothing more removed" ;;
+        esac
     done
     PROOF_OWN="read proof first"; proof_cleanup
     image_close "$VM_ROOT/seal-read"; rm -rf -- "${VM_ROOT:?}/seal-read"

@@ -580,7 +580,8 @@ pool_drop() {
 
 # dom_drop NAME DISK: domain NAME, where one is defined, destroyed and undefined with its
 # firmware store, only when one of its disks is DISK (an absolute path, as libvirt reports
-# it). A domain of that name on any other disk is refused and left alone (exit 1).
+# it). A domain of that name on any other disk is refused and left alone (exit 1). An
+# undefine that fails is exit 2, its cause on stderr.
 dom_drop() {
     [[ "$2" == /* ]] || { echo "REFUSED: dom_drop takes an absolute disk path, not '$2'" >&2; return 1; }
     virsh_ dominfo "$1" >/dev/null 2>&1 || return 0
@@ -591,7 +592,7 @@ dom_drop() {
         return 1
     fi
     virsh_ destroy "$1" >/dev/null 2>&1 || true
-    virsh_ undefine "$1" --nvram >/dev/null
+    virsh_ undefine "$1" --nvram >/dev/null || { echo "REFUSED: $1 could not be undefined" >&2; return 2; }
 }
 
 # step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.
