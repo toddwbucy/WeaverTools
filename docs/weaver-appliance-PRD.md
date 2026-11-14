@@ -11,6 +11,7 @@ of the weaver-agent domain. It binds one charter inside that domain and one outs
 **Bound charters:** `weaver-admin-PRD` in `toddwbucy/WeaverAgent`, and `weaver-web-PRD`
 in `toddwbucy/WeaverWeb`
 **Editorial:** Per the Working Rules. ASCII, absolute dates, prose at 88 characters.
+**Landing PR:** #30
 
 ---
 
