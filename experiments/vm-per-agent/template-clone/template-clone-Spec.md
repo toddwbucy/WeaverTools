@@ -617,12 +617,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     key (the fourth build's proof runs 2 to 4). Only on a match does the proof log in,
     under those keys, as the default account, and read cloud-init's verdict and the
     modules it ran, what became of each user-data ask, the hostname, the network and its
-    wait, `ubuntu.sources`, SSH's units, the stamp's commits and the MANIFEST entries the
-    boot changed. Each boot's serial console, and the no-seed boot's capture, is written by
-    QEMU to a file the proof makes. Only the file's owner and `QEMU_USER` may write it, by a
-    POSIX ACL. QEMU writing through the ACL is unproved until the next build. A file libvirt opens for a serial device becomes libvirt's, unreadable
-    without root, and a file every local account could write would let any of them write
-    the console that trust on first use is read from.
+    wait, `ubuntu.sources`, SSH's units, the stamp's commits, the MANIFEST files the boot
+    changed, and the links it changed, added or removed. For the links, the booted guest's
+    links are formatted on the host the way the seal formats them, so a format that drifted
+    between the two copies would show every link. Each boot's serial console, and the
+    no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
+    owner and `QEMU_USER` may write it, by a POSIX ACL. QEMU writing through the ACL is unproved until the next build. A file libvirt opens for a serial
+    device becomes libvirt's, unreadable without root, and a file every local account could
+    write would let any of them write the console that trust on first use is read from.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
 (cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it; kept until a carded load
@@ -677,9 +679,23 @@ line, sorted:
 The stamp is where a later reader finds the commits the image was compiled from, with no
 build log: `weaveragent.commit` and `weaverweb.commit`, with their origins.
 
-`/etc/weaver-appliance/MANIFEST` holds the sha256 of every regular file under `/usr`,
-`/etc`, `/opt`, `/boot` and `/boot/efi`, less itself and GRUB's environment block, which
-GRUB writes at boot. The image's identity is the MANIFEST's sha256.
+`/etc/weaver-appliance/MANIFEST` covers `/usr`, `/etc`, `/opt`, `/boot` and `/boot/efi`
+in two parts. The image's identity is the MANIFEST's sha256, which covers both parts.
+- **Regular files:** the sha256 of each one, as `sha256sum` writes it, less the MANIFEST
+  itself and GRUB's environment block, which GRUB writes at boot.
+- **Symbolic links:** after the marker line `# links: path TAB target, C-locale order`,
+  one line per link: its path, a tab, and its target as stored. In both fields, backslash,
+  tab and newline are escaped as `\\`, `\t` and `\n`.
+
+Both parts are in C-locale order. A mask is a link, and unmasking a unit changes what the
+image does, so a MANIFEST that cannot see links does not name the image (the Planner's
+call of 2026-11-14). To check the files with `sha256sum -c`, feed it the lines above the
+marker.
+
+**The form changed after the fourth build.** The third and fourth builds used the earlier
+form: regular files only, with no marker and no links section. Their identities
+(`cd1ce9c4...` and `1374f698...`) do not cover the masks or any other link. The stamp's
+`manifest.scope` line says which form an image has.
 
 **Seams left clean.** The image boots with no agent, no connector config, no unit
 instance, no credential, no key and no login account; SSH is enabled and answers once the

@@ -152,6 +152,7 @@ proof() {
     image_close "$r"
     if [ -f "$out/MANIFEST" ]; then
         sha256sum "$out/MANIFEST" | tee "$out/identity.txt"
+        echo "MANIFEST: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } { n++ } END { print n + 0 }' "$out/MANIFEST") files, $(manifest_links "$out/MANIFEST" | wc -l) links" | tee -a "$out/identity.txt"
     else
         echo "no MANIFEST in the image"; [ ! -f "$out/SEAL-REFUSED" ] || cat "$out/SEAL-REFUSED"
     fi
@@ -317,9 +318,22 @@ EOF
                 echo "== keys_to_console in cloud-init.log"; sudo grep -E "keys_to_console|keys-to-console" /var/log/cloud-init.log | grep -iE "running|ran" | tail -3
                 echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
                 echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
-                echo "== MANIFEST entries the first boot changed or removed"; sudo sha256sum --quiet -c /etc/weaver-appliance/MANIFEST 2>&1 | head -60
+                echo "== MANIFEST files the first boot changed or removed"; awk "/^# links: /{exit} 1" /etc/weaver-appliance/MANIFEST | sudo sha256sum --quiet -c - 2>&1 | head -60
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
                 || echo "(the login exited $?)"
+            # The links section set against the booted guest's links, formatted here as the
+            # seal formats them; a format that drifted would show every link.
+            echo "== MANIFEST links the first boot changed, added or removed (- sealed, + booted)"
+            if [ -n "$(manifest_links "$out/MANIFEST" | head -1)" ]; then
+                KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
+                    "sudo find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>/dev/null \
+                    | links_format >"$pdir/links-booted" || echo "(the links read exited non-zero)"
+                diff <(manifest_links "$out/MANIFEST") "$pdir/links-booted" \
+                    | sed -n 's/^</-/p; s/^>/+/p' | head -60 || true
+                echo "(sealed $(manifest_links "$out/MANIFEST" | wc -l), booted $(wc -l <"$pdir/links-booted"))"
+            else
+                echo "(no links section: a MANIFEST of the earlier form)"
+            fi
         else
             echo "trust on first use: NO MATCH; no login"
             echo "console: ${cfp:-none}"; echo "ssh: ${sfp:-none}"

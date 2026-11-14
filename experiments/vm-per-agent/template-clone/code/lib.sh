@@ -372,6 +372,22 @@ qemu_file() {
         || die "cannot make $1 writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 
+# The MANIFEST's links section (guest/template-steps, links_list and LINKS_MARK; the two
+# copies change together). links_format takes find's NUL-separated path and target pairs
+# on stdin and writes the section's lines; manifest_links prints a MANIFEST's section, empty
+# for a MANIFEST of the earlier form (regular files only).
+LINKS_MARK='# links: path TAB target, C-locale order'
+MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
+links_format() {
+    local p t
+    while IFS= read -r -d '' p && IFS= read -r -d '' t; do
+        p=${p//\\/\\\\}; p=${p//$'\t'/\\t}; p=${p//$'\n'/\\n}
+        t=${t//\\/\\\\}; t=${t//$'\t'/\\t}; t=${t//$'\n'/\\n}
+        printf '%s\t%s\n' "$p" "$t"
+    done | LC_ALL=C sort -u
+}
+manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
+
 # pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
 # undefined (virt-install makes one for each directory a --disk path names).
 pool_drop() {

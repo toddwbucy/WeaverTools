@@ -748,6 +748,38 @@ seal() {
     echo "the final step runs as root once this session ends; it powers the guest off"
 }
 
+# The MANIFEST's form (changed after the fourth build; the third and fourth used the
+# earlier form, regular files only). First every regular file in the scope, as sha256sum
+# writes it; then the marker line LINKS_MARK; then one line per symbolic link in the same
+# scope: its path, a tab, and its target as stored, each with backslash, tab and newline
+# escaped as \\, \t and \n. Both parts in C-locale order. A mask is a link, so the links
+# section is what lets the identity see a unit masked or unmasked. build-template.sh's
+# proof writes the same form (links_format) and must change with it.
+LINKS_MARK='# links: path TAB target, C-locale order'
+MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
+
+# links_list: the links section's lines, from find's NUL-separated path and target pairs.
+links_list() {
+    local p t
+    # shellcheck disable=SC2086
+    find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' 2>/dev/null |
+        while IFS= read -r -d '' p && IFS= read -r -d '' t; do
+            p=${p//\\/\\\\}; p=${p//$'\t'/\\t}; p=${p//$'\n'/\\n}
+            t=${t//\\/\\\\}; t=${t//$'\t'/\\t}; t=${t//$'\n'/\\n}
+            printf '%s\t%s\n' "$p" "$t"
+        done | LC_ALL=C sort -u
+}
+
+# manifest_write OUT: the MANIFEST in the form above.
+manifest_write() {
+    {
+        # shellcheck disable=SC2086
+        find $MANIFEST_SCOPE -xdev -type f -not -path "$RECORD/MANIFEST*" \
+            -not -path /boot/grub/grubenv -print0 2>/dev/null | LC_ALL=C sort -zu | xargs -0 sha256sum &&
+            printf '%s\n' "$LINKS_MARK" && links_list
+    } >"$1"
+}
+
 # seal_final: as root, from /run. Waits for the build account's sessions to end, removes
 # the account, the identity and the logs, runs the probes again, and writes the stamp and
 # then the MANIFEST last. A probe that hits writes SEAL-REFUSED and no MANIFEST. Either
@@ -788,7 +820,7 @@ seal_final() {
     {
         printf 'sealed = %s\n' "$(date -u +%FT%TZ)"
         for k in $(ls "$BUILD/stamp.d" | sort); do printf '%s = %s\n' "$k" "$(cat "$BUILD/stamp.d/$k")"; done
-        printf 'manifest.scope = %s\n' "/usr /etc /opt /boot /boot/efi, regular files, less the MANIFEST and /boot/grub/grubenv"
+        printf 'manifest.scope = %s\n' "$MANIFEST_SCOPE, regular files less the MANIFEST and /boot/grub/grubenv, then symbolic links (path and target)"
     } >"$RECORD/stamp.part"
     rm -rf -- "$BUILD" /usr/local/sbin/template-steps
     if ! probes final >"$RECORD/seal-probes" 2>&1; then
@@ -801,11 +833,10 @@ seal_final() {
         echo "probes passed; writing the MANIFEST $(date -u +%FT%TZ)"
         cp "$log" "$RECORD/seal-final.log"
         chmod 0644 "$RECORD/stamp" "$RECORD/seal-probes" "$RECORD/seal-final.log"
-        # The MANIFEST last.
-        find /usr /etc /opt /boot /boot/efi -xdev -type f -not -path "$RECORD/MANIFEST*" \
-            -not -path /boot/grub/grubenv -print0 2>/dev/null | sort -zu | xargs -0 sha256sum >"$RECORD/MANIFEST.part" \
+        # The MANIFEST last: regular files, then links.
+        manifest_write "$RECORD/MANIFEST.part" \
             && mv "$RECORD/MANIFEST.part" "$RECORD/MANIFEST" && chmod 0644 "$RECORD/MANIFEST"
-        echo "stamp and MANIFEST written: $(wc -l <"$RECORD/MANIFEST") files"
+        echo "stamp and MANIFEST written: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } { if (l) n++; else f++ } END { print f + 0 " files, " n + 0 " links" }' "$RECORD/MANIFEST")"
     fi
     sync; fstrim -av
     echo "seal-final done $(date -u +%FT%TZ); powering off"
