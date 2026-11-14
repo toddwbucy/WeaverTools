@@ -304,9 +304,11 @@ import struct, sys
 from collections import Counter
 data = open(sys.argv[1], "rb").read()
 if len(data) < 24:
-    print("capture: empty (no frame header written)"); sys.exit(0)
+    print("capture: empty (no frame header written)")
+    print("PROOF-FAIL: the no-seed boot's capture holds no header, so the capture did not run")
+    sys.exit(0)
 endian = "<" if data[:4] in (b"\xd4\xc3\xb2\xa1", b"\x4d\x3c\xb2\xa1") else ">"
-off, kinds = 24, Counter()
+off, kinds, guest = 24, Counter(), 0
 # Every field is read only where the frame is long enough for it. A short frame, or a
 # record cut off at the end of the file, is counted as such and never stops the proof.
 while off + 16 <= len(data):
@@ -314,6 +316,9 @@ while off + 16 <= len(data):
     if off + 16 + incl > len(data):
         kinds["record cut off at the end of the capture"] += 1; break
     f = data[off + 16:off + 16 + incl]; off += 16 + incl
+    # QEMU's user-mode network answers from MAC addresses 52:55:..., every other frame is
+    # the guest's own (one too short to name its source is counted as the guest's).
+    if len(f) < 12 or f[6:8] != b"\x52\x55": guest += 1
     if len(f) < 14:
         kinds["frame shorter than an Ethernet header"] += 1; continue
     et = struct.unpack("!H", f[12:14])[0]
@@ -329,16 +334,19 @@ while off + 16 <= len(data):
         name = {67: "DHCP", 68: "DHCP", 53: "DNS", 123: "NTP"}.get(dport) or {67: "DHCP", 53: "DNS"}.get(sport)
         kinds["IPv4 " + (name or {1: "ICMP", 6: f"TCP to {dport}", 17: f"UDP to {dport}"}.get(proto, f"proto {proto}"))] += 1
     else: kinds[f"ethertype {et:#06x}"] += 1
-print(f"capture: {sum(kinds.values())} frames")
+print(f"capture: {sum(kinds.values())} frames, {guest} sent by the guest")
 for k, n in sorted(kinds.items()): print(f"  {k}: {n}")
+# An image that configures no network sends nothing (the fourth build's five boots sent
+# none), so any frame the guest sends fails the proof.
+if guest: print(f"PROOF-FAIL: the no-seed boot sent {guest} frame(s); an image with no network configured sends none")
 PY
     proof_first_boot "$out"
-    # The verdict: every finding of the offline read's late writes and of the first boot
-    # fails the proof, after both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
+    # The verdict: every finding of the offline read's late writes, of the no-seed boot's
+    # capture and of the first boot fails the proof, after both boots' records are kept.
+    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt and $out/first-boot.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt, $out/boot-frames.txt and $out/first-boot.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"

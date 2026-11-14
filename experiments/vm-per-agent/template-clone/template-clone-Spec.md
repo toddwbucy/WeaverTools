@@ -666,7 +666,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     sealed image carries no guard of its own and the second build's no-seed boot,
     unrestricted, reached public time servers and resolved their names through the host's
     resolver. The capture still holds every frame the guest sends, and past QEMU's own DHCP
-    none is answered. Then a second overlay booted as a first boot, with no host key, from
+    none is answered. An image that configures no network sends nothing, so any frame the
+    guest sends fails the proof (the fourth build's five boots sent none), and so does a
+    capture with no header, which did not run. Then a second overlay booted as a first boot, with no host key, from
     a seed in three parts. Its meta-data names an SSH key and a hostname. Its
     network-config names a static address, gateway and resolver. Its user-data asks for a
     bootcmd, a runcmd, a package and an account, all of which must be discarded. That
