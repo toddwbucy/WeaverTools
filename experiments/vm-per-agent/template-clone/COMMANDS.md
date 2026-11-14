@@ -47,6 +47,9 @@ qemu-system-x86_64 -M none -display none -netdev passt,id=p0
 
 ## The template
 
+These are #21's steps as run on 2026-11-11. `build-template.sh` and `guest/template-steps`
+have since become the appliance build (below), which has no `ship` and no `nvidia` step.
+
 ```bash
 git -C <WeaverAgent checkout> bundle create $VM_ROOT/seed/weaveragent.bundle code/unseeded-turn-check
 
@@ -156,3 +159,23 @@ the host's load average and its outcome; the test-only runs by the same kind of 
 `gnu-coreutils` was the step as first written (Ubuntu's package switch), which apt's
 solver refused without removing `coreutils-from-uutils`; the step was then rewritten as
 `gnu-test`, and `code/guest/clone-steps` carries the rewritten one.
+
+## The appliance image (2026-11-14)
+
+The first cardless build, on a throwaway `VM_ROOT` with its own login key, torn down
+after (`template-clone-Spec.md`, section 10). The inputs are named on every command:
+
+```bash
+export VM_ROOT=... NAME=weaver-appliance-build1 PORT=...
+export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt
+export WA_COMMIT=d640ea818a58b68984e540abfd67c58e5351eb06   # WeaverAgent main, 2026-11-14
+export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 2026-11-14
+code/build-template.sh create
+for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
+  code/build-template.sh step "$s" || break
+done
+code/build-template.sh seal
+code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 1)
+code/build-template.sh destroy
+```
+
