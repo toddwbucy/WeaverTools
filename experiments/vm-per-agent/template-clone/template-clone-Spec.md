@@ -1,6 +1,7 @@
 # template-clone - Spec
 
-**Status:** DRAFT. On the `act/vm-template` stack, toddwbucy/WeaverTools #21.
+**Status:** DRAFT. Landed on `main` with toddwbucy/WeaverTools #21. Section 10 and the
+appliance build's changes elsewhere are on the `act/appliance-build` stack.
 
 **Date filed:** 2026-11-12
 **Document ID:** `template-clone-Spec`
@@ -79,7 +80,7 @@ default where a default would be a box path, a host name, an account, an address
 | `TOOLCHAIN_READING` | the `rustc --version` line the harness preflight must read | none |
 | `APT_LISTS`, `APT_CACHE` | the guest's apt lists and archive cache, which `gpu-steps` reads and fills; the offline mock (section 8) points them at its own | apt's own directories |
 | `RELAXED_LOCK` | the lock file that keeps a guest to one `-relaxed` step at a time (section 8); the offline mock points it at its own | `$HOME/.weaver-relaxed.lock`, in the operator's home |
-| `OS` | the appliance image's operating system (section 10): `26.04`; `24.04` is named and refused until its cloud image is pinned | none for `build-template.sh create`; `clone.sh` gets 26.04 |
+| `OS` | the appliance image's operating system (section 10): `26.04`, with `24.04` named and refused until its cloud image is pinned | none for `build-template.sh create`, 26.04 for `clone.sh` |
 | `DRIVER`, `DRIVER_ROUTE` | the driver release the image carries and the route it comes by (section 10) | none |
 | `COMPUTE_CAP` | the compute capability the image's CUDA kernels are compiled for, without its dot (section 10) | none |
 | `WA_COMMIT`, `WW_COMMIT` | the WeaverAgent and WeaverWeb commits the image is compiled from, each in full | none |
@@ -87,7 +88,7 @@ default where a default would be a box path, a host name, an account, an address
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
 | `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's fingerprint block on the console | 300 |
-| `QEMU_USER` | the account QEMU runs as under libvirt's system connection; `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens | `libvirt-qemu` |
+| `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -530,36 +531,36 @@ a domain argument a caller passes. That network is the operator's to rule (`READ
 ## 10. The appliance build
 
 `build-template.sh` builds the appliance image: one sealed qcow2 that an operator loads into
-their own hypervisor (Proxmox or plain KVM first), never booted again as itself. On the
-operator's rulings of 2026-11-14 the binaries are compiled inside the image's own build
-guest from two named commits, in place, and the guest is then cleaned by a checked list
-and sealed. Nothing built on the host enters the image.
+their own KVM hypervisor, never booted again as itself. KVM first. Proxmox is out of
+scope (WeaverTools #29). On the operator's rulings of 2026-11-14 the binaries are compiled
+inside the image's own build guest from two named commits, in place, and the guest is then
+cleaned by a checked list and sealed. Nothing built on the host enters the image.
 
 **Inputs, all named.** `OS` (the cloud image by digest, section 1), `DRIVER` and
 `DRIVER_ROUTE`, `COMPUTE_CAP`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses
 unless all six are set. `COMPUTE_CAP` is the compute capability the CUDA kernels are
 compiled for, without its dot. The build guest has no card to read it from, so it is
-named, and the stamp records it. `DRIVER` has one form on the host and in the guest, one regex in both scripts (a
-release such as `615.71.09`), and `DRIVER_ROUTE` is `ubuntu-prebuilt`, the one route this
-tree builds. Each guest step is given those that are set on its command line, and a step
-that needs one refuses where it is unset. The build guest has 24 vCPUs and 64 GiB by
-default. The domain a box later runs under is the operator's own.
+named, and the stamp records it. `DRIVER` has one form on the host and in the guest, one
+regex in both scripts (a release such as `615.71.09`), and `DRIVER_ROUTE` is
+`ubuntu-prebuilt`, the one route this tree builds. Each guest step is given those that are
+set on its command line, and a step that needs one refuses where it is unset. The build
+guest has 24 vCPUs and 64 GiB by default. The domain a box later runs under is the
+operator's own.
 
 **The network.** The build guest uses QEMU user-mode networking, as the template did
 (`README.md`, "The network"). The sealed image configures no network: no netplan file, no
 networkd or NetworkManager configuration, no resolver address, and Ubuntu's sources set
 `Enabled: no`. The 26.04 initramfs carries dracut's `systemd-networkd` module, which
-leaves `zzzz-dracut-default.network` (DHCP on every link) in `/run`. The first build's
+leaves `zzzz-dracut-default.network` (DHCP on every link) in `/run`. The second build's
 proof boot with no seed took a lease through it and reached Ubuntu's NTP pool, so the
 cleanup masks it with a link of the same name in `/etc/systemd/network` to `/dev/null`,
 which outranks `/run`. That file was put there by `systemd-networkd` running inside the
 initramfs, which took a lease there on every boot (the third build's proof boot with no
 seed: four DHCP frames, then nothing after the switch to the root filesystem). It is in
-the initramfs because `cloud-initramfs-dyn-netconf`'s dracut module depends on it; the
+the initramfs because `cloud-initramfs-dyn-netconf`'s dracut module depends on it. The
 appliance has no network root, so the cleanup purges that package and makes the
 initramfs again, and a probe checks it holds no networkd. The network is then the first
-boot's seed alone. chrony keeps Ubuntu's NTS pool as its servers; that is not changed
-here.
+boot's seed alone. chrony keeps Ubuntu's NTS pool as its servers, unchanged here.
 
 **cloud-init: the SSH key, the network and the hostname (operator's ruling,
 2026-11-14).** The cleanup writes `/etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg`:
@@ -569,10 +570,10 @@ to `growpart`, `resizefs`, `set_hostname`, `update_hostname`, `update_etc_hosts`
 User-data is discarded before any module runs, so a seed cannot name modules back, run a
 command or install a package. The seed gives the SSH key in its meta-data
 (`public-keys`, for the default account), the hostname in its meta-data
-(`local-hostname`) and the network in its `network-config`; with none, cloud-init's
+(`local-hostname`) and the network in its `network-config`. With none, cloud-init's
 fallback is DHCP on the first link. A key given in user-data is not read. The check is
 cloud-init's own merged system configuration, read the way the next boot reads it.
-`growpart` and `resizefs` take no setting from the seed; they grow the root filesystem to
+`growpart` and `resizefs` take no setting from the seed. They grow the root filesystem to
 the disk the operator gave. Measured on the third build, before this limit: the first
 boot's `apt_configure` rewrote `ubuntu.sources`.
 
@@ -585,13 +586,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 
 **The steps, in order.**
 
-1. `create`: the cloud image becomes a standalone disk; seed, define, boot.
+1. `create`: the cloud image becomes a standalone disk, then the seed, the definition and
+   the boot.
 2. `facts`: the base image's package list is recorded before anything is installed.
 3. `os-probes`: whether `test` run through sudo honours supplementary groups, and whether
    visudo takes the admin connector rule's `Defaults` line, with a throwaway account
    removed in the same step.
 4. `packages`, `rustup`: the build's tools and the toolchain both trees pin.
-5. `trees`: both repositories cloned and checked out detached at their commits; a tree
+5. `trees`: both repositories cloned and checked out detached at their commits. A tree
    not exactly its commit, clean, refuses, as does a toolchain file that names another
    toolchain.
 6. `toolkit`: NVIDIA's repository, the CUDA toolkit pinned to one release, and a CCCL inside
@@ -610,7 +612,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    (no card). The install tuple's commit must equal `WA_COMMIT`. The deploy scripts are
    copied to `/opt/weaver/deploy` before the checkout goes.
 9. `connectors`: `gate-con` and `admin-con` built with no default features and installed.
-   No unit is laid: the image half of WeaverWeb's staging is that repository's act.
+   No unit is laid: the image half of WeaverWeb's staging is that repository's act. From
+   the next build on, `build-template.sh mock` runs the offline mock after this step
+   (section 8).
 10. `cleanup`: the source trees and build directories, the Rust toolchain and cargo's
     caches, every package the build added but the runtime set, the CUDA repository,
     `git`, `unattended-upgrades` and `snapd`. Every installed package the build-package
@@ -619,10 +623,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     `bpftrace` and the BPF compiler collection, which depend on libclang. Those, and the
     metapackages and libraries that go with them, are named. Every other base package is
     marked manual first, and a simulation must remove no package of the runtime set and no
-    base package but those named or matched. Then `ldconfig` and the loader check, the
-    update units masked, apt's periodic jobs off, the sources disabled, the caches emptied,
+    base package but those named or matched. Then `ldconfig` and the loader check,
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
-    again without networkd. A rerun keeps the first run's size before the cleanup.
+    again without networkd, and last the update units masked, apt's periodic jobs off, the
+    sources disabled and the caches emptied. A rerun keeps the first run's size before the
+    cleanup.
 11. `seal`: the probes over SSH, the system libraries' records, then a root oneshot once
     the session ends. It removes the build account and its sudoers rule, the SSH host
     keys, the machine identity, cloud-init's state and the logs, assembles the stamp from
@@ -643,14 +648,16 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
     FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC
-    sends captured and counted by kind. That NIC is `restrict=on` (section 4), because the sealed image carries no guard of its own and the second build's no-seed boot, unrestricted, reached public time servers and resolved their names through the host's resolver. The capture
-    still holds every frame the guest sends, and past QEMU's own DHCP none is answered.
-    Then a second overlay booted as a first boot: a
-    seed whose meta-data names an SSH key and a hostname, with no host key; whose
-    network-config names a static address, gateway and resolver; and whose user-data asks
-    for a bootcmd, a runcmd, a package and an account, all of which must be discarded. Its
-    network is QEMU's `restrict=on`, with the SSH forward. The network is named because
-    `restrict=on` DHCP offers no gateway and no resolver, and netplan's wait
+    sends captured and counted by kind. That NIC is `restrict=on` (section 4), because the
+    sealed image carries no guard of its own and the second build's no-seed boot,
+    unrestricted, reached public time servers and resolved their names through the host's
+    resolver. The capture still holds every frame the guest sends, and past QEMU's own DHCP
+    none is answered. Then a second overlay booted as a first boot, with no host key, from
+    a seed in three parts. Its meta-data names an SSH key and a hostname. Its
+    network-config names a static address, gateway and resolver. Its user-data asks for a
+    bootcmd, a runcmd, a package and an account, all of which must be discarded. That
+    overlay's network is QEMU's `restrict=on`, with the SSH forward. The network is named
+    because `restrict=on` DHCP offers no gateway and no resolver, and netplan's wait
     (`systemd-networkd-wait-online --any --dns -o routable`) then holds the boot for its
     full 120 s (the fourth build's first proof run): an appliance on a network with no
     default route or no resolver pays that wait on every boot. The fingerprints on the
@@ -666,9 +673,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     links are formatted on the host the way the seal formats them, so a format that drifted
     between the two copies would show every link. Each boot's serial console, and the
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
-    owner and `QEMU_USER` may write it, by a POSIX ACL. QEMU writing through the ACL is unproved until the next build. A file libvirt opens for a serial
-    device becomes libvirt's, unreadable without root, and a file every local account could
-    write would let any of them write the console that trust on first use is read from.
+    owner and `QEMU_USER` may write it, by a POSIX ACL. QEMU writing through the ACL is
+    unproved until the next build. A file libvirt opens for a serial device becomes
+    libvirt's, unreadable without root, and a file every local account could write would
+    let any of them write the console that trust on first use is read from.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
     refusal, is not booted at all. After both boots, each finding the first boot recorded
     fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
@@ -688,27 +696,28 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     on any other disk. It then removes whatever a proof or a seal left.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
-(cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it; kept until a carded load
-shows it is never mapped), the driver's packages (its compute library whole, with
+(cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it, and it is kept until a carded
+load shows it is never mapped), the driver's packages (its compute library whole, with
 `nvidia-smi` and NVML), `acl`, the C++ runtime and `python3`.
 
 **The probes.** Any hit refuses the seal:
-- compilers, toolchains and build tools on a fixed PATH;
-- their directories, static CUDA archives and the build packages;
-- source trees and build directories anywhere on the root filesystem;
-- package caches;
+- compilers, toolchains and build tools on a fixed PATH
+- their directories, static CUDA archives and the build packages
+- source trees and build directories anywhere on the root filesystem
+- package caches
 - apt sources enabled, update units unmasked, `unattended-upgrades` or `snapd`, an apt
-  proxy;
+  proxy
 - a resolver address, networkd or NetworkManager configuration, the initramfs's
-  catch-all network not masked, or networkd in the initramfs;
-- an agent configured, a connector config or unit;
-- a stack member, a connector or a deploy script missing;
-- the loader check failing;
-- more than one kernel (a version-named tree under `/lib/modules`; the 615 module
-  package also ships an empty `/lib/modules/kernel/nvidia-615-open`);
-- the module's preconditions;
-- SSH not enabled; cloud-init not limited to the SSH key, network and hostname, or
-  `keys_to_console` not in its final modules;
+  catch-all network not masked, or networkd in the initramfs
+- an agent configured, a connector config or unit
+- a stack member, a connector or a deploy script missing
+- the loader check failing
+- more than one kernel (a version-named tree under `/lib/modules`, not the empty
+  `/lib/modules/kernel/nvidia-615-open` the 615 module package also ships)
+- the module's preconditions
+- SSH not enabled
+- cloud-init not limited to the SSH key, network and hostname, or `keys_to_console` not
+  in its final modules
 - private-key files. The pre pass leaves out the files the seal itself removes, so a hit
   is found before the removals. A `.pem` is judged by its content: fwupd ships its public
   LVFS CA certificates as `.pem` under `/etc/pki`.
@@ -717,10 +726,12 @@ A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages shi
 `Cargo.lock` under `/usr/share/doc`), nor is man-db's cache tag.
 
 The final pass adds:
-- the build account, shell histories, cloud-init's instance state, netplan files;
-- the machine identity and the SSH host keys, `sshd-keygen.service` not masked;
-- non-empty logs;
-- the build's records or this script still present;
+- the build account, shell histories, cloud-init's instance state, netplan files
+- the machine identity and the SSH host keys, `sshd-keygen.service` not masked
+- non-empty logs
+- the build's records or this script still present
+- a stamp other than the one being sealed: anything in `/etc/weaver-appliance` but the
+  stamp being assembled and the probe record
 - private-key files, the seal's own removals included.
 
 **The stamp and the MANIFEST.** `/etc/weaver-appliance/stamp` holds one `key = value` per
@@ -767,9 +778,9 @@ form: regular files only, with no marker and no links section. Their identities
 `manifest.scope` line says which form an image has.
 
 **Seams left clean.** The image boots with no agent, no connector config, no unit
-instance, no credential, no key and no login account; SSH is enabled and answers once the
+instance, no credential, no key and no login account. SSH is enabled and answers once the
 first boot's seed has made a host key and an account. There is no site-check hook and no
-image key (both ruled out by the operator on 2026-11-14; a condition of the operator's
+image key (both ruled out by the operator on 2026-11-14). A condition of the operator's
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
-it). The first-boot pairing, the data disks' mount points and the console's download are
+it. The first-boot pairing, the data disks' mount points and the console's download are
 later acts.

@@ -162,11 +162,12 @@ solver refused without removing `coreutils-from-uutils`; the step was then rewri
 
 ## The appliance image (2026-11-14)
 
-The first cardless build, on a throwaway `VM_ROOT` with its own login key, torn down
-after (`template-clone-Spec.md`, section 10). The inputs are named on every command:
+A cardless build, on a throwaway `VM_ROOT` with its own login key, torn down after
+(`template-clone-Spec.md`, section 10). The steps are in the order adopted after the first
+build broke at the stack (`driver` before `stack`). The inputs are named on every command:
 
 ```bash
-export VM_ROOT=... NAME=weaver-appliance-build1 PORT=...
+export VM_ROOT=... PORT=...
 export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86
 export WA_COMMIT=d640ea818a58b68984e540abfd67c58e5351eb06   # WeaverAgent main, 2026-11-14
 export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 2026-11-14
@@ -180,4 +181,3 @@ code/build-template.sh seal
 code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
 code/build-template.sh destroy
 ```
-
