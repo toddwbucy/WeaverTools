@@ -70,6 +70,8 @@ default where a default would be a box path, a host name, an account, an address
 | `WA_COMMIT`, `WW_COMMIT` | the WeaverAgent and WeaverWeb commits the image is compiled from, each in full | none |
 | `SEAL_WAIT` | the seconds the host waits for the guest's final seal step to power it off | 1200 |
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
+| `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
+| `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's fingerprint block on the console | 300 |
 | `QEMU_USER` | the account QEMU runs as under libvirt's system connection; `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.

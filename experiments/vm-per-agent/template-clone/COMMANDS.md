@@ -175,7 +175,7 @@ for s in facts os-probes packages rustup trees toolkit driver stack connectors c
   code/build-template.sh step "$s" || break
 done
 code/build-template.sh seal
-code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 1)
+code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
 code/build-template.sh destroy
 ```
 

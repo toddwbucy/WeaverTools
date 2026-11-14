@@ -232,15 +232,25 @@ if len(data) < 24:
     print("capture: empty (no frame header written)"); sys.exit(0)
 endian = "<" if data[:4] in (b"\xd4\xc3\xb2\xa1", b"\x4d\x3c\xb2\xa1") else ">"
 off, kinds = 24, Counter()
+# Every field is read only where the frame is long enough for it. A short frame, or a
+# record cut off at the end of the file, is counted as such and never stops the proof.
 while off + 16 <= len(data):
     _, _, incl, _ = struct.unpack(endian + "IIII", data[off:off + 16])
+    if off + 16 + incl > len(data):
+        kinds["record cut off at the end of the capture"] += 1; break
     f = data[off + 16:off + 16 + incl]; off += 16 + incl
-    et = struct.unpack("!H", f[12:14])[0] if len(f) >= 14 else 0
+    if len(f) < 14:
+        kinds["frame shorter than an Ethernet header"] += 1; continue
+    et = struct.unpack("!H", f[12:14])[0]
     if et == 0x0806: kinds["ARP"] += 1
-    elif et == 0x86DD: kinds["IPv6 " + {58: "ICMPv6"}.get(f[20], f"proto {f[20]}")] += 1
+    elif et == 0x86DD:
+        kinds["IPv6 " + ({58: "ICMPv6"}.get(f[20], f"proto {f[20]}") if len(f) > 20 else "frame too short")] += 1
     elif et == 0x0800:
+        if len(f) < 34:
+            kinds["IPv4 frame too short"] += 1; continue
         proto, ihl = f[23], (f[14] & 15) * 4
-        sport, dport = struct.unpack("!HH", f[14 + ihl:18 + ihl]) if proto in (6, 17) else (0, 0)
+        sport, dport = (struct.unpack("!HH", f[14 + ihl:18 + ihl])
+                        if proto in (6, 17) and len(f) >= 18 + ihl else (0, 0))
         name = {67: "DHCP", 68: "DHCP", 53: "DNS", 123: "NTP"}.get(dport) or {67: "DHCP", 53: "DNS"}.get(sport)
         kinds["IPv4 " + (name or {1: "ICMP", 6: f"TCP to {dport}", 17: f"UDP to {dport}"}.get(proto, f"proto {proto}"))] += 1
     else: kinds[f"ethertype {et:#06x}"] += 1
@@ -275,7 +285,7 @@ PY
 # cloud-init judged the boot degraded (measured on the fourth build); the seed's static
 # network is also the third setting the operator ruled cloud-init takes.
 proof_first_boot() {
-    local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 1))}
+    local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 100))}
     local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
     virsh_ dominfo "$pn" >/dev/null 2>&1 && die "$pn is already defined"
     mkdir -p "$pdir/seed"
