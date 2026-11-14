@@ -593,9 +593,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     masked: at first boot cloud-init makes the account and the host keys from the
     operator's seed and its `keys_to_console` prints the keys' fingerprints on the serial
     console, the trust on first use at the SSH step the operator ruled on 2026-11-14. If
-    any probe hits it writes `SEAL-REFUSED` and no MANIFEST; otherwise it writes the
-    stamp and then the MANIFEST last, and powers off. The seal's removals cannot be
-    undone, so a refused image is destroyed and the build begins again from `create`.
+    any probe hits, it writes `SEAL-REFUSED` and no MANIFEST. Otherwise it writes the
+    stamp and then the MANIFEST last. If the MANIFEST cannot be written whole, the stamp
+    goes too and it writes `SEAL-REFUSED`. Either way it powers off. On the host, `seal`
+    then reads the verdict out of the image before it marks anything sealed. A refusal,
+    a missing MANIFEST, or a stamp that does not name both commits stops it there, with
+    the domain defined and the disk writable, for `destroy`. Only a passing verdict is
+    followed by the undefine, the read-only disk and the sha256. The seal's removals
+    cannot be undone, so a refused image is destroyed and the build begins again from
+    `create`.
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
     FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC
@@ -625,6 +631,12 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     owner and `QEMU_USER` may write it, by a POSIX ACL. QEMU writing through the ACL is unproved until the next build. A file libvirt opens for a serial
     device becomes libvirt's, unreadable without root, and a file every local account could
     write would let any of them write the console that trust on first use is read from.
+    **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
+    refusal, is not booted at all. After both boots, each finding the first boot recorded
+    fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
+    are a fingerprint mismatch, a failed login, a user-data ask carried out (the
+    command, the package or the account), a cloud-init status other than done (exit 1
+    an error, 2 degraded), and a stamp that does not name both commits.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
 (cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it; kept until a carded load

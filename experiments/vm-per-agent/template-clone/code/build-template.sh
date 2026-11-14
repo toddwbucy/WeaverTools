@@ -105,6 +105,25 @@ seal() {
     done
     echo "shut off after ${t}s"
     virsh_ dumpxml "$NAME" >"$LOG/domain-sealed.xml"
+    # The final step's verdict, read out of the image before anything marks it sealed: a
+    # MANIFEST, no SEAL-REFUSED, and a stamp naming both commits. A refused or incomplete
+    # seal stops here, with the domain defined and the disk writable, for destroy.
+    local r=$VM_ROOT/seal-read v
+    image_open "$DISK" "$r"
+    for v in SEAL-REFUSED MANIFEST stamp seal-final.log; do
+        image_cat "$r" "/etc/weaver-appliance/$v" >"$LOG/sealed-$v" || true
+        [ -s "$LOG/sealed-$v" ] || rm -f "$LOG/sealed-$v"
+    done
+    image_close "$r"
+    if [ -f "$LOG/sealed-SEAL-REFUSED" ]; then
+        cat "$LOG/sealed-SEAL-REFUSED"
+        die "the seal refused (above, and $LOG/sealed-seal-final.log); the image is not sealed"
+    fi
+    [ -s "$LOG/sealed-MANIFEST" ] || die "the image holds no MANIFEST; the image is not sealed (see $LOG/sealed-seal-final.log)"
+    for v in weaveragent.commit weaverweb.commit; do
+        grep -qE "^$v = [0-9a-f]{40}$" "$LOG/sealed-stamp" 2>/dev/null \
+            || die "the image's stamp names no $v; the image is not sealed"
+    done
     # The sealed image is never booted again as itself: its domain is undefined and the
     # disk made read-only; proof boots an overlay.
     virsh_ undefine "$NAME" --nvram >/dev/null
@@ -150,12 +169,13 @@ proof() {
         image_cat "$r" /etc/apt/sources.list.d/ubuntu.sources | grep -i '^Enabled' || echo "(none)"
     } >"$out/network-and-updates.txt" 2>&1
     image_close "$r"
-    if [ -f "$out/MANIFEST" ]; then
-        sha256sum "$out/MANIFEST" | tee "$out/identity.txt"
-        echo "MANIFEST: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } { n++ } END { print n + 0 }' "$out/MANIFEST") files, $(manifest_links "$out/MANIFEST" | wc -l) links" | tee -a "$out/identity.txt"
-    else
-        echo "no MANIFEST in the image"; [ ! -f "$out/SEAL-REFUSED" ] || cat "$out/SEAL-REFUSED"
+    # An image with no MANIFEST, or with a refusal, is not sealed: nothing is booted.
+    if [ -f "$out/SEAL-REFUSED" ] || [ ! -f "$out/MANIFEST" ]; then
+        [ ! -f "$out/SEAL-REFUSED" ] || cat "$out/SEAL-REFUSED"
+        die "no MANIFEST in the image, or a seal refusal: not a sealed image; nothing booted"
     fi
+    sha256sum "$out/MANIFEST" | tee "$out/identity.txt"
+    echo "MANIFEST: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } { n++ } END { print n + 0 }' "$out/MANIFEST") files, $(manifest_links "$out/MANIFEST" | wc -l) links" | tee -a "$out/identity.txt"
     # The overlay boot. The capture and console files are made here, writable by their
     # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
@@ -203,6 +223,15 @@ print(f"capture: {sum(kinds.values())} frames")
 for k, n in sorted(kinds.items()): print(f"  {k}: {n}")
 PY
     proof_first_boot "$out"
+    # The verdict: every finding the first boot recorded fails the proof, after both boots'
+    # records are kept.
+    grep '^PROOF-FAIL: ' "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
+    if [ -s "$out/PROOF-FAILED" ]; then
+        cat "$out/PROOF-FAILED"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/first-boot.txt"
+    fi
+    rm -f "$out/PROOF-FAILED"
+    echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
 }
 
 # proof_first_boot OUT: a second overlay, booted as an operator's first boot is: a seed
@@ -304,13 +333,20 @@ EOF
                 echo "trust on first use: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the console's $(wc -l <<<"$cfp")); SSH did not present: $(comm -23 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
             fi
             KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" '
-                echo "== cloud-init status"; cloud-init status --long; echo "(exit $?)"
+                echo "== cloud-init status"; cloud-init status --long; rc=$?; echo "(exit $rc)"
+                [ "$rc" = 0 ] || echo "PROOF-FAIL: cloud-init status exited $rc (1 an error, 2 degraded)"
                 echo "== user-data and vendor-data"; sudo grep -E "allow_userdata|vendordata2? consumption|vendor_data" /var/log/cloud-init.log | tail -4
                 echo "== modules cloud-init ran"; sudo grep -oE "running (config|modules)-[a-z_]+" /var/log/cloud-init.log | sort -u
                 echo "== the user-data asks"
-                for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do [ -e "$m" ] && echo "RAN: $m" || echo "not run: ${m##*-}"; done
-                dpkg-query -W -f "\${db:Status-Abbrev} \${Package}\n" hello 2>/dev/null | grep -q "^ii" && echo "INSTALLED: hello" || echo "not installed: hello"
-                getent passwd weaver-proof-extra >/dev/null && echo "MADE: weaver-proof-extra" || echo "not made: weaver-proof-extra"
+                for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do
+                    if [ -e "$m" ]; then echo "RAN: $m"; echo "PROOF-FAIL: the user-data ${m##*-} ran"; else echo "not run: ${m##*-}"; fi
+                done
+                if dpkg-query -W -f "\${db:Status-Abbrev} \${Package}\n" hello 2>/dev/null | grep -q "^ii"; then
+                    echo "INSTALLED: hello"; echo "PROOF-FAIL: the user-data package hello was installed"
+                else echo "not installed: hello"; fi
+                if getent passwd weaver-proof-extra >/dev/null; then
+                    echo "MADE: weaver-proof-extra"; echo "PROOF-FAIL: the user-data account weaver-proof-extra was made"
+                else echo "not made: weaver-proof-extra"; fi
                 echo "== the hostname"; hostname
                 echo "== the network as the seed named it"; ip -br addr show nic0; ip route; resolvectl dns nic0 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
@@ -318,9 +354,11 @@ EOF
                 echo "== keys_to_console in cloud-init.log"; sudo grep -E "keys_to_console|keys-to-console" /var/log/cloud-init.log | grep -iE "running|ran" | tail -3
                 echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
                 echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
+                n=$(grep -cE "^(weaveragent|weaverweb)\.commit = [0-9a-f]{40}$" /etc/weaver-appliance/stamp)
+                [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
                 echo "== MANIFEST files the first boot changed or removed"; awk "/^# links: /{exit} 1" /etc/weaver-appliance/MANIFEST | sudo sha256sum --quiet -c - 2>&1 | head -60
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
-                || echo "(the login exited $?)"
+                || echo "PROOF-FAIL: the login as the default account, or its reads, exited $?"
             # The links section set against the booted guest's links, formatted here as the
             # seal formats them; a format that drifted would show every link.
             echo "== MANIFEST links the first boot changed, added or removed (- sealed, + booted)"
@@ -336,6 +374,7 @@ EOF
             fi
         else
             echo "trust on first use: NO MATCH; no login"
+            echo "PROOF-FAIL: trust on first use: the console's fingerprints do not name the keys SSH presents"
             echo "console: ${cfp:-none}"; echo "ssh: ${sfp:-none}"
         fi
     } >"$out/first-boot.txt" 2>&1

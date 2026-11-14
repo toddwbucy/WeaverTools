@@ -833,10 +833,18 @@ seal_final() {
         echo "probes passed; writing the MANIFEST $(date -u +%FT%TZ)"
         cp "$log" "$RECORD/seal-final.log"
         chmod 0644 "$RECORD/stamp" "$RECORD/seal-probes" "$RECORD/seal-final.log"
-        # The MANIFEST last: regular files, then links.
-        manifest_write "$RECORD/MANIFEST.part" \
-            && mv "$RECORD/MANIFEST.part" "$RECORD/MANIFEST" && chmod 0644 "$RECORD/MANIFEST"
-        echo "stamp and MANIFEST written: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } { if (l) n++; else f++ } END { print f + 0 " files, " n + 0 " links" }' "$RECORD/MANIFEST")"
+        # The MANIFEST last: regular files, then links. If it cannot be written whole, the
+        # stamp goes too and the seal refuses: an image with a stamp and no MANIFEST is not
+        # sealed.
+        if manifest_write "$RECORD/MANIFEST.part" \
+            && mv "$RECORD/MANIFEST.part" "$RECORD/MANIFEST" && chmod 0644 "$RECORD/MANIFEST"; then
+            echo "stamp and MANIFEST written: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } { if (l) n++; else f++ } END { print f + 0 " files, " n + 0 " links" }' "$RECORD/MANIFEST")"
+        else
+            rm -f "$RECORD/MANIFEST.part" "$RECORD/MANIFEST" "$RECORD/stamp"
+            echo "the MANIFEST could not be written whole $(date -u +%FT%TZ)" >"$RECORD/SEAL-REFUSED"
+            echo "SEAL REFUSED: the MANIFEST could not be written; no stamp, no MANIFEST"
+            cp "$log" "$RECORD/seal-final.log"
+        fi
     fi
     sync; fstrim -av
     echo "seal-final done $(date -u +%FT%TZ); powering off"
