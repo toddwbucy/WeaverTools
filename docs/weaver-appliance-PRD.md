@@ -119,12 +119,17 @@ build tooling and the source trees are removed and the image is sealed. Two reas
 hold. The image then states by commit what code it carries. The binaries are built
 against the libraries they run with.
 
-**A commit does not yet name every byte of an image.** Repeated builds of the image from
-the same commits on 2026-11-14 gave byte-identical files, with two exceptions: the SPU
-and the CUDA engine library, which are the two files that the CUDA compiler produces.
-Those two differed in every build, and the install record moved with them. So the
-identity of an image is its own manifest and its hash. A rebuild from the same commits
-does not confirm an image. Section 13 carries the open cell.
+**A commit does not yet name every byte of an image.** Repeated builds from the same
+commits give byte-identical files, with two exceptions: the SPU and the CUDA engine
+library, which are the two files that the CUDA compiler produces. A measurement on
+2026-11-14 found two causes. The compiler puts its own process id into the names of its
+temporary files, and those names reach the symbol tables of both files. The compiler
+also emits intermediate code that differs from run to run, in 9 of the 264 intermediate
+code images of the engine library. The compiled kernels are identical in every build,
+for every card architecture that the library targets. So the code that a targeted card
+runs does not differ between builds. Until the build changes, the identity of an image
+is its own manifest and its hash, and a rebuild from the same commits does not confirm
+an image. Section 12 carries the election that would close this.
 
 **The image states the commits it was compiled from**, where a reader can find them
 without the build log. WeaverAgent also records, for each released version of the image,
@@ -438,6 +443,15 @@ These are the operator's to rule. Each states the proposal on the table.
 4. **The version scheme of the image.**
 5. **Three design points of the power cap arm.** Proposed: the widest lever that the
    card allows, the order low, high, low, and the prediction written before the run.
+6. **Whether the image is built to be reproducible from its commits.** Two build
+   settings, measured together on 2026-11-14, make every shipped file byte-identical
+   across builds. The first is a compiler flag that fixes the names of the temporary
+   files. The second is a list of card architectures that carries compiled kernels only
+   and no intermediate code. The cost of the second: a card whose architecture is not in
+   the list has no fallback and cannot run the engine. The list that was measured holds
+   the architectures sm_86, sm_89, sm_120 and sm_121. Proposed: adopt both settings for
+   the image, because section 3.4 and the first cell of section 13 both need a rebuild
+   that can be compared with its parent.
 
 ## 13. Open cells, each with what settles it
 
@@ -448,11 +462,9 @@ These are the operator's to rule. Each states the proposal on the table.
   fix to the C library replaces the math library, and a fix to the kernel brings a new
   build of the driver module. Settled by one respin: compare the binaries by digest and
   the output by the probe set.
-- **The CUDA objects across builds.** Whether a build setting makes the two files of
-  section 3.1 reproducible, or whether the identity of an image stays its manifest
-  alone. This bears on the cell above: a respin that recompiles changes those two files
-  even where no code changed. Settled by two builds of one commit in one place, compared
-  by section and then by output on the probe set.
+- **The CUDA objects across builds.** Section 3.1 states what was measured. One cause
+  stays open: why the intermediate code differs from run to run where it is kept. No
+  setting removed it. It matters only if the election of section 12 keeps that code.
 - **The sealed-image run.** Section 11.4. Settled by the cells of issue 28.
 - **Which table holds the default policy on an appliance.** Section 7 leaves two shapes.
   In the first, the image ships no table that drops input, and the table of admin
@@ -476,8 +488,9 @@ These are the operator's to rule. Each states the proposal on the table.
   an appliance takes its time from is not ruled. Settled by the operator's ruling.
 - **Hypervisor formats after KVM, and where images are published for the console to
   find.** Later, and named as later.
-- **The GPU architectures that the stack inside the image is compiled for.** Later, and
-  named as later.
+- **The GPU architectures that the stack inside the image is compiled for.** The
+  election of section 12, item 6, sets this list for the first image. Further
+  architectures are later, and named as later.
 
 One open cell of the brief is retired. The brief asked whether a pairing code is typed
 or scanned. The pairing line of section 5.2 replaced the pairing code.
