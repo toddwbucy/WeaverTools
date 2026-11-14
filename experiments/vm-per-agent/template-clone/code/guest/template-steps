@@ -119,13 +119,16 @@ facts() {
 # run restores the first run's, and a rerun first removes whatever that run left.
 OSP_U=weaver-probe OSP_G=weaver-probe-g OSP_F=/root/probe-0640 OSP_RULE=
 os_probes_undo() {
-    trap '' INT TERM HUP
+    # PIPE as well: a dropped session without a terminal closes pipes rather than sending a
+    # signal, and a child that wrote to one during the undo would die of SIGPIPE. Ignored
+    # here, the children inherit it and get an error instead.
+    trap '' INT TERM HUP PIPE
     sudo rm -f "$OSP_F"
     [ -z "$OSP_RULE" ] || rm -f "$OSP_RULE"
     [ ! -s "$BUILD/os-probes.root-mode" ] || sudo chmod "$(cat "$BUILD/os-probes.root-mode")" /root
     ! getent passwd "$OSP_U" >/dev/null || sudo userdel "$OSP_U"
     ! getent group "$OSP_G" >/dev/null || sudo groupdel "$OSP_G"
-    trap - INT TERM HUP
+    trap - INT TERM HUP PIPE
 }
 os_probes() {
     local u=$OSP_U g=$OSP_G f=$OSP_F rule
@@ -292,7 +295,7 @@ connectors() {
     record connectors.command "$CONNECTORS_CMD" || return 1
     record connectors.gate-con "$(sha /opt/weaver-web/bin/gate-con)" || return 1
     record connectors.admin-con "$(sha /opt/weaver-web/bin/admin-con)" || return 1
-    for f in $WW_TEMPLATES; do record "connectors.template.${f##*/}" "$(sha "$WW/$f") (not laid)"; done
+    for f in $WW_TEMPLATES; do record "connectors.template.${f##*/}" "$(sha "$WW/$f") (not laid)" || return 1; done
 }
 
 # The driver, by the operator's route (ruling of 2026-11-14, "route B"): Ubuntu's own 615
