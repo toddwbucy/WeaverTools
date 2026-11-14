@@ -26,16 +26,19 @@ OS_GIVEN=${OS:-}
 # shellcheck source=lib.sh
 source "$HERE/lib.sh"
 
-NAME=${NAME:-weaver-template}
+NAME=${NAME:-weaver-appliance-build}
 PORT=${PORT:-2230}
 # The build's own size: 24 vCPUs for the compile (the operator's word of 2026-11-14). A
 # box is later run under the operator's own definition; this rig's default there is 8.
 VCPUS=${VCPUS:-24}
 MEMORY=${MEMORY:-65536}
 SIZE=${SIZE:-120G}
-DIR=$VM_ROOT/template
-DISK=$DIR/template.qcow2
-LOG=${LOG:-$VM_ROOT/logs/template}
+# The appliance image has its own path and name, apart from the #21 template's
+# ($VM_ROOT/template/template.qcow2), which clone.sh reads and which this script no longer
+# builds (template-clone-Spec.md, section 0).
+DIR=$VM_ROOT/appliance
+DISK=$DIR/appliance.qcow2
+LOG=${LOG:-$VM_ROOT/logs/appliance}
 KNOWN_HOSTS=$DIR/known_hosts
 mkdir -p "$LOG"
 
@@ -77,7 +80,7 @@ create() {
     qemu-img resize -q "$DISK" "$SIZE"
     write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)" "$LOG"
     define_guest "$NAME" "$DISK" "$DIR/seed.iso" "$VCPUS" "$MEMORY" "$PORT" \
-        "$DIR/template_VARS.fd" >"$LOG/virt-install.txt" 2>&1
+        "$DIR/appliance_VARS.fd" >"$LOG/virt-install.txt" 2>&1
     virsh_ dumpxml "$NAME" >"$LOG/domain.xml"
     boot_ok "$PORT" "$LOG" "first-boot-$(date -u +%Y%m%dT%H%M%SZ)" 600
     steps_in
@@ -138,8 +141,8 @@ seal() {
     # The build guest's host key pair, its pin and its seed image, which carries the private
     # key, go with it.
     rm -rf -- "${DIR:?}/hostkey" "${DIR:?}/known_hosts" "${DIR:?}/seed.iso"
-    sha256sum "$DISK" | tee "$LOG/template-sha256.txt"
-    qemu-img info "$DISK" >"$LOG/template-qemu-img-info.txt"
+    sha256sum "$DISK" | tee "$LOG/appliance-sha256.txt"
+    qemu-img info "$DISK" >"$LOG/appliance-qemu-img-info.txt"
 }
 
 # proof: what the sealed image holds, read offline, and what one boot of it sends.

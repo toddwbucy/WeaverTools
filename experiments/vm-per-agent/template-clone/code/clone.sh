@@ -29,10 +29,28 @@ KNOWN_HOSTS=$DIR/known_hosts
 DEB_CACHE=${DEB_CACHE:-$VM_ROOT/debs}
 mkdir -p "$LOG"
 
+# appliance_refuse IMAGE: refuses an appliance image (one that holds /etc/weaver-appliance)
+# with a sentence, read offline before anything is made. The appliance's cloud-init
+# discards user-data, so a clone seed's account, pinned host key and guard would never
+# apply and the clone could not be reached: create would wait out boot_ok's 600 s and die.
+appliance_refuse() {
+    local r=$VM_ROOT/clone-read-$NAME found
+    trap 'image_close "$VM_ROOT/clone-read-$NAME"; rm -rf -- "$VM_ROOT/clone-read-$NAME"' EXIT
+    image_open "$1" "$r"
+    found=$(image_ls "$r" /etc/weaver-appliance)
+    image_close "$r"; rm -rf -- "${r:?}"
+    trap - EXIT
+    [ -z "$found" ] || die "$1 is an appliance image (it holds /etc/weaver-appliance). clone.sh makes clones of the #21 template only: the appliance's cloud-init discards the clone seed's user-data, so the seed's account, pinned host key and guard would never apply and the clone could not be reached. No script in this tree rebuilds the template (template-clone-Spec.md, section 0)."
+}
+
 create() {
     : "${MODELS_DIR:?set MODELS_DIR to the host directory holding the model artifacts}"
     virsh_ dominfo "$NAME" >/dev/null 2>&1 && die "$NAME is already defined"
+    if [ ! -e "$TEMPLATE" ] && [ -e "$VM_ROOT/appliance/appliance.qcow2" ]; then
+        die "no template at $TEMPLATE. $VM_ROOT/appliance/appliance.qcow2 is an appliance image, which clone.sh cannot use, and no script in this tree rebuilds the template (template-clone-Spec.md, section 0)."
+    fi
     [ -r "$TEMPLATE" ] && [ ! -w "$TEMPLATE" ] || die "$TEMPLATE is not a sealed, read-only template"
+    appliance_refuse "$TEMPLATE"
     [ ! -e "$DIR" ] || die "$DIR already stands; destroy it first"
     ensure_key
     mkdir -p "$DIR"

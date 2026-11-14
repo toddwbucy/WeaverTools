@@ -12,8 +12,9 @@
 
 ## 0. What this document is
 
-The Spec of the scripts in `code/` beside it, which build the template virtual machine,
-make clones of it, and run steps inside a clone. It states what the scripts do and what
+The Spec of the scripts in `code/` beside it, which built the template virtual machine
+and now build the appliance image (section 10), make clones of the template, and run steps
+inside a clone. It states what the scripts do and what
 the offline mock pins. The result notes say what the scripts measured: `README.md` for the
 template and clone of 2026-11-11, and `results/2026-11-12-determinism-slice.md` for the
 determinism slice of 2026-11-12.
@@ -24,6 +25,19 @@ section names the run that found it. A behaviour that acts only in a template bu
 marked **(rebuild)**. Today's sealed template, of 2026-11-11, predates every such
 behaviour, and the later act that rebuilds the template measures them, on the operator's
 word.
+
+**What the tree can and cannot rebuild now.** Since the appliance act of 2026-11-14,
+`build-template.sh` builds the appliance image of section 10, at
+`$VM_ROOT/appliance/appliance.qcow2` under the domain name `weaver-appliance-build`. It no
+longer builds the template, and no script in this tree rebuilds the template of sections 1
+to 9. The steps that made it were replaced, among them its `finish` step, which wrote the
+guard's `/etc/nftables.conf` (section 4) and the models' `fstab` line. `clone.sh` still
+makes clones of a template built before that act, the sealed template of 2026-11-11 at
+`$VM_ROOT/template/template.qcow2`. It refuses an appliance image with a sentence, read
+offline before anything is made, because the appliance's cloud-init discards the clone
+seed's user-data: the seed's account, pinned host key and guard would never apply. The
+behaviours marked **(rebuild)** wait for an act that brings the template's build back, if
+one is ruled.
 
 **Words.** The **host** runs libvirt and QEMU. A **guest** is a virtual machine: the
 **template** while it is built, or a **clone**, an overlay naming the sealed template. A
@@ -169,6 +183,9 @@ pass. Every new domain is also defined with `ipv6=off`. The guard is laid twice:
 - by the seed's `bootcmd`, before any network service starts, where the table does not
   already stand;
 - by the template's `/etc/nftables.conf` **(rebuild)**.
+
+No script in this tree lays the template's copy now. The step that wrote it went with the
+template's build (section 0).
 
 Both copies carry the IPv4 line and the IPv6 line (WeaverTools commit 78bde86). The sealed
 template of 2026-11-11 predates 78bde86, so its `/etc/nftables.conf` carries the IPv4 line

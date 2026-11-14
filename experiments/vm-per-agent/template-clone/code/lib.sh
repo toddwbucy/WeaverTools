@@ -2,7 +2,8 @@
 # helpers that define a guest, reach it over SSH under its pinned host key, judge its
 # boots and log each step. template-clone-Spec.md states what they do.
 #
-# VM_ROOT names the directory that holds images/, template/, clones/, logs/ and keys/.
+# VM_ROOT names the directory that holds images/, template/, appliance/, clones/, logs/ and
+# keys/.
 # It has no default here: a default would be a box path in the repository. Each script
 # sets KNOWN_HOSTS to its guest's own known-hosts file before it reaches the guest.
 
