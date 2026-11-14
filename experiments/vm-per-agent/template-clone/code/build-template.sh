@@ -151,9 +151,14 @@ seal_verdict() {
         die "the seal refused (above, and $LOG/sealed-seal-final.log); the image is not sealed"
     fi
     [ -s "$LOG/sealed-MANIFEST" ] || die "the image holds no MANIFEST; the image is not sealed (see $LOG/sealed-seal-final.log)"
-    for v in weaveragent.commit weaverweb.commit; do
-        grep -qE "^$v = [0-9a-f]{40}$" "$LOG/sealed-stamp" 2>/dev/null \
-            || die "the image's stamp names no $v; the image is not sealed"
+    # Each commit the stamp names must be the input: an image compiled from other commits
+    # than the ones asked for is not this build's.
+    local got want
+    for v in weaveragent.commit:WA_COMMIT weaverweb.commit:WW_COMMIT; do
+        want=${v##*:}; v=${v%%:*}
+        got=$(sed -n "s/^$v = \([0-9a-f]\{40\}\)\$/\1/p" "$LOG/sealed-stamp" 2>/dev/null | head -1)
+        [ -n "$got" ] || die "the image's stamp names no $v; the image is not sealed"
+        [ "$got" = "${!want}" ] || die "the image's stamp names $v $got, not $want ${!want}; the image is not sealed"
     done
     # The sealed image is never booted again as itself: its domain is undefined and the
     # disk made read-only; proof boots an overlay.

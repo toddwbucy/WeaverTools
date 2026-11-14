@@ -463,13 +463,16 @@ check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the ste
 TD=$T/appliance
 IMG=$T/sealed-image
 A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
-verdict() { # verdict passed|refused|no-manifest|one-commit: what the final step left
+A3=3333333333333333333333333333333333333333
+verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit: what the final step left
     rm -rf -- "${IMG:?}"; mkdir -p "$IMG/etc/weaver-appliance"
     case $1 in
         refused) echo "1 hit(s)" >"$IMG/etc/weaver-appliance/SEAL-REFUSED" ;;
         no-manifest) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
         one-commit) printf 'weaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
                     echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        other-commit) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
+                      echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
         passed) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
                 echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
     esac
@@ -511,6 +514,10 @@ verdict one-commit
 sealrun >"$T/seal-onecommit.out" 2>&1
 check "a stamp that names one commit stops the seal likewise" \
     test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no weaverweb.commit" "$T/seal-onecommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict other-commit
+sealrun >"$T/seal-othercommit.out" 2>&1
+check "a stamp that names another commit than the input stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names weaverweb.commit $A3, not WW_COMMIT $A2" "$T/seal-othercommit.out")" = 1 -a "$(sealed_not && echo y)" = y
 verdict passed
 touch "$T/read-fails"
 sealrun >"$T/seal-readfails.out" 2>&1

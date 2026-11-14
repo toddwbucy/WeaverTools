@@ -645,9 +645,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     console, the trust on first use at the SSH step the operator ruled on 2026-11-14. If
     any probe hits, it writes `SEAL-REFUSED` and no MANIFEST. Otherwise it writes the
     stamp and then the MANIFEST last. If the MANIFEST cannot be written whole, the stamp
-    goes too and it writes `SEAL-REFUSED`. Either way it powers off. On the host, `seal`
-    then reads the verdict out of the image before it marks anything sealed. A refusal,
-    a missing MANIFEST, or a stamp that does not name both commits stops it there, with
+    goes too and it writes `SEAL-REFUSED`. Either way it powers off. Before any of this,
+    the seal step refuses unless each commit the build recorded is the input the host
+    names (`WA_COMMIT`, `WW_COMMIT`). On the host, `seal` then reads the verdict out of
+    the image before it marks anything sealed. A refusal, a missing MANIFEST, or a stamp
+    that does not name both commits, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
     followed by the undefine, the read-only disk and the sha256. The seal's removals
     cannot be undone, so a refused image is destroyed and the build begins again from

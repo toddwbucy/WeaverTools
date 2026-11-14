@@ -763,9 +763,14 @@ driver_check_quiet() {
 # seal: the probes over SSH, then the final step handed to root, to run once this session
 # has ended: it cannot remove the account it is logged in as.
 seal() {
-    local k
-    for k in weaveragent.commit weaverweb.commit; do
+    local k want
+    # Both commits recorded, and each the input the host names: a seal that would stamp
+    # other commits than the ones asked for refuses here, before anything is removed.
+    for k in weaveragent.commit:WA_COMMIT weaverweb.commit:WW_COMMIT; do
+        want=${k##*:}; k=${k%%:*}
+        [ -n "${!want:-}" ] || { echo "the seal needs $want, the commit the stamp's $k must name"; return 1; }
         grep -qxE '[0-9a-f]{40}' "$BUILD/stamp.d/$k" 2>/dev/null || { echo "the stamp has no $k (the trees step records it)"; return 1; }
+        [ "$(cat "$BUILD/stamp.d/$k")" = "${!want}" ] || { echo "the stamp's $k is $(cat "$BUILD/stamp.d/$k"), not $want ${!want}"; return 1; }
     done
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
