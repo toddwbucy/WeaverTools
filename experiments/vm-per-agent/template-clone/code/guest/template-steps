@@ -738,7 +738,7 @@ probes() {
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
-        check "machine identity" "$(m=$(sed -n 1p /etc/machine-id); [ -z "$m" ] || [ "$m" = uninitialized ] || echo "machine-id $m"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed 2>/dev/null)"
+        check "machine identity" "$(m=$(sed -n 1p /etc/machine-id); [ -z "$m" ] || [ "$m" = uninitialized ] || echo "machine-id $m"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
         check "sshd-keygen not masked" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ -z "$s" ] || [ "$s" = masked ] || echo "sshd-keygen.service=$s")"
         check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
         check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps 2>/dev/null)"
@@ -839,7 +839,9 @@ seal_final() {
     # leaves cloud-init the only maker of host keys, so the console names every key SSH
     # presents.
     systemctl mask sshd-keygen.service 2>&1
-    rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed
+    # systemd's random seed and its credential secret are per machine: no copy of the image
+    # ships either, whether or not the power-off writes one (proof reads for that).
+    rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret
     # shellcheck disable=SC2086
     rm -f $SEAL_KEYS
     cloud-init clean --logs --seed --machine-id --configs network 2>&1

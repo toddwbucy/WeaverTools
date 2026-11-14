@@ -630,9 +630,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     cleanup.
 11. `seal`: the probes over SSH, the system libraries' records, then a root oneshot once
     the session ends. It removes the build account and its sudoers rule, the SSH host
-    keys, the machine identity, cloud-init's state and the logs, assembles the stamp from
-    the build's records, removes those records and this script, and runs the probes
-    again. SSH stays enabled with no host key and no account, and `sshd-keygen.service` is
+    keys, the machine identity (with systemd's random seed and credential secret),
+    cloud-init's state and the logs, assembles the stamp from the build's records, removes
+    those records and this script, and runs the probes again. SSH stays enabled with no
+    host key and no account, and `sshd-keygen.service` is
     masked: at first boot cloud-init makes the account and the host keys from the
     operator's seed and its `keys_to_console` prints the keys' fingerprints on the serial
     console, the trust on first use at the SSH step the operator ruled on 2026-11-14. If
@@ -695,7 +696,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     because no secret ships in every copy of the image. The login records under
     `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. These reads were
     checked against scratch filesystem images and are first exercised on a sealed image
-    at the next build. If one hits there, the seal prevents that write.
+    at the next build. The seal removes both files before its final probe, which names
+    them, so a seed or a secret found here was written after it. If one is found, the
+    fix at the seal is its own act.
     **What an interrupted proof or seal leaves.** `proof` keeps a cleanup for every exit,
     and for INT, TERM and HUP. It removes each overlay domain (only where the domain
     stands on its own overlay), its directory and pool, and the FUSE export of the
@@ -736,7 +739,8 @@ A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages shi
 
 The final pass adds:
 - the build account, shell histories, cloud-init's instance state, netplan files
-- the machine identity and the SSH host keys, `sshd-keygen.service` not masked
+- the machine identity, systemd's random seed and credential secret, and the SSH host
+  keys, `sshd-keygen.service` not masked
 - non-empty logs
 - the build's records or this script still present
 - a stamp other than the one being sealed: anything in `/etc/weaver-appliance` but the
