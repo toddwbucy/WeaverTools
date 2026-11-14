@@ -133,6 +133,10 @@ seal_verdict() {
     inputs_ok set
     [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] || die "name WA_COMMIT and WW_COMMIT: the verdict sets the stamp's commits against them"
     [ "$(virsh_ domstate "$NAME" 2>/dev/null)" = "shut off" ] || die "$NAME is not a defined, shut-off build guest: the verdict reads a powered-off guest's disk"
+    # The verdict ends in an undefine, so the domain must be the build guest: one of its
+    # disks is DISK, by dom_drop's rule. A shut-off domain of that name on another disk is
+    # refused, and nothing is read or changed.
+    dom_on_disk "$NAME" "$DISK" || die "$NAME is not the build guest: none of its disks is $DISK. Nothing is read or changed"
     [ -f "$DISK" ] && [ -w "$DISK" ] || die "$DISK is not a writable disk: absent, or already marked sealed"
     local r=$VM_ROOT/seal-read v rc
     [ ! -e "$r" ] || die "$r stands: another seal or verdict is reading the image, or one was cut short (destroy removes it)"
@@ -218,11 +222,17 @@ PROOF_OWN=""
 # capture not yet kept is kept first, as interrupted-*. Signals are ignored while it runs,
 # so a second one cannot cut it short, and no step of it can stop the rest.
 proof_cleanup() {
-    local d f
+    local d f rc
     trap '' INT TERM HUP PIPE
     for d in proof first; do
         case " $PROOF_OWN " in *" $d "*) ;; *) continue ;; esac
-        dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || true
+        # A domain that could not be stopped or undefined (2) keeps its directory: an
+        # undefined domain that still runs goes on writing its overlay.
+        rc=0; dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || rc=$?
+        if [ "$rc" = 2 ]; then
+            echo "proof cleanup: $NAME-$d was not stopped and undefined (above); $VM_ROOT/$d is kept" >&2
+            continue
+        fi
         [ -d "$VM_ROOT/$d" ] || continue
         for f in console.log boot.pcap; do
             [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-$f" 2>/dev/null || true
@@ -302,8 +312,7 @@ proof() {
         >"$out/proof-virt-install.txt" 2>&1
     # In the background and waited on, so a TERM or INT reaches the trap at once.
     sleep "${PROOF_BOOT:-180}" & wait "$!"
-    virsh_ destroy "$pn" >/dev/null 2>&1 || true
-    virsh_ undefine "$pn" --nvram >/dev/null
+    dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     cp "$pdir/boot.pcap" "$out/boot.pcap"
     tr -d '\r' <"$pdir/console.log" >"$out/boot-console.log" || true
     pool_drop "$pdir"
@@ -539,8 +548,7 @@ EOF
         fi
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
-    virsh_ destroy "$pn" >/dev/null 2>&1 || true
-    virsh_ undefine "$pn" --nvram >/dev/null
+    dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     tr -d '\r' <"$pdir/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
@@ -556,14 +564,14 @@ destroy() {
     case $rc in
         0) ;;
         1) die "$NAME is defined on another disk than $DISK; nothing removed" ;;
-        *) die "$NAME could not be undefined (above); nothing removed" ;;
+        *) die "$NAME was not stopped and undefined (above); nothing removed" ;;
     esac
     for d in proof first; do
         rc=0; dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || rc=$?
         case $rc in
             0) ;;
             1) die "$NAME-$d is defined on another disk than its overlay; nothing more removed" ;;
-            *) die "$NAME-$d could not be undefined (above); nothing more removed" ;;
+            *) die "$NAME-$d was not stopped and undefined (above); nothing more removed" ;;
         esac
     done
     PROOF_OWN="read proof first"; proof_cleanup
