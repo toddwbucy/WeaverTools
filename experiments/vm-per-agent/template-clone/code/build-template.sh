@@ -109,12 +109,14 @@ seal() {
     # MANIFEST, no SEAL-REFUSED, and a stamp naming both commits. A refused or incomplete
     # seal stops here, with the domain defined and the disk writable, for destroy.
     local r=$VM_ROOT/seal-read v
+    trap 'trap "" INT TERM HUP PIPE; image_close "$VM_ROOT/seal-read"; rm -rf -- "${VM_ROOT:?}/seal-read" || true' EXIT
+    trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
     image_open "$DISK" "$r"
     for v in SEAL-REFUSED MANIFEST stamp seal-final.log; do
         image_cat "$r" "/etc/weaver-appliance/$v" >"$LOG/sealed-$v" || true
         [ -s "$LOG/sealed-$v" ] || rm -f "$LOG/sealed-$v"
     done
-    image_close "$r"
+    image_close "$r"; rm -rf -- "${r:?}"
     if [ -f "$LOG/sealed-SEAL-REFUSED" ]; then
         cat "$LOG/sealed-SEAL-REFUSED"
         die "the seal refused (above, and $LOG/sealed-seal-final.log); the image is not sealed"
@@ -147,8 +149,31 @@ seal() {
 #     the operator's), so the rig isolates the boot itself. The capture still holds every
 #     frame the guest sends; past QEMU's own DHCP, none is answered. The second, third
 #     and fourth builds' no-seed boots ran without restrict=on.
+# proof_cleanup: on any exit of proof, what its boots and its offline read would leave:
+# each overlay domain (only where it stands on its own overlay), its directory and pool,
+# and the FUSE export. A console or capture not yet kept is kept first, as
+# interrupted-*. Signals are ignored while it runs, so a second one cannot cut it short,
+# and no step of it can stop the rest.
+proof_cleanup() {
+    local d f
+    trap '' INT TERM HUP PIPE
+    for d in proof first; do
+        dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || true
+        [ -d "$VM_ROOT/$d" ] || continue
+        for f in console.log boot.pcap; do
+            [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-$f" 2>/dev/null || true
+        done
+        pool_drop "$VM_ROOT/$d" || true
+        rm -rf -- "${VM_ROOT:?}/$d" || true
+    done
+    image_close "$VM_ROOT/proof-read" || true
+    rm -rf -- "${VM_ROOT:?}/proof-read" || true
+}
+
 proof() {
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
+    trap proof_cleanup EXIT
+    trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
     local out=$LOG/proof r=$VM_ROOT/proof-read f p
     mkdir -p "$out"
     image_open "$DISK" "$r"
@@ -193,7 +218,7 @@ proof() {
         --graphics none --console none --noautoconsole --import \
         >"$out/proof-virt-install.txt" 2>&1
     sleep "${PROOF_BOOT:-180}"
-    virsh_ destroy "$pn" >/dev/null
+    virsh_ destroy "$pn" >/dev/null 2>&1 || true
     virsh_ undefine "$pn" --nvram >/dev/null
     cp "$pdir/boot.pcap" "$out/boot.pcap"
     tr -d '\r' <"$pdir/console.log" >"$out/boot-console.log" || true
@@ -386,11 +411,17 @@ EOF
     rm -rf -- "${pdir:?}"
 }
 
+# destroy: the build guest, only where its domain stands on DISK, then what a proof or a
+# seal left (proof_cleanup's objects and the seal's offline read), then the build's
+# directory and its pool.
 destroy() {
-    if virsh_ dominfo "$NAME" >/dev/null 2>&1; then
-        virsh_ destroy "$NAME" >/dev/null 2>&1 || true
-        virsh_ undefine "$NAME" --nvram >/dev/null
-    fi
+    dom_drop "$NAME" "$DISK" || die "$NAME is defined on another disk than $DISK; nothing removed"
+    local d
+    for d in proof first; do
+        dom_drop "$NAME-$d" "$VM_ROOT/$d/overlay.qcow2" || die "$NAME-$d is defined on another disk; nothing more removed"
+    done
+    proof_cleanup
+    image_close "$VM_ROOT/seal-read"; rm -rf -- "${VM_ROOT:?}/seal-read"
     pool_drop "$DIR"
     chmod -R u+w "$DIR" 2>/dev/null || true
     rm -rf "$DIR"

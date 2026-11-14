@@ -637,6 +637,13 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     are a fingerprint mismatch, a failed login, a user-data ask carried out (the
     command, the package or the account), a cloud-init status other than done (exit 1
     an error, 2 degraded), and a stamp that does not name both commits.
+    **What an interrupted proof or seal leaves.** `proof` keeps a cleanup for every exit,
+    and for INT, TERM and HUP. It removes each overlay domain (only where the domain
+    stands on its own overlay), its directory and pool, and the FUSE export of the
+    offline read, and keeps any console or capture not yet copied as `interrupted-*`.
+    `seal` closes its own offline read the same way. `destroy` removes the build guest
+    only where its domain stands on the build's disk, and refuses a domain of that name
+    on any other disk. It then removes whatever a proof or a seal left.
 
 **The runtime set kept.** The CUDA runtime the installed SPU and engine resolve
 (cuda-cudart, libcublas, libcurand), NVRTC (cuBLASLt names it; kept until a carded load

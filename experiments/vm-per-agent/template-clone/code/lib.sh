@@ -7,6 +7,10 @@
 # sets KNOWN_HOSTS to its guest's own known-hosts file before it reaches the guest.
 
 : "${VM_ROOT:?set VM_ROOT to the directory holding images/ template/ clones/ logs/ keys/}"
+# Absolute and without its trailing slashes, so that the paths built on it compare equal to
+# the ones libvirt reports (a storage pool's path, a domain's disk).
+case $VM_ROOT in /*) ;; *) VM_ROOT=$PWD/$VM_ROOT ;; esac
+while [[ "$VM_ROOT" == */ && "$VM_ROOT" != / ]]; do VM_ROOT=${VM_ROOT%/}; done
 
 URI=qemu:///system
 # The guest operating system, a named input (OS): its cloud image by digest, checked
@@ -344,7 +348,7 @@ import json, sys
 p = [p for p in json.load(sys.stdin)["partitiontable"]["partitions"]
      if p["type"].upper() == "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"]
 print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
-    kill "$(cat "$dir/qsd-whole.pid")"; sleep 1
+    kill "$(cat "$dir/qsd-whole.pid" 2>/dev/null)" 2>/dev/null || true; sleep 1
     [ -n "$part" ] || die "$disk has no single Linux root partition"
     read -r start size <<<"$part"
     qemu-storage-daemon \
@@ -356,10 +360,18 @@ print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
 }
 image_cat() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
 image_ls() { debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null; }
+# image_close stops both exports where they still run, unmounts one whose daemon is gone,
+# and never fails its caller (it runs from cleanup traps).
 image_close() {
-    [ ! -f "$1/qsd-root.pid" ] || kill "$(cat "$1/qsd-root.pid")" 2>/dev/null || true
+    local f
+    for f in qsd-whole qsd-root; do
+        [ ! -f "$1/$f.pid" ] || kill "$(cat "$1/$f.pid" 2>/dev/null)" 2>/dev/null || true
+    done
     sleep 1
-    rm -f -- "$1/whole.raw" "$1/root.raw" "$1/qsd-whole.pid" "$1/qsd-root.pid"
+    for f in whole.raw root.raw; do
+        ! findmnt -n --mountpoint "$1/$f" >/dev/null 2>&1 || fusermount3 -u "$1/$f" 2>/dev/null || true
+    done
+    rm -f -- "$1/whole.raw" "$1/root.raw" "$1/qsd-whole.pid" "$1/qsd-root.pid" 2>/dev/null || true
 }
 
 # qemu_file FILE: an empty FILE that its owner and QEMU's account (QEMU_USER) alone may
@@ -391,13 +403,30 @@ manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"
 # pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
 # undefined (virt-install makes one for each directory a --disk path names).
 pool_drop() {
-    local pool path
-    for pool in $(virsh_ pool-list --all --name); do
-        path=$(virsh_ pool-dumpxml "$pool" | sed -n 's:.*<path>\(.*\)</path>.*:\1:p')
-        [ "$path" = "$1" ] || continue
+    local pool path want=${1%/}
+    for pool in $(virsh_ pool-list --all --name 2>/dev/null || true); do
+        # A pool that goes between the listing and its read is skipped, not fatal.
+        path=$(virsh_ pool-dumpxml "$pool" 2>/dev/null | sed -n 's:.*<path>\(.*\)</path>.*:\1:p') || continue
+        [ "${path%/}" = "$want" ] || continue
         virsh_ pool-destroy "$pool" >/dev/null 2>&1 || true
         virsh_ pool-undefine "$pool" >/dev/null && echo "pool $pool ($path) undefined"
     done
+}
+
+# dom_drop NAME DISK: domain NAME, where one is defined, destroyed and undefined with its
+# firmware store, only when one of its disks is DISK (an absolute path, as libvirt reports
+# it). A domain of that name on any other disk is refused and left alone (exit 1).
+dom_drop() {
+    [[ "$2" == /* ]] || { echo "REFUSED: dom_drop takes an absolute disk path, not '$2'" >&2; return 1; }
+    virsh_ dominfo "$1" >/dev/null 2>&1 || return 0
+    if ! virsh_ domblklist "$1" --details 2>/dev/null | D=$2 awk '
+            $2 == "disk" && substr($0, length($0) - length(ENVIRON["D"])) == " " ENVIRON["D"] { f = 1 }
+            END { exit !f }'; then
+        echo "REFUSED: $1 is defined, but on no disk $2; left alone" >&2
+        return 1
+    fi
+    virsh_ destroy "$1" >/dev/null 2>&1 || true
+    virsh_ undefine "$1" --nvram >/dev/null
 }
 
 # step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.
