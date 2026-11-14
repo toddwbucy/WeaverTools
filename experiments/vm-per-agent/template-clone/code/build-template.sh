@@ -443,7 +443,15 @@ EOF
                 echo "trust on first use: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the console's $(wc -l <<<"$cfp")); SSH did not present: $(comm -23 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
             fi
             KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" '
-                echo "== cloud-init status"; cloud-init status --long; rc=$?; echo "(exit $rc)"
+                # cloud-init status exits 0 for running, disabled and not started too, so the
+                # proof waits for it to finish and requires the text "done" as well as exit 0.
+                echo "== cloud-init status"
+                timeout 600 cloud-init status --wait >/dev/null 2>&1; wrc=$?
+                cloud-init status --long; rc=$?
+                st=$(cloud-init status 2>/dev/null | sed -n "s/^status: //p")
+                echo "(status ${st:-unread}, exit $rc; the wait exited $wrc)"
+                [ "$wrc" != 124 ] || echo "PROOF-FAIL: cloud-init did not finish within 600 s"
+                [ "$st" = done ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not done"
                 [ "$rc" = 0 ] || echo "PROOF-FAIL: cloud-init status exited $rc (1 an error, 2 degraded)"
                 echo "== user-data and vendor-data"; sudo grep -E "allow_userdata|vendordata2? consumption|vendor_data" /var/log/cloud-init.log | tail -4
                 echo "== modules cloud-init ran"; sudo grep -oE "running (config|modules)-[a-z_]+" /var/log/cloud-init.log | sort -u

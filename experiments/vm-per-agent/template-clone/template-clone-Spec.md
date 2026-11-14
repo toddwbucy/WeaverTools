@@ -695,8 +695,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     refusal, is not booted at all. After both boots, each finding the first boot recorded
     fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
     are a fingerprint mismatch, a failed login, a user-data ask carried out (the
-    command, the package or the account), a cloud-init status other than done (exit 1
-    an error, 2 degraded), a stamp that does not name both commits, and any listening
+    command, the package or the account), cloud-init not done (the proof waits up to
+    600 s with `cloud-init status --wait`, then requires the status text `done` and exit
+    0, since the status exits 0 for running, disabled and not started too, 1 an error, 2
+    degraded), a stamp that does not name both commits, and any listening
     socket beyond loopback other than SSH on TCP 22. The last is the measure of the
     operator's ruling 4 (SSH only): the first boot lists every listening TCP and UDP
     socket with its process, and fails on any bound beyond loopback but SSH. A socket
