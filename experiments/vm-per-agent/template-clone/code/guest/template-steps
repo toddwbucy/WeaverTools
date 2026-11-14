@@ -509,8 +509,11 @@ cleanup() {
     # but those named or matched.
     # shellcheck disable=SC2086
     sim=$(sudo apt-get -s purge --autoremove -y $purge 2>&1) || { echo "$sim" | tail -20; return 1; }
+    # Fixed strings, not a regex: a name such as libstdc++6 means itself.
+    local sim_removed
+    sim_removed=$(awk '/^(Purg|Remv) / {print $2}' <<<"$sim")
     for p in $keep; do
-        if grep -qE "^(Purg|Remv) $p( |$)" <<<"$sim"; then echo "the simulation would remove $p, which is kept"; return 1; fi
+        if grep -qxF -- "$p" <<<"$sim_removed"; then echo "the simulation would remove $p, which is kept"; return 1; fi
     done
     local gone_base
     gone_base=$(awk '/^(Purg|Remv) / {print $2}' <<<"$sim" | grep -xF -f "$BUILD/base-packages" | grep -vxF -f <(printf '%s\n' $purge) || true)
