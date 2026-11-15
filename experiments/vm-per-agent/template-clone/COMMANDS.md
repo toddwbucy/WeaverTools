@@ -169,6 +169,8 @@ build broke at the stack (`driver` before `stack`). The inputs are named on ever
 ```bash
 export VM_ROOT=... PORT=...
 export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86
+# From 2026-11-15, create refuses without VERSION. The builds of 2026-11-14 predate it.
+export VERSION=1.0
 export WA_COMMIT=d640ea818a58b68984e540abfd67c58e5351eb06   # WeaverAgent main, 2026-11-14
 export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 2026-11-14
 code/build-template.sh create
@@ -180,5 +182,7 @@ done
 code/build-template.sh seal
 # where seal's own read of the verdict failed (it says so): code/build-template.sh verdict
 code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
+# From 2026-11-15: print the version's tag for the operator. It applies nothing.
+code/build-template.sh tag
 code/build-template.sh destroy
 ```

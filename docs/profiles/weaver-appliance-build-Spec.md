@@ -161,8 +161,9 @@ seed names (below). chrony keeps Ubuntu's NTS pool as its servers, unchanged her
 **The base inbound policy: drop, but SSH** (the operator's decision 9 of 2026-11-15). The
 image's own boot rules drop inbound traffic and accept SSH, with no agent loaded. The
 cleanup writes one table of the image's own, `inet weaver_appliance`, to
-`/etc/nftables.conf` and enables Ubuntu's `nftables.service`, which loads it before the
-network comes up. The table's input chain has policy drop and accepts four things:
+`/etc/nftables.conf` and enables Ubuntu's `nftables.service`, which is to load it before
+the network comes up (by the unit's own ordering, not measured on a boot of this
+image). The table's input chain has policy drop and accepts four things:
 loopback, replies (connection state established or related), the ICMPv6
 neighbour-discovery types without which IPv6 does not work (neighbour solicitation and
 advertisement, router advertisement), and TCP 22. It has no output chain, so outbound is
@@ -174,12 +175,17 @@ unit's stop with the destruction of the image's table alone. Both texts are defi
 in `guest/template-steps`, and a probe sets the files against them. The rules are enabled
 for the next boot and not loaded in the build guest. Checked on 2026-11-15 in a user
 namespace on the measuring host (nftables 1.1.7): the file loads twice, and a second
-table survives both loads and the stop. ufw is installed, as the cloud image ships it, and
-inactive (`ENABLED=no`), and a probe reads that it stays so. Admin's table is separate and
+table survives both loads and the stop. ufw is installed and inactive (`ENABLED=no`), as
+the build expects the cloud image to ship it, and a probe reads that it stays so. No
+build of this tree has run that probe yet. Admin's table is separate and
 is admin's. In nftables a drop in one table's base chain is final, so an accept in admin's
 table cannot open a port through this one (section 3). An address by DHCPv6 is not
 provided for: a DHCPv6 server's reply does not match the multicast solicitation as a
-reply, so the policy drops it. That is read from the rules and not measured.
+reply, so the policy drops it. Multicast listener queries (MLD) are dropped too, so on a
+switch that snoops MLD, neighbour discovery can lapse. Both are read from the rules and
+not measured. Stopping `nftables.service` destroys the image's table, so inbound is
+open until the unit starts again, and at the end of a shutdown, once the unit has
+stopped.
 
 **cloud-init: the build's seed, and a seed's limit in the image.** The build guest boots
 from a NoCloud seed, which makes the build account, pins the guest's host key and sets
@@ -289,7 +295,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     host key and no authorized key. `sshd-keygen.service` is left enabled, as its
     package ships it, and at the first boot it makes the host keys (`ssh-keygen -A`, on
     the condition that the boot is a first boot, which the uninitialized machine
-    identity makes it). After the console login the operator places a key and sets the
+    identity makes it). No build of this tree has measured that yet: the proof's first
+    boot reads the unit's condition and result. After the console login the operator
+    places a key and sets the
     network, and reads the host keys' fingerprints (decision 16 of 2026-11-15). Through
     the fifth build the seal masked `sshd-keygen.service`, the first boot's seed made
     the account and the host keys, and cloud-init's `keys_to_console` printed the
@@ -372,7 +380,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     the operator's steps after logging in** (decision 16 of 2026-11-15). Those steps are
     two: place a key, set the network. The proof writes both into its own overlay
     offline, before the boot, and never into the image: the proof key as root's
-    authorized key (root is the image's one account with a login shell), and a netplan
+    authorized key, and a netplan
     file, `/etc/netplan/90-weaver-proof.yaml`, naming a static address, gateway and
     resolver, matched by the NIC's MAC address. The overlay is opened writable through
     qemu-storage-daemon and written with debugfs, only where the file names a backing
@@ -381,7 +389,19 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     back from the overlay opened again read-only, with its bytes, its owner (root) and
     its mode (0600), and `e2fsck -n` must find the filesystem clean, before anything
     boots. Tested on 2026-11-15 against a scratch disk made on the measuring host: the
-    sealed stand-in's digest did not change. What waits for the operator is the console
+    sealed stand-in's digest did not change. The placement rests on three things, and
+    the proof fails closed where any does not hold:
+    - `/root/.ssh` stands (0700 in the fifth build's kept image). The placement refuses
+      where it does not.
+    - root may log in over SSH by key. The fifth build's kept image sets no
+      `PermitRootLogin`, so OpenSSH's default, `prohibit-password`, applies. The login
+      fails where it does not.
+    - netplan applies a file placed by hand with no cloud-init. Not measured: the login
+      fails where it does not.
+
+    Root's entry (`/bin/bash`, password field `*`) was read from the fifth build's kept
+    image. That no other account has a login shell is not measured. What waits for the
+    operator is the console
     login itself and the account it lands in (section 3). The proof does not stand in
     for those, and its record names the gap on a line of its own, which is not a
     failure. That overlay's network is QEMU's `restrict=on`, with the SSH forward. The
@@ -398,6 +418,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     a key (the fourth build's proof runs 2 to 4). It logs in under those keys as root,
     with the key it placed, and reads the host keys' fingerprints in the guest, as the
     operator does after logging in. Each key SSH presents must be one the guest holds.
+    Both sides are read from the same guest, so the match shows that sshd presents the
+    keys on its disk, not where they came from.
     Only on that match does the proof read on: cloud-init's status (with no seed it does
     not run), the hostname, the network and its wait, `ubuntu.sources`, SSH's units and
     whether `sshd-keygen.service` ran, and the stamp's commits. It then sets the
@@ -410,10 +432,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     through a second forward (`PROOF_PORT` + 1 to the guest's 8080), must be silent. QEMU's
     forward accepts the host's connection whatever the guest does, then ends it at once
     where the guest refuses, and leaves it silent where the guest drops the connection.
+    That is how the forward is expected to behave, and the host tests stand in for it
+    with loopback servers. It is not measured against a guest.
     `inbound_probe` reads for 2 s, sends one HTTP request line, and reads again, for 15 s in
     all. The listener is stopped, and last SSH must answer with its banner through its own
     forward. SSH is probed last because the probe leaves without authenticating, which
-    sshd counts against the forward's one source address. The guest's files are listed as the seal lists
+    sshd counts against the forward's one source address. The probe is TCP over IPv4
+    alone: the proof's network has IPv6 off, and no UDP or IPv6 packet reaches the guest
+    on the wire. The guest's files are listed as the seal lists
     them, less the host keys' private halves, so no digest of a private key is made. Its
     links are formatted on the host by the seal's own formatter text. Each file or link
     removed, added or changed is printed by its path, never with a digest. A difference
@@ -633,8 +659,9 @@ later acts.
   earlier priority, marks the packet, and the image's static rule accepts the mark, so
   admin still writes only its own table. Settled in the act that adds the port member to
   the declaration, by admin's Spec and this one together.
-- **The console login and the account it lands in.** Root is the image's one account
-  with a login shell, and it has no password. How the operator logs in at the console,
+- **The console login and the account it lands in.** Root has no password (read from
+  the fifth build's kept image), and the build expects it to be the image's one account
+  with a login shell, which is not measured. How the operator logs in at the console,
   and which account that lands in, waits for the operator's ruling. The proof names the
   gap and does not stand in for it: it logs in over SSH as root, with the key it placed
   in its own overlay. Root as the proof's login is the proof harness's choice, and it
