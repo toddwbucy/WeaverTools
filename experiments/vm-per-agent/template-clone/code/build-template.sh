@@ -233,7 +233,9 @@ compact_disk() {
 #     credential secret, a non-empty log), read out of the image through image_open. The
 #     sealed file's sha256, set against the one the seal recorded, and whether the file is
 #     compact (compact_check, the operator's decision 18 of 2026-11-15). The version the
-#     stamp names (decision 4).
+#     stamp names (decision 4). The shipped ggml CUDA library's device code, listed with
+#     the host's cuobjdump: no PTX, and cubins for exactly the architectures WeaverAgent's
+#     build names (device_code_check, decision 6).
 #  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
 #     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
 #     The capture is summarized by kind: an image that configures no network sends no
@@ -375,6 +377,13 @@ proof() {
     } >"$out/network-and-updates.txt" 2>&1
     # Judged with the first boot's findings, after both boots (finding 10 of the review).
     image_late_writes "$r" >"$out/late-writes.txt" 2>&1 || die "the offline read of late writes failed"
+    # The shipped ggml CUDA library's device code (decision 6 of 2026-11-15), judged with
+    # the rest after both boots. A record with neither its last line nor a finding did not
+    # run to its end, and fails too.
+    device_code_check "$r" "$r" >"$out/device-code.txt" 2>&1 || true
+    grep -qE '^(PROOF-FAIL: |device code: checked$)' "$out/device-code.txt" \
+        || echo "PROOF-FAIL: the device-code check did not run to its end" >>"$out/device-code.txt"
+    cat "$out/device-code.txt"
     image_close "$r"
     # An image with no MANIFEST, or with a refusal, is not sealed: nothing is booted.
     if [ -f "$out/SEAL-REFUSED" ] || [ ! -f "$out/MANIFEST" ]; then
@@ -481,13 +490,13 @@ PY
         echo "the sealed disk: $disk_before before the proof, $disk_after after"
         [ "$disk_after" = "$disk_before" ] || echo "PROOF-FAIL: the sealed disk's owner or mode changed during the proof"
     } | tee "$out/disk.txt"
-    # The verdict: every finding of the offline read's late writes, of the no-seed boot's
-    # capture, of the first boot and of the disk's owner and mode fails the proof, after
-    # both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    # The verdict: every finding of the offline read's late writes and device code, of the
+    # no-seed boot's capture, of the first boot and of the disk's owner and mode fails the
+    # proof, after both boots' records are kept.
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"

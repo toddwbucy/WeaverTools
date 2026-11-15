@@ -54,6 +54,7 @@ to: weaver-appliance-profile
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
 | `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's login prompt on the console | 300 |
+| `CUOBJDUMP` | the host's `cuobjdump`, from a CUDA toolkit that knows the four architectures `proof` checks for (section 2) | `cuobjdump` |
 | `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens and to the overlays it boots | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
@@ -86,6 +87,35 @@ refused on the host with a sentence: a respin carries a release's binaries into 
 layer, and no path here does that (section 3). Every other form is refused too. The facts
 step records the version in the stamp as `appliance.version`, and the guest refuses a
 `VERSION` that is not a release.
+
+**The ggml device code: four architectures, no PTX** (the operator's decision 6 of
+2026-11-15). WeaverAgent's deploy scripts, from its commit `1f6ef77e`, build the stack
+with two settings: nvcc names its temporaries after each object rather than after its
+process id, whose digits otherwise land in the objects' symbol tables
+(`NVCC_APPEND_FLAGS` with `-objtemp`), and ggml's CUDA kernels are compiled as cubins
+for four architectures with no PTX (`CMAKE_CUDA_ARCHITECTURES`
+`86-real;89-real;120a-real;121a-real`). The build sets nothing for this: the stack step
+runs those scripts unmodified. The architectures are named `sm_86`, `sm_89`, `sm_120a`
+and `sm_121a`. A card whose architecture is off the list gets no ggml device code, and
+the gguf engine does not run on it. weaver-spu's own kernels keep their `compute_86`
+PTX. The settings reach a fresh target only, since the engine and kernel builds do not
+rerun on them, and the image build is one: its target is made new in the build guest.
+The proof checks the shipped library. It follows `/opt/weaver/lib/libggml-cuda.so.0`
+through its links in the image, copies the file out, and lists it with the host's
+`cuobjdump` (`CUOBJDUMP`). Any PTX image fails the proof, as do any of the four cubin
+sets absent, a cubin for any other architecture, a file that cannot be read and a
+listing that cannot run. On 2026-11-15 the check passed stand-ins made with nvcc 13.4.92
+on the measuring host, failed stand-ins with PTX, a missing architecture or an extra
+one, and failed the fifth build's kept image, read-only, which was compiled before the
+change: it carries 132 PTX images each for `sm_75` and `sm_80` beside the four cubin
+sets of 132 each. The measurement behind the decision is WeaverAgent's, at `1f6ef77e` on
+2026-11-15, on nvcc 13.4.92: two fresh builds into one target path gave all 13 shipped
+files equal by sha256, and `libggml-cuda` with no PTX and 132 cubins for each of the
+four. The image's toolkit is the same release, CUDA 13.4.2 with nvcc 13.4.92
+(`guest/template-steps` pins it, and the stamp records it). A rebuild confirms those
+shipped binaries only. This Spec does not claim the whole image reproducible. It is the
+first measurement in the program to show the build site taking part in what is built
+(the process id in the symbol tables), which bears on WeaverTools#28.
 
 **The network.** The build guest uses QEMU user-mode networking, as the template did
 (`experiments/vm-per-agent/template-clone/README.md`, "The network"). The sealed image configures no network: no netplan file, no
@@ -291,7 +321,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     check failed the fifth build's kept file, read-only (17,496,539,136 bytes beyond its
     clusters), and passed the compacted copy of it (5,767,168 bytes beyond). The stamp
     must name one version of the form `<release>.<respin>`, and `VERSION` where the
-    caller names it. Then one boot of an overlay with no seed, every frame its NIC
+    caller names it. The shipped ggml library must carry the four cubin sets and no PTX
+    (above). Then one boot of an overlay with no seed, every frame its NIC
     sends captured and counted by kind. That NIC is `restrict=on` (`template-clone-Spec` section 4), because the
     sealed image carries no guard of its own and the second build's no-seed boot,
     unrestricted, reached public time servers and resolved their names through the host's
@@ -384,11 +415,12 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     The proof cannot undo that and does not try, and re-owning is the operator's root
     step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
-    refusal, is not booted at all. After both boots, each finding of the sealed file (its
-    sha256 and its compactness), of the stamp's version, and each finding the first boot
-    recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The
-    proof's two files not read back as written, or a filesystem that is not clean, stop
-    it before the first boot. The first boot's findings are a login prompt that does not
+    refusal, is not booted at all. After both boots, each finding of the sealed file
+    (its sha256 and its compactness), of the stamp's version, of the shipped library's
+    device code, and each finding the first boot recorded fails the proof (a non-zero
+    exit, and the findings in `PROOF-FAILED`). The proof's two files not read back as
+    written, or a filesystem that is not clean, stop it before the first boot. The first
+    boot's findings are a login prompt that does not
     greet with the image's hostname, a key SSH presents that the guest does not hold, a
     failed login as root, a MANIFEST difference outside the first boot's expected list,
     cloud-init run on a boot with no seed (its status not `disabled`), a hostname other

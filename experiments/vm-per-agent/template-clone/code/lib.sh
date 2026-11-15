@@ -484,6 +484,75 @@ image_late_writes() {
         image_files "$dir" "$p" | sed 's/^/  /'
     done
 }
+# The ggml CUDA library the image ships, and the device code it must carry (the operator's
+# decision 6 of 2026-11-15): cubins for exactly these architectures and no PTX. The list
+# is WeaverAgent's (CMAKE_CUDA_ARCHITECTURES "86-real;89-real;120a-real;121a-real" in its
+# deploy scripts, from its commit 1f6ef77e), held here for the proof to check against. It
+# moves when WeaverAgent's does. CUOBJDUMP lists the device code, from a CUDA toolkit that
+# knows all four architectures.
+GGML_CUDA_LIB=/opt/weaver/lib/libggml-cuda.so.0
+GGML_CUBIN_ARCHS="sm_86 sm_89 sm_120a sm_121a"
+CUOBJDUMP=${CUOBJDUMP:-cuobjdump}
+# image_resolve DIR PATH: PATH with each symbolic link in the image followed, 8 at most, to a
+# path that is not a link. debugfs follows none, so each target is read from its stat.
+image_resolve() {
+    local dir=$1 p=$2 n=0 o t
+    while [ "$n" -lt 8 ]; do
+        o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
+        grep -q 'Type: symlink' <<<"$o" || { printf '%s\n' "$p"; return 0; }
+        t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | head -1)
+        [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 1; }
+        case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
+        n=$((n + 1))
+    done
+    echo "image_resolve: more than 8 links from $2" >&2
+    return 1
+}
+# device_code_check DIR TMP: the shipped ggml CUDA library, followed through its links in
+# the image opened at DIR, copied to TMP, and listed with CUOBJDUMP: no PTX image, a cubin
+# for each architecture of GGML_CUBIN_ARCHS, and none for any other. A library that cannot
+# be read, a listing that cannot run (cuobjdump exits 255 on a file with no device code),
+# and a cubin line out of form are findings too. Each finding is a PROOF-FAIL line. The last
+# line, "device code: checked", is printed only where every step ran; the caller fails a
+# record that has neither it nor a finding.
+device_code_check() {
+    local dir=$1 tmp=$2 real rc=0 ptx elf np ne archs a n fails=0
+    real=$(image_resolve "$dir" "$GGML_CUDA_LIB") \
+        || { echo "PROOF-FAIL: $GGML_CUDA_LIB could not be followed to a file in the image"; return 0; }
+    image_get "$dir" "$real" "$tmp/libggml-cuda.so" || rc=$?
+    [ "$rc" = 0 ] || { echo "PROOF-FAIL: $real could not be read out of the image (image_get exited $rc)"; return 0; }
+    echo "$GGML_CUDA_LIB -> $real, $(stat -c %s "$tmp/libggml-cuda.so") bytes, sha256 $(sha256sum "$tmp/libggml-cuda.so" | cut -d' ' -f1)"
+    if ! command -v "$CUOBJDUMP" >/dev/null 2>&1; then
+        rm -f -- "$tmp/libggml-cuda.so"
+        echo "PROOF-FAIL: no $CUOBJDUMP on this host, so the device code could not be listed"
+        return 0
+    fi
+    echo "listed with $CUOBJDUMP $("$CUOBJDUMP" --version 2>&1 | grep -oE 'V[0-9][0-9.]*' | head -1 || true)"
+    rc=0; ptx=$("$CUOBJDUMP" --list-ptx "$tmp/libggml-cuda.so" 2>&1) || rc=$?
+    [ "$rc" = 0 ] || { echo "PROOF-FAIL: $CUOBJDUMP --list-ptx exited $rc: $(tail -1 <<<"$ptx")"; fails=1; }
+    rc=0; elf=$("$CUOBJDUMP" --list-elf "$tmp/libggml-cuda.so" 2>&1) || rc=$?
+    [ "$rc" = 0 ] || { echo "PROOF-FAIL: $CUOBJDUMP --list-elf exited $rc: $(tail -1 <<<"$elf")"; fails=1; }
+    rm -f -- "$tmp/libggml-cuda.so"
+    [ "$fails" = 0 ] || return 0
+    np=$(grep -cE '^PTX file +[0-9]+: ' <<<"$ptx" || true)
+    echo "PTX images: $np"
+    grep -oE '\.sm_[0-9]+[a-z]?\.ptx$' <<<"$ptx" | sed 's/^\.//; s/\.ptx$//' | sort | uniq -c | sed 's/^/  /' || true
+    [ "$np" = 0 ] || echo "PROOF-FAIL: libggml-cuda carries $np PTX image(s); the image ships none"
+    ne=$(grep -cE '^ELF file +[0-9]+: ' <<<"$elf" || true)
+    archs=$(sed -n 's/^ELF file *[0-9]*: .*\.\(sm_[0-9][0-9]*[a-z]*\)\.cubin$/\1/p' <<<"$elf")
+    echo "cubins: $ne"
+    sort <<<"$archs" | uniq -c | sed 's/^/  /' || true
+    [ "$ne" -gt 0 ] || echo "PROOF-FAIL: libggml-cuda carries no cubin"
+    [ "$(grep -c . <<<"$archs" || true)" = "$ne" ] || echo "PROOF-FAIL: a cubin line out of the form 'ELF file N: NAME.sm_ARCH.cubin'"
+    for a in $GGML_CUBIN_ARCHS; do
+        n=$(grep -cx -- "$a" <<<"$archs" || true)
+        [ "$n" -gt 0 ] || echo "PROOF-FAIL: libggml-cuda carries no cubin for $a"
+    done
+    for a in $(sort -u <<<"$archs"); do
+        case " $GGML_CUBIN_ARCHS " in *" $a "*) ;; *) echo "PROOF-FAIL: libggml-cuda carries a cubin for $a, off the list ($GGML_CUBIN_ARCHS)" ;; esac
+    done
+    echo "device code: checked"
+}
 # qsd_pid DIR NAME: the PID DIR/NAME.pid names, printed only where that process is a
 # qemu-storage-daemon whose command line exports this directory's file (DIR/whole.raw for
 # qsd-whole, DIR/root.raw for qsd-root). A pidfile left by a crash or a SIGKILL may name
