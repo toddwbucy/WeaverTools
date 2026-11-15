@@ -190,18 +190,23 @@ seal_verdict() {
     # The seal ends with a compaction, while the domain is still defined: one that fails
     # leaves the disk as it was, writable, and `verdict` runs again.
     compact_disk
-    # The sealed image is never booted again as itself: its domain is undefined and the
-    # disk made read-only; proof boots an overlay.
-    virsh_ undefine "$NAME" --nvram >/dev/null
+    # The published digest is of the compacted file (the operator's decision 18 of
+    # 2026-11-15). It and the file's figures are recorded while the domain is still
+    # defined and the disk writable, so a seal cut short here is finished by `verdict`
+    # (the Planner's review of 2026-11-15, F3).
+    sha256sum "$DISK" | tee "$LOG/appliance-sha256.txt"
+    qemu-img info "$DISK" >"$LOG/appliance-qemu-img-info.txt"
+    compact_check "$DISK" | tee "$LOG/appliance-compact.txt" \
+        || die "the compacted disk is not compact ($LOG/appliance-compact.txt); nothing is marked sealed, and verdict runs again"
+    # The sealed image is never booted again as itself: the disk is made read-only, then
+    # its domain undefined. proof boots an overlay. A cut between the two leaves a sealed
+    # disk, its digest recorded, under a defined domain: proof runs, and the domain is
+    # undefined by hand (virsh undefine NAME --nvram).
     chmod 0444 "$DISK"
+    virsh_ undefine "$NAME" --nvram >/dev/null
     # The build guest's host key pair, its pin and its seed image, which carries the private
     # key, go with it.
     rm -rf -- "${DIR:?}/hostkey" "${DIR:?}/known_hosts" "${DIR:?}/seed.iso"
-    # The published digest is of the compacted file (the operator's decision 18 of
-    # 2026-11-15).
-    sha256sum "$DISK" | tee "$LOG/appliance-sha256.txt"
-    qemu-img info "$DISK" >"$LOG/appliance-qemu-img-info.txt"
-    compact_check "$DISK" | tee "$LOG/appliance-compact.txt"
 }
 
 # compact_disk: the build's disk rewritten whole, holding only the clusters the guest
@@ -213,17 +218,25 @@ seal_verdict() {
 # removed.
 compact_disk() {
     local part=$DIR/appliance.compact.part rc
-    [ ! -e "$part" ] && [ ! -L "$part" ] || die "$part stands, left by a compaction cut short (destroy removes it)"
+    [ ! -e "$part" ] && [ ! -L "$part" ] || die "$part stands, left by a compaction cut short. It may be removed by hand, alone, and verdict run again. destroy removes the whole build, the disk with it"
     qemu-img info "$DISK" >"$LOG/appliance-before-compaction-qemu-img-info.txt"
     echo "before compaction: $(stat -c %s "$DISK") bytes long, $(du -B1 "$DISK" | cut -f1) bytes allocated" \
         | tee "$LOG/appliance-compaction.txt"
     trap 'rm -f -- "$DIR/appliance.compact.part"' EXIT
     trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
     qemu-img convert -f qcow2 -O qcow2 "$DISK" "$part" || die "the compaction failed (above); the disk is unchanged and verdict runs again"
+    # The copy reaches the disk before it is compared and before it replaces the disk
+    # (the Planner's review of 2026-11-15, F10).
+    sync -- "$part" || die "the compacted copy could not be synced; the disk is unchanged"
     rc=0; qemu-img compare -f qcow2 -F qcow2 "$DISK" "$part" >>"$LOG/appliance-compaction.txt" 2>&1 || rc=$?
     [ "$rc" = 0 ] || die "the compacted copy does not compare equal to the disk (qemu-img compare exited $rc; $LOG/appliance-compaction.txt); the disk is unchanged"
+    # The copy must be compact before it replaces the disk, so a copy that is not stops the
+    # seal here, with the domain defined (F4).
+    compact_check "$part" >>"$LOG/appliance-compaction.txt" 2>&1 \
+        || die "the compacted copy is not compact, or could not be checked ($LOG/appliance-compaction.txt); the disk is unchanged"
     mv -f -- "$part" "$DISK" || die "the compacted copy could not replace the disk; the disk is unchanged"
     trap - EXIT INT TERM HUP
+    sync -- "$DIR" || die "the directory could not be synced after the compacted copy replaced the disk; verdict runs again"
     echo "after compaction: $(stat -c %s "$DISK") bytes long, $(du -B1 "$DISK" | cut -f1) bytes allocated; compared equal" \
         | tee -a "$LOG/appliance-compaction.txt"
 }
@@ -410,7 +423,7 @@ proof() {
         else
             echo "PROOF-FAIL: the seal recorded sha256 $ssum, not the sealed file's"
         fi
-        compact_check "$DISK"
+        compact_check "$DISK" || true
     } 2>&1 | tee "$out/sealed-file.txt"
     # The version the stamp names (decision 4): one line, <release>.<respin>, and VERSION
     # where the caller names it.

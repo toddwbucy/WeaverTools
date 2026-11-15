@@ -588,37 +588,44 @@ image_close() {
 
 # compact_check FILE: whether a qcow2 is compact (the operator's decision 18 of 2026-11-15):
 # its end offset, as qemu-img check reads it, set against its allocated clusters times its
-# cluster size. What lies beyond them is the format's own tables, and COMPACT_SLACK bounds
-# it: a 120 GiB disk in 64 KiB clusters needs at most 240 second-level tables (15 MiB) and
-# a few refcount blocks. Prints the figures, and a PROOF-FAIL line where the file is longer
-# than that, names a backing file, or cannot be checked. qemu-img check opens the file
-# read-only.
+# cluster size. What lies beyond them is the format's own tables. The bound is
+# COMPACT_SLACK, for the header, the first-level and refcount tables, plus the most the
+# second-level tables can take, which grows with the disk: one 8-byte entry per cluster
+# of the virtual size (15 MiB for 120 GiB in 64 KiB clusters, 64 MiB for 512 GiB). Prints
+# the figures, and a PROOF-FAIL line where the file is longer than that, names a backing
+# file, or cannot be checked, and then returns 1. qemu-img check opens the file read-only.
 COMPACT_SLACK=$((64 * 1024 * 1024))
 compact_check() {
     local f=$1 chk info rc=0
     chk=$(qemu-img check --output=json "$f" 2>&1) || rc=$?
     if [ "$rc" != 0 ]; then
         echo "PROOF-FAIL: qemu-img check exited $rc on $f (1 not checked, 2 corrupt, 3 leaked clusters): $(tail -2 <<<"$chk" | tr '\n' ' ')"
-        return 0
+        return 1
     fi
-    info=$(qemu-img info --output=json "$f" 2>&1) || { echo "PROOF-FAIL: qemu-img info could not read $f"; return 0; }
+    info=$(qemu-img info --output=json "$f" 2>&1) || { echo "PROOF-FAIL: qemu-img info could not read $f"; return 1; }
     python3 -I - "$chk" "$info" "$COMPACT_SLACK" <<'PY'
 import json, sys
 try:
     c, i, slack = json.loads(sys.argv[1]), json.loads(sys.argv[2]), int(sys.argv[3])
     if i.get("backing-filename"):
         print(f"PROOF-FAIL: the file names a backing file, {i['backing-filename']}")
-        sys.exit(0)
+        sys.exit(1)
     # qemu-img check leaves allocated-clusters out where none is allocated.
     end, alloc, cs = int(c["image-end-offset"]), int(c.get("allocated-clusters", 0)), int(i["cluster-size"])
+    vs = int(i["virtual-size"])
+    if cs <= 0:
+        raise ValueError(f"cluster size {cs}")
 except (ValueError, KeyError, TypeError) as e:
     print(f"PROOF-FAIL: qemu-img's figures could not be read: {e!r}")
-    sys.exit(0)
-data = alloc * cs
+    sys.exit(1)
+data, l2 = alloc * cs, -(-vs // cs) * 8
+bound = slack + l2
 print(f"end offset {end} bytes; {alloc} clusters of {cs} bytes allocated ({data} bytes); "
-      f"{end - data} bytes beyond them, bound {slack}")
-if end - data > slack:
-    print(f"PROOF-FAIL: the file is not compact: its end lies {end - data} bytes beyond its allocated clusters, more than {slack}")
+      f"{end - data} bytes beyond them, bound {bound} ({slack}, and {l2} for the "
+      f"second-level tables of a {vs}-byte disk)")
+if end - data > bound:
+    print(f"PROOF-FAIL: the file is not compact: its end lies {end - data} bytes beyond its allocated clusters, more than {bound}")
+    sys.exit(1)
 PY
 }
 

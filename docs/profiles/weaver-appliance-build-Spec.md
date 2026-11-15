@@ -303,8 +303,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     a missing MANIFEST, or a stamp
     that does not name both commits and the version, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
-    followed by the compaction, the undefine, the read-only disk and the sha256. The seal's removals
-    cannot be undone, so a refused image is destroyed and the build begins again from
+    followed by the compaction, the sha256, the read-only disk and the undefine. The
+    seal's removals cannot be undone, so a refused image is destroyed and the build
+    begins again from
     `create`. The read tells a file that is absent from one it could not read (no
     debugfs, a filesystem it cannot open, a copy short of the file's size). A read that
     fails stops `seal` with nothing changed. `seal` cannot run twice, because the guest
@@ -318,15 +319,22 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     3.23 GiB of guest data (52,921 clusters of 64 KiB), and a transfer that does not
     keep holes writes the whole length. Once the verdict passes, and while the shut-off
     domain is still defined, `qemu-img convert` writes the disk again as a new
-    standalone file of the allocated, non-zero clusters alone, beside it. The copy must
-    compare equal to the disk, guest byte for guest byte (`qemu-img compare`), before it
-    replaces the disk by a rename. Only then come the undefine, the read-only mode and
-    the sha256. A compaction that fails, a copy that does not compare equal, or a signal
-    during either stops the seal with the copy removed, the domain defined and the disk
-    as it was, writable, and `build-template.sh verdict` runs again from there. A copy
-    left by a run cut short harder than that is refused, never reused or removed, and
-    `destroy` removes it. The record keeps both lengths, the comparison, and
-    `compact_check`'s figures for the sealed file. Measured on 2026-11-15 on a copy of
+    standalone file of the allocated, non-zero clusters alone, beside it, and the copy
+    is synced. The copy must compare equal to the disk, guest byte for guest byte
+    (`qemu-img compare`), and pass `compact_check` (step 12) before it replaces the disk
+    by a rename, and the directory is synced after. Then the sha256 and the file's
+    figures are recorded, with the domain still defined and the disk writable, so a seal
+    cut short there is finished by `build-template.sh verdict`. Only then is the disk
+    made read-only and the domain undefined. A cut between those two leaves a sealed
+    disk, its digest recorded, under a defined domain: `proof` runs on it, and the
+    domain is undefined by hand. A compaction that fails, a copy that does not compare
+    equal or is not compact, or a signal during any of these stops the seal with the
+    copy removed, the domain defined and the disk as it was, writable, and
+    `build-template.sh verdict` runs again from there. A copy left by a run cut short
+    harder than that is refused and never reused. It may be removed by hand, alone, and
+    `verdict` run again. `destroy` removes it with the rest of the build, the disk
+    included. The record keeps both lengths, the comparison, and `compact_check`'s
+    figures for the copy and for the sealed file. Measured on 2026-11-15 on a copy of
     the fifth build's file, made under scratch and never beside the kept image: the
     compacted file is 3,473,080,320 bytes long, holds 52,907 clusters (the 14 fewer are
     clusters of zeroes), compares equal to the original, and two compactions of the same
@@ -336,12 +344,16 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     FUSE, then debugfs). Then the sealed file itself: its sha256 must be the one the
     seal recorded after its compaction, and the file must be compact. `compact_check`
     reads the file's end offset and its allocated clusters with `qemu-img check`, which
-    opens it read-only, and fails a file whose end lies more than 64 MiB beyond its
-    allocated clusters, or that names a backing file, or that cannot be checked. The
-    64 MiB bounds the format's own tables: a 120 GiB disk in 64 KiB clusters needs at
-    most 240 second-level tables (15 MiB) and a few refcount blocks. On 2026-11-15 the
-    check failed the fifth build's kept file, read-only (17,496,539,136 bytes beyond its
-    clusters), and passed the compacted copy of it (5,767,168 bytes beyond). The stamp
+    opens it read-only, and fails a file whose end lies beyond its allocated clusters by
+    more than a bound, or that names a backing file, or that cannot be checked. What
+    lies beyond them is the format's own tables. The bound is 64 MiB for the header and
+    the first-level and refcount tables, plus the most the second-level tables can
+    take, one 8-byte entry for each cluster of the virtual size: 15 MiB more for a
+    120 GiB disk in 64 KiB clusters, 64 MiB more for 512 GiB. So a larger `SIZE` does
+    not fail a compact file. On 2026-11-15 the check, with its 64 MiB alone, failed the
+    fifth build's kept file, read-only (17,496,539,136 bytes beyond its clusters), and
+    passed the compacted copy of it (5,767,168 bytes beyond). Both verdicts stand under
+    the larger bound. The stamp
     must name one version of the form `<release>.<respin>`, and `VERSION` where the
     caller names it. The shipped ggml library must carry the four cubin sets and no PTX
     (above). Then one boot of an overlay with no seed, every frame its NIC
