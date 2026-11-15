@@ -867,14 +867,20 @@ probes() {
     # Private keys, in both passes, so a false hit is found before the seal's removals.
     # The pre pass leaves out what the seal itself removes (SEAL_KEYS and the SSH host keys).
     check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE '^/etc/ssh/ssh_host_' | grep -vxF -f <(printf '%s\n' $SEAL_KEYS); else cat; fi | head -8)"
+    # No key admits a login: the operator places the first one (decision 16). In both
+    # passes, so a key is found before the seal's removals (the Planner's review of
+    # 2026-11-15, F9). The pre pass leaves out the build account's own, which the seal
+    # removes with the account.
+    check "an authorized key" "$(sudo find /root /home /etc/ssh -xdev -type f \( -name authorized_keys -o -name authorized_keys2 \) -size +0 2>/dev/null | if [ "$mode" = pre ]; then grep -v '^/home/op/'; else cat; fi)"
     if [ "$mode" = final ]; then
         check "the build account" "$(getent passwd op; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
-        check "machine identity" "$(m=$(sed -n 1p /etc/machine-id); [ -z "$m" ] || [ "$m" = uninitialized ] || echo "machine-id $m"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
-        # No key admits a login: the operator places the first one (decision 16).
-        check "an authorized key" "$(find /root /home /etc/ssh -xdev -type f \( -name authorized_keys -o -name authorized_keys2 \) -size +0 2>/dev/null)"
+        # The machine identity must read uninitialized, as cloud-init clean writes it: that
+        # makes the first boot a first boot, on which sshd-keygen makes the host keys
+        # (ConditionFirstBoot). An empty or absent file is a hit (F8).
+        check "machine identity" "$([ "$(cat /etc/machine-id 2>/dev/null)" = uninitialized ] || echo "machine-id is '$(head -c 40 /etc/machine-id 2>/dev/null)', not uninitialized"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
         check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
         check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps 2>/dev/null)"
         check "a stamp other than the one being sealed" "$(ls "$RECORD" 2>/dev/null | grep -vxE 'stamp.part|seal-probes')"

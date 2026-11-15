@@ -52,7 +52,7 @@ to: weaver-appliance-profile
 | `VCPUS`, `MEMORY`, `SIZE` | the build guest's vCPUs, memory in MiB and disk | 24, 65536, 120G |
 | `SEAL_WAIT` | the seconds the host waits for the guest's final seal step to power it off | 1200 |
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
-| `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
+| `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port). The next port, `PROOF_PORT` + 1, forwards the inbound probe to the guest's TCP 8080, bound the same way | `PORT` + 100, and + 101 |
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's login prompt on the console | 300 |
 | `CUOBJDUMP` | the host's `cuobjdump`, from a CUDA toolkit that knows the four architectures `proof` checks for (section 2) | `cuobjdump` |
 | `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens and to the overlays it boots | `libvirt-qemu` |
@@ -125,7 +125,11 @@ The proof checks the shipped library. It follows `/opt/weaver/lib/libggml-cuda.s
 through its links in the image, copies the file out, and lists it with the host's
 `cuobjdump` (`CUOBJDUMP`). Any PTX image fails the proof, as do any of the four cubin
 sets absent, a cubin for any other architecture, a file that cannot be read and a
-listing that cannot run. On 2026-11-15 the check passed stand-ins made with nvcc 13.4.92
+listing that cannot run. So does a listing line in a form the check does not read, and
+a PTX listing that names no PTX image without cuobjdump's own line saying it found
+none. cuobjdump 13.4.92 prints `No PTX file found` then (measured on 2026-11-15 on the
+measuring host). The check counts architectures, not cubins: one cubin for an
+architecture passes it. On 2026-11-15 the check passed stand-ins made with nvcc 13.4.92
 on the measuring host, failed stand-ins with PTX, a missing architecture or an extra
 one, and failed the fifth build's kept image, read-only, which was compiled before the
 change: it carries 132 PTX images each for `sm_75` and `sm_80` beside the four cubin
@@ -387,7 +391,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     network with no default route or no resolver pays that wait on every boot. The proof
     waits for the console's login prompt, which must greet with the image's hostname. It
     then reads the keys SSH presents with one `ssh-keyscan` of the three types
-    `ssh-keygen -A` makes, and one retry after 30 s. One scan, because the guest's sshd
+    `ssh-keygen -A` makes, and one retry after 30 s, whose keys are added to the first
+    scan's and never replace them. One scan, because the guest's sshd
     counts each unauthenticated connection against its source (`PerSourcePenalties`),
     every forwarded connection arrives from the same address, and repeated scans dropped
     a key (the fourth build's proof runs 2 to 4). It logs in under those keys as root,
@@ -400,7 +405,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     policy with no agent loaded. In the guest it reads the tables the kernel holds, and
     the image's
     table with its input policy drop and its SSH accept. It starts a listener on TCP 8080,
-    which must answer on the guest's own loopback. From the host, that listener, reached
+    serving a new empty directory, which must answer on the guest's own loopback. From
+    the host, that listener, reached
     through a second forward (`PROOF_PORT` + 1 to the guest's 8080), must be silent. QEMU's
     forward accepts the host's connection whatever the guest does, then ends it at once
     where the guest refuses, and leaves it silent where the guest drops the connection.
@@ -546,15 +552,19 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - private-key files. The pre pass leaves out the files the seal itself removes, so a hit
   is found before the removals. A `.pem` is judged by its content: fwupd ships its public
   LVFS CA certificates as `.pem` under `/etc/pki`.
+- an authorized-keys file with any content under `/root`, `/home` or `/etc/ssh`, read as
+  root. The pre pass leaves out the build account's own, which the seal removes with the
+  account, so any other key is found before the removals.
 
 A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages ship their
 `Cargo.lock` under `/usr/share/doc`), nor is man-db's cache tag.
 
 The final pass adds:
 - the build account, shell histories, cloud-init's instance state, netplan files
-- the machine identity, systemd's random seed and credential secret, and the SSH host
-  keys
-- an authorized-keys file with any content under `/root`, `/home` or `/etc/ssh`
+- the machine identity not `uninitialized`, as `cloud-init clean` writes it (an empty or
+  absent file is a hit too, since the first boot's host keys rest on that word),
+  systemd's random seed and credential secret, and the SSH host keys
+- the authorized-keys files again, the build account's gone with it
 - non-empty logs
 - the build's records or this script still present
 - a stamp other than the one being sealed: anything in `/etc/weaver-appliance` but the

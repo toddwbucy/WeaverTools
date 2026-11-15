@@ -669,10 +669,10 @@ proof_first_boot() {
         t=$((t + 2)); [ "$t" -lt "$limit" ] || break; sleep 2
     done
     local want=3 n=0
-    ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
+    proof_keyscan "$port" "$pdir/scanned"
     if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "$want" ]; then
         proof_sleep 30; n=1
-        ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
+        proof_keyscan "$port" "$pdir/scanned"
     fi
     {
         echo "== first boot, $t s to the console's login prompt (bound $limit s); $n more scans"
@@ -772,10 +772,23 @@ proof_first_boot() {
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
 }
 
+# proof_keyscan PORT FILE: the keys SSH presents on the forward at PORT, added to FILE.
+# A second scan adds to the first and never replaces it, so a key the first found stands
+# (the Planner's review of 2026-11-15, F11). A key that differs between the two scans
+# stands twice, and the fingerprint comparison then fails.
+proof_keyscan() {
+    local port=$1 f=$2
+    ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$f.scan" 2>/dev/null || true
+    touch -- "$f"
+    sort -u -- "$f" "$f.scan" >"$f.merged" && mv -f -- "$f.merged" "$f"
+    rm -f -- "$f.scan"
+}
+
 # proof_inbound PORT DPORT KNOWN: the base inbound policy (the operator's decision 9 of
 # 2026-11-15) on the first boot, with no agent loaded. In the guest: the tables the kernel
 # holds, the image's own read back with its input policy drop and its SSH accept, and a
-# listener started on TCP 8080 that must answer on the guest's own loopback. From the host:
+# listener started on TCP 8080, serving a new empty directory, that must answer on the
+# guest's own loopback. From the host:
 # that listener, reached through the forward on DPORT, must be silent (dropped, inbound_probe),
 # and then SSH, through the forward on PORT, must answer. SSH is probed last: the probe
 # leaves without authenticating, which sshd counts against the forward's one source
@@ -794,7 +807,7 @@ proof_inbound() {
             printf "%s\n" "$r"; echo "PROOF-FAIL: the table inet weaver_appliance is not loaded"
         fi' 2>&1 || echo "PROOF-FAIL: the read of the loaded rules exited $?"
     lpid=$(KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
-        cd /tmp && setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
+        d=$(mktemp -d) && cd "$d" && setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
         for i in $(seq 50); do ss -Hltn "sport = :8080" | grep -q . && break; sleep 0.2; done
         echo "$p"' 2>/dev/null) || lpid=""
     if ! [[ "$lpid" =~ ^[0-9]+$ ]]; then

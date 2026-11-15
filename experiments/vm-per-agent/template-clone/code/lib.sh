@@ -534,8 +534,19 @@ device_code_check() {
     [ "$rc" = 0 ] || { echo "PROOF-FAIL: $CUOBJDUMP --list-elf exited $rc: $(tail -1 <<<"$elf")"; fails=1; }
     rm -f -- "$tmp/libggml-cuda.so"
     [ "$fails" = 0 ] || return 0
+    # Every line of each listing must be in a form this check reads, so a cuobjdump that
+    # words its listing otherwise is a finding and never reads as "no PTX" (the Planner's
+    # review of 2026-11-15, F7). With no PTX, cuobjdump says so in one info line, and with
+    # no PTX image named that line must stand (cuobjdump 13.4.92, measured 2026-11-15).
+    local odd
+    odd=$(grep -vE '^(PTX file +[0-9]+: |cuobjdump info +: No PTX file found)' <<<"$ptx" | grep -v '^$' || true)
+    [ -z "$odd" ] || echo "PROOF-FAIL: a --list-ptx line out of the forms 'PTX file N: NAME' and 'cuobjdump info : No PTX file found': $(head -1 <<<"$odd")"
+    odd=$(grep -vE '^ELF file +[0-9]+: ' <<<"$elf" | grep -v '^$' || true)
+    [ -z "$odd" ] || echo "PROOF-FAIL: a --list-elf line out of the form 'ELF file N: NAME': $(head -1 <<<"$odd")"
     np=$(grep -cE '^PTX file +[0-9]+: ' <<<"$ptx" || true)
     echo "PTX images: $np"
+    [ "$np" != 0 ] || grep -qE '^cuobjdump info +: No PTX file found' <<<"$ptx" \
+        || echo "PROOF-FAIL: --list-ptx named no PTX image and did not say it found none"
     grep -oE '\.sm_[0-9]+[a-z]?\.ptx$' <<<"$ptx" | sed 's/^\.//; s/\.ptx$//' | sort | uniq -c | sed 's/^/  /' || true
     [ "$np" = 0 ] || echo "PROOF-FAIL: libggml-cuda carries $np PTX image(s); the image ships none"
     ne=$(grep -cE '^ELF file +[0-9]+: ' <<<"$elf" || true)
