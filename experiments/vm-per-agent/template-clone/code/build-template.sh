@@ -531,9 +531,14 @@ EOF
                 if dpkg-query -W -f "\${db:Status-Abbrev} \${Package}\n" hello 2>/dev/null | grep -q "^ii"; then
                     echo "INSTALLED: hello"; echo "PROOF-FAIL: the user-data package hello was installed"
                 else echo "not installed: hello"; fi
-                if getent passwd weaver-proof-extra >/dev/null; then
-                    echo "MADE: weaver-proof-extra"; echo "PROOF-FAIL: the user-data account weaver-proof-extra was made"
-                else echo "not made: weaver-proof-extra"; fi
+                # getent exits 2 where the account is not found. Any other failure is a read
+                # that did not happen, not an account that was not made.
+                getent passwd weaver-proof-extra >/dev/null; g=$?
+                case $g in
+                    0) echo "MADE: weaver-proof-extra"; echo "PROOF-FAIL: the user-data account weaver-proof-extra was made" ;;
+                    2) echo "not made: weaver-proof-extra" ;;
+                    *) echo "PROOF-FAIL: getent exited $g, so whether weaver-proof-extra was made is not known" ;;
+                esac
                 echo "== the hostname"; hostname
                 echo "== the network as the seed named it"; ip -br addr show nic0; ip route; resolvectl dns nic0 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
@@ -570,11 +575,13 @@ EOF
             # seal lists them, less the host keys' private halves (no digest of a private key
             # is made), and its links formatted here as the seal formats them. A listing that
             # fails, a difference outside the first boot's expected list, and a MANIFEST
-            # without its links section each fail the proof (manifest_compare). The booted
-            # listings stay in the overlay's directory and go with it.
+            # without its links section each fail the proof (manifest_compare). The files'
+            # listing runs under pipefail, so a find error fails it, though sort and
+            # sha256sum succeed. The booted listings stay in the overlay's directory and go
+            # with it.
             echo "== the MANIFEST against the booted guest"
             if ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
-                    "sudo bash -c 'find $MANIFEST_SCOPE -xdev -type f -not -path \"/etc/weaver-appliance/MANIFEST*\" -not -path /boot/grub/grubenv -not -name \"ssh_host_*_key\" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum'" \
+                    "sudo bash -o pipefail -c 'find $MANIFEST_SCOPE -xdev -type f -not -path \"/etc/weaver-appliance/MANIFEST*\" -not -path /boot/grub/grubenv -not -name \"ssh_host_*_key\" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum'" \
                     >"$pdir/files-booted" 2>"$pdir/files-booted.err"; then
                 echo "PROOF-FAIL: the booted guest's files could not be listed: $(tail -2 "$pdir/files-booted.err" | tr '\n' ' ')"
             elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \

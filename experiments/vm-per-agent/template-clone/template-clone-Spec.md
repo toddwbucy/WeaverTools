@@ -753,7 +753,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     expected to change. On the fourth build's first boot, systemd ran its first-boot
     preset of all units, and the masks held against it, so a link it changes is a finding.
     Every other difference fails the proof, as do a listing that fails and a MANIFEST
-    that does not carry the marker once. The marker and the scope have one definition, in
+    that does not carry the marker once. The files' listing runs under `pipefail`, so a
+    `find` error fails it. The marker and the scope have one definition, in
     `guest/template-steps`, which `lib.sh` reads, and the offline mock checks that the two
     copies of the formatter are the same text. Each boot's serial console, and the
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
@@ -801,7 +802,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     credential secret (`/var/lib/systemd/credential.secret`) and any non-empty file
     under `/var/log`. Each one found fails the proof with the first boot's findings,
     because no secret ships in every copy of the image. The login records under
-    `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. These reads were
+    `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. debugfs exits 0
+    on a listing it cannot make and reports the error on its own output, so its lines
+    are read together. A listing of `/var/log` that does not complete fails the proof
+    too: an error debugfs reports, or a directory past 12 levels. These reads were
     checked against scratch filesystem images, and the fifth build's sealed image passed
     them: no seed, no secret, no non-empty log. The seal removes both files before its final probe, which names
     them. `systemd-random-seed.service` saves a seed when it stops, so left running it
@@ -895,8 +899,9 @@ then `manifest.scope` (which form the MANIFEST has) last. The records are these.
   package version and sha256 (for setting the image against a host, WeaverTools#28).
 - The build's vCPUs, memory and peak memory, and the sizes before and after the cleanup.
 
-Every record is checked when written, and a record that cannot be written fails its
-step.
+Every record is checked when written. A record that cannot be written fails its step,
+and so does a value whose read fails or gives nothing, such as the digest of a file that
+cannot be read.
 
 The stamp is where a later reader finds the commits the image was compiled from, with no
 build log: `weaveragent.commit` and `weaverweb.commit`, with their origins.
