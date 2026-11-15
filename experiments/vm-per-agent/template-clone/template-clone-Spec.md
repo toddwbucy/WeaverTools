@@ -359,7 +359,11 @@ sentence before it makes anything. `build-template.sh mock` runs it in the build
 it copies the code tree in, writes that marker (in `/run`, so it is gone at the next boot
 and never reaches the sealed image), runs the mock, records its output and count in
 `mock.txt`, and removes the copy. It runs before `cleanup`, while the guest still has the
-tools the mock uses. Its count is taken there.
+tools the mock uses. Its count is taken there. The count of record is the mock's own last
+line, `== N checks passed`, which counts the checks it ran: 123 in the fifth build's
+guest. The source has 108 `check` call sites. 15 of them sit in a loop that runs once for
+each of the two step files, `template-steps` and `clone-steps`, so 108 sites run 123
+checks.
 
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
 `uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `ensure_key`, harness
