@@ -520,6 +520,34 @@ BUILD_RE='^(build-essential|(gcc|g\+\+|cpp|clang|llvm)(-[0-9]+)?(-x86-64-linux-g
 PURGE_BASE="git git-man unattended-upgrades snapd ubuntu-server
   bpftrace bpfcc-tools python3-bpfcc libbpfcc linux-virtual linux-image-virtual
   update-notifier-common libbinutils libctf0 libgprofng0 cloud-initramfs-dyn-netconf"
+# The image's base inbound policy (the operator's decision 9 of 2026-11-15): its own boot
+# rules drop inbound and accept SSH. One table of the image's own, which Ubuntu's
+# nftables.service loads from /etc/nftables.conf before the network comes up. The file never
+# flushes the ruleset and names its own table alone, so loading it again replaces that table
+# and nothing else. The drop-in makes the unit's stop remove that table alone, where
+# Ubuntu's flushes every table. Accepted: loopback, replies (established and related), the
+# ICMPv6 neighbour-discovery types IPv6 cannot work without, and TCP 22. Outbound is not
+# limited. Admin's table is separate and admin's: a drop here is final, so an accept in it
+# cannot open a port through this table (weaver-appliance-build-Spec section 3).
+FIREWALL_TABLE="inet weaver_appliance"
+FIREWALL_RULES='#!/usr/sbin/nft -f
+# The appliance image'"'"'s base inbound policy (weaver-appliance-build-Spec): inbound is
+# dropped but loopback, replies, IPv6 neighbour discovery and SSH. Outbound is not limited.
+# This file names its own table alone and never flushes the ruleset.
+destroy table inet weaver_appliance
+table inet weaver_appliance {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iif "lo" accept
+		ct state established,related accept
+		icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
+		tcp dport 22 accept
+	}
+}'
+FIREWALL_DROPIN=/etc/systemd/system/nftables.service.d/weaver-appliance.conf
+FIREWALL_STOP='[Service]
+ExecStop=
+ExecStop=/usr/sbin/nft destroy table inet weaver_appliance'
 UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-daily-upgrade.service
   motd-news.timer motd-news.service fwupd-refresh.timer fwupd-refresh.service
   update-notifier-download.timer update-notifier-motd.timer snapd.service snapd.socket"
@@ -636,6 +664,15 @@ EOF
     initrd_network_check || return 1
     echo "initramfs $(sudo sha256sum "/boot/initrd.img-$KVER" | cut -c1-16): no networkd, no network hook"
 
+    section "the base inbound policy: drop, but SSH"
+    printf '%s\n' "$FIREWALL_RULES" | sudo tee /etc/nftables.conf >/dev/null || return 1
+    sudo install -d -m 0755 "${FIREWALL_DROPIN%/*}" || return 1
+    printf '%s\n' "$FIREWALL_STOP" | sudo tee "$FIREWALL_DROPIN" >/dev/null || return 1
+    # Enabled for the next boot, not loaded now: the build guest keeps its own network.
+    sudo systemctl enable nftables.service 2>&1 || return 1
+    firewall_check || return 1
+    echo "nftables.service enabled with the image's table; ufw installed and inactive"
+
     section "updates masked, sources off"
     # shellcheck disable=SC2086
     sudo systemctl mask $UPDATE_UNITS >/dev/null 2>&1
@@ -716,6 +753,20 @@ sys.exit(1 if bad else 0)
 PY
 }
 
+# firewall_check: the base inbound policy as the next boot loads it: /etc/nftables.conf and
+# the drop-in exactly as FIREWALL_RULES and FIREWALL_STOP hold them, the file accepted by
+# nft's check, nftables.service enabled, and ufw inactive. Prints each difference; exits 1
+# on any.
+firewall_check() {
+    local bad=""
+    cmp -s <(printf '%s\n' "$FIREWALL_RULES") /etc/nftables.conf || bad+="/etc/nftables.conf is not the image's rules. "
+    cmp -s <(printf '%s\n' "$FIREWALL_STOP") "$FIREWALL_DROPIN" || bad+="$FIREWALL_DROPIN is not the image's drop-in. "
+    sudo nft -c -f /etc/nftables.conf >/dev/null 2>&1 || bad+="nft's check refuses /etc/nftables.conf. "
+    [ "$(systemctl is-enabled nftables.service 2>/dev/null)" = enabled ] || bad+="nftables.service is not enabled. "
+    grep -qx 'ENABLED=no' /etc/ufw/ufw.conf 2>/dev/null || bad+="ufw is not inactive (/etc/ufw/ufw.conf). "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
 # SEAL_KEYS: the private keys the seal removes, besides the SSH host keys.
 SEAL_KEYS="/var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
   /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem"
@@ -776,6 +827,7 @@ probes() {
     check "ssh not enabled for the first boot" "$(e=0; for u in ssh.service ssh.socket; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = enabled ] && e=1; done; [ "$e" = 1 ] || echo "neither ssh.service nor ssh.socket is enabled")"
     check "cloud-init not limited to SSH key, network and hostname, or keys_to_console not run" "$(cloud_init_check 2>&1)"
     check "the module" "$(driver_check_quiet)"
+    check "the base inbound policy not as built" "$(firewall_check 2>&1)"
     # Private keys, in both passes, so a false hit is found before the seal's removals.
     # The pre pass leaves out what the seal itself removes (SEAL_KEYS and the SSH host keys).
     check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE '^/etc/ssh/ssh_host_' | grep -vxF -f <(printf '%s\n' $SEAL_KEYS); else cat; fi | head -8)"

@@ -505,6 +505,50 @@ if end - data > slack:
 PY
 }
 
+# inbound_probe PORT SECONDS: what one TCP connection to the host's loopback PORT meets,
+# through QEMU's user-mode forward to a guest port. It reads for 2 s first (a server that
+# speaks first, as SSH does), then sends one HTTP request line and reads again, for SECONDS
+# in all. It prints "answered: " and the first line the far end sent, "closed" where the
+# far end ended the connection with nothing sent, or "silent" where nothing came. Through
+# the forward the host's connection is accepted at once whatever the guest does, then a
+# guest that refuses (a reset) ends it at once, and a guest that drops the connection
+# leaves it silent until QEMU gives up, long after SECONDS.
+inbound_probe() {
+    python3 -I - "$1" "$2" <<'PY'
+import socket, sys, time
+port, secs = int(sys.argv[1]), float(sys.argv[2])
+end = time.monotonic() + secs
+try:
+    s = socket.create_connection(("127.0.0.1", port), timeout=secs)
+except OSError as e:
+    print(f"closed (the connection was refused: {e.strerror or e})")
+    sys.exit(0)
+def read(until):
+    while (left := until - time.monotonic()) > 0:
+        s.settimeout(left)
+        try:
+            b = s.recv(4096)
+        except socket.timeout:
+            return None
+        except OSError as e:
+            return f"closed ({e.strerror or e})"
+        if not b:
+            return "closed"
+        line = b.split(b"\n")[0].decode("ascii", "replace").strip()
+        return "answered: " + "".join(c if c.isprintable() else "?" for c in line)[:120]
+    return None
+got = read(min(end, time.monotonic() + 2))
+if got is None:
+    try:
+        s.sendall(b"GET / HTTP/1.0\r\n\r\n")
+    except OSError as e:
+        got = f"closed ({e.strerror or e})"
+if got is None:
+    got = read(end)
+print(got or "silent")
+PY
+}
+
 # qemu_file FILE: an empty FILE that its owner and QEMU's account (QEMU_USER) alone may
 # write, for a file QEMU opens from its own command line (a serial console, a capture).
 # A file libvirt opens for a device becomes its own, unreadable here without root; a mode

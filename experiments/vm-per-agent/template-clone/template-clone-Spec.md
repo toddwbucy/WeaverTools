@@ -191,11 +191,12 @@ alone. Its clones also skip the seed's copy, because the template's table alread
 at that point. A clone of today's template therefore relies on `ipv6=off` for the IPv6
 path (`README.md`, "The network"). Only a rebuilt template carries the IPv6 line.
 
-**The appliance image of `weaver-appliance-build-Spec` carries no copy of the guard.** The image's firewall
-belongs to the operator: admin owns one named table in it and never the whole firewall,
-as the operator ratified on 2026-11-14. This guard's file opens with `flush ruleset`, and
-10.0.2.2 means the host only under QEMU's user-mode networking. So the rig guards its own
-boots instead:
+**The appliance image of `weaver-appliance-build-Spec` carries no copy of the guard.** Its
+own boot rules are a base inbound policy, one table of its own that drops inbound but SSH
+and limits nothing outbound (the operator's decision 9 of 2026-11-15), and admin owns one
+named table beside it and never the whole firewall (ratified on 2026-11-14). This guard's
+file opens with `flush ruleset`, and 10.0.2.2 means the host only under QEMU's user-mode
+networking. So the rig guards its own boots instead:
 - the build VM gets the guard from its seed's `bootcmd`, as above.
 - `proof`'s boot with no seed and its first boot both run on `restrict=on`, so neither
   boot of the sealed image can reach the host or anything beyond it.
@@ -454,6 +455,11 @@ another, is refused, as are an argument with no SSH forward on `PORT` and one no
 `ensure_key` (section 1) makes the key's directory, 0700, and the key in it.
 
 `put` (section 5) refuses a destination that stands, and a path holding `..`.
+
+`inbound_probe` (`weaver-appliance-build-Spec` section 2, step 12), against loopback
+servers: one that speaks first is answered with its first line, one that answers a
+request is answered, one that accepts and never speaks is silent, and one that closes is
+closed.
 
 The host scripts' steps (section 0):
 - `build-template.sh step` and `clone.sh step` each exit non-zero on a guest step that

@@ -504,6 +504,9 @@ PY
 # network is also the third setting the operator ruled cloud-init takes.
 proof_first_boot() {
     local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 100))}
+    # The base inbound policy's probe port: TCP 8080 in the guest, forwarded from the next
+    # host port.
+    local dport=$((port + 1))
     local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
     mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN first"
     mkdir -- "$pdir/seed"
@@ -549,7 +552,7 @@ EOF
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
         --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22 -device virtio-net-pci,netdev=un0,mac=52:54:00:57:45:01,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=52:54:00:57:45:01,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/first-boot-virt-install.txt" 2>&1
     # Wait for the console's fingerprint block, then scan once. Each scan connection leaves
@@ -658,6 +661,7 @@ EOF
             else
                 manifest_compare "$out/MANIFEST" "$pdir/files-booted" "$pdir/links-booted"
             fi
+            proof_inbound "$port" "$dport" "$pdir/scanned"
         else
             echo "trust on first use: NO MATCH; no login"
             echo "PROOF-FAIL: trust on first use: the console's fingerprints do not name the keys SSH presents"
@@ -669,6 +673,50 @@ EOF
     tr -d '\r' <"$pdir/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
+}
+
+# proof_inbound PORT DPORT KNOWN: the base inbound policy (the operator's decision 9 of
+# 2026-11-15) on the first boot, with no agent loaded. In the guest: the tables the kernel
+# holds, the image's own read back with its input policy drop and its SSH accept, and a
+# listener started on TCP 8080 that must answer on the guest's own loopback. From the host:
+# that listener, reached through the forward on DPORT, must be silent (dropped, inbound_probe),
+# and then SSH, through the forward on PORT, must answer. SSH is probed last: the probe
+# leaves without authenticating, which sshd counts against the forward's one source
+# address (PerSourcePenalties). Each finding is a PROOF-FAIL line.
+proof_inbound() {
+    local port=$1 dport=$2 known=$3 lpid lb ans
+    echo "== the base inbound policy, with no agent loaded"
+    KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+        echo "-- nftables.service: $(systemctl is-active nftables.service)"
+        echo "-- the tables the kernel holds"; sudo nft list tables
+        if r=$(sudo nft list table inet weaver_appliance 2>&1); then
+            printf "%s\n" "$r"
+            grep -q "type filter hook input priority filter; policy drop;" <<<"$r" || echo "PROOF-FAIL: the table inet weaver_appliance does not drop inbound by default"
+            grep -q "tcp dport 22 accept" <<<"$r" || echo "PROOF-FAIL: the table inet weaver_appliance does not accept SSH"
+        else
+            printf "%s\n" "$r"; echo "PROOF-FAIL: the table inet weaver_appliance is not loaded"
+        fi' 2>&1 || echo "PROOF-FAIL: the read of the loaded rules exited $?"
+    lpid=$(KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+        cd /tmp && setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
+        for i in $(seq 50); do ss -Hltn "sport = :8080" | grep -q . && break; sleep 0.2; done
+        echo "$p"' 2>/dev/null) || lpid=""
+    if ! [[ "$lpid" =~ ^[0-9]+$ ]]; then
+        echo "PROOF-FAIL: the listener on TCP 8080 did not start in the guest (${lpid:-no PID})"
+    else
+        lb=$(KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+            ss -Hltn "sport = :8080"
+            python3 -c "import urllib.request as u; print(\"loopback:\", u.urlopen(\"http://127.0.0.1:8080/\", timeout=5).status)"' 2>&1) || true
+        printf -- '-- the listener on TCP 8080, in the guest\n%s\n' "$lb"
+        grep -qx 'loopback: 200' <<<"$lb" || echo "PROOF-FAIL: the listener on TCP 8080 did not answer on the guest's loopback, so its drop proves nothing"
+        ans=$(inbound_probe "$dport" 15)
+        echo "-- TCP 8080 from the host, through the forward: $ans"
+        [ "$ans" = silent ] || echo "PROOF-FAIL: inbound to TCP 8080 was not dropped ($ans)"
+        KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" "kill $lpid 2>/dev/null; sleep 1
+            if ss -Hltn 'sport = :8080' | grep -q .; then echo 'the listener still listens'; else echo 'the listener is stopped'; fi" 2>&1 || true
+    fi
+    ans=$(inbound_probe "$port" 10)
+    echo "-- SSH from the host, through the forward: $ans"
+    case $ans in "answered: SSH-2.0-"*) ;; *) echo "PROOF-FAIL: SSH did not answer through the forward ($ans)" ;; esac
 }
 
 # destroy: the build guest, only where its domain stands on DISK, then what a proof or a

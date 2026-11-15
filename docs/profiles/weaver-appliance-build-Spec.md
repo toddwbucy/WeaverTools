@@ -102,6 +102,29 @@ appliance has no network root, so the cleanup purges that package and makes the
 initramfs again, and a probe checks it holds no networkd. The network is then the first
 boot's seed alone. chrony keeps Ubuntu's NTS pool as its servers, unchanged here.
 
+**The base inbound policy: drop, but SSH** (the operator's decision 9 of 2026-11-15). The
+image's own boot rules drop inbound traffic and accept SSH, with no agent loaded. The
+cleanup writes one table of the image's own, `inet weaver_appliance`, to
+`/etc/nftables.conf` and enables Ubuntu's `nftables.service`, which loads it before the
+network comes up. The table's input chain has policy drop and accepts four things:
+loopback, replies (connection state established or related), the ICMPv6
+neighbour-discovery types without which IPv6 does not work (neighbour solicitation and
+advertisement, router advertisement), and TCP 22. It has no output chain, so outbound is
+not limited (decision 17). The file opens by destroying the image's own table and never
+flushes the ruleset, so a load, a reload or a second load replaces that table and leaves
+every other table as it stands. Ubuntu's unit flushes the whole ruleset when it stops, so
+a drop-in, `/etc/systemd/system/nftables.service.d/weaver-appliance.conf`, replaces the
+unit's stop with the destruction of the image's table alone. Both texts are defined once
+in `guest/template-steps`, and a probe sets the files against them. The rules are enabled
+for the next boot and not loaded in the build guest. Checked on 2026-11-15 in a user
+namespace on the measuring host (nftables 1.1.7): the file loads twice, and a second
+table survives both loads and the stop. ufw is installed, as the cloud image ships it, and
+inactive (`ENABLED=no`), and a probe reads that it stays so. Admin's table is separate and
+is admin's. In nftables a drop in one table's base chain is final, so an accept in admin's
+table cannot open a port through this one (section 3). An address by DHCPv6 is not
+provided for: a DHCPv6 server's reply does not match the multicast solicitation as a
+reply, so the policy drops it. That is read from the rules and not measured.
+
 **cloud-init: the SSH key, the network and the hostname (operator's ruling,
 2026-11-14).** The cleanup writes `/etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg`:
 `allow_userdata: false`, vendor-data and vendor-data2 disabled, and the module lists cut
@@ -173,7 +196,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     marked manual first, and a simulation must remove no package of the runtime set and no
     base package but those named or matched. Then `ldconfig` and the loader check,
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
-    again without networkd, and last the update units masked, apt's periodic jobs off, the
+    again without networkd, the base inbound policy written and enabled, and last the
+    update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
     cleanup, and marks manual only the base packages still installed, since apt-mark
     refuses a whole call on one name it cannot find. A rerun does not keep the caches
@@ -275,7 +299,17 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     under those keys, as the default account, and read cloud-init's verdict and the
     modules it ran, what became of each user-data ask, the hostname, the network and its
     wait, `ubuntu.sources`, SSH's units and the stamp's commits. It then sets the MANIFEST
-    against the booted guest, on the host. The guest's files are listed as the seal lists
+    against the booted guest, on the host, and last measures the base inbound policy with
+    no agent loaded. In the guest it reads the tables the kernel holds, and the image's
+    table with its input policy drop and its SSH accept. It starts a listener on TCP 8080,
+    which must answer on the guest's own loopback. From the host, that listener, reached
+    through a second forward (`PROOF_PORT` + 1 to the guest's 8080), must be silent. QEMU's
+    forward accepts the host's connection whatever the guest does, then ends it at once
+    where the guest refuses, and leaves it silent where the guest drops the connection.
+    `inbound_probe` reads for 2 s, sends one HTTP request line, and reads again, for 15 s in
+    all. The listener is stopped, and last SSH must answer with its banner through its own
+    forward. SSH is probed last because the probe leaves without authenticating, which
+    sshd counts against the forward's one source address. The guest's files are listed as the seal lists
     them, less the host keys' private halves, so no digest of a private key is made. Its
     links are formatted on the host by the seal's own formatter text. Each file or link
     removed, added or changed is printed by its path, never with a digest. A difference
@@ -322,7 +356,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     command, the package or the account), cloud-init not done (the proof waits up to
     600 s with `cloud-init status --wait`, then requires the status text `done` and exit
     0, since the status exits 0 for running, disabled and not started too, 1 an error, 2
-    degraded), a stamp that does not name both commits, and any listening
+    degraded), a stamp that does not name both commits, the image's table not loaded or
+    not dropping inbound by default or not accepting SSH, a listener on TCP 8080 that does
+    not answer on the guest's loopback or that answers from the host, SSH not answering
+    through its forward, and any listening
     socket beyond loopback other than SSH on TCP 22. The last is the measure of the
     operator's ruling 4 (SSH only): the first boot lists every listening TCP and UDP
     socket with its process, and fails on any bound beyond loopback but SSH. A socket
@@ -391,6 +428,9 @@ load shows it is never mapped), the driver's packages (its compute library whole
   kernel's image not read as held. The holds are read from dpkg, not from `apt-mark`:
   apt run as root rebuilds the binary caches the probes refuse.
 - the module's preconditions
+- the base inbound policy not as built: `/etc/nftables.conf` or the drop-in not the texts
+  the steps define, nft's check refusing the file, `nftables.service` not enabled, or ufw
+  not inactive
 - SSH not enabled
 - cloud-init not limited to the SSH key, network and hostname, or `keys_to_console` not
   in its final modules
@@ -465,6 +505,13 @@ later acts.
 
 ## 3. Open
 
+- **How admin's table opens a declared port through the image's rules.** A drop in the
+  image's table is final, so an accept in admin's table does not open a port. As of
+  2026-11-15 no declaration can name a port, and nothing is built for it: no set, no mark
+  and no hand-over. One candidate, named as a candidate only: admin's table, at an
+  earlier priority, marks the packet, and the image's static rule accepts the mark, so
+  admin still writes only its own table. Settled in the act that adds the port member to
+  the declaration, by admin's Spec and this one together.
 - **The respin path.** A respin carries a release's binaries into a new OS layer and never
   recompiles (the operator's decision 4 of 2026-11-15). No such path is built: this tree
   compiles, and refuses a respin. Until one is built, a security fix to the OS layer is a

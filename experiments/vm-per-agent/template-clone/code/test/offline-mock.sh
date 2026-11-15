@@ -209,6 +209,34 @@ check "a second forward bound to every address is refused" \
 check "no SSH forward on PORT is refused" refused nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5023-:22'
 check "an argument not starting user,id=un0 is refused" refused nd 'user,id=un1,hostfwd=tcp:127.0.0.1:5022-:22'
 
+echo "== inbound_probe tells answered, closed and silent apart (weaver-appliance-build-Spec section 2)"
+# Loopback servers stand in for what a forward relays: one that speaks first (SSH), one that
+# answers a request, one that accepts and never speaks (a drop, as the forward relays it),
+# and one that closes.
+python3 -I - "$T" <<'PY2' &
+import socket, sys, threading, time, os
+d = sys.argv[1]
+def serve(kind):
+    l = socket.socket(); l.bind(("127.0.0.1", 0)); l.listen(8)
+    open(os.path.join(d, "srv-" + kind), "w").write(str(l.getsockname()[1]))
+    while True:
+        c, _ = l.accept()
+        if kind == "ssh": c.sendall(b"SSH-2.0-OpenSSH_10.0p2\r\n"); c.close()
+        elif kind == "http": c.recv(100); c.sendall(b"HTTP/1.0 200 OK\r\n\r\n"); c.close()
+        elif kind == "silent": threading.Thread(target=lambda c=c: (time.sleep(20), c.close()), daemon=True).start()
+        else: c.close()
+for k in ("ssh", "http", "silent", "close"):
+    threading.Thread(target=serve, args=(k,), daemon=True).start()
+time.sleep(40)
+PY2
+IP_SRV=$!
+until [ -s "$T/srv-ssh" ] && [ -s "$T/srv-http" ] && [ -s "$T/srv-silent" ] && [ -s "$T/srv-close" ]; do sleep 0.1; done
+check "a server that speaks first is answered" test "$(inbound_probe "$(cat "$T/srv-ssh")" 5)" = "answered: SSH-2.0-OpenSSH_10.0p2"
+check "a server that answers a request is answered" test "$(inbound_probe "$(cat "$T/srv-http")" 5)" = "answered: HTTP/1.0 200 OK"
+check "an accepted connection with nothing sent is silent" test "$(inbound_probe "$(cat "$T/srv-silent")" 3)" = silent
+check "a server that closes is closed" test "$(inbound_probe "$(cat "$T/srv-close")" 5 | cut -d' ' -f1)" = closed
+kill "$IP_SRV" 2>/dev/null || true
+
 echo "== ensure_key (Spec section 1)"
 ( KEY=$T/keys/sub/measure_ed25519; ensure_key ) >/dev/null 2>&1
 check "ensure_key makes the key's directory, 0700, and the key in it" \
