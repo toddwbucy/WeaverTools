@@ -119,7 +119,8 @@ compacted file.**
 **The image's own boot rules drop inbound traffic and accept SSH** (ruling of
 2026-11-15). The appliance listens on SSH alone unless a declaration names a port.
 
-**Admin owns one named table and never the whole firewall** (ruling of 2026-11-14). A
+**Admin owns one named table for each agent and never the whole firewall** (rulings of
+2026-11-14 and 2026-11-15). A
 declaration that names a tool or exposes the gate names its ports. Every load replaces
 admin's table before it opens anything, and the table is not persisted (ruling of
 2026-11-15). Ports that a declaration opens belong to the operator's arrangement.
@@ -154,6 +155,9 @@ mount alone.
 **The agent's territory is `/var/lib/weaver-agent`, on the image's root.** The image is
 disposable. What the agent keeps is on the mounts.
 
+**State and save points on an appliance are out of scope as of 2026-11-15.** The first
+agent declares no state (ruling of 2026-11-15). Section 8 names it as a later item.
+
 ### 3.5 The agent service
 
 **Nothing in the image starts the agent.** After a boot the connectors come up and the
@@ -179,7 +183,7 @@ each agent, and each choice is part of that agent's arrangement.
 |---|---|---|
 | The model | the declaration | The bytes live on the model mount. |
 | Whether the agent elects state | the declaration | Where it does, the state mount is required. |
-| Where the trace goes | a field the operator declares in Weaver Web | A path on the state mount, a sink off the machine, or nowhere. A null sink is legitimate. |
+| Where the trace goes | a field on Weaver Web's declaration page, set when the agent is created | The suite sends the trace where it is told. A file, `/dev/null` or anything else: what stands behind it is the operator's. |
 | The ports of a tool or of the gate | the declaration | Admin opens them in its table at load. |
 | The card, and the virtual CPU model | the hypervisor | Both are members of the tuple, per section 5. |
 | What the appliance may reach | the operator's network | The image places no limit. |
@@ -305,11 +309,15 @@ still has to be captured into the binary or held by the image.
 - Proxmox, and other hypervisor formats.
 - Card architectures beyond the list of section 3.1.
 - Any claim across image versions. None is made until a rig exists to test one.
+- State and save points on an appliance: how the state mount meets the agent's
+  territory. Out of scope until the first agent, which declares no state, runs from the
+  console (ruling of 2026-11-15).
 
 **Open, each with who settles it.**
 
-- **What "run card" names.** The rulings of 2026-11-15 record three things on it. No
-  document of the suite defines the term. Settled by the operator.
+- **The run card's definition.** The run card is the operator's term for a JSON file.
+  The rulings of 2026-11-15 record three things on it. The paper that defines it is not
+  in a repository as of 2026-11-15. Settled when the operator places it.
 - **How the operator authenticates at the console of the virtual machine at the first
   boot.** The image carries no secret. Settled by the operator.
 - **Whether `toddwbucy/WeaverWeb` also carries the tag of section 5.** The image

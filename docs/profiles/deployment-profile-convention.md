@@ -33,7 +33,7 @@ Three profiles are named. One is written.
 |---|---|---|
 | The agent appliance | a virtual machine made from one sealed image | `weaver-appliance-profile.md` |
 | The host install | a machine the operator installs the WeaverAgent system onto | not written |
-| The Spark-class machine | a single-use machine of the Spark and GB10 class | not written |
+| The Spark-class machine | a single-use machine of the Spark and GB10 class | not written, and out of scope until such a machine exists (ruling of 2026-11-15) |
 
 ## 2. What a profile holds
 
