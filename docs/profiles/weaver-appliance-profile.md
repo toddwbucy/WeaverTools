@@ -96,7 +96,8 @@ and its own version.
 **The build is made to be reproducible from its commits** (ruling of 2026-11-15). Two
 build settings do it: a compiler flag that fixes the names of the compiler's temporary
 files, and a list of card architectures that carries compiled kernels only and no
-intermediate code. The list is sm_86, sm_89, sm_120 and sm_121.
+intermediate code. The list is sm_86, sm_89, sm_120a and sm_121a, in the toolchain's own
+names.
 
 **The cost is a condition of this profile: a card whose architecture is not on the list
 does not run this image.**
