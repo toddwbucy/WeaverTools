@@ -123,10 +123,11 @@ admin's table before it opens anything, and the table is not persisted (ruling o
 2026-11-15). Ports that a declaration opens belong to the operator's arrangement.
 Admin's table is the mechanism and not the authority.
 
-**One property of the mechanism binds the build.** In nftables an accept in one table
-does not override a drop in another table. So the image's boot rules must sit where
-admin's table can open a declared port. The image build's Spec represents this and
-proves it on a build.
+**One property of the mechanism is stated here because it binds two documents.** In
+nftables an accept in one table does not override a drop in another table. So an accept
+in admin's table does not by itself open a port through the image's boot rules. As of
+2026-11-15 no declaration can name a port, and nothing is built for it. Section 8
+carries the open cell.
 
 ### 3.3 Outbound
 
@@ -312,3 +313,9 @@ still has to be captured into the binary or held by the image.
 - **Whether `toddwbucy/WeaverWeb` also carries the tag of section 5.** The image
   compiles the two connectors from a WeaverWeb commit. Settled by the operator.
 - **Where the image is published.** Settled by the operator.
+- **How admin's table opens a declared port through the image's boot rules.** Settled
+  in the act that adds the port member to the declaration, by the Spec of admin and the
+  Spec of the image build together.
+- **The respin path.** A respin never recompiles, so it must carry a release's binaries
+  into a new operating system layer. No such path is built. Until one is, a security fix
+  is a new release. Settled by the Spec of the image build.
