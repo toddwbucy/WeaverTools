@@ -612,12 +612,28 @@ later acts.
   with a login shell, and it has no password. How the operator logs in at the console,
   and which account that lands in, waits for the operator's ruling. The proof names the
   gap and does not stand in for it: it logs in over SSH as root, with the key it placed
-  in its own overlay. Settled by the operator's ruling, then by this Spec and the proof.
+  in its own overlay. Root as the proof's login is the proof harness's choice, and it
+  does not answer the operator's question. Settled by the operator's ruling, then by
+  this Spec and the proof.
 - **cloud-init in the sealed image.** Proposed on 2026-11-15, pending the operator: the
   sealed image disables cloud-init, and the package may stay. An image that still acts
   on an attached seed has a first-boot path the profile does not state. Until the
   operator rules, a seed attached to the image is acted on within the limit of
   2026-11-14 (section 2). Settled by the operator's ruling, then by this Spec.
+- **systemd's first-boot paths in the image.** Beside cloud-init, the image holds
+  systemd's own first-boot paths as Ubuntu 26.04 ships them. Read on 2026-11-15 from the
+  fifth build's kept image, read-only:
+  - `/usr/lib/tmpfiles.d/provision.conf`, whose lines name the systemd credentials
+    `ssh.authorized_keys.root` (for `/root/.ssh/authorized_keys`), `network.hosts` (for
+    `/etc/hosts`), and `login.issue` and `login.motd` (for files under `/etc/issue.d`
+    and `/etc/motd.d`)
+  - `systemd-firstboot.service`, wanted by `sysinit.target`
+  - `systemd-creds.socket`, wanted by `sockets.target`
+  - `systemd-ssh-generator`, among the system generators
+
+  The build masks none of them. Whether the image keeps them, masks them or names them
+  in the profile waits for the operator's ruling. Settled by the operator's ruling, then
+  by this Spec.
 - **The respin path.** A respin carries a release's binaries into a new OS layer and never
   recompiles (the operator's decision 4 of 2026-11-15). No such path is built: this tree
   compiles, and refuses a respin. Until one is built, a security fix to the OS layer is a
