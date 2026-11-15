@@ -650,7 +650,12 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
     again without networkd, and last the update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
-    cleanup.
+    cleanup, and marks manual only the base packages still installed, since apt-mark
+    refuses a whole call on one name it cannot find. A rerun does not keep the caches
+    empty while it runs: its first apt command rebuilds apt's binary caches in
+    `/var/cache/apt` (measured on the fifth build, whose second run stopped at that
+    apt-mark), and only its last section removes them again. A rerun that stops before
+    then leaves them, and the probes refuse the seal on them.
 11. `seal`: the probes over SSH, the system libraries' records, a dry run of the MANIFEST,
     then a root oneshot once the session ends. The dry run writes the MANIFEST as root to a
     scratch file in `/run` and checks its form (each file line a digest and a path, the

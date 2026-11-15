@@ -509,11 +509,17 @@ cleanup() {
 
     section "3-4. the compilers, build tools and the CUDA toolkit's compile-time parts"
     keep="$KEEP $(cat "$BUILD/keep-driver")"
-    added=$(comm -13 "$BUILD/base-packages" <(dpkg-query -W -f '${Package}\n' | sort))
-    # Every base package is marked manual, so the autoremove reaches only what the build
-    # added; what the build added is marked auto but the runtime set, which is manual.
+    # The packages installed now. A rerun finds what the first run purged gone, and
+    # apt-mark refuses the whole call on one name it cannot find (the fifth build's second
+    # run stopped there), so only installed names are marked.
+    local installed
+    installed=$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' | awk '$1 ~ /^[ih]i/ {print $2}' | sort) || return 1
+    added=$(comm -13 "$BUILD/base-packages" <(printf '%s\n' "$installed"))
+    # Every base package still installed is marked manual, so the autoremove reaches only
+    # what the build added; what the build added is marked auto but the runtime set, which
+    # is manual.
     # shellcheck disable=SC2086
-    sudo apt-mark manual $(grep -vxF -f <(printf '%s\n' $PURGE_BASE) "$BUILD/base-packages") >/dev/null || return 1
+    sudo apt-mark manual $(comm -12 "$BUILD/base-packages" <(printf '%s\n' "$installed") | grep -vxF -f <(printf '%s\n' $PURGE_BASE)) >/dev/null || return 1
     # shellcheck disable=SC2086
     sudo apt-mark auto $added >/dev/null || return 1
     # shellcheck disable=SC2086
