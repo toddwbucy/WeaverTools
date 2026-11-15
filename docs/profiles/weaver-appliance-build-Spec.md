@@ -124,16 +124,19 @@ rerun on them, and the image build is one: its target is made new in the build g
 The proof checks the shipped library. It follows `/opt/weaver/lib/libggml-cuda.so.0`
 through its links in the image, copies the file out, and lists it with the host's
 `cuobjdump` (`CUOBJDUMP`). Any PTX image fails the proof, as do any of the four cubin
-sets absent, a cubin for any other architecture, a file that cannot be read and a
-listing that cannot run. So does a listing line in a form the check does not read, and
-a PTX listing that names no PTX image without cuobjdump's own line saying it found
-none. cuobjdump 13.4.92 prints `No PTX file found` then (measured on 2026-11-15 on the
-measuring host). The check counts architectures, not cubins: one cubin for an
-architecture passes it. On 2026-11-15 the check passed stand-ins made with nvcc 13.4.92
-on the measuring host, failed stand-ins with PTX, a missing architecture or an extra
-one, and failed the fifth build's kept image, read-only, which was compiled before the
-change: it carries 132 PTX images each for `sm_75` and `sm_80` beside the four cubin
-sets of 132 each. The measurement behind the decision is WeaverAgent's, at `1f6ef77e` on
+sets absent, a different count of cubins for one of the four than for the rest, a cubin
+for any other architecture, a file that cannot be read and a listing that cannot run. So
+does a listing line in a form the check does not read, and a PTX listing that names no
+PTX image without cuobjdump's own line saying it found none. cuobjdump 13.4.92 prints
+`No PTX file found` then (measured on 2026-11-15 on the measuring host). The count is
+not fixed, and the record names each architecture's: an object compiled for fewer
+architectures than the rest would leave some cards without its kernels. On 2026-11-15
+the check passed stand-ins made with nvcc 13.4.92 on the measuring host, failed
+stand-ins with PTX, a missing architecture, an extra one, or one object compiled for
+three of the four beside one compiled for all four. It failed the fifth build's kept
+image, read-only, which was compiled before the change, on its PTX alone: it carries 132
+PTX images each for `sm_75` and `sm_80` beside the four cubin sets of 132 each.
+The measurement behind the decision is WeaverAgent's, at `1f6ef77e` on
 2026-11-15, on nvcc 13.4.92: two fresh builds into one target path gave all 13 shipped
 files equal by sha256, and `libggml-cuda` with no PTX and 132 cubins for each of the
 four. The image's toolkit is the same release, CUDA 13.4.2 with nvcc 13.4.92
@@ -367,7 +370,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     passed the compacted copy of it (5,767,168 bytes beyond). Both verdicts stand under
     the larger bound. The stamp
     must name one version of the form `<release>.<respin>`, and `VERSION` where the
-    caller names it. The shipped ggml library must carry the four cubin sets and no PTX
+    caller names it. The shipped ggml library must carry the four cubin sets, of one
+    count, and no PTX
     (above). Then one boot of an overlay with no seed, every frame its NIC
     sends captured and counted by kind. That NIC is `restrict=on` (`template-clone-Spec` section 4), because the
     sealed image carries no guard of its own and the second build's no-seed boot,
@@ -660,7 +664,7 @@ the function's text. Each run works in a new `mktemp` directory and leaves it fo
 reading. A test that needs a tool the host lacks is skipped with exit status 77.
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-15 the 11 tests ran 192 checks and all passed, on a host with
+runs them all. On 2026-11-15 the 11 tests ran 197 checks and all passed, on a host with
 CUDA 13.4's `nvcc`. The offline mock (`template-clone-Spec` section 8) is not one of
 them, and runs only in a build guest.
 

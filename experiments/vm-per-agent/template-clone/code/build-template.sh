@@ -665,7 +665,10 @@ proof_first_boot() {
     # comes from one address, so polling with scans got the host refused and lost a key
     # type (measured on the fourth build). The scan names the three types sshd-keygen makes
     # (ssh-keygen -A); one short scan is made again after the penalty lapses.
-    until tr -d '\r' <"$pdir/console.log" 2>/dev/null | grep -aqE '^[^[:space:]]+ login:'; do
+    # grep reads the console through a process substitution: under pipefail, a pipe from tr
+    # would fail once grep had its match and tr had more to write, and the wait would run to
+    # its bound with the prompt on the console.
+    until grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/console.log" 2>/dev/null); do
         t=$((t + 2)); [ "$t" -lt "$limit" ] || break; sleep 2
     done
     local want=3 n=0

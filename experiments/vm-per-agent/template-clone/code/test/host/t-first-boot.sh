@@ -73,6 +73,10 @@ printf 'Ubuntu 26.04.1 LTS x ttyS0\n\nweaver-appliance-build5 login: ' >"$T/cons
 run
 check "a console that greets with the build guest's name fails" \
     test "$(fb | grep -c "^PROOF-FAIL: the console's login prompt is 'weaver-appliance-build5 login:', not the image's hostname")" = 1
+{ printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: \n' "$IMAGE_HOSTNAME" "$IMAGE_HOSTNAME"; head -c 400000 /dev/zero | tr '\0' x | fold -w 100; } >"$T/console"
+run
+check "a console with 400 kB after the prompt is read at once, not at the bound (the wait under pipefail)" \
+    test "$(fb | grep -c '^== first boot, 0 s to the console.s login prompt')" = 1 -a "$(fb | grep -c '^PROOF-FAIL')" = 0
 : >"$T/console"; run
 check "a console with no login prompt fails, after the bound" \
     test "$(fb | grep -c "^PROOF-FAIL: the console's login prompt is 'none'")" = 1 -a "$(fb | grep -c '^== first boot, 4 s to')" = 1

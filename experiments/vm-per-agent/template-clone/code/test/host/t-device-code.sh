@@ -40,6 +40,8 @@ printf 'stand-in\n' >"$T/stand-in.so"
 SI=$(img stub "$T/stand-in.so")
 noptx="cuobjdump info    : No PTX file found to extract from 'libggml-cuda.so'. You may try with -all option."
 elf4() { local a n=0; for a in $GGML_CUBIN_ARCHS; do n=$((n + 1)); printf 'ELF file    %s: libggml-cuda.%s.%s.cubin\n' "$n" "$n" "$a"; done; }
+# elfn A...: one ELF line for each architecture named, in order.
+elfn() { local a n=0; for a; do n=$((n + 1)); printf 'ELF file    %s: libggml-cuda.%s.%s.cubin\n' "$n" "$n" "$a"; done; }
 stub() { printf '%s\n' "$1" >"$STUB/ptx"; printf '%s\n' "$2" >"$STUB/elf"; CUOBJDUMP=$STUB/cuobjdump run "$SI"; }
 stub "$noptx" "$(elf4)"
 check "stub: no PTX said, one cubin for each of the four: no finding (one cubin passes)" test "$(fails)" = 0 -a "$(checked && echo y)" = y
@@ -54,6 +56,16 @@ check "stub: an ELF line worded otherwise is a finding" \
     test "$(grep -c "^PROOF-FAIL: a --list-elf line out of the form 'ELF file N: NAME'" "$T/dc.out")" = 1
 stub "PTX file    1: libggml-cuda.1.sm_80.ptx" "$(elf4)"
 check "stub: a PTX image is a finding, the only one" test "$(fails)" = 1 -a "$(grep -c '^PROOF-FAIL: libggml-cuda carries 1 PTX image(s)' "$T/dc.out")" = 1
+stub "$noptx" "$(elfn sm_86 sm_89 sm_120a sm_121a sm_86 sm_89 sm_120a sm_121a)"
+check "stub: two cubins for each of the four: no finding, and the count recorded, not fixed" \
+    test "$(fails)" = 0 -a "$(grep -cx 'cubins per architecture: sm_86=2 sm_89=2 sm_120a=2 sm_121a=2' "$T/dc.out")" = 1
+stub "$noptx" "$(elfn sm_86 sm_89 sm_120a sm_121a sm_86 sm_89 sm_120a)"
+check "stub: one architecture with fewer cubins than the rest is a finding, the only one" \
+    test "$(fails)" = 1 -a "$(grep -cx 'PROOF-FAIL: libggml-cuda carries a different count of cubins for its architectures: sm_86=2 sm_89=2 sm_120a=2 sm_121a=1' "$T/dc.out")" = 1
+stub "$noptx" "$(elfn sm_86 sm_89 sm_120a sm_86 sm_89)"
+check "stub: an absent architecture is one finding, and the uneven rest another" \
+    test "$(fails)" = 2 -a "$(grep -cx 'PROOF-FAIL: libggml-cuda carries no cubin for sm_121a' "$T/dc.out")" = 1 \
+         -a "$(grep -c '^PROOF-FAIL: libggml-cuda carries a different count of cubins' "$T/dc.out")" = 1
 
 # The real cuobjdump, on libraries the host's nvcc makes.
 NVCC=${NVCC:-nvcc}
@@ -64,11 +76,25 @@ if command -v "$NVCC" >/dev/null 2>&1 && command -v "$REAL_CUOBJDUMP" >/dev/null
     mk() { # shellcheck disable=SC2046
         "$NVCC" -shared -Xcompiler -fPIC $(g "${@:2}") "$T/k.cu" -o "$T/$1.so" >"$T/nvcc-$1.txt" 2>&1 || { no "nvcc built $1"; cat "$T/nvcc-$1.txt"; }; }
     mk four 86 89 120a 121a; mk ptx 86 89 120a 121a ptx80; mk three 86 89 120a; mk extra 86 89 120a 121a 75
+    # uneven: two objects in one library, one compiled for the four, one for three of them,
+    # linked for the four. nvcc's shared link adds cubins of its own (two for each
+    # architecture in a one-object library, measured with nvcc 13.4), so the counts are
+    # matched as equal or not, never as a number.
+    printf '__global__ void k2(float *x) { x[threadIdx.x] += 1.0f; }\nextern "C" void run2(float *x) { k2<<<1, 32>>>(x); }\n' >"$T/k2.cu"
+    # shellcheck disable=SC2046
+    { "$NVCC" -c -Xcompiler -fPIC $(g 86 89 120a 121a) "$T/k.cu" -o "$T/k4.o" \
+        && "$NVCC" -c -Xcompiler -fPIC $(g 86 89 120a) "$T/k2.cu" -o "$T/k3.o" \
+        && "$NVCC" -shared $(g 86 89 120a 121a) "$T/k4.o" "$T/k3.o" -o "$T/uneven.so"; } >"$T/nvcc-uneven.txt" 2>&1 || { no "nvcc built uneven"; cat "$T/nvcc-uneven.txt"; }
     printf 'not a library\n' >"$T/plain.so"
     run "$(img four "$T/four.so")"
     check "nvcc: four cubin sets and no PTX: no finding, and the check ran to its end" test "$(fails)" = 0 -a "$(checked && echo y)" = y
     check "nvcc: the record names the link chain's file and the counts" \
-        test "$(grep -c '^/opt/weaver/lib/libggml-cuda.so.0 -> /opt/weaver/lib/libggml-cuda.so.0.9.11, ' "$T/dc.out")" = 1 -a "$(grep -c '^PTX images: 0$' "$T/dc.out")" = 1
+        test "$(grep -c '^/opt/weaver/lib/libggml-cuda.so.0 -> /opt/weaver/lib/libggml-cuda.so.0.9.11, ' "$T/dc.out")" = 1 -a "$(grep -c '^PTX images: 0$' "$T/dc.out")" = 1 \
+             -a "$(grep -cxE 'cubins per architecture: sm_86=([1-9][0-9]*) sm_89=\1 sm_120a=\1 sm_121a=\1' "$T/dc.out")" = 1
+    run "$(img uneven "$T/uneven.so")"
+    check "nvcc: an object compiled for fewer architectures is a finding, the only one" \
+        test "$(fails)" = 1 -a "$(grep -cxE 'PROOF-FAIL: libggml-cuda carries a different count of cubins for its architectures: sm_86=([0-9]+) sm_89=\1 sm_120a=\1 sm_121a=[1-9][0-9]*' "$T/dc.out")" = 1 \
+             -a "$(grep -cxE 'cubins per architecture: sm_86=([0-9]+) sm_89=\1 sm_120a=\1 sm_121a=\1' "$T/dc.out")" = 0
     run "$(img ptx "$T/ptx.so")"
     check "nvcc: a PTX image is a finding, the only one" test "$(fails)" = 1 -a "$(grep -c '^PROOF-FAIL: libggml-cuda carries 1 PTX image(s)' "$T/dc.out")" = 1
     run "$(img three "$T/three.so")"
@@ -93,8 +119,10 @@ if [ -n "${KEPT_IMAGE:-}" ]; then
     CUOBJDUMP=$REAL_CUOBJDUMP
     before=$(stat -c '%U:%G %a %s %Y' "$KEPT_IMAGE")
     run "$KEPT_IMAGE"
-    check "the kept image fails on its PTX alone" \
-        test "$(fails)" -ge 1 -a "$(grep -c '^PROOF-FAIL: libggml-cuda carries [0-9]* PTX image(s)' "$T/dc.out")" = 1
+    check "the kept image fails on its PTX, and on nothing about its cubins" \
+        test "$(fails)" -ge 1 -a "$(grep -c '^PROOF-FAIL: libggml-cuda carries [0-9]* PTX image(s)' "$T/dc.out")" = 1 \
+             -a "$(grep -c '^PROOF-FAIL: .*cubin' "$T/dc.out")" = 0
+    grep '^cubins per architecture:' "$T/dc.out"
     check "and its owner, mode, length and time are unchanged" test "$(stat -c '%U:%G %a %s %Y' "$KEPT_IMAGE")" = "$before"
 fi
 finish

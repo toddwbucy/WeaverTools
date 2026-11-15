@@ -509,8 +509,9 @@ image_resolve() {
     return 1
 }
 # device_code_check DIR TMP: the shipped ggml CUDA library, followed through its links in
-# the image opened at DIR, copied to TMP, and listed with CUOBJDUMP: no PTX image, a cubin
-# for each architecture of GGML_CUBIN_ARCHS, and none for any other. A library that cannot
+# the image opened at DIR, copied to TMP, and listed with CUOBJDUMP: no PTX image, cubins
+# for each architecture of GGML_CUBIN_ARCHS, the same count for each, and none for any
+# other. Each architecture's count is printed, and no count is fixed. A library that cannot
 # be read, a listing that cannot run (cuobjdump exits 255 on a file with no device code),
 # and a cubin line out of form are findings too. Each finding is a PROOF-FAIL line. The last
 # line, "device code: checked", is printed only where every step ran; the caller fails a
@@ -555,10 +556,19 @@ device_code_check() {
     sort <<<"$archs" | uniq -c | sed 's/^/  /' || true
     [ "$ne" -gt 0 ] || echo "PROOF-FAIL: libggml-cuda carries no cubin"
     [ "$(grep -c . <<<"$archs" || true)" = "$ne" ] || echo "PROOF-FAIL: a cubin line out of the form 'ELF file N: NAME.sm_ARCH.cubin'"
+    # The same count of cubins for each architecture, whatever that count is: an object
+    # compiled for fewer architectures than the rest leaves some cards without its kernels.
+    # An absent architecture is its own finding, so only the present ones are compared.
+    local per="" first=""
     for a in $GGML_CUBIN_ARCHS; do
         n=$(grep -cx -- "$a" <<<"$archs" || true)
-        [ "$n" -gt 0 ] || echo "PROOF-FAIL: libggml-cuda carries no cubin for $a"
+        per="$per $a=$n"
+        [ "$n" -gt 0 ] || { echo "PROOF-FAIL: libggml-cuda carries no cubin for $a"; continue; }
+        [ -n "$first" ] || first=$n
+        [ "$n" = "$first" ] || first=uneven
     done
+    echo "cubins per architecture:$per"
+    [ "$first" != uneven ] || echo "PROOF-FAIL: libggml-cuda carries a different count of cubins for its architectures:$per"
     for a in $(sort -u <<<"$archs"); do
         case " $GGML_CUBIN_ARCHS " in *" $a "*) ;; *) echo "PROOF-FAIL: libggml-cuda carries a cubin for $a, off the list ($GGML_CUBIN_ARCHS)" ;; esac
     done
