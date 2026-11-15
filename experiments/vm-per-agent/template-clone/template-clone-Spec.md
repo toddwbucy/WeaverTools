@@ -705,6 +705,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     is off and its account gone, so `build-template.sh verdict` reads the verdict again
     from the shut-off guest and goes on from there. `proof` tells the two apart in the
     same way.
+    **The sealed file is thin in what it allocates, not in its length.** A qcow2 never
+    moves its end offset back, so the file's apparent length is the high-water mark of
+    the build's writes. The cleanup's trim punches holes in the file, which cost nothing
+    on the host. The fifth build's sealed file is 20,964,769,792 bytes long and
+    allocates 1.83 GiB on a dataset that compresses, and the guest's data in it is
+    3.23 GiB (52,921 clusters of 64 KiB). The fourth build's was 20,714,291,200 bytes
+    long and allocated 1.84 GiB. A transfer that does not keep holes writes the whole
+    length. The sha256 is taken of this file as sealed, and nothing compacts it.
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
     FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC
