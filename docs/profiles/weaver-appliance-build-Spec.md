@@ -88,6 +88,27 @@ layer, and no path here does that (section 3). Every other form is refused too. 
 step records the version in the stamp as `appliance.version`, and the guest refuses a
 `VERSION` that is not a release.
 
+**The tag** (the operator's decision 3 of 2026-11-15). Each released version is named in
+WeaverAgent by one annotated tag, `appliance/<version>`, on the WeaverAgent commit the
+version was compiled from. The operator makes the tag and pushes it. It is keyed by the
+version, not by the commit. `build-template.sh tag` prints the tag's name, its commit
+and its message for the operator, and writes the message to the build's log for
+`git tag -F`. It applies nothing and runs no git command. The message carries the
+version, the digest of the install record (`/etc/weaver/stack/install-tuple`, as written
+at image build) and the stack's test count. Each is read from the stamp that `proof`
+read out of the sealed image (`appliance.version`, `stack.install-tuple`,
+`stack.tests`), as is the commit (`weaveragent.commit`). `VERSION` and `WA_COMMIT`,
+where named, must equal the stamp's. `tag` refuses unless a proof has passed for the
+sealed file the seal recorded. A proof that passes writes a record naming the sealed
+file's sha256 and the MANIFEST's, and each proof removes the record when it starts. The
+test count is the count of WeaverAgent's tests that `bootstrap-stack.sh` runs at its
+test step in the build guest. A run that passes removes that step's own log, so the
+stack step keeps bootstrap's output as it streams, records the count in the stamp as
+`stack.tests`, and refuses unless the test step printed one count with no test failed
+(step 8). The fifth build's stamp names neither a version nor a test count, so `tag`
+refuses it. Checked on 2026-11-15 on the measuring host with stand-in records, and
+against the fifth build's kept logs: its stack log reads 2867 passed, 0 failed.
+
 **The ggml device code: four architectures, no PTX** (the operator's decision 6 of
 2026-11-15). WeaverAgent's deploy scripts, from its commit `1f6ef77e`, build the stack
 with two settings: nvcc names its temporaries after each object rather than after its
@@ -213,7 +234,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    the driver carries (the first build's break, 2026-11-14).
 8. `stack`: WeaverAgent's `deploy/bootstrap-stack.sh --install`, unmodified, under
    `relaxed`, with the canonical CUDA library directory and the compute capability named
-   (no card). The install tuple's commit must equal `WA_COMMIT`. The deploy scripts are
+   (no card). The install tuple's commit must equal `WA_COMMIT`. The test step's count
+   is recorded in the stamp as `stack.tests` (the tag, above). The deploy scripts are
    copied to `/opt/weaver/deploy` before the checkout goes.
 9. `connectors`: `gate-con` and `admin-con` built with no default features and installed.
    No unit is laid: the image half of WeaverWeb's staging is that repository's act. From

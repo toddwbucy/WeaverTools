@@ -260,7 +260,9 @@ EOF
 
 # The agent stack, as its deploy script builds and installs it: bootstrap-stack.sh
 # --install, unmodified, from the checkout, under relaxed (its test step needs both
-# settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable.
+# settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable. Its output
+# is kept as it streams, for the test count the stamp records (the tag's, decision 3 of
+# 2026-11-15), and the status is bootstrap's own, never tee's.
 stack_build() {
     [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || { echo "COMPUTE_CAP is not named (the compute capability without its dot, such as 86)"; return 1; }
     record build.compute-cap "$COMPUTE_CAP" || return 1
@@ -274,11 +276,23 @@ stack_build() {
     ( while :; do awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print int((t-a)/1024)}' /proc/meminfo; sleep 5; done ) \
         >"$HOME/mem-samples" 2>/dev/null &
     sampler=$!
-    (cd "$WA" && bash deploy/bootstrap-stack.sh --install) || rc=$?
+    (cd "$WA" && bash deploy/bootstrap-stack.sh --install) 2>&1 | tee "$HOME/stack-out"
+    rc=${PIPESTATUS[0]}
     kill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null
     printf 'memory: peak in use %s MiB of %s MiB (%s samples)\n' "$(sort -n "$HOME/mem-samples" | tail -1)" \
         "$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo)" "$(wc -l <"$HOME/mem-samples")"
     return "$rc"
+}
+# stack_tests OUT: bootstrap's test count from its output, "N passed, 0 failed", where its
+# "== test" section holds one count line, N is not 0 and none failed. Otherwise a sentence,
+# and status 1.
+stack_tests() {
+    local t
+    t=$(awk '/^== / { s = $2 } s == "test" && /^   [0-9]+ passed, [0-9]+ failed$/ { print $1, $3; n++ }
+        END { exit (n != 1) }' "$1" 2>/dev/null) \
+        || { echo "bootstrap's output names no one test count in its test step ($1)"; return 1; }
+    [ "${t#* }" = 0 ] && [ "${t% *}" != 0 ] || { echo "bootstrap's test step counted ${t% *} passed, ${t#* } failed"; return 1; }
+    printf '%s passed, 0 failed\n' "${t% *}"
 }
 stack() {
     [ -d "$WA" ] || { echo "no checkout; run trees first"; return 1; }
@@ -289,6 +303,12 @@ stack() {
     [ "$c" = "${WA_COMMIT:-}" ] || { echo "the tuple's commit is '$c', not $WA_COMMIT"; return 1; }
     record stack.install-tuple "$(sha "$tuple") (as written at image build; see the build's note)" || return 1
     record stack.peak-memory-mib "$(sort -n "$HOME/mem-samples" | tail -1)" || return 1
+    # The test count, as bootstrap's test step printed it: one count line in its "== test"
+    # section, with no test failed. A clean run removes the step's own log, so its output
+    # is the one record of the count.
+    local tests
+    tests=$(stack_tests "$HOME/stack-out") || { echo "$tests"; return 1; }
+    record stack.tests "$tests (bootstrap-stack.sh's test step)" || return 1
     local f k
     for f in /opt/weaver/bin/* /opt/weaver/lib/*; do
         [ -f "$f" ] && [ ! -L "$f" ] || continue

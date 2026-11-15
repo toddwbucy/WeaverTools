@@ -17,6 +17,8 @@
 #   ... code/build-template.sh proof             read the sealed image; boot an overlay
 #                                              with no seed, then one as a first boot,
 #                                              with a key and a network placed in it
+#   ... code/build-template.sh tag               print the version's tag for the operator,
+#                                              after a proof that passed; apply nothing
 #   ... code/build-template.sh destroy           undefine and remove the build guest
 #
 # The seven inputs are named, never defaulted: OS, VERSION (the image's version,
@@ -357,6 +359,8 @@ proof() {
     # proof (the boots' no-relabel label, PROOF_NORELABEL).
     disk_before=$(stat -c '%U:%G %a' "$DISK")
     mkdir -p "$out"
+    # A pass is recorded only at the end of a run that passed, so no earlier one stands.
+    rm -f "$out/passed.txt"
     mkdir -- "$r"; PROOF_OWN="read"
     ( exec {PROOF_LOCK_FD}>&-; image_open "$DISK" "$r" ) || die "the sealed image could not be opened (above); nothing booted"
     for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
@@ -499,7 +503,57 @@ PY
         die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
-    echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
+    # The pass names the sealed file the seal recorded, which the proof found equal, and
+    # the MANIFEST: tag reads it.
+    echo "proof passed: sealed file sha256 $(cut -d' ' -f1 "$LOG/appliance-sha256.txt"), MANIFEST sha256 $(cut -c1-64 "$out/identity.txt" | head -1)" \
+        | tee "$out/passed.txt"
+}
+
+# tag: the annotated tag the operator makes in WeaverAgent for this version (decision 3 of
+# 2026-11-15), printed and never applied. Nothing here runs git. Its name is
+# appliance/<version>, it goes on the WeaverAgent commit the version was compiled from,
+# and its message carries the version, the install record's digest and the stack's test
+# count. Each is read from the stamp the proof read out of the sealed image, and only after
+# a proof that passed for the sealed file the seal recorded. VERSION and WA_COMMIT, where
+# named, must equal the stamp's. The message is also written to the log, for git tag -F.
+tag() {
+    local out=$LOG/proof f=$LOG/tag-message.txt s ver wa inst tests passed sealed
+    [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
+    passed=$(sed -n 's/^proof passed: sealed file sha256 \([0-9a-f]\{64\}\), MANIFEST sha256 [0-9a-f]\{64\}$/\1/p' "$out/passed.txt" 2>/dev/null)
+    [ -n "$passed" ] || die "no proof has passed for this image ($out/passed.txt): the tag names a version that was proved"
+    sealed=$(cut -d' ' -f1 "$LOG/appliance-sha256.txt" 2>/dev/null || true)
+    [ "$passed" = "$sealed" ] || die "the proof that passed was of sealed file sha256 $passed, not the one the seal recorded (${sealed:-none}): run proof again"
+    s=$out/stamp
+    [ -f "$s" ] || die "no stamp read out of the sealed image ($s)"
+    ver=$(stamp_one "$s" appliance.version '^[1-9][0-9]*\.(0|[1-9][0-9]*)$') || die "$ver"
+    [ -z "${VERSION:-}" ] || [ "$ver" = "$VERSION" ] || die "the stamp names version $ver, not VERSION $VERSION"
+    wa=$(stamp_one "$s" weaveragent.commit '^[0-9a-f]{40}$') || die "$wa"
+    [ -z "${WA_COMMIT:-}" ] || [ "$wa" = "$WA_COMMIT" ] || die "the stamp names weaveragent.commit $wa, not WA_COMMIT $WA_COMMIT"
+    inst=$(stamp_one "$s" stack.install-tuple '^[0-9a-f]{64}( .*)?$') || die "$inst"
+    inst=${inst%% *}
+    tests=$(stamp_one "$s" stack.tests '^[1-9][0-9]* passed, 0 failed( .*)?$') || die "$tests"
+    tests=${tests%% (*}
+    printf '%s\n' "appliance image $ver" "" \
+        "version: $ver" \
+        "install record: /etc/weaver/stack/install-tuple, sha256 $inst, as written at image build" \
+        "tests: $tests, at bootstrap-stack.sh's test step in the build guest" >"$f"
+    echo "the tag, for the operator to make in WeaverAgent and push (nothing here applies it):"
+    echo "  name:    appliance/$ver"
+    echo "  commit:  $wa"
+    echo "  message: (written to $f)"
+    sed 's/^/    /' "$f"
+    echo "  made by: git tag -a appliance/$ver -F $f $wa"
+}
+
+# stamp_one STAMP KEY REGEX: the value of the stamp's one KEY line, which must match
+# REGEX. Otherwise a sentence, and status 1.
+stamp_one() {
+    local v n
+    n=$(awk -v k="$2" 'index($0, k " = ") == 1 { n++ } END { print n + 0 }' "$1")
+    [ "$n" = 1 ] || { echo "the stamp names $2 $n times, not once"; return 1; }
+    v=$(awk -v k="$2" 'index($0, k " = ") == 1 { print substr($0, length(k) + 4) }' "$1")
+    [[ "$v" =~ $3 ]] || { echo "the stamp's $2 is '$v', out of its form"; return 1; }
+    printf '%s\n' "$v"
 }
 
 # proof_place OUT PDIR: the operator's two by-hand steps after the console login, a key
@@ -783,6 +837,7 @@ mock) mock ;;
 seal) seal ;;
 verdict) seal_verdict ;;
 proof) proof ;;
+tag) tag ;;
 destroy) destroy ;;
 *) awk 'NR > 1 && !/^#/ { exit } NR > 1' "$0" >&2; exit 2 ;;   # the header, to its end
 esac
