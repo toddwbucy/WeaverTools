@@ -688,6 +688,10 @@ check "LINKS_MARK and MANIFEST_SCOPE are defined once, in guest/template-steps, 
          -a "$(grep -l -F '# links: ' "$CODE"/*.sh "$CODE"/guest/* | wc -l)" = 1 \
          -a "$LINKS_MARK" = "$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")" \
          -a "$MANIFEST_SCOPE" = "$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
+check "IMAGE_HOSTNAME is defined once, in guest/template-steps, and lib.sh reads the same" \
+    test "$(grep -c "^IMAGE_HOSTNAME='" "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -c '^IMAGE_HOSTNAME=' "$CODE/lib.sh")" = 1 -a -n "$IMAGE_HOSTNAME" \
+         -a "$IMAGE_HOSTNAME" = "$(sed -n "s/^IMAGE_HOSTNAME='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
 fmt_lib=$(sed -n '/^links_format() {/,/^}/p' "$CODE/lib.sh")
 fmt_ts=$(sed -n '/^links_format() {/,/^}/p' "$CODE/guest/template-steps")
 check "links_format's two copies, lib.sh's and guest/template-steps', are the same text" \

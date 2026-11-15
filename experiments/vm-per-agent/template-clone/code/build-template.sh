@@ -15,7 +15,8 @@
 #   ... code/build-template.sh verdict           read the verdict again from the shut-off
 #                                              guest, where seal's own read failed
 #   ... code/build-template.sh proof             read the sealed image; boot an overlay
-#                                              with no seed, then one as a first boot
+#                                              with no seed, then one as a first boot,
+#                                              with a key and a network placed in it
 #   ... code/build-template.sh destroy           undefine and remove the build guest
 #
 # The seven inputs are named, never defaulted: OS, VERSION (the image's version,
@@ -81,6 +82,8 @@ steps_in() {
 create() {
     inputs_ok all
     virsh_ dominfo "$NAME" >/dev/null 2>&1 && die "$NAME is already defined"
+    # The build guest's name must differ from the image's, or the seal cannot tell them apart.
+    [ "$NAME" != "$IMAGE_HOSTNAME" ] || die "NAME is the image's own hostname, $IMAGE_HOSTNAME; name the build guest otherwise"
     [ -e "$DISK" ] && die "$DISK already stands"
     fetch_image
     ensure_key
@@ -286,6 +289,9 @@ proof_cleanup() {
             continue
         fi
         [ -d "$VM_ROOT/$d" ] || continue
+        # The first boot's offline placement, where a signal cut it short: its export is
+        # stopped before its directory goes.
+        [ "$d" != first ] || image_close "$VM_ROOT/first/place" || true
         for f in console.log boot.pcap; do
             [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-$f" 2>/dev/null || true
         done
@@ -487,140 +493,155 @@ PY
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
 }
 
-# proof_first_boot OUT: a second overlay, booted as an operator's first boot is: a seed
-# whose meta-data names an SSH key and a hostname and whose network-config names a static
-# address, gateway and resolver, with no host key. Its user-data asks for a bootcmd, a runcmd, a package and an
-# account, which the image's cloud-init must discard (the operator's ruling of 2026-11-14:
-# SSH key, network and hostname only). It measures what trust on first use rests on: the
-# host keys' fingerprints keys_to_console prints on the serial console, set against the
-# keys SSH presents. Only on a match does it log in, under those keys, as the default
-# account, and read cloud-init's verdict and modules, what became of the user-data's
-# asks, the network as the seed named it, SSH's units and the stamp's commits, and it sets
-# the MANIFEST against the booted guest's files and links (manifest_compare). The network is QEMU's restrict=on: the guest reaches
-# neither the host nor beyond it, and the SSH forward still answers. restrict=on's DHCP
-# offers no gateway and no resolver, and netplan's wait for the network on 26.04 waits for
-# a resolver (--dns), so a seed with no network-config waited 120 s on every boot and
-# cloud-init judged the boot degraded (measured on the fourth build); the seed's static
-# network is also the third setting the operator ruled cloud-init takes.
+# proof_place OUT PDIR: the operator's two by-hand steps after the console login, a key
+# placed and the network set (decision 16 of 2026-11-15), written into the proof's own
+# overlay offline, before its boot, and never into the image: the proof key as root's
+# authorized key (root is the image's one login account) and a netplan file naming the
+# static address QEMU's user network forwards to (10.0.2.15), its gateway and its resolver,
+# matched by the NIC's MAC address. restrict=on's DHCP offers no gateway and no resolver,
+# and netplan's wait for the network on 26.04 waits for a resolver (--dns): a boot with no
+# network named waited 120 s (measured on the fourth build). Each file is read back from the
+# overlay opened again read-only, with its owner and mode, and the filesystem is checked
+# (e2fsck -n), before anything boots. image_open opens an overlay writable, never the
+# sealed image.
+proof_place() {
+    local out=$1 pdir=$2 r=$2/place rc=0
+    mkdir -- "$pdir/put" "$r"
+    cut -d' ' -f1,2 "$KEY.pub" >"$pdir/put/authorized_keys"
+    cat >"$pdir/put/netplan.yaml" <<EOF
+network:
+  version: 2
+  ethernets:
+    nic0:
+      match:
+        macaddress: "$PROOF_MAC"
+      addresses: [10.0.2.15/24]
+      routes:
+        - to: default
+          via: 10.0.2.2
+      nameservers:
+        addresses: [10.0.2.3]
+EOF
+    cp "$pdir/put/authorized_keys" "$out/first-boot-authorized_keys.txt"
+    cp "$pdir/put/netplan.yaml" "$out/first-boot-netplan.txt"
+    ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" rw ) \
+        || die "the proof's overlay could not be opened writable (above); nothing booted"
+    ( image_put "$r" "$pdir/put/authorized_keys" /root/.ssh/authorized_keys 0100600 \
+        && image_put "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 ) || rc=$?
+    cp "$r/put.log" "$out/first-boot-place-debugfs.txt" 2>/dev/null || true
+    image_close "$r"
+    rm -f -- "$r/put.cmd" "$r/put.log"
+    [ "$rc" = 0 ] || die "the proof's two files could not be written into its overlay (above, and $out/first-boot-place-debugfs.txt); nothing booted"
+    ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" ) \
+        || die "the proof's overlay could not be opened again to read its two files back (above); nothing booted"
+    # Both files read back as written, and the filesystem clean, or nothing boots.
+    {
+        rc=0
+        image_got "$r" "$pdir/put/authorized_keys" /root/.ssh/authorized_keys 0100600 || rc=1
+        image_got "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 || rc=1
+        echo "== e2fsck -fn on the overlay's root filesystem"
+        e2fsck -fn "$r/root.raw" 2>&1 || { echo "e2fsck exited $?"; rc=1; }
+        if [ "$rc" = 0 ]; then echo "placed: both files read back as written; the filesystem is clean"
+        else echo "NOT PLACED"; fi
+    } >"$out/first-boot-place.txt" 2>&1
+    image_close "$r"
+    rmdir -- "$r"
+    cat "$out/first-boot-place.txt"
+    [ "$(tail -1 "$out/first-boot-place.txt")" = "placed: both files read back as written; the filesystem is clean" ] \
+        || die "the proof's two files did not read back as written, or the filesystem is not clean ($out/first-boot-place.txt); nothing booted"
+}
+
+# proof_first_boot OUT: a second overlay, booted as an operator's first boot is: no seed, and
+# the operator's two by-hand steps after logging in placed in it offline (proof_place). The
+# console login itself, and the account it lands in, wait for the operator's ruling: the
+# proof names that gap and does not stand in for it. At this boot sshd-keygen makes the host
+# keys. The proof waits for the console's login prompt, which must greet with the image's
+# hostname (IMAGE_HOSTNAME), scans the keys SSH presents, logs in under them as root with
+# the key it placed, and reads the host keys' fingerprints in the guest, as the operator
+# does after logging in: each key SSH presents must be one the guest made. Only on that
+# match does it read cloud-init's state (with no seed none runs), the hostname, the network
+# as the overlay named it, SSH's units and sshd-keygen's run, the listeners, and the
+# stamp's commits, set the MANIFEST against the booted guest's files and links
+# (manifest_compare), and read the base inbound policy (proof_inbound). The network is
+# QEMU's restrict=on: the guest reaches neither the host nor beyond it, and the SSH forward
+# still answers.
 proof_first_boot() {
     local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 100))}
     # The base inbound policy's probe port: TCP 8080 in the guest, forwarded from the next
     # host port.
     local dport=$((port + 1))
-    local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
+    local t=0 limit=${PROOF_FIRST_BOOT:-300} sfp gfp gfps prompt
     mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN first"
-    mkdir -- "$pdir/seed"
     proof_overlay "$pdir/overlay.qcow2"
     qemu_file "$pdir/console.log"
-    printf 'instance-id: %s\nlocal-hostname: %s\npublic-keys:\n  - %s\n' \
-        "$pn-1" "$pn" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
-    cat >"$pdir/seed/user-data" <<'EOF'
-#cloud-config
-bootcmd:
-  - [sh, -c, "echo bootcmd ran > /var/tmp/weaver-proof-bootcmd"]
-runcmd:
-  - [sh, -c, "echo runcmd ran > /var/tmp/weaver-proof-runcmd"]
-packages:
-  - hello
-users:
-  - default
-  - name: weaver-proof-extra
-    lock_passwd: true
-EOF
-    cat >"$pdir/seed/network-config" <<'EOF'
-version: 2
-ethernets:
-  nic0:
-    match:
-      macaddress: "52:54:00:57:45:01"
-    set-name: nic0
-    addresses: [10.0.2.15/24]
-    routes:
-      - to: default
-        via: 10.0.2.2
-    nameservers:
-      addresses: [10.0.2.3]
-EOF
-    cp "$pdir/seed/meta-data" "$out/first-boot-meta-data.txt"
-    cp "$pdir/seed/user-data" "$out/first-boot-user-data.txt"
-    cp "$pdir/seed/network-config" "$out/first-boot-network-config.txt"
-    xorriso -as mkisofs -quiet -o "$pdir/seed.iso" -V cidata -J -r \
-        "$pdir/seed/user-data" "$pdir/seed/meta-data" "$pdir/seed/network-config" 2>/dev/null
+    proof_place "$out" "$pdir"
     virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
         --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
         --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
-        --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=52:54:00:57:45:01,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/first-boot-virt-install.txt" 2>&1
-    # Wait for the console's fingerprint block, then scan once. Each scan connection leaves
+    # Wait for the console's login prompt, then scan once. Each scan connection leaves
     # without authenticating, and OpenSSH's PerSourcePenalties (on by default since 9.8)
     # counts each against its source; through QEMU's user network every host connection
     # comes from one address, so polling with scans got the host refused and lost a key
-    # type (measured on the fourth build). The scan names the three types the image's
-    # cloud-init makes; one short scan is made again after the penalty lapses.
-    until grep -q 'END SSH HOST KEY FINGERPRINTS' "$pdir/console.log" 2>/dev/null; do
+    # type (measured on the fourth build). The scan names the three types sshd-keygen makes
+    # (ssh-keygen -A); one short scan is made again after the penalty lapses.
+    until tr -d '\r' <"$pdir/console.log" 2>/dev/null | grep -aqE '^[^[:space:]]+ login:'; do
         t=$((t + 2)); [ "$t" -lt "$limit" ] || break; sleep 2
     done
-    local want n=0
-    want=$(sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" \
-           | grep -cE 'SHA256:' || true)
+    local want=3 n=0
     ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
-    if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "${want:-0}" ]; then
+    if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "$want" ]; then
         proof_sleep 30; n=1
         ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
     fi
     {
-        echo "== first boot, $t s to the console block (bound $limit s); $n more scans"
-        echo "== the console's fingerprint block"
-        sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" | tr -d '\r'
-        cfp=$(sed -n '/BEGIN SSH HOST KEY FINGERPRINTS/,/END SSH HOST KEY FINGERPRINTS/p' "$pdir/console.log" \
-              | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
-        sfp=$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
+        echo "== first boot, $t s to the console's login prompt (bound $limit s); $n more scans"
+        echo "GAP: the console login, and the account it lands in, wait for the operator's ruling (decision 16 of 2026-11-15). The proof does not stand in for them: it logs in over SSH as root, with the key it placed in its own overlay."
+        prompt=$(tr -d '\r' <"$pdir/console.log" | grep -aoE '^[^[:space:]]+ login:' | tail -1 || true)
+        echo "== the console's login prompt: ${prompt:-none}"
+        [ "$prompt" = "$IMAGE_HOSTNAME login:" ] || echo "PROOF-FAIL: the console's login prompt is '${prompt:-none}', not the image's hostname, $IMAGE_HOSTNAME"
         echo "== the keys SSH presents"; ssh-keygen -lf "$pdir/scanned" 2>&1 || true
-        # The operator's check: every key SSH presents is named on the console. Whether
-        # SSH presents all of them is reported beside it.
-        if [ -n "$sfp" ] && [ -z "$(comm -13 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp"))" ]; then
-            if [ "$cfp" = "$sfp" ]; then
-                echo "trust on first use: MATCH, the console names each key SSH presents, and SSH presents each the console names ($(wc -l <<<"$cfp") keys)"
+        sfp=$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
+        # The operator's read after logging in: the host keys' fingerprints, in the guest.
+        echo "== the host keys' fingerprints, read in the guest as root, under the keys SSH presented"
+        gfp=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
+              'for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k"; done' 2>&1) \
+            || gfp="$gfp (the login as root, or the read, exited non-zero)"
+        printf '%s\n' "$gfp"
+        gfps=$(grep -oE 'SHA256:[A-Za-z0-9+/]{43}' <<<"$gfp" | sort -u || true)
+        # Each key SSH presents is one the guest holds. Whether SSH presents all of them is
+        # reported beside it.
+        if [ -n "$sfp" ] && [ -z "$(comm -13 <(printf '%s\n' "$gfps") <(printf '%s\n' "$sfp"))" ]; then
+            if [ "$gfps" = "$sfp" ]; then
+                echo "the host keys: MATCH, the guest holds each key SSH presents, and SSH presents each the guest holds ($(wc -l <<<"$sfp") keys)"
             else
-                echo "trust on first use: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the console's $(wc -l <<<"$cfp")); SSH did not present: $(comm -23 <(printf '%s\n' "$cfp") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
+                echo "the host keys: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the guest's $(wc -l <<<"$gfps")); SSH did not present: $(comm -23 <(printf '%s\n' "$gfps") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
             fi
-            KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" '
-                # cloud-init status exits 0 for running, disabled and not started too, so the
-                # proof waits for it to finish and requires the text "done" as well as exit 0.
-                echo "== cloud-init status"
-                timeout 600 cloud-init status --wait >/dev/null 2>&1; wrc=$?
-                cloud-init status --long; rc=$?
+            KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" '
+                # With no seed, no datasource is found and cloud-init does not run.
+                echo "== cloud-init, on a boot with no seed"
+                cloud-init status --long 2>&1 | head -8
                 st=$(cloud-init status 2>/dev/null | sed -n "s/^status: //p")
-                echo "(status ${st:-unread}, exit $rc; the wait exited $wrc)"
-                [ "$wrc" != 124 ] || echo "PROOF-FAIL: cloud-init did not finish within 600 s"
-                [ "$st" = done ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not done"
-                [ "$rc" = 0 ] || echo "PROOF-FAIL: cloud-init status exited $rc (1 an error, 2 degraded)"
-                echo "== user-data and vendor-data"; sudo grep -E "allow_userdata|vendordata2? consumption|vendor_data" /var/log/cloud-init.log | tail -4
-                echo "== modules cloud-init ran"; sudo grep -oE "running (config|modules)-[a-z_]+" /var/log/cloud-init.log | sort -u
-                echo "== the user-data asks"
-                for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do
-                    if [ -e "$m" ]; then echo "RAN: $m"; echo "PROOF-FAIL: the user-data ${m##*-} ran"; else echo "not run: ${m##*-}"; fi
-                done
-                if dpkg-query -W -f "\${db:Status-Abbrev} \${Package}\n" hello 2>/dev/null | grep -q "^ii"; then
-                    echo "INSTALLED: hello"; echo "PROOF-FAIL: the user-data package hello was installed"
-                else echo "not installed: hello"; fi
-                if getent passwd weaver-proof-extra >/dev/null; then
-                    echo "MADE: weaver-proof-extra"; echo "PROOF-FAIL: the user-data account weaver-proof-extra was made"
-                else echo "not made: weaver-proof-extra"; fi
+                [ "$st" = disabled ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not disabled, on a boot with no seed"
                 echo "== the hostname"; hostname
-                echo "== the network as the seed named it"; ip -br addr show nic0; ip route; resolvectl dns nic0 2>&1
+                [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
+                echo "== the network as the overlay named it"; ip -br addr; ip route; resolvectl dns 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
                 echo "== ubuntu.sources after the first boot"; grep -i "^Enabled" /etc/apt/sources.list.d/ubuntu.sources || echo "(no Enabled line)"
-                echo "== keys_to_console in cloud-init.log"; sudo grep -E "keys_to_console|keys-to-console" /var/log/cloud-init.log | grep -iE "running|ran" | tail -3
                 echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
+                # sshd-keygen made the host keys: its first-boot condition held and it ran.
+                kg=$(systemctl show -p ConditionResult -p Result -p ActiveState sshd-keygen.service)
+                echo "sshd-keygen.service: $(tr "\n" " " <<<"$kg")"
+                grep -qx ConditionResult=yes <<<"$kg" && grep -qx Result=success <<<"$kg" \
+                    || echo "PROOF-FAIL: sshd-keygen did not run at the first boot"
                 echo "== listening sockets (ruling 4: nothing but SSH listens beyond loopback)"
                 # One listing, judged as printed. A listing that fails, or lists nothing (SSH
                 # itself listens), fails the proof: a check that did not run never passes.
-                if lsk=$(sudo ss -Hltunp 2>&1); then
+                if lsk=$(ss -Hltunp 2>&1); then
                     printf "%s\n" "$lsk"
                     n=$(printf "%s\n" "$lsk" | grep -c .)
                     echo "the listing ran: $n listening sockets"
@@ -636,13 +657,13 @@ EOF
                     done
                 else
                     printf "%s\n" "$lsk"
-                    echo "PROOF-FAIL: the listening sockets could not be listed (sudo ss exited non-zero)"
+                    echo "PROOF-FAIL: the listening sockets could not be listed (ss exited non-zero)"
                 fi
                 echo "== the commits, from the stamp"; grep -E "^(weaveragent|weaverweb)\.(commit|origin) " /etc/weaver-appliance/stamp
                 n=$(grep -cE "^(weaveragent|weaverweb)\.commit = [0-9a-f]{40}$" /etc/weaver-appliance/stamp)
                 [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
-                || echo "PROOF-FAIL: the login as the default account, or its reads, exited $?"
+                || echo "PROOF-FAIL: the login as root, or its reads, exited $?"
             # The MANIFEST set against the booted guest, judged here: its files listed as the
             # seal lists them, less the host keys' private halves (no digest of a private key
             # is made), and its links formatted here as the seal formats them. A listing that
@@ -650,12 +671,12 @@ EOF
             # without its links section each fail the proof (manifest_compare). The booted
             # listings stay in the overlay's directory and go with it.
             echo "== the MANIFEST against the booted guest"
-            if ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
-                    "sudo bash -c 'find $MANIFEST_SCOPE -xdev -type f -not -path \"/etc/weaver-appliance/MANIFEST*\" -not -path /boot/grub/grubenv -not -name \"ssh_host_*_key\" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum'" \
+            if ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
+                    "find $MANIFEST_SCOPE -xdev -type f -not -path '/etc/weaver-appliance/MANIFEST*' -not -path /boot/grub/grubenv -not -name 'ssh_host_*_key' -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum" \
                     >"$pdir/files-booted" 2>"$pdir/files-booted.err"; then
                 echo "PROOF-FAIL: the booted guest's files could not be listed: $(tail -2 "$pdir/files-booted.err" | tr '\n' ' ')"
-            elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=ubuntu gssh "$port" \
-                    "sudo find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>"$pdir/links-booted.err" \
+            elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
+                    "find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>"$pdir/links-booted.err" \
                     | links_format >"$pdir/links-booted"; then
                 echo "PROOF-FAIL: the booted guest's links could not be listed: $(tail -2 "$pdir/links-booted.err" | tr '\n' ' ')"
             else
@@ -663,9 +684,9 @@ EOF
             fi
             proof_inbound "$port" "$dport" "$pdir/scanned"
         else
-            echo "trust on first use: NO MATCH; no login"
-            echo "PROOF-FAIL: trust on first use: the console's fingerprints do not name the keys SSH presents"
-            echo "console: ${cfp:-none}"; echo "ssh: ${sfp:-none}"
+            echo "the host keys: NO MATCH; nothing more is read"
+            echo "PROOF-FAIL: the host keys: the guest's fingerprints do not name the keys SSH presents"
+            echo "guest: ${gfps:-none}"; echo "ssh: ${sfp:-none}"
         fi
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
@@ -686,24 +707,24 @@ EOF
 proof_inbound() {
     local port=$1 dport=$2 known=$3 lpid lb ans
     echo "== the base inbound policy, with no agent loaded"
-    KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+    KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
         echo "-- nftables.service: $(systemctl is-active nftables.service)"
-        echo "-- the tables the kernel holds"; sudo nft list tables
-        if r=$(sudo nft list table inet weaver_appliance 2>&1); then
+        echo "-- the tables the kernel holds"; nft list tables
+        if r=$(nft list table inet weaver_appliance 2>&1); then
             printf "%s\n" "$r"
             grep -q "type filter hook input priority filter; policy drop;" <<<"$r" || echo "PROOF-FAIL: the table inet weaver_appliance does not drop inbound by default"
             grep -q "tcp dport 22 accept" <<<"$r" || echo "PROOF-FAIL: the table inet weaver_appliance does not accept SSH"
         else
             printf "%s\n" "$r"; echo "PROOF-FAIL: the table inet weaver_appliance is not loaded"
         fi' 2>&1 || echo "PROOF-FAIL: the read of the loaded rules exited $?"
-    lpid=$(KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+    lpid=$(KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
         cd /tmp && setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
         for i in $(seq 50); do ss -Hltn "sport = :8080" | grep -q . && break; sleep 0.2; done
         echo "$p"' 2>/dev/null) || lpid=""
     if ! [[ "$lpid" =~ ^[0-9]+$ ]]; then
         echo "PROOF-FAIL: the listener on TCP 8080 did not start in the guest (${lpid:-no PID})"
     else
-        lb=$(KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" '
+        lb=$(KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
             ss -Hltn "sport = :8080"
             python3 -c "import urllib.request as u; print(\"loopback:\", u.urlopen(\"http://127.0.0.1:8080/\", timeout=5).status)"' 2>&1) || true
         printf -- '-- the listener on TCP 8080, in the guest\n%s\n' "$lb"
@@ -711,7 +732,7 @@ proof_inbound() {
         ans=$(inbound_probe "$dport" 15)
         echo "-- TCP 8080 from the host, through the forward: $ans"
         [ "$ans" = silent ] || echo "PROOF-FAIL: inbound to TCP 8080 was not dropped ($ans)"
-        KNOWN_HOSTS=$known GUEST_USER=ubuntu gssh "$port" "kill $lpid 2>/dev/null; sleep 1
+        KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" "kill $lpid 2>/dev/null; sleep 1
             if ss -Hltn 'sport = :8080' | grep -q .; then echo 'the listener still listens'; else echo 'the listener is stopped'; fi" 2>&1 || true
     fi
     ans=$(inbound_probe "$port" 10)

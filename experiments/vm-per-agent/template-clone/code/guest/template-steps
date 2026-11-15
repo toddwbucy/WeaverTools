@@ -56,6 +56,10 @@ BUILD=/var/lib/weaver-build
 # The image's record and the deploy scripts' fixed copy (the appliance's layout).
 RECORD=/etc/weaver-appliance
 DEPLOY_COPY=/opt/weaver/deploy
+# The sealed image's hostname, set by the seal in place of the build guest's own: a neutral
+# name, so a box does not greet with the build's name (the Planner's note of 2026-11-15).
+# Defined once, here: lib.sh reads it for proof.
+IMAGE_HOSTNAME='weaver-appliance'
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
@@ -621,8 +625,9 @@ cleanup() {
     loader_check || return 1
 
     section "cloud-init limited to the operator's SSH key, network and hostname"
-    # The operator's ruling of 2026-11-14: cloud-init takes three settings from the seed,
-    # runs no command and installs no package. User-data and vendor-data are discarded
+    # The operator's ruling of 2026-11-14: cloud-init takes three settings from a seed,
+    # runs no command and installs no package. A boot with no seed attached runs no
+    # cloud-init at all (no datasource is found). User-data and vendor-data are discarded
     # before any module runs (so a seed cannot name modules back either); the SSH key comes
     # from the seed's meta-data public-keys, the hostname from its local-hostname, and the
     # network from its network-config. The modules left make the default account and the
@@ -821,11 +826,18 @@ probes() {
     check "the loader" "$(loader_check >/dev/null 2>&1 || { echo "loader_check fails:"; loader_check 2>&1 | tail -4; })"
     check "one kernel" "$(one_kernel >/dev/null || one_kernel; ls /boot/vmlinuz-* 2>/dev/null | grep -v "vmlinuz-$KVER\$")"
     check "a kernel image or module package installed and not held" "$(kernel_holds)"
-    # The first boot's SSH step: SSH enabled, and cloud-init's keys_to_console left to print
-    # the host keys' fingerprints on the console; cloud-init limited to the seed's SSH key,
-    # network and hostname (the operator's rulings of 2026-11-14).
+    # The first boot's SSH step: SSH enabled, and sshd-keygen enabled to make the host keys
+    # at the first boot (ConditionFirstBoot, true while /etc/machine-id is uninitialized).
+    # The operator reads the fingerprints after logging in (decision 16 of 2026-11-15).
+    # cloud-init, where a seed is attached, stays limited to its SSH key, network and
+    # hostname (the operator's rulings of 2026-11-14).
     check "ssh not enabled for the first boot" "$(e=0; for u in ssh.service ssh.socket; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = enabled ] && e=1; done; [ "$e" = 1 ] || echo "neither ssh.service nor ssh.socket is enabled")"
-    check "cloud-init not limited to SSH key, network and hostname, or keys_to_console not run" "$(cloud_init_check 2>&1)"
+    check "sshd-keygen not enabled for the first boot" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd-keygen.service is ${s:-unknown}, not enabled")"
+    check "cloud-init not limited to SSH key, network and hostname" "$(cloud_init_check 2>&1)"
+    # The hostname: the image's own, and the build guest's name (the kernel's hostname,
+    # which the seal does not change) nowhere in /etc. The pre pass leaves out the files the
+    # final step removes.
+    check "the image's hostname" "$(image_hostname_check "$mode")"
     check "the module" "$(driver_check_quiet)"
     check "the base inbound policy not as built" "$(firewall_check 2>&1)"
     # Private keys, in both passes, so a false hit is found before the seal's removals.
@@ -837,13 +849,31 @@ probes() {
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
         check "machine identity" "$(m=$(sed -n 1p /etc/machine-id); [ -z "$m" ] || [ "$m" = uninitialized ] || echo "machine-id $m"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
-        check "sshd-keygen not masked" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ -z "$s" ] || [ "$s" = masked ] || echo "sshd-keygen.service=$s")"
+        # No key admits a login: the operator places the first one (decision 16).
+        check "an authorized key" "$(find /root /home /etc/ssh -xdev -type f \( -name authorized_keys -o -name authorized_keys2 \) -size +0 2>/dev/null)"
         check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
         check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps 2>/dev/null)"
         check "a stamp other than the one being sealed" "$(ls "$RECORD" 2>/dev/null | grep -vxE 'stamp.part|seal-probes')"
     fi
     printf '\nprobes (%s): %s hit(s)\n' "$mode" "$hits"
     [ "$hits" = 0 ]
+}
+# image_hostname_check MODE: /etc/hostname is IMAGE_HOSTNAME alone, and no file under /etc
+# names the build guest (the kernel's hostname). MODE pre leaves out what seal_final removes:
+# the SSH host keys, the netplan files and cloud-init's sudoers rule. Prints each finding.
+image_hostname_check() {
+    local build
+    build=$(hostname)
+    [ "$(cat /etc/hostname 2>/dev/null)" = "$IMAGE_HOSTNAME" ] || echo "/etc/hostname is '$(head -c 80 /etc/hostname 2>/dev/null)', not $IMAGE_HOSTNAME"
+    if [ -z "$build" ] || [ "$build" = "$IMAGE_HOSTNAME" ]; then
+        echo "the build guest's name ('$build') cannot be told from the image's"
+        return 0
+    fi
+    # The final pass writes its own record, seal-probes, under /etc while it runs: that file
+    # is left out.
+    sudo grep -rlF -- "$build" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
+        grep -vE '^/etc/(ssh/ssh_host_|netplan/|sudoers\.d/90-cloud-init-users$)'; else cat; fi | head -8
+    return 0
 }
 driver_check_quiet() {
     local m ver vm fw
@@ -874,6 +904,10 @@ seal() {
     [ -n "${VERSION:-}" ] || { echo "the seal needs VERSION, the version the stamp's appliance.version must name"; return 1; }
     [ "$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)" = "$VERSION" ] \
         || { echo "the stamp's appliance.version is '$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)', not VERSION $VERSION (the facts step records it)"; return 1; }
+    # The image's own hostname, in place of the build guest's. The file alone: the running
+    # guest keeps its name, which the probes read as the build guest's.
+    printf '%s\n' "$IMAGE_HOSTNAME" | sudo tee /etc/hostname >/dev/null || return 1
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
@@ -968,12 +1002,11 @@ seal_final() {
     userdel -r op 2>&1 || true
     getent group op >/dev/null && groupdel op
     rm -f /etc/sudoers.d/90-cloud-init-users
-    # SSH stays enabled with no host key and no account: at first boot cloud-init makes
-    # both from the operator's seed and prints the host keys' fingerprints on the console
-    # (keys_to_console), the trust on first use the operator ruled on 2026-11-14. The mask
-    # leaves cloud-init the only maker of host keys, so the console names every key SSH
-    # presents.
-    systemctl mask sshd-keygen.service 2>&1
+    # SSH stays enabled with no host key and no authorized key: at the first boot
+    # sshd-keygen makes the host keys (the machine-id the seal leaves uninitialized makes
+    # the boot a first boot), and the operator places a key and reads the fingerprints
+    # after logging in (decision 16 of 2026-11-15). sshd-keygen is left as its package
+    # enables it; the probes require it enabled.
     # systemd's random seed and its credential secret are per machine: no copy of the image
     # ships either. systemd-random-seed.service saves a seed when it stops, so left running
     # it would write one at the power-off, after the final probe. It is stopped first (its

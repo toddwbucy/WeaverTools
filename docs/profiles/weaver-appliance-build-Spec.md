@@ -53,7 +53,7 @@ to: weaver-appliance-profile
 | `SEAL_WAIT` | the seconds the host waits for the guest's final seal step to power it off | 1200 |
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
 | `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
-| `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's fingerprint block on the console | 300 |
+| `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's login prompt on the console | 300 |
 | `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens and to the overlays it boots | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
@@ -99,8 +99,9 @@ initramfs, which took a lease there on every boot (the third build's proof boot 
 seed: four DHCP frames, then nothing after the switch to the root filesystem). It is in
 the initramfs because `cloud-initramfs-dyn-netconf`'s dracut module depends on it. The
 appliance has no network root, so the cleanup purges that package and makes the
-initramfs again, and a probe checks it holds no networkd. The network is then the first
-boot's seed alone. chrony keeps Ubuntu's NTS pool as its servers, unchanged here.
+initramfs again, and a probe checks it holds no networkd. The network is then the one
+the operator sets after logging in (decision 16 of 2026-11-15), or the one an attached
+seed names (below). chrony keeps Ubuntu's NTS pool as its servers, unchanged here.
 
 **The base inbound policy: drop, but SSH** (the operator's decision 9 of 2026-11-15). The
 image's own boot rules drop inbound traffic and accept SSH, with no agent loaded. The
@@ -125,20 +126,27 @@ table cannot open a port through this one (section 3). An address by DHCPv6 is n
 provided for: a DHCPv6 server's reply does not match the multicast solicitation as a
 reply, so the policy drops it. That is read from the rules and not measured.
 
-**cloud-init: the SSH key, the network and the hostname (operator's ruling,
-2026-11-14).** The cleanup writes `/etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg`:
-`allow_userdata: false`, vendor-data and vendor-data2 disabled, and the module lists cut
-to `growpart`, `resizefs`, `set_hostname`, `update_hostname`, `update_etc_hosts`,
-`users_groups` and `ssh` at init, none at config, and `keys_to_console` at final.
-User-data is discarded before any module runs, so a seed cannot name modules back, run a
-command or install a package. The seed gives the SSH key in its meta-data
-(`public-keys`, for the default account), the hostname in its meta-data
-(`local-hostname`) and the network in its `network-config`. With none, cloud-init's
-fallback is DHCP on the first link. A key given in user-data is not read. The check is
-cloud-init's own merged system configuration, read the way the next boot reads it.
-`growpart` and `resizefs` take no setting from the seed. They grow the root filesystem to
-the disk the operator gave. Measured on the third build, before this limit: the first
-boot's `apt_configure` rewrote `ubuntu.sources`.
+**cloud-init: the build's seed, and a seed's limit in the image.** The build guest boots
+from a NoCloud seed, which makes the build account, pins the guest's host key and sets
+its network and its guard (`template-clone-Spec` sections 2 and 4). The proof's first
+boot used a seed too, through the fifth build. It uses none now: it stands in for the
+operator's steps after logging in (step 12). In the sealed image, a boot with no seed
+attached runs no cloud-init, because no datasource is found. Where a seed is attached,
+cloud-init acts on it within the limit the operator ruled on 2026-11-14 (the SSH key,
+the network and the hostname). Whether the sealed image acts on an attached seed at all
+is open (section 3). The cleanup writes the limit to
+`/etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg`: `allow_userdata: false`, vendor-data
+and vendor-data2 disabled, and the module lists cut to `growpart`, `resizefs`,
+`set_hostname`, `update_hostname`, `update_etc_hosts`, `users_groups` and `ssh` at init,
+none at config, and `keys_to_console` at final. User-data is discarded before any module
+runs, so a seed cannot name modules back, run a command or install a package. The seed
+gives the SSH key in its meta-data (`public-keys`, for the default account), the
+hostname in its meta-data (`local-hostname`) and the network in its `network-config`.
+With none, cloud-init's fallback is DHCP on the first link. A key given in user-data is
+not read. The check is cloud-init's own merged system configuration, read the way the
+next boot reads it. `growpart` and `resizefs` take no setting from the seed. They grow
+the root filesystem to the disk the operator gave. Measured on the third build, before
+this limit: the first boot's `apt_configure` rewrote `ubuntu.sources`.
 
 **The fixed layout.** The binaries carry their build paths, so the build account (`op`,
 made by the seed), the checkouts (`~/WeaverAgent`, `~/WeaverWeb`) and the targets
@@ -205,8 +213,13 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     `/var/cache/apt` (measured on the fifth build, whose second run stopped at that
     apt-mark), and only its last section removes them again. A rerun that stops before
     then leaves them, and the probes refuse the seal on them.
-11. `seal`: the probes over SSH, the system libraries' records, a dry run of the MANIFEST,
-    then a root oneshot once the session ends. The dry run writes the MANIFEST as root to a
+11. `seal`: the image's own hostname, the probes over SSH, the system libraries'
+    records, a dry run of the MANIFEST, then a root oneshot once the session ends. The
+    hostname is `weaver-appliance`, written to `/etc/hostname` in place of the build
+    guest's own, so a box does not greet with the build's name (the Planner's note of
+    2026-11-15). The running guest keeps its name, and the probes read that name as the
+    build guest's. `create` refuses a `NAME` equal to the image's hostname. The dry run
+    writes the MANIFEST as root to a
     scratch file in `/run` and checks its form (each file line a digest and a path, the
     marker once, each link line a path, one tab and a target, at least one of each). The
     oneshot writes the MANIFEST again only after removals that cannot be undone, so a find
@@ -217,11 +230,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     random-seed service), cloud-init's state and the logs, assembles the stamp from the
     build's records, removes
     those records and this script, and runs the probes again. SSH stays enabled with no
-    host key and no account, and `sshd-keygen.service` is
-    masked: at first boot cloud-init makes the account and the host keys from the
-    operator's seed and its `keys_to_console` prints the keys' fingerprints on the serial
-    console, the trust on first use at the SSH step the operator ruled on 2026-11-14. If
-    any probe hits, it writes `SEAL-REFUSED` and no MANIFEST. Otherwise it writes the
+    host key and no authorized key. `sshd-keygen.service` is left enabled, as its
+    package ships it, and at the first boot it makes the host keys (`ssh-keygen -A`, on
+    the condition that the boot is a first boot, which the uninitialized machine
+    identity makes it). After the console login the operator places a key and sets the
+    network, and reads the host keys' fingerprints (decision 16 of 2026-11-15). Through
+    the fifth build the seal masked `sshd-keygen.service`, the first boot's seed made
+    the account and the host keys, and cloud-init's `keys_to_console` printed the
+    fingerprints on the serial console. If any probe hits, it writes `SEAL-REFUSED` and
+    no MANIFEST. Otherwise it writes the
     stamp and then the MANIFEST last. If the MANIFEST cannot be written whole, the stamp
     goes too and it writes `SEAL-REFUSED`. Either way it powers off. Before any of this,
     the seal step refuses unless each commit the build recorded is the input the host
@@ -281,26 +298,42 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     resolver. The capture still holds every frame the guest sends, and past QEMU's own DHCP
     none is answered. An image that configures no network sends nothing, so any frame the
     guest sends fails the proof (the fourth build's five boots sent none), and so does a
-    capture with no header, which did not run. Then a second overlay booted as a first
-    boot, with no host key, from
-    a seed in three parts. Its meta-data names an SSH key and a hostname. Its
-    network-config names a static address, gateway and resolver. Its user-data asks for a
-    bootcmd, a runcmd, a package and an account, all of which must be discarded. That
-    overlay's network is QEMU's `restrict=on`, with the SSH forward. The network is named
-    because `restrict=on` DHCP offers no gateway and no resolver, and netplan's wait
-    (`systemd-networkd-wait-online --any --dns -o routable`) then holds the boot for its
-    full 120 s (the fourth build's first proof run): an appliance on a network with no
-    default route or no resolver pays that wait on every boot. The fingerprints on the
-    console are set against the keys SSH presents, read with one `ssh-keyscan` once the
-    console's block has printed, and one retry after 30 s. One scan, because the guest's
-    sshd counts each unauthenticated connection against its source (`PerSourcePenalties`),
-    every forwarded connection arrives from the same address, and repeated scans dropped a
-    key (the fourth build's proof runs 2 to 4). Only on a match does the proof log in,
-    under those keys, as the default account, and read cloud-init's verdict and the
-    modules it ran, what became of each user-data ask, the hostname, the network and its
-    wait, `ubuntu.sources`, SSH's units and the stamp's commits. It then sets the MANIFEST
-    against the booted guest, on the host, and last measures the base inbound policy with
-    no agent loaded. In the guest it reads the tables the kernel holds, and the image's
+    capture with no header, which did not run. Then a second overlay booted as an
+    operator's first boot is, with no seed and no host key. **The proof stands in for
+    the operator's steps after logging in** (decision 16 of 2026-11-15). Those steps are
+    two: place a key, set the network. The proof writes both into its own overlay
+    offline, before the boot, and never into the image: the proof key as root's
+    authorized key (root is the image's one account with a login shell), and a netplan
+    file, `/etc/netplan/90-weaver-proof.yaml`, naming a static address, gateway and
+    resolver, matched by the NIC's MAC address. The overlay is opened writable through
+    qemu-storage-daemon and written with debugfs, only where the file names a backing
+    file, so the sealed image can never be opened writable this way, and QEMU opens the
+    backing file read-only. A filesystem that is not clean is refused. Each file is read
+    back from the overlay opened again read-only, with its bytes, its owner (root) and
+    its mode (0600), and `e2fsck -n` must find the filesystem clean, before anything
+    boots. Tested on 2026-11-15 against a scratch disk made on the measuring host: the
+    sealed stand-in's digest did not change. What waits for the operator is the console
+    login itself and the account it lands in (section 3). The proof does not stand in
+    for those, and its record names the gap on a line of its own, which is not a
+    failure. That overlay's network is QEMU's `restrict=on`, with the SSH forward. The
+    network is named because `restrict=on` DHCP offers no gateway and no resolver, and
+    netplan's wait (`systemd-networkd-wait-online --any --dns -o routable`) then holds
+    the boot for its full 120 s (the fourth build's first proof run): an appliance on a
+    network with no default route or no resolver pays that wait on every boot. The proof
+    waits for the console's login prompt, which must greet with the image's hostname. It
+    then reads the keys SSH presents with one `ssh-keyscan` of the three types
+    `ssh-keygen -A` makes, and one retry after 30 s. One scan, because the guest's sshd
+    counts each unauthenticated connection against its source (`PerSourcePenalties`),
+    every forwarded connection arrives from the same address, and repeated scans dropped
+    a key (the fourth build's proof runs 2 to 4). It logs in under those keys as root,
+    with the key it placed, and reads the host keys' fingerprints in the guest, as the
+    operator does after logging in. Each key SSH presents must be one the guest holds.
+    Only on that match does the proof read on: cloud-init's status (with no seed it does
+    not run), the hostname, the network and its wait, `ubuntu.sources`, SSH's units and
+    whether `sshd-keygen.service` ran, and the stamp's commits. It then sets the
+    MANIFEST against the booted guest, on the host, and last measures the base inbound
+    policy with no agent loaded. In the guest it reads the tables the kernel holds, and
+    the image's
     table with its input policy drop and its SSH accept. It starts a listener on TCP 8080,
     which must answer on the guest's own loopback. From the host, that listener, reached
     through a second forward (`PROOF_PORT` + 1 to the guest's 8080), must be silent. QEMU's
@@ -313,13 +346,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     them, less the host keys' private halves, so no digest of a private key is made. Its
     links are formatted on the host by the seal's own formatter text. Each file or link
     removed, added or changed is printed by its path, never with a digest. A difference
-    the first boot makes by design is marked expected. The changed files of that list
-    were measured on the fourth build: the account files and their backups, the hostname
-    and the machine identity. Its added files follow cloud-init's documented behaviour:
-    the host keys' public halves, its netplan file, its sudoers rule for the default
-    account and the account tools' lock file. The fifth build's first boot added all but
-    the lock file, which the list allows and does not require. No link is
-    expected to change. On the fourth build's first boot, systemd ran its first-boot
+    the first boot makes by design is marked expected. With no seed, the list is short.
+    Changed: the machine identity, which the seal leaves uninitialized. Added: the host
+    keys' public halves, which `sshd-keygen.service` makes, the proof's own network
+    file, and the account tools' lock file, which the list allows and does not require.
+    The fourth and fifth builds' first boots ran cloud-init from a seed, which also
+    changed the account files and the hostname and added its own netplan file and
+    sudoers rule. None of those is expected now, and the shorter list is not yet
+    measured on a build. No link is expected to change. On the fourth build's first
+    boot, systemd ran its first-boot
     preset of all units, and the masks held against it, so a link it changes is a finding.
     Every other difference fails the proof, as do a listing that fails and a MANIFEST
     that does not carry the marker once. The marker and the scope have one definition, in
@@ -333,7 +368,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     reused or written through. QEMU writing through the ACL was first proved on the fifth
     build. A file libvirt opens for a serial device becomes
     libvirt's, unreadable without root, and a file every local account could write would
-    let any of them write the console that trust on first use is read from.
+    let any of them write the console the proof reads the login prompt from.
     **The sealed disk is not relabelled** (the Planner's ruling of 2026-11-15). Each
     boot names its overlay with a DAC security label that libvirt must not relabel, and
     the label holds for the overlay's whole backing chain. Without it, libvirt's DAC
@@ -350,13 +385,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
     refusal, is not booted at all. After both boots, each finding of the sealed file (its
-    sha256 and its compactness), of the stamp's version, and each finding the first boot recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
-    are a fingerprint mismatch, a failed login, a MANIFEST difference outside the first
-    boot's expected list, a user-data ask carried out (the
-    command, the package or the account), cloud-init not done (the proof waits up to
-    600 s with `cloud-init status --wait`, then requires the status text `done` and exit
-    0, since the status exits 0 for running, disabled and not started too, 1 an error, 2
-    degraded), a stamp that does not name both commits, the image's table not loaded or
+    sha256 and its compactness), of the stamp's version, and each finding the first boot
+    recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The
+    proof's two files not read back as written, or a filesystem that is not clean, stop
+    it before the first boot. The first boot's findings are a login prompt that does not
+    greet with the image's hostname, a key SSH presents that the guest does not hold, a
+    failed login as root, a MANIFEST difference outside the first boot's expected list,
+    cloud-init run on a boot with no seed (its status not `disabled`), a hostname other
+    than the image's, `sshd-keygen.service` not run at the first boot, a stamp that does
+    not name both commits, the image's table not loaded or
     not dropping inbound by default or not accepting SSH, a listener on TCP 8080 that does
     not answer on the guest's loopback or that answers from the host, SSH not answering
     through its forward, and any listening
@@ -431,9 +468,12 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - the base inbound policy not as built: `/etc/nftables.conf` or the drop-in not the texts
   the steps define, nft's check refusing the file, `nftables.service` not enabled, or ufw
   not inactive
-- SSH not enabled
-- cloud-init not limited to the SSH key, network and hostname, or `keys_to_console` not
-  in its final modules
+- SSH not enabled, or `sshd-keygen.service` not enabled
+- cloud-init not limited to the SSH key, network and hostname (its module lists, with
+  `keys_to_console` at final)
+- `/etc/hostname` not the image's hostname, or the build guest's name in any file under
+  `/etc`. The pre pass leaves out the files the final step removes, and the final pass
+  leaves out its own probe record, which it writes while it runs.
 - private-key files. The pre pass leaves out the files the seal itself removes, so a hit
   is found before the removals. A `.pem` is judged by its content: fwupd ships its public
   LVFS CA certificates as `.pem` under `/etc/pki`.
@@ -444,7 +484,8 @@ A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages shi
 The final pass adds:
 - the build account, shell histories, cloud-init's instance state, netplan files
 - the machine identity, systemd's random seed and credential secret, and the SSH host
-  keys, `sshd-keygen.service` not masked
+  keys
+- an authorized-keys file with any content under `/root`, `/home` or `/etc/ssh`
 - non-empty logs
 - the build's records or this script still present
 - a stamp other than the one being sealed: anything in `/etc/weaver-appliance` but the
@@ -496,8 +537,9 @@ form: regular files only, with no marker and no links section. Their identities
 `manifest.scope` line says which form an image has.
 
 **Seams left clean.** The image boots with no agent, no connector config, no unit
-instance, no credential, no key and no login account. SSH is enabled and answers once the
-first boot's seed has made a host key and an account. There is no site-check hook and no
+instance, no credential, no key and no account that can log in. SSH is enabled, with
+host keys the first boot makes, and admits a login once the operator has placed a key.
+The hostname is `weaver-appliance`. There is no site-check hook and no
 image key (both ruled out by the operator on 2026-11-14). A condition of the operator's
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
 it. The first-boot pairing, the data disks' mount points and the console's download are
@@ -512,6 +554,16 @@ later acts.
   earlier priority, marks the packet, and the image's static rule accepts the mark, so
   admin still writes only its own table. Settled in the act that adds the port member to
   the declaration, by admin's Spec and this one together.
+- **The console login and the account it lands in.** Root is the image's one account
+  with a login shell, and it has no password. How the operator logs in at the console,
+  and which account that lands in, waits for the operator's ruling. The proof names the
+  gap and does not stand in for it: it logs in over SSH as root, with the key it placed
+  in its own overlay. Settled by the operator's ruling, then by this Spec and the proof.
+- **cloud-init in the sealed image.** Proposed on 2026-11-15, pending the operator: the
+  sealed image disables cloud-init, and the package may stay. An image that still acts
+  on an attached seed has a first-boot path the profile does not state. Until the
+  operator rules, a seed attached to the image is acted on within the limit of
+  2026-11-14 (section 2). Settled by the operator's ruling, then by this Spec.
 - **The respin path.** A respin carries a release's binaries into a new OS layer and never
   recompiles (the operator's decision 4 of 2026-11-15). No such path is built: this tree
   compiles, and refuses a respin. Until one is built, a security fix to the OS layer is a

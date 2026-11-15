@@ -330,13 +330,22 @@ guest_env() {
     [ -z "$out" ] || printf 'env%s ' "$out"
 }
 
-# image_open DISK DIR: DISK's root filesystem, read-only, as the file DIR/root.raw, which
+# image_open DISK DIR [rw]: DISK's root filesystem, read-only, as the file DIR/root.raw, which
 # qemu-storage-daemon exports over FUSE as this user: a FUSE mount this user owns, with no
 # root and no loop device.
 # The root partition is the one GPT names "Linux root (x86-64)". image_cat and image_ls
 # read through debugfs, which follows no symbolic link; image_close stops the export.
+# With rw the export is writable, for image_put, and only for an overlay: a DISK that names
+# no backing file (the sealed image names none) is refused. QEMU opens the backing file
+# read-only, so nothing written reaches it.
 image_open() {
-    local disk=$1 dir=$2 part start size pid
+    local disk=$1 dir=$2 part start size pid ro=on wr=off lock=off
+    if [ "${3:-}" = rw ]; then
+        qemu-img info --output=json "$disk" 2>/dev/null \
+            | python3 -I -c 'import json, sys; sys.exit(0 if json.load(sys.stdin).get("backing-filename") else 1)' \
+            || die "image_open writes only to an overlay, a file that names a backing file; $disk names none, or could not be read"
+        ro=off; wr=on; lock=on
+    fi
     mkdir -p -- "$dir"
     : >"$dir/whole.raw"; : >"$dir/root.raw"
     qemu-storage-daemon \
@@ -353,11 +362,45 @@ print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
     [ -n "$part" ] || die "$disk has no single Linux root partition"
     read -r start size <<<"$part"
     qemu-storage-daemon \
-        --blockdev "driver=file,node-name=f,filename=$disk,read-only=on,locking=off" \
-        --blockdev driver=qcow2,node-name=q,file=f,read-only=on \
-        --blockdev "driver=raw,node-name=p,file=q,offset=$((start * 512)),size=$((size * 512)),read-only=on" \
-        --export "type=fuse,id=r,node-name=p,mountpoint=$dir/root.raw,writable=off,allow-other=off" \
+        --blockdev "driver=file,node-name=f,filename=$disk,read-only=$ro,locking=$lock" \
+        --blockdev "driver=qcow2,node-name=q,file=f,read-only=$ro" \
+        --blockdev "driver=raw,node-name=p,file=q,offset=$((start * 512)),size=$((size * 512)),read-only=$ro" \
+        --export "type=fuse,id=r,node-name=p,mountpoint=$dir/root.raw,writable=$wr,allow-other=off" \
         --pidfile "$dir/qsd-root.pid" --daemonize || die "no export of $disk's root partition"
+}
+# image_put DIR SRC PATH MODE: the local file SRC written as PATH into a root filesystem
+# opened writable (image_open DISK DIR rw), in place of any file there, root's, with MODE
+# (octal, with the file type, such as 0100600). PATH's directory must stand. debugfs prints
+# its errors and exits 0, so its output is kept in DIR/put.log and the caller reads the
+# result back from the disk opened again (image_got). A filesystem that is not clean, or
+# whose journal awaits recovery, is refused: debugfs writes past the journal.
+image_put() {
+    local dir=$1 src=$2 path=$3 mode=$4 st
+    [ -f "$src" ] || die "image_put: no file $src"
+    st=$(debugfs -c -R stats "$dir/root.raw" 2>/dev/null)
+    grep -qE '^Filesystem state: +clean$' <<<"$st" && ! grep -qE '^Filesystem features:.*needs_recovery' <<<"$st" \
+        || die "image_put: the filesystem is not clean, or its journal awaits recovery; nothing written"
+    image_state "$dir" "${path%/*}" || die "image_put: ${path%/*} is not in the image, or could not be read; nothing written"
+    printf 'rm "%s"\nwrite "%s" "%s"\nsif "%s" mode %s\nsif "%s" uid 0\nsif "%s" gid 0\n' \
+        "$path" "$src" "$path" "$path" "$mode" "$path" "$path" >"$dir/put.cmd"
+    echo "== image_put $path" >>"$dir/put.log"
+    debugfs -w -f "$dir/put.cmd" "$dir/root.raw" >>"$dir/put.log" 2>&1
+}
+# image_got DIR SRC PATH MODE: PATH, read from the disk (opened read-only again after
+# image_put), holds SRC's bytes, as a regular file, root's, with MODE's permission bits.
+# Prints one line; exits 1 on any difference.
+image_got() {
+    local dir=$1 src=$2 path=$3 mode=$4 o got_mode owner rc=0
+    image_get "$dir" "$path" "$dir/got" || rc=$?
+    [ "$rc" = 0 ] || { echo "$path: not read back (image_get exited $rc)"; return 1; }
+    cmp -s -- "$src" "$dir/got" || { rm -f -- "$dir/got"; echo "$path: read back with other bytes than written"; return 1; }
+    rm -f -- "$dir/got"
+    o=$(debugfs -c -R "stat \"$path\"" "$dir/root.raw" 2>/dev/null)
+    got_mode=$(sed -n 's/.*Type: regular *Mode: *\([0-7]*\).*/\1/p' <<<"$o" | head -1)
+    owner=$(sed -n 's/^User: *\([0-9]*\) *Group: *\([0-9]*\).*/\1:\2/p' <<<"$o" | head -1)
+    [ "$got_mode" = "0${mode: -3}" ] && [ "$owner" = 0:0 ] \
+        || { echo "$path: a regular file with mode '${got_mode:-unread}' and owner '${owner:-unread}', not 0${mode: -3} and 0:0"; return 1; }
+    echo "$path: read back, $(stat -c %s -- "$src") bytes, mode $got_mode, owner $owner"
 }
 image_cat() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
 # image_ls DIR PATH fails where PATH is absent. debugfs exits 0 on a missing path and prints
@@ -458,11 +501,16 @@ qsd_pid() {
 # image_close stops both exports where they still run (each only through qsd_pid), unmounts
 # one whose daemon is gone, and never fails its caller (it runs from cleanup traps).
 image_close() {
-    local f pid
+    local f pid pids="" t
     for f in qsd-whole qsd-root; do
-        { pid=$(qsd_pid "$1" "$f") && kill "$pid"; } 2>/dev/null || true
+        { pid=$(qsd_pid "$1" "$f") && kill "$pid" && pids+=" $pid"; } 2>/dev/null || true
     done
     sleep 1
+    # A writable export flushes its writes as it exits: each daemon is waited for, 10 s at
+    # most, before the file is opened again.
+    for pid in $pids; do
+        t=0; while kill -0 "$pid" 2>/dev/null && [ "$t" -lt 20 ]; do sleep 0.5; t=$((t + 1)); done
+    done
     for f in whole.raw root.raw; do
         ! findmnt -n --mountpoint "$1/$f" >/dev/null 2>&1 || fusermount3 -u "$1/$f" 2>/dev/null || true
     done
@@ -573,8 +621,10 @@ qemu_file() {
 LIB_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LINKS_MARK=$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
 MANIFEST_SCOPE=$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
-[ -n "$LINKS_MARK" ] && [ -n "$MANIFEST_SCOPE" ] \
-    || die "no LINKS_MARK or MANIFEST_SCOPE in $LIB_DIR/guest/template-steps"
+# The sealed image's hostname has its one definition there too.
+IMAGE_HOSTNAME=$(sed -n "s/^IMAGE_HOSTNAME='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+[ -n "$LINKS_MARK" ] && [ -n "$MANIFEST_SCOPE" ] && [ -n "$IMAGE_HOSTNAME" ] \
+    || die "no LINKS_MARK, MANIFEST_SCOPE or IMAGE_HOSTNAME in $LIB_DIR/guest/template-steps"
 links_format() {
     local p t
     while IFS= read -r -d '' p && IFS= read -r -d '' t; do
@@ -585,14 +635,20 @@ links_format() {
 }
 manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
 
-# What an operator's first boot changes in the MANIFEST's scope by design. The changed files
-# were measured on the fourth build: the account files and their backups, the hostname and
-# the machine identity. The added files are cloud-init's by its documented behaviour and are
-# first measured on the fifth build: the host keys' public halves (the private halves are
-# never listed), its netplan file, its sudoers rule for the default account, and the account
-# tools' lock file. No link is expected to change. The offline mock names its own.
-FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/group /etc/group- /etc/gshadow /etc/gshadow- /etc/hostname /etc/machine-id /etc/passwd /etc/passwd- /etc/shadow /etc/shadow- /etc/subgid /etc/subgid- /etc/subuid /etc/subuid-}
-FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub /etc/netplan/50-cloud-init.yaml /etc/sudoers.d/90-cloud-init-users /etc/.pwd.lock}
+# The proof's own network file, written into its first boot's overlay (proof_place), and
+# the MAC address its NIC is given.
+PROOF_NETPLAN=/etc/netplan/90-weaver-proof.yaml
+PROOF_MAC=52:54:00:57:45:01
+# What the proof's first boot changes in the MANIFEST's scope by design, with no seed and no
+# cloud-init (decision 16 of 2026-11-15). Changed: the machine identity, which the seal
+# leaves uninitialized. Added: the host keys' public halves, which sshd-keygen makes (the
+# private halves are never listed), the proof's own network file, and the account tools'
+# lock file, which any account tool leaves. The fourth and fifth builds' first boots ran
+# cloud-init from a seed, which also changed the account files and the hostname and added
+# its own netplan file and sudoers rule; none of those is expected now. No link is expected
+# to change. The offline mock names its own.
+FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/machine-id}
+FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub $PROOF_NETPLAN /etc/.pwd.lock}
 # manifest_compare SEALED FILES LINKS: the sealed MANIFEST set against a booted guest's
 # listing of the same scope: FILES as sha256sum writes them, LINKS as links_format writes
 # them. Each difference is printed by its path, never with a digest: a file or link

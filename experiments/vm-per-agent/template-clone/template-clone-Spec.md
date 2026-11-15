@@ -488,7 +488,8 @@ The host scripts' steps (section 0):
 
 The MANIFEST (`weaver-appliance-build-Spec` section 2):
 - `LINKS_MARK` and `MANIFEST_SCOPE` are each defined once, in `guest/template-steps`, the
-  marker's text is in no other code file, and `lib.sh` reads the same values.
+  marker's text is in no other code file, and `lib.sh` reads the same values. So is
+  `IMAGE_HOSTNAME`, the sealed image's hostname.
 - `links_format`'s two copies, `lib.sh`'s and `guest/template-steps`', are the same text.
 - The seal's dry run passes on a stand-in scope with an escaped name and a link to
   `/dev/null`, and fails, with find's error shown, where a scope directory is missing.
