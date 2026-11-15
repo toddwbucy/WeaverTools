@@ -163,7 +163,7 @@ solver refused without removing `coreutils-from-uutils`; the step was then rewri
 ## The appliance image (2026-11-14)
 
 A cardless build, on a throwaway `VM_ROOT` with its own login key, torn down after
-(`template-clone-Spec.md`, section 10). The steps are in the order adopted after the first
+(`docs/profiles/weaver-appliance-build-Spec.md`). The steps are in the order adopted after the first
 build broke at the stack (`driver` before `stack`). The inputs are named on every command:
 
 ```bash
