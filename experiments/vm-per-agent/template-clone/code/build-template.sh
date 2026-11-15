@@ -627,15 +627,18 @@ EOF
         || die "the proof's two files did not read back as written, or the filesystem is not clean ($out/first-boot-place.txt); nothing booted"
 }
 
-# proof_first_boot OUT: a second overlay, booted as an operator's first boot is: no seed, and
-# the operator's two by-hand steps after logging in placed in it offline (proof_place). The
+# proof_first_boot OUT: a second overlay, booted as an operator's first boot is, with the
+# operator's two by-hand steps after logging in placed in it offline (proof_place), and a
+# seed attached that the image must ignore, since it disables cloud-init (proposed on
+# 2026-11-15, pending the operator): its meta-data names a key and a hostname, its
+# user-data a bootcmd, a runcmd and the default account, and none may be acted on. The
 # console login itself, and the account it lands in, wait for the operator's ruling: the
 # proof names that gap and does not stand in for it. At this boot sshd-keygen makes the host
 # keys. The proof waits for the console's login prompt, which must greet with the image's
 # hostname (IMAGE_HOSTNAME), scans the keys SSH presents, logs in under them as root with
 # the key it placed, and reads the host keys' fingerprints in the guest, as the operator
 # does after logging in: each key SSH presents must be one the guest made. Only on that
-# match does it read cloud-init's state (with no seed none runs), the hostname, the network
+# match does it read cloud-init's state (disabled, the seed ignored), the hostname, the network
 # as the overlay named it, SSH's units and sshd-keygen's run, the listeners, and the
 # stamp's commits, set the MANIFEST against the booted guest's files and links
 # (manifest_compare), and read the base inbound policy (proof_inbound). The network is
@@ -651,10 +654,28 @@ proof_first_boot() {
     proof_overlay "$pdir/overlay.qcow2"
     qemu_file "$pdir/console.log"
     proof_place "$out" "$pdir"
+    mkdir -- "$pdir/seed"
+    printf 'instance-id: %s\nlocal-hostname: weaver-proof-seed\npublic-keys:\n  - %s\n' \
+        "$pn-1" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
+    cat >"$pdir/seed/user-data" <<'EOF'
+#cloud-config
+bootcmd:
+  - [sh, -c, "echo bootcmd ran > /var/tmp/weaver-proof-bootcmd"]
+runcmd:
+  - [sh, -c, "echo runcmd ran > /var/tmp/weaver-proof-runcmd"]
+users:
+  - default
+EOF
+    cp "$pdir/seed/meta-data" "$out/first-boot-seed-meta-data.txt"
+    cp "$pdir/seed/user-data" "$out/first-boot-seed-user-data.txt"
+    xorriso -as mkisofs -quiet -o "$pdir/seed.iso" -V cidata -J -r \
+        "$pdir/seed/user-data" "$pdir/seed/meta-data" 2>/dev/null \
+        || die "the first boot's seed image could not be made; nothing booted"
     virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
         --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
         --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
+        --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
         --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
@@ -701,11 +722,18 @@ proof_first_boot() {
                 echo "the host keys: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the guest's $(wc -l <<<"$gfps")); SSH did not present: $(comm -23 <(printf '%s\n' "$gfps") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
             fi
             KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" '
-                # With no seed, no datasource is found and cloud-init does not run.
-                echo "== cloud-init, on a boot with no seed"
+                # A seed is attached, and the image disables cloud-init: none of it is
+                # acted on.
+                echo "== cloud-init, with a seed attached"
                 cloud-init status --long 2>&1 | head -8
                 st=$(cloud-init status 2>/dev/null | sed -n "s/^status: //p")
-                [ "$st" = disabled ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not disabled, on a boot with no seed"
+                [ "$st" = disabled ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not disabled, with a seed attached"
+                [ -f /etc/cloud/cloud-init.disabled ] || echo "PROOF-FAIL: /etc/cloud/cloud-init.disabled is absent"
+                echo "== the seed'"'"'s asks"
+                for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do
+                    if [ -e "$m" ]; then echo "PROOF-FAIL: the seed'"'"'s ${m##*-} ran"; else echo "not run: ${m##*-}"; fi
+                done
+                if getent passwd ubuntu >/dev/null; then echo "PROOF-FAIL: the seed'"'"'s default account was made"; else echo "not made: the default account"; fi
                 echo "== the hostname"; hostname
                 [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
                 echo "== the network as the overlay named it"; ip -br addr; ip route; resolvectl dns 2>&1

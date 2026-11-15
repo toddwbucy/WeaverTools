@@ -877,6 +877,7 @@ probes() {
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
+        check "cloud-init not disabled" "$([ -f /etc/cloud/cloud-init.disabled ] || echo "/etc/cloud/cloud-init.disabled is absent")"
         # The machine identity must read uninitialized, as cloud-init clean writes it: that
         # makes the first boot a first boot, on which sshd-keygen makes the host keys
         # (ConditionFirstBoot). An empty or absent file is a hit (F8).
@@ -1053,6 +1054,10 @@ seal_final() {
     # shellcheck disable=SC2086
     rm -f $SEAL_KEYS
     cloud-init clean --logs --seed --machine-id --configs network 2>&1
+    # cloud-init disabled in the sealed image, the package kept (proposed on 2026-11-15,
+    # pending the operator): an image that acts on an attached seed has a first-boot path
+    # the profile does not state. The limit written by the cleanup stays beneath it.
+    install -o root -g root -m 0644 /dev/null /etc/cloud/cloud-init.disabled
     rm -f /root/.bash_history /root/.lesshst /root/.wget-hsts /root/.python_history
     rm -rf /tmp/* /var/tmp/* /var/crash/* 2>/dev/null
     systemctl stop rsyslog.service syslog.socket 2>/dev/null || true

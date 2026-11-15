@@ -158,8 +158,8 @@ seed: four DHCP frames, then nothing after the switch to the root filesystem). I
 the initramfs because `cloud-initramfs-dyn-netconf`'s dracut module depends on it. The
 appliance has no network root, so the cleanup purges that package and makes the
 initramfs again, and a probe checks it holds no networkd. The network is then the one
-the operator sets after logging in (decision 16 of 2026-11-15), or the one an attached
-seed names (below). chrony keeps Ubuntu's NTS pool as its servers, unchanged here.
+the operator sets after logging in (decision 16 of 2026-11-15). chrony keeps Ubuntu's
+NTS pool as its servers, unchanged here.
 
 **The base inbound policy: drop, but SSH** (the operator's decision 9 of 2026-11-15). The
 image's own boot rules drop inbound traffic and accept SSH, with no agent loaded. The
@@ -193,12 +193,13 @@ stopped.
 **cloud-init: the build's seed, and a seed's limit in the image.** The build guest boots
 from a NoCloud seed, which makes the build account, pins the guest's host key and sets
 its network and its guard (`template-clone-Spec` sections 2 and 4). The proof's first
-boot used a seed too, through the fifth build. It uses none now: it stands in for the
-operator's steps after logging in (step 12). In the sealed image, a boot with no seed
-attached runs no cloud-init, because no datasource is found. Where a seed is attached,
-cloud-init acts on it within the limit the operator ruled on 2026-11-14 (the SSH key,
-the network and the hostname). Whether the sealed image acts on an attached seed at all
-is open (section 3). The cleanup writes the limit to
+boot was set up by a seed through the fifth build. Now it stands in for the operator's
+steps after logging in, and attaches a seed only to show it ignored (step 12). The seal
+disables cloud-init in the sealed image: it writes `/etc/cloud/cloud-init.disabled`, and
+the package stays (proposed on 2026-11-15, pending the operator, section 3). An attached
+seed is then not acted on, and a boot with none runs no cloud-init either. The limit the
+operator ruled on 2026-11-14 (the SSH key, the network and the hostname) stays beneath
+it, for an operator who removes that file. The cleanup writes the limit to
 `/etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg`: `allow_userdata: false`, vendor-data
 and vendor-data2 disabled, and the module lists cut to `growpart`, `resizefs`,
 `set_hostname`, `update_hostname`, `update_etc_hosts`, `users_groups` and `ssh` at init,
@@ -380,13 +381,21 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     none is answered. An image that configures no network sends nothing, so any frame the
     guest sends fails the proof (the fourth build's five boots sent none), and so does a
     capture with no header, which did not run. Then a second overlay booted as an
-    operator's first boot is, with no seed and no host key. **The proof stands in for
-    the operator's steps after logging in** (decision 16 of 2026-11-15). Those steps are
+    operator's first boot is, with no host key. A seed is attached, which the image must
+    ignore: its meta-data names a key and a hostname, and its user-data a bootcmd, a
+    runcmd and the default account. With cloud-init disabled, the sealed image has no
+    way in: root has no password, no key is authorized and no seed is read, so the proof
+    gets in only by writing its own overlay offline. The bootcmd and runcmd asks are
+    near vacuous: the limit beneath the marker discards user-data and runs neither
+    module, whether or not cloud-init is disabled. The checks that tell a disabled
+    cloud-init from a limited one are its status, the seed's hostname and the default
+    account. **The proof stands in for the
+    operator's steps after logging in** (decision 16 of 2026-11-15). Those steps are
     two: place a key, set the network. The proof writes both into its own overlay
     offline, before the boot, and never into the image: the proof key as root's
-    authorized key, and a netplan
-    file, `/etc/netplan/90-weaver-proof.yaml`, naming a static address, gateway and
-    resolver, matched by the NIC's MAC address. The overlay is opened writable through
+    authorized key, and a netplan file, `/etc/netplan/90-weaver-proof.yaml`, naming a
+    static address, gateway and resolver, matched by the NIC's MAC address. The overlay
+    is opened writable through
     qemu-storage-daemon and written with debugfs, only where the file names a backing
     file, so the sealed image can never be opened writable this way, and QEMU opens the
     backing file read-only. A filesystem that is not clean is refused. Each file is read
@@ -424,10 +433,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     operator does after logging in. Each key SSH presents must be one the guest holds.
     Both sides are read from the same guest, so the match shows that sshd presents the
     keys on its disk, not where they came from.
-    Only on that match does the proof read on: cloud-init's status (with no seed it does
-    not run), the hostname, the network and its wait, `ubuntu.sources`, SSH's units and
-    whether `sshd-keygen.service` ran, and the stamp's commits. It then sets the
-    MANIFEST against the booted guest, on the host, and last measures the base inbound
+    Only on that match does the proof read on: cloud-init's status (disabled, with the
+    seed attached), what became of the seed's asks, the hostname, the network and its
+    wait, `ubuntu.sources`, SSH's units and whether `sshd-keygen.service` ran, and the
+    stamp's commits. It then sets the MANIFEST against the booted guest, on the host,
+    and last measures the base inbound
     policy with no agent loaded. In the guest it reads the tables the kernel holds, and
     the image's
     table with its input policy drop and its SSH accept. It starts a listener on TCP 8080,
@@ -447,7 +457,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     them, less the host keys' private halves, so no digest of a private key is made. Its
     links are formatted on the host by the seal's own formatter text. Each file or link
     removed, added or changed is printed by its path, never with a digest. A difference
-    the first boot makes by design is marked expected. With no seed, the list is short.
+    the first boot makes by design is marked expected. With cloud-init disabled,
+    the list is short.
     Changed: the machine identity, which the seal leaves uninitialized. Added: the host
     keys' public halves, which `sshd-keygen.service` makes, the proof's own network
     file, and the account tools' lock file, which the list allows and does not require.
@@ -490,12 +501,13 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     device code, and each finding the first boot recorded fails the proof (a non-zero
     exit, and the findings in `PROOF-FAILED`). The proof's two files not read back as
     written, or a filesystem that is not clean, stop it before the first boot. The first
-    boot's findings are a login prompt that does not
-    greet with the image's hostname, a key SSH presents that the guest does not hold, a
-    failed login as root, a MANIFEST difference outside the first boot's expected list,
-    cloud-init run on a boot with no seed (its status not `disabled`), a hostname other
-    than the image's, `sshd-keygen.service` not run at the first boot, a stamp that does
-    not name both commits, the image's table not loaded or
+    boot's findings are a login prompt that does not greet with the image's hostname, a
+    key SSH presents that the guest does not hold, a failed login as root, a MANIFEST
+    difference outside the first boot's expected list, cloud-init not disabled with a
+    seed attached, any of the seed's asks carried out (the bootcmd, the runcmd or the
+    default account), a hostname other than the image's, `sshd-keygen.service` not run
+    at the first boot, a stamp that does not name both commits, the image's table not
+    loaded or
     not dropping inbound by default or not accepting SSH, a listener on TCP 8080 that does
     not answer on the guest's loopback or that answers from the host, SSH not answering
     through its forward, and any listening
@@ -591,6 +603,9 @@ A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages shi
 
 The final pass adds:
 - the build account, shell histories, cloud-init's instance state, netplan files
+- cloud-init not disabled (`/etc/cloud/cloud-init.disabled` absent). The seal writes the
+  marker just before this pass, so the probe reads back the step's own write and little
+  more. The proof's boot with a seed attached is the check that counts.
 - the machine identity not `uninitialized`, as `cloud-init clean` writes it (an empty or
   absent file is a hit too, since the first boot's host keys rest on that word),
   systemd's random seed and credential secret, and the SSH host keys
@@ -664,7 +679,7 @@ the function's text. Each run works in a new `mktemp` directory and leaves it fo
 reading. A test that needs a tool the host lacks is skipped with exit status 77.
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-15 the 11 tests ran 197 checks and all passed, on a host with
+runs them all. On 2026-11-15 the 11 tests ran 205 checks and all passed, on a host with
 CUDA 13.4's `nvcc`. The offline mock (`template-clone-Spec` section 8) is not one of
 them, and runs only in a build guest.
 
@@ -685,11 +700,14 @@ them, and runs only in a build guest.
   in its own overlay. Root as the proof's login is the proof harness's choice, and it
   does not answer the operator's question. Settled by the operator's ruling, then by
   this Spec and the proof.
-- **cloud-init in the sealed image.** Proposed on 2026-11-15, pending the operator: the
-  sealed image disables cloud-init, and the package may stay. An image that still acts
-  on an attached seed has a first-boot path the profile does not state. Until the
-  operator rules, a seed attached to the image is acted on within the limit of
-  2026-11-14 (section 2). Settled by the operator's ruling, then by this Spec.
+- **cloud-init in the sealed image.** Proposed on 2026-11-15, pending the operator, and
+  built that way (section 2): the sealed image disables cloud-init, and the package
+  stays. An image that still acts on an attached seed has a first-boot path the profile
+  does not state. If the operator rules otherwise, the seal's marker file and the
+  proof's seed go, and a seed attached to the image is acted on within the limit of
+  2026-11-14. The limit file and its probe are still written and required beneath the
+  marker. If the operator rules cloud-init disabled, they go with no other change, and
+  the marker alone stands. Settled by the operator's ruling, then by this Spec.
 - **systemd's first-boot paths in the image.** Beside cloud-init, the image holds
   systemd's own first-boot paths as Ubuntu 26.04 ships them. Read on 2026-11-15 from the
   fifth build's kept image, read-only:
