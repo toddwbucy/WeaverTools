@@ -8,9 +8,10 @@
 # WeaverWeb script; the deploy scripts run unmodified from their checkouts.
 set -uo pipefail
 
-# The inputs, named by the host on each step's command line: WA_COMMIT and WW_COMMIT in
-# full, DRIVER, DRIVER_ROUTE, COMPUTE_CAP, and BASE_IMAGE (the cloud image's name and
-# digest). A step that needs one refuses where it is unset.
+# The inputs, named by the host on each step's command line: VERSION (the image's version,
+# a release, <release>.0), WA_COMMIT and WW_COMMIT in full, DRIVER, DRIVER_ROUTE,
+# COMPUTE_CAP, and BASE_IMAGE (the cloud image's name and digest). A step that needs one
+# refuses where it is unset.
 WA_URL=https://github.com/toddwbucy/WeaverAgent.git
 WW_URL=https://github.com/toddwbucy/WeaverWeb.git
 # The pins this file holds.
@@ -120,6 +121,10 @@ facts() {
     fi
     section base-packages; wc -l <"$BUILD/base-packages"
     record base.image "${BASE_IMAGE:-unknown}" || return 1
+    # The image's version (the operator's decision 4 of 2026-11-15), as the host names it:
+    # a release, since a respin never recompiles and this build compiles.
+    [[ "${VERSION:-}" =~ ^[1-9][0-9]*\.0$ ]] || { echo "VERSION '${VERSION:-}' is not named as a release, <release>.0"; return 1; }
+    record appliance.version "$VERSION" || return 1
     record os "$PRETTY_NAME" || return 1
     record kernel "$KVER" || return 1
     record build.vcpus "$(nproc)" || return 1
@@ -813,6 +818,10 @@ seal() {
         grep -qxE '[0-9a-f]{40}' "$BUILD/stamp.d/$k" 2>/dev/null || { echo "the stamp has no $k (the trees step records it)"; return 1; }
         [ "$(cat "$BUILD/stamp.d/$k")" = "${!want}" ] || { echo "the stamp's $k is $(cat "$BUILD/stamp.d/$k"), not $want ${!want}"; return 1; }
     done
+    # And the version: the one the facts step recorded, and the host's VERSION.
+    [ -n "${VERSION:-}" ] || { echo "the seal needs VERSION, the version the stamp's appliance.version must name"; return 1; }
+    [ "$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)" = "$VERSION" ] \
+        || { echo "the stamp's appliance.version is '$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)', not VERSION $VERSION (the facts step records it)"; return 1; }
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
@@ -939,15 +948,16 @@ seal_final() {
         for k in $(ls "$BUILD/stamp.d" | sort); do printf '%s = %s\n' "$k" "$(cat "$BUILD/stamp.d/$k")"; done
         printf 'manifest.scope = %s\n' "$MANIFEST_SCOPE, regular files less the MANIFEST and /boot/grub/grubenv, then symbolic links (path and target)"
     } >"$RECORD/stamp.part"
-    # The stamp must name both commits: an image whose stamp does not cannot say what code
-    # it was compiled from.
+    # The stamp must name both commits and the version: an image whose stamp does not
+    # cannot say what code it was compiled from, or which version it is.
     local commits=1
     for k in weaveragent.commit weaverweb.commit; do
         grep -qE "^$k = [0-9a-f]{40}\$" "$RECORD/stamp.part" || commits=0
     done
+    grep -qE '^appliance\.version = [1-9][0-9]*\.0$' "$RECORD/stamp.part" || commits=0
     rm -rf -- "$BUILD" /usr/local/sbin/template-steps
     if ! probes final >"$RECORD/seal-probes" 2>&1 || [ "$commits" = 0 ]; then
-        [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name both weaveragent.commit and weaverweb.commit" >>"$RECORD/seal-probes"
+        [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name weaveragent.commit, weaverweb.commit and appliance.version" >>"$RECORD/seal-probes"
         rm -f "$RECORD/stamp.part"
         cp "$RECORD/seal-probes" "$RECORD/SEAL-REFUSED"
         echo "SEAL REFUSED; no stamp, no MANIFEST"

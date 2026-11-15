@@ -44,6 +44,7 @@ to: weaver-appliance-profile
 | Parameter | What it names | Default |
 |---|---|---|
 | `OS` | the appliance image's operating system: `26.04`, with `24.04` named and refused until its cloud image is pinned | none for `build-template.sh create` |
+| `VERSION` | the image's version, `<release>.<respin>`. This tree builds a release, `<release>.0`, and refuses a respin (section 2) | none |
 | `DRIVER`, `DRIVER_ROUTE` | the driver release the image carries and the route it comes by | none |
 | `COMPUTE_CAP` | the compute capability the image's CUDA kernels are compiled for, without its dot | none |
 | `WA_COMMIT`, `WW_COMMIT` | the WeaverAgent and WeaverWeb commits the image is compiled from, each in full | none |
@@ -65,9 +66,9 @@ scope (WeaverTools #29). On the operator's rulings of 2026-11-14 the binaries ar
 inside the image's own build guest from two named commits, in place, and the guest is then
 cleaned by a checked list and sealed. Nothing built on the host enters the image.
 
-**Inputs, all named.** `OS` (the cloud image by digest, section 1), `DRIVER` and
-`DRIVER_ROUTE`, `COMPUTE_CAP`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses
-unless all six are set. `COMPUTE_CAP` is the compute capability the CUDA kernels are
+**Inputs, all named.** `OS` (the cloud image by digest, section 1), `VERSION`, `DRIVER`
+and `DRIVER_ROUTE`, `COMPUTE_CAP`, `WA_COMMIT` and `WW_COMMIT` in full. `create` refuses
+unless all seven are set. `COMPUTE_CAP` is the compute capability the CUDA kernels are
 compiled for, without its dot. The build guest has no card to read it from, so it is
 named, and the stamp records it. `DRIVER` has one form on the host and in the guest, one
 regex in both scripts (a release such as `615.71.09`), and `DRIVER_ROUTE` is
@@ -75,6 +76,16 @@ regex in both scripts (a release such as `615.71.09`), and `DRIVER_ROUTE` is
 set on its command line, and a step that needs one refuses where it is unset. The build
 guest has 24 vCPUs and 64 GiB by default. The domain a box later runs under is the
 operator's own.
+
+**The version** (the operator's decision 4 of 2026-11-15). `VERSION` is
+`<release>.<respin>`, each a number, the release from 1. The release moves when the
+binaries move. The respin moves when only the OS layer moves. A respin never recompiles,
+and if the binaries change for any reason, the release moves. This tree always compiles
+the binaries in the build guest, so it builds a release alone, `<release>.0`. A respin is
+refused on the host with a sentence: a respin carries a release's binaries into a new OS
+layer, and no path here does that (section 3). Every other form is refused too. The facts
+step records the version in the stamp as `appliance.version`, and the guest refuses a
+`VERSION` that is not a release.
 
 **The network.** The build guest uses QEMU user-mode networking, as the template did
 (`experiments/vm-per-agent/template-clone/README.md`, "The network"). The sealed image configures no network: no netplan file, no
@@ -190,14 +201,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     stamp and then the MANIFEST last. If the MANIFEST cannot be written whole, the stamp
     goes too and it writes `SEAL-REFUSED`. Either way it powers off. Before any of this,
     the seal step refuses unless each commit the build recorded is the input the host
-    names (`WA_COMMIT`, `WW_COMMIT`). On the host, `seal` then reads the verdict out of
+    names (`WA_COMMIT`, `WW_COMMIT`), and the version it recorded is `VERSION`. On the host, `seal` then reads the verdict out of
     the image before it marks anything sealed. It first refuses unless one of the
     domain's disks has the build's disk as its whole source path, read from the domain's
     XML, so a shut-off domain of that name on another disk is never undefined. A parser
     that fails, whatever its exit, is taken for a definition that cannot be read, never
     for a mismatch. A refusal,
     a missing MANIFEST, or a stamp
-    that does not name both commits, each equal to its input, stops it there, with
+    that does not name both commits and the version, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
     followed by the compaction, the undefine, the read-only disk and the sha256. The seal's removals
     cannot be undone, so a refused image is destroyed and the build begins again from
@@ -237,7 +248,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     64 MiB bounds the format's own tables: a 120 GiB disk in 64 KiB clusters needs at
     most 240 second-level tables (15 MiB) and a few refcount blocks. On 2026-11-15 the
     check failed the fifth build's kept file, read-only (17,496,539,136 bytes beyond its
-    clusters), and passed the compacted copy of it (5,767,168 bytes beyond). Then one boot of an overlay with no seed, every frame its NIC
+    clusters), and passed the compacted copy of it (5,767,168 bytes beyond). The stamp
+    must name one version of the form `<release>.<respin>`, and `VERSION` where the
+    caller names it. Then one boot of an overlay with no seed, every frame its NIC
     sends captured and counted by kind. That NIC is `restrict=on` (`template-clone-Spec` section 4), because the
     sealed image carries no guard of its own and the second build's no-seed boot,
     unrestricted, reached public time servers and resolved their names through the host's
@@ -303,7 +316,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
     refusal, is not booted at all. After both boots, each finding of the sealed file (its
-    sha256 and its compactness) and each finding the first boot recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
+    sha256 and its compactness), of the stamp's version, and each finding the first boot recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
     are a fingerprint mismatch, a failed login, a MANIFEST difference outside the first
     boot's expected list, a user-data ask carried out (the
     command, the package or the account), cloud-init not done (the proof waits up to
@@ -401,6 +414,7 @@ The final pass adds:
 **The stamp and the MANIFEST.** `/etc/weaver-appliance/stamp` holds one `key = value` per
 line. `sealed` (the time of the seal) comes first, then the build's records sorted by key,
 then `manifest.scope` (which form the MANIFEST has) last. The records are these.
+- The image's version, `appliance.version`. The seal refuses a stamp without it.
 - The base image, the OS and kernel.
 - Both commits and their origins, and the toolchain. The seal refuses a stamp without
   both commits.
@@ -448,3 +462,10 @@ image key (both ruled out by the operator on 2026-11-14). A condition of the ope
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
 it. The first-boot pairing, the data disks' mount points and the console's download are
 later acts.
+
+## 3. Open
+
+- **The respin path.** A respin carries a release's binaries into a new OS layer and never
+  recompiles (the operator's decision 4 of 2026-11-15). No such path is built: this tree
+  compiles, and refuses a respin. Until one is built, a security fix to the OS layer is a
+  new release. Settled by this Spec, in the act that builds the path.

@@ -434,6 +434,16 @@ copy_in_stubbed() {
     eval "mock_gssh() $(declare -f gssh | tail -n +2)"
     gssh() { case $2 in 'sudo install '*) return 0 ;; esac; mock_gssh "$@"; }
 }
+# VERSION's forms (weaver-appliance-build-Spec section 1): a release passes, a respin is
+# refused with its sentence, and every other form is refused.
+vin() { ( set -euo pipefail; host_fn build-template.sh inputs_ok; VERSION=$1 inputs_ok set ) >"$T/vin.out" 2>&1; }
+vin_refused() { ! vin "$1" && grep -qF -- "$2" "$T/vin.out"; }
+check "VERSION 1.0 passes" vin 1.0
+check "VERSION 12.0 passes" vin 12.0
+check "a respin, VERSION 1.1, is refused with its sentence" vin_refused 1.1 'REFUSED: VERSION 1.1 is a respin'
+for v in 1 1.0.0 0.0 01.0 1.00 v1.0; do
+    check "VERSION $v is refused as out of form" vin_refused "$v" 'REFUSED: VERSION is <release>.<respin>'
+done
 cat >"$B/template-steps" <<'EOF'
 #!/bin/bash
 echo "template-steps $*" >>"$MOCK/calls"
@@ -464,16 +474,20 @@ TD=$T/appliance
 IMG=$T/sealed-image
 A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
 A3=3333333333333333333333333333333333333333
-verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit: what the final step left
+verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit|no-version|other-version: what the final step left
     rm -rf -- "${IMG:?}"; mkdir -p "$IMG/etc/weaver-appliance"
     case $1 in
         refused) echo "1 hit(s)" >"$IMG/etc/weaver-appliance/SEAL-REFUSED" ;;
-        no-manifest) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
-        one-commit) printf 'weaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
+        no-manifest) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
+        one-commit) printf 'appliance.version = 1.0\nweaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
                     echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
-        other-commit) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
+        other-commit) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
                       echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
-        passed) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+        no-version) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                    echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        other-version) printf 'appliance.version = 2.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                       echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        passed) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
                 echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
     esac
 }
@@ -482,7 +496,7 @@ sealrun() {
     head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
     : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
     ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict compact_disk; copy_in_stubbed
-      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
+      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2 VERSION=1.0
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
                      domstate) echo "shut off" ;;
@@ -530,6 +544,14 @@ verdict other-commit
 sealrun >"$T/seal-othercommit.out" 2>&1
 check "a stamp that names another commit than the input stops the seal likewise" \
     test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names weaverweb.commit $A3, not WW_COMMIT $A2" "$T/seal-othercommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict no-version
+sealrun >"$T/seal-noversion.out" 2>&1
+check "a stamp that names no version stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no appliance.version" "$T/seal-noversion.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict other-version
+sealrun >"$T/seal-otherversion.out" 2>&1
+check "a stamp that names another version than the input stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names appliance.version 2.0, not VERSION 1.0" "$T/seal-otherversion.out")" = 1 -a "$(sealed_not && echo y)" = y
 verdict passed
 touch "$T/read-fails"
 sealrun >"$T/seal-readfails.out" 2>&1
@@ -573,7 +595,7 @@ rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.
 head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"; echo left >"$TD/appliance.compact.part"
 : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt"
 ( set -euo pipefail; host_fns build-template.sh inputs_ok seal_verdict compact_disk
-  NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
+  NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2 VERSION=1.0
   virsh_() { echo "virsh_ $*" >>"$T/host-calls"; case $1 in domstate) echo "shut off" ;; dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk></devices></domain>\n" "$2" "$DISK" ;; esac; }
   qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
   image_open() { :; }; image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }

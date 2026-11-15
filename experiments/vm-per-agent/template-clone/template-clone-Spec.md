@@ -458,9 +458,13 @@ another, is refused, as are an argument with no SSH forward on `PORT` and one no
 The host scripts' steps (section 0):
 - `build-template.sh step` and `clone.sh step` each exit non-zero on a guest step that
   fails, and nothing after them runs; a step that passes goes on;
+- `VERSION` (`weaver-appliance-build-Spec` section 2) passes as a release (1.0, 12.0). A
+  respin (1.1) is refused with its sentence, and each other form (1, 1.0.0, 0.0, 01.0,
+  1.00, v1.0) is refused as out of form;
 - a seal that fails stops before the undefine, the read-only disk and the checksum. So
   does one whose image holds `SEAL-REFUSED` or no MANIFEST, or whose stamp names one
-  commit or a commit other than its input. A read error stops it too, and is not taken
+  commit or a commit other than its input, or no version or a version other than
+  `VERSION`. A read error stops it too, and is not taken
   for an absent MANIFEST. `build-template.sh verdict`, run again after it, reads the
   verdict and marks the image sealed, and refuses a shut-off domain of the build guest's
   name on another disk, changing nothing, though that disk's path ends with the build

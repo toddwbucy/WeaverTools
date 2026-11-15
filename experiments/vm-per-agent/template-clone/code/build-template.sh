@@ -4,8 +4,8 @@
 # two named commits; nothing built on the host enters the image (template-clone-Spec.md,
 # section 10).
 #
-#   VM_ROOT=<dir> OS=26.04 DRIVER=<release> DRIVER_ROUTE=<route> COMPUTE_CAP=<cc> \
-#     WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create
+#   VM_ROOT=<dir> OS=26.04 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
+#     COMPUTE_CAP=<cc> WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create
 #                                              disk, seed, define and boot
 #   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
 #                                              (GUEST_ENV="VAR=value ..." adds to its env)
@@ -18,10 +18,11 @@
 #                                              with no seed, then one as a first boot
 #   ... code/build-template.sh destroy           undefine and remove the build guest
 #
-# The six inputs are named, never defaulted: OS, DRIVER (the NVIDIA driver release),
-# DRIVER_ROUTE (the route it comes by), COMPUTE_CAP (the compute capability the CUDA
-# kernels are compiled for, without its dot), WA_COMMIT and WW_COMMIT (the WeaverAgent and
-# WeaverWeb commits, in full). create needs all six. Every step is given those that are
+# The seven inputs are named, never defaulted: OS, VERSION (the image's version,
+# <release>.<respin>), DRIVER (the NVIDIA driver release), DRIVER_ROUTE (the route it comes
+# by), COMPUTE_CAP (the compute capability the CUDA kernels are compiled for, without its
+# dot), WA_COMMIT and WW_COMMIT (the WeaverAgent and WeaverWeb commits, in full). create
+# needs all seven. Every step is given those that are
 # set, and a guest step that needs one refuses where it is not. The step names, in order,
 # are in COMMANDS.md. A step that breaks is rerun after the break is recorded and got
 # past; nothing here retries.
@@ -51,7 +52,7 @@ mkdir -p "$LOG"
 inputs_ok() {
     if [ "$1" = all ]; then
         [ -n "$OS_GIVEN" ] || die "name OS (26.04)"
-        local v; for v in DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
+        local v; for v in VERSION DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
     fi
     [ -z "${WA_COMMIT:-}" ] || [[ "$WA_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WA_COMMIT is a commit in full, 40 hex digits"
     [ -z "${WW_COMMIT:-}" ] || [[ "$WW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WW_COMMIT is a commit in full, 40 hex digits"
@@ -59,12 +60,18 @@ inputs_ok() {
     [ -z "${DRIVER:-}" ] || [[ "$DRIVER" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || die "DRIVER is a driver release such as 615.71.09"
     [ -z "${DRIVER_ROUTE:-}" ] || [ "$DRIVER_ROUTE" = ubuntu-prebuilt ] || die "DRIVER_ROUTE is a route this tree builds: ubuntu-prebuilt"
     [ -z "${COMPUTE_CAP:-}" ] || [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || die "COMPUTE_CAP is a compute capability without its dot, such as 86"
+    # VERSION is <release>.<respin> (the operator's decision 4 of 2026-11-15): the release
+    # moves when the binaries move, the respin when only the OS layer moves. A respin
+    # carries a release's binaries into a new OS layer and never recompiles. This tree
+    # always compiles, so it builds a release alone, respin 0.
+    [ -z "${VERSION:-}" ] || [[ "$VERSION" =~ ^[1-9][0-9]*\.(0|[1-9][0-9]*)$ ]] || die "VERSION is <release>.<respin>, such as 1.0"
+    [ -z "${VERSION:-}" ] || [[ "$VERSION" =~ \.0$ ]] || die "VERSION $VERSION is a respin. A respin carries a release's binaries into a new OS layer and never recompiles, and no path here does that: this tree compiles, so it builds a release, VERSION <release>.0"
 }
 # inputs_env: the guest command's environment prefix: the inputs that are set, and the base
 # image by name and digest, which the stamp records.
 inputs_env() {
     BASE_IMAGE="$IMAGE_NAME $IMAGE_SHA256"
-    guest_env WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE COMPUTE_CAP BASE_IMAGE
+    guest_env VERSION WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE COMPUTE_CAP BASE_IMAGE
 }
 steps_in() {
     gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
@@ -104,7 +111,7 @@ step() {
 
 seal() {
     inputs_ok set
-    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] || die "name WA_COMMIT and WW_COMMIT: the verdict sets the stamp's commits against them"
+    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] && [ -n "${VERSION:-}" ] || die "name WA_COMMIT, WW_COMMIT and VERSION: the verdict sets the stamp's commits and version against them"
     steps_in
     run_step "$PORT" "$LOG" seal-identity "$(inputs_env)template-steps seal"
     tail -3 "$LOG/seal-identity.txt"
@@ -131,7 +138,7 @@ seal() {
 # gone), so `build-template.sh verdict` runs this read again on its own.
 seal_verdict() {
     inputs_ok set
-    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] || die "name WA_COMMIT and WW_COMMIT: the verdict sets the stamp's commits against them"
+    [ -n "${WA_COMMIT:-}" ] && [ -n "${WW_COMMIT:-}" ] && [ -n "${VERSION:-}" ] || die "name WA_COMMIT, WW_COMMIT and VERSION: the verdict sets the stamp's commits and version against them"
     [ "$(virsh_ domstate "$NAME" 2>/dev/null)" = "shut off" ] || die "$NAME is not a defined, shut-off build guest: the verdict reads a powered-off guest's disk"
     # The verdict ends in an undefine, so the domain must be the build guest: one of its
     # disks is DISK, by dom_drop's rule. A shut-off domain of that name on another disk is
@@ -170,6 +177,11 @@ seal_verdict() {
         [ -n "$got" ] || die "the image's stamp names no $v; the image is not sealed"
         [ "$got" = "${!want}" ] || die "the image's stamp names $v $got, not $want ${!want}; the image is not sealed"
     done
+    # And the version the host names: an image stamped with another version is not this
+    # build's.
+    got=$(sed -n 's/^appliance\.version = \([0-9][0-9.]*\)$/\1/p' "$LOG/sealed-stamp" 2>/dev/null | head -1)
+    [ -n "$got" ] || die "the image's stamp names no appliance.version; the image is not sealed"
+    [ "$got" = "$VERSION" ] || die "the image's stamp names appliance.version $got, not VERSION $VERSION; the image is not sealed"
     # The seal ends with a compaction, while the domain is still defined: one that fails
     # leaves the disk as it was, writable, and `verdict` runs again.
     compact_disk
@@ -217,7 +229,8 @@ compact_disk() {
 #     power-off wrote after its final probe (image_late_writes: a random seed, systemd's
 #     credential secret, a non-empty log), read out of the image through image_open. The
 #     sealed file's sha256, set against the one the seal recorded, and whether the file is
-#     compact (compact_check, the operator's decision 18 of 2026-11-15).
+#     compact (compact_check, the operator's decision 18 of 2026-11-15). The version the
+#     stamp names (decision 4).
 #  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
 #     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
 #     The capture is summarized by kind: an image that configures no network sends no
@@ -380,6 +393,19 @@ proof() {
         fi
         compact_check "$DISK"
     } 2>&1 | tee "$out/sealed-file.txt"
+    # The version the stamp names (decision 4): one line, <release>.<respin>, and VERSION
+    # where the caller names it.
+    local ver
+    {
+        ver=$(sed -n 's/^appliance\.version = //p' "$out/stamp" 2>/dev/null)
+        if [ "$(grep -c '^appliance\.version = ' "$out/stamp" 2>/dev/null)" = 1 ] \
+                && [[ "$ver" =~ ^[1-9][0-9]*\.(0|[1-9][0-9]*)$ ]]; then
+            echo "the stamp names version $ver"
+            [ -z "${VERSION:-}" ] || [ "$ver" = "$VERSION" ] || echo "PROOF-FAIL: the stamp names version $ver, not VERSION $VERSION"
+        else
+            echo "PROOF-FAIL: the stamp names no one version of the form <release>.<respin> ($(tr '\n' ' ' <<<"${ver:-none}"))"
+        fi
+    } 2>&1 | tee "$out/version.txt"
     # The overlay boot. The capture and console files are made here, writable by their
     # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
@@ -452,10 +478,10 @@ PY
     # The verdict: every finding of the offline read's late writes, of the no-seed boot's
     # capture, of the first boot and of the disk's owner and mode fails the proof, after
     # both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
