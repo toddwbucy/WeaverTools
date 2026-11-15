@@ -37,14 +37,15 @@ the component.
 
 ## 1. The stance
 
-The operator's ruling of 2026-11-15, as it was recorded for the seats:
+The operator's ruling of 2026-11-15:
 
-> We ship a tuple and the operator produces their own. The image is disposable and
-> carries what runs. The mounts carry what the agent keeps. Whatever the operator adds
-> or changes after boot is theirs to account for, and we offer no guarantee about a
-> changed box. Inbound is ours, outbound is theirs. We build the VM and the service as
-> simply as will work, and anything that adds machinery for a later enterprise is a
-> later item.
+- We ship a tuple, and the operator produces their own.
+- The image is disposable and carries what runs. The mounts carry what the agent keeps.
+- Whatever the operator adds or changes after boot is the operator's to account for. No
+  guarantee is offered about a changed box.
+- Inbound is ours. Outbound is the operator's.
+- The virtual machine and the service are built as simply as will work. Machinery for a
+  later need is a later item.
 
 Each section below applies it.
 
