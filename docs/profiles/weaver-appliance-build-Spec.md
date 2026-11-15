@@ -526,8 +526,11 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - cloud-init not limited to the SSH key, network and hostname (its module lists, with
   `keys_to_console` at final)
 - `/etc/hostname` not the image's hostname, or the build guest's name in any file under
-  `/etc`. The pre pass leaves out the files the final step removes, and the final pass
-  leaves out its own probe record, which it writes while it runs.
+  `/etc`. The name is matched whole, with no letter, digit or hyphen on either side, so
+  a longer word it begins is not a hit: the default name begins
+  `weaver-appliance-build-Spec`, which `/etc/nftables.conf` names. The pre pass leaves
+  out the files the final step removes, and the final pass leaves out its own probe
+  record, which it writes while it runs.
 - private-key files. The pre pass leaves out the files the seal itself removes, so a hit
   is found before the removals. A `.pem` is judged by its content: fwupd ships its public
   LVFS CA certificates as `.pem` under `/etc/pki`.

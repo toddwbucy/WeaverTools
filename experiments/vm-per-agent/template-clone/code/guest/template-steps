@@ -26,8 +26,12 @@ CUDA_LIBS=/usr/local/cuda-13.4/targets/x86_64-linux/lib
 # is a named input, COMPUTE_CAP (the capability without its dot, such as 86 for 8.6), which
 # the stack step refuses without and the stamp records.
 COMPUTE_CAP=${COMPUTE_CAP:-}
+# os-release is read in subshells and never sourced here: it assigns VERSION, which would
+# replace the image's version the host names (the Planner's review of 2026-11-15, B1).
 # shellcheck source=/dev/null
-. /etc/os-release
+VERSION_ID=$(. /etc/os-release && printf '%s' "${VERSION_ID:-}")
+# shellcheck source=/dev/null
+PRETTY_NAME=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-}")
 case $VERSION_ID in
     26.04) CXX_MAJOR=15 ;;
     24.04) CXX_MAJOR=14 ;;   # named, not built (weaver-appliance-build-Spec, section 1)
@@ -889,9 +893,14 @@ image_hostname_check() {
         echo "the build guest's name ('$build') cannot be told from the image's"
         return 0
     fi
-    # The final pass writes its own record, seal-probes, under /etc while it runs: that file
-    # is left out.
-    sudo grep -rlF -- "$build" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
+    # The name is matched whole, with no character a hostname carries on either side, so a
+    # longer word it begins is not a finding: the default name, weaver-appliance-build,
+    # begins weaver-appliance-build-Spec, which the image's nftables.conf names (the
+    # Planner's review of 2026-11-15, B2). The final pass writes its own record,
+    # seal-probes, under /etc while it runs: that file is left out.
+    local re
+    re=$(printf '%s' "$build" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
+    sudo grep -rlE -- "(^|[^A-Za-z0-9-])$re([^A-Za-z0-9-]|\$)" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
         grep -vE '^/etc/(ssh/ssh_host_|netplan/|sudoers\.d/90-cloud-init-users$)'; else cat; fi | head -8
     return 0
 }
