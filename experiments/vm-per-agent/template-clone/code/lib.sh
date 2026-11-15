@@ -469,6 +469,42 @@ image_close() {
     rm -f -- "$1/whole.raw" "$1/root.raw" "$1/qsd-whole.pid" "$1/qsd-root.pid" 2>/dev/null || true
 }
 
+# compact_check FILE: whether a qcow2 is compact (the operator's decision 18 of 2026-11-15):
+# its end offset, as qemu-img check reads it, set against its allocated clusters times its
+# cluster size. What lies beyond them is the format's own tables, and COMPACT_SLACK bounds
+# it: a 120 GiB disk in 64 KiB clusters needs at most 240 second-level tables (15 MiB) and
+# a few refcount blocks. Prints the figures, and a PROOF-FAIL line where the file is longer
+# than that, names a backing file, or cannot be checked. qemu-img check opens the file
+# read-only.
+COMPACT_SLACK=$((64 * 1024 * 1024))
+compact_check() {
+    local f=$1 chk info rc=0
+    chk=$(qemu-img check --output=json "$f" 2>&1) || rc=$?
+    if [ "$rc" != 0 ]; then
+        echo "PROOF-FAIL: qemu-img check exited $rc on $f (1 not checked, 2 corrupt, 3 leaked clusters): $(tail -2 <<<"$chk" | tr '\n' ' ')"
+        return 0
+    fi
+    info=$(qemu-img info --output=json "$f" 2>&1) || { echo "PROOF-FAIL: qemu-img info could not read $f"; return 0; }
+    python3 -I - "$chk" "$info" "$COMPACT_SLACK" <<'PY'
+import json, sys
+try:
+    c, i, slack = json.loads(sys.argv[1]), json.loads(sys.argv[2]), int(sys.argv[3])
+    if i.get("backing-filename"):
+        print(f"PROOF-FAIL: the file names a backing file, {i['backing-filename']}")
+        sys.exit(0)
+    # qemu-img check leaves allocated-clusters out where none is allocated.
+    end, alloc, cs = int(c["image-end-offset"]), int(c.get("allocated-clusters", 0)), int(i["cluster-size"])
+except (ValueError, KeyError, TypeError) as e:
+    print(f"PROOF-FAIL: qemu-img's figures could not be read: {e!r}")
+    sys.exit(0)
+data = alloc * cs
+print(f"end offset {end} bytes; {alloc} clusters of {cs} bytes allocated ({data} bytes); "
+      f"{end - data} bytes beyond them, bound {slack}")
+if end - data > slack:
+    print(f"PROOF-FAIL: the file is not compact: its end lies {end - data} bytes beyond its allocated clusters, more than {slack}")
+PY
+}
+
 # qemu_file FILE: an empty FILE that its owner and QEMU's account (QEMU_USER) alone may
 # write, for a file QEMU opens from its own command line (a serial console, a capture).
 # A file libvirt opens for a device becomes its own, unreadable here without root; a mode

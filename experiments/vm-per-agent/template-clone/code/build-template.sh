@@ -170,6 +170,9 @@ seal_verdict() {
         [ -n "$got" ] || die "the image's stamp names no $v; the image is not sealed"
         [ "$got" = "${!want}" ] || die "the image's stamp names $v $got, not $want ${!want}; the image is not sealed"
     done
+    # The seal ends with a compaction, while the domain is still defined: one that fails
+    # leaves the disk as it was, writable, and `verdict` runs again.
+    compact_disk
     # The sealed image is never booted again as itself: its domain is undefined and the
     # disk made read-only; proof boots an overlay.
     virsh_ undefine "$NAME" --nvram >/dev/null
@@ -177,15 +180,44 @@ seal_verdict() {
     # The build guest's host key pair, its pin and its seed image, which carries the private
     # key, go with it.
     rm -rf -- "${DIR:?}/hostkey" "${DIR:?}/known_hosts" "${DIR:?}/seed.iso"
+    # The published digest is of the compacted file (the operator's decision 18 of
+    # 2026-11-15).
     sha256sum "$DISK" | tee "$LOG/appliance-sha256.txt"
     qemu-img info "$DISK" >"$LOG/appliance-qemu-img-info.txt"
+    compact_check "$DISK" | tee "$LOG/appliance-compact.txt"
+}
+
+# compact_disk: the build's disk rewritten whole, holding only the clusters the guest
+# allocated. A qcow2 never moves its end back, so the sealed file's length is the high-water
+# mark of the build's writes (20,964,769,792 bytes on the fifth build, for 3.23 GiB of
+# data). qemu-img convert writes a new standalone file of the allocated, non-zero clusters
+# alone. The copy must compare equal to the disk, guest byte for guest byte, before it
+# replaces it. Anything short of that stops here with the disk unchanged and the copy
+# removed.
+compact_disk() {
+    local part=$DIR/appliance.compact.part rc
+    [ ! -e "$part" ] && [ ! -L "$part" ] || die "$part stands, left by a compaction cut short (destroy removes it)"
+    qemu-img info "$DISK" >"$LOG/appliance-before-compaction-qemu-img-info.txt"
+    echo "before compaction: $(stat -c %s "$DISK") bytes long, $(du -B1 "$DISK" | cut -f1) bytes allocated" \
+        | tee "$LOG/appliance-compaction.txt"
+    trap 'rm -f -- "$DIR/appliance.compact.part"' EXIT
+    trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
+    qemu-img convert -f qcow2 -O qcow2 "$DISK" "$part" || die "the compaction failed (above); the disk is unchanged and verdict runs again"
+    rc=0; qemu-img compare -f qcow2 -F qcow2 "$DISK" "$part" >>"$LOG/appliance-compaction.txt" 2>&1 || rc=$?
+    [ "$rc" = 0 ] || die "the compacted copy does not compare equal to the disk (qemu-img compare exited $rc; $LOG/appliance-compaction.txt); the disk is unchanged"
+    mv -f -- "$part" "$DISK" || die "the compacted copy could not replace the disk; the disk is unchanged"
+    trap - EXIT INT TERM HUP
+    echo "after compaction: $(stat -c %s "$DISK") bytes long, $(du -B1 "$DISK" | cut -f1) bytes allocated; compared equal" \
+        | tee -a "$LOG/appliance-compaction.txt"
 }
 
 # proof: what the sealed image holds, read offline, and what one boot of it sends.
 #  1. The stamp, the MANIFEST (its sha256 is the image's identity), the seal's probe
 #     record or its refusal, the network and update configuration, and what the seal's
 #     power-off wrote after its final probe (image_late_writes: a random seed, systemd's
-#     credential secret, a non-empty log), read out of the image through image_open.
+#     credential secret, a non-empty log), read out of the image through image_open. The
+#     sealed file's sha256, set against the one the seal recorded, and whether the file is
+#     compact (compact_check, the operator's decision 18 of 2026-11-15).
 #  2. One boot of an overlay on the sealed image, with no seed and a fresh firmware store,
 #     its user-mode NIC's every frame captured (QEMU filter-dump), for PROOF_BOOT seconds.
 #     The capture is summarized by kind: an image that configures no network sends no
@@ -332,6 +364,22 @@ proof() {
     fi
     sha256sum "$out/MANIFEST" | tee "$out/identity.txt"
     echo "MANIFEST: $(M=$LINKS_MARK awk '$0 == ENVIRON["M"] { exit } { n++ } END { print n + 0 }' "$out/MANIFEST") files, $(manifest_links "$out/MANIFEST" | wc -l) links" | tee -a "$out/identity.txt"
+    # The sealed file itself (decision 18): its sha256 is the published digest, so it must
+    # be the one the seal recorded after its compaction, and the file must be compact.
+    local fsum ssum
+    {
+        fsum=$(sha256sum "$DISK" | cut -d' ' -f1)
+        echo "the sealed file: sha256 $fsum, $(stat -c %s "$DISK") bytes long, $(du -B1 "$DISK" | cut -f1) bytes allocated"
+        ssum=$(cut -d' ' -f1 "$LOG/appliance-sha256.txt" 2>/dev/null || true)
+        if [ -z "$ssum" ]; then
+            echo "PROOF-FAIL: no sha256 recorded by the seal ($LOG/appliance-sha256.txt)"
+        elif [ "$ssum" = "$fsum" ]; then
+            echo "the seal recorded the same sha256"
+        else
+            echo "PROOF-FAIL: the seal recorded sha256 $ssum, not the sealed file's"
+        fi
+        compact_check "$DISK"
+    } 2>&1 | tee "$out/sealed-file.txt"
     # The overlay boot. The capture and console files are made here, writable by their
     # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
@@ -404,10 +452,10 @@ PY
     # The verdict: every finding of the offline read's late writes, of the no-seed boot's
     # capture, of the first boot and of the disk's owner and mode fails the proof, after
     # both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"

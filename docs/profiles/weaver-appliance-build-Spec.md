@@ -199,7 +199,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     a missing MANIFEST, or a stamp
     that does not name both commits, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is
-    followed by the undefine, the read-only disk and the sha256. The seal's removals
+    followed by the compaction, the undefine, the read-only disk and the sha256. The seal's removals
     cannot be undone, so a refused image is destroyed and the build begins again from
     `create`. The read tells a file that is absent from one it could not read (no
     debugfs, a filesystem it cannot open, a copy short of the file's size). A read that
@@ -207,17 +207,37 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     is off and its account gone, so `build-template.sh verdict` reads the verdict again
     from the shut-off guest and goes on from there. `proof` tells the two apart in the
     same way.
-    **The sealed file is thin in what it allocates, not in its length.** A qcow2 never
-    moves its end offset back, so the file's apparent length is the high-water mark of
-    the build's writes. The cleanup's trim punches holes in the file, which cost nothing
-    on the host. The fifth build's sealed file is 20,964,769,792 bytes long and
-    allocates 1.83 GiB on a dataset that compresses, and the guest's data in it is
-    3.23 GiB (52,921 clusters of 64 KiB). The fourth build's was 20,714,291,200 bytes
-    long and allocated 1.84 GiB. A transfer that does not keep holes writes the whole
-    length. The sha256 is taken of this file as sealed, and nothing compacts it.
+    **The seal ends with a compaction, and the published digest is of the compacted
+    file** (the operator's decision 18 of 2026-11-15). A qcow2 never moves its end
+    offset back, so the build's disk is as long as the high-water mark of its writes.
+    The fifth build's sealed file, made before this, is 20,964,769,792 bytes long for
+    3.23 GiB of guest data (52,921 clusters of 64 KiB), and a transfer that does not
+    keep holes writes the whole length. Once the verdict passes, and while the shut-off
+    domain is still defined, `qemu-img convert` writes the disk again as a new
+    standalone file of the allocated, non-zero clusters alone, beside it. The copy must
+    compare equal to the disk, guest byte for guest byte (`qemu-img compare`), before it
+    replaces the disk by a rename. Only then come the undefine, the read-only mode and
+    the sha256. A compaction that fails, a copy that does not compare equal, or a signal
+    during either stops the seal with the copy removed, the domain defined and the disk
+    as it was, writable, and `build-template.sh verdict` runs again from there. A copy
+    left by a run cut short harder than that is refused, never reused or removed, and
+    `destroy` removes it. The record keeps both lengths, the comparison, and
+    `compact_check`'s figures for the sealed file. Measured on 2026-11-15 on a copy of
+    the fifth build's file, made under scratch and never beside the kept image: the
+    compacted file is 3,473,080,320 bytes long, holds 52,907 clusters (the 14 fewer are
+    clusters of zeroes), compares equal to the original, and two compactions of the same
+    file wrote byte-identical files.
 12. `proof`, on the host: the stamp, the MANIFEST, the probe record and the network
     configuration read out of the sealed image without root (qemu-storage-daemon over
-    FUSE, then debugfs), and one boot of an overlay with no seed, every frame its NIC
+    FUSE, then debugfs). Then the sealed file itself: its sha256 must be the one the
+    seal recorded after its compaction, and the file must be compact. `compact_check`
+    reads the file's end offset and its allocated clusters with `qemu-img check`, which
+    opens it read-only, and fails a file whose end lies more than 64 MiB beyond its
+    allocated clusters, or that names a backing file, or that cannot be checked. The
+    64 MiB bounds the format's own tables: a 120 GiB disk in 64 KiB clusters needs at
+    most 240 second-level tables (15 MiB) and a few refcount blocks. On 2026-11-15 the
+    check failed the fifth build's kept file, read-only (17,496,539,136 bytes beyond its
+    clusters), and passed the compacted copy of it (5,767,168 bytes beyond). Then one boot of an overlay with no seed, every frame its NIC
     sends captured and counted by kind. That NIC is `restrict=on` (`template-clone-Spec` section 4), because the
     sealed image carries no guard of its own and the second build's no-seed boot,
     unrestricted, reached public time servers and resolved their names through the host's
@@ -282,8 +302,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     The proof cannot undo that and does not try, and re-owning is the operator's root
     step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
-    refusal, is not booted at all. After both boots, each finding the first boot recorded
-    fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
+    refusal, is not booted at all. After both boots, each finding of the sealed file (its
+    sha256 and its compactness) and each finding the first boot recorded fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings
     are a fingerprint mismatch, a failed login, a MANIFEST difference outside the first
     boot's expected list, a user-data ask carried out (the
     command, the package or the account), cloud-init not done (the proof waits up to

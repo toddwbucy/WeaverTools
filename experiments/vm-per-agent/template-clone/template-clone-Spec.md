@@ -465,6 +465,11 @@ The host scripts' steps (section 0):
   verdict and marks the image sealed, and refuses a shut-off domain of the build guest's
   name on another disk, changing nothing, though that disk's path ends with the build
   disk's. A seal that passes goes on to all three.
+- the seal's compaction (`weaver-appliance-build-Spec` section 2, step 11) comes before the
+  undefine and leaves no copy behind. A compaction that fails, and one whose copy does
+  not compare equal, each stop the seal before the undefine, the read-only disk and the
+  checksum, and remove the copy. A copy left by a run cut short is refused and kept, and
+  no compaction runs.
 - `dom_drop` refuses to undefine a domain still running after its stop, and undefines one
   that is shut off, though the stop failed. Where the domain list or the domain's
   definition cannot be read, it neither stops nor undefines, and where the list cannot be

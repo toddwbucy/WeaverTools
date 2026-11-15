@@ -481,14 +481,22 @@ sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
     head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
     : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
-    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict; copy_in_stubbed
+    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict compact_disk; copy_in_stubbed
       NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
                      domstate) echo "shut off" ;;
                      dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk><disk type='file' device='cdrom'><source file='%s'/></disk></devices></domain>\n" "$2" "${MOCK_DOMDISK:-$DISK}" "$DISK" ;;
                  esac; }
-      qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+      # convert copies, unless T/convert-fails; compare finds them equal, unless
+      # T/compare-differs; check and info answer the figures compact_check reads.
+      qemu-img() { echo "qemu-img $*" >>"$T/host-calls"
+                   case $1 in
+                       convert) [ ! -e "$T/convert-fails" ] || return 1; cp -- "${@: -2:1}" "${@: -1}" ;;
+                       compare) [ ! -e "$T/compare-differs" ] || { echo "Content mismatch at offset 0!"; return 1; } ;;
+                       check) echo '{"image-end-offset": 4096, "allocated-clusters": 0}' ;;
+                       info) case " $* " in *" --output=json "*) echo '{"cluster-size": 65536}' ;; esac ;;
+                   esac; }
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
       image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
                     [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
@@ -547,6 +555,33 @@ check "a seal that passes goes on to all three" \
     test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
          -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/appliance-sha256.txt"
 chmod 0644 "$TD/appliance.qcow2"
+check "and its compaction, compared equal, comes before the undefine, and leaves no copy behind" \
+    test "$(grep -oE '^(qemu-img convert|qemu-img compare|virsh_ undefine)' "$T/host-calls" | tr '\n' ,)" = "qemu-img convert,qemu-img compare,virsh_ undefine," \
+         -a ! -e "$TD/appliance.compact.part" -a "$(grep -c '^end offset 4096 bytes' "$LOG/appliance-compact.txt")" = 1
+# A compaction that fails, or whose copy does not compare equal, stops before the undefine,
+# the read-only disk and the checksum, removes its copy, and leaves verdict to run again.
+for c in convert-fails compare-differs; do
+    touch "$T/$c"
+    sealrun >"$T/seal-$c.out" 2>&1
+    check "a compaction that fails ($c) stops the seal before the undefine, the read-only disk and the checksum, and removes its copy" \
+        test $? = 1 -a "$(sealed_not && echo y)" = y -a ! -e "$TD/appliance.compact.part" \
+             -a "$(grep -c 'REFUSED: the compact.*the disk is unchanged' "$T/seal-$c.out")" = 1
+    rm "$T/$c"
+done
+# A copy left by a compaction cut short is refused, not reused or removed.
+rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
+head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"; echo left >"$TD/appliance.compact.part"
+: >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt"
+( set -euo pipefail; host_fns build-template.sh inputs_ok seal_verdict compact_disk
+  NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
+  virsh_() { echo "virsh_ $*" >>"$T/host-calls"; case $1 in domstate) echo "shut off" ;; dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk></devices></domain>\n" "$2" "$DISK" ;; esac; }
+  qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+  image_open() { :; }; image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }
+  seal_verdict ) >"$T/seal-leftover.out" 2>&1
+check "a compacted copy left by a run cut short is refused, kept, and nothing is marked sealed" \
+    test $? = 1 -a "$(grep -c 'REFUSED: .*appliance.compact.part stands, left by a compaction cut short (destroy removes it)' "$T/seal-leftover.out")" = 1 \
+         -a "$(cat "$TD/appliance.compact.part")" = left -a "$(sealed_not && echo y)" = y \
+         -a "$(grep -c '^qemu-img convert' "$T/host-calls")" = 0
 
 echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
