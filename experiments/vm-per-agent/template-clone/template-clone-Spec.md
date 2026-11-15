@@ -757,8 +757,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     `guest/template-steps`, which `lib.sh` reads, and the offline mock checks that the two
     copies of the formatter are the same text. Each boot's serial console, and the
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
-    owner and `QEMU_USER` may write it, by a POSIX ACL. The file is made new and
-    exclusively, so a file or a symbolic link already at that path is refused, never
+    owner and `QEMU_USER` may write it, by a POSIX ACL. An entry the file inherits from
+    its directory's default ACL is removed before the grant, since chmod only masks it
+    and the grant recomputes the mask. The overlays are made the same way. The file is
+    made new and exclusively, so a file or a symbolic link already at that path is refused, never
     reused or written through. QEMU writing through the ACL was first proved on the fifth
     build. A file libvirt opens for a serial device becomes
     libvirt's, unreadable without root, and a file every local account could write would

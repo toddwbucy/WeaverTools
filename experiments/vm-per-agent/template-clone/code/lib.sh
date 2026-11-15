@@ -475,11 +475,13 @@ image_close() {
 # open to every local account would let any of them write the console that trust on first
 # use is read from. The grant is a POSIX ACL, which the filesystem must support. The file
 # is made new, exclusively and without following a link: an existing file or a symbolic
-# link at that path is refused, never reused or written through.
+# link at that path is refused, never reused or written through. Any ACL entry the file
+# inherits from its directory's default ACL is removed before the grant: chmod only masks
+# an inherited entry, and the grant recomputes the mask, which would let it write again.
 qemu_file() {
     [ ! -e "$1" ] && [ ! -L "$1" ] || die "$1 already stands, or is a symbolic link: qemu_file makes a new file only"
     python3 -I -c 'import os, sys; os.close(os.open(sys.argv[1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600))' "$1" \
-        && chmod 0600 "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
+        && chmod 0600 "$1" && setfacl -b "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
         || die "cannot make $1, new, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 

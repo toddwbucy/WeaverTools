@@ -272,11 +272,11 @@ proof_lock() {
 # it is. The overlay itself is QEMU's to write through an ACL (proof_overlay).
 PROOF_NORELABEL="source.seclabel0.model=dac,source.seclabel0.relabel=no"
 # proof_overlay PATH: a new overlay on the sealed disk, writable by its owner and
-# QEMU_USER alone.
+# QEMU_USER alone, with any ACL entry it inherits removed first, as qemu_file does.
 proof_overlay() {
     [ ! -e "$1" ] && [ ! -L "$1" ] || die "$1 already stands: proof_overlay makes a new overlay only"
     qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$1" && chmod 0600 "$1" \
-        && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
+        && setfacl -b "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
         || die "cannot make the overlay $1, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 PROOF_SLEEP=""
