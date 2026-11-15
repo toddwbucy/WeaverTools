@@ -738,9 +738,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     removed, added or changed is printed by its path, never with a digest. A difference
     the first boot makes by design is marked expected. The changed files of that list
     were measured on the fourth build: the account files and their backups, the hostname
-    and the machine identity. Its added files follow cloud-init's documented behaviour and
-    are first measured at the fifth build: the host keys' public halves, its netplan file,
-    its sudoers rule for the default account and the account tools' lock file. No link is
+    and the machine identity. Its added files follow cloud-init's documented behaviour:
+    the host keys' public halves, its netplan file, its sudoers rule for the default
+    account and the account tools' lock file. The fifth build's first boot added all but
+    the lock file, which the list allows and does not require. No link is
     expected to change. On the fourth build's first boot, systemd ran its first-boot
     preset of all units, and the masks held against it, so a link it changes is a finding.
     Every other difference fails the proof, as do a listing that fails and a MANIFEST
@@ -782,7 +783,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     socket with its process, and fails on any bound beyond loopback but SSH. A socket
     bound to the loopback device (`%lo`) counts as loopback. A listing that fails, or
     that is empty though SSH listens, fails the proof too, and the record says the listing
-    ran and how many sockets it found. It is first tested at the fifth build.
+    ran and how many sockets it found. On the fifth build's first boot it listed 8
+    sockets, and only SSH listened beyond loopback.
     **What the power-off wrote.** The seal's final probe runs before the guest powers
     off, and a power-off can write. So the offline read also looks in the sealed image,
     without booting it, for systemd's random seed (`/var/lib/systemd/random-seed`), its
@@ -790,8 +792,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     under `/var/log`. Each one found fails the proof with the first boot's findings,
     because no secret ships in every copy of the image. The login records under
     `/var/lib/wtmpdb` and `/var/lib/lastlog` are listed and not judged. These reads were
-    checked against scratch filesystem images and are first exercised on a sealed image
-    at the fifth build. The seal removes both files before its final probe, which names
+    checked against scratch filesystem images, and the fifth build's sealed image passed
+    them: no seed, no secret, no non-empty log. The seal removes both files before its final probe, which names
     them. `systemd-random-seed.service` saves a seed when it stops, so left running it
     would write one at the power-off, after that probe. The seal stops it first (that
     stop saves a seed, which the seal then removes), and a stopped unit is not stopped
