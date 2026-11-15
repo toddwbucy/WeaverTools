@@ -3,9 +3,9 @@
 # SSH. The appliance image is compiled here, in its own OS: both repositories are cloned
 # at their named commits and built in this guest, the build's tools are removed by a
 # checked list, and the seal writes the stamp and then the MANIFEST last
-# (template-clone-Spec.md, section 10). Each step prints what it measured; a step that
-# fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent or
-# WeaverWeb script; the deploy scripts run unmodified from their checkouts.
+# (weaver-appliance-build-Spec, section 2). Each step prints what it measured; a step
+# that fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent
+# or WeaverWeb script; the deploy scripts run unmodified from their checkouts.
 set -uo pipefail
 
 # The inputs, named by the host on each step's command line: VERSION (the image's version,
@@ -30,7 +30,7 @@ COMPUTE_CAP=${COMPUTE_CAP:-}
 . /etc/os-release
 case $VERSION_ID in
     26.04) CXX_MAJOR=15 ;;
-    24.04) CXX_MAJOR=14 ;;   # named, not built (template-clone-Spec.md, section 10)
+    24.04) CXX_MAJOR=14 ;;   # named, not built (weaver-appliance-build-Spec, section 1)
     *) echo "no build for Ubuntu $VERSION_ID" >&2; exit 2 ;;
 esac
 NV_REPO=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${VERSION_ID//./}/x86_64

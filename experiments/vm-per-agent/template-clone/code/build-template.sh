@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build the appliance image from the Ubuntu cloud image, one step at a time, each step's
 # output and status kept under logs/. The binaries are compiled inside this guest from the
-# two named commits; nothing built on the host enters the image (template-clone-Spec.md,
-# section 10).
+# two named commits; nothing built on the host enters the image
+# (weaver-appliance-build-Spec, section 2).
 #
 #   VM_ROOT=<dir> OS=26.04 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
 #     COMPUTE_CAP=<cc> WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create

@@ -16,7 +16,7 @@ URI=qemu:///system
 # The guest operating system, a named input (OS): its cloud image by digest, checked
 # against SHA256SUMS signed by the Ubuntu cloud image key. 26.04 is the cloud image as
 # released on 2026-10-20. 24.04 is named and refused until its image is pinned
-# (template-clone-Spec.md, section 10). clone.sh names no OS and gets 26.04.
+# (weaver-appliance-build-Spec, section 1). clone.sh names no OS and gets 26.04.
 OS=${OS:-26.04}
 IMAGE_KEY=D2EB44626FDDC30B513D5BB71A5D6C4C7DB87C81
 case $OS in
@@ -26,7 +26,7 @@ case $OS in
         IMAGE_SHA256=5645d0318ad21f643ebb1ac4567514620e9893380b07b0201fda163baa5b7eb5
         OS_VARIANT=ubuntu26.04 ;;
     24.04)
-        printf '\nREFUSED: no Ubuntu 24.04 cloud image is pinned yet (template-clone-Spec.md, section 10)\n' >&2
+        printf '\nREFUSED: no Ubuntu 24.04 cloud image is pinned yet (weaver-appliance-build-Spec, section 1)\n' >&2
         exit 1 ;;
     *)
         printf '\nREFUSED: OS is 26.04 (or 24.04 once pinned), not %s\n' "$OS" >&2

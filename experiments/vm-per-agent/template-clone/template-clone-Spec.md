@@ -356,15 +356,18 @@ and never reaches the sealed image), runs the mock, records its output and count
 `mock.txt`, and removes the copy. It runs before `cleanup`, while the guest still has the
 tools the mock uses. Its count is taken there. The count of record is the mock's own last
 line, `== N checks passed`, which counts the checks it ran: 123 in the fifth build's
-guest. The source has 108 `check` call sites. 15 of them sit in a loop that runs once for
-each of the two step files, `template-steps` and `clone-steps`, so 108 sites run 123
-checks.
+guest, from the 108 `check` call sites its source had then. The source has 122 now. 15
+of them sit in a loop that runs once for each of the two step files, `template-steps`
+and `clone-steps`, one runs once for each of six refused forms of `VERSION`, and one
+once for each of two ways a compaction fails, so 122 sites run 143 checks. The mock has
+not run since the 14 sites were added: it runs only in a build guest.
 
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
-`uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `ensure_key`, harness
-preflight and `relaxed`, the host scripts' `step`, `seal` and `seal_verdict`, the seal's
-MANIFEST functions and proof's comparison, with no virtual machine of its own, no sudo and
-no network beyond loopback.**
+`uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `inbound_probe`,
+`ensure_key`, harness preflight and `relaxed`, the host scripts' `inputs_ok`, `step`,
+`seal`, `seal_verdict` and `compact_disk`, the seal's MANIFEST functions and proof's
+comparison, with no virtual machine of its own, no sudo and no network beyond
+loopback.**
 
 - The mock's guest is a temporary home directory inside the build guest it runs in. The
   SSH helper runs each

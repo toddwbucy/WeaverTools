@@ -633,7 +633,7 @@ check "a compacted copy left by a run cut short is refused, kept, and nothing is
          -a "$(cat "$TD/appliance.compact.part")" = left -a "$(sealed_not && echo y)" = y \
          -a "$(grep -c '^qemu-img convert' "$T/host-calls")" = 0
 
-echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
+echo "== dom_drop: a domain is undefined only once it is shut off (weaver-appliance-build-Spec section 2)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
 # decides.
 ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails|parser-127|parser-1]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
@@ -678,7 +678,7 @@ ddrun running parser-1 >"$T/dd-parser-1.out" 2>&1
 check "dom_drop refuses (2) where the parser dies with exit 1, which is not taken for a mismatch" \
     test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-1.out")" = 1
 
-echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
+echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (weaver-appliance-build-Spec section 2)"
 # The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.
 # links_format's two copies, lib.sh's for proof's read of a booted guest and
 # guest/template-steps' for the seal, are the same text.
