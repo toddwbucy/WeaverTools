@@ -91,7 +91,7 @@ default where a default would be a box path, a host name, an account, an address
 | `PROOF_BOOT` | the seconds `proof` lets the overlay of the sealed image run with its frames captured | 180 |
 | `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port) | `PORT` + 100 |
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's fingerprint block on the console | 300 |
-| `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens | `libvirt-qemu` |
+| `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens and to the overlays it boots | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -750,10 +750,24 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
     owner and `QEMU_USER` may write it, by a POSIX ACL. The file is made new and
     exclusively, so a file or a symbolic link already at that path is refused, never
-    reused or written through. QEMU writing through the ACL is
-    unproved until the fifth build. A file libvirt opens for a serial device becomes
+    reused or written through. QEMU writing through the ACL was first proved on the fifth
+    build. A file libvirt opens for a serial device becomes
     libvirt's, unreadable without root, and a file every local account could write would
     let any of them write the console that trust on first use is read from.
+    **The sealed disk is not relabelled** (the Planner's ruling of 2026-11-15). Each
+    boot names its overlay with a DAC security label that libvirt must not relabel, and
+    the label holds for the overlay's whole backing chain. Without it, libvirt's DAC
+    driver relabels every image in the chain to `QEMU_USER` and restores none that is
+    read-only. On the fifth build that left the sealed disk owned by the account every
+    QEMU on the host runs as, which as the owner may make it writable again, and the
+    operator could no longer change its mode without root. With the label, libvirt leaves
+    the sealed disk's owner and mode alone, and QEMU reads it as the 0444 file it is. The
+    overlay is QEMU's to write by the same kind of ACL as the console files. The proof
+    reads the sealed disk's owner and mode before its offline read and again after both
+    boots, and a change fails it. A disk already relabelled by an earlier proof (the
+    fifth build's kept image is one) stays owned by `QEMU_USER` until root re-owns it.
+    The proof cannot undo that and does not try, and re-owning is the operator's root
+    step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
     refusal, is not booted at all. After both boots, each finding the first boot recorded
     fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The findings

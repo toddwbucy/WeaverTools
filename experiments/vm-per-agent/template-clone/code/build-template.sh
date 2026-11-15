@@ -263,6 +263,22 @@ proof_lock() {
 # the trap leaves behind holds no lock (on the fifth build an orphaned boot wait held it
 # for 104 s after a TERM), and proof_cleanup kills it. Anything else proof starts that can
 # outlive a command (the offline read's daemons) starts without the descriptor too.
+# The proof's boots name their overlay with a DAC label that libvirt must not relabel (the
+# Planner's ruling of 2026-11-15). libvirt's DAC driver otherwise relabels every image in a
+# disk's backing chain to QEMU's account and restores none that is read-only: on the fifth
+# build the sealed disk was left owned by the account every QEMU on the host runs as, which
+# may make it writable again. The label on the disk holds for its whole backing chain, so
+# libvirt leaves the sealed disk's owner and mode alone and QEMU reads it as the 0444 file
+# it is. The overlay itself is QEMU's to write through an ACL (proof_overlay).
+PROOF_NORELABEL="source.seclabel0.model=dac,source.seclabel0.relabel=no"
+# proof_overlay PATH: a new overlay on the sealed disk, writable by its owner and
+# QEMU_USER alone.
+proof_overlay() {
+    [ ! -e "$1" ] && [ ! -L "$1" ] || die "$1 already stands: proof_overlay makes a new overlay only"
+    qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$1" && chmod 0600 "$1" \
+        && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
+        || die "cannot make the overlay $1, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
+}
 PROOF_SLEEP=""
 proof_sleep() {
     ( exec {PROOF_LOCK_FD}>&-; exec sleep "$1" ) & PROOF_SLEEP=$!
@@ -283,7 +299,10 @@ proof() {
     [ ! -e "$VM_ROOT/proof-read" ] || die "$VM_ROOT/proof-read stands, left by a run cut short (destroy removes it)"
     trap proof_cleanup EXIT
     trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
-    local out=$LOG/proof r=$VM_ROOT/proof-read f p rc
+    local out=$LOG/proof r=$VM_ROOT/proof-read f p rc disk_before
+    # The sealed disk's owner and mode, read again after both boots: a change fails the
+    # proof (the boots' no-relabel label, PROOF_NORELABEL).
+    disk_before=$(stat -c '%U:%G %a' "$DISK")
     mkdir -p "$out"
     mkdir -- "$r"; PROOF_OWN="read"
     ( exec {PROOF_LOCK_FD}>&-; image_open "$DISK" "$r" ) || die "the sealed image could not be opened (above); nothing booted"
@@ -317,13 +336,13 @@ proof() {
     # owner and QEMU's account alone (qemu_file).
     local pn=$NAME-proof pdir=$VM_ROOT/proof
     mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN proof"
-    qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
+    proof_overlay "$pdir/overlay.qcow2"
     qemu_file "$pdir/boot.pcap"
     qemu_file "$pdir/console.log"
     virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
         --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
         --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
-        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio" \
+        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
         --network none \
         --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
@@ -376,12 +395,19 @@ for k, n in sorted(kinds.items()): print(f"  {k}: {n}")
 if guest: print(f"PROOF-FAIL: the no-seed boot sent {guest} frame(s); an image with no network configured sends none")
 PY
     proof_first_boot "$out"
+    local disk_after
+    disk_after=$(stat -c '%U:%G %a' "$DISK")
+    {
+        echo "the sealed disk: $disk_before before the proof, $disk_after after"
+        [ "$disk_after" = "$disk_before" ] || echo "PROOF-FAIL: the sealed disk's owner or mode changed during the proof"
+    } | tee "$out/disk.txt"
     # The verdict: every finding of the offline read's late writes, of the no-seed boot's
-    # capture and of the first boot fails the proof, after both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" >"$out/PROOF-FAILED" || true
+    # capture, of the first boot and of the disk's owner and mode fails the proof, after
+    # both boots' records are kept.
+    grep -h '^PROOF-FAIL: ' "$out/late-writes.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt, $out/boot-frames.txt and $out/first-boot.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/late-writes.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     echo "proof passed: $(cut -c1-16 "$out/identity.txt" | head -1)"
@@ -407,7 +433,7 @@ proof_first_boot() {
     local t=0 limit=${PROOF_FIRST_BOOT:-300} cfp sfp
     mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN first"
     mkdir -- "$pdir/seed"
-    qemu-img create -q -f qcow2 -b "$DISK" -F qcow2 "$pdir/overlay.qcow2"
+    proof_overlay "$pdir/overlay.qcow2"
     qemu_file "$pdir/console.log"
     printf 'instance-id: %s\nlocal-hostname: %s\npublic-keys:\n  - %s\n' \
         "$pn-1" "$pn" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
@@ -446,7 +472,7 @@ EOF
     virt-install --connect "$URI" --name "$pn" --memory 4096 --vcpus 2 \
         --osinfo "$OS_VARIANT" --machine q35 --cpu host-passthrough \
         --boot "firmware=efi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no,nvram=$pdir/VARS.fd" \
-        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio" \
+        --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
         --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
         --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22 -device virtio-net-pci,netdev=un0,mac=52:54:00:57:45:01,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
