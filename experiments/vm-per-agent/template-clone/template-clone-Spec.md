@@ -796,7 +796,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     and pool, and the
     offline read's FUSE export and directory. It keeps any console or capture not yet
     copied as `interrupted-*`. The boot's wait runs in the background, so a signal
-    reaches the cleanup at once. `seal`'s verdict read refuses where its read directory
+    reaches the cleanup at once. Each wait runs without the lock's descriptor and the
+    cleanup kills it, so the lock is free once the proof exits. On the fifth build, before
+    this, a boot wait the TERM had orphaned held the lock for 104 s, and a second proof
+    or a `destroy` would have refused meanwhile. The offline read's daemons start without
+    the descriptor too. `seal`'s verdict read refuses where its read directory
     stands and closes only its own. `destroy` takes the same lock, so it refuses while a
     proof runs. It removes the build guest only where its domain stands on the build's
     disk, and refuses a domain of that name on any other disk. It then removes whatever

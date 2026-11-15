@@ -229,6 +229,8 @@ PROOF_OWN=""
 proof_cleanup() {
     local d f rc
     trap '' INT TERM HUP PIPE
+    # A wait the signal cut short: its sleep is killed, not left to run out.
+    [ -z "$PROOF_SLEEP" ] || kill "$PROOF_SLEEP" 2>/dev/null || true
     for d in proof first; do
         case " $PROOF_OWN " in *" $d "*) ;; *) continue ;; esac
         # A domain that could not be stopped or undefined (2) keeps its directory: an
@@ -256,6 +258,17 @@ proof_lock() {
     exec {PROOF_LOCK_FD}>>"$VM_ROOT/proof.lock" || die "cannot open $VM_ROOT/proof.lock"
     flock -n "$PROOF_LOCK_FD" || die "a proof is running (it holds $VM_ROOT/proof.lock); $1"
 }
+# proof_sleep SECONDS: proof's waits, run in the background and waited on, so a TERM or
+# INT reaches the trap at once. The sleep runs without the lock's descriptor, so a sleep
+# the trap leaves behind holds no lock (on the fifth build an orphaned boot wait held it
+# for 104 s after a TERM), and proof_cleanup kills it. Anything else proof starts that can
+# outlive a command (the offline read's daemons) starts without the descriptor too.
+PROOF_SLEEP=""
+proof_sleep() {
+    ( exec {PROOF_LOCK_FD}>&-; exec sleep "$1" ) & PROOF_SLEEP=$!
+    wait "$PROOF_SLEEP"
+    PROOF_SLEEP=""
+}
 
 proof() {
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
@@ -273,7 +286,7 @@ proof() {
     local out=$LOG/proof r=$VM_ROOT/proof-read f p rc
     mkdir -p "$out"
     mkdir -- "$r"; PROOF_OWN="read"
-    image_open "$DISK" "$r"
+    ( exec {PROOF_LOCK_FD}>&-; image_open "$DISK" "$r" ) || die "the sealed image could not be opened (above); nothing booted"
     for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
         rc=0; image_get "$r" "/etc/weaver-appliance/$f" "$out/$f" || rc=$?
         [ "$rc" != 2 ] || die "the sealed image could not be read at /etc/weaver-appliance/$f (above); nothing booted"
@@ -315,8 +328,7 @@ proof() {
         --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on -device virtio-net-pci,netdev=un0,bus=pcie.0,addr=0x0a -object filter-dump,id=fd0,netdev=un0,file=$pdir/boot.pcap -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/proof-virt-install.txt" 2>&1
-    # In the background and waited on, so a TERM or INT reaches the trap at once.
-    sleep "${PROOF_BOOT:-180}" & wait "$!"
+    proof_sleep "${PROOF_BOOT:-180}"
     dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     cp "$pdir/boot.pcap" "$out/boot.pcap"
     tr -d '\r' <"$pdir/console.log" >"$out/boot-console.log" || true
@@ -454,7 +466,7 @@ EOF
            | grep -cE 'SHA256:' || true)
     ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
     if [ "$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -c 'SHA256:' || true)" -lt "${want:-0}" ]; then
-        sleep 30 & wait "$!"; n=1
+        proof_sleep 30; n=1
         ssh-keyscan -T 10 -t rsa,ecdsa,ed25519 -p "$port" 127.0.0.1 >"$pdir/scanned" 2>/dev/null || true
     fi
     {
