@@ -650,6 +650,20 @@ site is a unit the operator adds over SSH to their own VM, and the image never l
 it. The first-boot pairing, the data disks' mount points and the console's download are
 later acts.
 
+**The host logic tests run on a host, with no root and no guest.** They are in
+`test/host/` beside the scripts. Each `t-*.sh` takes the functions it tests out of
+`build-template.sh`, `lib.sh` and `guest/template-steps` by their own text, and runs
+them against stand-ins: small qcow2 files, stand-in images opened read-only, loopback
+servers, and stubs for what a guest or the hypervisor would answer. No test stubs a
+privileged command. Where a guest function calls one, the test drops that prefix from
+the function's text. Each run works in a new `mktemp` directory and leaves it for
+reading. A test that needs a tool the host lacks is skipped with exit status 77.
+`t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
+on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
+runs them all. On 2026-11-15 the 11 tests ran 192 checks and all passed, on a host with
+CUDA 13.4's `nvcc`. The offline mock (`template-clone-Spec` section 8) is not one of
+them, and runs only in a build guest.
+
 ## 3. Open
 
 - **How admin's table opens a declared port through the image's rules.** A drop in the

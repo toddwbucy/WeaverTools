@@ -167,6 +167,9 @@ A cardless build, on a throwaway `VM_ROOT` with its own login key, torn down aft
 build broke at the stack (`driver` before `stack`). The inputs are named on every command:
 
 ```bash
+# From 2026-11-15, the host logic tests, on the host before any guest. They need no root
+# and no guest, and each runs in a new mktemp directory under TMPDIR.
+code/test/host/run-all.sh
 export VM_ROOT=... PORT=...
 export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86
 # From 2026-11-15, create refuses without VERSION. The builds of 2026-11-14 predate it.
