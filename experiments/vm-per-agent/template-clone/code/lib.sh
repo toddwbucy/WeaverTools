@@ -579,35 +579,40 @@ pool_drop() {
 }
 
 # dom_known NAME: 0 where domain NAME is defined, 1 where a domain list that was read does
-# not name it, 2 where the list could not be read. A query that fails (libvirt out of
-# reach) is never taken for a domain that is gone.
+# not name it, 2 where the list could not be read or searched. A query that fails
+# (libvirt out of reach) is never taken for a domain that is gone.
 dom_known() {
-    local names
+    local names rc=0
     names=$(virsh_ list --all --name 2>/dev/null) || return 2
-    printf '%s\n' "$names" | grep -qxF -- "$1" && return 0
-    return 1
+    printf '%s\n' "$names" | grep -qxF -- "$1" || rc=$?
+    case $rc in 0) return 0 ;; 1) return 1 ;; *) return 2 ;; esac
 }
 
 # dom_on_disk NAME DISK: 0 where one of domain NAME's disks (device "disk") has DISK, an
 # absolute path, as its whole source file; 1 where none has; 2 where the domain's XML
-# cannot be read. The source is read from the domain's XML and compared whole, never as
-# the end of a listing's line, so a path that holds a space cannot pass for DISK.
-# dom_drop and seal_verdict act on a domain only through it, so a domain of the same name
-# on another disk is never stopped or undefined.
+# cannot be read or parsed. The source is read from the domain's XML and compared whole,
+# never as the end of a listing's line, so a path that holds a space cannot pass for DISK.
+# The parser names its verdict on stdout, "match" or "none", and only a parser that exits
+# 0 with one of those two words is believed: any other exit (127 for no python3, 1 for an
+# exception it did not catch, a signal) is 2, never a mismatch. dom_drop and seal_verdict
+# act on a domain only through it, so a domain of the same name on another disk is never
+# stopped or undefined.
 dom_on_disk() {
-    local x
+    local x v
     x=$(virsh_ dumpxml "$1" 2>/dev/null) && [ -n "$x" ] || return 2
-    printf '%s' "$x" | python3 -I -c '
+    v=$(printf '%s' "$x" | python3 -I -c '
 import sys, xml.etree.ElementTree as E
 try:
     r = E.fromstring(sys.stdin.read())
-except E.ParseError:
+    found = False
+    for d in r.iter("disk"):
+        s = d.find("source")
+        if d.get("device") == "disk" and s is not None and s.get("file") == sys.argv[1]:
+            found = True
+except Exception:
     sys.exit(2)
-for d in r.iter("disk"):
-    s = d.find("source")
-    if d.get("device") == "disk" and s is not None and s.get("file") == sys.argv[1]:
-        sys.exit(0)
-sys.exit(1)' "$2"
+print("match" if found else "none")' "$2" 2>/dev/null) || return 2
+    case $v in match) return 0 ;; none) return 1 ;; *) return 2 ;; esac
 }
 
 # dom_drop NAME DISK: domain NAME, where one is defined, stopped and undefined with its
@@ -618,24 +623,28 @@ sys.exit(1)' "$2"
 # domain's directory: an undefined domain that still runs goes on writing its disk.
 dom_drop() {
     [[ "$2" == /* ]] || { echo "REFUSED: dom_drop takes an absolute disk path, not '$2'" >&2; return 1; }
+    # Each status is matched whole: 0 and 1 are named, and any other is refused as 2.
     local rc=0 st
     dom_known "$1" || rc=$?
     case $rc in
+        0) ;;
         1) return 0 ;;
-        2) echo "REFUSED: the domain list could not be read, so $1 is not taken for gone" >&2; return 2 ;;
+        *) echo "REFUSED: the domain list could not be read, so $1 is not taken for gone" >&2; return 2 ;;
     esac
     rc=0; dom_on_disk "$1" "$2" || rc=$?
     case $rc in
+        0) ;;
         1) echo "REFUSED: $1 is defined, but on no disk $2; left alone" >&2; return 1 ;;
-        2) echo "REFUSED: $1's definition could not be read; left alone" >&2; return 2 ;;
+        *) echo "REFUSED: $1's definition could not be read or parsed; left alone" >&2; return 2 ;;
     esac
     # destroy fails on a domain that is already shut off, so its exit is not the test: the
     # domain's state after it is.
     virsh_ destroy "$1" >/dev/null 2>&1 || true
     rc=0; dom_known "$1" || rc=$?
     case $rc in
+        0) ;;
         1) return 0 ;;
-        2) echo "REFUSED: the domain list could not be read after destroy, so $1 is not taken for gone" >&2; return 2 ;;
+        *) echo "REFUSED: the domain list could not be read after destroy, so $1 is not taken for gone" >&2; return 2 ;;
     esac
     st=$(virsh_ domstate "$1" 2>/dev/null) || st=unknown
     [ "$st" = "shut off" ] || { echo "REFUSED: $1 is not shut off after destroy (${st:-unknown}); not undefined" >&2; return 2; }

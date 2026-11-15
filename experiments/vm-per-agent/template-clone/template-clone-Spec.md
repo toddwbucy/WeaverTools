@@ -470,7 +470,8 @@ The host scripts' steps (section 0):
 - `dom_drop` refuses to undefine a domain still running after its stop, and undefines one
   that is shut off, though the stop failed. Where the domain list or the domain's
   definition cannot be read, it neither stops nor undefines, and where the list cannot be
-  read after the stop, it does not undefine.
+  read after the stop, it does not undefine. A parser that is missing or dies is a
+  definition that cannot be read, never a disk that does not match.
 
 The MANIFEST (section 10):
 - `LINKS_MARK` and `MANIFEST_SCOPE` are each defined once, in `guest/template-steps`, the
@@ -673,7 +674,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     names (`WA_COMMIT`, `WW_COMMIT`). On the host, `seal` then reads the verdict out of
     the image before it marks anything sealed. It first refuses unless one of the
     domain's disks has the build's disk as its whole source path, read from the domain's
-    XML, so a shut-off domain of that name on another disk is never undefined. A refusal,
+    XML, so a shut-off domain of that name on another disk is never undefined. A parser
+    that fails, whatever its exit, is taken for a definition that cannot be read, never
+    for a mismatch. A refusal,
     a missing MANIFEST, or a stamp
     that does not name both commits, each equal to its input, stops it there, with
     the domain defined and the disk writable, for `destroy`. Only a passing verdict is

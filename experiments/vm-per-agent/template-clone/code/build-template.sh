@@ -140,7 +140,7 @@ seal_verdict() {
     case $on in
         0) ;;
         1) die "$NAME is not the build guest: none of its disks is $DISK. Nothing is read or changed" ;;
-        *) die "$NAME's definition could not be read. Nothing is read or changed" ;;
+        *) die "$NAME's definition could not be read or parsed. Nothing is read or changed" ;;
     esac
     [ -f "$DISK" ] && [ -w "$DISK" ] || die "$DISK is not a writable disk: absent, or already marked sealed"
     local r=$VM_ROOT/seal-read v rc

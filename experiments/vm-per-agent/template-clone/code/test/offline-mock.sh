@@ -551,9 +551,14 @@ chmod 0644 "$TD/appliance.qcow2"
 echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
 # decides.
-ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
+ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails|parser-127|parser-1]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
     : >"$T/host-calls"
     ( DD_STATE=$1 DD_FAIL=${2:-}
+      # A parser that is missing (127) or dies (1) stands in for python3.
+      case $DD_FAIL in
+          parser-127) python3() { return 127; } ;;
+          parser-1) python3() { echo "Traceback (most recent call last): a stand-in" >&2; return 1; } ;;
+      esac
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
                      list) [ "$DD_FAIL" != list-fails ] || return 1
@@ -581,6 +586,12 @@ check "dom_drop refuses (2) where the domain list cannot be read after destroy, 
 ddrun running xml-fails >"$T/dd-noxml.out" 2>&1
 check "dom_drop refuses (2) where the domain's definition cannot be read, and neither stops nor undefines" \
     test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read" "$T/dd-noxml.out")" = 1
+ddrun running parser-127 >"$T/dd-parser-127.out" 2>&1
+check "dom_drop refuses (2) where the parser is missing (127), and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-127.out")" = 1
+ddrun running parser-1 >"$T/dd-parser-1.out" 2>&1
+check "dom_drop refuses (2) where the parser dies with exit 1, which is not taken for a mismatch" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-1.out")" = 1
 
 echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
 # The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.
