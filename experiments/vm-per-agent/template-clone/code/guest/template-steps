@@ -80,6 +80,23 @@ one_kernel() {
     local n; n=$(find /lib/modules -mindepth 1 -maxdepth 1 -type d -name '[0-9]*' | wc -l)
     [ "$n" = 1 ] && [ -d "/lib/modules/$KVER" ] || { echo "more than one kernel, or not $KVER: $(ls /lib/modules)"; return 1; }
 }
+# kernel_packages: "STATE NAME" for each installed kernel image or module package
+# (linux-image-*, linux-modules-*, linux-main-modules-*: the kernel's image, its modules,
+# the driver's module), read from dpkg. STATE is dpkg's abbreviation: hi is held and
+# installed. dpkg, not apt-mark: apt run as root rebuilds its binary caches, which the
+# probes refuse.
+kernel_packages() {
+    dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' |
+        awk '$2 ~ /^linux-(image|modules|main-modules)-/ && $1 ~ /^.[^nc]/ {print $1, $2}'
+}
+# kernel_holds: every installed kernel image or module package held, the running kernel's
+# image among them. Prints what is not.
+kernel_holds() {
+    local st
+    st=$(kernel_packages 2>&1) || { echo "dpkg-query fails: $(tail -1 <<<"$st")"; return 0; }
+    awk 'NF && $1 != "hi" {print $2 " is " $1 ", installed and not held"}' <<<"$st"
+    awk -v k="linux-image-$KVER" '$1 == "hi" && $2 == k {f = 1} END {if (!f) print k " does not read held and installed"}' <<<"$st"
+}
 
 facts() {
     section os; cat /etc/os-release
@@ -340,7 +357,17 @@ driver_ubuntu_prebuilt() {
         record "driver.package.$p" "$(dpkg-query -W -f '${Version}' "$p") $origin" || return 1
     done
     printf '%s\n' $names | sudo tee "$BUILD/keep-driver" >/dev/null
-    sudo apt-mark hold "linux-image-$KVER" "linux-modules-$KVER" "linux-modules-nvidia-$b-open-$KVER" >/dev/null || return 1
+    # The kernel is held with every image and module package installed for it: its image,
+    # its modules, the driver's module, and what else the image ships for it (on 26.04,
+    # linux-main-modules-zfs, which its modules depend on). The probes refuse any
+    # installed kernel image or module package left unheld.
+    local held
+    held=$(kernel_packages | awk -v k="-$KVER" 'substr($2, length($2) - length(k) + 1) == k {print $2}') || return 1
+    for p in "linux-image-$KVER" "linux-modules-$KVER" "linux-modules-nvidia-$b-open-$KVER"; do
+        grep -qxF -- "$p" <<<"$held" || { echo "$p is not installed"; return 1; }
+    done
+    # shellcheck disable=SC2086
+    sudo apt-mark hold $held >/dev/null || return 1
     section held; apt-mark showhold
     record driver.route "ubuntu-prebuilt (Canonical-signed module, restricted; userspace, multiverse)" || return 1
     record driver.cuda-minimum "CUDA 13.4 needs an R615 or later driver (NVIDIA, CUDA 13.4.2 release notes, table 2); 13.x minor-version compatibility >= 580 (table 3); installed $DRIVER" || return 1
@@ -478,12 +505,16 @@ BUILD_RE='^(build-essential|(gcc|g\+\+|cpp|clang|llvm)(-[0-9]+)?(-x86-64-linux-g
 # and ubuntu-server depends on git. cloud-initramfs-dyn-netconf's dracut module depends on
 # dracut's systemd-networkd module, which takes a DHCP lease from inside the initramfs on
 # every boot (measured on the third build's proof boot with no seed); the appliance has no
-# network root. Every other base package is marked manual first, so
+# network root. linux-image-virtual, the kernel image's metapackage, goes too (finding 8):
+# nothing installed depends on it (read in the fifth build's guest, where a simulated purge
+# removed it alone), and its one use, pulling the next kernel at an update, is one the
+# appliance never makes. The kernel it named stays, held with its modules by the driver
+# step. Every other base package is marked manual first, so
 # it stays; the simulation refuses a base package that would go and is not named here or
 # matched by BUILD_RE.
 PURGE_BASE="git git-man unattended-upgrades snapd ubuntu-server
-  bpftrace bpfcc-tools python3-bpfcc libbpfcc linux-virtual update-notifier-common
-  libbinutils libctf0 libgprofng0 cloud-initramfs-dyn-netconf"
+  bpftrace bpfcc-tools python3-bpfcc libbpfcc linux-virtual linux-image-virtual
+  update-notifier-common libbinutils libctf0 libgprofng0 cloud-initramfs-dyn-netconf"
 UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-daily-upgrade.service
   motd-news.timer motd-news.service fwupd-refresh.timer fwupd-refresh.service
   update-notifier-download.timer update-notifier-motd.timer snapd.service snapd.socket"
@@ -733,6 +764,7 @@ probes() {
     check "the deploy scripts' copy" "$(for b in $DEPLOY_FILES; do [ -f "$DEPLOY_COPY/$b" ] || echo "missing $b"; done)"
     check "the loader" "$(loader_check >/dev/null 2>&1 || { echo "loader_check fails:"; loader_check 2>&1 | tail -4; })"
     check "one kernel" "$(one_kernel >/dev/null || one_kernel; ls /boot/vmlinuz-* 2>/dev/null | grep -v "vmlinuz-$KVER\$")"
+    check "a kernel image or module package installed and not held" "$(kernel_holds)"
     # The first boot's SSH step: SSH enabled, and cloud-init's keys_to_console left to print
     # the host keys' fingerprints on the console; cloud-init limited to the seed's SSH key,
     # network and hostname (the operator's rulings of 2026-11-14).

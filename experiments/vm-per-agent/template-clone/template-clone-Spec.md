@@ -624,8 +624,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 7. `driver`: route `ubuntu-prebuilt` (the operator's ruling of 2026-11-14): Ubuntu's own
    branch, its module prebuilt and signed by Canonical for the image's one kernel
    (restricted), its userspace at the same version (multiverse), each package named. No
-   DKMS, kernel source or compiler touches the driver. The kernel packages are held. The
-   step checks, with no card, that each module is present for the kernel, that modinfo
+   DKMS, kernel source or compiler touches the driver. The kernel is held with every
+   image and module package installed for it: its image, its modules, the driver's
+   module, and on 26.04 `linux-main-modules-zfs`, which its modules depend on (installed
+   and not held on the fifth build, finding 8). The step refuses unless the first three
+   are installed. It checks, with no card, that each module is present for the kernel, that modinfo
    reads the release and a vermagic equal to the kernel, that modprobe resolves its
    dependencies, and that every firmware file it names is present. It runs before the
    stack: bootstrap's install refuses unless `weaver-spu` resolves `libcuda.so.1`, which
@@ -644,7 +647,12 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     pattern matches is purged by name, base or added: the 26.04 cloud image itself ships
     kernel headers that depend on gcc, `libc6-dev`, which recommends one, binutils, and
     `bpftrace` and the BPF compiler collection, which depend on libclang. Those, and the
-    metapackages and libraries that go with them, are named. Every other base package is
+    metapackages and libraries that go with them, are named. So is `linux-image-virtual`,
+    the kernel image's metapackage (finding 8, closed by removal rather than a hold).
+    Nothing installed depends on it: in the fifth build's guest a simulated purge removed
+    it alone. Its one use is to pull the next kernel at an update, and the appliance is
+    never updated in place, so a hold would keep a package with no use in every copy. The
+    kernel it named stays, held. Every other base package is
     marked manual first, and a simulation must remove no package of the runtime set and no
     base package but those named or matched. Then `ldconfig` and the loader check,
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
@@ -809,6 +817,10 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - the loader check failing
 - more than one kernel (a version-named tree under `/lib/modules`, not the empty
   `/lib/modules/kernel/nvidia-615-open` the 615 module package also ships)
+- an installed kernel image or module package (`linux-image-*`, `linux-modules-*`,
+  `linux-main-modules-*`, the driver's module among them) not held, or the running
+  kernel's image not read as held. The holds are read from dpkg, not from `apt-mark`:
+  apt run as root rebuilds the binary caches the probes refuse.
 - the module's preconditions
 - SSH not enabled
 - cloud-init not limited to the SSH key, network and hostname, or `keys_to_console` not
