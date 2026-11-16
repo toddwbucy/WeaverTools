@@ -148,7 +148,8 @@ Any accurate source serves.
 ### 3.4 Storage
 
 **Two mount points are fixed: `/mnt/weaver/model` and `/mnt/weaver/state`.** The
-operator attaches the disks in the hypervisor and mounts them.
+operator attaches the disks in the hypervisor and mounts them. The image lays both as
+empty directories.
 
 **The model mount is required.** A load is refused where the model mount is not a
 separate filesystem.
@@ -160,8 +161,9 @@ mount alone.
 **The agent's territory is `/var/lib/weaver-agent`, on the image's root.** The image is
 disposable. What the agent keeps is on the mounts.
 
-**State and save points on an appliance are out of scope as of 2026-11-15.** The first
-agent declares no state (ruling of 2026-11-15). Section 8 names it as a later item.
+**Save points on an appliance are out of scope as of 2026-11-16.** When they come, they
+live on the state disk. The first agent "declares a store and keeps the system prompt"
+(ruling of 2026-11-16). Section 8 names save points as a later item.
 
 ### 3.5 The agent service
 
@@ -315,9 +317,8 @@ still has to be captured into the binary or held by the image.
 - Proxmox, and other hypervisor formats.
 - Card architectures beyond the list of section 3.1.
 - Any claim across image versions. None is made until a rig exists to test one.
-- State and save points on an appliance: how the state mount meets the agent's
-  territory. Out of scope until the first agent, which declares no state, runs from the
-  console (ruling of 2026-11-15).
+- Save points on an appliance. When they come, they live on the state disk (ruling of
+  2026-11-16).
 
 **Open, each with who settles it.**
 

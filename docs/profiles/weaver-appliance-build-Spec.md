@@ -226,6 +226,20 @@ OpenSSH 10.2p1, PAM 1.7.0, systemd 259.5):
   image ships no key, so the change is at the console unless the operator feeds a key in
   first (the next paragraph).
 
+**The data mount points, laid empty.** The profile fixes two mount points,
+`/mnt/weaver/model` and `/mnt/weaver/state` (`weaver-appliance-profile` section 3.4), and
+the operator attaches the disks and mounts them. The cleanup lays both, and
+`/mnt/weaver`, as empty directories owned by root with mode 0755. They are defined once in
+`guest/template-steps`, which `lib.sh` reads for the proof. The image carries no model and
+no state, so a probe requires each mount point empty, on the image's own filesystem,
+and `/mnt/weaver` to hold the two alone. The proof's first boot reads them with no disk
+attached. They are not in the MANIFEST: its scope is `/usr`, `/etc`, `/opt`, `/boot` and
+`/boot/efi`, and it lists regular files and links only. Whether a load finds a separate filesystem on each is admin's test, made at every
+load (`weaver-admin-Spec-vm-environment` section 1, merged in WeaverAgent at 6b91747e). It
+judges the filesystem and not what lies on it, so an empty directory on the image's root
+fails it. As of 2026-11-16 that test is specified and not built, and nothing in this tree
+stands in for it.
+
 **systemd's first-boot paths, left and named** (the operator's ruling of 2026-11-16).
 Beside cloud-init, the image keeps systemd's own first-boot paths as Ubuntu 26.04 ships
 them, and masks none. Read on 2026-11-15 from the fifth build's kept image, read-only:
@@ -324,7 +338,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     base package but those named or matched. Then `ldconfig` and the loader check,
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
     again without networkd, the base inbound policy written and enabled, the SSH settings
-    written and read back as sshd reads them for root, and last the
+    written and read back as sshd reads them for root, the two data mount points laid
+    empty, and last the
     update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
     cleanup, and marks manual only the base packages still installed, since apt-mark
@@ -513,7 +528,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     Both sides are read from the same guest, so the match shows that sshd presents the
     keys on its disk, not where they came from.
     Only on that match does the proof read on: cloud-init's status (disabled, with the
-    seed attached), what became of the seed's asks, the hostname, the network and its
+    seed attached), what became of the seed's asks, the hostname, the two data mount
+    points (present, empty, root's, mode 0755, nothing mounted), the network and its
     wait, `ubuntu.sources`, SSH's units and whether `sshd-keygen.service` ran, and the
     stamp's commits. Then two more tries over SSH, each refused as before: the password
     the console set, and a wrong one. It then sets the MANIFEST against the booted guest,
@@ -597,7 +613,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     difference outside the first boot's expected list, cloud-init not disabled with a
     seed attached, any of the seed's asks carried out (the bootcmd, the runcmd or the
     default account), a read of the default account that fails, a hostname other than
-    the image's, `sshd-keygen.service` not run
+    the image's, a data mount point absent, not empty, not root's with mode 0755, or
+    with a filesystem mounted on it, `sshd-keygen.service` not run
     at the first boot, a stamp that does not name both commits, the image's table not
     loaded or
     not dropping inbound by default or not accepting SSH, a listener on TCP 8080 that does
@@ -707,6 +724,9 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - private-key files. The pre pass leaves out the files the seal itself removes, so a hit
   is found before the removals. A `.pem` is judged by its content: fwupd ships its public
   LVFS CA certificates as `.pem` under `/etc/pki`.
+- the data mount points not as laid: `/mnt/weaver` holding other than the two, or either
+  of them absent, a link, not root's with mode 0755, not empty, or on another filesystem
+  than the image's root
 - an authorized-keys file with any content under `/root`, `/home` or `/etc/ssh`, read as
   root. The pre pass leaves out the build account's own, which the seal removes with the
   account, so any other key is found before the removals.
@@ -786,8 +806,7 @@ operator has placed one.
 The hostname is `weaver-appliance`. There is no site-check hook and no
 image key (both ruled out by the operator on 2026-11-14). A condition of the operator's
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
-it. The first-boot pairing, the data disks' mount points and the console's download are
-later acts.
+it. The first-boot pairing and the console's download are later acts.
 
 **The host logic tests run on a host, with no root and no guest.** They are in
 `test/host/` beside the scripts. Each `t-*.sh` takes the functions it tests out of
@@ -799,7 +818,7 @@ the function's text. Each run works in a new `mktemp` directory and leaves it fo
 reading. A test that needs a tool the host lacks is skipped with exit status 77.
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-16 the 16 tests ran 318 checks and all passed, on a host with
+runs them all. On 2026-11-16 the 17 tests ran 333 checks and all passed, on a host with
 CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
 socket the proof names to QEMU, which plays getty, the forced change and a shell, and
 the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
