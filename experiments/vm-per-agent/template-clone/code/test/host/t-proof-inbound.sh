@@ -2,7 +2,8 @@
 # proof_inbound's grading: gssh stubbed with what a guest would print, and loopback servers
 # on PORT and DPORT standing in for what the forwards relay. The listener serves a new
 # empty directory (the Planner's review of 2026-11-15). The table's own grading runs in the
-# guest and is not reached here. Pure logic: no root, no guest.
+# guest: its two grep lines are taken out of the function's text and run against table
+# texts, with no stand-in for nft. Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need python3
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
@@ -46,12 +47,21 @@ check "a listener that answers from the host fails" grep -q 'PROOF-FAIL: inbound
 proof_inbound "$Q" "$Q" x >"$T/nossh.out" 2>&1
 check "SSH silent fails" grep -q 'PROOF-FAIL: SSH did not answer through the forward (silent)' "$T/nossh.out"
 touch "$T/no-table"; proof_inbound "$P" "$Q" x >"$T/notable.out" 2>&1; rm "$T/no-table"
-check "no table fails" grep -q 'PROOF-FAIL: the table inet weaver_appliance is not loaded' "$T/notable.out"
+check "no table: the PROOF-FAIL the guest prints is passed through (the host side alone)" grep -q 'PROOF-FAIL: the table inet weaver_appliance is not loaded' "$T/notable.out"
 touch "$T/no-loopback"; proof_inbound "$P" "$Q" x >"$T/nolb.out" 2>&1; rm "$T/no-loopback"
 check "a listener that does not answer on loopback fails" grep -q "PROOF-FAIL: the listener on TCP 8080 did not answer on the guest's loopback" "$T/nolb.out"
-# The table's own grading (policy drop, the SSH accept) runs in the guest and is not
-# reached here: a host test stubs no privileged command.
 kill $(jobs -p) 2>/dev/null
+# The table's own grading, as the guest runs it: the two grep lines, out of the function's
+# text, run on the text nft would print. nft itself is not stood in for: a host test stubs
+# no privileged command (CodeRabbit's review of #33, 2026-11-16).
+grade=$(fn "$CODE/build-template.sh" proof_inbound | grep -E '^ *grep -q ".*" <<<"\$r" \|\| echo "PROOF-FAIL: the table inet weaver_appliance ')
+check "the table's two grading lines are found" test "$(wc -l <<<"$grade")" = 2
+g() { bash -c 'r=$1; eval "$2"' _ "$1" "$grade"; }
+check "the table as built: no finding" test -z "$(g "$TABLE")"
+check "a table that accepts inbound by default: one finding, the policy" \
+    test "$(g "${TABLE/policy drop;/policy accept;}")" = "PROOF-FAIL: the table inet weaver_appliance does not drop inbound by default"
+check "a table with no SSH rule: one finding, SSH" \
+    test "$(g "$(grep -v 'tcp dport 22 accept' <<<"$TABLE")")" = "PROOF-FAIL: the table inet weaver_appliance does not accept SSH"
 # The listener's start, run as sshd runs a command: bash -c, its output a pipe that closes
 # only when every holder exits. The rehearsal of 2026-11-16 hung here for 49 minutes: the
 # whole && list went to the background, so a subshell held the channel open while the
