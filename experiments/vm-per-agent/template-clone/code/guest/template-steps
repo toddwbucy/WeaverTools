@@ -69,7 +69,7 @@ IMAGE_HOSTNAME='weaver-appliance'
 # root's, and carries no model and no state. Whether a load finds a separate filesystem on
 # each is admin's test, at every load, not the image's. Defined once, here: lib.sh reads it
 # for proof.
-DATA_MOUNTS='/mnt/weaver/model /mnt/weaver/state'
+DATA_MOUNTS='/mnt/weaver/models /mnt/weaver/state'
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"

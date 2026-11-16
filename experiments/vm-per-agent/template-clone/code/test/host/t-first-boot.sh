@@ -204,12 +204,12 @@ me="$(id -u):$(id -g)"; MT=$T/mounts
 sed -n '/== the data mount points, with no disk attached/,/^ *done$/p' "$T/reads.sh" \
     | sed -e "s|/mnt/weaver|$MT/mnt/weaver|g" -e "s|directory 0:0 755|directory $me 755|" -e "s|stat -c %d -- /)|stat -c %d -- $MT)|" >"$T/mounts.sh"
 check "the in-guest reads include the data mount points, both of them" \
-    test "$(grep -c "for d in $MT/mnt/weaver/model $MT/mnt/weaver/state; do" "$T/mounts.sh")" = 1
-mt() { rm -rf -- "${MT:?}"; mkdir -p "$MT/mnt/weaver/model" "$MT/mnt/weaver/state"; chmod 0755 "$MT/mnt/weaver/model" "$MT/mnt/weaver/state"; }
+    test "$(grep -c "for d in $MT/mnt/weaver/models $MT/mnt/weaver/state; do" "$T/mounts.sh")" = 1
+mt() { rm -rf -- "${MT:?}"; mkdir -p "$MT/mnt/weaver/models" "$MT/mnt/weaver/state"; chmod 0755 "$MT/mnt/weaver/models" "$MT/mnt/weaver/state"; }
 mt
 check "two empty directories 0755 on the root's filesystem: read, and no PROOF-FAIL" \
     test "$(bash "$T/mounts.sh" | grep -c '^PROOF-FAIL')" = 0 -a "$(bash "$T/mounts.sh" | grep -c ": directory $me 755, 0 entries$")" = 2
-mt; : >"$MT/mnt/weaver/state/x"; rmdir "$MT/mnt/weaver/model"
+mt; : >"$MT/mnt/weaver/state/x"; rmdir "$MT/mnt/weaver/models"
 check "a mount point absent, or one that holds a file: each a PROOF-FAIL" \
     test "$(bash "$T/mounts.sh" | grep -c '^PROOF-FAIL: .* is not an empty directory root owns with mode 755$')" = 2
 mt
