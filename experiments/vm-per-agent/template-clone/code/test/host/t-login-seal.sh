@@ -146,7 +146,7 @@ pu=$(grep -n -F 'userdel -r op' <<<"$seal_final" | cut -d: -f1)
 pd=$(grep -n -xF '    passwd -d root 2>&1; chage -d 0 root 2>&1' <<<"$seal_final" | cut -d: -f1)
 pf=$(grep -n -F 'probes final' <<<"$seal_final" | head -1 | cut -d: -f1)
 check "the final step empties root's password field and requires the change, after the build account goes and before the final probe" \
-    test -n "$pd" -a -n "$pu" -a -n "$pf" && [ "$pu" -lt "$pd" ] && [ "$pd" -lt "$pf" ]
+    eval '[ -n "$pd" ] && [ -n "$pu" ] && [ -n "$pf" ] && [ "$pu" -lt "$pd" ] && [ "$pd" -lt "$pf" ]'
 check "the cleanup writes the SSH settings to the drop-in and checks them as sshd reads them" \
     bash -c 'grep -qF "printf '"'"'%s\n'"'"' \"\$SSHD_SETTINGS\" | sudo tee \"\$SSHD_DROPIN\"" <<<"$1" && grep -qF "sudo sshd -t" <<<"$1" && grep -qxF "    sshd_check || return 1" <<<"$1"' _ "$cleanup"
 finish

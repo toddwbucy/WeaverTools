@@ -11,13 +11,13 @@ eval "$(fn "$TS" getent_absent)" || exit 1
 getent() { return "$GS"; }
 
 GS=2; out=$(getent_absent passwd x "the probe account"); rc=$?
-check "status 2: absent, status 0 and nothing printed" [ "$rc" = 0 ] && [ -z "$out" ]
+check "status 2: absent, status 0 and nothing printed" eval '[ "$rc" = 0 ] && [ -z "$out" ]'
 GS=0; out=$(getent_absent passwd x "the probe account"); rc=$?
-check "status 0: found, status 1, named" [ "$rc" = 1 ] && [ "$out" = "the probe account remains" ]
+check "status 0: found, status 1, named" eval '[ "$rc" = 1 ] && [ "$out" = "the probe account remains" ]'
 for GS in 1 3; do
     out=$(getent_absent group x "the probe group"); rc=$?
     check "status $GS: a read that did not happen, status 1, not an absence" \
-        [ "$rc" = 1 ] && [ "$out" = "getent exited $GS, so whether the probe group remains is not known" ]
+        eval '[ "$rc" = 1 ] && [ "$out" = "getent exited $GS, so whether the probe group remains is not known" ]'
 done
 unset -f getent
 
@@ -25,9 +25,9 @@ unset -f getent
 # account no system has is not.
 if command -v getent >/dev/null 2>&1; then
     out=$(getent_absent passwd "$(id -un)" "this account"); rc=$?
-    check "the real getent: this account remains" [ "$rc" = 1 ] && [ "$out" = "this account remains" ]
+    check "the real getent: this account remains" eval '[ "$rc" = 1 ] && [ "$out" = "this account remains" ]'
     out=$(getent_absent passwd weaver-no-such-account-x9 "no such account"); rc=$?
-    check "the real getent: an account no system has is absent" [ "$rc" = 0 ] && [ -z "$out" ]
+    check "the real getent: an account no system has is absent" eval '[ "$rc" = 0 ] && [ -z "$out" ]'
 fi
 
 # The sites: os_probes judges its probe account and group gone, and the final probe the

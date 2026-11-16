@@ -51,7 +51,7 @@ check "the cleanup lays /mnt/weaver and the two, root's, mode 0755, and checks t
     bash -c 'grep -qF "sudo install -d -o root -g root -m 0755 /mnt/weaver \$DATA_MOUNTS || return 1" <<<"$1" && grep -qxF "    mounts_check || return 1" <<<"$1"' _ "$cleanup"
 final_at=$(grep -n -F 'if [ "$mode" = final ]; then' <<<"$probes" | cut -d: -f1)
 at=$(grep -n -F 'check "the data mount points not as laid" "$(mounts_check 2>&1)"' <<<"$probes" | cut -d: -f1)
-check "the probes run it in both passes" test -n "$at" -a -n "$final_at" && [ "$at" -lt "$final_at" ]
+check "the probes run it in both passes" eval '[ -n "$at" ] && [ -n "$final_at" ] && [ "$at" -lt "$final_at" ]'
 ( export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"; [ "$DATA_MOUNTS" = "/mnt/weaver/models /mnt/weaver/state" ] )
 check "lib.sh reads the same two for the proof" test $? = 0
 finish

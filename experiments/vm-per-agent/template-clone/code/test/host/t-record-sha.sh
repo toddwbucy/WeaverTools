@@ -31,27 +31,27 @@ check "an absent file: no record" [ ! -e "$BUILD/stamp.d/t.absent" ]
 check "an absent file: named" grep -qx "record: no sha256 of $T/files/absent for t.absent" <<<"$out"
 
 out=$(record_sha t.dir "$T/files/dir" 2>&1); rc=$?
-check "a directory: the step fails, no record" [ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.dir" ]
+check "a directory: the step fails, no record" eval '[ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.dir" ]'
 
 out=$(record_sha 'Bad/Key' "$T/files/one" 2>&1); rc=$?
-check "a bad key is still refused by record" [ "$rc" != 0 ] && grep -q '^record: bad key' <<<"$out"
+check "a bad key is still refused by record" eval '[ "$rc" != 0 ] && grep -q "^record: bad key" <<<"$out"'
 
 # record_read: a read that failed, or gave nothing, makes no record.
 v=$(printf '4\n'); record_read t.ok $? "$v" >/dev/null 2>&1; rc=$?
-check "record_read: a read that worked is recorded" [ "$rc" = 0 ] && [ "$(stamp t.ok)" = 4 ]
+check "record_read: a read that worked is recorded" eval '[ "$rc" = 0 ] && [ "$(stamp t.ok)" = 4 ]'
 v=$(id -un); record_read t.more $? "$v" "/home/x" >/dev/null 2>&1
 check "record_read: MORE follows READ" [ "$(stamp t.more)" = "$(id -un) /home/x" ]
 v=$(false); out=$(record_read t.failed $? "$v" 2>&1); rc=$?
-check "record_read: a failed read fails, no record" [ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.failed" ]
+check "record_read: a failed read fails, no record" eval '[ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.failed" ]'
 check "record_read: named with its status" grep -qx "record: t.failed could not be read (status 1)" <<<"$out"
 v=$(printf '' | sort -n | tail -1); out=$(record_read t.empty $? "$v" "/home/x" 2>&1); rc=$?
-check "record_read: an empty read fails though MORE is given" [ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.empty" ]
+check "record_read: an empty read fails though MORE is given" eval '[ "$rc" != 0 ] && [ ! -e "$BUILD/stamp.d/t.empty" ]'
 v=$(sort -n "$T/files/no-samples" | tail -1); record_read t.pipe $? "$v" >/dev/null 2>&1; rc=$?
 check "record_read: a pipeline's first command failing fails, under the file's pipefail" [ "$rc" != 0 ]
 
 # The old form, for the record: inside record's own argument a failed sha is lost.
 record t.old "$(sha "$T/files/absent" 2>/dev/null) (not laid)" >/dev/null 2>&1; rc=$?
-check "the old form recorded ' (not laid)' with no digest, status 0" [ "$rc" = 0 ] && [ "$(stamp t.old)" = " (not laid)" ]
+check "the old form recorded ' (not laid)' with no digest, status 0" eval '[ "$rc" = 0 ] && [ "$(stamp t.old)" = " (not laid)" ]'
 
 # Every site in guest/template-steps: no record takes a command substitution in its own
 # arguments, where a read that fails is lost, and each size is read through record_read.

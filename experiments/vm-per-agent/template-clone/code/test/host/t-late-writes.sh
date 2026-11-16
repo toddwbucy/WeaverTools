@@ -81,5 +81,5 @@ check "no /var/log keeps its own finding" has nolog '^PROOF-FAIL: the offline re
 rc=0; image_files "$T/short" /var/log >/dev/null 2>&1 || rc=$?
 check "image_files returns 2 on a damaged directory" [ "$rc" = 2 ]
 rc=0; out=$(image_files "$T/log" /var/nothing 2>&1) || rc=$?
-check "image_files on an absent path: status 0, nothing printed" [ "$rc" = 0 ] && [ -z "$out" ]
+check "image_files on an absent path: status 0, nothing printed" eval '[ "$rc" = 0 ] && [ -z "$out" ]'
 finish
