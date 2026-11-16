@@ -537,7 +537,7 @@ sealrun() {
                        convert) [ ! -e "$T/convert-fails" ] || return 1; cp -- "${@: -2:1}" "${@: -1}" ;;
                        compare) [ ! -e "$T/compare-differs" ] || { echo "Content mismatch at offset 0!"; return 1; } ;;
                        check) echo '{"image-end-offset": 4096, "allocated-clusters": 0}' ;;
-                       info) case " $* " in *" --output=json "*) echo '{"cluster-size": 65536}' ;; esac ;;
+                       info) case " $* " in *" --output=json "*) echo '{"cluster-size": 65536, "virtual-size": 4096}' ;; esac ;;
                    esac; }
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
       image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
@@ -629,7 +629,7 @@ head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2";
   image_open() { :; }; image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }
   seal_verdict ) >"$T/seal-leftover.out" 2>&1
 check "a compacted copy left by a run cut short is refused, kept, and nothing is marked sealed" \
-    test $? = 1 -a "$(grep -c 'REFUSED: .*appliance.compact.part stands, left by a compaction cut short (destroy removes it)' "$T/seal-leftover.out")" = 1 \
+    test $? = 1 -a "$(grep -c 'REFUSED: .*appliance\.compact\.part stands, left by a compaction cut short\. It may be removed by hand, alone, and verdict run again\. destroy removes the whole build, the disk with it' "$T/seal-leftover.out")" = 1 \
          -a "$(cat "$TD/appliance.compact.part")" = left -a "$(sealed_not && echo y)" = y \
          -a "$(grep -c '^qemu-img convert' "$T/host-calls")" = 0
 
