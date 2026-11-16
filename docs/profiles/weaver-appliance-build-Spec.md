@@ -55,7 +55,7 @@ to: weaver-appliance-profile
 | `PROOF_PORT` | the host port `proof`'s first-boot overlay forwards SSH on, bound to the host's loopback (clear of `clone.sh`'s default port). The next port, `PROOF_PORT` + 1, forwards the inbound probe to the guest's TCP 8080, bound the same way | `PORT` + 100, and + 101 |
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's login prompt on the console | 300 |
 | `CUOBJDUMP` | the host's `cuobjdump`, from a CUDA toolkit that knows the four architectures `proof` checks for (section 2) | `cuobjdump` |
-| `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens and to the overlays it boots | `libvirt-qemu` |
+| `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens, to the directory of the first boot's console socket, and to the overlays it boots | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
 
@@ -190,13 +190,65 @@ not measured. Stopping `nftables.service` destroys the image's table, so inbound
 open until the unit starts again, and at the end of a shutdown, once the unit has
 stopped.
 
+**The first login: root, set at the console** (the operator's ruling of 2026-11-16). The
+image carries no secret. Root's password field is empty and its last change is 0, so at
+the console `login` asks root for no password and requires a new one before the shell.
+After that the operator places a key and sets the network from the root shell (decision
+16 of 2026-11-15). SSH admits keys alone. The cleanup writes
+`/etc/ssh/sshd_config.d/10-weaver-appliance.conf` with `PasswordAuthentication no`,
+`KbdInteractiveAuthentication no`, `PermitEmptyPasswords no` and `PermitRootLogin
+prohibit-password`. Ubuntu's `sshd_config` includes that directory's files, in name
+order, before its own settings, and sshd keeps the first value it reads for each
+keyword, so this file decides all four. The text is defined once in
+`guest/template-steps`, and a probe reads sshd's own merged configuration for root. So
+the first password is set at the console, never over SSH. Every other account stays
+locked as Ubuntu ships it, and none has a login shell. Measured on 2026-11-16 in a
+throwaway guest of the pinned 26.04 image (login from util-linux 2.41.3, shadow 4.17.4,
+OpenSSH 10.2p1, PAM 1.7.0, systemd 259.5):
+- With root's password field emptied (`passwd -d`) and its last change set to 0
+  (`chage -d 0`), `login` at the serial console and at the first virtual console asked
+  no password. It said "You are required to change your password immediately
+  (administrator enforced).", asked "New password:" and "Retype new password:" with no
+  current password, and gave a root shell. No securetty file is shipped, and
+  `pam_unix` in `common-auth` carries `nullok`.
+- Over SSH, before the change and after it, an empty password, the password the console
+  set and a wrong one were each refused: sshd offered `publickey` alone. A key root does
+  not hold was refused too.
+- No service failed on an expired root at boot. `runuser -l root` runs.
+- cron refuses every job of root's until the first login: "pam_unix(cron:account):
+  expired password for user root (root enforced)". The image ships cron enabled, with
+  `/etc/crontab`'s hourly and daily runs, `e2scrub_all` and five daily scripts as root
+  (the fifth build's MANIFEST). Nothing of the suite's runs from cron. Root's job ran at
+  the first minute after the change.
+- A key in root's `authorized_keys` before the first login authenticates over SSH, and
+  sshd then requires the change: with no terminal it refuses ("Password change required
+  but no TTY available."), and with one (`ssh -tt`) it makes the change over SSH. The
+  image ships no key, so the change is at the console unless the operator feeds a key in
+  first (the next paragraph).
+
+**systemd's first-boot paths, left and named** (the operator's ruling of 2026-11-16).
+Beside cloud-init, the image keeps systemd's own first-boot paths as Ubuntu 26.04 ships
+them, and masks none. Read on 2026-11-15 from the fifth build's kept image, read-only:
+- `/usr/lib/tmpfiles.d/provision.conf`, whose lines name the systemd credentials
+  `ssh.authorized_keys.root` (for `/root/.ssh/authorized_keys`), `network.hosts` (for
+  `/etc/hosts`), and `login.issue` and `login.motd` (for files under `/etc/issue.d`
+  and `/etc/motd.d`)
+- `systemd-firstboot.service`, wanted by `sysinit.target`
+- `systemd-creds.socket`, wanted by `sockets.target`
+- `systemd-ssh-generator`, among the system generators
+
+What an operator feeds through them is the operator's to account for. One effect is
+measured: a key given as `ssh.authorized_keys.root` reaches root's `authorized_keys`
+before the first login, and the forced change then happens over SSH, as above. A probe
+reads each path present and not masked.
+
 **cloud-init: the build's seed, and a seed's limit in the image.** The build guest boots
 from a NoCloud seed, which makes the build account, pins the guest's host key and sets
 its network and its guard (`template-clone-Spec` sections 2 and 4). The proof's first
-boot was set up by a seed through the fifth build. Now it stands in for the operator's
-steps after logging in, and attaches a seed only to show it ignored (step 12). The seal
+boot was set up by a seed through the fifth build. Now it logs in at the console as the
+operator does, and attaches a seed only to show it ignored (step 12). The seal
 disables cloud-init in the sealed image: it writes `/etc/cloud/cloud-init.disabled`, and
-the package stays (proposed on 2026-11-15, pending the operator, section 3). An attached
+the package stays (the operator's ruling of 2026-11-16). An attached
 seed is then not acted on, and a boot with none runs no cloud-init either. The limit the
 operator ruled on 2026-11-14 (the SSH key, the network and the hostname) stays beneath
 it, for an operator who removes that file. The cleanup writes the limit to
@@ -271,7 +323,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     marked manual first, and a simulation must remove no package of the runtime set and no
     base package but those named or matched. Then `ldconfig` and the loader check,
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
-    again without networkd, the base inbound policy written and enabled, and last the
+    again without networkd, the base inbound policy written and enabled, the SSH settings
+    written and read back as sshd reads them for root, and last the
     update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
     cleanup, and marks manual only the base packages still installed, since apt-mark
@@ -292,7 +345,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     oneshot writes the MANIFEST again only after removals that cannot be undone, so a find
     or a formatter that fails must fail in the dry run, with the guest intact and the step
     rerun. find's errors are kept, in the step's log and in `seal-final.log`. The oneshot
-    removes the build account and its sudoers rule, the SSH host keys, the machine
+    removes the build account and its sudoers rule, empties root's password field and
+    sets its last change to 0 (`passwd -d root`, `chage -d 0 root`, the first login of
+    the operator's ruling of 2026-11-16), removes the SSH host keys, the machine
     identity (with systemd's random seed and credential secret, after it stops the
     random-seed service), cloud-init's state and the logs, assembles the stamp from the
     build's records, removes
@@ -384,41 +439,38 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     capture with no header, which did not run. Then a second overlay booted as an
     operator's first boot is, with no host key. A seed is attached, which the image must
     ignore: its meta-data names a key and a hostname, and its user-data a bootcmd, a
-    runcmd and the default account. With cloud-init disabled, the sealed image has no
-    way in: root has no password, no key is authorized and no seed is read, so the proof
-    gets in only by writing its own overlay offline. The bootcmd and runcmd asks are
+    runcmd and the default account. With cloud-init disabled, the sealed image's one way
+    in is the console: root has no password and must set one, no key is authorized and
+    no seed is read. The bootcmd and runcmd asks are
     near vacuous: the limit beneath the marker discards user-data and runs neither
     module, whether or not cloud-init is disabled. The checks that tell a disabled
     cloud-init from a limited one are its status, the seed's hostname and the default
-    account. **The proof stands in for the
-    operator's steps after logging in** (decision 16 of 2026-11-15). Those steps are
-    two: place a key, set the network. The proof writes both into its own overlay
-    offline, before the boot, and never into the image: the proof key as root's
-    authorized key, and a netplan file, `/etc/netplan/90-weaver-proof.yaml`, naming a
-    static address, gateway and resolver, matched by the NIC's MAC address. The overlay
-    is opened writable through
+    account. **The proof logs in at the console as the operator does** (the operator's
+    ruling of 2026-11-16). The operator's steps after logging in are two: place a key,
+    set the network (decision 16 of 2026-11-15). The proof sets the network offline, in
+    its own overlay before the boot and never in the image, so SSH answers from the boot
+    and the proof can show it refusing root before the first login: a netplan file,
+    `/etc/netplan/90-weaver-proof.yaml`, naming a static address, gateway and resolver,
+    matched by the NIC's MAC address. The overlay is opened writable through
     qemu-storage-daemon and written with debugfs, only where the file names a backing
     file, so the sealed image can never be opened writable this way, and QEMU opens the
-    backing file read-only. A filesystem that is not clean is refused. Each file is read
+    backing file read-only. A filesystem that is not clean is refused. The file is read
     back from the overlay opened again read-only, with its bytes, its owner (root) and
     its mode (0600), and `e2fsck -n` must find the filesystem clean, before anything
     boots. Tested on 2026-11-15 against a scratch disk made on the measuring host: the
-    sealed stand-in's digest did not change. The placement rests on three things, and
-    the proof fails closed where any does not hold:
-    - `/root/.ssh` stands (0700 in the fifth build's kept image). The placement refuses
-      where it does not.
-    - root may log in over SSH by key. The fifth build's kept image sets no
-      `PermitRootLogin`, so OpenSSH's default, `prohibit-password`, applies. The login
-      fails where it does not.
-    - netplan applies a file placed by hand with no cloud-init. Not measured: the login
-      fails where it does not.
+    sealed stand-in's digest did not change. netplan applying a file placed with no
+    cloud-init was measured on 2026-11-16 in a throwaway guest of the pinned image, with
+    cloud-init disabled: the file in place before a boot brought the network up at that
+    boot. Where it does not, every login over SSH fails, and so does the proof. The key
+    is placed at the console, after the first login.
 
-    Root's entry (`/bin/bash`, password field `*`) was read from the fifth build's kept
-    image. That no other account has a login shell is not measured. What waits for the
-    operator is the console
-    login itself and the account it lands in (section 3). The proof does not stand in
-    for those, and its record names the gap on a line of its own, which is not a
-    failure. That overlay's network is QEMU's `restrict=on`, with the SSH forward. The
+    The console is QEMU's unix socket, in a directory only the proof's owner and
+    `QEMU_USER` may enter, made as the console files are, whose default ACL lets the
+    owner connect to the socket QEMU makes there. QEMU writes every byte the console
+    sends to a file beside it as well, from the firmware's first line (`logfile=`, which
+    QEMU truncates as it opens it). A socket's path holds at most 107 bytes, and the
+    proof refuses a longer one before anything boots. That overlay's network is QEMU's
+    `restrict=on`, with the SSH forward. The
     network is named because `restrict=on` DHCP offers no gateway and no resolver, and
     netplan's wait (`systemd-networkd-wait-online --any --dns -o routable`) then holds
     the boot for its full 120 s (the fourth build's first proof run): an appliance on a
@@ -429,16 +481,43 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     scan's and never replace them. One scan, because the guest's sshd
     counts each unauthenticated connection against its source (`PerSourcePenalties`),
     every forwarded connection arrives from the same address, and repeated scans dropped
-    a key (the fourth build's proof runs 2 to 4). It logs in under those keys as root,
-    with the key it placed, and reads the host keys' fingerprints in the guest, as the
-    operator does after logging in. Each key SSH presents must be one the guest holds.
+    a key (the fourth build's proof runs 2 to 4).
+
+    Before the first login the proof tries root over SSH three ways, and each must be
+    refused with the server offering `publickey` alone: an empty password, a wrong one,
+    and the proof key, not yet placed. A password is given through `SSH_ASKPASS` with
+    public keys off, so the client sends it only if the server offers a password method.
+    A connection cut before authentication, as `PerSourcePenalties` cuts one, names no
+    method, and fails the proof: a refusal that did not happen proves nothing. Then the
+    first login, typed at the console through the socket by `console-drive.py`: `root`
+    at the prompt, a password the proof makes (24 letters and digits) given twice when
+    the change is asked, then from that root shell the proof key placed as root's one
+    authorized key, one read line naming the terminal, the account, root's password state
+    and the keys held, and the logout. The password is made into a file only the proof's
+    owner can read, typed and offered to SSH from that file, never printed or logged,
+    and removed after the last try. The driver logs each such send as `[sent: <file
+    pw>]`, and the console does not echo it. `console_judge` grades the driver's log:
+    the prompt before `root` greets with the image's hostname; after `root` no password
+    is asked and no refusal shown, the forced change is announced and a new password
+    asked; after the first entry it is asked again, and no error from the change
+    follows; and the read line names `/dev/ttyS0`, root, `P` (a usable password) and one
+    key. A driver that stopped on a step it waited for is a finding too. Rehearsed on
+    2026-11-16 with the proof's own functions against the throwaway guest, its root
+    sealed as the final step seals it and its host keys in place: a scan, the three
+    refusals, the login with the change, the key, SSH by that key, and two refusals
+    after.
+
+    It then logs in under the scanned keys as root, with the key it placed at the
+    console, and reads the host keys' fingerprints in the guest, as the operator does
+    after logging in. Each key SSH presents must be one the guest holds.
     Both sides are read from the same guest, so the match shows that sshd presents the
     keys on its disk, not where they came from.
     Only on that match does the proof read on: cloud-init's status (disabled, with the
     seed attached), what became of the seed's asks, the hostname, the network and its
     wait, `ubuntu.sources`, SSH's units and whether `sshd-keygen.service` ran, and the
-    stamp's commits. It then sets the MANIFEST against the booted guest, on the host,
-    and last measures the base inbound
+    stamp's commits. Then two more tries over SSH, each refused as before: the password
+    the console set, and a wrong one. It then sets the MANIFEST against the booted guest,
+    on the host, and last measures the base inbound
     policy with no agent loaded. In the guest it reads the tables the kernel holds, and
     the image's
     table with its input policy drop and its SSH accept. It starts a listener on TCP 8080,
@@ -460,20 +539,25 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     removed, added or changed is printed by its path, never with a digest. A difference
     the first boot makes by design is marked expected. With cloud-init disabled,
     the list is short.
-    Changed: the machine identity, which the seal leaves uninitialized. Added: the host
+    Changed: the machine identity, which the seal leaves uninitialized, and the shadow
+    file, where the first login sets root's password. Added: the host
     keys' public halves, which `sshd-keygen.service` makes, the proof's own network
     file, and the account tools' lock file, which the list allows and does not require.
     The fourth and fifth builds' first boots ran cloud-init from a seed, which also
     changed the account files and the hostname and added its own netplan file and
     sudoers rule. None of those is expected now, and the shorter list is not yet
-    measured on a build. No link is expected to change. On the fourth build's first
+    measured on a build. In the throwaway guest on 2026-11-16, a boot shaped as the
+    sealed first boot (cloud-init disabled, no netplan file, root as the seal leaves it)
+    and the console session changed the shadow file and added the session's network file
+    within the MANIFEST's scope, and nothing else. No link is expected to change. On the fourth build's first
     boot, systemd ran its first-boot
     preset of all units, and the masks held against it, so a link it changes is a finding.
     Every other difference fails the proof, as do a listing that fails and a MANIFEST
     that does not carry the marker once. The files' listing runs under `pipefail`, so a
     `find` error fails it. The marker and the scope have one definition, in
     `guest/template-steps`, which `lib.sh` reads, and the offline mock checks that the two
-    copies of the formatter are the same text. Each boot's serial console, and the
+    copies of the formatter are the same text. Each boot's serial console (the first
+    boot's beside its socket), and the
     no-seed boot's capture, is written by QEMU to a file the proof makes. Only the file's
     owner and `QEMU_USER` may write it, by a POSIX ACL. An entry the file inherits from
     its directory's default ACL is removed before the grant, since chmod only masks it
@@ -501,9 +585,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     refusal, is not booted at all. After both boots, each finding of the sealed file
     (its sha256 and its compactness), of the stamp's version, of the shipped library's
     device code, and each finding the first boot recorded fails the proof (a non-zero
-    exit, and the findings in `PROOF-FAILED`). The proof's two files not read back as
-    written, or a filesystem that is not clean, stop it before the first boot. The first
-    boot's findings are a login prompt that does not greet with the image's hostname, a
+    exit, and the findings in `PROOF-FAILED`). The proof's network file not read back as
+    written, a filesystem that is not clean, a socket path too long, or a password or
+    helper that cannot be made, stop it before the first boot. The first
+    boot's findings are a login prompt that does not greet with the image's hostname,
+    any of the five SSH tries as root not refused with `publickey` alone offered, a first
+    login at the console that asks a password, does not require the change, fails the
+    change, lands elsewhere than root on `/dev/ttyS0`, leaves root's password unusable or
+    places other than one key, a console driver that stopped, a
     key SSH presents that the guest does not hold, a failed login as root, a MANIFEST
     difference outside the first boot's expected list, cloud-init not disabled with a
     seed attached, any of the seed's asks carried out (the bootcmd, the runcmd or the
@@ -591,6 +680,24 @@ load shows it is never mapped), the driver's packages (its compute library whole
 - SSH not enabled, or `sshd-keygen.service` not enabled
 - cloud-init not limited to the SSH key, network and hostname (its module lists, with
   `keys_to_console` at final)
+- the SSH settings not as built: the drop-in not the text the steps define, or sshd's own
+  merged configuration for root (`sshd -T`, whatever the case of its keywords) not
+  naming each of the four. sshd -T will not run with no host key it can load, and the
+  final pass runs after the seal removes them, so both passes give it a throwaway key
+  under `/run`, which no key probe scans, and remove it after. A run that fails is a hit.
+- systemd's first-boot paths masked or missing: `provision.conf` not naming
+  `ssh.authorized_keys.root` or overridden in `/etc/tmpfiles.d`,
+  `systemd-firstboot.service` or `systemd-creds.socket` masked or not found, or
+  `systemd-ssh-generator` absent or masked in `/etc/systemd/system-generators`
+- an account that can log in, other than as sealed: a password field in `passwd` other
+  than `x`, any account but root with a login shell (one `/etc/shells` lists) or not
+  locked (its shadow field beginning `!` or `*`), root without a login shell, or a
+  password hash (`$`) in `shadow`, `gshadow` or the tools' `shadow-` and `gshadow-`
+  copies. The pre pass leaves out the build account and root's two fields, which the
+  final step removes and sets, so any other account that can log in is found before the
+  removals. Measured on 2026-11-16 in the throwaway guest of the pinned image: every
+  account but root locked, no login shell but root's and the build account's, and no
+  hash in `gshadow`.
 - `/etc/hostname` not the image's hostname, or the build guest's name in any file under
   `/etc`. The name is matched whole, with no letter, digit or hyphen on either side, so
   a longer word it begins is not a hit: the default name begins
@@ -617,6 +724,8 @@ The final pass adds:
 - the machine identity not `uninitialized`, as `cloud-init clean` writes it (an empty or
   absent file is a hit too, since the first boot's host keys rest on that word),
   systemd's random seed and credential secret, and the SSH host keys
+- root's password field not empty, or its last change not 0 (the accounts probe above,
+  now judging root's two fields)
 - the authorized-keys files again, the build account's gone with it
 - non-empty logs
 - the build's records or this script still present
@@ -670,8 +779,10 @@ form: regular files only, with no marker and no links section. Their identities
 `manifest.scope` line says which form an image has.
 
 **Seams left clean.** The image boots with no agent, no connector config, no unit
-instance, no credential, no key and no account that can log in. SSH is enabled, with
-host keys the first boot makes, and admits a login once the operator has placed a key.
+instance, no credential, no key and no password. Root alone can log in, at the console,
+with no password, and must set one there (the operator's ruling of 2026-11-16). SSH is
+enabled, with host keys the first boot makes, and admits a login by key alone, once the
+operator has placed one.
 The hostname is `weaver-appliance`. There is no site-check hook and no
 image key (both ruled out by the operator on 2026-11-14). A condition of the operator's
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
@@ -688,8 +799,11 @@ the function's text. Each run works in a new `mktemp` directory and leaves it fo
 reading. A test that needs a tool the host lacks is skipped with exit status 77.
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-15 the 11 tests ran 205 checks and all passed, on a host with
-CUDA 13.4's `nvcc`. The offline mock (`template-clone-Spec` section 8) is not one of
+runs them all. On 2026-11-16 the 16 tests ran 318 checks and all passed, on a host with
+CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
+socket the proof names to QEMU, which plays getty, the forced change and a shell, and
+the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
+sshd with a stand-in configuration. The offline mock (`template-clone-Spec` section 8) is not one of
 them, and runs only in a build guest.
 
 ## 3. Open
@@ -701,36 +815,6 @@ them, and runs only in a build guest.
   earlier priority, marks the packet, and the image's static rule accepts the mark, so
   admin still writes only its own table. Settled in the act that adds the port member to
   the declaration, by admin's Spec and this one together.
-- **The console login and the account it lands in.** Root has no password (read from
-  the fifth build's kept image), and the build expects it to be the image's one account
-  with a login shell, which is not measured. How the operator logs in at the console,
-  and which account that lands in, waits for the operator's ruling. The proof names the
-  gap and does not stand in for it: it logs in over SSH as root, with the key it placed
-  in its own overlay. Root as the proof's login is the proof harness's choice, and it
-  does not answer the operator's question. Settled by the operator's ruling, then by
-  this Spec and the proof.
-- **cloud-init in the sealed image.** Proposed on 2026-11-15, pending the operator, and
-  built that way (section 2): the sealed image disables cloud-init, and the package
-  stays. An image that still acts on an attached seed has a first-boot path the profile
-  does not state. If the operator rules otherwise, the seal's marker file and the
-  proof's seed go, and a seed attached to the image is acted on within the limit of
-  2026-11-14. The limit file and its probe are still written and required beneath the
-  marker. If the operator rules cloud-init disabled, they go with no other change, and
-  the marker alone stands. Settled by the operator's ruling, then by this Spec.
-- **systemd's first-boot paths in the image.** Beside cloud-init, the image holds
-  systemd's own first-boot paths as Ubuntu 26.04 ships them. Read on 2026-11-15 from the
-  fifth build's kept image, read-only:
-  - `/usr/lib/tmpfiles.d/provision.conf`, whose lines name the systemd credentials
-    `ssh.authorized_keys.root` (for `/root/.ssh/authorized_keys`), `network.hosts` (for
-    `/etc/hosts`), and `login.issue` and `login.motd` (for files under `/etc/issue.d`
-    and `/etc/motd.d`)
-  - `systemd-firstboot.service`, wanted by `sysinit.target`
-  - `systemd-creds.socket`, wanted by `sockets.target`
-  - `systemd-ssh-generator`, among the system generators
-
-  The build masks none of them. Whether the image keeps them, masks them or names them
-  in the profile waits for the operator's ruling. Settled by the operator's ruling, then
-  by this Spec.
 - **The respin path.** A respin carries a release's binaries into a new OS layer and never
   recompiles (the operator's decision 4 of 2026-11-15). No such path is built: this tree
   compiles, and refuses a respin. Until one is built, a security fix to the OS layer is a

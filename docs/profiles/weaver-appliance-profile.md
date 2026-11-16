@@ -72,8 +72,13 @@ virtual machine. To start and stop the agent is to load and unload it through ad
 inside a running appliance.
 
 **At the first boot the operator logs in at the console of the virtual machine, places
-their SSH key, and sets the network by hand** (ruling of 2026-11-15). Cloud-init is not
-part of this profile at this stage and is a later item, per section 8.
+their SSH key, and sets the network by hand** (ruling of 2026-11-15). The operator logs
+in as root, which has no password, and sets one at that first login; SSH admits keys
+alone, and the image carries no secret (ruling of 2026-11-16). The image disables
+cloud-init (ruling of 2026-11-16). Cloud-init is not part of this profile at this stage
+and is a later item, per section 8. systemd's own first-boot paths stay as Ubuntu ships
+them and are named in the Spec of the image build: what an operator feeds through them
+is the operator's to account for (ruling of 2026-11-16).
 
 **The shape of a deployment is the operator's choice.** The suite recommends a machine
 given to one agent. It is a recommendation and no rule. In the operator's words: "we
@@ -319,8 +324,6 @@ still has to be captured into the binary or held by the image.
 - **The run card's definition.** The run card is the operator's term for a JSON file.
   The rulings of 2026-11-15 record three things on it. The paper that defines it is not
   in a repository as of 2026-11-15. Settled when the operator places it.
-- **How the operator authenticates at the console of the virtual machine at the first
-  boot.** The image carries no secret. Settled by the operator.
 - **Whether `toddwbucy/WeaverWeb` also carries the tag of section 5.** The image
   compiles the two connectors from a WeaverWeb commit. Settled by the operator.
 - **Where the image is published.** Settled by the operator.
