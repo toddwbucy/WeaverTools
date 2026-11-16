@@ -46,4 +46,31 @@ fresh; BUILD_NAME=weaver-appliance-build; mkdir -p "$RECORD"; echo "HIT  /etc/ho
 check "the final pass's own record, written while it runs, is left out" test -z "$(image_hostname_check final)"
 echo "x $BUILD_NAME" >"$RECORD/stamp"
 check "but the stamp beside it is not" test "$(image_hostname_check final)" = "$RECORD/stamp"
+
+# Where the hostname is written, against where it is judged: every probes pre the recipe
+# reaches comes after the write. The proving build of 2026-11-16 stopped at the recipe's
+# probes step, which ran before the seal that then wrote the hostname.
+cleanup=$(fn "$STEPS" cleanup); seal=$(fn "$STEPS" seal)
+code=$(grep -vE '^[[:space:]]*#' "$STEPS")
+check "the cleanup writes the image's hostname to /etc/hostname" \
+    grep -qF "printf '%s\n' \"\$IMAGE_HOSTNAME\" | sudo tee /etc/hostname >/dev/null || return 1" <<<"$cleanup"
+# A write is a tee, a redirection, a copy, a move or an install onto the file, or
+# hostnamectl; every other line that names the file reads it.
+writes=$(grep -E '(tee|>|cp|mv|install)[^|;]* /etc/hostname|hostnamectl' <<<"$code")
+check "and nothing else in the guest steps writes /etc/hostname" \
+    test "$(grep -c . <<<"$writes")" = 1 -a "$(grep -cxF -- "$writes" <<<"$cleanup")" = 1
+check "probes pre is reached only from the seal and the probes step" \
+    test "$(grep -cE '(^|[^a-z_])probes pre' <<<"$code")" = 2 -a "$(grep -cxF '    probes pre || return 1' <<<"$seal")" = 1 \
+         -a "$(grep -cxF 'probes) probes pre ;;' <<<"$code")" = 1
+# The recipe (COMMANDS.md, the appliance image's block): the step loop that ends in the
+# cleanup and the probes step, then the seal.
+loop=$(grep -n -E '^ *for s in .* cleanup .*; do$' "$CODE/../COMMANDS.md" | tail -1)
+seal_at=$(grep -n -E '^ *code/build-template\.sh seal \|\| exit$' "$CODE/../COMMANDS.md" | tail -1 | cut -d: -f1)
+order=$(sed -E 's/.*for s in (.*); do$/\1/' <<<"${loop#*:}" | tr ' ' '\n' | grep -nxE 'cleanup|probes' | cut -d: -f2 | tr '\n' ' ')
+check "the recipe runs the cleanup, then its probes step, then the seal" \
+    test "$order" = "cleanup probes " -a -n "$seal_at" -a "${seal_at:-0}" -gt "${loop%%:*}"
+# And the probe on the tree the cleanup leaves, the build guest still running under its
+# own name: no finding in the pre pass.
+fresh
+check "the tree as the cleanup leaves it passes the pre pass" test -z "$(image_hostname_check pre)"
 finish

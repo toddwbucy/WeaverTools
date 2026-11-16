@@ -772,6 +772,14 @@ EOF
     mounts_check || return 1
     echo "$DATA_MOUNTS: empty, root's, mode 0755, on the image's root"
 
+    section "the image's hostname"
+    # The image's own hostname, in place of the build guest's, written here so that every
+    # probes pre the recipe reaches (its own probes step, then the seal's) reads it. The
+    # file alone: the running guest keeps its name, which the probes read as the build
+    # guest's.
+    printf '%s\n' "$IMAGE_HOSTNAME" | sudo tee /etc/hostname >/dev/null || return 1
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
+
     section "updates masked, sources off"
     # shellcheck disable=SC2086
     sudo systemctl mask $UPDATE_UNITS >/dev/null 2>&1
@@ -1120,9 +1128,7 @@ seal() {
     [ -n "${VERSION:-}" ] || { echo "the seal needs VERSION, the version the stamp's appliance.version must name"; return 1; }
     [ "$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)" = "$VERSION" ] \
         || { echo "the stamp's appliance.version is '$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)', not VERSION $VERSION (the facts step records it)"; return 1; }
-    # The image's own hostname, in place of the build guest's. The file alone: the running
-    # guest keeps its name, which the probes read as the build guest's.
-    printf '%s\n' "$IMAGE_HOSTNAME" | sudo tee /etc/hostname >/dev/null || return 1
+    # The image's own hostname was written by the cleanup; the probes judge it.
     echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
