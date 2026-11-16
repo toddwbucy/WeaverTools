@@ -878,8 +878,10 @@ expect 30 READ tty=/\\S+ user=\\S+ root=\\S+ keys=\\S+
 send exit\\r
 expect 60 login:
 EOF
-    python3 -I "$LIB_DIR/console-drive.py" "$pdir/con/console.sock" "$out/first-boot-session.log" "$out/first-boot-session.steps"
-    rc=$?
+    # rc is read with ||: under errexit a driver that stops must be judged below, not end
+    # the proof before console_judge says why.
+    rc=0
+    python3 -I "$LIB_DIR/console-drive.py" "$pdir/con/console.sock" "$out/first-boot-session.log" "$out/first-boot-session.steps" || rc=$?
     [ "$rc" = 0 ] || echo "PROOF-FAIL: the first login: the console driver stopped (exit $rc), above"
     console_judge "$out/first-boot-session.log" "$IMAGE_HOSTNAME"
 }
@@ -891,13 +893,14 @@ EOF
 # password from PDIR/secret, and the client sends it only if the server offers a password
 # method. ssh -v's output stays in PDIR and holds no password.
 proof_refusal() {
-    local port=$1 known=$2 pdir=$3 label=$4 src=$5 o rc
+    # rc is read with ||: the script runs under errexit, and a refused ssh (255) is the
+    # result this judges, not a failure that ends the proof.
+    local port=$1 known=$2 pdir=$3 label=$4 src=$5 o rc=0
     o=$(mktemp "$pdir/refusal.XXXXXX") || { echo "PROOF-FAIL: SSH as root with $label: no file for ssh's output"; return 0; }
     if [ "$src" = key ]; then
         ssh -v -i "$KEY" -p "$port" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=10 \
             -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$known" -o GlobalKnownHostsFile=/dev/null \
-            root@127.0.0.1 true >"$o" 2>&1 </dev/null
-        rc=$?
+            root@127.0.0.1 true >"$o" 2>&1 </dev/null || rc=$?
     else
         case $src in
             empty) ( umask 077; : >"$pdir/secret/askpass.pw" ) ;;
@@ -908,8 +911,7 @@ proof_refusal() {
             -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive \
             -o NumberOfPasswordPrompts=1 -o ConnectTimeout=10 -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$known" -o GlobalKnownHostsFile=/dev/null \
-            root@127.0.0.1 true >"$o" 2>&1 </dev/null
-        rc=$?
+            root@127.0.0.1 true >"$o" 2>&1 </dev/null || rc=$?
         rm -f -- "$pdir/secret/askpass.pw"
     fi
     refusal_judge "$o" "$rc" "$label"

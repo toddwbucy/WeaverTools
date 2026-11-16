@@ -137,7 +137,9 @@ gssh() { shift
         *) echo "unexpected: $*" ;;
     esac; }
 run() { VM_ROOT=$(mktemp -d "$T/vmroot.XXXXXX"); rm -f -- "$T/out/first-boot.txt" "$T/scan-count" "$T/vi-args" "$T/out/first-boot-session.log" "$T/askpass.log" "$T/con-got"
-    ( proof_first_boot "$T/out" ) >"$T/run.out" 2>&1; local rc=$?
+    # build-template.sh's own shell options: under errexit an expected failure (a refused
+    # ssh, 255) must be judged, not end the proof (the rehearsal of 2026-11-16).
+    ( set -euo pipefail; proof_first_boot "$T/out" ) >"$T/run.out" 2>&1; local rc=$?
     kill "$(cat "$T/con-pid" 2>/dev/null)" 2>/dev/null; rm -f -- "$T/con-pid"; return "$rc"; }
 echo pass >"$T/con-mode"; echo "$IMAGE_HOSTNAME" >"$T/con-host"
 fb() { cat "$T/out/first-boot.txt"; }
@@ -263,7 +265,7 @@ check "a server that offers passwords fails each of the five tries" \
          -a "$(fb | grep -c '^PROOF-FAIL: SSH as root with the proof key, not yet placed: the server offered publickey,password$')" = 1
 # A VM_ROOT whose socket path a unix socket cannot hold refuses before anything boots.
 long=$T/$(printf 'x%.0s' $(seq 120)); mkdir -p "$long"
-rm -f -- "$T/vi-args"; ( VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?
+rm -f -- "$T/vi-args"; ( set -euo pipefail; VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?
 check "a socket path past 107 bytes refuses, and nothing boots" \
     test "$rc" != 0 -a "$(grep -c "is longer than a unix socket allows (107 bytes); set VM_ROOT shorter; nothing booted" "$T/long.out")" = 1 \
          -a "$(grep -c "$long" "$T/vi-args" 2>/dev/null || echo 0)" = 0
