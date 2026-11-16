@@ -339,7 +339,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     cloud-init limited, the initramfs's catch-all network masked and the initramfs made
     again without networkd, the base inbound policy written and enabled, the SSH settings
     written and read back as sshd reads them for root, the two data mount points laid
-    empty, and last the
+    empty, the image's own hostname (below), and last the
     update units masked, apt's periodic jobs off, the
     sources disabled and the caches emptied. A rerun keeps the first run's size before the
     cleanup, and marks manual only the base packages still installed, since apt-mark
@@ -348,12 +348,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     `/var/cache/apt` (measured on the fifth build, whose second run stopped at that
     apt-mark), and only its last section removes them again. A rerun that stops before
     then leaves them, and the probes refuse the seal on them.
-11. `seal`: the image's own hostname, the probes over SSH, the system libraries'
-    records, a dry run of the MANIFEST, then a root oneshot once the session ends. The
-    hostname is `weaver-appliance`, written to `/etc/hostname` in place of the build
+11. `seal`: the probes over SSH, the system libraries' records, a dry run of the
+    MANIFEST, then a root oneshot once the session ends. The image's own hostname is
+    `weaver-appliance`. The cleanup writes it to `/etc/hostname` in place of the build
     guest's own, so a box does not greet with the build's name (the Planner's note of
-    2026-11-15). The running guest keeps its name, and the probes read that name as the
-    build guest's. `create` refuses a `NAME` equal to the image's hostname. The dry run
+    2026-11-15), and so the recipe's `probes` step, which runs before the seal, reads it
+    as the seal's probes do. Until 2026-11-16 the seal wrote it, and the `probes` step
+    before it always found the build guest's name. The running guest keeps its name, and
+    the probes read that name as the build guest's. `create` refuses a `NAME` equal to the
+    image's hostname. The dry run
     writes the MANIFEST as root to a
     scratch file in `/run` and checks its form (each file line a digest and a path, the
     marker once, each link line a path, one tab and a target, at least one of each). The
@@ -821,7 +824,7 @@ reads them, so a test runs the same in a clean shell and in one that has exporte
 build's inputs, as the recipe does (`t-harness-env.sh` checks it).
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-16 the 18 tests ran 343 checks and all passed, on a host with
+runs them all. On 2026-11-16 the 18 tests ran 348 checks and all passed, on a host with
 CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
 socket the proof names to QEMU, which plays getty, the forced change and a shell, and
 the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
