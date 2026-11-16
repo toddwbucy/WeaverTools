@@ -72,8 +72,12 @@ virtual machine. To start and stop the agent is to load and unload it through ad
 inside a running appliance.
 
 **One flow serves a virtual machine and a host** (the operator's rulings of 2026-11-16
-on the setup pages). On a virtual machine the console's shutdown command is enabled. On
-a host it is disabled entirely. Nothing is built for it as of 2026-11-16.
+on the setup pages). **The console's shutdown stops the agent service and never the
+machine** (the operator's answers of 2026-11-16, recorded with the setup-pages rulings,
+item 14, in place of a shutdown command enabled on a virtual machine). Starting and
+stopping the machine stay the operator's, in the hypervisor. Whether the console can
+start the service again, and whether the command stays disabled on a host, are open.
+Nothing is built for it as of 2026-11-16.
 
 **At the first boot the operator logs in at the console of the virtual machine, places
 their SSH key, and sets the network by hand** (ruling of 2026-11-15). The operator logs
@@ -180,7 +184,9 @@ the state mount is required only where the declaration elects state. The same te
 refuses a load without it.
 
 **The agent's territory is `/var/lib/weaver-agent`, on the image's root.** The image is
-disposable. What the agent keeps is on the mounts.
+disposable. What the agent keeps is on the mounts. The next act moves the agent's home,
+with the agent's folder inside it, onto the state drive (the operator's answers of
+2026-11-16, recorded with the setup-pages rulings, item 15), per section 8.
 
 **The automatic save point that the unload writes is in scope, on the state disk** (the
 operator's rulings of 2026-11-16 on the setup pages). It is the existing save point
@@ -381,6 +387,15 @@ still has to be captured into the binary or held by the image.
   after pairing. SSH takes that key and never a password (the same). The next act.
 - The survey script, run locally, its report crossing over TLS (the same rulings). The
   next act.
+- The accounts the agent needs, shipped in the image: the agent's own and, by the suite
+  Planner's reading, the two connectors' accounts, which today `create-agent.sh` lays at
+  agent creation (the operator's answers of 2026-11-16, recorded with the setup-pages
+  rulings, item 17). The agent account's name is open, since the image is built before
+  the agent is named. The next act.
+- The agent as a real user whose home directory lives on the state drive, with the
+  agent's folder (declaration, logs, trace, save points) inside it, so the root disk
+  keeps nothing (the same, item 15). The home's exact path is open. The next act.
+- The console's shutdown as a stop of the agent service alone (the same, item 14).
 
 **Open, each with who settles it.**
 
