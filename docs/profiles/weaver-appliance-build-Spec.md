@@ -227,7 +227,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 2. `facts`: the base image's package list is recorded before anything is installed.
 3. `os-probes`: whether `test` run through sudo honours supplementary groups, and whether
    visudo takes the admin connector rule's `Defaults` line, with a throwaway account
-   removed in the same step.
+   removed in the same step. The account and its group count as gone only where getent
+   reports them not found (its status 2); a read that fails is not an absence.
 4. `packages`, `rustup`: the build's tools and the toolchain both trees pin.
 5. `trees`: both repositories cloned and checked out detached at their commits. A tree
    not exactly its commit, clean, refuses, as does a toolchain file that names another
@@ -607,7 +608,9 @@ A file a package owns is not a source-tree hit (Ubuntu's Rust-built packages shi
 `Cargo.lock` under `/usr/share/doc`), nor is man-db's cache tag.
 
 The final pass adds:
-- the build account, shell histories, cloud-init's instance state, netplan files
+- the build account and its group, shell histories, cloud-init's instance state, netplan
+  files. The account and the group count as gone only where getent reports them not found
+  (its status 2); getent finding either, or failing, is a hit.
 - cloud-init not disabled (`/etc/cloud/cloud-init.disabled` absent). The seal writes the
   marker just before this pass, so the probe reads back the step's own write and little
   more. The proof's boot with a seed attached is the check that counts.

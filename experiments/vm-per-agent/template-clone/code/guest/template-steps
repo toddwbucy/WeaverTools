@@ -99,6 +99,19 @@ record_read() {
     record "$k" "$@"
 }
 used_bytes() { df -B1 --output=used / | tail -1 | tr -d ' '; }
+# getent_absent DB NAME LABEL: nothing, and status 0, where getent finds no NAME in DB (its
+# status 2). Otherwise a sentence naming LABEL, and status 1: NAME found (status 0), or a
+# read that did not happen (any other status), which is not an absence.
+getent_absent() {
+    local g
+    getent "$1" "$2" >/dev/null; g=$?
+    case $g in
+        2) return 0 ;;
+        0) echo "$3 remains" ;;
+        *) echo "getent exited $g, so whether $3 remains is not known" ;;
+    esac
+    return 1
+}
 # one_kernel: one version-named tree under /lib/modules, the running kernel's. The 615
 # module package also ships an empty /lib/modules/kernel/nvidia-615-open, which is no
 # kernel and is not counted.
@@ -198,8 +211,8 @@ os_probes() {
     printf 'sudo is %s; packages: %s\n' "$(readlink -f "$(command -v sudo)")" \
         "$(dpkg-query -W -f '${Package} ${Version}, ' 'sudo*' 2>/dev/null)"
     os_probes_undo; trap - EXIT HUP INT TERM
-    getent passwd "$u" >/dev/null && { echo "the probe account remains"; return 1; }
-    getent group "$g" >/dev/null && { echo "the probe group remains"; return 1; }
+    getent_absent passwd "$u" "the probe account" || return 1
+    getent_absent group "$g" "the probe group" || return 1
     sudo test -e "$f" && { echo "the probe file remains"; return 1; }
     echo "probe account, group and file removed; /root is $(stat -c %a /root) again"
 }
@@ -900,7 +913,7 @@ probes() {
     # removes with the account.
     check "an authorized key" "$(sudo find /root /home /etc/ssh -xdev -type f \( -name authorized_keys -o -name authorized_keys2 \) -size +0 2>/dev/null | if [ "$mode" = pre ]; then grep -v '^/home/op/'; else cat; fi)"
     if [ "$mode" = final ]; then
-        check "the build account" "$(getent passwd op; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
+        check "the build account" "$(getent_absent passwd op "the build account op"; getent_absent group op "the build account's group op"; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
