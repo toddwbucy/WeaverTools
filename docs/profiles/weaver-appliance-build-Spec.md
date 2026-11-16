@@ -227,8 +227,12 @@ OpenSSH 10.2p1, PAM 1.7.0, systemd 259.5):
   first (the next paragraph).
 
 **The data mount points, laid empty.** The profile fixes two mount points,
-`/mnt/weaver/model` and `/mnt/weaver/state` (`weaver-appliance-profile` section 3.4), and
-the operator attaches the disks and mounts them. The cleanup lays both, and
+`/mnt/weaver/models` and `/mnt/weaver/state` (`weaver-appliance-profile` section 3.4).
+The models mount is plural by the operator's rulings of 2026-11-16 on the setup pages,
+which supersede the singular of 2026-11-14. The operator attaches the disks in the
+hypervisor and chooses each at the appliance's console, where the appliance formats and
+mounts it once the operator confirms (the same rulings; a later act). The cleanup lays
+both, and
 `/mnt/weaver`, as empty directories owned by root with mode 0755. They are defined once in
 `guest/template-steps`, which `lib.sh` reads for the proof. The image carries no model and
 no state, so a probe requires each mount point empty, on the image's own filesystem,
@@ -238,7 +242,7 @@ attached. They are not in the MANIFEST: its scope is `/usr`, `/etc`, `/opt`, `/b
 load (`weaver-admin-Spec-vm-environment` section 1, merged in WeaverAgent at 6b91747e). It
 judges the filesystem and not what lies on it, so an empty directory on the image's root
 fails it. As of 2026-11-16 that test is specified and not built, and nothing in this tree
-stands in for it.
+stands in for it. That Spec names `/mnt/weaver/model`, singular, as of 2026-11-16.
 
 **systemd's first-boot paths, left and named** (the operator's ruling of 2026-11-16).
 Beside cloud-init, the image keeps systemd's own first-boot paths as Ubuntu 26.04 ships
@@ -809,7 +813,13 @@ operator has placed one.
 The hostname is `weaver-appliance`. There is no site-check hook and no
 image key (both ruled out by the operator on 2026-11-14). A condition of the operator's
 site is a unit the operator adds over SSH to their own VM, and the image never learns of
-it. The first-boot pairing and the console's download are later acts.
+it. The appliance's setup script, to which its console goes straight in place of a login
+prompt, its drive setup, the survey script and the console's download (the profile's
+sections 3.5 and 8, by the operator's rulings of 2026-11-16 on the setup pages and his
+addendum of that day) are later acts. The script's first question setting root's
+password, and the operator's SSH key arriving through the console over TLS, change the
+first login above and the console proof of step 12. The pairing itself belongs to the
+connectors.
 
 **The host logic tests run on a host, with no root and no guest.** They are in
 `test/host/` beside the scripts. Each `t-*.sh` takes the functions it tests out of
