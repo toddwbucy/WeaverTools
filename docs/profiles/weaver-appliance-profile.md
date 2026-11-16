@@ -73,11 +73,11 @@ inside a running appliance.
 
 **One flow serves a virtual machine and a host** (the operator's rulings of 2026-11-16
 on the setup pages). **The console's shutdown stops the agent service and never the
-machine** (the operator's answers of 2026-11-16, recorded with the setup-pages rulings,
-item 14, in place of a shutdown command enabled on a virtual machine). Starting and
-stopping the machine stay the operator's, in the hypervisor. Whether the console can
-start the service again, and whether the command stays disabled on a host, are open.
-Nothing is built for it as of 2026-11-16.
+machine, and the console may start it again, on a virtual machine and on a host alike**
+(the operator's answers of 2026-11-16, recorded with the setup-pages rulings, items 14
+and 18, in place of a shutdown command enabled on a virtual machine). Starting and
+stopping the machine stay the operator's, in the hypervisor. Nothing is built for it as
+of 2026-11-16.
 
 **At the first boot the operator logs in at the console of the virtual machine, places
 their SSH key, and sets the network by hand** (ruling of 2026-11-15). The operator logs
@@ -185,8 +185,9 @@ refuses a load without it.
 
 **The agent's territory is `/var/lib/weaver-agent`, on the image's root.** The image is
 disposable. What the agent keeps is on the mounts. The next act moves the agent's home,
-with the agent's folder inside it, onto the state drive (the operator's answers of
-2026-11-16, recorded with the setup-pages rulings, item 15), per section 8.
+with the agent's folder inside it, onto the state drive at
+`/mnt/weaver/state/<agent-name>` (the operator's answers of 2026-11-16, recorded with
+the setup-pages rulings, items 15 and 19), per section 8.
 
 **The automatic save point that the unload writes is in scope, on the state disk** (the
 operator's rulings of 2026-11-16 on the setup pages). It is the existing save point
@@ -384,18 +385,24 @@ still has to be captured into the binary or held by the image.
 - Root's password set by the setup script's first question, in place of the first login
   of section 2 (the addendum, as the suite Planner recorded it). The next act.
 - The operator's SSH public key reaching the appliance through the console over TLS
-  after pairing. SSH takes that key and never a password (the same). The next act.
-- The survey script, run locally, its report crossing over TLS (the same rulings). The
-  next act.
-- The accounts the agent needs, shipped in the image: the agent's own and, by the suite
-  Planner's reading, the two connectors' accounts, which today `create-agent.sh` lays at
-  agent creation (the operator's answers of 2026-11-16, recorded with the setup-pages
-  rulings, item 17). The agent account's name is open, since the image is built before
-  the agent is named. The next act.
-- The agent as a real user whose home directory lives on the state drive, with the
-  agent's folder (declaration, logs, trace, save points) inside it, so the root disk
-  keeps nothing (the same, item 15). The home's exact path is open. The next act.
-- The console's shutdown as a stop of the agent service alone (the same, item 14).
+  after pairing. SSH takes that key and never a password (the addendum, as the suite
+  Planner recorded it). The setup script's drive-setup run fetches the key over the
+  paired link and writes it, since writing it is a root act and the connectors hold no
+  root, and running the setup command again writes a changed key (the suite Planner's
+  brief, recorded with the rulings). The next act.
+- The survey script, run locally, its report crossing over TLS (the operator's rulings of
+  2026-11-16 on the setup pages). The next act.
+- The accounts the agent needs, shipped in the image: a fixed agent account,
+  `weaver-agent` as proposed, and the two connectors' accounts, which today
+  `create-agent.sh` lays at agent creation (the operator's answers of 2026-11-16,
+  recorded with the setup-pages rulings, items 17 and 19). The next act.
+- The agent as a real user whose home directory lives on the state drive: once the agent
+  is named, the setup script points the fixed account's home at
+  `/mnt/weaver/state/<agent-name>`, with the agent's folder (declaration, logs, trace,
+  save points) inside it, so the root disk keeps nothing (the same, items 15 and 19).
+  The next act.
+- The console's shutdown as a stop of the agent service alone, which the console may
+  start again, on a virtual machine and on a host alike (the same, items 14 and 18).
 
 **Open, each with who settles it.**
 
