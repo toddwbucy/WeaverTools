@@ -715,6 +715,96 @@ print(got or "silent")
 PY
 }
 
+# refusal_judge OUT RC LABEL: one SSH login as root that must be refused, judged from
+# ssh -v's output (the file OUT) and its exit status RC. Refused: exit 255, at least one
+# "Authentications that can continue" line, each offering publickey alone, and "Permission
+# denied (publickey)". A line saying the login went through is a finding, as is any other
+# method offered or a server that named none (a connection cut before authentication, as
+# sshd's PerSourcePenalties cuts one, proves nothing). Prints one line, "refused: LABEL ..."
+# or a PROOF-FAIL line.
+refusal_judge() {
+    local out=$1 rc=$2 label=$3 m bad=""
+    m=$(grep -oE 'Authentications that can continue: [^[:space:]]*' "$out" | sed 's/^.*: //' | sort -u)
+    if [ -z "$m" ]; then bad+="the server named no methods; "
+    elif [ "$m" != publickey ]; then bad+="the server offered $(tr '\n' ' ' <<<"$m" | sed 's/ $//'); "
+    fi
+    grep -qE 'Authenticated to |Authentication succeeded' "$out" && bad+="the login went through; "
+    grep -qF 'Permission denied (publickey)' "$out" || bad+="no 'Permission denied (publickey)'; "
+    [ "$rc" = 255 ] || bad+="ssh exited $rc, not 255; "
+    if [ -z "$bad" ]; then echo "refused: $label (the server offers publickey alone)"
+    else echo "PROOF-FAIL: SSH as root with $label: ${bad%; }"; fi
+}
+
+# console_judge LOG HOST: the proof's first login at the console, judged from the driver's
+# LOG (console-drive.py: the console's bytes, each send marked on a line of its own), with
+# the terminal's escape sequences and carriage returns taken out. The login prompt before
+# root is sent greets as HOST. After root: no password asked and no refusal, the forced
+# change announced and a new password asked; after the first password, the same asked
+# again; after the second, no error from the change. Then the session's read line names
+# /dev/ttyS0, root, root's password usable (P) and one authorized key. Prints what it read,
+# then a PROOF-FAIL line for each finding.
+console_judge() {
+    python3 -I - "$1" "$2" <<'PY'
+import re, sys
+log, host = sys.argv[1], sys.argv[2]
+raw = open(log, "rb").read().decode("utf-8", "replace")
+esc = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1bP.*?\x1b\\|\x1b\[[0-9;?<=>!]*[ -/]*[@-~]|\x1b[()][0-9A-Za-z]|\x1b[=>78cDEHM]", re.S)
+text = esc.sub("", raw).replace("\r", "")
+parts = re.split(r"\n\[sent: (.*?)\]\n", text)
+outs, sents = parts[0::2], parts[1::2]
+fails = []
+try:
+    i = sents.index("root\\r")
+except ValueError:
+    i = None
+    fails.append("root was never sent at the console")
+if i is not None:
+    before, after_root = outs[i], outs[i + 1]
+    prompts = re.findall(r"(?m)^(\S+ login:)", before)
+    seen = prompts[-1] if prompts else "none"
+    print("the prompt before root: %s" % seen)
+    if seen != host + " login:":
+        fails.append("the console's prompt before root is '%s', not '%s login:'" % (seen, host))
+    if re.search(r"(?m)^\s*Password:", after_root):
+        fails.append("login asked root for a password")
+    if "Login incorrect" in after_root:
+        fails.append("login refused root")
+    if "You are required to change your password immediately" in after_root:
+        print("the forced change: announced")
+    else:
+        fails.append("login did not announce the forced change")
+    if "New password:" not in after_root:
+        fails.append("no new password was asked")
+    rest = sents[i + 1:]
+    if len(rest) < 2 or not rest[0].startswith("<file ") or not rest[1].startswith("<file "):
+        fails.append("the new password was not given twice")
+    else:
+        if "Retype new password:" not in outs[i + 2]:
+            fails.append("the new password was not asked again")
+        tail = "".join(outs[i + 3:])
+        for e in ("Authentication token manipulation error", "BAD PASSWORD", "do not match",
+                  "Login incorrect", "password unchanged", "maximum number of retries"):
+            if e in outs[i + 2] + tail:
+                fails.append("the change said '%s'" % e)
+        reads = re.findall(r"(?m)^READ tty=(\S+) user=(\S+) root=(\S+) keys=(\S+)\s*$", tail)
+        if not reads:
+            fails.append("the session's read line is absent")
+        else:
+            tty, user, st, keys = reads[-1]
+            print("the session: tty %s, user %s, root's password %s, %s authorized key(s)" % (tty, user, st, keys))
+            if tty != "/dev/ttyS0":
+                fails.append("the session's terminal is %s, not /dev/ttyS0" % tty)
+            if user != "root":
+                fails.append("the session's account is %s, not root" % user)
+            if st != "P":
+                fails.append("root's password reads %s after the change, not P" % st)
+            if keys != "1":
+                fails.append("root holds %s authorized key(s), not 1" % keys)
+for m in fails:
+    print("PROOF-FAIL: the first login: " + m)
+PY
+}
+
 # qemu_file FILE: an empty FILE that its owner and QEMU's account (QEMU_USER) alone may
 # write, for a file QEMU opens from its own command line (a serial console, a capture).
 # A file libvirt opens for a device becomes its own, unreadable here without root; a mode
@@ -729,6 +819,16 @@ qemu_file() {
     python3 -I -c 'import os, sys; os.close(os.open(sys.argv[1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600))' "$1" \
         && chmod 0600 "$1" && setfacl -b "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
         || die "cannot make $1, new, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
+}
+# qemu_dir DIR: a new directory in which QEMU makes the console's socket. Only its owner and
+# QEMU_USER may enter or write it, by a POSIX ACL, made as qemu_file makes a file; its
+# default ACL lets the owner connect to the socket QEMU makes there. An existing path or a
+# symbolic link is refused.
+qemu_dir() {
+    [ ! -e "$1" ] && [ ! -L "$1" ] || die "$1 already stands, or is a symbolic link: qemu_dir makes a new directory only"
+    mkdir -m 0700 -- "$1" && setfacl -b "$1" && setfacl -k "$1" \
+        && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rwx" "$1" && setfacl -d -m "u:$(id -un):rwx" "$1" \
+        || die "cannot make $1, new, open to its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
 
 # The MANIFEST's form has one definition, guest/template-steps' LINKS_MARK and
@@ -759,13 +859,14 @@ PROOF_NETPLAN=/etc/netplan/90-weaver-proof.yaml
 PROOF_MAC=52:54:00:57:45:01
 # What the proof's first boot changes in the MANIFEST's scope by design, with no seed and no
 # cloud-init (decision 16 of 2026-11-15). Changed: the machine identity, which the seal
-# leaves uninitialized. Added: the host keys' public halves, which sshd-keygen makes (the
-# private halves are never listed), the proof's own network file, and the account tools'
-# lock file, which any account tool leaves. The fourth and fifth builds' first boots ran
-# cloud-init from a seed, which also changed the account files and the hostname and added
-# its own netplan file and sudoers rule; none of those is expected now. No link is expected
-# to change. The offline mock names its own.
-FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/machine-id}
+# leaves uninitialized, and the shadow file, where the first login at the console sets
+# root's password (the operator's ruling of 2026-11-16). Added: the host keys' public
+# halves, which sshd-keygen makes (the private halves are never listed), the proof's own
+# network file, and the account tools' lock file, which any account tool leaves. The fourth
+# and fifth builds' first boots ran cloud-init from a seed, which also changed the account
+# files and the hostname and added its own netplan file and sudoers rule; none of those is
+# expected now. No link is expected to change. The offline mock names its own.
+FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/machine-id /etc/shadow}
 FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub $PROOF_NETPLAN /etc/.pwd.lock}
 # manifest_compare SEALED FILES LINKS: the sealed MANIFEST set against a booted guest's
 # listing of the same scope: FILES as sha256sum writes them, LINKS as links_format writes

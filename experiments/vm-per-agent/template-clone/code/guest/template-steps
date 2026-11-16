@@ -615,6 +615,16 @@ FIREWALL_DROPIN=/etc/systemd/system/nftables.service.d/weaver-appliance.conf
 FIREWALL_STOP='[Service]
 ExecStop=
 ExecStop=/usr/sbin/nft destroy table inet weaver_appliance'
+# The image's SSH settings (the operator's ruling of 2026-11-16: root, set at first login):
+# no password of any kind and no empty one, and root by key alone. sshd keeps the first
+# value it reads for each keyword, and Ubuntu's sshd_config includes sshd_config.d's files,
+# in name order, before its own settings, so this file, first by name, decides all four.
+SSHD_DROPIN=/etc/ssh/sshd_config.d/10-weaver-appliance.conf
+SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone.
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PermitRootLogin prohibit-password'
 UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-daily-upgrade.service
   motd-news.timer motd-news.service fwupd-refresh.timer fwupd-refresh.service
   update-notifier-download.timer update-notifier-motd.timer snapd.service snapd.socket"
@@ -741,6 +751,15 @@ EOF
     firewall_check || return 1
     echo "nftables.service enabled with the image's table; ufw installed and inactive"
 
+    section "SSH: keys alone"
+    # Written now, read at the next boot: the build account logs in by key, and none of the
+    # four settings bears on that.
+    printf '%s\n' "$SSHD_SETTINGS" | sudo tee "$SSHD_DROPIN" >/dev/null || return 1
+    sudo chmod 0644 "$SSHD_DROPIN" || return 1
+    sudo sshd -t 2>&1 || return 1
+    sshd_check || return 1
+    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone"
+
     section "updates masked, sources off"
     # shellcheck disable=SC2086
     sudo systemctl mask $UPDATE_UNITS >/dev/null 2>&1
@@ -836,6 +855,89 @@ firewall_check() {
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 
+# sshd_check: the image's SSH settings as sshd reads them: SSHD_DROPIN exactly as
+# SSHD_SETTINGS holds it, and sshd's merged configuration for root naming each of the
+# four, whatever the case of its keywords (OpenSSH 10.2 prints them in lower case, 10.6 as
+# written). sshd -T exits at once where it can load no host key, and the seal removes the
+# host keys, so it is given a throwaway key under /run, which the key probes do not scan,
+# and the key goes after. Prints each difference; exits 1 on any.
+sshd_check() {
+    local bad="" d t k
+    cmp -s <(printf '%s\n' "$SSHD_SETTINGS") "$SSHD_DROPIN" || bad+="$SSHD_DROPIN is not the image's settings. "
+    if d=$(sudo mktemp -d /run/weaver-sshd-check.XXXXXX); then
+        if sudo ssh-keygen -q -t ed25519 -N '' -C sshd-check -f "$d/k" </dev/null >/dev/null 2>&1 \
+            && t=$(sudo sshd -T -o HostKey="$d/k" -C user=root,host=localhost,addr=127.0.0.1 2>&1); then
+            for k in "passwordauthentication no" "kbdinteractiveauthentication no" \
+                     "permitemptypasswords no" "permitrootlogin prohibit-password"; do
+                grep -qixF "$k" <<<"$t" || bad+="sshd -T reads '$(grep -im1 "^${k%% *} " <<<"$t" || echo "no ${k%% *}")', not '$k'. "
+            done
+        else
+            bad+="sshd -T did not run ($(tail -1 <<<"${t:-no output}")) "
+        fi
+        sudo rm -f -- "$d/k" "$d/k.pub"; sudo rmdir -- "$d"
+    else
+        bad+="no scratch directory under /run for sshd -T. "
+    fi
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
+# accounts_judge MODE PASSWD SHADOW GSHADOW SHELLS BACKUP...: who can log in, from the
+# account files given. MODE final is the sealed image: root's password field empty and its
+# last change 0, so login asks for no password and requires a new one at once (the
+# operator's ruling of 2026-11-16), and root's shell a login shell. In both modes: every
+# password in the shadow file (field 2 of passwd is x), no account but root with a login
+# shell (one SHELLS lists), every account but root locked (its field begins ! or *), and no
+# password hash ($) in SHADOW, GSHADOW or any BACKUP (the tools' shadow- and gshadow-
+# copies). MODE pre, before the seal, leaves out the build account op, which the seal
+# removes, and root's two fields, which the seal sets. Prints each finding.
+accounts_judge() {
+    local mode=$1 passwd=$2 shadow=$3 gshadow=$4 shells=$5 f b=(); shift 5
+    # A backup the tools have not written is not a finding.
+    for f; do [ -e "$f" ] && b+=("$f"); done
+    awk -F: -v mode="$mode" '
+        FILENAME == ARGV[1] { if ($0 !~ /^[[:space:]]*(#|$)/) sh[$0] = 1; next }
+        FILENAME == ARGV[2] {
+            if (mode == "pre" && $1 == "op") next
+            if ($2 != "x") print $1 ": the password field of passwd is not x"
+            if ($1 == "root") { if (!($7 in sh)) print "root: the shell " $7 " is not a login shell"; next }
+            if ($7 in sh) print $1 ": the login shell " $7
+            next
+        }
+        FILENAME == ARGV[3] {
+            if (mode == "pre" && $1 == "op") next
+            if ($2 ~ /\$/) print $1 ": a password hash in " FILENAME
+            if ($1 == "root") {
+                if (mode == "final" && ($2 != "" || $3 != "0"))
+                    print "root: the password field is " ($2 == "" ? "empty" : "not empty") " and the last change " ($3 == "" ? "unset" : $3) ", not empty and 0"
+                next
+            }
+            if ($2 !~ /^[!*]/) print $1 ": not locked"
+            next
+        }
+        { if ($2 ~ /\$/) print $1 ": a password hash in " FILENAME }
+    ' "$shells" "$passwd" "$shadow" "$gshadow" "${b[@]}"
+}
+
+# firstboot_paths_check: systemd's first-boot paths as Ubuntu 26.04 ships them, present and
+# not masked (the operator's ruling of 2026-11-16: leave and name them). What an operator
+# feeds through them is the operator's. Prints each finding.
+firstboot_paths_check() {
+    local u s
+    grep -q 'ssh\.authorized_keys\.root' /usr/lib/tmpfiles.d/provision.conf 2>/dev/null \
+        || echo "/usr/lib/tmpfiles.d/provision.conf does not name ssh.authorized_keys.root"
+    [ -e /etc/tmpfiles.d/provision.conf ] || [ -L /etc/tmpfiles.d/provision.conf ] \
+        && echo "/etc/tmpfiles.d/provision.conf stands over the shipped file"
+    for u in systemd-firstboot.service systemd-creds.socket; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        case $s in ""|masked*) echo "$u is ${s:-not found}" ;; esac
+    done
+    [ -x /usr/lib/systemd/system-generators/systemd-ssh-generator ] \
+        || echo "systemd-ssh-generator is not among the system generators"
+    [ -e /etc/systemd/system-generators/systemd-ssh-generator ] || [ -L /etc/systemd/system-generators/systemd-ssh-generator ] \
+        && echo "systemd-ssh-generator is masked"
+    return 0
+}
+
 # SEAL_KEYS: the private keys the seal removes, besides the SSH host keys.
 SEAL_KEYS="/var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
   /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem"
@@ -898,6 +1000,13 @@ probes() {
     check "ssh not enabled for the first boot" "$(e=0; for u in ssh.service ssh.socket; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = enabled ] && e=1; done; [ "$e" = 1 ] || echo "neither ssh.service nor ssh.socket is enabled")"
     check "sshd-keygen not enabled for the first boot" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd-keygen.service is ${s:-unknown}, not enabled")"
     check "cloud-init not limited to SSH key, network and hostname" "$(cloud_init_check 2>&1)"
+    # SSH by key alone, and systemd's first-boot paths left and named (the operator's
+    # rulings of 2026-11-16). In both passes: the settings are written by the cleanup.
+    check "SSH settings not as built" "$(sshd_check 2>&1)"
+    check "systemd's first-boot paths masked or missing" "$(firstboot_paths_check 2>&1)"
+    # Who can log in. The pre pass leaves out the build account and root's two fields,
+    # which the final step removes and sets.
+    check "an account that can log in, other than as sealed" "$(sudo bash -c "$(declare -f accounts_judge); accounts_judge $mode /etc/passwd /etc/shadow /etc/gshadow /etc/shells /etc/shadow- /etc/gshadow-" 2>&1)"
     # The hostname: the image's own, and the build guest's name (the kernel's hostname,
     # which the seal does not change) nowhere in /etc. The pre pass leaves out the files the
     # final step removes.
@@ -1080,11 +1189,18 @@ seal_final() {
     userdel -r op 2>&1 || true
     getent group op >/dev/null && groupdel op
     rm -f /etc/sudoers.d/90-cloud-init-users
+    # Root, set at the first login (the operator's ruling of 2026-11-16): the password field
+    # emptied and the last change put at 0, so the console's login asks for no password and
+    # requires a new one before the shell. SSH refuses every password (SSHD_SETTINGS), so the
+    # first password is set at the console, and the image carries none. Every other account
+    # stays locked as shipped. The final probe reads both fields back.
+    passwd -d root 2>&1; chage -d 0 root 2>&1
+    echo "root: $(passwd -S root 2>&1)"
     # SSH stays enabled with no host key and no authorized key: at the first boot
     # sshd-keygen makes the host keys (the machine-id the seal leaves uninitialized makes
-    # the boot a first boot), and the operator places a key and reads the fingerprints
-    # after logging in (decision 16 of 2026-11-15). sshd-keygen is left as its package
-    # enables it; the probes require it enabled.
+    # the boot a first boot), and the operator, logged in at the console, places a key and
+    # reads the fingerprints (decision 16 of 2026-11-15). sshd-keygen is left as its
+    # package enables it; the probes require it enabled.
     # systemd's random seed and its credential secret are per machine: no copy of the image
     # ships either. systemd-random-seed.service saves a seed when it stops, so left running
     # it would write one at the power-off, after the final probe. It is stopped first (its
@@ -1096,9 +1212,9 @@ seal_final() {
     # shellcheck disable=SC2086
     rm -f $SEAL_KEYS
     cloud-init clean --logs --seed --machine-id --configs network 2>&1
-    # cloud-init disabled in the sealed image, the package kept (proposed on 2026-11-15,
-    # pending the operator): an image that acts on an attached seed has a first-boot path
-    # the profile does not state. The limit written by the cleanup stays beneath it.
+    # cloud-init disabled in the sealed image, the package kept (the operator's ruling of
+    # 2026-11-16): an image that acts on an attached seed has a first-boot path the profile
+    # does not state. The limit written by the cleanup stays beneath it.
     install -o root -g root -m 0644 /dev/null /etc/cloud/cloud-init.disabled
     rm -f /root/.bash_history /root/.lesshst /root/.wget-hsts /root/.python_history
     rm -rf /tmp/* /var/tmp/* /var/crash/* 2>/dev/null

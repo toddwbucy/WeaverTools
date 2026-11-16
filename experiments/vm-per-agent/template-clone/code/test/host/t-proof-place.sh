@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # The proof's offline placement (decision 16 of 2026-11-15): image_open's writable mode on
-# a scratch overlay, image_put, image_got, image_close, and proof_place whole. The disk is
+# a scratch overlay, image_put, image_got, image_close, and proof_place whole, which places
+# the network file alone (the key is placed at the console, the operator's ruling of
+# 2026-11-16). The disk is
 # built here: a GPT with one "Linux root (x86-64)" partition holding ext4, in a qcow2 made
 # read-only like a sealed image, and an overlay on it. qemu-storage-daemon exports it over
 # FUSE as the user. Pure logic: no root, no guest.
@@ -70,14 +72,18 @@ newov; mkdir -p "$T/pd" "$T/out"; cp "$T/ov.qcow2" "$T/pd/overlay.qcow2"
 ssh-keygen -q -t ed25519 -N '' -C stand-in -f "$T/key" </dev/null
 exec {PROOF_LOCK_FD}>>"$T/lock"
 ( KEY=$T/key; proof_place "$T/out" "$T/pd" ) >"$T/7.out" 2>&1; rc=$?
-check "proof_place passes, and says both files read back and the filesystem is clean" \
-    test "$rc" = 0 -a "$(tail -1 "$T/out/first-boot-place.txt")" = "placed: both files read back as written; the filesystem is clean"
-check "and records the key, the network file and debugfs's output, and leaves no export or place directory" \
-    test -s "$T/out/first-boot-authorized_keys.txt" -a -s "$T/out/first-boot-netplan.txt" -a -s "$T/out/first-boot-place-debugfs.txt" \
+check "proof_place passes, and says the network file reads back and the filesystem is clean" \
+    test "$rc" = 0 -a "$(tail -1 "$T/out/first-boot-place.txt")" = "placed: the network file reads back as written; the filesystem is clean"
+check "and records the network file and debugfs's output, no key, and leaves no export or place directory" \
+    test ! -e "$T/out/first-boot-authorized_keys.txt" -a -s "$T/out/first-boot-netplan.txt" -a -s "$T/out/first-boot-place-debugfs.txt" \
          -a ! -e "$T/pd/place" -a "$(qsd_count)" = 0
-check "the authorized key is the stand-in's public line, and the network file names the MAC address" \
-    test "$(cat "$T/out/first-boot-authorized_keys.txt")" = "$(cut -d' ' -f1,2 "$T/key.pub")" \
-         -a "$(grep -c "macaddress: \"$PROOF_MAC\"" "$T/out/first-boot-netplan.txt")" = 1
+check "the network file names the MAC address" \
+    bash -c '[ "$(grep -c "macaddress: \"$1\"" "$2")" = 1 ]' _ "$PROOF_MAC" "$T/out/first-boot-netplan.txt"
+( image_open "$T/pd/overlay.qcow2" "$T/r7"; image_got "$T/r7" /dev/null /root/.ssh/authorized_keys 0100600; echo "rc $?"; image_close "$T/r7" ) >"$T/7b.out" 2>&1
+# The stand-in tree is the test account's, so only the bytes are judged here: image_got
+# compares them before the owner.
+check "and root's authorized_keys in that overlay is still empty" \
+    test "$(grep -c '^/root/.ssh/authorized_keys: ' "$T/7b.out")" = 1 -a "$(grep -c 'other bytes\|not read back' "$T/7b.out")" = 0
 # 7. proof_place on the sealed file itself (a PDIR whose overlay is a standalone image)
 # refuses.
 mkdir -p "$T/pd2" "$T/out2"; cp "$T/sealed.qcow2" "$T/pd2/overlay.qcow2"; chmod 0644 "$T/pd2/overlay.qcow2"

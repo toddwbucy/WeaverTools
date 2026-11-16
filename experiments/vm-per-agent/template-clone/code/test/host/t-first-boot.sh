@@ -1,27 +1,106 @@
 #!/usr/bin/env bash
-# proof_first_boot's grading, with no guest: virt-install, xorriso, ssh-keyscan, the
-# guest's answers (gssh), the placement and the domain's removal stood in. Real: the seed
-# the image must ignore (the cloud-init proposal of 2026-11-15), the prompt check,
-# proof_keyscan's merge (the Planner's review of 2026-11-15, F11), the host-key match, the
-# GAP line, and manifest_compare with lib.sh's lists. Each run has its own VM_ROOT. Pure
-# logic: no root, no guest.
+# proof_first_boot's grading, with no guest: virt-install, xorriso, ssh-keyscan, ssh, the
+# guest's answers (gssh), the placement and the domain's removal stood in. The console is
+# a stand-in server on the unix socket the proof names to QEMU, playing getty, login's
+# forced change and a shell, or one of the ways they can go wrong. Real: the seed the image
+# must ignore (the operator's ruling of 2026-11-16), the prompt check, proof_keyscan's merge
+# (the Planner's review of 2026-11-15, F11), the SSH refusals and their judge, the first
+# login through console-drive.py and console_judge (the operator's ruling of 2026-11-16:
+# root, set at first login), the host-key match, and manifest_compare with lib.sh's lists.
+# Each run has its own VM_ROOT. Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need ssh-keygen python3
 BT=$CODE/build-template.sh
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
-eval "$(fn "$BT" proof_first_boot proof_keyscan)"
+eval "$(fn "$BT" proof_first_boot proof_keyscan proof_console proof_refusal)"
 NAME=mock-appliance PORT=2230 PROOF_OWN="" PROOF_FIRST_BOOT=4 PROOF_NORELABEL=stand-in
 for t in rsa ecdsa ed25519; do ssh-keygen -q -t $t -N '' -C x -f "$T/hk_$t" </dev/null; done
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/other_ed25519" </dev/null
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/proofkey" </dev/null; KEY=$T/proofkey
 proof_overlay() { : >"$1"; }
 qemu_file() { :; }
+qemu_dir() { mkdir -- "$1"; }
 proof_place() { echo "placed (stand-in)"; }
 proof_sleep() { :; }
 proof_inbound() { echo "== the base inbound policy (stand-in)"; }
 dom_drop() { return 0; }
 pool_drop() { return 0; }
-virt-install() { printf '%s\n' "$@" >"$T/vi-args"; sed 's/$/\r/' <"$T/console" >"$VM_ROOT/first/console.log"; }
+# virt-install: records its arguments, writes the boot's console text where QEMU's logfile
+# would be, and starts the stand-in console on the socket the -chardev names.
+virt-install() { local a sock log
+    printf '%s\n' "$@" >"$T/vi-args"
+    a=$(grep -o -- '-chardev socket,[^ ]*' "$T/vi-args")
+    sock=$(sed -n 's/.*,path=\([^,]*\),.*/\1/p' <<<"$a"); log=$(sed -n 's/.*,logfile=\([^,]*\).*/\1/p' <<<"$a")
+    sed 's/$/\r/' <"$T/console" >"$log"
+    python3 -I "$T/con-server.py" "$sock" "$log" "$(cat "$T/con-host")" "$(cat "$T/con-mode")" "$T/con-got" &
+    echo $! >"$T/con-pid"; }
+# The stand-in console: getty's prompt on an empty line; for root, login's forced change
+# (pass), or a password asked (asks-password), or a shell at once (no-change), or a change
+# the second entry does not match (mismatch); then a shell that echoes each line, answers
+# the read line (on /dev/tty1 in wrong-tty), and logs out on exit. It appends what it sends
+# to the logfile, as QEMU does, and records the passwords it was given in its last file. A
+# way that goes wrong ends the connection, so the driver stops at once.
+cat >"$T/con-server.py" <<'PY'
+import os, socket, sys
+path, logp, host, mode, gotp = sys.argv[1:6]
+srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+srv.bind(path); srv.listen(1); srv.settimeout(60)
+c, _ = srv.accept()
+log = open(logp, "ab", buffering=0)
+def out(t):
+    b = t.encode(); c.sendall(b); log.write(b)
+def line():
+    b = b""
+    while not b.endswith(b"\r"):
+        d = c.recv(1)
+        if not d:
+            sys.exit(0)
+        b += d
+    return b[:-1].decode()
+def prompt():
+    out("\x1b[?2004hroot@%s:~# " % host)
+while True:
+    l = line()
+    if l == "":
+        out("\r\n\x1b]3008;start=x;type=boot\x1b\\\r\nUbuntu 26.04.1 LTS %s ttyS0\r\n\r\n%s login: " % (host, host))
+    elif l == "root":
+        out("root\r\n")
+        break
+if mode == "asks-password":
+    out("Password: "); sys.exit(0)
+if mode == "no-change":
+    out("Welcome to Ubuntu 26.04.1 LTS\r\n"); prompt(); sys.exit(0)
+out("You are required to change your password immediately (administrator enforced).\r\nNew password: ")
+p1 = line(); out("\r\nRetype new password: ")
+p2 = line()
+open(gotp, "w").write(p1 + "\n" + p2 + "\n")
+if mode == "mismatch":
+    out("\r\nSorry, passwords do not match.\r\npasswd: Authentication token manipulation error\r\n"); sys.exit(0)
+out("\r\nWelcome to Ubuntu 26.04.1 LTS\r\n\r\n"); prompt()
+keys = 0
+while True:
+    l = line()
+    out(l + "\r\n\x1b[?2004l")
+    if l.startswith("install -d -m 0700 /root/.ssh && echo 'ssh-ed25519 "):
+        keys = 1
+    elif l.startswith("printf 'READ tty=%s"):
+        out("READ tty=%s user=root root=P keys=%d\r\n" % ("/dev/tty1" if mode == "wrong-tty" else "/dev/ttyS0", keys))
+    elif l == "exit":
+        out("logout\r\n\r\nUbuntu 26.04.1 LTS %s ttyS0\r\n\r\n%s login: " % (host, host)); break
+    prompt()
+PY
+# ssh: one refused login, as OpenSSH's -v reports it, or with T/ssh-pw-offered a server that
+# offers passwords too. A password try reads its helper, as ssh would, and records what the
+# helper gave in T/askpass.log. setsid runs the function, not a program.
+ssh() { local a k=0
+    for a; do [ "$a" = -i ] && k=1; done
+    if [ "$k" = 0 ]; then printf '%s\n' "$("$SSH_ASKPASS")" >>"$T/askpass.log"; fi
+    if [ -e "$T/ssh-pw-offered" ]; then echo "debug1: Authentications that can continue: publickey,password"
+    else echo "debug1: Authentications that can continue: publickey"; fi
+    echo "debug1: No more authentication methods to try."
+    echo "root@127.0.0.1: Permission denied (publickey)."
+    return 255; }
+setsid() { [ "$1" = -w ] && shift; "$@"; }
 # xorriso: writes the image it is asked for and records its path in T/iso-path, or with
 # T/no-iso fails. The proof removes its directory, the image with it, when it ends.
 xorriso() { local o=""; [ -e "$T/no-iso" ] && return 1
@@ -37,13 +116,14 @@ ssh-keyscan() { local p n=0
         fi
         printf '[127.0.0.1]:2330 %s\n' "$(cut -d' ' -f1,2 "$p")"
     done; }
-# The sealed MANIFEST: two files and one link. The booted listing changes machine-id and
-# adds the host keys' public halves and the proof's netplan file, or (T/booted-extra) also
-# changes /etc/passwd, which is not on the expected list.
+# The sealed MANIFEST: three files and one link. The booted listing changes machine-id and
+# the shadow file (the first login's password), and adds the host keys' public halves and
+# the proof's netplan file, or (T/booted-extra) also changes /etc/passwd, which is not on
+# the expected list.
 D=0000000000000000000000000000000000000000000000000000000000000000
 E=1111111111111111111111111111111111111111111111111111111111111111
 mkdir -p "$T/out"
-printf '%s  /etc/machine-id\n%s  /etc/passwd\n%s\n/etc/x\t/dev/null\n' "$D" "$D" "$LINKS_MARK" >"$T/out/MANIFEST"
+printf '%s  /etc/machine-id\n%s  /etc/passwd\n%s  /etc/shadow\n%s\n/etc/x\t/dev/null\n' "$D" "$D" "$D" "$LINKS_MARK" >"$T/out/MANIFEST"
 gssh() { shift
     case $* in
         *"ssh_host_*_key.pub"*) [ -e "$T/no-login" ] && { echo "root@127.0.0.1: Permission denied (publickey)."; return 255; }
@@ -52,11 +132,14 @@ gssh() { shift
             echo "== the seed's asks"; echo "not run: bootcmd"; echo "not run: runcmd"; echo "not made: the default account"
             echo "== the hostname"; echo "$IMAGE_HOSTNAME" ;;
         *"-type f"*) printf '%s  /etc/machine-id\n' "$E"; printf '%s  %s\n' "$([ -e "$T/booted-extra" ] && echo "$E" || echo "$D")" /etc/passwd
-            printf '%s  /etc/ssh/ssh_host_ed25519_key.pub\n%s  %s\n' "$E" "$E" "$PROOF_NETPLAN" ;;
+            printf '%s  /etc/shadow\n%s  /etc/ssh/ssh_host_ed25519_key.pub\n%s  %s\n' "$E" "$E" "$E" "$PROOF_NETPLAN" ;;
         *"-type l"*) printf '/etc/x\0/dev/null\0' ;;
         *) echo "unexpected: $*" ;;
     esac; }
-run() { VM_ROOT=$(mktemp -d "$T/vmroot.XXXXXX"); rm -f -- "$T/out/first-boot.txt" "$T/scan-count" "$T/vi-args"; ( proof_first_boot "$T/out" ) >"$T/run.out" 2>&1; }
+run() { VM_ROOT=$(mktemp -d "$T/vmroot.XXXXXX"); rm -f -- "$T/out/first-boot.txt" "$T/scan-count" "$T/vi-args" "$T/out/first-boot-session.log" "$T/askpass.log" "$T/con-got"
+    ( proof_first_boot "$T/out" ) >"$T/run.out" 2>&1; local rc=$?
+    kill "$(cat "$T/con-pid" 2>/dev/null)" 2>/dev/null; rm -f -- "$T/con-pid"; return "$rc"; }
+echo pass >"$T/con-mode"; echo "$IMAGE_HOSTNAME" >"$T/con-host"
 fb() { cat "$T/out/first-boot.txt"; }
 match3='^the host keys: MATCH, the guest holds each key SSH presents, and SSH presents each the guest holds (3 keys)$'
 
@@ -64,10 +147,31 @@ printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: ' "$IMAGE_HOSTNAME" "$IMAGE_HOS
 run
 check "a first boot that greets as the image, whose keys match, passes with no PROOF-FAIL" \
     test "$(fb | grep -c '^PROOF-FAIL')" = 0 -a "$(fb | grep -c "$match3")" = 1
-check "and names the console-login gap once, as a GAP line, not a failure" \
-    test "$(fb | grep -c '^GAP: the console login, and the account it lands in, wait for the operator')" = 1
-check "and its MANIFEST comparison marks machine-id, the host key and the netplan file expected, with 0 findings" \
-    test "$(fb | grep -c '(expected)$')" = 3 -a "$(fb | grep -c ', 0 finding(s)$')" = 1
+check "and names no gap: the console login is proved, not stood in for" test "$(fb | grep -c '^GAP')" = 0
+check "SSH refuses root three ways before the first login and two after, each offering publickey alone" \
+    test "$(fb | grep -c '^refused: .* (the server offers publickey alone)$')" = 5 \
+         -a "$(fb | sed -n '/^== SSH as root before the first login$/,/^== the first login, at the console$/p' | grep -c '^refused: ')" = 3 \
+         -a "$(fb | sed -n '/^== SSH as root after the first login$/,$p' | grep -c '^refused: ')" = 2
+check "the first login: greeted as the image, the change announced, root on ttyS0 with P and one key" \
+    test "$(fb | grep -cx "the prompt before root: $IMAGE_HOSTNAME login:")" = 1 -a "$(fb | grep -cx 'the forced change: announced')" = 1 \
+         -a "$(fb | grep -cx 'the session: tty /dev/ttyS0, user root, root.s password P, 1 authorized key(s)')" = 1
+check "the console was given the password file's one line, twice" \
+    test "$(sed -n 1p "$T/con-got")" = "$(sed -n 2p "$T/con-got")" -a "$(wc -l <"$T/con-got")" = 2 -a "$(sed -n 1p "$T/con-got" | wc -c)" = 25
+pw=$(sed -n 1p "$T/con-got")
+check "the SSH tries after the change offered that password, then a wrong one; before, an empty one and a wrong one" \
+    test "$(sed -n 1p "$T/askpass.log")" = "" -a "$(sed -n 3p "$T/askpass.log")" = "$pw" \
+         -a "$(grep -c '^not-the-password-' "$T/askpass.log")" = 2 -a "$(wc -l <"$T/askpass.log")" = 4
+check "the password is in no record the proof keeps: not the first boot's, the session's log or its steps" \
+    bash -c '! grep -rqF -- "$1" "$2"' _ "$pw" "$T/out"
+check "the session log marks each password as sent from its file, by name alone" \
+    test "$(grep -c '^\[sent: <file pw>\]$' "$T/out/first-boot-session.log")" = 2
+check "and the proof's directory, the password file with it, is gone" test ! -e "$VM_ROOT/first"
+check "the console is QEMU's socket, with its log beside it, under the first boot's own directory" \
+    test "$(grep -c -- "-chardev socket,id=con0,path=$VM_ROOT/first/con/console.sock,server=on,wait=off,logfile=$VM_ROOT/first/con/console.log -serial chardev:con0" "$T/vi-args")" = 1
+check "the first boot's console log is kept, the stand-in's session in it" \
+    test "$(grep -c 'You are required to change your password immediately' "$T/out/first-boot-console.log")" = 1
+check "and its MANIFEST comparison marks machine-id, the shadow file, the host key and the netplan file expected, with 0 findings" \
+    test "$(fb | grep -c '(expected)$')" = 4 -a "$(fb | grep -c '/etc/shadow.*(expected)$')" = 1 -a "$(fb | grep -c ', 0 finding(s)$')" = 1
 check "and reads the inbound policy" test "$(fb | grep -c 'base inbound policy (stand-in)')" = 1
 check "the in-guest reads parse as bash" bash -n "$T/reads.sh"
 check "a seed is attached, as a SATA cdrom beside the overlay" \
@@ -119,4 +223,30 @@ check "a key SSH presents that the guest does not hold fails, and nothing more i
 touch "$T/no-login"; run; rm -f -- "$T/no-login"
 check "a login as root that is refused fails the host-key match" \
     test "$(fb | grep -c '^PROOF-FAIL: the host keys:')" = 1 -a "$(fb | grep -c 'exited non-zero')" = 1
+printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: ' "$IMAGE_HOSTNAME" "$IMAGE_HOSTNAME" >"$T/console"
+# The first login, gone wrong each way the stand-in console plays.
+echo asks-password >"$T/con-mode"; run
+check "a login that asks root for a password fails, and the driver stops at once" \
+    test "$(fb | grep -c '^PROOF-FAIL: the first login: login asked root for a password$')" = 1 \
+         -a "$(fb | grep -c '^PROOF-FAIL: the first login: the console driver stopped (exit 1)')" = 1
+echo no-change >"$T/con-mode"; run
+check "a login that lands in a shell with no change required fails" \
+    test "$(fb | grep -c '^PROOF-FAIL: the first login: login did not announce the forced change$')" = 1 \
+         -a "$(fb | grep -c '^PROOF-FAIL: the first login: no new password was asked$')" = 1
+echo mismatch >"$T/con-mode"; run
+check "a change that fails fails, by its own words" \
+    test "$(fb | grep -c "^PROOF-FAIL: the first login: the change said 'Authentication token manipulation error'$")" = 1
+echo wrong-tty >"$T/con-mode"; run
+check "a session on another terminal than the serial console fails" \
+    test "$(fb | grep -c '^PROOF-FAIL: the first login: the session.s terminal is /dev/tty1, not /dev/ttyS0$')" = 1
+echo pass >"$T/con-mode"; touch "$T/ssh-pw-offered"; run; rm -f -- "$T/ssh-pw-offered"
+check "a server that offers passwords fails each of the five tries" \
+    test "$(fb | grep -c '^PROOF-FAIL: SSH as root with .*: the server offered publickey,password$')" = 5 \
+         -a "$(fb | grep -c '^PROOF-FAIL: SSH as root with the proof key, not yet placed: the server offered publickey,password$')" = 1
+# A VM_ROOT whose socket path a unix socket cannot hold refuses before anything boots.
+long=$T/$(printf 'x%.0s' $(seq 120)); mkdir -p "$long"
+rm -f -- "$T/vi-args"; ( VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?
+check "a socket path past 107 bytes refuses, and nothing boots" \
+    test "$rc" != 0 -a "$(grep -c "is longer than a unix socket allows (107 bytes); set VM_ROOT shorter; nothing booted" "$T/long.out")" = 1 \
+         -a "$(grep -c "$long" "$T/vi-args" 2>/dev/null || echo 0)" = 0
 finish

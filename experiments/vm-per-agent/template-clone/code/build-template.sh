@@ -309,8 +309,10 @@ proof_cleanup() {
         # The first boot's offline placement, where a signal cut it short: its export is
         # stopped before its directory goes.
         [ "$d" != first ] || image_close "$VM_ROOT/first/place" || true
-        for f in console.log boot.pcap; do
-            [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-$f" 2>/dev/null || true
+        # The first boot's console log sits beside its socket, under con/. The password
+        # file under secret/ goes with the directory.
+        for f in console.log con/console.log boot.pcap; do
+            [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-${f##*/}" 2>/dev/null || true
         done
         pool_drop "$VM_ROOT/$d" || true
         rm -rf -- "${VM_ROOT:?}/$d" || true
@@ -569,21 +571,21 @@ stamp_one() {
     printf '%s\n' "$v"
 }
 
-# proof_place OUT PDIR: the operator's two by-hand steps after the console login, a key
-# placed and the network set (decision 16 of 2026-11-15), written into the proof's own
-# overlay offline, before its boot, and never into the image: the proof key as root's
-# authorized key (root is the image's one login account) and a netplan file naming the
-# static address QEMU's user network forwards to (10.0.2.15), its gateway and its resolver,
-# matched by the NIC's MAC address. restrict=on's DHCP offers no gateway and no resolver,
-# and netplan's wait for the network on 26.04 waits for a resolver (--dns): a boot with no
-# network named waited 120 s (measured on the fourth build). Each file is read back from the
-# overlay opened again read-only, with its owner and mode, and the filesystem is checked
-# (e2fsck -n), before anything boots. image_open opens an overlay writable, never the
-# sealed image.
+# proof_place OUT PDIR: one of the operator's two by-hand steps after the console login,
+# the network set (decision 16 of 2026-11-15), written into the proof's own overlay
+# offline, before its boot, and never into the image: a netplan file naming the static
+# address QEMU's user network forwards to (10.0.2.15), its gateway and its resolver,
+# matched by the NIC's MAC address. Placed offline so SSH answers from the boot, and the
+# proof can show it refusing root before the first login. The other step, the key, is
+# placed at the console after that login (proof_console). restrict=on's DHCP offers no
+# gateway and no resolver, and netplan's wait for the network on 26.04 waits for a
+# resolver (--dns): a boot with no network named waited 120 s (measured on the fourth
+# build). The file is read back from the overlay opened again read-only, with its owner
+# and mode, and the filesystem is checked (e2fsck -n), before anything boots. image_open
+# opens an overlay writable, never the sealed image.
 proof_place() {
     local out=$1 pdir=$2 r=$2/place rc=0
     mkdir -- "$pdir/put" "$r"
-    cut -d' ' -f1,2 "$KEY.pub" >"$pdir/put/authorized_keys"
     cat >"$pdir/put/netplan.yaml" <<EOF
 network:
   version: 2
@@ -598,52 +600,53 @@ network:
       nameservers:
         addresses: [10.0.2.3]
 EOF
-    cp "$pdir/put/authorized_keys" "$out/first-boot-authorized_keys.txt"
     cp "$pdir/put/netplan.yaml" "$out/first-boot-netplan.txt"
     ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" rw ) \
         || die "the proof's overlay could not be opened writable (above); nothing booted"
-    ( image_put "$r" "$pdir/put/authorized_keys" /root/.ssh/authorized_keys 0100600 \
-        && image_put "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 ) || rc=$?
+    ( image_put "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 ) || rc=$?
     cp "$r/put.log" "$out/first-boot-place-debugfs.txt" 2>/dev/null || true
     image_close "$r"
     rm -f -- "$r/put.cmd" "$r/put.log"
-    [ "$rc" = 0 ] || die "the proof's two files could not be written into its overlay (above, and $out/first-boot-place-debugfs.txt); nothing booted"
+    [ "$rc" = 0 ] || die "the proof's network file could not be written into its overlay (above, and $out/first-boot-place-debugfs.txt); nothing booted"
     ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" ) \
-        || die "the proof's overlay could not be opened again to read its two files back (above); nothing booted"
-    # Both files read back as written, and the filesystem clean, or nothing boots.
+        || die "the proof's overlay could not be opened again to read its network file back (above); nothing booted"
+    # The file read back as written, and the filesystem clean, or nothing boots.
     {
         rc=0
-        image_got "$r" "$pdir/put/authorized_keys" /root/.ssh/authorized_keys 0100600 || rc=1
         image_got "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 || rc=1
         echo "== e2fsck -fn on the overlay's root filesystem"
         e2fsck -fn "$r/root.raw" 2>&1 || { echo "e2fsck exited $?"; rc=1; }
-        if [ "$rc" = 0 ]; then echo "placed: both files read back as written; the filesystem is clean"
+        if [ "$rc" = 0 ]; then echo "placed: the network file reads back as written; the filesystem is clean"
         else echo "NOT PLACED"; fi
     } >"$out/first-boot-place.txt" 2>&1
     image_close "$r"
     rmdir -- "$r"
     cat "$out/first-boot-place.txt"
-    [ "$(tail -1 "$out/first-boot-place.txt")" = "placed: both files read back as written; the filesystem is clean" ] \
-        || die "the proof's two files did not read back as written, or the filesystem is not clean ($out/first-boot-place.txt); nothing booted"
+    [ "$(tail -1 "$out/first-boot-place.txt")" = "placed: the network file reads back as written; the filesystem is clean" ] \
+        || die "the proof's network file did not read back as written, or the filesystem is not clean ($out/first-boot-place.txt); nothing booted"
 }
 
-# proof_first_boot OUT: a second overlay, booted as an operator's first boot is, with the
-# operator's two by-hand steps after logging in placed in it offline (proof_place), and a
-# seed attached that the image must ignore, since it disables cloud-init (proposed on
-# 2026-11-15, pending the operator): its meta-data names a key and a hostname, its
-# user-data a bootcmd, a runcmd and the default account, and none may be acted on. The
-# console login itself, and the account it lands in, wait for the operator's ruling: the
-# proof names that gap and does not stand in for it. At this boot sshd-keygen makes the host
-# keys. The proof waits for the console's login prompt, which must greet with the image's
-# hostname (IMAGE_HOSTNAME), scans the keys SSH presents, logs in under them as root with
-# the key it placed, and reads the host keys' fingerprints in the guest, as the operator
-# does after logging in: each key SSH presents must be one the guest made. Only on that
-# match does it read cloud-init's state (disabled, the seed ignored), the hostname, the network
-# as the overlay named it, SSH's units and sshd-keygen's run, the listeners, and the
-# stamp's commits, set the MANIFEST against the booted guest's files and links
-# (manifest_compare), and read the base inbound policy (proof_inbound). The network is
-# QEMU's restrict=on: the guest reaches neither the host nor beyond it, and the SSH forward
-# still answers.
+# proof_first_boot OUT: a second overlay, booted as an operator's first boot is, with a seed
+# attached that the image must ignore, since it disables cloud-init (the operator's ruling of
+# 2026-11-16): its meta-data names a key and a hostname, its user-data a bootcmd, a runcmd and
+# the default account, and none may be acted on. The operator's network, set by hand after
+# logging in, is placed in the overlay offline (proof_place), so SSH answers from the boot;
+# everything else the operator does, the proof does at the console. At this boot
+# sshd-keygen makes the host keys. The proof waits for the console's login prompt, which
+# must greet with the image's hostname (IMAGE_HOSTNAME), and scans the keys SSH presents.
+# Before the first login it tries root over SSH with an empty password, a wrong one and the
+# proof key, and each must be refused (proof_refusal). Then the first login, at the serial
+# console through QEMU's socket (proof_console): root, no password asked, the change
+# required and made, and the proof key placed from that session (the operator's ruling of
+# 2026-11-16: root, set at first login). It then logs in over SSH as root with that key and
+# reads the host keys' fingerprints, as the operator does: each key SSH presents must be
+# one the guest made. Only on that match does it read cloud-init's state (disabled, the seed
+# ignored), the hostname, the network as the overlay named it, SSH's units and
+# sshd-keygen's run, the listeners, and the stamp's commits, try root over SSH again with
+# the password the console set and a wrong one (each refused), set the MANIFEST against
+# the booted guest's files and links (manifest_compare), and read the base inbound policy
+# (proof_inbound). The network is QEMU's restrict=on: the guest reaches neither the host nor
+# beyond it, and the SSH forward still answers.
 proof_first_boot() {
     local out=$1 pn=$NAME-first pdir=$VM_ROOT/first port=${PROOF_PORT:-$((PORT + 100))}
     # The base inbound policy's probe port: TCP 8080 in the guest, forwarded from the next
@@ -652,8 +655,23 @@ proof_first_boot() {
     local t=0 limit=${PROOF_FIRST_BOOT:-300} sfp gfp gfps prompt
     mkdir -- "$pdir"; PROOF_OWN="$PROOF_OWN first"
     proof_overlay "$pdir/overlay.qcow2"
-    qemu_file "$pdir/console.log"
+    # The console: QEMU's socket, which the first login is typed through, and its log of
+    # every byte the console sent from the firmware on. A unix socket's path holds at most
+    # 107 bytes, and QEMU cannot start on a longer one.
+    local sock=$pdir/con/console.sock
+    [ "${#sock}" -le 107 ] \
+        || die "the console's socket path, $pdir/con/console.sock, is longer than a unix socket allows (107 bytes); set VM_ROOT shorter; nothing booted"
+    qemu_dir "$pdir/con"
+    qemu_file "$pdir/con/console.log"
     proof_place "$out" "$pdir"
+    # The password the first login sets, made here and read only from this file: it is
+    # typed at the console and offered to SSH, never printed or logged, and removed after
+    # the last try.
+    mkdir -m 0700 -- "$pdir/secret"
+    ( umask 077; python3 -I -c 'import secrets, string; a = string.ascii_letters + string.digits; print("".join(secrets.choice(a) for _ in range(24)))' >"$pdir/secret/pw" ) \
+        || die "the first login's password could not be made; nothing booted"
+    printf '#!/bin/sh\nexec cat "%s"\n' "$pdir/secret/askpass.pw" >"$pdir/secret/askpass" && chmod 0700 "$pdir/secret/askpass" \
+        || die "the SSH tries' password helper could not be made; nothing booted"
     mkdir -- "$pdir/seed"
     printf 'instance-id: %s\nlocal-hostname: weaver-proof-seed\npublic-keys:\n  - %s\n' \
         "$pn-1" "$(cut -d' ' -f1,2 "$KEY.pub")" >"$pdir/seed/meta-data"
@@ -677,7 +695,7 @@ EOF
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
         --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -chardev file,id=con0,path=$pdir/console.log -serial chardev:con0" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -chardev socket,id=con0,path=$pdir/con/console.sock,server=on,wait=off,logfile=$pdir/con/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/first-boot-virt-install.txt" 2>&1
     # Wait for the console's login prompt, then scan once. Each scan connection leaves
@@ -689,7 +707,7 @@ EOF
     # grep reads the console through a process substitution: under pipefail, a pipe from tr
     # would fail once grep had its match and tr had more to write, and the wait would run to
     # its bound with the prompt on the console.
-    until grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/console.log" 2>/dev/null); do
+    until grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); do
         t=$((t + 2)); [ "$t" -lt "$limit" ] || break; sleep 2
     done
     local want=3 n=0
@@ -700,12 +718,19 @@ EOF
     fi
     {
         echo "== first boot, $t s to the console's login prompt (bound $limit s); $n more scans"
-        echo "GAP: the console login, and the account it lands in, wait for the operator's ruling (decision 16 of 2026-11-15). The proof does not stand in for them: it logs in over SSH as root, with the key it placed in its own overlay."
-        prompt=$(tr -d '\r' <"$pdir/console.log" | grep -aoE '^[^[:space:]]+ login:' | tail -1 || true)
+        prompt=$(tr -d '\r' <"$pdir/con/console.log" | grep -aoE '^[^[:space:]]+ login:' | tail -1 || true)
         echo "== the console's login prompt: ${prompt:-none}"
         [ "$prompt" = "$IMAGE_HOSTNAME login:" ] || echo "PROOF-FAIL: the console's login prompt is '${prompt:-none}', not the image's hostname, $IMAGE_HOSTNAME"
         echo "== the keys SSH presents"; ssh-keygen -lf "$pdir/scanned" 2>&1 || true
         sfp=$(ssh-keygen -lf "$pdir/scanned" 2>/dev/null | grep -oE 'SHA256:[A-Za-z0-9+/]{43}' | sort -u || true)
+        # Before the first login root's password is empty and expired, and no key is
+        # authorized: SSH must refuse root every way.
+        echo "== SSH as root before the first login"
+        proof_refusal "$port" "$pdir/scanned" "$pdir" "an empty password" empty
+        proof_refusal "$port" "$pdir/scanned" "$pdir" "a wrong password" wrong
+        proof_refusal "$port" "$pdir/scanned" "$pdir" "the proof key, not yet placed" key
+        echo "== the first login, at the console"
+        proof_console "$out" "$pdir"
         # The operator's read after logging in: the host keys' fingerprints, in the guest.
         echo "== the host keys' fingerprints, read in the guest as root, under the keys SSH presented"
         gfp=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
@@ -778,6 +803,10 @@ EOF
                 [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
                 || echo "PROOF-FAIL: the login as root, or its reads, exited $?"
+            # The password is set now, and SSH must still refuse it.
+            echo "== SSH as root after the first login"
+            proof_refusal "$port" "$pdir/scanned" "$pdir" "the password set at the console" "$pdir/secret/pw"
+            proof_refusal "$port" "$pdir/scanned" "$pdir" "a wrong password" wrong
             # The MANIFEST set against the booted guest, judged here: its files listed as the
             # seal lists them, less the host keys' private halves (no digest of a private key
             # is made), and its links formatted here as the seal formats them. A listing that
@@ -804,12 +833,77 @@ EOF
             echo "PROOF-FAIL: the host keys: the guest's fingerprints do not name the keys SSH presents"
             echo "guest: ${gfps:-none}"; echo "ssh: ${sfp:-none}"
         fi
+        rm -f -- "$pdir/secret/pw" "$pdir/secret/askpass.pw"
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
     dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
-    tr -d '\r' <"$pdir/console.log" >"$out/first-boot-console.log" || true
+    tr -d '\r' <"$pdir/con/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
+}
+
+# proof_console OUT PDIR: the first login, typed at the serial console through QEMU's
+# socket in PDIR/con by console-drive.py, as the operator logs in: root at the prompt, the
+# password from PDIR/secret/pw given twice when the change is asked, then, in that session,
+# the proof key placed as root's one authorized key, one read line (the terminal, the
+# account, root's password state, the keys held), and the logout. The steps and the
+# driver's log go to OUT; neither holds the password, which is sent from its file.
+# console_judge grades the log; a driver that stopped is a PROOF-FAIL too.
+proof_console() {
+    local out=$1 pdir=$2 rc
+    cut -d' ' -f1,2 "$KEY.pub" >"$out/first-boot-authorized_keys.txt"
+    cat >"$out/first-boot-session.steps" <<EOF
+# The first login at the console (the operator's ruling of 2026-11-16: root, set at first login).
+send \\r
+expect 120 login:
+send root\\r
+expect 60 New password:
+sendfile $pdir/secret/pw
+expect 30 Retype new password:
+sendfile $pdir/secret/pw
+expect 60 root@[^ ]*:~#
+send install -d -m 0700 /root/.ssh && echo '$(cat "$out/first-boot-authorized_keys.txt")' >/root/.ssh/authorized_keys && chmod 0600 /root/.ssh/authorized_keys\\r
+expect 30 root@[^ ]*:~#
+send printf 'READ tty=%s user=%s root=%s keys=%s\\\\n' "\$(tty)" "\$(id -un)" "\$(passwd -S root | cut -d' ' -f2)" "\$(wc -l </root/.ssh/authorized_keys)"\\r
+expect 30 READ tty=/\\S+ user=\\S+ root=\\S+ keys=\\S+
+send exit\\r
+expect 60 login:
+EOF
+    python3 -I "$LIB_DIR/console-drive.py" "$pdir/con/console.sock" "$out/first-boot-session.log" "$out/first-boot-session.steps"
+    rc=$?
+    [ "$rc" = 0 ] || echo "PROOF-FAIL: the first login: the console driver stopped (exit $rc), above"
+    console_judge "$out/first-boot-session.log" "$IMAGE_HOSTNAME"
+}
+
+# proof_refusal PORT KNOWN PDIR LABEL SOURCE: one SSH login as root through the forward at
+# PORT, under the host keys in KNOWN, which must be refused (refusal_judge). SOURCE key is
+# the proof key; empty is an empty password, wrong one the guest never had, and a file the
+# password in it, each given through SSH_ASKPASS with public keys off. The helper reads the
+# password from PDIR/secret, and the client sends it only if the server offers a password
+# method. ssh -v's output stays in PDIR and holds no password.
+proof_refusal() {
+    local port=$1 known=$2 pdir=$3 label=$4 src=$5 o rc
+    o=$(mktemp "$pdir/refusal.XXXXXX") || { echo "PROOF-FAIL: SSH as root with $label: no file for ssh's output"; return 0; }
+    if [ "$src" = key ]; then
+        ssh -v -i "$KEY" -p "$port" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=10 \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$known" -o GlobalKnownHostsFile=/dev/null \
+            root@127.0.0.1 true >"$o" 2>&1 </dev/null
+        rc=$?
+    else
+        case $src in
+            empty) ( umask 077; : >"$pdir/secret/askpass.pw" ) ;;
+            wrong) ( umask 077; printf 'not-the-password-%s\n' "$RANDOM$RANDOM" >"$pdir/secret/askpass.pw" ) ;;
+            *) ( umask 077; cp -- "$src" "$pdir/secret/askpass.pw" ) ;;
+        esac
+        SSH_ASKPASS=$pdir/secret/askpass SSH_ASKPASS_REQUIRE=force DISPLAY= setsid -w ssh -v -p "$port" \
+            -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive \
+            -o NumberOfPasswordPrompts=1 -o ConnectTimeout=10 -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$known" -o GlobalKnownHostsFile=/dev/null \
+            root@127.0.0.1 true >"$o" 2>&1 </dev/null
+        rc=$?
+        rm -f -- "$pdir/secret/askpass.pw"
+    fi
+    refusal_judge "$o" "$rc" "$label"
 }
 
 # proof_keyscan PORT FILE: the keys SSH presents on the forward at PORT, added to FILE.
