@@ -610,15 +610,15 @@ UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-dail
 # again before it writes anything.
 cleanup() {
     [ -s "$BUILD/keep-driver" ] || { echo "the driver step has not passed; the cleanup keeps its packages"; return 1; }
-    local before keep p added purge sim
-    before=$(used_bytes)
+    local before keep p added purge sim brc
+    before=$(used_bytes); brc=$?
     section before; df -h /
     du -sh "$WA" "$WW" "$HOME/target" "$HOME/.cargo" "$HOME/.rustup" /usr/local/cuda-13.4 /usr/local/cuda-13.3 2>/dev/null
     # A rerun keeps the first run's figure: the size before any cleanup.
     if [ -s "$BUILD/stamp.d/size.before-cleanup-used-bytes" ]; then
         echo "kept from the first run: size.before-cleanup-used-bytes = $(cat "$BUILD/stamp.d/size.before-cleanup-used-bytes")"
     else
-        record size.before-cleanup-used-bytes "$before" || return 1
+        record_read size.before-cleanup-used-bytes "$brc" "$before" || return 1
     fi
 
     section "1-2. the source trees, their build directories, the Rust toolchain and cargo's caches"
