@@ -445,24 +445,39 @@ image_get() {
 # image_files DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
 # bounded at 12. debugfs ls -p prints /inode/mode/uid/gid/name/size/ per entry, the mode in
 # six octal digits (040 a directory, 100 a regular file). Nothing where PATH is absent.
+# debugfs exits 0 on a listing it cannot make and says so on stderr, so its lines are read
+# together: its banner is passed over, and any other line, or a directory past the bound,
+# ends the listing with status 2 and a line on stderr. A listing that did not complete is
+# not an empty one. A directory debugfs lists as empty and reports nothing about is empty
+# here too.
 image_files() {
-    local dir=$1 path=${2%/} depth=${3:-0} ino mode uid gid name size rest
-    [ "$depth" -lt 12 ] || return 0
-    debugfs -c -R "ls -p \"$path\"" "$dir/root.raw" 2>/dev/null |
-        while IFS=/ read -r _ ino mode uid gid name size rest; do
-            case $name in '' | . | ..) continue ;; esac
-            case $mode in
-                040*) image_files "$dir" "$path/$name" $((depth + 1)) ;;
-                100*) printf '%s %s\n' "${size:-0}" "$path/$name" ;;
-            esac
-        done
+    local dir=$1 path=${2%/} depth=${3:-0} o l ino mode uid gid name size rest
+    [ "$depth" -lt 12 ] || { echo "image_files: $path is past the depth bound of 12" >&2; return 2; }
+    o=$(debugfs -c -R "ls -p \"$path\"" "$dir/root.raw" 2>&1) \
+        || { echo "image_files: debugfs exited non-zero on $path" >&2; return 2; }
+    while IFS= read -r l; do
+        case $l in
+            /*/*/*/*/*/*/*) ;;
+            '' | 'debugfs '[0-9]* | 'catastrophic mode'*) continue ;;
+            "$path: File not found by ext2_lookup"*) [ "$depth" = 0 ] && return 0
+                printf 'image_files: %s: %s\n' "$path" "$l" >&2; return 2 ;;
+            *) printf 'image_files: %s: %s\n' "$path" "$l" >&2; return 2 ;;
+        esac
+        IFS=/ read -r _ ino mode uid gid name size rest <<<"$l"
+        case $name in '' | . | ..) continue ;; esac
+        case $mode in
+            040*) image_files "$dir" "$path/$name" $((depth + 1)) || return 2 ;;
+            100*) printf '%s %s\n' "${size:-0}" "$path/$name" ;;
+        esac
+    done <<<"$o"
 }
 # image_late_writes DIR: what a sealed image holds that its seal's final probe refuses, so
 # written after that probe (at the power-off): systemd's random seed, its credential secret,
-# and any non-empty file under /var/log. Each is a PROOF-FAIL line. The login records under
-# /var/lib (wtmpdb, lastlog) are listed for the measure and not judged.
+# and any non-empty file under /var/log. Each is a PROOF-FAIL line, and so is a listing of
+# /var/log that does not complete. The login records under /var/lib (wtmpdb, lastlog) are
+# listed for the measure and not judged.
 image_late_writes() {
-    local dir=$1 f p rc
+    local dir=$1 f p rc files
     for f in /var/lib/systemd/random-seed /var/lib/systemd/credential.secret; do
         rc=0; image_state "$dir" "$f" 2>&1 || rc=$?
         case $rc in
@@ -475,13 +490,19 @@ image_late_writes() {
     if [ "$rc" != 0 ]; then
         echo "PROOF-FAIL: the offline read could not list /var/log in the sealed image"
     else
-        image_files "$dir" /var/log | awk '$1 > 0 { s = $1; sub(/^[0-9]+ /, "")
-            print "PROOF-FAIL: a log written after the final probe: " $0 " (" s " bytes)"; n++ }
-            END { if (!n) print "no non-empty file under /var/log" }'
+        # image_files's own line goes to stderr, which the proof's record also takes.
+        rc=0; files=$(image_files "$dir" /var/log) || rc=$?
+        if [ "$rc" != 0 ]; then
+            echo "PROOF-FAIL: the offline read could not list every directory under /var/log in the sealed image"
+        else
+            printf '%s\n' "$files" | awk '$1 > 0 { s = $1; sub(/^[0-9]+ /, "")
+                print "PROOF-FAIL: a log written after the final probe: " $0 " (" s " bytes)"; n++ }
+                END { if (!n) print "no non-empty file under /var/log" }'
+        fi
     fi
     for p in /var/lib/wtmpdb /var/lib/lastlog; do
         echo "== $p, listed and not judged"
-        image_files "$dir" "$p" | sed 's/^/  /'
+        { image_files "$dir" "$p" 2>&1 || echo "(this listing did not complete)"; } | sed 's/^/  /'
     done
 }
 # The ggml CUDA library the image ships, and the device code it must carry (the operator's

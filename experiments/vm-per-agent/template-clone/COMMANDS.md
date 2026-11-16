@@ -176,16 +176,21 @@ export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86
 export VERSION=1.0
 export WA_COMMIT=d640ea818a58b68984e540abfd67c58e5351eb06   # WeaverAgent main, 2026-11-14
 export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 2026-11-14
-code/build-template.sh create
-for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
-  code/build-template.sh step "$s" || break
-done
-# From the fifth build on, the offline mock runs in the guest between connectors and
-# cleanup (it refuses on a host): code/build-template.sh mock
-code/build-template.sh seal
-# where seal's own read of the verdict failed (it says so): code/build-template.sh verdict
-code/build-template.sh proof     # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
-# From 2026-11-15: print the version's tag for the operator. It applies nothing.
-code/build-template.sh tag
-code/build-template.sh destroy
+# One subshell: it stops at the first command that fails, so nothing after a failed step
+# runs and `destroy` cannot take the build guest. Record the break, rerun that step, then
+# go on from it by hand. A pasted block that stops leaves the operator's shell open.
+(
+  code/build-template.sh create || exit
+  for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
+    code/build-template.sh step "$s" || exit
+  done
+  # From the fifth build on, the offline mock runs in the guest between connectors and
+  # cleanup (it refuses on a host): code/build-template.sh mock
+  code/build-template.sh seal || exit
+  # where seal's own read of the verdict failed (it says so): code/build-template.sh verdict
+  code/build-template.sh proof || exit   # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
+  # From 2026-11-15: print the version's tag for the operator. It applies nothing.
+  code/build-template.sh tag || exit
+  code/build-template.sh destroy
+)
 ```

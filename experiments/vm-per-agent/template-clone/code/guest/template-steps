@@ -81,6 +81,23 @@ record() {
     printf 'stamp: %s = %s\n' "$k" "$*"
 }
 sha() { sha256sum "$1" | cut -d' ' -f1; }
+# record_sha KEY FILE [BEFORE [AFTER]]: FILE's sha256 recorded as KEY's value, with BEFORE
+# and AFTER around it where the value carries more. The digest is read before the record
+# is made: inside record's own argument a failed sha is lost, and the record would be
+# made without it.
+record_sha() {
+    local k=$1 f=$2 d
+    d=$(sha "$f") && [[ "$d" =~ ^[0-9a-f]{64}$ ]] || { echo "record: no sha256 of $f for $k"; return 1; }
+    record "$k" "${3:-}$d${4:-}"
+}
+# record_read KEY STATUS READ [MORE...]: READ, and MORE after it, recorded as KEY's value
+# where STATUS, the exit status of the read that gave READ, is 0 and READ is not empty. A
+# read that failed or gave nothing fails the step, for the reason record_sha gives.
+record_read() {
+    local k=$1 rc=$2; shift 2
+    [ "$rc" = 0 ] && [ -n "${1:-}" ] || { echo "record: $k could not be read (status $rc)"; return 1; }
+    record "$k" "$@"
+}
 used_bytes() { df -B1 --output=used / | tail -1 | tr -d ' '; }
 # one_kernel: one version-named tree under /lib/modules, the running kernel's. The 615
 # module package also ships an empty /lib/modules/kernel/nvidia-615-open, which is no
@@ -135,10 +152,11 @@ facts() {
     record appliance.version "$VERSION" || return 1
     record os "$PRETTY_NAME" || return 1
     record kernel "$KVER" || return 1
-    record build.vcpus "$(nproc)" || return 1
-    record build.memory-mib "$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo)" || return 1
-    record build.account "$(id -un) $HOME" || return 1
-    record size.base-used-bytes "$(used_bytes)" || return 1
+    local v
+    v=$(nproc); record_read build.vcpus $? "$v" || return 1
+    v=$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo); record_read build.memory-mib $? "$v" || return 1
+    v=$(id -un); record_read build.account $? "$v" "$HOME" || return 1
+    v=$(used_bytes); record_read size.base-used-bytes $? "$v" || return 1
 }
 
 # The two OS reads the WeaverAgent seat asked of a fresh 26.04.1 build: whether `test` run
@@ -200,7 +218,7 @@ rustup_install() {
     curl -fsS --proto '=https' https://sh.rustup.rs -o /tmp/rustup-init.sh || return 1
     # Stamped, not pinned: sh.rustup.rs serves the current installer under one unversioned
     # name, which changes with each rustup release. It runs as the build account.
-    record build.rustup-init "sh.rustup.rs sha256 $(sha /tmp/rustup-init.sh)" || return 1
+    record_sha build.rustup-init /tmp/rustup-init.sh 'sh.rustup.rs sha256 ' || return 1
     sh /tmp/rustup-init.sh -y --no-modify-path --profile minimal \
         --default-toolchain "$TOOLCHAIN" || return 1
     rm -f /tmp/rustup-init.sh
@@ -231,7 +249,9 @@ trees() {
     record weaveragent.origin "$WA_URL" || return 1
     record weaverweb.commit "$WW_COMMIT" || return 1
     record weaverweb.origin "$WW_URL" || return 1
-    record toolchain "$(rustc -vV | awk '/^release:/{r=$2} /^commit-hash:/{c=$2} /^host:/{h=$2} /^LLVM version:/{l=$3} END{print r, c, h, "LLVM", l}')" || return 1
+    local v
+    v=$(rustc -vV | awk '/^release:/{r=$2} /^commit-hash:/{c=$2} /^host:/{h=$2} /^LLVM version:/{l=$3} END{print r, c, h, "LLVM", l}')
+    record_read toolchain $? "$v" || return 1
 }
 
 # NVIDIA's repository and the CUDA toolkit, with no driver: the stack's build needs nvcc,
@@ -258,7 +278,8 @@ EOF
     grep -h 'define CCCL_VERSION ' "$CCCL_INCLUDE/cuda/std/__cccl/version.h"
     section driver-packages; dpkg-query -W -f '${Package} ${Version}\n' 'nvidia-*' 'libnvidia-*' 2>/dev/null | awk '$2 != ""' || true
     record cuda.toolkit "cuda-toolkit-13-4 $CUDA" || return 1
-    record nvcc "$(/usr/local/cuda-13.4/bin/nvcc --version | tail -1 | sed 's/^Build //')" || return 1
+    local v
+    v=$(/usr/local/cuda-13.4/bin/nvcc --version | tail -1 | sed 's/^Build //'); record_read nvcc $? "$v" || return 1
     record cccl "$CCCL_PKG, by NVCC_PREPEND_FLAGS=-I$CCCL_INCLUDE" || return 1
 }
 
@@ -305,20 +326,20 @@ stack() {
     section install-tuple; cat "$tuple"
     c=$(sed -n 's/^commit = //p' "$tuple")
     [ "$c" = "${WA_COMMIT:-}" ] || { echo "the tuple's commit is '$c', not $WA_COMMIT"; return 1; }
-    record stack.install-tuple "$(sha "$tuple") (as written at image build; see the build's note)" || return 1
-    record stack.peak-memory-mib "$(sort -n "$HOME/mem-samples" | tail -1)" || return 1
+    record_sha stack.install-tuple "$tuple" '' " (as written at image build; see the build's note)" || return 1
+    local f k v
+    v=$(sort -n "$HOME/mem-samples" | tail -1); record_read stack.peak-memory-mib $? "$v" || return 1
     # The test count, as bootstrap's test step printed it: one count line in its "== test"
     # section, with no test failed. A clean run removes the step's own log, so its output
     # is the one record of the count.
     local tests
     tests=$(stack_tests "$HOME/stack-out") || { echo "$tests"; return 1; }
     record stack.tests "$tests (bootstrap-stack.sh's test step)" || return 1
-    local f k
     for f in /opt/weaver/bin/* /opt/weaver/lib/*; do
         [ -f "$f" ] && [ ! -L "$f" ] || continue
         # The key names the file under the prefix, its slash a dot (record refuses a slash).
         k=${f#/opt/weaver/}
-        record "stack.${k//\//.}" "$(sha "$f")" || return 1
+        record_sha "stack.${k//\//.}" "$f" || return 1
     done
     # The deploy scripts an enrolled box runs (create-agent, verify-load and their
     # siblings), copied at the image's commit to a fixed root-owned path before the checkout
@@ -326,7 +347,7 @@ stack() {
     sudo install -d -o root -g root -m 0755 "$DEPLOY_COPY" || return 1
     for f in $DEPLOY_FILES; do
         sudo install -o root -g root -m 0755 "$WA/deploy/$f" "$DEPLOY_COPY/$f" || return 1
-        record "deploy.$f" "$(sha "$DEPLOY_COPY/$f")" || return 1
+        record_sha "deploy.$f" "$DEPLOY_COPY/$f" || return 1
     done
     rm -f "$HOME/mem-samples"
 }
@@ -343,9 +364,9 @@ connectors() {
     sudo install -o root -g root -m 0755 "$t/release/gate-con" "$t/release/admin-con" /opt/weaver-web/bin/ || return 1
     section installed; sha256sum /opt/weaver-web/bin/*
     record connectors.command "$CONNECTORS_CMD" || return 1
-    record connectors.gate-con "$(sha /opt/weaver-web/bin/gate-con)" || return 1
-    record connectors.admin-con "$(sha /opt/weaver-web/bin/admin-con)" || return 1
-    for f in $WW_TEMPLATES; do record "connectors.template.${f##*/}" "$(sha "$WW/$f") (not laid)" || return 1; done
+    record_sha connectors.gate-con /opt/weaver-web/bin/gate-con || return 1
+    record_sha connectors.admin-con /opt/weaver-web/bin/admin-con || return 1
+    for f in $WW_TEMPLATES; do record_sha "connectors.template.${f##*/}" "$WW/$f" '' ' (not laid)' || return 1; done
 }
 
 # The driver, by the operator's route (ruling of 2026-11-14, "route B"): Ubuntu's own 615
@@ -370,7 +391,7 @@ driver() {
     driver_check || return 1
 }
 driver_ubuntu_prebuilt() {
-    local b=${DRIVER%%.*} p pkgs names origin
+    local b=${DRIVER%%.*} p pkgs names origin v
     [ "$DRIVER" = "${UBUNTU_DRIVER%%-*}" ] || { echo "this file pins $UBUNTU_DRIVER, not $DRIVER"; return 1; }
     [ "$KVER" = "${UBUNTU_MODULES%.*}-generic" ] || { echo "the module pin $UBUNTU_MODULES is not for $KVER"; return 1; }
     grep -qE '^Components:.*\brestricted\b.*\bmultiverse\b' /etc/apt/sources.list.d/ubuntu.sources \
@@ -387,7 +408,7 @@ driver_ubuntu_prebuilt() {
         # The archive pocket and component the installed version came from, as apt reads it.
         origin=$(apt-cache policy "$p" | awk '/^ \*\*\* /{f=1; next} f && /http/ {print $2, $3; exit}')
         printf '%s %s from %s\n' "$p" "$(dpkg-query -W -f '${Version}' "$p")" "$origin"
-        record "driver.package.$p" "$(dpkg-query -W -f '${Version}' "$p") $origin" || return 1
+        v=$(dpkg-query -W -f '${Version}' "$p"); record_read "driver.package.$p" $? "$v" "$origin" || return 1
     done
     printf '%s\n' $names | sudo tee "$BUILD/keep-driver" >/dev/null
     # The kernel is held with every image and module package installed for it: its image,
@@ -409,7 +430,7 @@ driver_ubuntu_prebuilt() {
 # image's one kernel, modinfo's version and vermagic, its dependencies resolved, every
 # firmware file it names present.
 driver_check() {
-    local m file ver vm fw bad=0
+    local m file ver vm fw bad=0 v n=0
     section module
     for m in nvidia nvidia-uvm nvidia-modeset; do
         file=$(modinfo -k "$KVER" -F filename "$m" 2>/dev/null) || { echo "modinfo finds no $m for $KVER"; bad=1; continue; }
@@ -424,12 +445,17 @@ driver_check() {
     done
     [ "$bad" = 0 ] || return 1
     record driver.version "$DRIVER" || return 1
-    record driver.vermagic "$(modinfo -k "$KVER" -F vermagic nvidia)" || return 1
-    # The driver's own module directory, not the kernel's in-tree nvidiafb and its kin.
+    v=$(modinfo -k "$KVER" -F vermagic nvidia); record_read driver.vermagic $? "$v" || return 1
+    # The driver's own module directory, not the kernel's in-tree nvidiafb and its kin. A
+    # list that comes back empty fails the step, since the files' digests are the record.
     for file in $(find "$(dirname "$(modinfo -k "$KVER" -F filename nvidia)")" -name '*.ko*' | sort); do
-        record "driver.module.${file##*/}" "$(sha "$file")" || return 1
+        record_sha "driver.module.${file##*/}" "$file" || return 1
+        n=$((n + 1))
     done
-    record driver.signer "$(modinfo -k "$KVER" -F signer nvidia 2>/dev/null || echo none)" || return 1
+    [ "$n" -gt 0 ] || { echo "no file of the driver's module directory was found to stamp"; return 1; }
+    # modinfo prints nothing for a module with no signer, and that records as none. A
+    # modinfo that fails is not an unsigned module.
+    v=$(modinfo -k "$KVER" -F signer nvidia); record_read driver.signer $? "${v:-none}" || return 1
 }
 
 # relaxed COMMAND...: runs COMMAND with the two guest settings the WeaverAgent test
@@ -719,7 +745,8 @@ EOF
     sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/*.bin /var/cache/debconf/*-old /var/crash/* /tmp/* /var/tmp/* 2>/dev/null
 
     section after; df -h /
-    record size.after-cleanup-used-bytes "$(used_bytes)" || return 1
+    local v
+    v=$(used_bytes); record_read size.after-cleanup-used-bytes $? "$v" || return 1
     sudo fstrim -v /
 }
 
@@ -947,11 +974,13 @@ seal() {
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
-    local f real key
+    local f real key pkg ver
     for f in libc.so.6 libm.so.6 ld-linux-x86-64.so.2 libstdc++.so.6 libgcc_s.so.1; do
         real=$(readlink -f "/usr/lib/x86_64-linux-gnu/$f") && [ -f "$real" ] || { echo "no $f"; return 1; }
         key=syslib.$(tr '+_' 'p-' <<<"$f")
-        record "$key" "${real##*/} $(dpkg -S "$real" | cut -d: -f1)=$(dpkg-query -W -f '${Version}' "$(dpkg -S "$real" | cut -d: -f1)") sha256 $(sha "$real")" || return 1
+        pkg=$(dpkg -S "$real" | cut -d: -f1) && [ -n "$pkg" ] || { echo "no package owns $real"; return 1; }
+        ver=$(dpkg-query -W -f '${Version}' "$pkg") && [ -n "$ver" ] || { echo "no version of $pkg"; return 1; }
+        record_sha "$key" "$real" "${real##*/} $pkg=$ver sha256 " || return 1
     done
     sudo install -d -m 0700 /run/weaver-seal || return 1
     # The MANIFEST's file list and links list run here first, as root, to a scratch file in

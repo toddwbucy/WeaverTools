@@ -64,7 +64,7 @@ sb 0; rc=$?
 check "a bootstrap that exits 0 makes stack_build return 0" test "$rc" = 0
 REC='    record stack.tests "$tests (bootstrap-stack.sh'"'"'s test step)" || return 1'
 STACK_FN=$(fn "$STEPS" stack); PROOF_FN=$(fn "$BT" proof)
-check "stack records the count after the peak memory" eval 'grep -qxF -- "$REC" <<<"$(grep -A8 "record stack.peak-memory-mib" <<<"$STACK_FN")"'
+check "stack records the count after the peak memory" eval 'grep -qxF -- "$REC" <<<"$(grep -A8 "record_read stack.peak-memory-mib" <<<"$STACK_FN")"'
 
 # ---- proof's pass line and tag
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
