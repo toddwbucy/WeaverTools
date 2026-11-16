@@ -721,10 +721,11 @@ PY
 # denied (publickey)". A line saying the login went through is a finding, as is any other
 # method offered or a server that named none (a connection cut before authentication, as
 # sshd's PerSourcePenalties cuts one, proves nothing). Prints one line, "refused: LABEL ..."
-# or a PROOF-FAIL line.
+# or a PROOF-FAIL line, and returns 0 either way: a missing methods line is a finding, not
+# grep's status 1 ending the proof under errexit and pipefail before its verdict.
 refusal_judge() {
     local out=$1 rc=$2 label=$3 m bad=""
-    m=$(grep -oE 'Authentications that can continue: [^[:space:]]*' "$out" | sed 's/^.*: //' | sort -u)
+    m=$({ grep -oE 'Authentications that can continue: [^[:space:]]*' "$out" || true; } | sed 's/^.*: //' | sort -u)
     if [ -z "$m" ]; then bad+="the server named no methods; "
     elif [ "$m" != publickey ]; then bad+="the server offered $(tr '\n' ' ' <<<"$m" | sed 's/ $//'); "
     fi
