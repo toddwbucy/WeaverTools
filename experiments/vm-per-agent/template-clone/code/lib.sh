@@ -841,8 +841,10 @@ LINKS_MARK=$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-ste
 MANIFEST_SCOPE=$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
 # The sealed image's hostname has its one definition there too.
 IMAGE_HOSTNAME=$(sed -n "s/^IMAGE_HOSTNAME='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
-[ -n "$LINKS_MARK" ] && [ -n "$MANIFEST_SCOPE" ] && [ -n "$IMAGE_HOSTNAME" ] \
-    || die "no LINKS_MARK, MANIFEST_SCOPE or IMAGE_HOSTNAME in $LIB_DIR/guest/template-steps"
+# And the two data mount points the proof reads at the first boot.
+DATA_MOUNTS=$(sed -n "s/^DATA_MOUNTS='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+[ -n "$LINKS_MARK" ] && [ -n "$MANIFEST_SCOPE" ] && [ -n "$IMAGE_HOSTNAME" ] && [ -n "$DATA_MOUNTS" ] \
+    || die "no LINKS_MARK, MANIFEST_SCOPE, IMAGE_HOSTNAME or DATA_MOUNTS in $LIB_DIR/guest/template-steps"
 links_format() {
     local p t
     while IFS= read -r -d '' p && IFS= read -r -d '' t; do

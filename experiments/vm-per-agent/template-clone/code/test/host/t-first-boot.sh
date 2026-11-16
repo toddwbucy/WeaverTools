@@ -195,6 +195,24 @@ check "getent's status 0 is the default account made, a PROOF-FAIL" \
     test "$(ga 0)" = "PROOF-FAIL: the seed's default account was made"
 check "any other status is a read that did not happen, a PROOF-FAIL, not an account not made" \
     test "$(ga 3)" = "PROOF-FAIL: getent exited 3, so whether the default account exists is not known"
+# The data mount points' read, as the guest runs it, against a stand-in tree: its paths
+# pointed at the tree, root's ownership read as this account's, and the root filesystem as
+# the tree's own.
+me="$(id -u):$(id -g)"; MT=$T/mounts
+sed -n '/== the data mount points, with no disk attached/,/^ *done$/p' "$T/reads.sh" \
+    | sed -e "s|/mnt/weaver|$MT/mnt/weaver|g" -e "s|directory 0:0 755|directory $me 755|" -e "s|stat -c %d -- /)|stat -c %d -- $MT)|" >"$T/mounts.sh"
+check "the in-guest reads include the data mount points, both of them" \
+    test "$(grep -c "for d in $MT/mnt/weaver/model $MT/mnt/weaver/state; do" "$T/mounts.sh")" = 1
+mt() { rm -rf -- "${MT:?}"; mkdir -p "$MT/mnt/weaver/model" "$MT/mnt/weaver/state"; chmod 0755 "$MT/mnt/weaver/model" "$MT/mnt/weaver/state"; }
+mt
+check "two empty directories 0755 on the root's filesystem: read, and no PROOF-FAIL" \
+    test "$(bash "$T/mounts.sh" | grep -c '^PROOF-FAIL')" = 0 -a "$(bash "$T/mounts.sh" | grep -c ": directory $me 755, 0 entries$")" = 2
+mt; : >"$MT/mnt/weaver/state/x"; rmdir "$MT/mnt/weaver/model"
+check "a mount point absent, or one that holds a file: each a PROOF-FAIL" \
+    test "$(bash "$T/mounts.sh" | grep -c '^PROOF-FAIL: .* is not an empty directory root owns with mode 755$')" = 2
+mt
+check "a mount point on another filesystem than the root's: a PROOF-FAIL" \
+    test "$(sed "s|stat -c %d -- $MT)|stat -c %d -- /proc)|" "$T/mounts.sh" | bash | grep -c '^PROOF-FAIL: .* has a filesystem mounted on it, with no disk attached$')" = 2
 touch "$T/no-iso"; run; rc=$?; rm -f -- "$T/no-iso"
 check "a seed image that cannot be made refuses, and nothing boots" \
     test "$rc" != 0 -a ! -e "$T/vi-args" -a "$(grep -c "REFUSED: the first boot's seed image could not be made; nothing booted" "$T/run.out")" = 1

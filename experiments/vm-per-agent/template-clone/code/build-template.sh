@@ -767,6 +767,15 @@ EOF
                     *) echo "PROOF-FAIL: getent exited $g, so whether the default account exists is not known" ;;
                 esac
                 echo "== the hostname"; hostname
+                # The data mount points, with no disk attached: laid by the image, empty,
+                # owned by root, and nothing mounted on them.
+                echo "== the data mount points, with no disk attached"
+                for d in '"$DATA_MOUNTS"'; do
+                    s=$(stat -c "%F %u:%g %a" -- "$d" 2>/dev/null); n=$(ls -A -- "$d" 2>/dev/null | wc -l)
+                    echo "$d: ${s:-absent}, $n entries"
+                    [ "$s" = "directory 0:0 755" ] && [ "$n" = 0 ] || echo "PROOF-FAIL: $d is not an empty directory root owns with mode 755"
+                    [ -z "$s" ] || [ "$(stat -c %d -- "$d")" = "$(stat -c %d -- /)" ] || echo "PROOF-FAIL: $d has a filesystem mounted on it, with no disk attached"
+                done
                 [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
                 echo "== the network as the overlay named it"; ip -br addr; ip route; resolvectl dns 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"

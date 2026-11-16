@@ -64,6 +64,12 @@ DEPLOY_COPY=/opt/weaver/deploy
 # name, so a box does not greet with the build's name (the Planner's note of 2026-11-15).
 # Defined once, here: lib.sh reads it for proof.
 IMAGE_HOSTNAME='weaver-appliance'
+# The two data mount points the appliance's profile fixes (weaver-appliance-profile section
+# 3.4): the operator attaches the disks and mounts them here. The image lays them empty and
+# root's, and carries no model and no state. Whether a load finds a separate filesystem on
+# each is admin's test, at every load, not the image's. Defined once, here: lib.sh reads it
+# for proof.
+DATA_MOUNTS='/mnt/weaver/model /mnt/weaver/state'
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
@@ -760,6 +766,12 @@ EOF
     sshd_check || return 1
     echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone"
 
+    section "the data mount points"
+    # shellcheck disable=SC2086
+    sudo install -d -o root -g root -m 0755 /mnt/weaver $DATA_MOUNTS || return 1
+    mounts_check || return 1
+    echo "$DATA_MOUNTS: empty, root's, mode 0755, on the image's root"
+
     section "updates masked, sources off"
     # shellcheck disable=SC2086
     sudo systemctl mask $UPDATE_UNITS >/dev/null 2>&1
@@ -938,6 +950,24 @@ firstboot_paths_check() {
     return 0
 }
 
+# mounts_check: the data mount points as the image lays them: /mnt/weaver holding the two
+# alone, and each a directory (not a link), root's, mode 0755, empty, and on the image's
+# own filesystem, so nothing is mounted there in the build. Prints each finding; exits 1 on
+# any.
+mounts_check() {
+    local bad="" d s n want
+    want=$(for d in $DATA_MOUNTS; do echo "${d##*/}"; done | LC_ALL=C sort)
+    [ "$(sudo ls -A /mnt/weaver 2>/dev/null | LC_ALL=C sort)" = "$want" ] || bad+="/mnt/weaver does not hold the two mount points alone. "
+    for d in $DATA_MOUNTS; do
+        s=$(sudo stat -c '%F %u:%g %a' -- "$d" 2>/dev/null)
+        [ "$s" = "directory 0:0 755" ] || bad+="$d is '${s:-absent}', not a directory root's with mode 755. "
+        n=$(sudo ls -A -- "$d" 2>/dev/null | wc -l)
+        [ "$n" = 0 ] || bad+="$d holds $n entries. "
+        [ "$(sudo stat -c %d -- "$d" 2>/dev/null)" = "$(sudo stat -c %d -- / 2>/dev/null)" ] || bad+="$d is not on the image's root filesystem. "
+    done
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
 # SEAL_KEYS: the private keys the seal removes, besides the SSH host keys.
 SEAL_KEYS="/var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
   /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem"
@@ -985,6 +1015,7 @@ probes() {
     check "networkd in the initramfs" "$(initrd_network_check 2>&1)"
     check "the initramfs's catch-all network not masked" "$([ "$(readlink /etc/systemd/network/zzzz-dracut-default.network 2>/dev/null)" = /dev/null ] || echo "/etc/systemd/network/zzzz-dracut-default.network is not a link to /dev/null")"
     check "an agent configured" "$(sudo ls -A /etc/weaver/admin /var/lib/weaver-agent 2>&1 | grep -vE '^(/|$)')"
+    check "the data mount points not as laid" "$(mounts_check 2>&1)"
     check "a connector config or unit" "$(ls -d /etc/weaver-web /etc/systemd/system/weaver-web-* 2>/dev/null)"
     check "the stack's members and shell" "$(for b in worker weaver-admin weaver-trace-relay weaver-gate weaver-spu weaver-state busybox busybox.applets; do [ -f "/opt/weaver/bin/$b" ] || echo "missing $b"; done)"
     check "the connectors' programs" "$(for b in gate-con admin-con; do [ -x "/opt/weaver-web/bin/$b" ] || echo "missing $b"; done)"
