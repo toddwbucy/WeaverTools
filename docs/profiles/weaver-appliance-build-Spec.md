@@ -834,7 +834,7 @@ reads them, so a test runs the same in a clean shell and in one that has exporte
 build's inputs, as the recipe does (`t-harness-env.sh` checks it).
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-16 the 18 tests ran 348 checks and all passed, on a host with
+runs them all. On 2026-11-16 the 18 tests ran 351 checks and all passed, on a host with
 CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
 socket the proof names to QEMU, which plays getty, the forced change and a shell, and
 the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
