@@ -390,8 +390,8 @@ still has to be captured into the binary or held by the image.
   paired link and writes it, since writing it is a root act and the connectors hold no
   root, and running the setup command again writes a changed key (the suite Planner's
   brief, recorded with the rulings). The next act.
-- The survey script, run locally, its report crossing over TLS (the operator's rulings of
-  2026-11-16 on the setup pages). The next act.
+- The survey script, run locally, its report crossing over TLS (the operator's rulings
+  of 2026-11-16 on the setup pages). The next act.
 - The accounts the agent needs, shipped in the image: a fixed agent account,
   `weaver-agent` as proposed, and the two connectors' accounts, which today
   `create-agent.sh` lays at agent creation (the operator's answers of 2026-11-16,
