@@ -74,7 +74,7 @@ check "proof clears an earlier pass after making its directory" eval 'grep -qx "
 PASSLINE=$(sed -n '/^    echo "proof passed: sealed file sha256/,/tee "\$out\/passed.txt"$/p' "$BT")
 check "proof's pass line is in the file" test -n "$PASSLINE"
 LOG=$T/log; out=$LOG/proof; DISK=$T/disk.qcow2; mkdir -p "$out"
-SHA=$(printf 'a%.0s' {1..64}); MSHA=$(printf 'b%.0s' {1..64}); WA=$(printf 'c%.0s' {1..40}); INST=$(printf 'd%.0s' {1..64})
+SHA=$(printf '' | sha256sum | cut -d' ' -f1); MSHA=$(printf 'b%.0s' {1..64}); WA=$(printf 'c%.0s' {1..40}); INST=$(printf 'd%.0s' {1..64})
 echo "$SHA  $DISK" >"$LOG/appliance-sha256.txt"; echo "$MSHA  $out/MANIFEST" >"$out/identity.txt"
 eval "$PASSLINE" >/dev/null
 check "proof's pass line names both digests" grep -qx "proof passed: sealed file sha256 $SHA, MANIFEST sha256 $MSHA" "$out/passed.txt"
@@ -103,6 +103,10 @@ eval "$PASSLINE" >/dev/null; echo "$INST  $DISK" >"$LOG/appliance-sha256.txt"
 check "a pass of another sealed file refuses" tg_no "not the one the seal recorded"
 echo "$SHA  $DISK" >"$LOG/appliance-sha256.txt"
 chmod 0644 "$DISK"; check "a writable disk refuses" tg_no "no sealed image at"; chmod 0444 "$DISK"
+chmod 0644 "$DISK"; echo changed >"$DISK"; chmod 0444 "$DISK"
+check "a sealed file changed since the proof refuses, with no message written" \
+    eval 'rm -f "$LOG/tag-message.txt"; tg_no "now has sha256 $(sha256sum <"$DISK" | cut -d" " -f1), not the $SHA the proof passed: run proof again" && [ ! -e "$LOG/tag-message.txt" ]'
+chmod 0644 "$DISK"; : >"$DISK"; chmod 0444 "$DISK"
 rm -f "$out/stamp"; check "no stamp refuses" tg_no "no stamp read out of the sealed image"
 TL="stack.tests = 2867 passed, 0 failed (bootstrap-stack.sh's test step)\\n"
 stamp "${STD/"$TL"/}"; check "no stack.tests refuses" tg_no "names stack.tests 0 times"

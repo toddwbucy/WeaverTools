@@ -529,15 +529,19 @@ PY
 # appliance/<version>, it goes on the WeaverAgent commit the version was compiled from,
 # and its message carries the version, the install record's digest and the stack's test
 # count. Each is read from the stamp the proof read out of the sealed image, and only after
-# a proof that passed for the sealed file the seal recorded. VERSION and WA_COMMIT, where
-# named, must equal the stamp's. The message is also written to the log, for git tag -F.
+# a proof that passed for the sealed file the seal recorded, with the file on disk hashed
+# again to that digest, so the message never describes a file changed since its proof.
+# VERSION and WA_COMMIT, where named, must equal the stamp's. The message is also written
+# to the log, for git tag -F.
 tag() {
-    local out=$LOG/proof f=$LOG/tag-message.txt s ver wa inst tests passed sealed
+    local out=$LOG/proof f=$LOG/tag-message.txt s ver wa inst tests passed sealed now
     [ -f "$DISK" ] && [ ! -w "$DISK" ] || die "no sealed image at $DISK"
     passed=$(sed -n 's/^proof passed: sealed file sha256 \([0-9a-f]\{64\}\), MANIFEST sha256 [0-9a-f]\{64\}$/\1/p' "$out/passed.txt" 2>/dev/null)
     [ -n "$passed" ] || die "no proof has passed for this image ($out/passed.txt): the tag names a version that was proved"
     sealed=$(cut -d' ' -f1 "$LOG/appliance-sha256.txt" 2>/dev/null || true)
     [ "$passed" = "$sealed" ] || die "the proof that passed was of sealed file sha256 $passed, not the one the seal recorded (${sealed:-none}): run proof again"
+    now=$(sha256sum <"$DISK" | cut -d' ' -f1) || die "the sealed image at $DISK could not be read"
+    [ "$now" = "$passed" ] || die "the sealed file at $DISK now has sha256 $now, not the $passed the proof passed: run proof again"
     s=$out/stamp
     [ -f "$s" ] || die "no stamp read out of the sealed image ($s)"
     ver=$(stamp_one "$s" appliance.version '^[1-9][0-9]*\.(0|[1-9][0-9]*)$') || die "$ver"
