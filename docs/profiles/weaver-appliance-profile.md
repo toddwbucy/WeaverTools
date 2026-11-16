@@ -277,7 +277,8 @@ not in a repository. It is owed with the act that adopts the two settings.
 **A sealed image was built and proved on 2026-11-15, as the fifth build.** The proof
 found SSH as the only listener, every file and link of the manifest in place, no
 first-boot seed, no secret, and the held kernel. That image predates the rulings of
-2026-11-15. It is a proof artifact and is not version 1.
+2026-11-15. It is a proof artifact and is not version 1. The proof's result note is not
+in a repository. It is owed with the Spec of the image build.
 
 ### 7.2 What is owed
 
