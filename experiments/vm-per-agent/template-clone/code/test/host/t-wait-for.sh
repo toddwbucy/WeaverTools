@@ -20,6 +20,7 @@ check "a fixture that exits first: status 1, before the bound" test "$rc" = 1 -a
 sleep 30 & p=$!
 t0=$(secs); wait_for "$p" 1 test -e "$T/never"; rc=$?; t1=$(secs)
 check "a fixture that lives on without coming up: status 1, at the bound" test "$rc" = 1 -a $((t1 - t0)) -ge 10 -a $((t1 - t0)) -lt 40
+kill "$p" 2>/dev/null; wait "$p" 2>/dev/null
 sleep 30 & q=$!; ( sleep 0.3 ) & p=$!
 t0=$(secs); wait_for "$q $p" 5 test -e "$T/never"; rc=$?; t1=$(secs)
 check "two fixtures, one of which exits: status 1, before the bound" test "$rc" = 1 -a $((t1 - t0)) -lt 30
