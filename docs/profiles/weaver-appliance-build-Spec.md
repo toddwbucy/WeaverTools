@@ -506,7 +506,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     key SSH presents that the guest does not hold, a failed login as root, a MANIFEST
     difference outside the first boot's expected list, cloud-init not disabled with a
     seed attached, any of the seed's asks carried out (the bootcmd, the runcmd or the
-    default account), a hostname other than the image's, `sshd-keygen.service` not run
+    default account), a read of the default account that fails, a hostname other than
+    the image's, `sshd-keygen.service` not run
     at the first boot, a stamp that does not name both commits, the image's table not
     loaded or
     not dropping inbound by default or not accepting SSH, a listener on TCP 8080 that does

@@ -733,7 +733,14 @@ EOF
                 for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do
                     if [ -e "$m" ]; then echo "PROOF-FAIL: the seed'"'"'s ${m##*-} ran"; else echo "not run: ${m##*-}"; fi
                 done
-                if getent passwd ubuntu >/dev/null; then echo "PROOF-FAIL: the seed'"'"'s default account was made"; else echo "not made: the default account"; fi
+                # getent exits 2 where the account is not found. Any other failure is a read
+                # that did not happen, not an account that was not made.
+                getent passwd ubuntu >/dev/null; g=$?
+                case $g in
+                    0) echo "PROOF-FAIL: the seed'"'"'s default account was made" ;;
+                    2) echo "not made: the default account" ;;
+                    *) echo "PROOF-FAIL: getent exited $g, so whether the default account exists is not known" ;;
+                esac
                 echo "== the hostname"; hostname
                 [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
                 echo "== the network as the overlay named it"; ip -br addr; ip route; resolvectl dns 2>&1

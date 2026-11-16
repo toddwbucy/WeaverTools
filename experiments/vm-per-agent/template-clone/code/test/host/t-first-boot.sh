@@ -81,6 +81,16 @@ check "its user-data asks for a bootcmd, a runcmd and the default account" \
 check "the in-guest reads require cloud-init disabled, the marker, and none of the asks carried out" \
     test "$(grep -c 'not disabled, with a seed attached' "$T/reads.sh")" = 1 -a "$(grep -c '/etc/cloud/cloud-init.disabled' "$T/reads.sh")" = 1 \
          -a "$(grep -c '/var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd' "$T/reads.sh")" = 1 -a "$(grep -c "default account was made" "$T/reads.sh")" = 1
+# The default account's read, as the guest runs it, against a stand-in getent: its status 2
+# is an account not made, 0 one made, and any other a read that did not happen.
+sed -n '/getent passwd ubuntu/,/^ *esac$/p' "$T/reads.sh" >"$T/getent.sh"
+ga() { bash -c 'getent() { return '"$1"'; }; . "$0"' "$T/getent.sh" 2>&1; }
+check "the default account's read: getent's status 2 is not made, and no PROOF-FAIL" \
+    test "$(ga 2)" = "not made: the default account"
+check "getent's status 0 is the default account made, a PROOF-FAIL" \
+    test "$(ga 0)" = "PROOF-FAIL: the seed's default account was made"
+check "any other status is a read that did not happen, a PROOF-FAIL, not an account not made" \
+    test "$(ga 3)" = "PROOF-FAIL: getent exited 3, so whether the default account exists is not known"
 touch "$T/no-iso"; run; rc=$?; rm -f -- "$T/no-iso"
 check "a seed image that cannot be made refuses, and nothing boots" \
     test "$rc" != 0 -a ! -e "$T/vi-args" -a "$(grep -c "REFUSED: the first boot's seed image could not be made; nothing booted" "$T/run.out")" = 1
