@@ -36,7 +36,8 @@ while True:
 PY
 }
 for k in ssh http silent; do serve "$k"; done
-until [ -s "$T/ssh" ] && [ -s "$T/http" ] && [ -s "$T/silent" ]; do sleep 0.1; done
+wait_for "$(jobs -p | tr '\n' ' ')" 10 eval '[ -s "$T/ssh" ] && [ -s "$T/http" ] && [ -s "$T/silent" ]' \
+    || { no "the three loopback servers came up within 10 seconds"; kill $(jobs -p) 2>/dev/null; finish; exit 1; }
 P=$(cat "$T/ssh"); H=$(cat "$T/http"); Q=$(cat "$T/silent")
 proof_inbound "$P" "$Q" x >"$T/good.out" 2>&1
 check "a dropped listener and SSH answering pass" test "$(grep -c PROOF-FAIL "$T/good.out")" = 0 -a "$(grep -c '^-- TCP 8080 from the host, through the forward: silent$' "$T/good.out")" = 1

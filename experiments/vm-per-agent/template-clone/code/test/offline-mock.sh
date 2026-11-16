@@ -37,6 +37,19 @@ pass=0
 ok() { printf 'ok   %s\n' "$*"; pass=$((pass + 1)); }
 no() { printf 'FAIL %s\n' "$*"; exit 1; }
 check() { local what=$1; shift; if "$@"; then ok "$what"; else no "$what"; fi; }
+# wait_for PIDS SECONDS CMD...: run CMD each tenth of a second until it succeeds. Status 1
+# once any of PIDS (one or more, space-separated) has exited, or SECONDS have passed, with
+# CMD still failing, so a fixture that never comes up is a failed check, not a hang. The
+# offline mock carries the same text, which t-wait-for.sh checks and runs.
+wait_for() {
+    local pids=$1 n=$(($2 * 10)) q
+    shift 2
+    until "$@"; do
+        [ "$n" -gt 0 ] || return 1
+        for q in $pids; do kill -0 "$q" 2>/dev/null || return 1; done
+        n=$((n - 1)); sleep 0.1
+    done
+}
 refused() { ! ( "$@" ) >/dev/null 2>&1; }   # refused CMD...: CMD fails, or stops its subshell
 
 # ---- the host side: lib.sh as the scripts source it, gssh pointed at the mock guest
@@ -230,7 +243,8 @@ for k in ("ssh", "http", "silent", "close"):
 time.sleep(40)
 PY2
 IP_SRV=$!
-until [ -s "$T/srv-ssh" ] && [ -s "$T/srv-http" ] && [ -s "$T/srv-silent" ] && [ -s "$T/srv-close" ]; do sleep 0.1; done
+wait_for "$IP_SRV" 10 eval '[ -s "$T/srv-ssh" ] && [ -s "$T/srv-http" ] && [ -s "$T/srv-silent" ] && [ -s "$T/srv-close" ]' \
+    || { kill "$IP_SRV" 2>/dev/null; wait "$IP_SRV" 2>/dev/null; no "the fixture's four servers came up within 10 seconds"; }
 check "a server that speaks first is answered" test "$(inbound_probe "$(cat "$T/srv-ssh")" 5)" = "answered: SSH-2.0-OpenSSH_10.0p2"
 check "a server that answers a request is answered" test "$(inbound_probe "$(cat "$T/srv-http")" 5)" = "answered: HTTP/1.0 200 OK"
 check "an accepted connection with nothing sent is silent" test "$(inbound_probe "$(cat "$T/srv-silent")" 3)" = silent

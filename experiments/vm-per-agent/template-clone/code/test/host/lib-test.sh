@@ -50,4 +50,17 @@ fn() {
         printf '%s\n' "$s"
     done
 }
+# wait_for PIDS SECONDS CMD...: run CMD each tenth of a second until it succeeds. Status 1
+# once any of PIDS (one or more, space-separated) has exited, or SECONDS have passed, with
+# CMD still failing, so a fixture that never comes up is a failed check, not a hang. The
+# offline mock carries the same text, which t-wait-for.sh checks and runs.
+wait_for() {
+    local pids=$1 n=$(($2 * 10)) q
+    shift 2
+    until "$@"; do
+        [ "$n" -gt 0 ] || return 1
+        for q in $pids; do kill -0 "$q" 2>/dev/null || return 1; done
+        n=$((n - 1)); sleep 0.1
+    done
+}
 finish() { echo "== $pass passed, $fail failed (in $T)"; [ "$fail" = 0 ]; }

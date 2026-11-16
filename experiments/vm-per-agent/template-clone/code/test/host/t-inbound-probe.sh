@@ -24,7 +24,8 @@ for k in ("ssh", "http", "silent", "close"):
 time.sleep(60)
 PY
 srv=$!
-until [ -s "$T/ssh" ] && [ -s "$T/http" ] && [ -s "$T/silent" ] && [ -s "$T/close" ]; do sleep 0.1; done
+wait_for "$srv" 10 eval '[ -s "$T/ssh" ] && [ -s "$T/http" ] && [ -s "$T/silent" ] && [ -s "$T/close" ]' \
+    || { no "the fixture's four servers came up within 10 seconds"; kill "$srv" 2>/dev/null; wait "$srv" 2>/dev/null; finish; exit 1; }
 r=$(inbound_probe "$(cat "$T/ssh")" 5); echo "  ssh: $r"; check "a server that speaks first is answered" test "${r#answered: SSH-2.0-}" != "$r"
 r=$(inbound_probe "$(cat "$T/http")" 5); echo "  http: $r"; check "a server that answers a request is answered" test "$r" = "answered: HTTP/1.0 200 OK"
 s0=$(date +%s); r=$(inbound_probe "$(cat "$T/silent")" 4); s1=$(date +%s); echo "  silent: $r ($((s1 - s0)) s)"

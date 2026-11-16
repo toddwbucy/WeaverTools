@@ -93,8 +93,12 @@ check "a copy left by a run cut short is refused and kept, with no convert run, 
          -a "$(grep -c 'compact.part stands, left by a compaction cut short. It may be removed by hand, alone, and verdict run again' "$LOGD/leftover.out")" = 1
 fresh; s0=$(sha256sum "$TD/appliance.qcow2" | cut -d' ' -f1)
 run slow-convert >"$LOGD/term.out" 2>&1 & p=$!
-until [ -e "$LOGD/converted" ]; do sleep 0.2; done
-kill -TERM "$(cat "$LOGD/pid")"; wait "$p"; rc=$?
+if wait_for "$p" 60 test -e "$LOGD/converted"; then
+    kill -TERM "$(cat "$LOGD/pid")"; wait "$p"; rc=$?
+else
+    no "slow-convert: the convert's marker within 60 seconds (the run ended or hung first)"
+    kill "$p" 2>/dev/null; wait "$p" 2>/dev/null; rc=none
+fi
 check "a TERM during the compaction exits 143, removes the copy and leaves the disk unchanged and unsealed" \
     test "$rc" = 143 -a ! -e "$TD/appliance.compact.part" -a "$(sha256sum "$TD/appliance.qcow2" | cut -d' ' -f1)" = "$s0" \
          -a "$(grep -c '^virsh_ undefine' "$CALLS")" = 0 -a "$(stat -c %a "$TD/appliance.qcow2")" = 644
