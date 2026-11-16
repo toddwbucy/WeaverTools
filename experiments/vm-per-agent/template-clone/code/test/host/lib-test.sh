@@ -15,6 +15,19 @@
 # that needs more (qemu-img, debugfs, nvcc) says so and is skipped where a tool is absent,
 # with exit status 77.
 set -uo pipefail
+# The build's inputs and knobs, cleared here before any test reads them: the seven inputs,
+# VM_ROOT, NAME and PORT, and every other name build-template.sh, lib.sh and
+# guest/template-steps read from the environment. So a test passes or fails the same in a
+# clean shell and in one that has exported a build's inputs, as COMMANDS.md's recipe block
+# does (on 2026-11-16, with WA_COMMIT exported t-tag failed 13 checks, and with VERSION
+# exported t-version failed one). Kept: KEPT_IMAGE, NVCC and CUOBJDUMP, which name what a
+# test may read and the tools it uses, and TMPDIR. t-harness-env.sh checks this list
+# against the scripts.
+BUILD_ENV_NAMES='OS VERSION DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT VM_ROOT NAME PORT
+ PROOF_PORT PROOF_BOOT PROOF_FIRST_BOOT LOG KEY KNOWN_HOSTS QEMU_USER VCPUS MEMORY SIZE CPUSET
+ GUEST_ENV BASE_IMAGE DEB_ORIGINS SEAL_WAIT CI_WAIT FIRST_BOOT_CHANGES FIRST_BOOT_ADDS RELAXED_LOCK'
+# shellcheck disable=SC2086
+unset $BUILD_ENV_NAMES
 CODE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/weaver-host-test.XXXXXX") || exit 1
 pass=0; fail=0
