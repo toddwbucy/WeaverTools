@@ -951,8 +951,12 @@ proof_inbound() {
         else
             printf "%s\n" "$r"; echo "PROOF-FAIL: the table inet weaver_appliance is not loaded"
         fi' 2>&1 || echo "PROOF-FAIL: the read of the loaded rules exited $?"
+    # The server alone goes to the background, every descriptor its own: a backgrounded
+    # && list would hold SSH's channel open and leave $! naming a subshell (the rehearsal
+    # of 2026-11-16 hung here).
     lpid=$(KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
-        d=$(mktemp -d) && cd "$d" && setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
+        d=$(mktemp -d) && cd "$d" || exit 1
+        setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
         for i in $(seq 50); do ss -Hltn "sport = :8080" | grep -q . && break; sleep 0.2; done
         echo "$p"' 2>/dev/null) || lpid=""
     if ! [[ "$lpid" =~ ^[0-9]+$ ]]; then

@@ -51,6 +51,29 @@ check "a listener that does not answer on loopback fails" grep -q "PROOF-FAIL: t
 # The table's own grading (policy drop, the SSH accept) runs in the guest and is not
 # reached here: a host test stubs no privileged command.
 kill $(jobs -p) 2>/dev/null
-cmd=$(fn "$CODE/build-template.sh" proof_inbound | grep -F 'http.server 8080')
-check "the listener serves a new empty directory, not /tmp" eval 'grep -qF "d=\$(mktemp -d) && cd \"\$d\"" <<<"$cmd" && ! grep -qF "cd /tmp" <<<"$cmd"'
+# The listener's start, run as sshd runs a command: bash -c, its output a pipe that closes
+# only when every holder exits. The rehearsal of 2026-11-16 hung here for 49 minutes: the
+# whole && list went to the background, so a subshell held the channel open while the
+# server ran, and $! named that subshell, not the server. Here the server is a stand-in
+# (sleep, then a listener on a port of its own), and ss is stubbed to see that listener.
+start=$(fn "$CODE/build-template.sh" proof_inbound | awk '/lpid=\$\(KNOWN_HOSTS=/ { f = 1; next } f && /^ *echo "\$p"/ { sub(/'"'"' 2>\/dev\/null\) \|\| lpid=""$/, ""); print; exit } f { print }')
+check "the start's text is found" grep -qF 'http.server 8080' <<<"$start"
+check "the listener serves a new empty directory, not /tmp" eval 'grep -qF "d=\$(mktemp -d) && cd \"\$d\"" <<<"$start" && ! grep -qF "cd /tmp" <<<"$start"'
+W=$(mktemp -d "$T/start.XXXXXX"); mkdir -p "$W/bin"
+cat >"$W/bin/python3" <<'STUB'
+#!/usr/bin/env bash
+# python3 -m http.server 8080 ...: the stand-in server marks itself up, then runs.
+echo "$$" >"$STARTDIR/up"; exec -a stand-in-server sleep 30
+STUB
+cat >"$W/bin/ss" <<'STUB'
+#!/usr/bin/env bash
+[ -s "$STARTDIR/up" ] && echo "LISTEN 0 5 0.0.0.0:8080 0.0.0.0:*"
+STUB
+chmod 755 "$W/bin/python3" "$W/bin/ss"
+t0=$(date +%s)
+STARTDIR=$W PATH="$W/bin:$PATH" timeout 10 bash -c "$start" | cat >"$W/out"; rc=${PIPESTATUS[0]}; got=$(cat "$W/out")
+t1=$(date +%s)
+check "the start returns once the server is up, its pipe closed (no hang)" test "$rc" = 0 -a $((t1 - t0)) -lt 8
+check "and the PID it prints is the server's own" eval '[[ "$got" =~ ^[0-9]+$ ]] && [ "$got" = "$(cat "$W/up" 2>/dev/null)" ]'
+kill "$(cat "$W/up" 2>/dev/null)" 2>/dev/null
 finish
