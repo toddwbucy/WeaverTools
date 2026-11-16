@@ -195,7 +195,11 @@ the setup-pages rulings, items 15 and 19), per section 8.
 
 **The automatic save point that the unload writes is in scope, on the state disk** (the
 operator's rulings of 2026-11-16 on the setup pages). It is the existing save point
-path, placed on the state mount, and no new persistent store. The first agent "declares
+path, in the agent's folder, and no new persistent store. In version 1.0 the agent's
+folder is in its territory on the image's root (above), so a save point written there
+outlives a restart of the virtual machine but not the image's replacement. It is on the
+state disk once the next act moves the agent's home, with the folder inside it, onto the
+state drive. The first agent "declares
 a store and keeps the system prompt" (ruling of 2026-11-16) and keeps that save point.
 Its test puts a prompt into state, loads, unloads, shuts the virtual machine down,
 restarts, reloads, and finds the prompt restored. Save points that the operator manages

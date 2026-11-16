@@ -99,8 +99,10 @@ at image build) and the stack's test count. Each is read from the stamp that `pr
 read out of the sealed image (`appliance.version`, `stack.install-tuple`,
 `stack.tests`), as is the commit (`weaveragent.commit`). `VERSION` and `WA_COMMIT`,
 where named, must equal the stamp's. `tag` refuses unless a proof has passed for the
-sealed file the seal recorded. A proof that passes writes a record naming the sealed
-file's sha256 and the MANIFEST's, and each proof removes the record when it starts. The
+sealed file the seal recorded, and unless the file on disk, hashed again, still has that
+digest, so the message never describes a file changed since its proof. A proof that
+passes writes a record naming the sealed file's sha256 and the MANIFEST's, and each
+proof removes the record when it starts. The
 test count is the count of WeaverAgent's tests that `bootstrap-stack.sh` runs at its
 test step in the build guest. A run that passes removes that step's own log, so the
 stack step keeps bootstrap's output as it streams, records the count in the stamp as
@@ -828,18 +830,22 @@ them against stand-ins: small qcow2 files, stand-in images opened read-only, loo
 servers, and stubs for what a guest or the hypervisor would answer. No test stubs a
 privileged command. Where a guest function calls one, the test drops that prefix from
 the function's text. Each run works in a new `mktemp` directory and leaves it for
-reading. A test that needs a tool the host lacks is skipped with exit status 77. The
+reading. A loopback fixture is waited for within a bound, so one that never comes up is
+a failed check, not a hang. A test that needs a tool the host lacks is skipped with exit
+status 77. The
 harness clears the build's inputs and the scripts' other environment knobs before any test
 reads them, so a test runs the same in a clean shell and in one that has exported a
 build's inputs, as the recipe does (`t-harness-env.sh` checks it).
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-16 the 18 tests ran 351 checks and all passed, on a host with
+runs them all. On 2026-11-16 the 20 tests ran 367 checks and all passed, on a host with
 CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
 socket the proof names to QEMU, which plays getty, the forced change and a shell, and
 the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
-sshd with a stand-in configuration. The offline mock (`template-clone-Spec` section 8) is not one of
-them, and runs only in a build guest.
+sshd with a stand-in configuration. The offline mock (`template-clone-Spec` section 8)
+is not one of them, and runs only in a build guest. `t-wait-for.sh` takes the mock's
+bounded wait out of its text, checks it is the harness's own, and runs it, without
+running the mock.
 
 ## 3. Open
 

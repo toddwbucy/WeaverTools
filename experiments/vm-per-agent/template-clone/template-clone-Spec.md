@@ -359,8 +359,11 @@ line, `== N checks passed`, which counts the checks it ran: 123 in the fifth bui
 guest, from the 108 `check` call sites its source had then. The source has 122 now. 15
 of them sit in a loop that runs once for each of the two step files, `template-steps`
 and `clone-steps`, one runs once for each of six refused forms of `VERSION`, and one
-once for each of two ways a compaction fails, so 122 sites run 143 checks. The mock has
-not run since the 14 sites were added: it runs only in a build guest.
+once for each of two ways a compaction fails, so 122 sites run 143 checks. The proving
+build of version 1.0 ran it at 5108127 on 2026-11-16: 143 checks, all passed. Since then
+its wait for the loopback servers has a bound (CodeRabbit's review of #33), which adds
+no check. That edit has not run in a build guest, the only place the mock runs.
+`t-wait-for.sh` runs the bounded wait on the host, taken out of the mock's text.
 
 **`code/test/offline-mock.sh` runs the real `put`, `fetch_round`, `driver-install`,
 `uris_sha256`, `ci_judge`, `cloud_init_verdict`, `netdev_ok`, `inbound_probe`,
