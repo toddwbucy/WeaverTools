@@ -3,14 +3,15 @@
 # SSH. The appliance image is compiled here, in its own OS: both repositories are cloned
 # at their named commits and built in this guest, the build's tools are removed by a
 # checked list, and the seal writes the stamp and then the MANIFEST last
-# (template-clone-Spec.md, section 10). Each step prints what it measured; a step that
-# fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent or
-# WeaverWeb script; the deploy scripts run unmodified from their checkouts.
+# (weaver-appliance-build-Spec, section 2). Each step prints what it measured; a step
+# that fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent
+# or WeaverWeb script; the deploy scripts run unmodified from their checkouts.
 set -uo pipefail
 
-# The inputs, named by the host on each step's command line: WA_COMMIT and WW_COMMIT in
-# full, DRIVER, DRIVER_ROUTE, COMPUTE_CAP, and BASE_IMAGE (the cloud image's name and
-# digest). A step that needs one refuses where it is unset.
+# The inputs, named by the host on each step's command line: VERSION (the image's version,
+# a release, <release>.0), WA_COMMIT and WW_COMMIT in full, DRIVER, DRIVER_ROUTE,
+# COMPUTE_CAP, and BASE_IMAGE (the cloud image's name and digest). A step that needs one
+# refuses where it is unset.
 WA_URL=https://github.com/toddwbucy/WeaverAgent.git
 WW_URL=https://github.com/toddwbucy/WeaverWeb.git
 # The pins this file holds.
@@ -25,11 +26,15 @@ CUDA_LIBS=/usr/local/cuda-13.4/targets/x86_64-linux/lib
 # is a named input, COMPUTE_CAP (the capability without its dot, such as 86 for 8.6), which
 # the stack step refuses without and the stamp records.
 COMPUTE_CAP=${COMPUTE_CAP:-}
+# os-release is read in subshells and never sourced here: it assigns VERSION, which would
+# replace the image's version the host names (the Planner's review of 2026-11-15, B1).
 # shellcheck source=/dev/null
-. /etc/os-release
+VERSION_ID=$(. /etc/os-release && printf '%s' "${VERSION_ID:-}")
+# shellcheck source=/dev/null
+PRETTY_NAME=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-}")
 case $VERSION_ID in
     26.04) CXX_MAJOR=15 ;;
-    24.04) CXX_MAJOR=14 ;;   # named, not built (template-clone-Spec.md, section 10)
+    24.04) CXX_MAJOR=14 ;;   # named, not built (weaver-appliance-build-Spec, section 1)
     *) echo "no build for Ubuntu $VERSION_ID" >&2; exit 2 ;;
 esac
 NV_REPO=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${VERSION_ID//./}/x86_64
@@ -55,6 +60,16 @@ BUILD=/var/lib/weaver-build
 # The image's record and the deploy scripts' fixed copy (the appliance's layout).
 RECORD=/etc/weaver-appliance
 DEPLOY_COPY=/opt/weaver/deploy
+# The sealed image's hostname, set by the seal in place of the build guest's own: a neutral
+# name, so a box does not greet with the build's name (the Planner's note of 2026-11-15).
+# Defined once, here: lib.sh reads it for proof.
+IMAGE_HOSTNAME='weaver-appliance'
+# The two data mount points the appliance's profile fixes (weaver-appliance-profile section
+# 3.4): the operator attaches the disks and mounts them here. The image lays them empty and
+# root's, and carries no model and no state. Whether a load finds a separate filesystem on
+# each is admin's test, at every load, not the image's. Defined once, here: lib.sh reads it
+# for proof.
+DATA_MOUNTS='/mnt/weaver/models /mnt/weaver/state'
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
@@ -90,6 +105,19 @@ record_read() {
     record "$k" "$@"
 }
 used_bytes() { df -B1 --output=used / | tail -1 | tr -d ' '; }
+# getent_absent DB NAME LABEL: nothing, and status 0, where getent finds no NAME in DB (its
+# status 2). Otherwise a sentence naming LABEL, and status 1: NAME found (status 0), or a
+# read that did not happen (any other status), which is not an absence.
+getent_absent() {
+    local g
+    getent "$1" "$2" >/dev/null; g=$?
+    case $g in
+        2) return 0 ;;
+        0) echo "$3 remains" ;;
+        *) echo "getent exited $g, so whether $3 remains is not known" ;;
+    esac
+    return 1
+}
 # one_kernel: one version-named tree under /lib/modules, the running kernel's. The 615
 # module package also ships an empty /lib/modules/kernel/nvidia-615-open, which is no
 # kernel and is not counted.
@@ -137,6 +165,10 @@ facts() {
     fi
     section base-packages; wc -l <"$BUILD/base-packages"
     record base.image "${BASE_IMAGE:-unknown}" || return 1
+    # The image's version (the operator's decision 4 of 2026-11-15), as the host names it:
+    # a release, since a respin never recompiles and this build compiles.
+    [[ "${VERSION:-}" =~ ^[1-9][0-9]*\.0$ ]] || { echo "VERSION '${VERSION:-}' is not named as a release, <release>.0"; return 1; }
+    record appliance.version "$VERSION" || return 1
     record os "$PRETTY_NAME" || return 1
     record kernel "$KVER" || return 1
     local v
@@ -185,8 +217,8 @@ os_probes() {
     printf 'sudo is %s; packages: %s\n' "$(readlink -f "$(command -v sudo)")" \
         "$(dpkg-query -W -f '${Package} ${Version}, ' 'sudo*' 2>/dev/null)"
     os_probes_undo; trap - EXIT HUP INT TERM
-    getent passwd "$u" >/dev/null && { echo "the probe account remains"; return 1; }
-    getent group "$g" >/dev/null && { echo "the probe group remains"; return 1; }
+    getent_absent passwd "$u" "the probe account" || return 1
+    getent_absent group "$g" "the probe group" || return 1
     sudo test -e "$f" && { echo "the probe file remains"; return 1; }
     echo "probe account, group and file removed; /root is $(stat -c %a /root) again"
 }
@@ -272,7 +304,9 @@ EOF
 
 # The agent stack, as its deploy script builds and installs it: bootstrap-stack.sh
 # --install, unmodified, from the checkout, under relaxed (its test step needs both
-# settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable.
+# settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable. Its output
+# is kept as it streams, for the test count the stamp records (the tag's, decision 3 of
+# 2026-11-15), and the status is bootstrap's own, never tee's.
 stack_build() {
     [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || { echo "COMPUTE_CAP is not named (the compute capability without its dot, such as 86)"; return 1; }
     record build.compute-cap "$COMPUTE_CAP" || return 1
@@ -286,11 +320,23 @@ stack_build() {
     ( while :; do awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print int((t-a)/1024)}' /proc/meminfo; sleep 5; done ) \
         >"$HOME/mem-samples" 2>/dev/null &
     sampler=$!
-    (cd "$WA" && bash deploy/bootstrap-stack.sh --install) || rc=$?
+    (cd "$WA" && bash deploy/bootstrap-stack.sh --install) 2>&1 | tee "$HOME/stack-out"
+    rc=${PIPESTATUS[0]}
     kill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null
     printf 'memory: peak in use %s MiB of %s MiB (%s samples)\n' "$(sort -n "$HOME/mem-samples" | tail -1)" \
         "$(awk '/^MemTotal:/{print int($2/1024)}' /proc/meminfo)" "$(wc -l <"$HOME/mem-samples")"
     return "$rc"
+}
+# stack_tests OUT: bootstrap's test count from its output, "N passed, 0 failed", where its
+# "== test" section holds one count line, N is not 0 and none failed. Otherwise a sentence,
+# and status 1.
+stack_tests() {
+    local t
+    t=$(awk '/^== / { s = $2 } s == "test" && /^   [0-9]+ passed, [0-9]+ failed$/ { print $1, $3; n++ }
+        END { exit (n != 1) }' "$1" 2>/dev/null) \
+        || { echo "bootstrap's output names no one test count in its test step ($1)"; return 1; }
+    [ "${t#* }" = 0 ] && [ "${t% *}" != 0 ] || { echo "bootstrap's test step counted ${t% *} passed, ${t#* } failed"; return 1; }
+    printf '%s passed, 0 failed\n' "${t% *}"
 }
 stack() {
     [ -d "$WA" ] || { echo "no checkout; run trees first"; return 1; }
@@ -302,6 +348,12 @@ stack() {
     record_sha stack.install-tuple "$tuple" '' " (as written at image build; see the build's note)" || return 1
     local f k v
     v=$(sort -n "$HOME/mem-samples" | tail -1); record_read stack.peak-memory-mib $? "$v" || return 1
+    # The test count, as bootstrap's test step printed it: one count line in its "== test"
+    # section, with no test failed. A clean run removes the step's own log, so its output
+    # is the one record of the count.
+    local tests
+    tests=$(stack_tests "$HOME/stack-out") || { echo "$tests"; return 1; }
+    record stack.tests "$tests (bootstrap-stack.sh's test step)" || return 1
     for f in /opt/weaver/bin/* /opt/weaver/lib/*; do
         [ -f "$f" ] && [ ! -L "$f" ] || continue
         # The key names the file under the prefix, its slash a dot (record refuses a slash).
@@ -541,6 +593,44 @@ BUILD_RE='^(build-essential|(gcc|g\+\+|cpp|clang|llvm)(-[0-9]+)?(-x86-64-linux-g
 PURGE_BASE="git git-man unattended-upgrades snapd ubuntu-server
   bpftrace bpfcc-tools python3-bpfcc libbpfcc linux-virtual linux-image-virtual
   update-notifier-common libbinutils libctf0 libgprofng0 cloud-initramfs-dyn-netconf"
+# The image's base inbound policy (the operator's decision 9 of 2026-11-15): its own boot
+# rules drop inbound and accept SSH. One table of the image's own, which Ubuntu's
+# nftables.service loads from /etc/nftables.conf before the network comes up. The file never
+# flushes the ruleset and names its own table alone, so loading it again replaces that table
+# and nothing else. The drop-in makes the unit's stop remove that table alone, where
+# Ubuntu's flushes every table. Accepted: loopback, replies (established and related), the
+# ICMPv6 neighbour-discovery types IPv6 cannot work without, and TCP 22. Outbound is not
+# limited. Admin's table is separate and admin's: a drop here is final, so an accept in it
+# cannot open a port through this table (weaver-appliance-build-Spec section 3).
+FIREWALL_TABLE="inet weaver_appliance"
+FIREWALL_RULES='#!/usr/sbin/nft -f
+# The appliance image'"'"'s base inbound policy (weaver-appliance-build-Spec): inbound is
+# dropped but loopback, replies, IPv6 neighbour discovery and SSH. Outbound is not limited.
+# This file names its own table alone and never flushes the ruleset.
+destroy table inet weaver_appliance
+table inet weaver_appliance {
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iif "lo" accept
+		ct state established,related accept
+		icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } accept
+		tcp dport 22 accept
+	}
+}'
+FIREWALL_DROPIN=/etc/systemd/system/nftables.service.d/weaver-appliance.conf
+FIREWALL_STOP='[Service]
+ExecStop=
+ExecStop=/usr/sbin/nft destroy table inet weaver_appliance'
+# The image's SSH settings (the operator's ruling of 2026-11-16: root, set at first login):
+# no password of any kind and no empty one, and root by key alone. sshd keeps the first
+# value it reads for each keyword, and Ubuntu's sshd_config includes sshd_config.d's files,
+# in name order, before its own settings, so this file, first by name, decides all four.
+SSHD_DROPIN=/etc/ssh/sshd_config.d/10-weaver-appliance.conf
+SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone.
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PermitRootLogin prohibit-password'
 UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-daily-upgrade.service
   motd-news.timer motd-news.service fwupd-refresh.timer fwupd-refresh.service
   update-notifier-download.timer update-notifier-motd.timer snapd.service snapd.socket"
@@ -549,15 +639,15 @@ UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-dail
 # again before it writes anything.
 cleanup() {
     [ -s "$BUILD/keep-driver" ] || { echo "the driver step has not passed; the cleanup keeps its packages"; return 1; }
-    local before keep p added purge sim
-    before=$(used_bytes)
+    local before keep p added purge sim brc
+    before=$(used_bytes); brc=$?
     section before; df -h /
     du -sh "$WA" "$WW" "$HOME/target" "$HOME/.cargo" "$HOME/.rustup" /usr/local/cuda-13.4 /usr/local/cuda-13.3 2>/dev/null
     # A rerun keeps the first run's figure: the size before any cleanup.
     if [ -s "$BUILD/stamp.d/size.before-cleanup-used-bytes" ]; then
         echo "kept from the first run: size.before-cleanup-used-bytes = $(cat "$BUILD/stamp.d/size.before-cleanup-used-bytes")"
     else
-        record size.before-cleanup-used-bytes "$before" || return 1
+        record_read size.before-cleanup-used-bytes "$brc" "$before" || return 1
     fi
 
     section "1-2. the source trees, their build directories, the Rust toolchain and cargo's caches"
@@ -614,8 +704,9 @@ cleanup() {
     loader_check || return 1
 
     section "cloud-init limited to the operator's SSH key, network and hostname"
-    # The operator's ruling of 2026-11-14: cloud-init takes three settings from the seed,
-    # runs no command and installs no package. User-data and vendor-data are discarded
+    # The operator's ruling of 2026-11-14: cloud-init takes three settings from a seed,
+    # runs no command and installs no package. A boot with no seed attached runs no
+    # cloud-init at all (no datasource is found). User-data and vendor-data are discarded
     # before any module runs (so a seed cannot name modules back either); the SSH key comes
     # from the seed's meta-data public-keys, the hostname from its local-hostname, and the
     # network from its network-config. The modules left make the default account and the
@@ -656,6 +747,38 @@ EOF
     sudo dracut -f -q --kver "$KVER" || return 1
     initrd_network_check || return 1
     echo "initramfs $(sudo sha256sum "/boot/initrd.img-$KVER" | cut -c1-16): no networkd, no network hook"
+
+    section "the base inbound policy: drop, but SSH"
+    printf '%s\n' "$FIREWALL_RULES" | sudo tee /etc/nftables.conf >/dev/null || return 1
+    sudo install -d -m 0755 "${FIREWALL_DROPIN%/*}" || return 1
+    printf '%s\n' "$FIREWALL_STOP" | sudo tee "$FIREWALL_DROPIN" >/dev/null || return 1
+    # Enabled for the next boot, not loaded now: the build guest keeps its own network.
+    sudo systemctl enable nftables.service 2>&1 || return 1
+    firewall_check || return 1
+    echo "nftables.service enabled with the image's table; ufw installed and inactive"
+
+    section "SSH: keys alone"
+    # Written now, read at the next boot: the build account logs in by key, and none of the
+    # four settings bears on that.
+    printf '%s\n' "$SSHD_SETTINGS" | sudo tee "$SSHD_DROPIN" >/dev/null || return 1
+    sudo chmod 0644 "$SSHD_DROPIN" || return 1
+    sudo sshd -t 2>&1 || return 1
+    sshd_check || return 1
+    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone"
+
+    section "the data mount points"
+    # shellcheck disable=SC2086
+    sudo install -d -o root -g root -m 0755 /mnt/weaver $DATA_MOUNTS || return 1
+    mounts_check || return 1
+    echo "$DATA_MOUNTS: empty, root's, mode 0755, on the image's root"
+
+    section "the image's hostname"
+    # The image's own hostname, in place of the build guest's, written here so that every
+    # probes pre the recipe reaches (its own probes step, then the seal's) reads it. The
+    # file alone: the running guest keeps its name, which the probes read as the build
+    # guest's.
+    printf '%s\n' "$IMAGE_HOSTNAME" | sudo tee /etc/hostname >/dev/null || return 1
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
 
     section "updates masked, sources off"
     # shellcheck disable=SC2086
@@ -738,6 +861,121 @@ sys.exit(1 if bad else 0)
 PY
 }
 
+# firewall_check: the base inbound policy as the next boot loads it: /etc/nftables.conf and
+# the drop-in exactly as FIREWALL_RULES and FIREWALL_STOP hold them, the file accepted by
+# nft's check, nftables.service enabled, and ufw inactive. Prints each difference; exits 1
+# on any.
+firewall_check() {
+    local bad=""
+    cmp -s <(printf '%s\n' "$FIREWALL_RULES") /etc/nftables.conf || bad+="/etc/nftables.conf is not the image's rules. "
+    cmp -s <(printf '%s\n' "$FIREWALL_STOP") "$FIREWALL_DROPIN" || bad+="$FIREWALL_DROPIN is not the image's drop-in. "
+    sudo nft -c -f /etc/nftables.conf >/dev/null 2>&1 || bad+="nft's check refuses /etc/nftables.conf. "
+    [ "$(systemctl is-enabled nftables.service 2>/dev/null)" = enabled ] || bad+="nftables.service is not enabled. "
+    grep -qx 'ENABLED=no' /etc/ufw/ufw.conf 2>/dev/null || bad+="ufw is not inactive (/etc/ufw/ufw.conf). "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
+# sshd_check: the image's SSH settings as sshd reads them: SSHD_DROPIN exactly as
+# SSHD_SETTINGS holds it, and sshd's merged configuration for root naming each of the
+# four, whatever the case of its keywords (OpenSSH 10.2 prints them in lower case, 10.6 as
+# written). sshd -T exits at once where it can load no host key, and the seal removes the
+# host keys, so it is given a throwaway key under /run, which the key probes do not scan,
+# and the key goes after. Prints each difference; exits 1 on any.
+sshd_check() {
+    local bad="" d t k
+    cmp -s <(printf '%s\n' "$SSHD_SETTINGS") "$SSHD_DROPIN" || bad+="$SSHD_DROPIN is not the image's settings. "
+    if d=$(sudo mktemp -d /run/weaver-sshd-check.XXXXXX); then
+        if sudo ssh-keygen -q -t ed25519 -N '' -C sshd-check -f "$d/k" </dev/null >/dev/null 2>&1 \
+            && t=$(sudo sshd -T -o HostKey="$d/k" -C user=root,host=localhost,addr=127.0.0.1 2>&1); then
+            for k in "passwordauthentication no" "kbdinteractiveauthentication no" \
+                     "permitemptypasswords no" "permitrootlogin prohibit-password"; do
+                grep -qixF "$k" <<<"$t" || bad+="sshd -T reads '$(grep -im1 "^${k%% *} " <<<"$t" || echo "no ${k%% *}")', not '$k'. "
+            done
+        else
+            bad+="sshd -T did not run ($(tail -1 <<<"${t:-no output}")) "
+        fi
+        sudo rm -f -- "$d/k" "$d/k.pub"; sudo rmdir -- "$d"
+    else
+        bad+="no scratch directory under /run for sshd -T. "
+    fi
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
+# accounts_judge MODE PASSWD SHADOW GSHADOW SHELLS BACKUP...: who can log in, from the
+# account files given. MODE final is the sealed image: root's password field empty and its
+# last change 0, so login asks for no password and requires a new one at once (the
+# operator's ruling of 2026-11-16), and root's shell a login shell. In both modes: every
+# password in the shadow file (field 2 of passwd is x), no account but root with a login
+# shell (one SHELLS lists), every account but root locked (its field begins ! or *), and no
+# password hash ($) in SHADOW, GSHADOW or any BACKUP (the tools' shadow- and gshadow-
+# copies). MODE pre, before the seal, leaves out the build account op, which the seal
+# removes, and root's two fields, which the seal sets. Prints each finding.
+accounts_judge() {
+    local mode=$1 passwd=$2 shadow=$3 gshadow=$4 shells=$5 f b=(); shift 5
+    # A backup the tools have not written is not a finding.
+    for f; do [ -e "$f" ] && b+=("$f"); done
+    awk -F: -v mode="$mode" '
+        FILENAME == ARGV[1] { if ($0 !~ /^[[:space:]]*(#|$)/) sh[$0] = 1; next }
+        FILENAME == ARGV[2] {
+            if (mode == "pre" && $1 == "op") next
+            if ($2 != "x") print $1 ": the password field of passwd is not x"
+            if ($1 == "root") { if (!($7 in sh)) print "root: the shell " $7 " is not a login shell"; next }
+            if ($7 in sh) print $1 ": the login shell " $7
+            next
+        }
+        FILENAME == ARGV[3] {
+            if (mode == "pre" && $1 == "op") next
+            if ($2 ~ /\$/) print $1 ": a password hash in " FILENAME
+            if ($1 == "root") {
+                if (mode == "final" && ($2 != "" || $3 != "0"))
+                    print "root: the password field is " ($2 == "" ? "empty" : "not empty") " and the last change " ($3 == "" ? "unset" : $3) ", not empty and 0"
+                next
+            }
+            if ($2 !~ /^[!*]/) print $1 ": not locked"
+            next
+        }
+        { if ($2 ~ /\$/) print $1 ": a password hash in " FILENAME }
+    ' "$shells" "$passwd" "$shadow" "$gshadow" "${b[@]}"
+}
+
+# firstboot_paths_check: systemd's first-boot paths as Ubuntu 26.04 ships them, present and
+# not masked (the operator's ruling of 2026-11-16: leave and name them). What an operator
+# feeds through them is the operator's. Prints each finding.
+firstboot_paths_check() {
+    local u s
+    grep -q 'ssh\.authorized_keys\.root' /usr/lib/tmpfiles.d/provision.conf 2>/dev/null \
+        || echo "/usr/lib/tmpfiles.d/provision.conf does not name ssh.authorized_keys.root"
+    [ -e /etc/tmpfiles.d/provision.conf ] || [ -L /etc/tmpfiles.d/provision.conf ] \
+        && echo "/etc/tmpfiles.d/provision.conf stands over the shipped file"
+    for u in systemd-firstboot.service systemd-creds.socket; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        case $s in ""|masked*) echo "$u is ${s:-not found}" ;; esac
+    done
+    [ -x /usr/lib/systemd/system-generators/systemd-ssh-generator ] \
+        || echo "systemd-ssh-generator is not among the system generators"
+    [ -e /etc/systemd/system-generators/systemd-ssh-generator ] || [ -L /etc/systemd/system-generators/systemd-ssh-generator ] \
+        && echo "systemd-ssh-generator is masked"
+    return 0
+}
+
+# mounts_check: the data mount points as the image lays them: /mnt/weaver holding the two
+# alone, and each a directory (not a link), root's, mode 0755, empty, and on the image's
+# own filesystem, so nothing is mounted there in the build. Prints each finding; exits 1 on
+# any.
+mounts_check() {
+    local bad="" d s n want
+    want=$(for d in $DATA_MOUNTS; do echo "${d##*/}"; done | LC_ALL=C sort)
+    [ "$(sudo ls -A /mnt/weaver 2>/dev/null | LC_ALL=C sort)" = "$want" ] || bad+="/mnt/weaver does not hold the two mount points alone. "
+    for d in $DATA_MOUNTS; do
+        s=$(sudo stat -c '%F %u:%g %a' -- "$d" 2>/dev/null)
+        [ "$s" = "directory 0:0 755" ] || bad+="$d is '${s:-absent}', not a directory root's with mode 755. "
+        n=$(sudo ls -A -- "$d" 2>/dev/null | wc -l)
+        [ "$n" = 0 ] || bad+="$d holds $n entries. "
+        [ "$(sudo stat -c %d -- "$d" 2>/dev/null)" = "$(sudo stat -c %d -- / 2>/dev/null)" ] || bad+="$d is not on the image's root filesystem. "
+    done
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
 # SEAL_KEYS: the private keys the seal removes, besides the SSH host keys.
 SEAL_KEYS="/var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
   /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem"
@@ -785,6 +1023,7 @@ probes() {
     check "networkd in the initramfs" "$(initrd_network_check 2>&1)"
     check "the initramfs's catch-all network not masked" "$([ "$(readlink /etc/systemd/network/zzzz-dracut-default.network 2>/dev/null)" = /dev/null ] || echo "/etc/systemd/network/zzzz-dracut-default.network is not a link to /dev/null")"
     check "an agent configured" "$(sudo ls -A /etc/weaver/admin /var/lib/weaver-agent 2>&1 | grep -vE '^(/|$)')"
+    check "the data mount points not as laid" "$(mounts_check 2>&1)"
     check "a connector config or unit" "$(ls -d /etc/weaver-web /etc/systemd/system/weaver-web-* 2>/dev/null)"
     check "the stack's members and shell" "$(for b in worker weaver-admin weaver-trace-relay weaver-gate weaver-spu weaver-state busybox busybox.applets; do [ -f "/opt/weaver/bin/$b" ] || echo "missing $b"; done)"
     check "the connectors' programs" "$(for b in gate-con admin-con; do [ -x "/opt/weaver-web/bin/$b" ] || echo "missing $b"; done)"
@@ -792,28 +1031,73 @@ probes() {
     check "the loader" "$(loader_check >/dev/null 2>&1 || { echo "loader_check fails:"; loader_check 2>&1 | tail -4; })"
     check "one kernel" "$(one_kernel >/dev/null || one_kernel; ls /boot/vmlinuz-* 2>/dev/null | grep -v "vmlinuz-$KVER\$")"
     check "a kernel image or module package installed and not held" "$(kernel_holds)"
-    # The first boot's SSH step: SSH enabled, and cloud-init's keys_to_console left to print
-    # the host keys' fingerprints on the console; cloud-init limited to the seed's SSH key,
-    # network and hostname (the operator's rulings of 2026-11-14).
+    # The first boot's SSH step: SSH enabled, and sshd-keygen enabled to make the host keys
+    # at the first boot (ConditionFirstBoot, true while /etc/machine-id is uninitialized).
+    # The operator reads the fingerprints after logging in (decision 16 of 2026-11-15).
+    # cloud-init, where a seed is attached, stays limited to its SSH key, network and
+    # hostname (the operator's rulings of 2026-11-14).
     check "ssh not enabled for the first boot" "$(e=0; for u in ssh.service ssh.socket; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = enabled ] && e=1; done; [ "$e" = 1 ] || echo "neither ssh.service nor ssh.socket is enabled")"
-    check "cloud-init not limited to SSH key, network and hostname, or keys_to_console not run" "$(cloud_init_check 2>&1)"
+    check "sshd-keygen not enabled for the first boot" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd-keygen.service is ${s:-unknown}, not enabled")"
+    check "cloud-init not limited to SSH key, network and hostname" "$(cloud_init_check 2>&1)"
+    # SSH by key alone, and systemd's first-boot paths left and named (the operator's
+    # rulings of 2026-11-16). In both passes: the settings are written by the cleanup.
+    check "SSH settings not as built" "$(sshd_check 2>&1)"
+    check "systemd's first-boot paths masked or missing" "$(firstboot_paths_check 2>&1)"
+    # Who can log in. The pre pass leaves out the build account and root's two fields,
+    # which the final step removes and sets.
+    check "an account that can log in, other than as sealed" "$(sudo bash -c "$(declare -f accounts_judge); accounts_judge $mode /etc/passwd /etc/shadow /etc/gshadow /etc/shells /etc/shadow- /etc/gshadow-" 2>&1)"
+    # The hostname: the image's own, and the build guest's name (the kernel's hostname,
+    # which the seal does not change) nowhere in /etc. The pre pass leaves out the files the
+    # final step removes.
+    check "the image's hostname" "$(image_hostname_check "$mode")"
     check "the module" "$(driver_check_quiet)"
+    check "the base inbound policy not as built" "$(firewall_check 2>&1)"
     # Private keys, in both passes, so a false hit is found before the seal's removals.
     # The pre pass leaves out what the seal itself removes (SEAL_KEYS and the SSH host keys).
     check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE '^/etc/ssh/ssh_host_' | grep -vxF -f <(printf '%s\n' $SEAL_KEYS); else cat; fi | head -8)"
+    # No key admits a login: the operator places the first one (decision 16). In both
+    # passes, so a key is found before the seal's removals (the Planner's review of
+    # 2026-11-15, F9). The pre pass leaves out the build account's own, which the seal
+    # removes with the account.
+    check "an authorized key" "$(sudo find /root /home /etc/ssh -xdev -type f \( -name authorized_keys -o -name authorized_keys2 \) -size +0 2>/dev/null | if [ "$mode" = pre ]; then grep -v '^/home/op/'; else cat; fi)"
     if [ "$mode" = final ]; then
-        check "the build account" "$(getent passwd op; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
+        check "the build account" "$(getent_absent passwd op "the build account op"; getent_absent group op "the build account's group op"; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
         check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
         check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
-        check "machine identity" "$(m=$(sed -n 1p /etc/machine-id); [ -z "$m" ] || [ "$m" = uninitialized ] || echo "machine-id $m"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
-        check "sshd-keygen not masked" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ -z "$s" ] || [ "$s" = masked ] || echo "sshd-keygen.service=$s")"
+        check "cloud-init not disabled" "$([ -f /etc/cloud/cloud-init.disabled ] || echo "/etc/cloud/cloud-init.disabled is absent")"
+        # The machine identity must read uninitialized, as cloud-init clean writes it: that
+        # makes the first boot a first boot, on which sshd-keygen makes the host keys
+        # (ConditionFirstBoot). An empty or absent file is a hit (F8).
+        check "machine identity" "$([ "$(cat /etc/machine-id 2>/dev/null)" = uninitialized ] || echo "machine-id is '$(head -c 40 /etc/machine-id 2>/dev/null)', not uninitialized"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
         check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
         check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps 2>/dev/null)"
         check "a stamp other than the one being sealed" "$(ls "$RECORD" 2>/dev/null | grep -vxE 'stamp.part|seal-probes')"
     fi
     printf '\nprobes (%s): %s hit(s)\n' "$mode" "$hits"
     [ "$hits" = 0 ]
+}
+# image_hostname_check MODE: /etc/hostname is IMAGE_HOSTNAME alone, and no file under /etc
+# names the build guest (the kernel's hostname). MODE pre leaves out what seal_final removes:
+# the SSH host keys, the netplan files and cloud-init's sudoers rule. Prints each finding.
+image_hostname_check() {
+    local build
+    build=$(hostname)
+    [ "$(cat /etc/hostname 2>/dev/null)" = "$IMAGE_HOSTNAME" ] || echo "/etc/hostname is '$(head -c 80 /etc/hostname 2>/dev/null)', not $IMAGE_HOSTNAME"
+    if [ -z "$build" ] || [ "$build" = "$IMAGE_HOSTNAME" ]; then
+        echo "the build guest's name ('$build') cannot be told from the image's"
+        return 0
+    fi
+    # The name is matched whole, with no character a hostname carries on either side, so a
+    # longer word it begins is not a finding: the default name, weaver-appliance-build,
+    # begins weaver-appliance-build-Spec, which the image's nftables.conf names (the
+    # Planner's review of 2026-11-15, B2). The final pass writes its own record,
+    # seal-probes, under /etc while it runs: that file is left out.
+    local re
+    re=$(printf '%s' "$build" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
+    sudo grep -rlE -- "(^|[^A-Za-z0-9-])$re([^A-Za-z0-9-]|\$)" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
+        grep -vE '^/etc/(ssh/ssh_host_|netplan/|sudoers\.d/90-cloud-init-users$)'; else cat; fi | head -8
+    return 0
 }
 driver_check_quiet() {
     local m ver vm fw
@@ -840,6 +1124,12 @@ seal() {
         grep -qxE '[0-9a-f]{40}' "$BUILD/stamp.d/$k" 2>/dev/null || { echo "the stamp has no $k (the trees step records it)"; return 1; }
         [ "$(cat "$BUILD/stamp.d/$k")" = "${!want}" ] || { echo "the stamp's $k is $(cat "$BUILD/stamp.d/$k"), not $want ${!want}"; return 1; }
     done
+    # And the version: the one the facts step recorded, and the host's VERSION.
+    [ -n "${VERSION:-}" ] || { echo "the seal needs VERSION, the version the stamp's appliance.version must name"; return 1; }
+    [ "$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)" = "$VERSION" ] \
+        || { echo "the stamp's appliance.version is '$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)', not VERSION $VERSION (the facts step records it)"; return 1; }
+    # The image's own hostname was written by the cleanup; the probes judge it.
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
@@ -936,12 +1226,18 @@ seal_final() {
     userdel -r op 2>&1 || true
     getent group op >/dev/null && groupdel op
     rm -f /etc/sudoers.d/90-cloud-init-users
-    # SSH stays enabled with no host key and no account: at first boot cloud-init makes
-    # both from the operator's seed and prints the host keys' fingerprints on the console
-    # (keys_to_console), the trust on first use the operator ruled on 2026-11-14. The mask
-    # leaves cloud-init the only maker of host keys, so the console names every key SSH
-    # presents.
-    systemctl mask sshd-keygen.service 2>&1
+    # Root, set at the first login (the operator's ruling of 2026-11-16): the password field
+    # emptied and the last change put at 0, so the console's login asks for no password and
+    # requires a new one before the shell. SSH refuses every password (SSHD_SETTINGS), so the
+    # first password is set at the console, and the image carries none. Every other account
+    # stays locked as shipped. The final probe reads both fields back.
+    passwd -d root 2>&1; chage -d 0 root 2>&1
+    echo "root: $(passwd -S root 2>&1)"
+    # SSH stays enabled with no host key and no authorized key: at the first boot
+    # sshd-keygen makes the host keys (the machine-id the seal leaves uninitialized makes
+    # the boot a first boot), and the operator, logged in at the console, places a key and
+    # reads the fingerprints (decision 16 of 2026-11-15). sshd-keygen is left as its
+    # package enables it; the probes require it enabled.
     # systemd's random seed and its credential secret are per machine: no copy of the image
     # ships either. systemd-random-seed.service saves a seed when it stops, so left running
     # it would write one at the power-off, after the final probe. It is stopped first (its
@@ -953,6 +1249,10 @@ seal_final() {
     # shellcheck disable=SC2086
     rm -f $SEAL_KEYS
     cloud-init clean --logs --seed --machine-id --configs network 2>&1
+    # cloud-init disabled in the sealed image, the package kept (the operator's ruling of
+    # 2026-11-16): an image that acts on an attached seed has a first-boot path the profile
+    # does not state. The limit written by the cleanup stays beneath it.
+    install -o root -g root -m 0644 /dev/null /etc/cloud/cloud-init.disabled
     rm -f /root/.bash_history /root/.lesshst /root/.wget-hsts /root/.python_history
     rm -rf /tmp/* /var/tmp/* /var/crash/* 2>/dev/null
     systemctl stop rsyslog.service syslog.socket 2>/dev/null || true
@@ -968,15 +1268,16 @@ seal_final() {
         for k in $(ls "$BUILD/stamp.d" | sort); do printf '%s = %s\n' "$k" "$(cat "$BUILD/stamp.d/$k")"; done
         printf 'manifest.scope = %s\n' "$MANIFEST_SCOPE, regular files less the MANIFEST and /boot/grub/grubenv, then symbolic links (path and target)"
     } >"$RECORD/stamp.part"
-    # The stamp must name both commits: an image whose stamp does not cannot say what code
-    # it was compiled from.
+    # The stamp must name both commits and the version: an image whose stamp does not
+    # cannot say what code it was compiled from, or which version it is.
     local commits=1
     for k in weaveragent.commit weaverweb.commit; do
         grep -qE "^$k = [0-9a-f]{40}\$" "$RECORD/stamp.part" || commits=0
     done
+    grep -qE '^appliance\.version = [1-9][0-9]*\.0$' "$RECORD/stamp.part" || commits=0
     rm -rf -- "$BUILD" /usr/local/sbin/template-steps
     if ! probes final >"$RECORD/seal-probes" 2>&1 || [ "$commits" = 0 ]; then
-        [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name both weaveragent.commit and weaverweb.commit" >>"$RECORD/seal-probes"
+        [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name weaveragent.commit, weaverweb.commit and appliance.version" >>"$RECORD/seal-probes"
         rm -f "$RECORD/stamp.part"
         cp "$RECORD/seal-probes" "$RECORD/SEAL-REFUSED"
         echo "SEAL REFUSED; no stamp, no MANIFEST"

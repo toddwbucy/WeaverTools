@@ -37,6 +37,19 @@ pass=0
 ok() { printf 'ok   %s\n' "$*"; pass=$((pass + 1)); }
 no() { printf 'FAIL %s\n' "$*"; exit 1; }
 check() { local what=$1; shift; if "$@"; then ok "$what"; else no "$what"; fi; }
+# wait_for PIDS SECONDS CMD...: run CMD each tenth of a second until it succeeds. Status 1
+# once any of PIDS (one or more, space-separated) has exited, or SECONDS have passed, with
+# CMD still failing, so a fixture that never comes up is a failed check, not a hang. The
+# offline mock carries the same text, which t-wait-for.sh checks and runs.
+wait_for() {
+    local pids=$1 n=$(($2 * 10)) q
+    shift 2
+    until "$@"; do
+        [ "$n" -gt 0 ] || return 1
+        for q in $pids; do kill -0 "$q" 2>/dev/null || return 1; done
+        n=$((n - 1)); sleep 0.1
+    done
+}
 refused() { ! ( "$@" ) >/dev/null 2>&1; }   # refused CMD...: CMD fails, or stops its subshell
 
 # ---- the host side: lib.sh as the scripts source it, gssh pointed at the mock guest
@@ -208,6 +221,35 @@ check "a second forward bound to every address is refused" \
     refused nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5022-:22,hostfwd=tcp:0.0.0.0:8080-:80'
 check "no SSH forward on PORT is refused" refused nd 'user,id=un0,hostfwd=tcp:127.0.0.1:5023-:22'
 check "an argument not starting user,id=un0 is refused" refused nd 'user,id=un1,hostfwd=tcp:127.0.0.1:5022-:22'
+
+echo "== inbound_probe tells answered, closed and silent apart (weaver-appliance-build-Spec section 2)"
+# Loopback servers stand in for what a forward relays: one that speaks first (SSH), one that
+# answers a request, one that accepts and never speaks (a drop, as the forward relays it),
+# and one that closes.
+python3 -I - "$T" <<'PY2' &
+import socket, sys, threading, time, os
+d = sys.argv[1]
+def serve(kind):
+    l = socket.socket(); l.bind(("127.0.0.1", 0)); l.listen(8)
+    open(os.path.join(d, "srv-" + kind), "w").write(str(l.getsockname()[1]))
+    while True:
+        c, _ = l.accept()
+        if kind == "ssh": c.sendall(b"SSH-2.0-OpenSSH_10.0p2\r\n"); c.close()
+        elif kind == "http": c.recv(100); c.sendall(b"HTTP/1.0 200 OK\r\n\r\n"); c.close()
+        elif kind == "silent": threading.Thread(target=lambda c=c: (time.sleep(20), c.close()), daemon=True).start()
+        else: c.close()
+for k in ("ssh", "http", "silent", "close"):
+    threading.Thread(target=serve, args=(k,), daemon=True).start()
+time.sleep(40)
+PY2
+IP_SRV=$!
+wait_for "$IP_SRV" 10 eval '[ -s "$T/srv-ssh" ] && [ -s "$T/srv-http" ] && [ -s "$T/srv-silent" ] && [ -s "$T/srv-close" ]' \
+    || { kill "$IP_SRV" 2>/dev/null; wait "$IP_SRV" 2>/dev/null; no "the fixture's four servers came up within 10 seconds"; }
+check "a server that speaks first is answered" test "$(inbound_probe "$(cat "$T/srv-ssh")" 5)" = "answered: SSH-2.0-OpenSSH_10.0p2"
+check "a server that answers a request is answered" test "$(inbound_probe "$(cat "$T/srv-http")" 5)" = "answered: HTTP/1.0 200 OK"
+check "an accepted connection with nothing sent is silent" test "$(inbound_probe "$(cat "$T/srv-silent")" 3)" = silent
+check "a server that closes is closed" test "$(inbound_probe "$(cat "$T/srv-close")" 5 | cut -d' ' -f1)" = closed
+kill "$IP_SRV" 2>/dev/null || true
 
 echo "== ensure_key (Spec section 1)"
 ( KEY=$T/keys/sub/measure_ed25519; ensure_key ) >/dev/null 2>&1
@@ -434,6 +476,16 @@ copy_in_stubbed() {
     eval "mock_gssh() $(declare -f gssh | tail -n +2)"
     gssh() { case $2 in 'sudo install '*) return 0 ;; esac; mock_gssh "$@"; }
 }
+# VERSION's forms (weaver-appliance-build-Spec section 1): a release passes, a respin is
+# refused with its sentence, and every other form is refused.
+vin() { ( set -euo pipefail; host_fn build-template.sh inputs_ok; VERSION=$1 inputs_ok set ) >"$T/vin.out" 2>&1; }
+vin_refused() { ! vin "$1" && grep -qF -- "$2" "$T/vin.out"; }
+check "VERSION 1.0 passes" vin 1.0
+check "VERSION 12.0 passes" vin 12.0
+check "a respin, VERSION 1.1, is refused with its sentence" vin_refused 1.1 'REFUSED: VERSION 1.1 is a respin'
+for v in 1 1.0.0 0.0 01.0 1.00 v1.0; do
+    check "VERSION $v is refused as out of form" vin_refused "$v" 'REFUSED: VERSION is <release>.<respin>'
+done
 cat >"$B/template-steps" <<'EOF'
 #!/bin/bash
 echo "template-steps $*" >>"$MOCK/calls"
@@ -464,16 +516,20 @@ TD=$T/appliance
 IMG=$T/sealed-image
 A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
 A3=3333333333333333333333333333333333333333
-verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit: what the final step left
+verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit|no-version|other-version: what the final step left
     rm -rf -- "${IMG:?}"; mkdir -p "$IMG/etc/weaver-appliance"
     case $1 in
         refused) echo "1 hit(s)" >"$IMG/etc/weaver-appliance/SEAL-REFUSED" ;;
-        no-manifest) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
-        one-commit) printf 'weaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
+        no-manifest) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
+        one-commit) printf 'appliance.version = 1.0\nweaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
                     echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
-        other-commit) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
+        other-commit) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
                       echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
-        passed) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+        no-version) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                    echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        other-version) printf 'appliance.version = 2.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                       echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        passed) printf 'appliance.version = 1.0\nweaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
                 echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
     esac
 }
@@ -481,14 +537,22 @@ sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
     head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
     : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
-    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict; copy_in_stubbed
-      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
+    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict compact_disk; copy_in_stubbed
+      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2 VERSION=1.0
       virsh_() { echo "virsh_ $*" >>"$T/host-calls"
                  case $1 in
                      domstate) echo "shut off" ;;
                      dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk><disk type='file' device='cdrom'><source file='%s'/></disk></devices></domain>\n" "$2" "${MOCK_DOMDISK:-$DISK}" "$DISK" ;;
                  esac; }
-      qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+      # convert copies, unless T/convert-fails; compare finds them equal, unless
+      # T/compare-differs; check and info answer the figures compact_check reads.
+      qemu-img() { echo "qemu-img $*" >>"$T/host-calls"
+                   case $1 in
+                       convert) [ ! -e "$T/convert-fails" ] || return 1; cp -- "${@: -2:1}" "${@: -1}" ;;
+                       compare) [ ! -e "$T/compare-differs" ] || { echo "Content mismatch at offset 0!"; return 1; } ;;
+                       check) echo '{"image-end-offset": 4096, "allocated-clusters": 0}' ;;
+                       info) case " $* " in *" --output=json "*) echo '{"cluster-size": 65536, "virtual-size": 4096}' ;; esac ;;
+                   esac; }
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
       image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
                     [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
@@ -522,6 +586,14 @@ verdict other-commit
 sealrun >"$T/seal-othercommit.out" 2>&1
 check "a stamp that names another commit than the input stops the seal likewise" \
     test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names weaverweb.commit $A3, not WW_COMMIT $A2" "$T/seal-othercommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict no-version
+sealrun >"$T/seal-noversion.out" 2>&1
+check "a stamp that names no version stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no appliance.version" "$T/seal-noversion.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict other-version
+sealrun >"$T/seal-otherversion.out" 2>&1
+check "a stamp that names another version than the input stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names appliance.version 2.0, not VERSION 1.0" "$T/seal-otherversion.out")" = 1 -a "$(sealed_not && echo y)" = y
 verdict passed
 touch "$T/read-fails"
 sealrun >"$T/seal-readfails.out" 2>&1
@@ -547,8 +619,35 @@ check "a seal that passes goes on to all three" \
     test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
          -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/appliance-sha256.txt"
 chmod 0644 "$TD/appliance.qcow2"
+check "and its compaction, compared equal, comes before the undefine, and leaves no copy behind" \
+    test "$(grep -oE '^(qemu-img convert|qemu-img compare|virsh_ undefine)' "$T/host-calls" | tr '\n' ,)" = "qemu-img convert,qemu-img compare,virsh_ undefine," \
+         -a ! -e "$TD/appliance.compact.part" -a "$(grep -c '^end offset 4096 bytes' "$LOG/appliance-compact.txt")" = 1
+# A compaction that fails, or whose copy does not compare equal, stops before the undefine,
+# the read-only disk and the checksum, removes its copy, and leaves verdict to run again.
+for c in convert-fails compare-differs; do
+    touch "$T/$c"
+    sealrun >"$T/seal-$c.out" 2>&1
+    check "a compaction that fails ($c) stops the seal before the undefine, the read-only disk and the checksum, and removes its copy" \
+        test $? = 1 -a "$(sealed_not && echo y)" = y -a ! -e "$TD/appliance.compact.part" \
+             -a "$(grep -c 'REFUSED: the compact.*the disk is unchanged' "$T/seal-$c.out")" = 1
+    rm "$T/$c"
+done
+# A copy left by a compaction cut short is refused, not reused or removed.
+rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
+head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"; echo left >"$TD/appliance.compact.part"
+: >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt"
+( set -euo pipefail; host_fns build-template.sh inputs_ok seal_verdict compact_disk
+  NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2 VERSION=1.0
+  virsh_() { echo "virsh_ $*" >>"$T/host-calls"; case $1 in domstate) echo "shut off" ;; dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk></devices></domain>\n" "$2" "$DISK" ;; esac; }
+  qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
+  image_open() { :; }; image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }
+  seal_verdict ) >"$T/seal-leftover.out" 2>&1
+check "a compacted copy left by a run cut short is refused, kept, and nothing is marked sealed" \
+    test $? = 1 -a "$(grep -c 'REFUSED: .*appliance\.compact\.part stands, left by a compaction cut short\. It may be removed by hand, alone, and verdict run again\. destroy removes the whole build, the disk with it' "$T/seal-leftover.out")" = 1 \
+         -a "$(cat "$TD/appliance.compact.part")" = left -a "$(sealed_not && echo y)" = y \
+         -a "$(grep -c '^qemu-img convert' "$T/host-calls")" = 0
 
-echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
+echo "== dom_drop: a domain is undefined only once it is shut off (weaver-appliance-build-Spec section 2)"
 # destroy always fails here, as it does on a domain already shut off. The state after it
 # decides.
 ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails|parser-127|parser-1]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
@@ -593,7 +692,7 @@ ddrun running parser-1 >"$T/dd-parser-1.out" 2>&1
 check "dom_drop refuses (2) where the parser dies with exit 1, which is not taken for a mismatch" \
     test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-1.out")" = 1
 
-echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
+echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (weaver-appliance-build-Spec section 2)"
 # The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.
 # links_format's two copies, lib.sh's for proof's read of a booted guest and
 # guest/template-steps' for the seal, are the same text.
@@ -603,6 +702,10 @@ check "LINKS_MARK and MANIFEST_SCOPE are defined once, in guest/template-steps, 
          -a "$(grep -l -F '# links: ' "$CODE"/*.sh "$CODE"/guest/* | wc -l)" = 1 \
          -a "$LINKS_MARK" = "$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")" \
          -a "$MANIFEST_SCOPE" = "$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
+check "IMAGE_HOSTNAME is defined once, in guest/template-steps, and lib.sh reads the same" \
+    test "$(grep -c "^IMAGE_HOSTNAME='" "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -c '^IMAGE_HOSTNAME=' "$CODE/lib.sh")" = 1 -a -n "$IMAGE_HOSTNAME" \
+         -a "$IMAGE_HOSTNAME" = "$(sed -n "s/^IMAGE_HOSTNAME='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
 fmt_lib=$(sed -n '/^links_format() {/,/^}/p' "$CODE/lib.sh")
 fmt_ts=$(sed -n '/^links_format() {/,/^}/p' "$CODE/guest/template-steps")
 check "links_format's two copies, lib.sh's and guest/template-steps', are the same text" \
