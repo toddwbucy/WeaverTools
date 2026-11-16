@@ -145,7 +145,12 @@ that way from its first boot.
 
 ## The template
 
-`code/build-template.sh` builds it one step at a time from the Ubuntu Server 26.04.1
+**Since 2026-11-14 the tree cannot rebuild this template.** Since then
+`code/build-template.sh` builds the appliance image instead (`template-clone-Spec.md`, section 10), at its own path.
+This section records the template of 2026-11-11 as it was built then. `code/clone.sh`
+still clones that sealed template, and refuses an appliance image (Spec, section 0).
+
+`code/build-template.sh` built it one step at a time from the Ubuntu Server 26.04.1
 cloud image (signature verified against Ubuntu's cloud image key; kernel 7.0.0-38,
 systemd 259, gcc 15.2.0, Python 3.14) on 16 virtual CPUs and 32 GiB, UEFI without
 secure boot. The steps, in order, are in `COMMANDS.md`. What it holds:

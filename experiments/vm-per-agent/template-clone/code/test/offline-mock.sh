@@ -13,6 +13,19 @@
 # archive. Each of the 2026-11-12 slice's three script defects (D1, D2, D3) is reproduced
 # against the behaviour that had it, and shown caught by this one.
 set -uo pipefail
+# Where the mock runs (template-clone-Spec.md, section 8): it stubs sudo, so it starts only
+# inside a build guest it can recognise, a virtual machine (systemd-detect-virt --vm) that
+# carries the build harness's marker /run/weaver-build-guest, owned by root. Anywhere else,
+# a host above all, it refuses before it makes anything: there a stub that missed would
+# reach the real sudo. build-template.sh mock runs it in the build guest.
+mock_guest_ok() {
+    command -v systemd-detect-virt >/dev/null 2>&1 && systemd-detect-virt --vm --quiet 2>/dev/null \
+        && [ -f /run/weaver-build-guest ] && [ "$(stat -c %u /run/weaver-build-guest 2>/dev/null)" = 0 ]
+}
+if ! mock_guest_ok; then
+    printf 'REFUSED: offline-mock.sh runs only inside a build guest: a virtual machine carrying /run/weaver-build-guest, owned by root. It stubs sudo, and outside such a guest a stub that missed would reach the real sudo. Run it with build-template.sh mock.\n' >&2
+    exit 2
+fi
 HERE=$(cd "$(dirname "$0")" && pwd)
 CODE=$(cd "$HERE/.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/template-mock.XXXXXX")
@@ -412,6 +425,9 @@ echo "== a guest step that fails stops the host script (Spec section 0)"
 # guest's sudo install of the steps) are stubbed; each run is a subshell under the
 # scripts' own set -euo pipefail.
 host_fn() { eval "$(sed -n "/^$2() {/,/^}/p" "$CODE/$1")"; declare -F "$2" >/dev/null || no "no $2 in $1"; }
+# host_fns SCRIPT FN...: each FN as host_fn takes it. build-template.sh's step and seal call
+# inputs_ok, inputs_env and steps_in, which are extracted with them.
+host_fns() { local f=$1 fn; shift; for fn in "$@"; do host_fn "$f" "$fn"; done; }
 copy_in_stubbed() {
     gscp() { :; }
     install_steps() { :; }
@@ -427,12 +443,12 @@ EOF
 chmod 0755 "$B/template-steps"
 guest_reset
 touch "$T/steps-fail"
-( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep.out" 2>&1
+( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep.out" 2>&1
 check "build-template.sh step: a failed guest step exits non-zero, and nothing after it runs" \
     test $? = 1 -a "$(grep -c '^after the step' "$T/bstep.out")" = 0 \
          -a "$(grep -c 'REFUSED: step packages did not pass' "$T/bstep.out")" = 1
 rm "$T/steps-fail"
-( set -euo pipefail; host_fn build-template.sh step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep2.out" 2>&1
+( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in step; copy_in_stubbed; step packages; echo "after the step" ) >"$T/bstep2.out" 2>&1
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/bstep2.out")" = 1
 ( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step harness-preflight "$G"; echo "after the step" ) >"$T/cstep.out" 2>&1
 check "clone.sh step: a failed guest step exits non-zero, and nothing after it runs" \
@@ -440,29 +456,190 @@ check "clone.sh step: a failed guest step exits non-zero, and nothing after it r
          -a "$(grep -c 'REFUSED: step harness-preflight did not pass' "$T/cstep.out")" = 1
 ( set -euo pipefail; host_fn clone.sh step; copy_in_stubbed; step driver-uris pin; echo "after the step" ) >"$T/cstep2.out" 2>&1
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/cstep2.out")" = 1
-# seal: virsh_ and qemu-img recorded, the template's directory a stand-in
-TD=$T/template
+# seal: virsh_ and qemu-img recorded, the appliance's directory a stand-in. The final
+# step's verdict is read from IMG, a stand-in for the sealed image's root filesystem, by
+# image_open, image_get and image_close as functions. T/read-fails makes image_get fail as
+# a read error (2), not an absent file (1).
+TD=$T/appliance
+IMG=$T/sealed-image
+A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
+A3=3333333333333333333333333333333333333333
+verdict() { # verdict passed|refused|no-manifest|one-commit|other-commit: what the final step left
+    rm -rf -- "${IMG:?}"; mkdir -p "$IMG/etc/weaver-appliance"
+    case $1 in
+        refused) echo "1 hit(s)" >"$IMG/etc/weaver-appliance/SEAL-REFUSED" ;;
+        no-manifest) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp" ;;
+        one-commit) printf 'weaveragent.commit = %s\n' "$A1" >"$IMG/etc/weaver-appliance/stamp"
+                    echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        other-commit) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A3" >"$IMG/etc/weaver-appliance/stamp"
+                      echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+        passed) printf 'weaveragent.commit = %s\nweaverweb.commit = %s\n' "$A1" "$A2" >"$IMG/etc/weaver-appliance/stamp"
+                echo "x  /etc/hostname" >"$IMG/etc/weaver-appliance/MANIFEST" ;;
+    esac
+}
 sealrun() {
     rm -rf -- "${TD:?}"; mkdir -p "$TD/hostkey"; : >"$TD/known_hosts"; : >"$TD/seed.iso"
-    head -c 4096 /dev/zero >"$TD/template.qcow2"; chmod 0644 "$TD/template.qcow2"
-    : >"$T/host-calls"; rm -f "$LOG/template-sha256.txt"
-    ( set -euo pipefail; host_fn build-template.sh seal; copy_in_stubbed
-      NAME=mock-template DIR=$TD DISK=$TD/template.qcow2
-      virsh_() { echo "virsh_ $*" >>"$T/host-calls"; [ "$1" != domstate ] || echo "shut off"; }
+    head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2"
+    : >"$T/host-calls"; rm -f "$LOG/appliance-sha256.txt" "$LOG"/sealed-*
+    ( set -euo pipefail; host_fns build-template.sh inputs_ok inputs_env steps_in seal seal_verdict; copy_in_stubbed
+      NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2
+      virsh_() { echo "virsh_ $*" >>"$T/host-calls"
+                 case $1 in
+                     domstate) echo "shut off" ;;
+                     dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk><disk type='file' device='cdrom'><source file='%s'/></disk></devices></domain>\n" "$2" "${MOCK_DOMDISK:-$DISK}" "$DISK" ;;
+                 esac; }
       qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
-      seal; echo "after the seal" )
+      image_open() { echo "image_open $*" >>"$T/host-calls"; }
+      image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
+                    [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
+      image_close() { :; }
+      ${SEAL_ENTRY:-seal}; echo "after the seal" )
 }
+sealed_not() { # the seal stopped before the undefine, the read-only disk and the checksum
+    [ "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 ] && [ "$(stat -c %a "$TD/appliance.qcow2")" = 644 ] \
+        && [ -e "$TD/hostkey" ] && [ ! -e "$LOG/appliance-sha256.txt" ]
+}
+verdict passed
 touch "$T/steps-fail"
 sealrun >"$T/seal.out" 2>&1
 check "a seal that fails stops before the undefine, the read-only disk and the checksum" \
-    test $? = 1 -a ! -s "$T/host-calls" -a "$(stat -c %a "$TD/template.qcow2")" = 644 -a -e "$TD/hostkey" \
-         -a ! -e "$LOG/template-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
+    test $? = 1 -a ! -s "$T/host-calls" -a "$(stat -c %a "$TD/appliance.qcow2")" = 644 -a -e "$TD/hostkey" \
+         -a ! -e "$LOG/appliance-sha256.txt" -a "$(grep -c 'REFUSED: the seal did not pass' "$T/seal.out")" = 1
 rm "$T/steps-fail"
+verdict refused
+sealrun >"$T/seal-refused.out" 2>&1
+check "a final step that refused stops the seal before the undefine, the read-only disk and the checksum" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the seal refused' "$T/seal-refused.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict no-manifest
+sealrun >"$T/seal-nomanifest.out" 2>&1
+check "an image with no MANIFEST stops the seal likewise" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the image holds no MANIFEST' "$T/seal-nomanifest.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict one-commit
+sealrun >"$T/seal-onecommit.out" 2>&1
+check "a stamp that names one commit stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names no weaverweb.commit" "$T/seal-onecommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict other-commit
+sealrun >"$T/seal-othercommit.out" 2>&1
+check "a stamp that names another commit than the input stops the seal likewise" \
+    test $? = 1 -a "$(grep -c "REFUSED: the image's stamp names weaverweb.commit $A3, not WW_COMMIT $A2" "$T/seal-othercommit.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict passed
+touch "$T/read-fails"
+sealrun >"$T/seal-readfails.out" 2>&1
+check "a read error is not taken for an absent MANIFEST: the seal stops, says so, and names verdict" \
+    test $? = 1 -a "$(grep -c 'REFUSED: the image could not be read at /etc/weaver-appliance/SEAL-REFUSED (above). Nothing is marked sealed: build-template.sh verdict reads it again' "$T/seal-readfails.out")" = 1 \
+         -a "$(grep -c 'holds no MANIFEST' "$T/seal-readfails.out")" = 0 -a "$(sealed_not && echo y)" = y
+rm "$T/read-fails"
+: >"$T/calls"
+( SEAL_ENTRY=seal_verdict; sealrun ) >"$T/seal-verdict.out" 2>&1
+check "verdict alone, run again after the read error, reads the verdict and marks the image sealed" \
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
+         -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a -s "$LOG/appliance-sha256.txt" \
+         -a "$(grep -c 'template-steps seal' "$T/calls" || true)" = 0
+chmod 0644 "$TD/appliance.qcow2"
+# The other disk's path ends with the build disk's after a space, which a listing's line
+# cannot tell apart, and the build disk is the domain's CD-ROM, which is not a disk.
+( SEAL_ENTRY=seal_verdict; MOCK_DOMDISK="/archive $TD/appliance.qcow2"; sealrun ) >"$T/seal-otherdisk.out" 2>&1
+check "verdict refuses a shut-off domain of that name on another disk (one whose path ends with the build disk's), and changes nothing" \
+    test $? = 1 -a "$(grep -c 'REFUSED: mock-appliance is not the build guest' "$T/seal-otherdisk.out")" = 1 -a "$(sealed_not && echo y)" = y
+verdict passed
 sealrun >"$T/seal2.out" 2>&1
 check "a seal that passes goes on to all three" \
-    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-template --nvram$' "$T/host-calls")" = 1 \
-         -a "$(stat -c %a "$TD/template.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/template-sha256.txt"
-chmod 0644 "$TD/template.qcow2"
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-appliance --nvram$' "$T/host-calls")" = 1 \
+         -a "$(stat -c %a "$TD/appliance.qcow2")" = 444 -a ! -e "$TD/hostkey" -a -s "$LOG/appliance-sha256.txt"
+chmod 0644 "$TD/appliance.qcow2"
+
+echo "== dom_drop: a domain is undefined only once it is shut off (Spec section 10)"
+# destroy always fails here, as it does on a domain already shut off. The state after it
+# decides.
+ddrun() { # ddrun STATE [list-fails|list-fails-after|xml-fails|parser-127|parser-1]: dom_drop on a stand-in domain on its own disk, in STATE after destroy
+    : >"$T/host-calls"
+    ( DD_STATE=$1 DD_FAIL=${2:-}
+      # A parser that is missing (127) or dies (1) stands in for python3.
+      case $DD_FAIL in
+          parser-127) python3() { return 127; } ;;
+          parser-1) python3() { echo "Traceback (most recent call last): a stand-in" >&2; return 1; } ;;
+      esac
+      virsh_() { echo "virsh_ $*" >>"$T/host-calls"
+                 case $1 in
+                     list) [ "$DD_FAIL" != list-fails ] || return 1
+                           [ "$DD_FAIL" != list-fails-after ] || ! grep -q '^virsh_ destroy' "$T/host-calls" || return 1
+                           printf 'other\nmock-proof\n\n' ;;
+                     dumpxml) [ "$DD_FAIL" != xml-fails ] || return 1
+                              printf "<domain><devices><disk type='file' device='disk'><source file='/mock/overlay.qcow2'/></disk></devices></domain>\n" ;;
+                     domstate) echo "$DD_STATE" ;;
+                     destroy) return 1 ;;
+                 esac; }
+      dom_drop mock-proof /mock/overlay.qcow2 )
+}
+ddrun running >"$T/dd-running.out" 2>&1
+check "dom_drop refuses (2) to undefine a domain still running after destroy" \
+    test $? = 2 -a "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: mock-proof is not shut off after destroy (running)' "$T/dd-running.out")" = 1
+ddrun "shut off" >"$T/dd-off.out" 2>&1
+check "dom_drop undefines a domain that is shut off, though destroy failed" \
+    test $? = 0 -a "$(grep -c '^virsh_ undefine mock-proof --nvram$' "$T/host-calls")" = 1
+ddrun running list-fails >"$T/dd-nolist.out" 2>&1
+check "dom_drop refuses (2) where the domain list cannot be read, and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: the domain list could not be read' "$T/dd-nolist.out")" = 1
+ddrun "shut off" list-fails-after >"$T/dd-nolist-after.out" 2>&1
+check "dom_drop refuses (2) where the domain list cannot be read after destroy, and does not undefine" \
+    test $? = 2 -a "$(grep -c '^virsh_ undefine' "$T/host-calls")" = 0 -a "$(grep -c 'REFUSED: the domain list could not be read after destroy' "$T/dd-nolist-after.out")" = 1
+ddrun running xml-fails >"$T/dd-noxml.out" 2>&1
+check "dom_drop refuses (2) where the domain's definition cannot be read, and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read" "$T/dd-noxml.out")" = 1
+ddrun running parser-127 >"$T/dd-parser-127.out" 2>&1
+check "dom_drop refuses (2) where the parser is missing (127), and neither stops nor undefines" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-127.out")" = 1
+ddrun running parser-1 >"$T/dd-parser-1.out" 2>&1
+check "dom_drop refuses (2) where the parser dies with exit 1, which is not taken for a mismatch" \
+    test $? = 2 -a "$(grep -cE '^virsh_ (destroy|undefine)' "$T/host-calls")" = 0 -a "$(grep -c "REFUSED: mock-proof's definition could not be read or parsed" "$T/dd-parser-1.out")" = 1
+
+echo "== the MANIFEST: one definition, one formatter, the dry run and proof's comparison (Spec section 10)"
+# The marker and the scope are defined once, in guest/template-steps, and lib.sh reads them.
+# links_format's two copies, lib.sh's for proof's read of a booted guest and
+# guest/template-steps' for the seal, are the same text.
+check "LINKS_MARK and MANIFEST_SCOPE are defined once, in guest/template-steps, and lib.sh reads the same" \
+    test "$(grep -c '^LINKS_MARK=' "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -c '^MANIFEST_SCOPE=' "$CODE/guest/template-steps")" = 1 \
+         -a "$(grep -l -F '# links: ' "$CODE"/*.sh "$CODE"/guest/* | wc -l)" = 1 \
+         -a "$LINKS_MARK" = "$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")" \
+         -a "$MANIFEST_SCOPE" = "$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$CODE/guest/template-steps")"
+fmt_lib=$(sed -n '/^links_format() {/,/^}/p' "$CODE/lib.sh")
+fmt_ts=$(sed -n '/^links_format() {/,/^}/p' "$CODE/guest/template-steps")
+check "links_format's two copies, lib.sh's and guest/template-steps', are the same text" \
+    test -n "$fmt_lib" -a "$fmt_lib" = "$fmt_ts"
+# The seal's own functions on a stand-in scope, run with this guest's find, sort and
+# sha256sum: the dry run, then a "booted" copy changed as a first boot would, and beyond.
+MS=$T/mscope
+mkdir -p "$MS/usr/lib" "$MS/etc/netplan" "$MS/rec"
+echo a >"$MS/usr/lib/a"; echo p >"$MS/etc/passwd"; echo o >"$MS/etc/other"; echo g >"$MS/etc/gone"
+printf 'b\n' >"$MS/etc/back\\slash"; ln -s ../usr/lib/a "$MS/etc/link1"; ln -s /dev/null "$MS/etc/masked.service"
+manifest_fns() {
+    eval "$(sed -n "/^LINKS_MARK=/p; /^links_format() {/,/^}/p; /^links_list() {/,/^}/p; /^manifest_write() {/,/^}/p; /^manifest_dry() {/,/^}/p; /^manifest_links() /p" "$CODE/guest/template-steps")"
+    RECORD=$MS/rec; MANIFEST_SCOPE="$MS/usr $MS/etc"
+}
+( manifest_fns; manifest_dry "$T/m.sealed" ) >"$T/mdry.out" 2>&1
+check "the seal's dry run passes on a stand-in scope with an escaped name and a link to /dev/null" \
+    test $? = 0 -a "$(grep -c '^MANIFEST dry run: 5 files, 2 links, 0 lines out of form$' "$T/mdry.out")" = 1
+( manifest_fns; MANIFEST_SCOPE="$MS/usr $MS/absent"; manifest_dry "$T/m.absent" ) >"$T/mdry2.out" 2>&1
+check "and fails, with find's error shown, where a scope directory is missing" \
+    test $? = 1 -a "$(grep -c 'No such file or directory' "$T/mdry2.out")" -ge 1
+echo p2 >"$MS/etc/passwd"; echo o2 >"$MS/etc/other"; rm "$MS/etc/gone"
+echo n >"$MS/etc/netplan/50-cloud-init.yaml"; ln -s /x "$MS/etc/newlink"
+( manifest_fns
+  # shellcheck disable=SC2086
+  find $MANIFEST_SCOPE -xdev -type f -not -path "$RECORD/MANIFEST*" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum >"$T/m.files"
+  links_list >"$T/m.links" )
+( FIRST_BOOT_CHANGES="$MS/etc/passwd" FIRST_BOOT_ADDS="$MS/etc/netplan/*"
+  manifest_compare "$T/m.sealed" "$T/m.files" "$T/m.links" ) >"$T/mcmp.out" 2>&1
+check "proof's comparison passes a change and an addition on the expected lists, and fails a change, a removal and a link beyond them" \
+    test "$(grep -c '^PROOF-FAIL: ' "$T/mcmp.out")" = 3 -a "$(grep -c '(expected)$' "$T/mcmp.out")" = 2 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot changed a MANIFEST file outside the expected list: $MS/etc/other" "$T/mcmp.out")" = 1 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot removed a MANIFEST file outside the expected list: $MS/etc/gone" "$T/mcmp.out")" = 1 \
+         -a "$(grep -cF "PROOF-FAIL: the first boot added a MANIFEST link outside the expected list: $MS/etc/newlink" "$T/mcmp.out")" = 1
+grep -v -F -x "$LINKS_MARK" "$T/m.sealed" >"$T/m.earlier"
+manifest_compare "$T/m.earlier" "$T/m.files" "$T/m.links" >"$T/mcmp2.out" 2>&1
+check "a MANIFEST without its marker (an earlier form, or a marker that drifted) fails the comparison" \
+    test "$(grep -c '^PROOF-FAIL: the sealed MANIFEST does not carry the links marker once' "$T/mcmp2.out")" = 1
 
 echo "== relaxed puts both settings back (template-steps and clone-steps)"
 # relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions

@@ -47,6 +47,9 @@ qemu-system-x86_64 -M none -display none -netdev passt,id=p0
 
 ## The template
 
+These are #21's steps as run on 2026-11-11. `build-template.sh` and `guest/template-steps`
+have since become the appliance build (below), which has no `ship` and no `nvidia` step.
+
 ```bash
 git -C <WeaverAgent checkout> bundle create $VM_ROOT/seed/weaveragent.bundle code/unseeded-turn-check
 
@@ -156,3 +159,31 @@ the host's load average and its outcome; the test-only runs by the same kind of 
 `gnu-coreutils` was the step as first written (Ubuntu's package switch), which apt's
 solver refused without removing `coreutils-from-uutils`; the step was then rewritten as
 `gnu-test`, and `code/guest/clone-steps` carries the rewritten one.
+
+## The appliance image (2026-11-14)
+
+A cardless build, on a throwaway `VM_ROOT` with its own login key, torn down after
+(`template-clone-Spec.md`, section 10). The steps are in the order adopted after the first
+build broke at the stack (`driver` before `stack`). The inputs are named on every command:
+
+```bash
+export VM_ROOT=... PORT=...
+export OS=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86
+export WA_COMMIT=d640ea818a58b68984e540abfd67c58e5351eb06   # WeaverAgent main, 2026-11-14
+export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 2026-11-14
+# One subshell: it stops at the first command that fails, so nothing after a failed step
+# runs and `destroy` cannot take the build guest. Record the break, rerun that step, then
+# go on from it by hand. A pasted block that stops leaves the operator's shell open.
+(
+  code/build-template.sh create || exit
+  for s in facts os-probes packages rustup trees toolkit driver stack connectors cleanup probes; do
+    code/build-template.sh step "$s" || exit
+  done
+  # From the fifth build on, the offline mock runs in the guest between connectors and
+  # cleanup (it refuses on a host): code/build-template.sh mock
+  code/build-template.sh seal || exit
+  # where seal's own read of the verdict failed (it says so): code/build-template.sh verdict
+  code/build-template.sh proof || exit   # the first-boot overlay forwards SSH on PROOF_PORT (PORT + 100)
+  code/build-template.sh destroy
+)
+```
