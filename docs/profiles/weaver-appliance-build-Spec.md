@@ -815,10 +815,13 @@ them against stand-ins: small qcow2 files, stand-in images opened read-only, loo
 servers, and stubs for what a guest or the hypervisor would answer. No test stubs a
 privileged command. Where a guest function calls one, the test drops that prefix from
 the function's text. Each run works in a new `mktemp` directory and leaves it for
-reading. A test that needs a tool the host lacks is skipped with exit status 77.
+reading. A test that needs a tool the host lacks is skipped with exit status 77. The
+harness clears the build's inputs and the scripts' other environment knobs before any test
+reads them, so a test runs the same in a clean shell and in one that has exported a
+build's inputs, as the recipe does (`t-harness-env.sh` checks it).
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-16 the 17 tests ran 333 checks and all passed, on a host with
+runs them all. On 2026-11-16 the 18 tests ran 343 checks and all passed, on a host with
 CUDA 13.4's `nvcc` and OpenSSH 10.6p1. `t-first-boot.sh` stands a server on the unix
 socket the proof names to QEMU, which plays getty, the forced change and a shell, and
 the ways each can go wrong. `t-login-seal.sh` runs `sshd_check` against the host's own
