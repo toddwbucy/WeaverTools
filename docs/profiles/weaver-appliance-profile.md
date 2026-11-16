@@ -141,7 +141,11 @@ compacted file.**
 ### 3.2 Inbound
 
 **The image's own boot rules drop inbound traffic and accept SSH** (ruling of
-2026-11-15). The appliance listens on SSH alone unless a declaration names a port.
+2026-11-15). In version 1.0 the appliance listens on SSH alone. The setup and the
+console use no listener but SSH (the operator's addendum of 2026-11-16 to the
+setup-pages rulings, item 9). A port that a declaration names is the agent's own
+surface, and declared ports are later work (the operator's design-first ruling of
+2026-11-16).
 
 **Admin owns one named table for each agent and never the whole firewall** (rulings of
 2026-11-14 and 2026-11-15). A
@@ -248,9 +252,9 @@ each agent, and each choice is part of that agent's arrangement.
 | Choice | Where it is made | Note |
 |---|---|---|
 | The model | the declaration | The bytes live on the models mount. |
-| Whether the agent elects state | the declaration | The state mount is required for every agent, at least 10 GiB (the operator's rulings of 2026-11-16 on the setup pages). |
+| Whether the agent elects a store (the engine) | the declaration | It stays a choice for each agent. The state mount is required for every agent either way, at least 10 GiB, and whether a smaller drive is refused or warned of is open (the operator's rulings of 2026-11-16 on the setup pages). The first agent declares a store and keeps the system prompt (ruling of 2026-11-16). |
 | Where the trace goes | a field on Weaver Web's declaration page, set when the agent is created | The suite sends the trace where it is told. A file, `/dev/null` or anything else: what stands behind it is the operator's. |
-| The ports of a tool or of the gate | the declaration | Admin opens them in its table at load. |
+| The ports of a tool or of the gate | the declaration | Later work: none in version 1.0, per section 3.2 (the operator's design-first ruling of 2026-11-16). |
 | The card, and the virtual CPU model | the hypervisor | Both are members of the tuple, per section 5. |
 | What the appliance may reach | the operator's network | The image places no limit. |
 
@@ -290,17 +294,19 @@ lives in the charter named. This document does not state it with authority.
 | `weaver-agent-PRD` (WeaverAgent) | One clarifying sentence: the rule that no listening socket exists binds the program's own processes. | Owed in the act that adds the port member to the declaration. |
 | `weaver-admin-operator-contract` (WeaverAgent) | The member that carries the operator's choice of trace sink from the console to admin. | Not filed. |
 | the deployment tuple (WeaverAgent) | The guest CPU as a member. The tag of section 5. | Not filed. |
-| `weaver-web-PRD` (WeaverWeb) | Enrollment on the link port, with keys made in the appliance and signed by the console. The link's one unauthenticated surface, with the two browser pages that answer before a session named apart. The console described as management-plane software. The trace sink as a declared field. The clone of an enrolled appliance as a note. The model sources ruled on 2026-11-14. | On pull request 118, under amendment for the rulings of 2026-11-15. |
+| `weaver-web-PRD` (WeaverWeb) | Enrollment on the link port, with keys made in the appliance and signed by the console. The link's one unauthenticated surface, with the two browser pages that answer before a session named apart. The console described as management-plane software. The trace sink as a declared field. The clone of an enrolled appliance as a note. The model source ruled on 2026-11-16: Hugging Face only, for now. | On pull request 118, under amendment for the rulings of 2026-11-15. |
 | this repository | The Spec of the image build, under this profile. | As of 2026-11-15 it is section 10 of `template-clone-Spec`, on pull request 31. It moves to its own document. |
 
 **The image build's Spec is the one artifact gated on issue 28.** The enrollment work
 and the admin work are not gated on it.
 
-**On models.** The rulings of 2026-11-14 stand as asks of `weaver-web-PRD`: the console
-fetches models from four sources, pins each by exact revision and digest, and keeps
-access tokens in its own store. They state what the console offers. They place no limit
-on an appliance, since the claim that an appliance never reaches the internet was
-withdrawn on 2026-11-15.
+**On models.** Models come from Hugging Face only, for now, and a local source is later
+work (the operator's rulings of 2026-11-16 on the setup pages, section 2, superseding
+the four sources of 2026-11-14). The console pins each pull by commit and every file's
+digest, keeps the access token in its own store and the pulled model in its own cache,
+and the appliance pulls the model from that cache over TLS (the same rulings). They
+place no limit on what an appliance reaches, since the claim that an appliance never
+reaches the internet was withdrawn on 2026-11-15.
 
 ## 7. The evidence, and what is owed
 
