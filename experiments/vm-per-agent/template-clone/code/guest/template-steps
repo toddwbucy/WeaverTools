@@ -532,8 +532,12 @@ driver_arch_prebuilt() {
     sudo pacman -S --needed --noconfirm $names || return 1
     pin_check nvidia-open "$PIN_NVIDIA_OPEN" || return 1
     pin_check nvidia-utils "$PIN_NVIDIA_UTILS" || return 1
-    p=$(pacman -Qq | grep -E '^(dkms|linux(-[a-z]+)*-headers|nvidia(-open)?-dkms)$' || true)
+    # Kernel headers by package, for each of Arch's kernels (not linux-api-headers, the
+    # kernel's userspace interface, which glibc requires), and by what any such package
+    # lays: a kernel's module build tree.
+    p=$(pacman -Qq | grep -E "$HEADERS_RE" || true)
     [ -z "$p" ] || { echo "installed, and not to be: $(tr '\n' ' ' <<<"$p")"; return 1; }
+    p=$(build_trees); [ -z "$p" ] || { echo "a kernel's module build tree stands: $p"; return 1; }
     section installed
     for p in $names; do
         repo=$(pacman -Si "$p" 2>/dev/null | awk -F': ' '/^Repository/{print $2; exit}')
@@ -716,9 +720,15 @@ tuple_runtime_check() {
 # runtime the members load (gcc-libs: libstdc++ and libgcc_s), python (the deploy scripts;
 # create-agent.sh needs 3.11 or later), and util-linux (runuser, root's drops to accounts).
 KEEP="$RUNTIME_PKG acl gcc-libs python util-linux"
-# BUILD_RE: a build package, by name. The cleanup removes every installed package it
-# matches, base or added, and the probe refuses the seal on any left.
-BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoconf|automake|bison|flex|libtool|m4|patch|pkgconf|binutils|fakeroot|debugedit|dkms|linux(-[a-z]+)*-headers|nvidia(-open)?-dkms|cuda|cuda-tools|cccl|nsight-.*|git|rust|rustup|cargo|meson|ninja|go|gdb)$'
+# HEADERS_RE: what builds a module against a kernel, by package: DKMS, the driver's DKMS
+# forms, and the headers of each of Arch's kernels (linux, -lts, -zen, -hardened, -rt,
+# -rt-lts). Not linux-api-headers: the kernel's userspace interface, which glibc and
+# libbpf require and the base image carries; no module is built from it. build_trees
+# reads the tree any headers package lays, whatever its name.
+HEADERS_RE='^(dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers)$'
+# BUILD_RE: a build package, by name, HEADERS_RE's among them. The cleanup removes every
+# installed package it matches, base or added, and the probe refuses the seal on any left.
+BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoconf|automake|bison|flex|libtool|m4|patch|pkgconf|binutils|fakeroot|debugedit|dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers|cuda|cuda-tools|cccl|nsight-.*|git|rust|rustup|cargo|meson|ninja|go|gdb)$'
 # Base-image packages the cleanup also removes by name: cloud-init, removed outright once
 # the build seed is used (the Planner's ruling of 2026-11-16, the stronger form of the
 # operator's "off"), and growpart, which only cloud-init runs. Every other base package is
@@ -1253,6 +1263,13 @@ credential_consumers() {
 
 # imds_check: the cloud metadata service's units masked and its generator masked. Prints
 # each finding; exits 1 on any.
+# build_trees: each kernel's module build tree that stands (/usr/lib/modules/*/build), one
+# line each; none, no line.
+build_trees() {
+    local d
+    for d in /usr/lib/modules/*/build; do [ -e "$d" ] || [ -L "$d" ] && echo "$d"; done
+    return 0
+}
 # coredump_check: the image's coredump settings, and what systemd-coredump reads in the end
 # from all of coredump.conf's files: Storage=none and ProcessSizeMax=0, the last of each
 # name deciding, as systemd-analyze cat-config prints them in the order systemd reads them.
@@ -1453,6 +1470,7 @@ probes() {
     check "compiler and toolchain directories" "$(sudo bash -c "ls -d /usr/lib/gcc /usr/libexec/gcc /usr/lib/clang /usr/lib/llvm* $CUDA_HOME/bin $CUDA_HOME/nvvm $CUDA_HOME/include $CUDA_HOME/targets/*/include /usr/include/cccl /root/.cargo /root/.rustup /home/*/.cargo /home/*/.rustup 2>/dev/null")"
     check "static or device-link CUDA archives" "$(find /usr/local "$CUDA_HOME" -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | head -5)"
     check "build packages installed" "$(pacman -Qq 2>/dev/null | grep -E "$BUILD_RE")"
+    check "a kernel's module build tree" "$(build_trees)"
     check "test or sudo not GNU's and sudo's own" "$(o=$(pacman -Qoq /usr/bin/test 2>&1); [ "$o" = coreutils ] || echo "/usr/bin/test is ${o}'s"; o=$(pacman -Qoq /usr/bin/sudo 2>&1); [ "$o" = sudo ] || echo "/usr/bin/sudo is ${o}'s"; pacman -Qq uutils-coreutils sudo-rs 2>/dev/null)"
     # The man index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
     # a package owns is the distribution's; only what no package owns is a hit.

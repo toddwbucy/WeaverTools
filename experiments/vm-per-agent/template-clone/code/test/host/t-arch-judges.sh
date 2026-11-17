@@ -341,4 +341,24 @@ systemd-analyze() { echo "Failed to connect"; return 1; }
 check "a cat-config that does not run is a finding, never a pass" \
     eval 'grep -q "systemd-analyze cat-config did not run (Failed to connect)" <<<"$(coredump_check)"'
 unset -f systemd-analyze
+
+# ---- 16. Kernel headers: each of Arch's kernels' headers and DKMS refused, by the driver
+# step and by the cleanup's removal; linux-api-headers, which glibc requires and the base
+# image carries, is neither (the 2.0 build's stop of 2026-11-17 at the driver step).
+eval "$(sed -n "/^HEADERS_RE=/p; /^BUILD_RE=/p" "$STEPS")"
+check "the driver step reads HEADERS_RE, and the probes read build_trees" \
+    eval 'grep -qF "grep -E \"\$HEADERS_RE\"" <<<"$(fn "$STEPS" driver_arch_prebuilt)" && grep -qF "check \"a kernel'"'"'s module build tree\" \"\$(build_trees)\"" "$STEPS"'
+for n in linux-headers linux-lts-headers linux-zen-headers linux-hardened-headers linux-rt-headers linux-rt-lts-headers dkms nvidia-dkms nvidia-open-dkms; do
+    check "$n: refused by the driver step and removed by the cleanup" eval 'grep -qE "$HEADERS_RE" <<<"$n" && grep -qE "$BUILD_RE" <<<"$n"'
+done
+for n in linux-api-headers linux libbpf glibc linux-firmware; do
+    check "$n: neither" eval '! grep -qE "$HEADERS_RE" <<<"$n" && ! grep -qE "$BUILD_RE" <<<"$n"'
+done
+BTR=$T/modules; mkdir -p "$BTR/7.3.4-arch1-2"
+eval "$(steps build_trees | sed "s|/usr/lib/modules/|$BTR/|")" || exit 1
+check "build_trees: no build tree, no line" test -z "$(build_trees)"
+ln -s ../../src/linux "$BTR/7.3.4-arch1-2/build"
+check "a build link, though it leads nowhere here: named" test "$(build_trees)" = "$BTR/7.3.4-arch1-2/build"
+rm -f -- "$BTR/7.3.4-arch1-2/build"; mkdir -p "$BTR/7.2.9-arch1-1/build"
+check "a build directory under another kernel: named" test "$(build_trees)" = "$BTR/7.2.9-arch1-1/build"
 finish
