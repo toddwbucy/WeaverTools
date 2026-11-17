@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Build the appliance image from the Ubuntu cloud image, one step at a time, each step's
-# output and status kept under logs/. The binaries are compiled inside this guest from the
-# two named commits; nothing built on the host enters the image
+# Build the appliance image from the Arch Linux cloud image (release 2.0 on, the operator's
+# ruling of 2026-11-16; release 1.0 was built from Ubuntu 26.04 by this tree at WeaverTools
+# main 06d42bd, its stack WeaverAgent at the tag appliance/1.0), one step at a time, each
+# step's output and status kept under logs/. The binaries are compiled inside this guest
+# from the two named commits; nothing built on the host enters the image
 # (weaver-appliance-build-Spec, section 2).
 #
-#   VM_ROOT=<dir> OS=26.04 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
+#   VM_ROOT=<dir> OS=arch-20261115 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
 #     COMPUTE_CAP=<cc> WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create
 #                                              disk, seed, define and boot
 #   ... code/build-template.sh step NAME [ARGS]  run guest/template-steps NAME
@@ -16,7 +18,7 @@
 #                                              guest, where seal's own read failed
 #   ... code/build-template.sh proof             read the sealed image; boot an overlay
 #                                              with no seed, then one as a first boot,
-#                                              with a key and a network placed in it
+#                                              its network handed in as a credential
 #   ... code/build-template.sh tag               print the version's tag for the operator,
 #                                              after a proof that passed; apply nothing
 #   ... code/build-template.sh destroy           undefine and remove the build guest
@@ -31,7 +33,13 @@
 # past; nothing here retries.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
+# This tree builds one base, arch-20261115 (lib.sh). create needs OS named; any step given
+# another refuses, and a step that names none reads this one, so that no step reads lib.sh's
+# default, clone.sh's Ubuntu.
 OS_GIVEN=${OS:-}
+[ -z "$OS_GIVEN" ] || [ "$OS_GIVEN" = arch-20261115 ] \
+    || { printf '\nREFUSED: OS is arch-20261115, the base this tree builds, not %s (release 1.0'"'"'s build tree is WeaverTools main at 06d42bd, its stack WeaverAgent at the tag appliance/1.0)\n' "$OS_GIVEN" >&2; exit 1; }
+OS=arch-20261115
 # shellcheck source=lib.sh
 source "$HERE/lib.sh"
 
@@ -54,14 +62,14 @@ mkdir -p "$LOG"
 # inputs_ok all|set: each input that is set has its form; with "all", each is set.
 inputs_ok() {
     if [ "$1" = all ]; then
-        [ -n "$OS_GIVEN" ] || die "name OS (26.04)"
+        [ -n "$OS_GIVEN" ] || die "name OS (arch-20261115)"
         local v; for v in VERSION DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT; do [ -n "${!v:-}" ] || die "name $v"; done
     fi
     [ -z "${WA_COMMIT:-}" ] || [[ "$WA_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WA_COMMIT is a commit in full, 40 hex digits"
     [ -z "${WW_COMMIT:-}" ] || [[ "$WW_COMMIT" =~ ^[0-9a-f]{40}$ ]] || die "WW_COMMIT is a commit in full, 40 hex digits"
     # One form for DRIVER, the same regex guest/template-steps' driver step checks.
-    [ -z "${DRIVER:-}" ] || [[ "$DRIVER" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || die "DRIVER is a driver release such as 615.71.09"
-    [ -z "${DRIVER_ROUTE:-}" ] || [ "$DRIVER_ROUTE" = ubuntu-prebuilt ] || die "DRIVER_ROUTE is a route this tree builds: ubuntu-prebuilt"
+    [ -z "${DRIVER:-}" ] || [[ "$DRIVER" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || die "DRIVER is a driver release such as 620.70.06"
+    [ -z "${DRIVER_ROUTE:-}" ] || [ "$DRIVER_ROUTE" = arch-prebuilt ] || die "DRIVER_ROUTE is a route this tree builds: arch-prebuilt"
     [ -z "${COMPUTE_CAP:-}" ] || [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || die "COMPUTE_CAP is a compute capability without its dot, such as 86"
     # VERSION is <release>.<respin> (the operator's decision 4 of 2026-11-15): the release
     # moves when the binaries move, the respin when only the OS layer moves. A respin
@@ -76,9 +84,13 @@ inputs_env() {
     BASE_IMAGE="$IMAGE_NAME $IMAGE_SHA256"
     guest_env VERSION WA_COMMIT WW_COMMIT DRIVER DRIVER_ROUTE COMPUTE_CAP BASE_IMAGE
 }
+# steps_in: the guest's copy of the steps, and the CUDA runtime's PKGBUILD the cleanup
+# builds from (guest/template-steps, runtime_build). The seal removes both.
 steps_in() {
-    gscp "$PORT" "$HERE/guest/template-steps" /tmp/template-steps
-    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps'
+    gscp "$PORT" "$HERE/guest/template-steps" "$HERE/guest/cuda-runtime/PKGBUILD" /tmp/
+    gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps \
+        && sudo install -D -m 0644 /tmp/PKGBUILD /usr/local/share/weaver-build/cuda-runtime/PKGBUILD \
+        && rm -f /tmp/template-steps /tmp/PKGBUILD'
 }
 
 create() {
@@ -92,7 +104,8 @@ create() {
     mkdir -p "$DIR"
     guest_keys "$DIR" "$PORT"
     # A standalone disk, not an overlay on the cloud image: the sealed image names no
-    # backing file.
+    # backing file. The cloud image's disk is 2 GiB; cloud-init's growpart and resizefs
+    # grow its root partition and filesystem to SIZE at the first boot.
     qemu-img convert -O qcow2 "$IMAGE" "$DISK"
     qemu-img resize -q "$DISK" "$SIZE"
     write_seed "$DIR" "$NAME" "$NAME-$(date -u +%Y%m%dT%H%M%SZ)" "$LOG"
@@ -163,7 +176,7 @@ seal_verdict() {
     ( image_open "$DISK" "$r" ) || die "the image could not be opened (above). Nothing is marked sealed: build-template.sh verdict reads it again"
     rm -f "$LOG"/sealed-*
     for v in SEAL-REFUSED MANIFEST stamp seal-final.log seal-probes; do
-        rc=0; image_get "$r" "/etc/weaver-appliance/$v" "$LOG/sealed-$v" || rc=$?
+        rc=0; image_get_present "$r" "/etc/weaver-appliance/$v" "$LOG/sealed-$v" || rc=$?
         [ "$rc" != 2 ] || die "the image could not be read at /etc/weaver-appliance/$v (above). Nothing is marked sealed: build-template.sh verdict reads it again"
     done
     image_close "$r"; rm -rf -- "${r:?}"
@@ -306,9 +319,6 @@ proof_cleanup() {
             continue
         fi
         [ -d "$VM_ROOT/$d" ] || continue
-        # The first boot's offline placement, where a signal cut it short: its export is
-        # stopped before its directory goes.
-        [ "$d" != first ] || image_close "$VM_ROOT/first/place" || true
         # The first boot's console log sits beside its socket, under con/. The password
         # file under secret/ goes with the directory.
         for f in console.log con/console.log boot.pcap; do
@@ -379,20 +389,23 @@ proof() {
     mkdir -- "$r"; PROOF_OWN="read"
     ( exec {PROOF_LOCK_FD}>&-; image_open "$DISK" "$r" ) || die "the sealed image could not be opened (above); nothing booted"
     for f in stamp MANIFEST seal-probes SEAL-REFUSED; do
-        rc=0; image_get "$r" "/etc/weaver-appliance/$f" "$out/$f" || rc=$?
+        rc=0; image_get_present "$r" "/etc/weaver-appliance/$f" "$out/$f" || rc=$?
         [ "$rc" != 2 ] || die "the sealed image could not be read at /etc/weaver-appliance/$f (above); nothing booted"
     done
     {
         echo "== /etc/weaver-appliance"; image_ls "$r" /etc/weaver-appliance || echo "(absent)"
-        for p in /etc/netplan /etc/systemd/network /etc/NetworkManager/system-connections \
-                 /etc/apt/sources.list.d /etc/apt/apt.conf.d /etc/cloud/cloud.cfg.d \
-                 /etc/systemd/system /home /root; do
+        for p in /etc/systemd/network /etc/NetworkManager/system-connections /etc/cloud \
+                 /etc/systemd/system /etc/systemd/system-generators /etc/systemd/resolved.conf.d \
+                 /etc/pacman.d /home /root; do
             echo "== $p"; image_ls "$r" "$p" || echo "(absent)"
         done
-        echo "== /etc/systemd/resolved.conf, uncommented lines"
-        image_cat "$r" /etc/systemd/resolved.conf | grep -vE '^[[:space:]]*(#|$)' || echo "(none)"
-        echo "== /etc/apt/sources.list.d/ubuntu.sources, Enabled lines"
-        image_cat "$r" /etc/apt/sources.list.d/ubuntu.sources | grep -i '^Enabled' || echo "(none)"
+        echo "== /etc/systemd/resolved.conf and its drop-in, uncommented lines"
+        { image_cat "$r" /etc/systemd/resolved.conf; image_cat "$r" /etc/systemd/resolved.conf.d/10-weaver-appliance.conf; } \
+            | grep -vE '^[[:space:]]*(#|$)' || echo "(none)"
+        echo "== /etc/pacman.d/mirrorlist, uncommented lines"
+        image_cat "$r" /etc/pacman.d/mirrorlist | grep -vE '^[[:space:]]*(#|$)' || echo "(none)"
+        echo "== /etc/pacman.conf, its repositories and IgnorePkg"
+        image_cat "$r" /etc/pacman.conf | grep -E '^(\[|IgnorePkg|Include|Server)' || echo "(none)"
     } >"$out/network-and-updates.txt" 2>&1
     # Judged with the first boot's findings, after both boots (finding 10 of the review).
     image_late_writes "$r" >"$out/late-writes.txt" 2>&1 || die "the offline read of late writes failed"
@@ -512,10 +525,10 @@ PY
     # The verdict: every finding of the offline read's late writes and device code, of the
     # no-seed boot's capture, of the first boot and of the disk's owner and mode fails the
     # proof, after both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/power-off.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt, $out/power-off.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     # The pass names the sealed file the seal recorded, which the proof found equal, and
@@ -575,68 +588,42 @@ stamp_one() {
     printf '%s\n' "$v"
 }
 
-# proof_place OUT PDIR: one of the operator's two by-hand steps after the console login,
-# the network set (decision 16 of 2026-11-15), written into the proof's own overlay
-# offline, before its boot, and never into the image: a netplan file naming the static
-# address QEMU's user network forwards to (10.0.2.15), its gateway and its resolver,
-# matched by the NIC's MAC address. Placed offline so SSH answers from the boot, and the
-# proof can show it refusing root before the first login. The other step, the key, is
-# placed at the console after that login (proof_console). restrict=on's DHCP offers no
-# gateway and no resolver, and netplan's wait for the network on 26.04 waits for a
-# resolver (--dns): a boot with no network named waited 120 s (measured on the fourth
-# build). The file is read back from the overlay opened again read-only, with its owner
-# and mode, and the filesystem is checked (e2fsck -n), before anything boots. image_open
-# opens an overlay writable, never the sealed image.
-proof_place() {
-    local out=$1 pdir=$2 r=$2/place rc=0
-    mkdir -- "$pdir/put" "$r"
-    cat >"$pdir/put/netplan.yaml" <<EOF
-network:
-  version: 2
-  ethernets:
-    nic0:
-      match:
-        macaddress: "$PROOF_MAC"
-      addresses: [10.0.2.15/24]
-      routes:
-        - to: default
-          via: 10.0.2.2
-      nameservers:
-        addresses: [10.0.2.3]
+# proof_network OUT PDIR: one of the operator's two by-hand steps after the console login,
+# the network set (decision 16 of 2026-11-15), handed to the proof's first boot as a systemd
+# credential, and never written into the image or its overlay: a networkd file naming the
+# static address QEMU's user network forwards to (10.0.2.15), its gateway and its resolver,
+# matched by the NIC's MAC address. QEMU gives it to the guest as an SMBIOS type 11 string;
+# systemd imports it at boot, and systemd-network-generator writes it under
+# /run/systemd/network, where networkd reads it. SMBIOS is read through dmi-sysfs, which
+# Arch's kernel builds in, so the import works from the initramfs on; fw_cfg's reader is a
+# module (qemu_fw_cfg) the initramfs need not hold. Handed in so SSH answers from the boot,
+# and the proof can show it refusing root before the first login. The other step, the
+# key, is placed at the console after that login (proof_console). restrict=on's DHCP
+# offers no gateway and no resolver. The file is kept in OUT; the -smbios argument is
+# printed.
+proof_network() {
+    local out=$1 pdir=$2 f=$2/cred/50-weaver-proof.network
+    mkdir -- "$pdir/cred" || die "no directory for the proof's network credential"
+    cat >"$f" <<EOF
+[Match]
+MACAddress=$PROOF_MAC
+
+[Network]
+Address=10.0.2.15/24
+Gateway=10.0.2.2
+DNS=10.0.2.3
 EOF
-    cp "$pdir/put/netplan.yaml" "$out/first-boot-netplan.txt"
-    ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" rw ) \
-        || die "the proof's overlay could not be opened writable (above); nothing booted"
-    ( image_put "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 ) || rc=$?
-    cp "$r/put.log" "$out/first-boot-place-debugfs.txt" 2>/dev/null || true
-    image_close "$r"
-    rm -f -- "$r/put.cmd" "$r/put.log"
-    [ "$rc" = 0 ] || die "the proof's network file could not be written into its overlay (above, and $out/first-boot-place-debugfs.txt); nothing booted"
-    ( exec {PROOF_LOCK_FD}>&-; image_open "$pdir/overlay.qcow2" "$r" ) \
-        || die "the proof's overlay could not be opened again to read its network file back (above); nothing booted"
-    # The file read back as written, and the filesystem clean, or nothing boots.
-    {
-        rc=0
-        image_got "$r" "$pdir/put/netplan.yaml" "$PROOF_NETPLAN" 0100600 || rc=1
-        echo "== e2fsck -fn on the overlay's root filesystem"
-        e2fsck -fn "$r/root.raw" 2>&1 || { echo "e2fsck exited $?"; rc=1; }
-        if [ "$rc" = 0 ]; then echo "placed: the network file reads back as written; the filesystem is clean"
-        else echo "NOT PLACED"; fi
-    } >"$out/first-boot-place.txt" 2>&1
-    image_close "$r"
-    rmdir -- "$r"
-    cat "$out/first-boot-place.txt"
-    [ "$(tail -1 "$out/first-boot-place.txt")" = "placed: the network file reads back as written; the filesystem is clean" ] \
-        || die "the proof's network file did not read back as written, or the filesystem is not clean ($out/first-boot-place.txt); nothing booted"
+    cp "$f" "$out/first-boot-network.txt"
+    printf 'type=11,value=io.systemd.credential.binary:%s=%s\n' "$PROOF_CREDENTIAL" "$(base64 -w0 <"$f")"
 }
 
 # proof_first_boot OUT: a second overlay, booted as an operator's first boot is, with a seed
-# attached that the image must ignore, since it disables cloud-init (the operator's ruling of
-# 2026-11-16): its meta-data names a key and a hostname, its user-data a bootcmd, a runcmd and
-# the default account, and none may be acted on. The operator's network, set by hand after
-# logging in, is placed in the overlay offline (proof_place), so SSH answers from the boot;
-# everything else the operator does, the proof does at the console. At this boot
-# sshd-keygen makes the host keys. The proof waits for the console's login prompt, which
+# attached that the image must ignore, since it carries no cloud-init (the Planner's ruling
+# of 2026-11-16): its meta-data names a key and a hostname, its user-data a bootcmd, a
+# runcmd and the default account, and none may be acted on. The operator's network, set by
+# hand after logging in, is handed in as a credential (proof_network), so SSH answers from
+# the boot; everything else the operator does, the proof does at the console. At this boot
+# sshdgenkeys makes the host keys. The proof waits for the console's login prompt, which
 # must greet with the image's hostname (IMAGE_HOSTNAME), and scans the keys SSH presents.
 # Before the first login it tries root over SSH with an empty password, a wrong one and the
 # proof key, and each must be refused (proof_refusal). Then the first login, at the serial
@@ -644,9 +631,9 @@ EOF
 # required and made, and the proof key placed from that session (the operator's ruling of
 # 2026-11-16: root, set at first login). It then logs in over SSH as root with that key and
 # reads the host keys' fingerprints, as the operator does: each key SSH presents must be
-# one the guest made. Only on that match does it read cloud-init's state (disabled, the seed
-# ignored), the hostname, the network as the overlay named it, SSH's units and
-# sshd-keygen's run, the listeners, and the stamp's commits, try root over SSH again with
+# one the guest made. Only on that match does it read that cloud-init is gone and the seed
+# ignored, the hostname, the network as the credential named it, SSH's units and
+# sshdgenkeys's run, the listeners, and the stamp's commits, try root over SSH again with
 # the password the console set and a wrong one (each refused), set the MANIFEST against
 # the booted guest's files and links (manifest_compare), and read the base inbound policy
 # (proof_inbound). The network is QEMU's restrict=on: the guest reaches neither the host nor
@@ -667,7 +654,8 @@ proof_first_boot() {
         || die "the console's socket path, $pdir/con/console.sock, is longer than a unix socket allows (107 bytes); set VM_ROOT shorter; nothing booted"
     qemu_dir "$pdir/con"
     qemu_file "$pdir/con/console.log"
-    proof_place "$out" "$pdir"
+    local smbios
+    smbios=$(proof_network "$out" "$pdir") && [ -n "$smbios" ] || die "the proof's network credential could not be made; nothing booted"
     # The password the first login sets, made here and read only from this file: it is
     # typed at the console and offered to SSH, never printed or logged, and removed after
     # the last try.
@@ -699,15 +687,16 @@ EOF
         --disk "path=$pdir/overlay.qcow2,format=qcow2,bus=virtio,$PROOF_NORELABEL" \
         --disk "path=$pdir/seed.iso,device=cdrom,bus=sata" \
         --network none \
-        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -chardev socket,id=con0,path=$pdir/con/console.sock,server=on,wait=off,logfile=$pdir/con/console.log -serial chardev:con0" \
+        --qemu-commandline="-netdev user,id=un0,ipv6=off,restrict=on,hostfwd=tcp:127.0.0.1:$port-:22,hostfwd=tcp:127.0.0.1:$dport-:8080 -device virtio-net-pci,netdev=un0,mac=$PROOF_MAC,bus=pcie.0,addr=0x0a -smbios $smbios -chardev socket,id=con0,path=$pdir/con/console.sock,server=on,wait=off,logfile=$pdir/con/console.log -serial chardev:con0" \
         --graphics none --console none --noautoconsole --import \
         >"$out/first-boot-virt-install.txt" 2>&1
     # Wait for the console's login prompt, then scan once. Each scan connection leaves
     # without authenticating, and OpenSSH's PerSourcePenalties (on by default since 9.8)
     # counts each against its source; through QEMU's user network every host connection
     # comes from one address, so polling with scans got the host refused and lost a key
-    # type (measured on the fourth build). The scan names the three types sshd-keygen makes
-    # (ssh-keygen -A); one short scan is made again after the penalty lapses.
+    # type (measured on the fourth build). The scan names three of the types sshdgenkeys makes
+    # (ssh-keygen -A, which on OpenSSH 10.6 also makes an ML-DSA hybrid key no scan here
+    # names); one short scan is made again after the penalty lapses.
     # grep reads the console through a process substitution: under pipefail, a pipe from tr
     # would fail once grep had its match and tr had more to write, and the wait would run to
     # its bound with the prompt on the console.
@@ -751,26 +740,31 @@ EOF
                 echo "the host keys: MATCH for the keys SSH presents ($(wc -l <<<"$sfp") of the guest's $(wc -l <<<"$gfps")); SSH did not present: $(comm -23 <(printf '%s\n' "$gfps") <(printf '%s\n' "$sfp") | tr '\n' ' ')"
             fi
             KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" '
-                # A seed is attached, and the image disables cloud-init: none of it is
+                # A seed is attached, and the image carries no cloud-init: none of it is
                 # acted on.
                 echo "== cloud-init, with a seed attached"
-                cloud-init status --long 2>&1 | head -8
-                st=$(cloud-init status 2>/dev/null | sed -n "s/^status: //p")
-                [ "$st" = disabled ] || echo "PROOF-FAIL: cloud-init status is ${st:-unread}, not disabled, with a seed attached"
-                [ -f /etc/cloud/cloud-init.disabled ] || echo "PROOF-FAIL: /etc/cloud/cloud-init.disabled is absent"
+                if command -v cloud-init >/dev/null 2>&1 || pacman -Q cloud-init >/dev/null 2>&1; then
+                    echo "PROOF-FAIL: cloud-init is installed"
+                else
+                    echo "cloud-init: not installed"
+                fi
+                for d in /etc/cloud /var/lib/cloud; do
+                    [ ! -e "$d" ] || echo "PROOF-FAIL: $d stands"
+                done
                 echo "== the seed'"'"'s asks"
                 for m in /var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd; do
                     if [ -e "$m" ]; then echo "PROOF-FAIL: the seed'"'"'s ${m##*-} ran"; else echo "not run: ${m##*-}"; fi
                 done
                 # getent exits 2 where the account is not found. Any other failure is a read
                 # that did not happen, not an account that was not made.
-                getent passwd ubuntu >/dev/null; g=$?
+                getent passwd arch >/dev/null; g=$?
                 case $g in
                     0) echo "PROOF-FAIL: the seed'"'"'s default account was made" ;;
                     2) echo "not made: the default account" ;;
                     *) echo "PROOF-FAIL: getent exited $g, so whether the default account exists is not known" ;;
                 esac
-                echo "== the hostname"; hostname
+                # The kernel'"'"'s hostname (Arch ships no hostname command).
+                echo "== the hostname"; uname -n
                 # The data mount points, with no disk attached: laid by the image, empty,
                 # owned by root, and nothing mounted on them.
                 echo "== the data mount points, with no disk attached"
@@ -780,16 +774,37 @@ EOF
                     [ "$s" = "directory 0:0 755" ] && [ "$n" = 0 ] || echo "PROOF-FAIL: $d is not an empty directory root owns with mode 755"
                     [ -z "$s" ] || [ "$(stat -c %d -- "$d")" = "$(stat -c %d -- /)" ] || echo "PROOF-FAIL: $d has a filesystem mounted on it, with no disk attached"
                 done
-                [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
-                echo "== the network as the overlay named it"; ip -br addr; ip route; resolvectl dns 2>&1
+                [ "$(uname -n)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(uname -n), not '"$IMAGE_HOSTNAME"'"
+                echo "== the network as the credential named it"; ip -br addr; ip route; resolvectl dns 2>&1
+                ls /run/credentials/@system 2>&1; ls /run/systemd/network 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
-                echo "== ubuntu.sources after the first boot"; grep -i "^Enabled" /etc/apt/sources.list.d/ubuntu.sources || echo "(no Enabled line)"
-                echo "== ssh units"; systemctl is-enabled ssh.service ssh.socket sshd-keygen.service; systemctl is-active ssh.service
-                # sshd-keygen made the host keys: its first-boot condition held and it ran.
-                kg=$(systemctl show -p ConditionResult -p Result -p ActiveState sshd-keygen.service)
-                echo "sshd-keygen.service: $(tr "\n" " " <<<"$kg")"
+                # The boot as systemd timed it, for the Planner: the critical chains to the
+                # system and to the serial console'"'"'s login, where time-wait-sync and the
+                # network wait stand in them, the slowest units, and what runs.
+                # A boot that has not finished by now is held by a unit that waits on what
+                # this network cannot give (time-wait-sync did, before its mask).
+                echo "== the boot, as systemd timed it"; o=$(systemd-analyze time 2>&1); echo "$o"
+                case $o in *"Bootup is not yet finished"*) echo "PROOF-FAIL: the boot had not finished after the first login: $(systemctl list-jobs --no-legend --no-pager 2>&1 | head -3 | tr "\n" " ")" ;; esac
+                echo "== the critical chain to multi-user.target"; systemd-analyze critical-chain --no-pager multi-user.target 2>&1
+                echo "== the critical chain to the serial console login"; systemd-analyze critical-chain --no-pager serial-getty@ttyS0.service 2>&1
+                echo "== time-wait-sync"; systemctl show -p UnitFileState -p ActiveState -p Result systemd-time-wait-sync.service 2>&1 | tr "\n" " "; echo
+                [ "$(systemctl is-enabled systemd-time-wait-sync.service 2>/dev/null)" = masked ] || echo "PROOF-FAIL: time-wait-sync is not masked"
+                echo "== the slowest units"; systemd-analyze blame --no-pager 2>&1 | head -15
+                echo "== the units running"; systemctl list-units --no-legend --no-pager --plain --state=running 2>&1 | awk "{print \$1}" | tr "\n" " "; echo
+                # create-agent.sh runs a command as nobody through sudo (WeaverAgent #581),
+                # as root once root has a password, so here, after the first login.
+                # The ESP read-only on the booted image (the Planner'"'"'s ruling of 2026-11-17).
+                echo "== the ESP at /efi"; o=$(findmnt -nvo SOURCE,FSTYPE,OPTIONS /efi 2>&1 | tail -1); echo "$o"
+                case ",$(findmnt -nvo OPTIONS /efi 2>/dev/null | tail -1)," in *,ro,*) echo "the ESP is mounted read-only" ;; *) echo "PROOF-FAIL: /efi is not mounted read-only ($o)" ;; esac
+                echo "== sudo as nobody, as root after the first login"
+                if sudo -n -u nobody true 2>&1; then echo "sudo runs a command as nobody"; else echo "PROOF-FAIL: sudo would not run a command as nobody, as root after the first login"; fi
+                echo "== the package sources after the first boot"; grep -vE "^[[:space:]]*(#|$)" /etc/pacman.d/mirrorlist || echo "(no source)"
+                echo "== ssh units"; systemctl is-enabled sshd.service sshdgenkeys.service; systemctl is-active sshd.service
+                # sshdgenkeys made the host keys: its first-boot condition held and it ran.
+                kg=$(systemctl show -p ConditionResult -p Result -p ActiveState sshdgenkeys.service)
+                echo "sshdgenkeys.service: $(tr "\n" " " <<<"$kg")"
                 grep -qx ConditionResult=yes <<<"$kg" && grep -qx Result=success <<<"$kg" \
-                    || echo "PROOF-FAIL: sshd-keygen did not run at the first boot"
+                    || echo "PROOF-FAIL: sshdgenkeys did not run at the first boot"
                 echo "== listening sockets (ruling 4: nothing but SSH listens beyond loopback)"
                 # One listing, judged as printed. A listing that fails, or lists nothing (SSH
                 # itself listens), fails the proof: a check that did not run never passes.
@@ -849,12 +864,44 @@ EOF
         rm -f -- "$pdir/secret/pw" "$pdir/secret/askpass.pw"
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
+    proof_power_off "$pn" "$pdir/con/console.log" 2>&1 | tee "$out/power-off.txt"
     dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     tr -d '\r' <"$pdir/con/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
 }
 
+# proof_power_off PN LOG: the hypervisor's power button pressed (ACPI), as a host's shutdown
+# or Cockpit presses it with no guest agent in the image (the Planner's ruling of
+# 2026-11-17), and the guest powering itself off through systemd. Read: libvirt names the
+# guest's own shutdown as the stop's reason, and the serial log after the press holds
+# systemd's power-off target and the kernel's power-down line (printed at every console
+# level), with no unit failing and no stop job waited on. Each that does not hold is a
+# PROOF-FAIL line. A guest not off within PROOF_ACPI seconds is left to dom_drop.
+proof_power_off() {
+    local pn=$1 log=$2 mark t=0 st after f
+    mark=$(stat -c %s -- "$log" 2>/dev/null) || mark=0
+    echo "== the power button (ACPI), as a host's shutdown presses it"
+    if ! virsh_ shutdown "$pn" --mode acpi >/dev/null 2>&1; then
+        echo "PROOF-FAIL: the hypervisor could not press $pn's power button (virsh shutdown --mode acpi)"
+        return 0
+    fi
+    until [ "$(virsh_ domstate "$pn" 2>/dev/null)" = "shut off" ]; do
+        [ "$t" -lt "${PROOF_ACPI:-120}" ] || break
+        proof_sleep 2; t=$((t + 2))
+    done
+    st=$(virsh_ domstate "$pn" --reason 2>/dev/null) || st=""
+    echo "the domain: ${st:-unread}, ${t}s after the press"
+    [ "$st" = "shut off (shutdown)" ] || echo "PROOF-FAIL: $pn did not power itself off within ${PROOF_ACPI:-120}s of the power button (${st:-unread})"
+    after=$(tail -c +"$((mark + 1))" -- "$log" 2>/dev/null | tr -d '\r' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g')
+    echo "-- the serial log after the press: $(wc -l <<<"$after") lines"
+    grep -E 'Reached target System Power Off|reboot: Power down|\[FAILED\]|A stop job is running' <<<"$after" || true
+    grep -q 'Reached target System Power Off' <<<"$after" || echo "PROOF-FAIL: the serial log after the power button does not reach systemd's power-off target"
+    grep -q 'reboot: Power down' <<<"$after" || echo "PROOF-FAIL: the serial log after the power button holds no kernel power-down line"
+    f=$(grep -cE '\[FAILED\]|A stop job is running' <<<"$after" || true)
+    [ "$f" = 0 ] || echo "PROOF-FAIL: the power-off was not clean: $f unit(s) failed or a stop job was waited on (above)"
+    return 0
+}
 # proof_console OUT PDIR: the first login, typed at the serial console through QEMU's
 # socket in PDIR/con by console-drive.py, as the operator logs in: root at the prompt, the
 # password from PDIR/secret/pw given twice when the change is asked, then, in that session,
@@ -874,9 +921,9 @@ expect 60 New password:
 sendfile $pdir/secret/pw
 expect 30 Retype new password:
 sendfile $pdir/secret/pw
-expect 60 root@[^ ]*:~#
+expect 60 \\[root@[^ ]* ~\\]#
 send install -d -m 0700 /root/.ssh && echo '$(cat "$out/first-boot-authorized_keys.txt")' >/root/.ssh/authorized_keys && chmod 0600 /root/.ssh/authorized_keys\\r
-expect 30 root@[^ ]*:~#
+expect 30 \\[root@[^ ]* ~\\]#
 send printf 'READ tty=%s user=%s root=%s keys=%s\\\\n' "\$(tty)" "\$(id -un)" "\$(passwd -S root | cut -d' ' -f2)" "\$(wc -l </root/.ssh/authorized_keys)"\\r
 expect 30 READ tty=/\\S+ user=\\S+ root=\\S+ keys=\\S+
 send exit\\r

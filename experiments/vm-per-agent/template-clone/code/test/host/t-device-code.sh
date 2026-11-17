@@ -107,9 +107,12 @@ if command -v "$NVCC" >/dev/null 2>&1 && command -v "$REAL_CUOBJDUMP" >/dev/null
 else
     echo "note: no $NVCC or $REAL_CUOBJDUMP on this host, so the stand-in libraries are not built"
 fi
+# A link to nothing is not followed to a file: image_resolve answers 1, its target absent,
+# on ext4 as on btrfs (the shared statuses of 2026-11-17), and nothing is read.
 run "$(img broken x broken)"
-check "a link to nothing is a finding, and nothing is listed" \
-    test "$(fails)" = 1 -a "$(grep -c '^PROOF-FAIL: /opt/weaver/lib/libggml-cuda.so.0.9.11 could not be read out of the image' "$T/dc.out")" = 1
+check "a link to nothing is a finding, naming the absent target, and nothing is listed" \
+    test "$(fails)" = 1 -a "$(grep -c '^PROOF-FAIL: /opt/weaver/lib/libggml-cuda.so.0 could not be followed to a file in the image$' "$T/dc.out")" = 1 \
+         -a "$(grep -cx 'image_resolve: /opt/weaver/lib/libggml-cuda.so.0.9.11 is absent from the image' "$T/dc.out")" = 1
 ( CUOBJDUMP=$T/no-such-cuobjdump; run "$SI" )
 check "no cuobjdump on the host is a finding, not a pass" \
     test "$(fails)" = 1 -a "$(grep -c "^PROOF-FAIL: no $T/no-such-cuobjdump on this host" "$T/dc.out")" = 1

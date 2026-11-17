@@ -12,6 +12,9 @@ P='s''udo '
 me="$(id -u):$(id -g)"
 eval "$(grep -m1 "^DATA_MOUNTS=" "$TS")"
 check "the two mount points the profile fixes, defined once" test "$DATA_MOUNTS" = "/mnt/weaver/models /mnt/weaver/state"
+eval "$(sed -n '/^AGENT_DIR=/p' "$CODE/guest/template-steps")"
+check "the agents' base is the state mount, defined once" \
+    test "$AGENT_DIR" = "${DATA_MOUNTS##* }" -a "$(grep -c '^AGENT_DIR=' "$CODE/guest/template-steps")" = 1
 M=$T/root
 mc=$(fn "$TS" mounts_check | sed -e "s|$P||g" -e "s|/mnt/weaver|$M/mnt/weaver|g" -e "s|directory 0:0 755|directory $me 755|" -e "s|stat -c %d -- / |stat -c %d -- $M |")
 DATA_MOUNTS="$M/mnt/weaver/models $M/mnt/weaver/state"

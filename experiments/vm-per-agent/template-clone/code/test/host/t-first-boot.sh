@@ -1,18 +1,29 @@
 #!/usr/bin/env bash
 # proof_first_boot's grading, with no guest: virt-install, xorriso, ssh-keyscan, ssh, the
-# guest's answers (gssh), the placement and the domain's removal stood in. The console is
-# a stand-in server on the unix socket the proof names to QEMU, playing getty, login's
-# forced change and a shell, or one of the ways they can go wrong. Real: the seed the image
-# must ignore (the operator's ruling of 2026-11-16), the prompt check, proof_keyscan's merge
+# guest's answers (gssh) and the domain's removal stood in. The console is a stand-in
+# server on the unix socket the proof names to QEMU, playing Arch's getty, login's forced
+# change and a shell, or one of the ways they can go wrong. Real: the network credential
+# (proof_network), the seed the image must ignore (the operator's ruling of 2026-11-16),
+# the prompt check, proof_keyscan's merge
 # (the Planner's review of 2026-11-15, F11), the SSH refusals and their judge, the first
 # login through console-drive.py and console_judge (the operator's ruling of 2026-11-16:
 # root, set at first login), the host-key match, and manifest_compare with lib.sh's lists.
 # Each run has its own VM_ROOT. Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need ssh-keygen python3
+# Each stand-in proof's console socket lies under this run's directory, and proof_console
+# refuses a socket path longer than a unix socket allows (107 bytes), rightly. Refuse here,
+# once and by name, where TMPDIR is too long for that, not in each stand-in proof.
+s=$T/vmroot.XXXXXX/first/con/console.sock
+if [ "${#s}" -gt 107 ]; then
+    no "TMPDIR is too long for the proof's console socket: $s is ${#s} bytes, over the 107 a unix socket allows; set TMPDIR shorter"
+    finish; exit
+fi
 BT=$CODE/build-template.sh
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
-eval "$(fn "$BT" proof_first_boot proof_keyscan proof_console proof_refusal)"
+eval "$(fn "$BT" proof_first_boot proof_network proof_keyscan proof_console proof_refusal)"
+eval "$(fn "$BT" proof_power_off | sed '1s/^proof_power_off()/real_proof_power_off()/')"
+proof_power_off() { echo "== the power button (stand-in) $1 ${2##*/}"; }
 NAME=mock-appliance PORT=2230 PROOF_OWN="" PROOF_FIRST_BOOT=4 PROOF_NORELABEL=stand-in
 for t in rsa ecdsa ed25519; do ssh-keygen -q -t $t -N '' -C x -f "$T/hk_$t" </dev/null; done
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/other_ed25519" </dev/null
@@ -20,7 +31,6 @@ ssh-keygen -q -t ed25519 -N '' -C x -f "$T/proofkey" </dev/null; KEY=$T/proofkey
 proof_overlay() { : >"$1"; }
 qemu_file() { :; }
 qemu_dir() { mkdir -- "$1"; }
-proof_place() { echo "placed (stand-in)"; }
 proof_sleep() { :; }
 proof_inbound() { echo "== the base inbound policy (stand-in)"; }
 dom_drop() { return 0; }
@@ -58,35 +68,35 @@ def line():
         b += d
     return b[:-1].decode()
 def prompt():
-    out("\x1b[?2004hroot@%s:~# " % host)
+    out("[root@%s ~]# " % host)
 while True:
     l = line()
     if l == "":
-        out("\r\n\x1b]3008;start=x;type=boot\x1b\\\r\nUbuntu 26.04.1 LTS %s ttyS0\r\n\r\n%s login: " % (host, host))
+        out("\r\n\r\nArch Linux 7.3.4-arch1-2 (ttyS0)\r\n\r\n%s login: " % host)
     elif l == "root":
         out("root\r\n")
         break
 if mode == "asks-password":
     out("Password: "); sys.exit(0)
 if mode == "no-change":
-    out("Welcome to Ubuntu 26.04.1 LTS\r\n"); prompt(); sys.exit(0)
+    out("Last login: never\r\n"); prompt(); sys.exit(0)
 out("You are required to change your password immediately (administrator enforced).\r\nNew password: ")
 p1 = line(); out("\r\nRetype new password: ")
 p2 = line()
 open(gotp, "w").write(p1 + "\n" + p2 + "\n")
 if mode == "mismatch":
     out("\r\nSorry, passwords do not match.\r\npasswd: Authentication token manipulation error\r\n"); sys.exit(0)
-out("\r\nWelcome to Ubuntu 26.04.1 LTS\r\n\r\n"); prompt()
+out("\r\n"); prompt()
 keys = 0
 while True:
     l = line()
-    out(l + "\r\n\x1b[?2004l")
+    out(l + "\r\n")
     if l.startswith("install -d -m 0700 /root/.ssh && echo 'ssh-ed25519 "):
         keys = 1
     elif l.startswith("printf 'READ tty=%s"):
         out("READ tty=%s user=root root=P keys=%d\r\n" % ("/dev/tty1" if mode == "wrong-tty" else "/dev/ttyS0", keys))
     elif l == "exit":
-        out("logout\r\n\r\nUbuntu 26.04.1 LTS %s ttyS0\r\n\r\n%s login: " % (host, host)); break
+        out("logout\r\n\r\nArch Linux 7.3.4-arch1-2 (ttyS0)\r\n\r\n%s login: " % host); break
     prompt()
 PY
 # ssh: one refused login, as OpenSSH's -v reports it, or with T/ssh-pw-offered a server that
@@ -117,9 +127,8 @@ ssh-keyscan() { local p n=0
         printf '[127.0.0.1]:2330 %s\n' "$(cut -d' ' -f1,2 "$p")"
     done; }
 # The sealed MANIFEST: three files and one link. The booted listing changes machine-id and
-# the shadow file (the first login's password), and adds the host keys' public halves and
-# the proof's netplan file, or (T/booted-extra) also changes /etc/passwd, which is not on
-# the expected list.
+# the shadow file (the first login's password), and adds the host keys' public halves, or
+# (T/booted-extra) also changes /etc/passwd, which is not on the expected list.
 D=0000000000000000000000000000000000000000000000000000000000000000
 E=1111111111111111111111111111111111111111111111111111111111111111
 mkdir -p "$T/out"
@@ -128,11 +137,11 @@ gssh() { shift
     case $* in
         *"ssh_host_*_key.pub"*) [ -e "$T/no-login" ] && { echo "root@127.0.0.1: Permission denied (publickey)."; return 255; }
             for p in "$T"/hk_*.pub; do ssh-keygen -lf "$p"; done ;;
-        *"cloud-init status --long"*) printf '%s\n' "$*" >"$T/reads.sh"; echo "== cloud-init, with a seed attached"; echo "status: disabled"
+        *"cloud-init: not installed"*) printf '%s\n' "$*" >"$T/reads.sh"; echo "== cloud-init, with a seed attached"; echo "cloud-init: not installed"
             echo "== the seed's asks"; echo "not run: bootcmd"; echo "not run: runcmd"; echo "not made: the default account"
             echo "== the hostname"; echo "$IMAGE_HOSTNAME" ;;
         *"-type f"*) printf '%s  /etc/machine-id\n' "$E"; printf '%s  %s\n' "$([ -e "$T/booted-extra" ] && echo "$E" || echo "$D")" /etc/passwd
-            printf '%s  /etc/shadow\n%s  /etc/ssh/ssh_host_ed25519_key.pub\n%s  %s\n' "$E" "$E" "$E" "$PROOF_NETPLAN" ;;
+            printf '%s  /etc/shadow\n%s  /etc/ssh/ssh_host_ed25519_key.pub\n' "$E" "$E" ;;
         *"-type l"*) printf '/etc/x\0/dev/null\0' ;;
         *) echo "unexpected: $*" ;;
     esac; }
@@ -145,7 +154,7 @@ echo pass >"$T/con-mode"; echo "$IMAGE_HOSTNAME" >"$T/con-host"
 fb() { cat "$T/out/first-boot.txt"; }
 match3='^the host keys: MATCH, the guest holds each key SSH presents, and SSH presents each the guest holds (3 keys)$'
 
-printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: ' "$IMAGE_HOSTNAME" "$IMAGE_HOSTNAME" >"$T/console"
+printf 'Arch Linux 7.3.4-arch1-2 (ttyS0)\n\n%s login: ' "$IMAGE_HOSTNAME" >"$T/console"
 run
 check "a first boot that greets as the image, whose keys match, passes with no PROOF-FAIL" \
     test "$(fb | grep -c '^PROOF-FAIL')" = 0 -a "$(fb | grep -c "$match3")" = 1
@@ -172,10 +181,38 @@ check "the console is QEMU's socket, with its log beside it, under the first boo
     test "$(grep -c -- "-chardev socket,id=con0,path=$VM_ROOT/first/con/console.sock,server=on,wait=off,logfile=$VM_ROOT/first/con/console.log -serial chardev:con0" "$T/vi-args")" = 1
 check "the first boot's console log is kept, the stand-in's session in it" \
     test "$(grep -c 'You are required to change your password immediately' "$T/out/first-boot-console.log")" = 1
-check "and its MANIFEST comparison marks machine-id, the shadow file, the host key and the netplan file expected, with 0 findings" \
-    test "$(fb | grep -c '(expected)$')" = 4 -a "$(fb | grep -c '/etc/shadow.*(expected)$')" = 1 -a "$(fb | grep -c ', 0 finding(s)$')" = 1
+check "and its MANIFEST comparison marks machine-id, the shadow file and the host key expected, with 0 findings" \
+    test "$(fb | grep -c '(expected)$')" = 3 -a "$(fb | grep -c '/etc/shadow.*(expected)$')" = 1 -a "$(fb | grep -c ', 0 finding(s)$')" = 1
 check "and reads the inbound policy" test "$(fb | grep -c 'base inbound policy (stand-in)')" = 1
 check "the in-guest reads parse as bash" bash -n "$T/reads.sh"
+check "they time the boot: systemd-analyze's time, both critical chains, time-wait-sync and the units running" \
+    test "$(grep -cE 'systemd-analyze time|critical-chain --no-pager multi-user.target|critical-chain --no-pager serial-getty@ttyS0.service|systemd-time-wait-sync.service|--state=running' "$T/reads.sh")" = 6
+# The boot-finished and time-wait-sync reads, as the guest runs them, against stand-ins.
+BL=$(sed -n '/^                echo "== the boot, as systemd timed it"/,/^                case \$o in/p' "$T/reads.sh")
+br() { bash -c 'systemd-analyze() { echo "$A"; }; systemctl() { echo "systemd-time-wait-sync.service start running"; }; '"$BL" _ ; }
+check "a boot not finished is a PROOF-FAIL naming the waiting job; a finished one is read" \
+    test "$(wc -l <<<"$BL")" = 2 -a "$(A='Startup finished in 1.2s (kernel) + 3.4s (userspace) = 4.6s' br | grep -c PROOF-FAIL)" = 0 \
+         -a "$(A='Bootup is not yet finished (org.freedesktop.systemd1.Manager.FinishTimestampMonotonic=0).' br | grep -c '^PROOF-FAIL: the boot had not finished after the first login: systemd-time-wait-sync.service start running')" = 1
+WL=$(grep -F 'systemctl is-enabled systemd-time-wait-sync.service' "$T/reads.sh")
+check "time-wait-sync not masked is a PROOF-FAIL" \
+    test -n "$WL" -a -z "$(bash -c 'systemctl() { echo masked; }; '"$WL")" \
+         -a "$(bash -c 'systemctl() { echo enabled; }; '"$WL")" = "PROOF-FAIL: time-wait-sync is not masked"
+check "the power button is pressed after the reads, on the first boot's guest and its console log" \
+    test "$(cat "$T/out/power-off.txt")" = "== the power button (stand-in) mock-appliance-first console.log"
+# The ESP read, as the guest runs it, against a stand-in findmnt.
+EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
+er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }
+check "the ESP read: ro passes, rw is a PROOF-FAIL naming the mount" \
+    test "$(wc -l <<<"$EL")" = 2 -a "$(er ro,nosuid,umask=0077 | grep -c '^the ESP is mounted read-only$')" = 1 \
+         -a "$(er rw,nosuid | grep -c '^PROOF-FAIL: /efi is not mounted read-only (/dev/vda2 vfat rw,nosuid)$')" = 1 \
+         -a "$(er rw,nosuid | grep -c 'mounted read-only$')" = 0
+check "the hostname reads are the kernel's (uname -n), with no hostname command" \
+    eval '[ "$(grep -o "uname -n" "$T/reads.sh" | wc -l)" = 3 ] && ! grep -vE "^[[:space:]]*#" "$T/reads.sh" | grep -qE "(^|[;(])[[:space:]]*hostname[[:space:]]*([);]|\$)"'
+# The sudo read, as the guest runs it, against a stand-in sudo.
+SL=$(grep -F 'if sudo -n -u nobody true 2>&1; then' "$T/reads.sh")
+sr() { bash -c 'sudo() { return '"$1"'; }; '"$SL"; }
+check "sudo as nobody after the first login: read, and a refusal is a PROOF-FAIL" \
+    test -n "$SL" -a "$(sr 0)" = "sudo runs a command as nobody" -a "$(sr 1 | grep -c '^PROOF-FAIL: sudo would not run a command as nobody')" = 1
 check "a seed is attached, as a SATA cdrom beside the overlay" \
     test "$(cat "$T/iso-path")" = "$VM_ROOT/first/seed.iso" -a "$(grep -cxF -- "path=$VM_ROOT/first/seed.iso,device=cdrom,bus=sata" "$T/vi-args")" = 1
 check "its meta-data names a hostname of its own and the proof key" \
@@ -184,12 +221,27 @@ check "its meta-data names a hostname of its own and the proof key" \
 check "its user-data asks for a bootcmd, a runcmd and the default account" \
     test "$(grep -c 'weaver-proof-bootcmd' "$T/out/first-boot-seed-user-data.txt")" = 1 -a "$(grep -c 'weaver-proof-runcmd' "$T/out/first-boot-seed-user-data.txt")" = 1 \
          -a "$(grep -cx '  - default' "$T/out/first-boot-seed-user-data.txt")" = 1
-check "the in-guest reads require cloud-init disabled, the marker, and none of the asks carried out" \
-    test "$(grep -c 'not disabled, with a seed attached' "$T/reads.sh")" = 1 -a "$(grep -c '/etc/cloud/cloud-init.disabled' "$T/reads.sh")" = 1 \
+check "the in-guest reads require cloud-init absent, its directories gone, and none of the asks carried out" \
+    test "$(grep -c 'PROOF-FAIL: cloud-init is installed' "$T/reads.sh")" = 1 -a "$(grep -c 'for d in /etc/cloud /var/lib/cloud; do' "$T/reads.sh")" = 1 \
          -a "$(grep -c '/var/tmp/weaver-proof-bootcmd /var/tmp/weaver-proof-runcmd' "$T/reads.sh")" = 1 -a "$(grep -c "default account was made" "$T/reads.sh")" = 1
+# The network, handed in as a systemd credential through SMBIOS type 11: the argument names
+# the credential and carries the network file the proof keeps, base64 and with no comma
+# (QEMU's option separator); the file matches the NIC's MAC and names the static address,
+# gateway and resolver QEMU's user network serves.
+sm=$(grep -oE -- '-smbios [^ ]+' "$T/vi-args" | head -1); sm=${sm#-smbios }
+check "the first boot is given one -smbios argument, a type 11 credential named $PROOF_CREDENTIAL" \
+    test "$(grep -oE -- '-smbios ' "$T/vi-args" | wc -l)" = 1 -a "${sm%%=*}" = "type" \
+         -a "$(grep -c "^type=11,value=io.systemd.credential.binary:$PROOF_CREDENTIAL=[A-Za-z0-9+/=]*\$" <<<"$sm")" = 1
+check "its value decodes to the network file the proof keeps" \
+    cmp -s <(base64 -d <<<"${sm##*:$PROOF_CREDENTIAL=}") "$T/out/first-boot-network.txt"
+check "the network file matches the NIC's MAC, the same the -device names, and the static address, gateway and resolver" \
+    test "$(grep -cx "MACAddress=$PROOF_MAC" "$T/out/first-boot-network.txt")" = 1 -a "$(grep -c "mac=$PROOF_MAC," "$T/vi-args")" = 1 \
+         -a "$(grep -cxE 'Address=10\.0\.2\.15/24|Gateway=10\.0\.2\.2|DNS=10\.0\.2\.3' "$T/out/first-boot-network.txt")" = 3
+check "and nothing is written into the overlay: no image_open, no placement" \
+    bash -c '! grep -qE "image_open|image_put|proof_place" <<<"$1"' _ "$(fn "$BT" proof_first_boot proof_network)"
 # The default account's read, as the guest runs it, against a stand-in getent: its status 2
 # is an account not made, 0 one made, and any other a read that did not happen.
-sed -n '/getent passwd ubuntu/,/^ *esac$/p' "$T/reads.sh" >"$T/getent.sh"
+sed -n '/getent passwd arch/,/^ *esac$/p' "$T/reads.sh" >"$T/getent.sh"
 ga() { bash -c 'getent() { return '"$1"'; }; . "$0"' "$T/getent.sh" 2>&1; }
 check "the default account's read: getent's status 2 is not made, and no PROOF-FAIL" \
     test "$(ga 2)" = "not made: the default account"
@@ -224,11 +276,11 @@ check "a first scan that misses a key and a retry that finds it: all three kept,
 touch "$T/booted-extra"; run; rm -f -- "$T/booted-extra"
 check "a first boot that changes /etc/passwd fails: the account files are off the expected list" \
     test "$(fb | grep -c '^PROOF-FAIL: the first boot changed a MANIFEST file outside the expected list: /etc/passwd$')" = 1
-printf 'Ubuntu 26.04.1 LTS x ttyS0\n\nweaver-appliance-build5 login: ' >"$T/console"
+printf 'Arch Linux 7.3.4-arch1-2 (ttyS0)\n\nweaver-appliance-build5 login: ' >"$T/console"
 run
 check "a console that greets with the build guest's name fails" \
     test "$(fb | grep -c "^PROOF-FAIL: the console's login prompt is 'weaver-appliance-build5 login:', not the image's hostname")" = 1
-{ printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: \n' "$IMAGE_HOSTNAME" "$IMAGE_HOSTNAME"; head -c 400000 /dev/zero | tr '\0' x | fold -w 100; } >"$T/console"
+{ printf 'Arch Linux 7.3.4-arch1-2 (ttyS0)\n\n%s login: \n' "$IMAGE_HOSTNAME"; head -c 400000 /dev/zero | tr '\0' x | fold -w 100; } >"$T/console"
 run
 check "a console with 400 kB after the prompt is read at once, not at the bound (the wait under pipefail)" \
     test "$(fb | grep -c '^== first boot, 0 s to the console.s login prompt')" = 1 -a "$(fb | grep -c '^PROOF-FAIL')" = 0
@@ -243,7 +295,7 @@ check "a key SSH presents that the guest does not hold fails, and nothing more i
 touch "$T/no-login"; run; rm -f -- "$T/no-login"
 check "a login as root that is refused fails the host-key match" \
     test "$(fb | grep -c '^PROOF-FAIL: the host keys:')" = 1 -a "$(fb | grep -c 'exited non-zero')" = 1
-printf 'Ubuntu 26.04.1 LTS %s ttyS0\n\n%s login: ' "$IMAGE_HOSTNAME" "$IMAGE_HOSTNAME" >"$T/console"
+printf 'Arch Linux 7.3.4-arch1-2 (ttyS0)\n\n%s login: ' "$IMAGE_HOSTNAME" >"$T/console"
 # The first login, gone wrong each way the stand-in console plays.
 echo asks-password >"$T/con-mode"; run
 check "a login that asks root for a password fails, and the driver stops at once" \
@@ -263,6 +315,34 @@ echo pass >"$T/con-mode"; touch "$T/ssh-pw-offered"; run; rm -f -- "$T/ssh-pw-of
 check "a server that offers passwords fails each of the five tries" \
     test "$(fb | grep -c '^PROOF-FAIL: SSH as root with .*: the server offered publickey,password$')" = 5 \
          -a "$(fb | grep -c '^PROOF-FAIL: SSH as root with the proof key, not yet placed: the server offered publickey,password$')" = 1
+# proof_power_off, against a stand-in virsh: the press appends the shutdown's console text
+# to the log, as QEMU's logfile takes it; the state and the stop's reason are the case's.
+LOGF=$T/acpi.log
+OKOFF=$'[\e[0;32m  OK  \e[0m] Reached target \e[0;1;39mSystem Power Off\e[0m.\r\n[   41.002113] reboot: Power down\r\n'
+virsh_() { case $1 in
+    shutdown) printf '%s\n' "$*" >"$T/acpi-args"; [ -e "$T/acpi-refuse" ] && return 1; printf '%s' "$ACPI_TAIL" >>"$LOGF" ;;
+    domstate) if [ "${3:-}" = --reason ]; then echo "$ACPI_REASON"; else echo "$ACPI_STATE"; fi ;;
+    esac; }
+pr() { printf '[\e[0;1;31mFAILED\e[0m] Failed to start an earlier unit.\r\nweaver-appliance login: ' >"$LOGF"
+    ( set -euo pipefail; real_proof_power_off mock-appliance-first "$LOGF" ) 2>&1; }
+ACPI_STATE="shut off" ACPI_REASON="shut off (shutdown)" ACPI_TAIL=$OKOFF
+check "a clean ACPI power-off: no PROOF-FAIL, the reason read, a failure before the press not counted" \
+    eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 0 ] && grep -qx "the domain: shut off (shutdown), 0s after the press" <<<"$o" && grep -q "reboot: Power down" <<<"$o"'
+check "the press is ACPI's, on the named domain" test "$(cat "$T/acpi-args")" = "shutdown mock-appliance-first --mode acpi"
+ACPI_TAIL=$'[  OK  ] Reached target System Power Off.\r\n'
+check "no kernel power-down line is a PROOF-FAIL" eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 1 ] && grep -q "^PROOF-FAIL: the serial log after the power button holds no kernel power-down line" <<<"$o"'
+ACPI_TAIL=$'[\e[0;1;31mFAILED\e[0m] Failed unmounting /efi.\r\n[ ***  ] A stop job is running for x (5s / 1min 30s)\r\n'"$OKOFF"
+check "a unit failing and a stop job waited on: one PROOF-FAIL counting both" \
+    eval 'grep -q "^PROOF-FAIL: the power-off was not clean: 2 unit(s) failed or a stop job was waited on" <<<"$(pr)"'
+ACPI_TAIL=""; ACPI_STATE=running ACPI_REASON="running (booted)"
+check "a guest that does not power off: PROOF-FAILs for the reason, the target and the kernel line, at the bound" \
+    eval 'o=$(PROOF_ACPI=6 pr); grep -q "^PROOF-FAIL: mock-appliance-first did not power itself off within 6s of the power button (running (booted))" <<<"$o" && grep -qx "the domain: running (booted), 6s after the press" <<<"$o" && [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 3 ]'
+touch "$T/acpi-refuse"
+check "a press the hypervisor refuses: one PROOF-FAIL, and nothing more read" \
+    eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 1 ] && grep -q "could not press mock-appliance-first.s power button" <<<"$o" && ! grep -q "the domain:" <<<"$o"'
+rm -f -- "$T/acpi-refuse"
+check "and the proof gathers the power-off's findings with the others" \
+    eval 'grep -q "\"\$out/first-boot.txt\" \"\$out/power-off.txt\" \"\$out/disk.txt\" >\"\$out/PROOF-FAILED\"" "$BT"'
 # A VM_ROOT whose socket path a unix socket cannot hold refuses before anything boots.
 long=$T/$(printf 'x%.0s' $(seq 120)); mkdir -p "$long"
 rm -f -- "$T/vi-args"; ( set -euo pipefail; VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?

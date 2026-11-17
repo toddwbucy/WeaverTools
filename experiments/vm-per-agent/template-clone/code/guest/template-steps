@@ -6,6 +6,12 @@
 # (weaver-appliance-build-Spec, section 2). Each step prints what it measured; a step
 # that fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent
 # or WeaverWeb script; the deploy scripts run unmodified from their checkouts.
+#
+# Release 2.0 builds on Arch Linux, pinned (the operator's ruling of 2026-11-16; the
+# Planner named it 2.0 under decision 4 of 2026-11-15, an OS change with a recompile): the
+# arch-boxes cloud image lib.sh names, brought to one day of the Arch Linux Archive and
+# never past it. Release 1.0 was built on Ubuntu 26.04 by this file at WeaverTools main
+# 06d42bd (the merge of pull request 33), its stack WeaverAgent at the tag appliance/1.0.
 set -uo pipefail
 
 # The inputs, named by the host on each step's command line: VERSION (the image's version,
@@ -14,14 +20,34 @@ set -uo pipefail
 # refuses where it is unset.
 WA_URL=https://github.com/toddwbucy/WeaverAgent.git
 WW_URL=https://github.com/toddwbucy/WeaverWeb.git
-# The pins this file holds.
+# The pins this file holds. Every package comes from one day of the Arch Linux Archive, the
+# snapshot below, and the versions after it are that day's, read on 2026-11-16 from the
+# day's core and extra databases. A version that reads otherwise after the update refuses.
 TOOLCHAIN=nightly-2026-02-13                        # both trees' rust-toolchain.toml
-CUDA=13.4.2-1                                       # cuda-toolkit-13-4; nvcc and cudart 13.4.92
-CCCL_PKG="cccl-13-3=13.3.3.4.1-1"                   # CCCL 3.3.4, inside the stack's window
-CCCL_INCLUDE=/usr/local/cuda-13.3/targets/x86_64-linux/include/cccl
-# The canonical CUDA library directory, not reached through the alternatives' links, which
-# a package removal can take away (the WeaverAgent seat's read of 2026-11-14).
-CUDA_LIBS=/usr/local/cuda-13.4/targets/x86_64-linux/lib
+ARCHIVE_DAY=2026/11/15
+ARCHIVE=https://archive.archlinux.org/repos/$ARCHIVE_DAY
+PIN_LINUX=7.3.4.arch1-2                             # the kernel package
+PIN_KVER=7.3.4-arch1-2                              # its release, as uname -r prints it
+PIN_CUDA=13.4.3-1                                   # nvcc 13.4; cudart and NVRTC 13.4.92
+PIN_NVIDIA=620.70.06                                # the driver release
+PIN_NVIDIA_OPEN=620.70.06-3                         # the module, prebuilt for PIN_KVER
+PIN_NVIDIA_UTILS=620.70.06-1                        # its userspace, at the module's version
+# CCCL 3.3.4: the one package from outside the snapshot (the Planner's ruling of
+# 2026-11-16). The day's cccl is 3.5.0, outside the window WeaverAgent's bootstrap accepts
+# (3.1.4 to 3.3.4), so this host's measured pairing is pinned from the archive's package
+# store by digest, its signature checked against the build guest's keyring. It is a build
+# package: the cleanup purges it, and the stamp records it.
+CCCL_PIN=3.3.4-1
+CCCL_PKG=cccl-$CCCL_PIN-any.pkg.tar.zst
+CCCL_URL=https://archive.archlinux.org/packages/c/cccl/$CCCL_PKG
+CCCL_SHA256=71107144147f149f81532bad5bf92ca52ac82f5e204065e7279b937fd3a409e9
+# nvcc's host compiler: g++ 15 from gcc15, as release 1.0 compiled (the Planner's ruling of
+# 2026-11-16). Arch's cuda.sh would name its base g++ (16).
+CXX_MAJOR=15
+CUDA_HOME=/opt/cuda
+# The canonical CUDA library directory. The runtime package's own loader file names it
+# alone (RUNTIME_LDCONF).
+CUDA_LIBS=$CUDA_HOME/targets/x86_64-linux/lib
 # candle's kernels read the compute capability from a card. The build guest has none, so it
 # is a named input, COMPUTE_CAP (the capability without its dot, such as 86 for 8.6), which
 # the stack step refuses without and the stamp records.
@@ -29,23 +55,16 @@ COMPUTE_CAP=${COMPUTE_CAP:-}
 # os-release is read in subshells and never sourced here: it assigns VERSION, which would
 # replace the image's version the host names (the Planner's review of 2026-11-15, B1).
 # shellcheck source=/dev/null
-VERSION_ID=$(. /etc/os-release && printf '%s' "${VERSION_ID:-}")
+OS_ID=$(. /etc/os-release && printf '%s' "${ID:-}")
 # shellcheck source=/dev/null
 PRETTY_NAME=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-}")
-case $VERSION_ID in
-    26.04) CXX_MAJOR=15 ;;
-    24.04) CXX_MAJOR=14 ;;   # named, not built (weaver-appliance-build-Spec, section 1)
-    *) echo "no build for Ubuntu $VERSION_ID" >&2; exit 2 ;;
-esac
-NV_REPO=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${VERSION_ID//./}/x86_64
-# The repository's keyring package, installed as root, pinned by digest (the same file in
-# all four builds of 2026-11-14).
-CUDA_KEYRING=cuda-keyring_1.1-1_all.deb
-CUDA_KEYRING_SHA256=f7f474b5f6a4adf987aa587920df00e713285958ef6a913dda1945a544a3099e
+[ "$OS_ID" = arch ] || { echo "no build for os-release ID '$OS_ID' (this file builds Arch Linux)" >&2; exit 2; }
 KVER=$(uname -r)
 # No dkms and no kernel headers: the driver's module comes prebuilt (driver, below).
-PACKAGES="build-essential gcc-$CXX_MAJOR g++-$CXX_MAJOR git curl ca-certificates cmake clang
-  libclang-dev pkg-config python3 bzip2 make acl libssl-dev jq sqlite3"
+# base-devel holds the C toolchain, make, patch, fakeroot and makepkg's helpers; clang
+# carries libclang; openssl its headers. quota-tools is kept (KEEP).
+PACKAGES="base-devel gcc$CXX_MAJOR git curl ca-certificates cmake clang pkgconf python bzip2
+  make acl openssl jq sqlite quota-tools"
 
 # The build's fixed layout: one account (op, made by the seed), one checkout path and one
 # target path, since the binaries carry their build paths (the WeaverAgent seat counted
@@ -54,7 +73,6 @@ WA=$HOME/WeaverAgent
 WW=$HOME/WeaverWeb
 export CARGO_TARGET_DIR=$HOME/target/weaveragent
 export PATH=$HOME/.cargo/bin:$PATH
-export DEBIAN_FRONTEND=noninteractive
 # The build's own records, root's, removed by the seal once the stamp is written.
 BUILD=/var/lib/weaver-build
 # The image's record and the deploy scripts' fixed copy (the appliance's layout).
@@ -70,14 +88,18 @@ IMAGE_HOSTNAME='weaver-appliance'
 # each is admin's test, at every load, not the image's. Defined once, here: lib.sh reads it
 # for proof.
 DATA_MOUNTS='/mnt/weaver/models /mnt/weaver/state'
+# The agents' base (the Planner's note of 2026-11-16): the stack record's agent-directory,
+# fixed at the build on the state mount, under which each agent is laid at setup. The
+# stack step hands it to bootstrap-stack.sh, which makes it root's, mode 0755, and empty.
+AGENT_DIR=/mnt/weaver/state
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
 
 section() { printf '\n== %s\n' "$*"; }
 cuda_env() {
-    export PATH=/usr/local/cuda-13.4/bin:$PATH
-    export CUDA_PATH=/usr/local/cuda-13.4
+    export PATH=$CUDA_HOME/bin:$PATH
+    export CUDA_PATH=$CUDA_HOME
 }
 # record KEY VALUE...: one line of the stamp, kept in BUILD until the seal assembles it.
 record() {
@@ -118,29 +140,87 @@ getent_absent() {
     esac
     return 1
 }
-# one_kernel: one version-named tree under /lib/modules, the running kernel's. The 615
-# module package also ships an empty /lib/modules/kernel/nvidia-615-open, which is no
-# kernel and is not counted.
+
+# pin_check NAME VERSION: pacman reads NAME installed at VERSION. Otherwise a sentence, and
+# status 1.
+pin_check() {
+    local v
+    v=$(pacman -Q -- "$1" 2>/dev/null | awk '{print $2}')
+    [ "$v" = "$2" ] || { echo "$1 is ${v:-not installed}, not $2"; return 1; }
+}
+# pacman_sources_check CONF MIRRORLIST: the package sources as pacman reads them: CONF names
+# the core and extra repositories alone, each by an Include of MIRRORLIST and no Server line
+# of its own, and MIRRORLIST names the archive's snapshot alone. Prints each finding.
+pacman_sources_check() {
+    local conf=$1 ml=$2 want
+    want="Server = $ARCHIVE/\$repo/os/\$arch"
+    awk -v ml="$ml" '
+        /^[[:space:]]*(#|$)/ { next }
+        /^\[.*\]$/ { s = substr($0, 2, length($0) - 2); if (s != "options") { repos[s] = 1; if (s != "core" && s != "extra") print "pacman.conf names the repository " s }; next }
+        s != "options" && /^[[:space:]]*Server[[:space:]]*=/ { print "pacman.conf names a server of its own in [" s "]" }
+        s != "options" && /^[[:space:]]*Include[[:space:]]*=/ { v = $0; sub(/^[^=]*=[[:space:]]*/, "", v); if (v != ml) print "[" s "] includes " v ", not " ml }
+        END { if (!("core" in repos)) print "pacman.conf names no [core]"; if (!("extra" in repos)) print "pacman.conf names no [extra]" }
+    ' "$conf"
+    [ "$(grep -vE '^[[:space:]]*(#|$)' "$ml")" = "$want" ] || echo "$ml is not the archive's snapshot alone ($want)"
+    return 0
+}
+# PACMAN_IGNORE: the packages pacman.conf holds back from any later upgrade, the kernel and
+# the driver with their CUDA runtime: the hold release 1.0 made with apt-mark. Nothing
+# updates after the seal; the hold is there for an operator who points pacman elsewhere.
+PACMAN_IGNORE="linux nvidia-open nvidia-utils weaver-cuda-runtime"
+# pacman_ignore CONF NAMES...: CONF's one IgnorePkg line made to name exactly NAMES, in
+# place of the shipped commented line.
+pacman_ignore() {
+    local conf=$1; shift
+    sudo sed -i -E '/^[[:space:]]*#?[[:space:]]*IgnorePkg[[:space:]]*=/d' "$conf" || return 1
+    sudo sed -i -E "/^\[options\]\$/a IgnorePkg = $*" "$conf" || return 1
+    ignored_check "$conf" "$@"
+}
+# ignored_check CONF NAMES...: CONF's IgnorePkg names each of NAMES, and IgnorePkg stands
+# once. Prints each finding; exits 1 on any.
+ignored_check() {
+    local conf=$1 n line bad=""; shift
+    n=$(grep -cE '^[[:space:]]*IgnorePkg[[:space:]]*=' "$conf")
+    [ "$n" = 1 ] || bad+="pacman.conf has $n IgnorePkg lines, not one. "
+    line=" $(grep -E '^[[:space:]]*IgnorePkg[[:space:]]*=' "$conf" | head -1 | sed -E 's/^[^=]*=//') "
+    for n; do case $line in *" $n "*) ;; *) bad+="IgnorePkg does not name $n. " ;; esac; done
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# pacman ARGS: pacman itself, less one warning. The cleanup removes the sync databases (no
+# package list ships), and pacman 7 then warns at every call that each repository's is
+# missing; that warning alone is dropped from what pacman prints on stderr, so a query's
+# output or error reads as pacman's own. sudo pacman runs pacman itself, warning and all.
+pacman() {
+    local e rc=0
+    e=$(mktemp) || return 2
+    command pacman "$@" 2>"$e" || rc=$?
+    grep -vE "^warning: database file for '[^']+' does not exist \(use '-Sy' to download\)$" "$e" >&2 || true
+    rm -f -- "$e"
+    return "$rc"
+}
+# one_kernel: one version-named tree under /usr/lib/modules, the running kernel's, from the
+# pinned package; and /boot holding that kernel's image and initramfs alone, the image
+# byte for byte the tree's vmlinuz (Arch's kernel image carries no version in its name).
 one_kernel() {
-    local n; n=$(find /lib/modules -mindepth 1 -maxdepth 1 -type d -name '[0-9]*' | wc -l)
-    [ "$n" = 1 ] && [ -d "/lib/modules/$KVER" ] || { echo "more than one kernel, or not $KVER: $(ls /lib/modules)"; return 1; }
+    local n f bad=""
+    n=$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d -name '[0-9]*' | wc -l)
+    [ "$n" = 1 ] && [ -d "/usr/lib/modules/$KVER" ] || bad+="more than one kernel, or not $KVER: $(ls /usr/lib/modules | tr '\n' ' '). "
+    [ "$KVER" = "$PIN_KVER" ] || bad+="the running kernel is $KVER, not $PIN_KVER. "
+    for f in $(sudo ls /boot 2>/dev/null); do
+        case $f in vmlinuz-linux|initramfs-linux.img|grub) ;; *) bad+="/boot holds $f. " ;; esac
+    done
+    sudo cmp -s "/usr/lib/modules/$KVER/vmlinuz" /boot/vmlinuz-linux || bad+="/boot/vmlinuz-linux is not /usr/lib/modules/$KVER/vmlinuz. "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
-# kernel_packages: "STATE NAME" for each installed kernel image or module package
-# (linux-image-*, linux-modules-*, linux-main-modules-*: the kernel's image, its modules,
-# the driver's module), read from dpkg. STATE is dpkg's abbreviation: hi is held and
-# installed. dpkg, not apt-mark: apt run as root rebuilds its binary caches, which the
-# probes refuse.
-kernel_packages() {
-    dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' |
-        awk '$2 ~ /^linux-(image|modules|main-modules)-/ && $1 ~ /^.[^nc]/ {print $1, $2}'
-}
-# kernel_holds: every installed kernel image or module package held, the running kernel's
-# image among them. Prints what is not.
-kernel_holds() {
-    local st
-    st=$(kernel_packages 2>&1) || { echo "dpkg-query fails: $(tail -1 <<<"$st")"; return 0; }
-    awk 'NF && $1 != "hi" {print $2 " is " $1 ", installed and not held"}' <<<"$st"
-    awk -v k="linux-image-$KVER" '$1 == "hi" && $2 == k {f = 1} END {if (!f) print k " does not read held and installed"}' <<<"$st"
+# kernel_pins: the kernel and the driver at their pins, and pacman.conf holding them back.
+# Prints what is not.
+kernel_pins() {
+    pin_check linux "$PIN_LINUX"
+    pin_check nvidia-open "$PIN_NVIDIA_OPEN"
+    pin_check nvidia-utils "$PIN_NVIDIA_UTILS"
+    # shellcheck disable=SC2086
+    ignored_check /etc/pacman.conf $PACMAN_IGNORE
+    return 0
 }
 
 facts() {
@@ -151,20 +231,31 @@ facts() {
     section python; python3 --version
     section identity; cat /etc/machine-id
     section network; ip -4 -o addr show scope global; ip -4 route; resolvectl dns
-    section hostguard; sudo nft list table inet hostguard
-    section snap; snap list 2>&1 | head; dpkg-query -W -f '${Package} ${Version}\n' snapd 2>&1
+    # The seed's guard, which keeps this guest off the host (lib.sh's write_seed): a gate,
+    # since the build guest's network is otherwise open. Its first boot on Arch is here.
+    section hostguard
+    local g; g=$(sudo nft list table inet hostguard 2>&1); echo "$g"
+    grep -q 'ip daddr 10\.0\.2\.2 counter' <<<"$g" || { echo "the seed's host guard is not loaded: this guest could reach the host"; return 1; }
+    section pacman; pacman -V | sed -n 's/^ *\(Pacman v.*\)/\1/p'; pacman -Q | wc -l
+    sudo pacman-key --list-keys >/dev/null 2>&1 && echo "keyring: made at this guest's first boot (pacman-init)" || echo "keyring: NONE"
+    section enabled-units; systemctl list-unit-files --state=enabled --no-legend --no-pager | awk '{print $1}' | tr '\n' ' '; echo
+    section after-time-sync
+    # The units that wait for a synchronized clock, where systemd-time-wait-sync holds
+    # time-sync.target until one comes (the plan's boot waits, measured before any is cut).
+    systemctl list-dependencies --reverse --plain --no-pager time-sync.target 2>/dev/null | tail -n +2 | sed 's/^[^a-z]*//' | tr '\n' ' '; echo
     section base-compilers-and-tools
-    for t in cc gcc g++ make ld as git curl python3 sudo visudo setfacl nvidia-smi; do
+    for t in cc gcc g++ make ld as git curl python3 sudo visudo setfacl runuser nvidia-smi; do
         printf '%-12s %s\n' "$t" "$(command -v "$t" || echo absent)"
     done
     # The base image's packages, before anything is installed: the cleanup removes what the
     # build added. Recorded once; a rerun keeps the first list.
     sudo install -d -o root -g root -m 0755 "$BUILD" "$BUILD/stamp.d" || return 1
     if [ ! -e "$BUILD/base-packages" ]; then
-        dpkg-query -W -f '${Package}\n' | sort | sudo tee "$BUILD/base-packages" >/dev/null || return 1
+        pacman -Qq | sort | sudo tee "$BUILD/base-packages" >/dev/null || return 1
     fi
     section base-packages; wc -l <"$BUILD/base-packages"
     record base.image "${BASE_IMAGE:-unknown}" || return 1
+    record base.snapshot "$ARCHIVE (the Arch Linux Archive's packages of that day)" || return 1
     # The image's version (the operator's decision 4 of 2026-11-15), as the host names it:
     # a release, since a respin never recompiles and this build compiles.
     [[ "${VERSION:-}" =~ ^[1-9][0-9]*\.0$ ]] || { echo "VERSION '${VERSION:-}' is not named as a release, <release>.0"; return 1; }
@@ -178,12 +269,15 @@ facts() {
     v=$(used_bytes); record_read size.base-used-bytes $? "$v" || return 1
 }
 
-# The two OS reads the WeaverAgent seat asked of a fresh 26.04.1 build: whether `test` run
-# through sudo honours supplementary groups (rust-coreutils did not), and whether visudo
-# takes the connector rule's Defaults line (sudo-rs did not). A throwaway account and file,
-# removed in the same step, on any exit: a failure, an interrupt or a dropped session (HUP).
-# /root's mode as found is kept in the build's records, so that a rerun after a cut-short
-# run restores the first run's, and a rerun first removes whatever that run left.
+# The two OS reads the WeaverAgent seat asked of the base, now gates (the operator's ruling
+# of 2026-11-16 moved the next release to Arch because Ubuntu 26.04 failed both): whether `test` run
+# through sudo honours supplementary groups (uutils' did not), and whether visudo takes
+# the connector rule's Defaults line (sudo-rs did not). Arch ships GNU coreutils and the
+# original sudo, and both are expected to pass; the step fails where either does not. A
+# throwaway account and file, removed in the same step, on any exit: a failure, an
+# interrupt or a dropped session (HUP). /root's mode as found is kept in the build's
+# records, so that a rerun after a cut-short run restores the first run's, and a rerun
+# first removes whatever that run left.
 OSP_U=weaver-probe OSP_G=weaver-probe-g OSP_F=/root/probe-0640 OSP_RULE=
 os_probes_undo() {
     # PIPE as well: a dropped session without a terminal closes pipes rather than sending a
@@ -198,39 +292,60 @@ os_probes_undo() {
     trap - INT TERM HUP PIPE
 }
 os_probes() {
-    local u=$OSP_U g=$OSP_G f=$OSP_F rule
+    local u=$OSP_U g=$OSP_G f=$OSP_F rule t s n
     [ -d "$BUILD" ] || { echo "no $BUILD; run facts first"; return 1; }
     [ -s "$BUILD/os-probes.root-mode" ] || stat -c %a /root | sudo tee "$BUILD/os-probes.root-mode" >/dev/null || return 1
     os_probes_undo
     trap os_probes_undo EXIT
     trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM
-    sudo groupadd "$g" && sudo useradd --system --no-create-home --shell /usr/sbin/nologin -G "$g" "$u" || return 1
+    sudo groupadd "$g" && sudo useradd --system --no-create-home --shell /usr/bin/nologin -G "$g" "$u" || return 1
     sudo touch "$f" && sudo chown "root:$g" "$f" && sudo chmod 0640 "$f" && sudo chmod 0711 /root
     section sudo-test-supplementary-group
-    sudo -u "$u" test -r "$f"; echo "sudo -u $u test -r <root:$g 0640>: exit $? (GNU test: 0)"
-    printf '/usr/bin/test is %s; coreutils packages: %s\n' "$(readlink -f /usr/bin/test)" \
-        "$(dpkg-query -W -f '${Package} ${Version}, ' 'coreutils*' 'rust-coreutils*' 2>/dev/null)"
+    sudo -u "$u" test -r "$f"; t=$?
+    echo "sudo -u $u test -r <root:$g 0640>: exit $t (GNU test: 0)"
+    printf '/usr/bin/test is %s, owned by %s\n' "$(readlink -f /usr/bin/test)" "$(pacman -Qo /usr/bin/test 2>&1 | sed 's/.* is owned by //')"
+    section nologin
+    # The deploy scripts name /usr/sbin/nologin, which Arch reaches through its sbin link;
+    # neither name is a login shell, so the accounts probe reads such an account as one
+    # that cannot log in.
+    n=$(readlink -f /usr/sbin/nologin)
+    echo "/usr/sbin/nologin is $n; /etc/shells names it: $(grep -cxE '/usr/s?bin/nologin|/s?bin/nologin' /etc/shells)"
     section visudo-defaults-line
     rule=$(mktemp); OSP_RULE=$rule
     printf 'Defaults:%s !pam_session\n' "$u" >"$rule"
-    sudo visudo -cf "$rule"; echo "visudo -cf: exit $?"
-    printf 'sudo is %s; packages: %s\n' "$(readlink -f "$(command -v sudo)")" \
-        "$(dpkg-query -W -f '${Package} ${Version}, ' 'sudo*' 2>/dev/null)"
+    sudo visudo -cf "$rule"; s=$?
+    echo "visudo -cf: exit $s"
+    printf 'sudo is %s, owned by %s\n' "$(readlink -f "$(command -v sudo)")" "$(pacman -Qo "$(command -v sudo)" 2>&1 | sed 's/.* is owned by //')"
     os_probes_undo; trap - EXIT HUP INT TERM
     getent_absent passwd "$u" "the probe account" || return 1
     getent_absent group "$g" "the probe group" || return 1
     sudo test -e "$f" && { echo "the probe file remains"; return 1; }
     echo "probe account, group and file removed; /root is $(stat -c %a /root) again"
+    [ "$t" = 0 ] || { echo "REFUSED: test through sudo does not honour a supplementary group"; return 1; }
+    [ "$s" = 0 ] || { echo "REFUSED: visudo does not take the connector rule's Defaults line"; return 1; }
+    [ "$n" = /usr/bin/nologin ] && ! grep -qxE '/usr/s?bin/nologin|/s?bin/nologin' /etc/shells \
+        || { echo "REFUSED: /usr/sbin/nologin is not /usr/bin/nologin, or /etc/shells names it"; return 1; }
 }
 
+# packages: pacman pointed at the archive's snapshot alone, the system brought to that day
+# (-Syyuu, which also takes a package back where the image's is newer), then the build's
+# packages. The kernel must read its pin after the update, and be the kernel running: an
+# update that moved it would need a reboot this step does not make.
 packages() {
     [ -s "$BUILD/base-packages" ] || { echo "no base package list; run facts first"; return 1; }
-    sudo apt-get update -q || return 1
+    printf 'Server = %s/$repo/os/$arch\n' "$ARCHIVE" | sudo tee /etc/pacman.d/mirrorlist >/dev/null || return 1
+    local out
+    out=$(pacman_sources_check /etc/pacman.conf /etc/pacman.d/mirrorlist)
+    [ -z "$out" ] || { echo "$out"; return 1; }
+    sudo pacman -Syyuu --noconfirm || return 1
     # shellcheck disable=SC2086
-    sudo apt-get install -y -q --no-install-recommends $PACKAGES || return 1
+    sudo pacman -S --needed --noconfirm $PACKAGES || return 1
+    pin_check linux "$PIN_LINUX" || return 1
+    [ "$KVER" = "$PIN_KVER" ] || { echo "the running kernel is $KVER, not $PIN_KVER"; return 1; }
     section installed
     # shellcheck disable=SC2086
-    dpkg-query -W -f '${Package} ${Version}\n' $PACKAGES 2>&1
+    pacman -Q $PACKAGES 2>&1
+    command -v "g++-$CXX_MAJOR" >/dev/null || { echo "no g++-$CXX_MAJOR"; return 1; }
 }
 
 rustup_install() {
@@ -273,49 +388,64 @@ trees() {
     record_read toolchain $? "$v" || return 1
 }
 
-# NVIDIA's repository and the CUDA toolkit, with no driver: the stack's build needs nvcc,
-# not a module. The CUDA metapackages are pinned to one release, as #21's template did.
+# The CUDA toolkit, with no driver: the stack's build needs nvcc, not a module. CCCL 3.3.4
+# goes first, from the archive's package store by digest and signature, so cuda's
+# dependency on cccl is met by it and the day's 3.5.0 is never installed. Arch's cuda
+# points its include/cccl at /usr/include/cccl, where the cccl package puts its headers.
 toolkit() {
-    cd /tmp || return 1
-    curl -fsS --proto '=https' -O "$NV_REPO/$CUDA_KEYRING" || return 1
-    [ "$(sha "$CUDA_KEYRING")" = "$CUDA_KEYRING_SHA256" ] \
-        || { echo "$CUDA_KEYRING is not the pinned file (sha256 $(sha "$CUDA_KEYRING"))"; rm -f "$CUDA_KEYRING"; return 1; }
-    record build.cuda-keyring "$CUDA_KEYRING sha256 $CUDA_KEYRING_SHA256" || return 1
-    sudo dpkg -i "$CUDA_KEYRING" || return 1
-    rm -f "$CUDA_KEYRING"
-    sudo apt-get update -q || return 1
-    sudo tee /etc/apt/preferences.d/cuda-13-4-2 >/dev/null <<EOF
-Package: cuda-13-4 cuda-command-line-tools-13-4 cuda-compiler-13-4 cuda-libraries-13-4 cuda-libraries-dev-13-4 cuda-minimal-build-13-4 cuda-nsight-compute-13-4 cuda-nsight-systems-13-4 cuda-runtime-13-4 cuda-toolkit-13-4 cuda-tools-13-4 cuda-visual-tools-13-4 nvidia-gds-13-4
-Pin: version $CUDA
-Pin-Priority: 1001
-EOF
-    sudo apt-get install -y -q --no-install-recommends "cuda-toolkit-13-4=$CUDA" "$CCCL_PKG" || return 1
-    dpkg-query -W -f '${Version}\n' cuda-toolkit-13-4 | grep -qx "$CUDA" \
-        || { echo "cuda-toolkit-13-4 is not $CUDA"; return 1; }
-    section nvcc; /usr/local/cuda-13.4/bin/nvcc --version
+    local d v
+    d=$(mktemp -d) || return 1
+    curl -fsS --proto '=https' -o "$d/$CCCL_PKG" "$CCCL_URL" || return 1
+    curl -fsS --proto '=https' -o "$d/$CCCL_PKG.sig" "$CCCL_URL.sig" || return 1
+    [ "$(sha "$d/$CCCL_PKG")" = "$CCCL_SHA256" ] \
+        || { echo "$CCCL_PKG is not the pinned file (sha256 $(sha "$d/$CCCL_PKG"))"; return 1; }
+    sudo pacman-key --verify "$d/$CCCL_PKG.sig" "$d/$CCCL_PKG" 2>&1 || { echo "$CCCL_PKG's signature does not verify against the keyring"; return 1; }
+    sudo pacman -U --needed --noconfirm "$d/$CCCL_PKG" || return 1
+    rm -f -- "$d/$CCCL_PKG" "$d/$CCCL_PKG.sig"; rmdir -- "$d"
+    sudo pacman -S --needed --noconfirm cuda || return 1
+    pin_check cuda "$PIN_CUDA" || return 1
+    pin_check cccl "$CCCL_PIN" || return 1
+    section nvcc; "$CUDA_HOME/bin/nvcc" --version
     section cccl
-    grep -h 'define CCCL_VERSION ' "$CCCL_INCLUDE/cuda/std/__cccl/version.h"
-    section driver-packages; dpkg-query -W -f '${Package} ${Version}\n' 'nvidia-*' 'libnvidia-*' 2>/dev/null | awk '$2 != ""' || true
-    record cuda.toolkit "cuda-toolkit-13-4 $CUDA" || return 1
-    local v
-    v=$(/usr/local/cuda-13.4/bin/nvcc --version | tail -1 | sed 's/^Build //'); record_read nvcc $? "$v" || return 1
-    record cccl "$CCCL_PKG, by NVCC_PREPEND_FLAGS=-I$CCCL_INCLUDE" || return 1
+    grep -h 'define CCCL_VERSION ' /usr/include/cccl/cuda/std/__cccl/version.h
+    readlink "$CUDA_HOME/include/cccl"
+    section driver-packages; pacman -Qq | grep -E '^(nvidia|libnvidia)' || echo "(none)"
+    record cuda.toolkit "cuda $PIN_CUDA (Arch, from the snapshot)" || return 1
+    v=$("$CUDA_HOME/bin/nvcc" --version | tail -1 | sed 's/^Build //'); record_read nvcc $? "$v" || return 1
+    record cccl "cccl $CCCL_PIN, at /usr/include/cccl, which $CUDA_HOME/include/cccl names" || return 1
+    record base.outside-snapshot "$CCCL_PKG from $CCCL_URL, sha256 $CCCL_SHA256, its signature checked; a build package, purged by the cleanup" || return 1
+}
+
+# stack_preconditions: the two settings the WeaverAgent test step needs (README, "Breaks"),
+# read, never changed: unprivileged user namespaces with a uid map, and /bin/sh as bash (a
+# gate test's stand-in is a /bin/sh script and allows bash's fd 255 only). Release 1.0 set
+# both for the step and put them back (relaxed), since Ubuntu gives neither; Arch gives
+# both. Prints what is not so; exits 1 on any.
+stack_preconditions() {
+    local bad="" o
+    o=$(unshare --user --map-root-user id -u 2>&1)
+    [ "$o" = 0 ] || bad+="an unprivileged user namespace with a uid map is not given ($o). "
+    [ "$(readlink -f /bin/sh)" = /usr/bin/bash ] || bad+="/bin/sh is $(readlink -f /bin/sh), not bash. "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+    echo "unprivileged user namespaces with a uid map: given; /bin/sh -> $(readlink /bin/sh) ($(readlink -f /bin/sh))"
 }
 
 # The agent stack, as its deploy script builds and installs it: bootstrap-stack.sh
-# --install, unmodified, from the checkout, under relaxed (its test step needs both
-# settings). Memory in use is sampled every 5 s, as MemTotal less MemAvailable. Its output
-# is kept as it streams, for the test count the stamp records (the tag's, decision 3 of
-# 2026-11-15), and the status is bootstrap's own, never tee's.
+# --install, unmodified, from the checkout. Memory in use is sampled every 5 s, as MemTotal
+# less MemAvailable. Its output is kept as it streams, for the test count the stamp records
+# (the tag's, decision 3 of 2026-11-15), and the status is bootstrap's own, never tee's.
 stack_build() {
     [[ "$COMPUTE_CAP" =~ ^[0-9]{2,3}$ ]] || { echo "COMPUTE_CAP is not named (the compute capability without its dot, such as 86)"; return 1; }
     record build.compute-cap "$COMPUTE_CAP" || return 1
     cuda_env
-    export NVCC_PREPEND_FLAGS="-I$CCCL_INCLUDE"
     export NVCC_CCBIN=/usr/bin/g++-$CXX_MAJOR
     export CUDA_LIB_DIR=$CUDA_LIBS
     export CUDA_COMPUTE_CAP=$COMPUTE_CAP
-    echo "NVCC_PREPEND_FLAGS=$NVCC_PREPEND_FLAGS NVCC_CCBIN=$NVCC_CCBIN CUDA_LIB_DIR=$CUDA_LIB_DIR CUDA_COMPUTE_CAP=$CUDA_COMPUTE_CAP"
+    export WEAVER_AGENT_DIR=$AGENT_DIR
+    echo "CUDA_PATH=$CUDA_PATH NVCC_CCBIN=$NVCC_CCBIN CUDA_LIB_DIR=$CUDA_LIB_DIR CUDA_COMPUTE_CAP=$CUDA_COMPUTE_CAP WEAVER_AGENT_DIR=$WEAVER_AGENT_DIR"
+    local v
+    v=$("$NVCC_CCBIN" --version | head -1); record_read build.nvcc-host-compiler $? "$NVCC_CCBIN: $v" || return 1
+    v=$(cc --version | head -1); record_read build.cc $? "$(readlink -f "$(command -v cc)"): $v" || return 1
     local rc=0 sampler
     ( while :; do awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print int((t-a)/1024)}' /proc/meminfo; sleep 5; done ) \
         >"$HOME/mem-samples" 2>/dev/null &
@@ -340,7 +470,8 @@ stack_tests() {
 }
 stack() {
     [ -d "$WA" ] || { echo "no checkout; run trees first"; return 1; }
-    relaxed stack_build || return 1
+    stack_preconditions || return 1
+    stack_build || return 1
     local tuple=/etc/weaver/stack/install-tuple c
     section install-tuple; cat "$tuple"
     c=$(sed -n 's/^commit = //p' "$tuple")
@@ -388,61 +519,48 @@ connectors() {
     for f in $WW_TEMPLATES; do record_sha "connectors.template.${f##*/}" "$WW/$f" '' ' (not laid)' || return 1; done
 }
 
-# The driver, by the operator's route (ruling of 2026-11-14, "route B"): Ubuntu's own 615
-# branch, its module prebuilt and signed by Canonical for the image's one kernel, from the
-# archive's restricted component, and the userspace from multiverse, at one version. No
-# DKMS, no kernel source and no compiler touch the driver. The packages are named one by
-# one rather than through nvidia-headless-no-dkms-615-open, which also pulls the kernel
-# module's source. nvidia-modprobe (multiverse, any branch) makes the device nodes libcuda
-# asks for. The kernel packages are held. The step runs before the stack's: bootstrap's
-# install refuses unless weaver-spu resolves libcuda.so.1, which the driver carries.
-UBUNTU_DRIVER=615.71.09-0ubuntu0.26.04.2
-UBUNTU_MODULES=7.0.0-38.38+2
-UBUNTU_MODPROBE=570.133.07-1   # Ubuntu's, not NVIDIA's repository's newer one
+# The driver, by the Arch route (the Planner's ruling of 2026-11-16, route B's equivalent):
+# Arch's nvidia-open, the open module prebuilt for the snapshot's one kernel, and
+# nvidia-utils, its userspace at the module's version (libcuda, NVML, nvidia-smi,
+# nvidia-modprobe, nvidia-persistenced). No DKMS, no kernel headers and no compiler touch
+# the driver. Arch signs no module with a key a firmware trusts, so Secure Boot stays off.
+# The step runs before the stack's: bootstrap's install refuses unless weaver-spu resolves
+# libcuda.so.1, which the driver carries.
 driver() {
     # One form for DRIVER, the same regex build-template.sh's inputs_ok checks.
-    [[ "${DRIVER:-}" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || { echo "DRIVER is not named, or not a release such as 615.71.09"; return 1; }
+    [[ "${DRIVER:-}" =~ ^[0-9]{3}\.[0-9]+(\.[0-9]+)?$ ]] || { echo "DRIVER is not named, or not a release such as 620.70.06"; return 1; }
     one_kernel || return 1
     case ${DRIVER_ROUTE:-} in
-        ubuntu-prebuilt) driver_ubuntu_prebuilt ;;
-        *) echo "DRIVER_ROUTE '${DRIVER_ROUTE:-}' is not a route this file builds (ubuntu-prebuilt)"; return 1 ;;
+        arch-prebuilt) driver_arch_prebuilt ;;
+        *) echo "DRIVER_ROUTE '${DRIVER_ROUTE:-}' is not a route this file builds (arch-prebuilt)"; return 1 ;;
     esac || return 1
     driver_check || return 1
 }
-driver_ubuntu_prebuilt() {
-    local b=${DRIVER%%.*} p pkgs names origin v
-    [ "$DRIVER" = "${UBUNTU_DRIVER%%-*}" ] || { echo "this file pins $UBUNTU_DRIVER, not $DRIVER"; return 1; }
-    [ "$KVER" = "${UBUNTU_MODULES%.*}-generic" ] || { echo "the module pin $UBUNTU_MODULES is not for $KVER"; return 1; }
-    grep -qE '^Components:.*\brestricted\b.*\bmultiverse\b' /etc/apt/sources.list.d/ubuntu.sources \
-        || { echo "ubuntu.sources does not name restricted and multiverse"; grep -i '^Components' /etc/apt/sources.list.d/ubuntu.sources; return 1; }
-    names="linux-modules-nvidia-$b-open-$KVER nvidia-kernel-common-$b nvidia-firmware-$b-$DRIVER libnvidia-compute-$b nvidia-utils-$b nvidia-modprobe"
-    pkgs="linux-modules-nvidia-$b-open-$KVER=$UBUNTU_MODULES nvidia-kernel-common-$b=$UBUNTU_DRIVER"
-    pkgs+=" nvidia-firmware-$b-$DRIVER=$UBUNTU_DRIVER libnvidia-compute-$b=$UBUNTU_DRIVER nvidia-utils-$b=$UBUNTU_DRIVER nvidia-modprobe=$UBUNTU_MODPROBE"
-    sudo apt-get update -q || return 1
+driver_arch_prebuilt() {
+    local p names="nvidia-open nvidia-utils" v repo
+    [ "$DRIVER" = "$PIN_NVIDIA" ] || { echo "this file pins $PIN_NVIDIA, not $DRIVER"; return 1; }
+    [ "$KVER" = "$PIN_KVER" ] || { echo "the module pin is for $PIN_KVER, not $KVER"; return 1; }
     # shellcheck disable=SC2086
-    sudo apt-get install -y -q --no-install-recommends $pkgs || return 1
-    if dpkg-query -W -f '${db:Status-Abbrev}\n' dkms 2>/dev/null | grep -q '^ii'; then echo "dkms is installed"; return 1; fi
+    sudo pacman -S --needed --noconfirm $names || return 1
+    pin_check nvidia-open "$PIN_NVIDIA_OPEN" || return 1
+    pin_check nvidia-utils "$PIN_NVIDIA_UTILS" || return 1
+    # Kernel headers by package, for each of Arch's kernels (not linux-api-headers, the
+    # kernel's userspace interface, which glibc requires), and by what any such package
+    # lays: a kernel's module build tree.
+    p=$(pacman -Qq | grep -E "$HEADERS_RE" || true)
+    [ -z "$p" ] || { echo "installed, and not to be: $(tr '\n' ' ' <<<"$p")"; return 1; }
+    p=$(build_trees); [ -z "$p" ] || { echo "a kernel's module build tree stands: $p"; return 1; }
     section installed
     for p in $names; do
-        # The archive pocket and component the installed version came from, as apt reads it.
-        origin=$(apt-cache policy "$p" | awk '/^ \*\*\* /{f=1; next} f && /http/ {print $2, $3; exit}')
-        printf '%s %s from %s\n' "$p" "$(dpkg-query -W -f '${Version}' "$p")" "$origin"
-        v=$(dpkg-query -W -f '${Version}' "$p"); record_read "driver.package.$p" $? "$v" "$origin" || return 1
+        repo=$(pacman -Si "$p" 2>/dev/null | awk -F': ' '/^Repository/{print $2; exit}')
+        v=$(pacman -Q "$p" | awk '{print $2}'); record_read "driver.package.$p" $? "$v" "from $repo, $ARCHIVE" || return 1
     done
     printf '%s\n' $names | sudo tee "$BUILD/keep-driver" >/dev/null
-    # The kernel is held with every image and module package installed for it: its image,
-    # its modules, the driver's module, and what else the image ships for it (on 26.04,
-    # linux-main-modules-zfs, which its modules depend on). The probes refuse any
-    # installed kernel image or module package left unheld.
-    local held
-    held=$(kernel_packages | awk -v k="-$KVER" 'substr($2, length($2) - length(k) + 1) == k {print $2}') || return 1
-    for p in "linux-image-$KVER" "linux-modules-$KVER" "linux-modules-nvidia-$b-open-$KVER"; do
-        grep -qxF -- "$p" <<<"$held" || { echo "$p is not installed"; return 1; }
-    done
-    # shellcheck disable=SC2086
-    sudo apt-mark hold $held >/dev/null || return 1
-    section held; apt-mark showhold
-    record driver.route "ubuntu-prebuilt (Canonical-signed module, restricted; userspace, multiverse)" || return 1
+    # The kernel and the driver held back from any later upgrade (the hold release 1.0 made
+    # with apt-mark); the runtime package joins them at the cleanup.
+    pacman_ignore /etc/pacman.conf linux nvidia-open nvidia-utils || return 1
+    section held; grep -E '^IgnorePkg' /etc/pacman.conf
+    record driver.route "arch-prebuilt (Arch's nvidia-open, prebuilt for linux $PIN_LINUX; nvidia-utils at its version; unsigned)" || return 1
     record driver.cuda-minimum "CUDA 13.4 needs an R615 or later driver (NVIDIA, CUDA 13.4.2 release notes, table 2); 13.x minor-version compatibility >= 580 (table 3); installed $DRIVER" || return 1
 }
 # driver_check: the module's preconditions to load, read with no card: present for the
@@ -477,133 +595,191 @@ driver_check() {
     v=$(modinfo -k "$KVER" -F signer nvidia); record_read driver.signer $? "${v:-none}" || return 1
 }
 
-# relaxed COMMAND...: runs COMMAND with the two guest settings the WeaverAgent test
-# step needs and Ubuntu does not give by default (README, "Breaks"), and puts both back
-# after it whatever COMMAND answers, so the sealed template keeps Ubuntu's defaults:
-# unprivileged user namespaces with a uid map (AppArmor restricts them), and /bin/sh
-# as bash (a gate test's stand-in is a /bin/sh script and allows bash's fd 255 only;
-# dash holds 10 and 11).
-relaxed() {
-    local rc=0 mask lock=${RELAXED_LOCK:-$HOME/.weaver-relaxed.lock}
-    # One relaxed step at a time in this guest. A second step that started while the
-    # first had both settings relaxed would save the relaxed values as its own and put
-    # them back after the first restored, and both would pass. So the lock is taken
-    # before the two reads and never given back by hand: its descriptor stays open for
-    # this shell's life, the restore runs under it on every way out, and the kernel frees
-    # it however the shell ends. A step that finds it held, or cannot open or take it, is
-    # refused at once with nothing changed; it never runs unlocked. The file is 0600 in
-    # the operator's home, where the checkout and cargo's target are, so its directory is
-    # there, and no other account can open the file to hold the lock.
-    mask=$(umask)
-    umask 077
-    if ! exec {relaxed_lock_fd}>>"$lock"; then
-        umask "$mask"
-        echo "relaxed: cannot open the lock $lock; nothing relaxed" >&2
-        return 1
+# The CUDA runtime the image keeps (the Planner's ruling of 2026-11-16, form b): Arch's cuda
+# is one package, toolkit and runtime together, so the runtime is made into a package of
+# its own inside this guest, from the toolkit's own files, unchanged: the libraries the
+# installed members and engine load (RUNTIME_LIBS), each soname link to them and the
+# /opt/cuda/lib64 link; and one file of its own, the loader file RUNTIME_LDCONF, naming
+# CUDA_LIBS alone (the Planner's ruling of 2026-11-16: the toolkit's cuda.conf also names
+# nvvm/lib64, which goes with the toolkit, and ldconfig would warn of it). makepkg builds it as
+# the build account under fakeroot, with nothing stripped. Each file's sha256 is taken from
+# the toolkit before the build and read again from the installed package; the cleanup then
+# removes cuda and installs this package in its place, so pacman owns every file the
+# install tuple names. The PKGBUILD is code/guest/cuda-runtime/PKGBUILD, copied in by
+# build-template.sh with this file.
+RUNTIME_PKG=weaver-cuda-runtime
+RUNTIME_LIBS="cudart cublas cublasLt curand nvrtc nvrtc-builtins"
+RUNTIME_DIR=$BUILD/runtime
+PKGBUILD_SRC=/usr/local/share/weaver-build/cuda-runtime/PKGBUILD
+RUNTIME_LDCONF=/etc/ld.so.conf.d/cuda.conf
+# runtime_list LIBDIR: the runtime package's files, one absolute path a line in C-locale
+# order: each regular file in LIBDIR named lib<one of RUNTIME_LIBS>.so.<version>, each link
+# in LIBDIR that resolves to one of them, and the link LIBDIR's parent's lib64 where it
+# names LIBDIR. The toolkit's files alone: the loader file is the package's own.
+runtime_list() {
+    local dir=$1 f l n
+    {
+        for n in $RUNTIME_LIBS; do
+            find "$dir" -maxdepth 1 -type f -regextype posix-extended -regex ".*/lib${n}\.so\.[0-9.]+" | sort
+        done >"$RUNTIME_DIR/real.tmp"
+        cat "$RUNTIME_DIR/real.tmp"
+        for l in "$dir"/*; do
+            [ -L "$l" ] || continue
+            grep -qxF -- "$(readlink -f "$l")" "$RUNTIME_DIR/real.tmp" && echo "$l"
+        done
+        f=$CUDA_HOME/lib64
+        [ -L "$f" ] && [ "$(readlink -f "$f")" = "$(readlink -f "$dir")" ] && echo "$f"
+    } | LC_ALL=C sort -u
+    rm -f -- "$RUNTIME_DIR/real.tmp"
+}
+# runtime_resolved_check LIST LDD...: every CUDA library the loader resolved under
+# CUDA_HOME for the files given (ldd's output, in the files LDD...) is in LIST, by its real
+# path. Prints each one that is not.
+runtime_resolved_check() {
+    local list=$1 lib; shift
+    for lib in $(cat "$@" | grep -oE "=> $CUDA_HOME/[^ ]+" | awk '{print $2}' | sort -u); do
+        grep -qxF -- "$(readlink -f "$lib")" "$list" || echo "$lib ($(readlink -f "$lib")) resolves for the stack and is not in the runtime package"
+    done
+}
+# runtime_hashes LIST OUT: "SHA256  PATH" for each regular file in LIST, and "LINK PATH ->
+# TARGET" for each link, into OUT.
+runtime_hashes() {
+    local f
+    while IFS= read -r f; do
+        if [ -L "$f" ]; then printf 'LINK %s -> %s\n' "$f" "$(readlink "$f")"
+        elif [ -f "$f" ]; then sha256sum -- "$f"
+        else echo "MISSING $f"; fi
+    done <"$1" >"$2"
+}
+# runtime_build: the runtime package made and its file list and hashes kept in RUNTIME_DIR,
+# once: a rerun after cuda is gone finds them there.
+runtime_build() {
+    if [ -s "$RUNTIME_DIR/pkg.sha256" ] && sudo test -s "$RUNTIME_DIR/$(sudo cat "$RUNTIME_DIR/pkg.name" 2>/dev/null)"; then
+        echo "kept from the first run: $(sudo cat "$RUNTIME_DIR/pkg.name")"; return 0
     fi
-    umask "$mask"
-    flock -n "$relaxed_lock_fd" || {
-        echo "relaxed: the lock $lock is held by another relaxed step or cannot be taken; nothing relaxed" >&2
-        return 1
-    }
-    # The two settings as they were, kept global: after an unset variable under set -u,
-    # bash unwinds every function before the EXIT trap runs, and a local would be gone.
-    relaxed_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns) || return 1
-    relaxed_sh=$(readlink /bin/sh)
-    [ -n "$relaxed_sh" ] || { echo "/bin/sh is not a link; nothing relaxed"; return 1; }
-    # Both settings come back on every way out of this shell once the traps are set,
-    # so a step that stops does not leave /bin/sh -> bash in an image that is then
-    # sealed:
-    #   - a failed change, and the wrapped command's end;
-    #   - an exit inside the wrapped command, which is a shell function in this shell
-    #     (an `exit`, or an unset variable under set -u);
-    #   - INT, HUP or TERM sent to the step;
-    #   - SIGPIPE, the dropped SSH session. sshd sends a command without a terminal no
-    #     signal when the client goes away, but it closes the command's pipes, and the
-    #     next write by this shell (a wrapped function's printf) would end it untrapped.
-    # Each signal exits with its own status, and the EXIT trap restores. A restore that
-    # does not read back both settings as they were fails the step, even after a
-    # command that passed.
-    relaxed_restore() {
-        local bad=0 now_sh now_userns
-        sudo ln -sfn "$relaxed_sh" /bin/sh || bad=1
-        sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns="$relaxed_userns" || bad=1
-        now_sh=$(readlink /bin/sh)
-        now_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
-        [ "$now_sh" = "$relaxed_sh" ] && [ "$now_userns" = "$relaxed_userns" ] || bad=1
-        if [ "$bad" = 0 ]; then
-            echo "restored: kernel.apparmor_restrict_unprivileged_userns=$now_userns, /bin/sh -> $now_sh"
-        else
-            echo "NOT RESTORED: kernel.apparmor_restrict_unprivileged_userns=$now_userns (was $relaxed_userns), /bin/sh -> $now_sh (was $relaxed_sh)" >&2
-        fi
-        return "$bad"
-    }
-    # On the way out: the exit status stands, but a 0 becomes 1 when the restore fails.
-    relaxed_on_exit() {
-        local st=$1
-        relaxed_restore || [ "$st" != 0 ] || st=1
-        exit "$st"
-    }
-    trap 'relaxed_on_exit $?' EXIT
-    trap 'exit 130' INT
-    trap 'exit 129' HUP
-    trap 'exit 143' TERM
-    trap 'exit 141' PIPE
-    if ! sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0 || ! sudo ln -sfn bash /bin/sh; then
-        relaxed_restore
-        trap - EXIT INT HUP TERM PIPE
-        return 1
-    fi
-    echo "relaxed: kernel.apparmor_restrict_unprivileged_userns=0, /bin/sh -> bash"
-    # The command runs with the lock's descriptor closed, so nothing it leaves running
-    # holds the lock after this shell ends; the shell keeps it meanwhile.
-    "$@" {relaxed_lock_fd}>&- || rc=$?
-    relaxed_restore || [ "$rc" != 0 ] || rc=1
-    trap - EXIT INT HUP TERM PIPE
-    return "$rc"
+    pin_check cuda "$PIN_CUDA" || return 1
+    local w ld f out v
+    sudo install -d -o root -g root -m 0755 "$RUNTIME_DIR" || return 1
+    w=$(mktemp -d) || return 1
+    sudo chown "$(id -u):$(id -g)" "$RUNTIME_DIR"
+    runtime_list "$CUDA_LIBS" >"$RUNTIME_DIR/files" || return 1
+    for f in /opt/weaver/bin/* /opt/weaver/lib/*.so* /opt/weaver-web/bin/*; do
+        [ -f "$f" ] && [ ! -L "$f" ] || continue
+        env -u LD_LIBRARY_PATH LD_LIBRARY_PATH=/opt/weaver/lib ldd "$f" 2>/dev/null
+    done >"$w/ldd"
+    out=$(runtime_resolved_check "$RUNTIME_DIR/files" "$w/ldd")
+    [ -z "$out" ] || { echo "$out"; return 1; }
+    out=$(while IFS= read -r f; do pacman -Qoq -- "$f" 2>/dev/null | grep -qx cuda || echo "$f is not cuda's"; done <"$RUNTIME_DIR/files")
+    [ -z "$out" ] || { echo "$out"; return 1; }
+    runtime_hashes "$RUNTIME_DIR/files" "$RUNTIME_DIR/toolkit.hashes" || return 1
+    ! grep -q '^MISSING ' "$RUNTIME_DIR/toolkit.hashes" || { grep '^MISSING ' "$RUNTIME_DIR/toolkit.hashes"; return 1; }
+    v=${PIN_CUDA%-*}
+    cp "$PKGBUILD_SRC" "$w/PKGBUILD" || return 1
+    (cd "$w" && WEAVER_RUNTIME_LIST=$RUNTIME_DIR/files WEAVER_RUNTIME_VER=$v \
+        WEAVER_RUNTIME_LDCONF=$RUNTIME_LDCONF WEAVER_RUNTIME_LDDIR=$CUDA_LIBS \
+        PKGDEST="$w/out" SRCDEST="$w" BUILDDIR="$w/build" makepkg --noconfirm --nocheck 2>&1) || return 1
+    f=$(ls "$w/out/$RUNTIME_PKG-$v-1-x86_64.pkg.tar.zst") || return 1
+    # The package's own list, set against the file list: every file and link in it, and
+    # nothing else but the directories that hold them.
+    out=$(diff <({ cat "$RUNTIME_DIR/files"; echo "$RUNTIME_LDCONF"; } | LC_ALL=C sort) \
+               <(pacman -Qlpq "$f" | grep -v '/$' | sed 's|^|/|; s|//|/|' | LC_ALL=C sort))
+    [ -z "$out" ] || { echo "the package's files are not the list:"; echo "$out"; return 1; }
+    echo "$RUNTIME_PKG metadata, as makepkg wrote it: $(bsdtar -xOf "$f" .PKGINFO | grep -E '^(depend|provides|license) = ' | tr '\n' ' ')"
+    sudo install -o root -g root -m 0644 "$f" "$RUNTIME_DIR/${f##*/}" || return 1
+    printf '%s\n' "${f##*/}" | sudo tee "$RUNTIME_DIR/pkg.name" >/dev/null
+    sha "$RUNTIME_DIR/${f##*/}" | sudo tee "$RUNTIME_DIR/pkg.sha256" >/dev/null
+    sudo chown -R root:root "$RUNTIME_DIR"
+    rm -rf -- "$w"
+    echo "$RUNTIME_PKG: $(wc -l <"$RUNTIME_DIR/files") files and links, $(cat "$RUNTIME_DIR/pkg.sha256")"
+}
+# runtime_check: every file of the runtime package installed as the toolkit had it (each
+# regular file's sha256, each link's target), and owned by the package. Prints each
+# finding; exits 1 on any.
+runtime_check() {
+    local now f w bad=""
+    pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1" >/dev/null || bad+="$(pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1"). "
+    now=$(mktemp) || return 1
+    runtime_hashes "$RUNTIME_DIR/files" "$now"
+    cmp -s "$RUNTIME_DIR/toolkit.hashes" "$now" || bad+="installed files differ from the toolkit's: $(diff "$RUNTIME_DIR/toolkit.hashes" "$now" | grep '^[<>]' | head -4 | tr '\n' ' '). "
+    rm -f -- "$now"
+    while IFS= read -r f; do
+        [ "$(pacman -Qoq -- "$f" 2>/dev/null)" = "$RUNTIME_PKG" ] || bad+="$f is not $RUNTIME_PKG's. "
+    done < <(cat "$RUNTIME_DIR/files"; echo "$RUNTIME_LDCONF")
+    [ "$(cat "$RUNTIME_LDCONF" 2>/dev/null)" = "$CUDA_LIBS" ] || bad+="$RUNTIME_LDCONF does not name $CUDA_LIBS alone. "
+    # A directory the loader's files name and that does not stand (the toolkit's nvvm/lib64).
+    w=$(sudo ldconfig -X 2>&1)
+    ! grep -q "Can't stat" <<<"$w" || bad+="ldconfig cannot stat: $(grep "Can't stat" <<<"$w" | head -2 | tr '\n' ' '). "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 
-# The runtime set the cleanup keeps (marked manual; everything else the build added is
-# marked auto and autoremoved): the CUDA runtime the loader resolves for the installed SPU
-# and engine, NVRTC (cuBLASLt names it; kept until a carded load shows it is never
-# mapped), the driver's packages (the route's list, libnvidia-compute whole, which carries
-# nvidia-smi and NVML), acl (decommission's setfacl), and the C++ runtime the members load.
-KEEP="cuda-cudart-13-4 libcublas-13-4 libcurand-13-4 cuda-nvrtc-13-4 acl libstdc++6 libgcc-s1 python3"
-# BUILD_RE: a build package, by name. The cleanup purges every installed package it
-# matches, base or added, and the probe refuses the seal on any left. The CUDA toolkit's
-# config-common packages are not matched: cudart and cuBLAS depend on them, and they hold
-# only the loader's ld.so.conf.d entries.
-BUILD_RE='^(build-essential|(gcc|g\+\+|cpp|clang|llvm)(-[0-9]+)?(-x86-64-linux-gnu)?|libclang.*|cmake.*|make|dkms|dpkg-dev|patch|pkgconf.*|pkg-config|binutils.*|linux-headers-.*|.*-dev|cuda-(nvcc|crt|cudart-dev|compiler|nvrtc-dev).*|cuda-toolkit(-[0-9]+)*|cccl.*|nsight.*|cuda-keyring|rustc|cargo|git)$'
-# Base-image packages the cleanup also purges by name: the build's VCS (after the stamp
-# names the commits), the update services, snapd where the image has it, and what the
-# 26.04 cloud image ships that holds a compiler in place or goes with one. Its kernel
-# headers depend on gcc, its libc6-dev recommends one, and bpftrace and the BPF compiler
-# collection depend on libclang. The kernel's virtual metapackage depends on the headers'
-# metapackage, the binutils libraries and update-notifier-common (patch) go with theirs,
-# and ubuntu-server depends on git. cloud-initramfs-dyn-netconf's dracut module depends on
-# dracut's systemd-networkd module, which takes a DHCP lease from inside the initramfs on
-# every boot (measured on the third build's proof boot with no seed); the appliance has no
-# network root. linux-image-virtual, the kernel image's metapackage, goes too (finding 8):
-# nothing installed depends on it (read in the fifth build's guest, where a simulated purge
-# removed it alone), and its one use, pulling the next kernel at an update, is one the
-# appliance never makes. The kernel it named stays, held with its modules by the driver
-# step. Every other base package is marked manual first, so
-# it stays; the simulation refuses a base package that would go and is not named here or
-# matched by BUILD_RE.
-PURGE_BASE="git git-man unattended-upgrades snapd ubuntu-server
-  bpftrace bpfcc-tools python3-bpfcc libbpfcc linux-virtual linux-image-virtual
-  update-notifier-common libbinutils libctf0 libgprofng0 cloud-initramfs-dyn-netconf"
+# tuple_runtime_check TUPLE: each CUDA runtime file the install tuple names (runtime.<name>
+# = <sha256> <path>) owned by the runtime package and of that digest. Prints each finding.
+tuple_runtime_check() {
+    local k d f n=0
+    while read -r k _ d f; do
+        n=$((n + 1))
+        [ -f "$f" ] || { echo "$k names $f, which is not a file"; continue; }
+        [ "$(pacman -Qoq -- "$f" 2>/dev/null)" = "$RUNTIME_PKG" ] || echo "$k: $f is not $RUNTIME_PKG's"
+        [ "$(sha "$f")" = "$d" ] || echo "$k: $f is not the digest the tuple names"
+    done < <(grep -E '^runtime\.[a-z]+ = ' "$1" 2>/dev/null)
+    [ "$n" -gt 0 ] || echo "$1 names no runtime file"
+    return 0
+}
+
+# The runtime set the cleanup keeps, as explicitly installed (everything else the build
+# added is marked a dependency, and removed once nothing kept needs it): the CUDA runtime
+# package, the driver's packages (the route's list), acl (decommission's setfacl), the C++
+# runtime the members load (gcc-libs: libstdc++ and libgcc_s), python (the deploy scripts;
+# create-agent.sh needs 3.11 or later), util-linux (runuser, root's drops to accounts), and
+# quota-tools: setquota sets the ext4 project quota on the agent's home, so the agent's own
+# writes cannot fill the state drive (the operator's ruling of 2026-11-17; create-agent.sh's
+# option, WeaverAgent #585). e2fsprogs, in the base image, carries chattr -p.
+KEEP="$RUNTIME_PKG acl gcc-libs python util-linux quota-tools"
+# HEADERS_RE: what builds a module against a kernel, by package: DKMS, the driver's DKMS
+# forms, and the headers of each of Arch's kernels (linux, -lts, -zen, -hardened, -rt,
+# -rt-lts). Not linux-api-headers: the kernel's userspace interface, which glibc and
+# libbpf require and the base image carries; no module is built from it. build_trees
+# reads the tree any headers package lays, whatever its name.
+HEADERS_RE='^(dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers)$'
+# BUILD_RE: a build package, by name, HEADERS_RE's among them. The cleanup removes every
+# installed package it matches, base or added, and the probe refuses the seal on any left.
+# Not binutils: two base packages require it, mkinitcpio (the initramfs the kernel package
+# depends on) and libmakepkg-dropins (which pacman depends on), so it stays, and
+# binutils_check holds it to those two (BINUTILS_FOR).
+BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoconf|automake|bison|flex|libtool|m4|patch|pkgconf|fakeroot|debugedit|dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers|cuda|cuda-tools|cccl|nsight-.*|git|rust|rustup|cargo|meson|ninja|go|gdb)$'
+BINUTILS_FOR="libmakepkg-dropins mkinitcpio"
+# Base-image packages the cleanup also removes by name: cloud-init, removed outright once
+# the build seed is used (the Planner's ruling of 2026-11-16, the stronger form of the
+# operator's "off"), growpart, which only cloud-init runs, and the QEMU guest agent, which
+# the image's builder installs and udev starts wherever the hypervisor offers its channel,
+# and which nothing in the appliance uses (the Planner's ruling of 2026-11-17): a host's
+# shutdown reaches the guest by ACPI, which the proof reads. Every other base package is
+# marked explicitly installed first, so it stays; the simulation refuses a base package
+# that would go and is not named here or matched by BUILD_RE.
+PURGE_BASE="cloud-init cloud-guest-utils qemu-guest-agent"
+CLOUD_INIT_UNITS="cloud-init-local.service cloud-init-main.service cloud-init-network.service
+  cloud-config.service cloud-final.service"
+# unit_links_check: no link under /etc/systemd that leads nowhere: an enablement whose unit
+# is gone. A mask leads to /dev/null, which stands. Prints each.
+unit_links_check() {
+    sudo find /etc/systemd -xdev -xtype l -printf '%p -> %l (leads nowhere)\n' 2>/dev/null
+    return 0
+}
 # The image's base inbound policy (the operator's decision 9 of 2026-11-15): its own boot
-# rules drop inbound and accept SSH. One table of the image's own, which Ubuntu's
-# nftables.service loads from /etc/nftables.conf before the network comes up. The file never
-# flushes the ruleset and names its own table alone, so loading it again replaces that table
-# and nothing else. The drop-in makes the unit's stop remove that table alone, where
-# Ubuntu's flushes every table. Accepted: loopback, replies (established and related), the
-# ICMPv6 neighbour-discovery types IPv6 cannot work without, and TCP 22. Outbound is not
-# limited. Admin's table is separate and admin's: a drop here is final, so an accept in it
-# cannot open a port through this table (weaver-appliance-build-Spec section 3).
+# rules drop inbound and accept SSH. One table of the image's own, which nftables.service
+# loads from /etc/nftables.conf before the network comes up, in place of Arch's shipped
+# file. The file never flushes the ruleset and names its own table alone, so loading it
+# again replaces that table and nothing else. Arch's unit (nftables 1.1.7) is a oneshot
+# with no stop command and no RemainAfterExit, so nothing removes the table at a stop, and
+# no stop command may be added: on such a unit systemd runs ExecStop as soon as the start
+# exits. Release 1.0's drop-in, which made Ubuntu's stop remove this table alone, is not
+# carried, and firewall_check reads the unit with no stop command. Accepted: loopback,
+# replies (established and related), the ICMPv6 neighbour-discovery types IPv6 cannot work
+# without, and TCP 22. Outbound is not limited. Admin's table is separate and admin's: a
+# drop here is final, so an accept in it cannot open a port through this table
+# (weaver-appliance-build-Spec section 3).
 FIREWALL_TABLE="inet weaver_appliance"
-FIREWALL_RULES='#!/usr/sbin/nft -f
+FIREWALL_RULES='#!/usr/bin/nft -f
 # The appliance image'"'"'s base inbound policy (weaver-appliance-build-Spec): inbound is
 # dropped but loopback, replies, IPv6 neighbour discovery and SSH. Outbound is not limited.
 # This file names its own table alone and never flushes the ruleset.
@@ -617,32 +793,158 @@ table inet weaver_appliance {
 		tcp dport 22 accept
 	}
 }'
-FIREWALL_DROPIN=/etc/systemd/system/nftables.service.d/weaver-appliance.conf
-FIREWALL_STOP='[Service]
-ExecStop=
-ExecStop=/usr/sbin/nft destroy table inet weaver_appliance'
 # The image's SSH settings (the operator's ruling of 2026-11-16: root, set at first login):
 # no password of any kind and no empty one, and root by key alone. sshd keeps the first
-# value it reads for each keyword, and Ubuntu's sshd_config includes sshd_config.d's files,
+# value it reads for each keyword, and Arch's sshd_config includes sshd_config.d's files,
 # in name order, before its own settings, so this file, first by name, decides all four.
 SSHD_DROPIN=/etc/ssh/sshd_config.d/10-weaver-appliance.conf
-SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone.
+SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone,
+# from root'"'"'s authorized_keys alone.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitEmptyPasswords no
-PermitRootLogin prohibit-password'
-UPDATE_UNITS="apt-daily.timer apt-daily.service apt-daily-upgrade.timer apt-daily-upgrade.service
-  motd-news.timer motd-news.service fwupd-refresh.timer fwupd-refresh.service
-  update-notifier-download.timer update-notifier-motd.timer snapd.service snapd.socket"
+PermitRootLogin prohibit-password
+AuthorizedKeysFile .ssh/authorized_keys
+AuthorizedKeysCommand none'
+# systemd's sshd drop-in that asks userdbctl for a user's keys, a link systemd-tmpfiles lays
+# at every boot from its own line. Keys come from root's authorized_keys alone, which setup
+# writes from Weaver Web (the Planner's ruling of 2026-11-16): the tmpfiles line is masked
+# and the link removed, and SSHD_SETTINGS names no key command besides.
+USERDB_SSH_LINK=/etc/ssh/sshd_config.d/20-systemd-userdb.conf
+USERDB_TMPFILES=/etc/tmpfiles.d/20-systemd-userdb.conf
+# The units that would update the image or its keys from the network, masked: the
+# keyring's weekly sync, systemd-sysupdate, and pacman-init, which would make a pacman
+# master key, a private key, at every box's first boot (its file is the image builder's,
+# under /etc, and is removed besides).
+UPDATE_UNITS="archlinux-keyring-wkd-sync.timer archlinux-keyring-wkd-sync.service
+  systemd-sysupdate.timer systemd-sysupdate.service systemd-sysupdate-reboot.timer
+  systemd-sysupdate-reboot.service systemd-sysupdate-update.timer
+  systemd-sysupdate-update.service systemd-sysupdate-auto-enable.service
+  systemd-sysupdated.service systemd-sysupdate.socket systemd-sysupdate@.service pacman-init.service"
+# What the appliance does not use, masked at the seal (the Planner's rule of 2026-11-16,
+# as worded on 2026-11-17: nothing installs, overlays or updates software after the seal,
+# the bootloader included, and nothing runs that the appliance does not use). Masked, not
+# disabled: a box's first boot applies systemd's presets, which would
+# enable a disabled unit again (Arch's 90-systemd.preset enables each of these but the
+# sysroot units), and presets leave a mask alone.
+# - sysext and confext: an image file dropped on disk would overlay /usr or /etc.
+# - homed: no home directories of its own (its first-boot unit makes accounts from
+#   home.create credentials).
+# - sysupdate's notification sockets, the TPM clear (no TPM), and the report sockets: no
+#   member of the appliance reads them.
+# - userdbd: nss-systemd and PID 1's dynamic users answer without it, and its one user
+#   here, sshd's key command, is removed (USERDB_SSH_LINK).
+# - journalctl's and networkd's metrics sockets, mountfsd, nsresourced and machines.target:
+#   no member of the appliance reads metrics, mounts images unprivileged, asks for a user
+#   namespace range or runs machines. networkd, without its metrics socket, serves none.
+# - time-wait-sync, which the image's builder enables: where no time server answers, it
+#   holds time-sync.target and the boot never finishes (the 2.0 rehearsal's proof of
+#   2026-11-17). timesyncd stays enabled, so the clock syncs where a server answers.
+# - boot-update, which would rewrite a systemd-boot in the ESP after the seal (the image
+#   boots by GRUB, which it would leave alone, but the rule takes the bootloader in), and
+#   boot-clear-sysfail (no boot counting).
+# Kept: pstore, which only archives the kernel's crash records under /var, and coredump,
+# which logs each crash to the journal and writes no dump (COREDUMP_SETTINGS).
+UNUSED_UNITS="systemd-sysext.service systemd-sysext.socket systemd-sysext@.service
+  systemd-sysext-sysroot.service systemd-confext.service systemd-confext-sysroot.service
+  systemd-homed.service systemd-homed-activate.service systemd-homed-firstboot.service
+  systemd-sysupdate-notify-bootctl.socket systemd-sysupdate-notify-bootctl@.service
+  systemd-sysupdate-notify-pcrlock.socket systemd-sysupdate-notify-pcrlock@.service
+  systemd-sysupdate-notify-sysext.socket systemd-sysupdate-notify-sysext@.service
+  systemd-tpm2-clear.service
+  systemd-report.socket systemd-report@.service systemd-report-basic.socket
+  systemd-report-basic@.service systemd-report-cgroup.socket systemd-report-cgroup@.service
+  systemd-report-files.socket systemd-report-files@.service systemd-report-sign-plain.socket
+  systemd-report-sign-plain@.service systemd-report-sign-tpm2.socket
+  systemd-report-sign-tpm2@.service systemd-report-sign-tsm.socket
+  systemd-report-sign-tsm@.service
+  systemd-userdbd.socket systemd-userdbd.service
+  systemd-journalctl-metrics.socket systemd-journalctl-metrics@.service
+  systemd-networkd-varlink-metrics.socket systemd-time-wait-sync.service
+  systemd-mountfsd.socket systemd-mountfsd.service
+  systemd-nsresourced.socket systemd-nsresourced.service machines.target
+  systemd-boot-update.service systemd-boot-clear-sysfail.service"
+# A crash is a journal record and nothing more (the Planner's ruling of 2026-11-17): no
+# dump is written, kept or not, so that a worker holding large host buffers cannot fill
+# the root disk. Storage=none alone would still write the core to /var/lib/systemd/coredump
+# while it is processed, up to ProcessSizeMax (32G on 64-bit); ProcessSizeMax=0 with it
+# leaves the log entry alone (coredump.conf(5)).
+COREDUMP_DROPIN=/etc/systemd/coredump.conf.d/10-weaver-appliance.conf
+COREDUMP_SETTINGS='# The appliance image'"'"'s crash handling: a journal record, no dump written.
+[Coredump]
+Storage=none
+ProcessSizeMax=0'
+# systemd 262's cloud metadata service. Its generator pulls these units in where the
+# machine's DMI identity names one of the cloud vendors udev's hwdb lists (40-imds.hwdb:
+# EC2, Azure, GCE, Hetzner, Oracle, Scaleway, Tencent, Alibaba, Vultr) or the kernel line
+# names systemd.imds; the service then reads metadata over the network, a trust case the
+# hypervisor's does not cover. Not shown inert (an operator's hypervisor or cloud can
+# present such an identity), so masked, the generator with them (the Planner's ruling of
+# 2026-11-16).
+IMDS_UNITS="systemd-imds-early-network.service systemd-imds-import.service systemd-imdsd.socket
+  systemd-imdsd@.service systemd-imds-metrics.socket systemd-imds-metrics@.service"
+IMDS_GENERATOR=systemd-imds-generator
+# resolved as release 1.0 had it, where Arch's compiled defaults differ (its shipped
+# resolved.conf lists them): no fallback resolver (Arch's lists Quad9, Cloudflare and
+# Google), so the image names none until the operator's network does; and no LLMNR or
+# multicast DNS, both on in Arch's build, where LLMNR listens on port 5355 of every address
+# and the image's listeners beyond loopback are SSH alone (ruling 4).
+RESOLVED_DROPIN=/etc/systemd/resolved.conf.d/10-weaver-appliance.conf
+RESOLVED_SETTINGS='# The appliance image names no resolver (weaver-appliance-build-Spec); the
+# operator'"'"'s network does. The empty value turns off the compiled fallback list. No
+# LLMNR and no multicast DNS: nothing but SSH listens beyond loopback.
+[Resolve]
+FallbackDNS=
+LLMNR=no
+MulticastDNS=no'
+# The EFI system partition, mounted where the MANIFEST reads it: the cloud image installs
+# GRUB's EFI loader there (--efi-directory=/efi --removable) and leaves the partition out
+# of fstab, so without this line the image's identity would not cover its loader.
+ESP_DIR=/efi
+ESP_TYPE=c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+# The swap file the cloud image ships, removed (the Planner's ruling of 2026-11-16): its
+# subvolume, its fstab line.
+SWAP_SUBVOL=/swap
+
+# removal_judge SIM KEEP BASE PURGE: a simulated removal (SIM, the names pacman would remove,
+# one a line) judged: no name of KEEP removed, and no name of BASE (the base image's
+# packages, one a line) removed but those in PURGE (one a line). Prints each finding;
+# exits 1 on any. Fixed strings throughout: a name such as gcc-libs means itself.
+removal_judge() {
+    local sim=$1 keep=$2 base=$3 purge=$4 bad="" p
+    for p in $(cat "$keep"); do grep -qxF -- "$p" "$sim" && bad+="the simulation would remove $p, which is kept. "; done
+    p=$(grep -xF -f "$base" "$sim" | grep -vxF -f "$purge" || true)
+    [ -z "$p" ] || bad+="the simulation would remove base packages not named: $(tr '\n' ' ' <<<"$p"). "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# remove_judged NAME...: NAME removed with what only it held (pacman -Rns), after a
+# simulation of the same removal judged by removal_judge. The simulation is -Rs: pacman 7
+# refuses --nosave with --print, and -n chooses no package (it only skips the .pacsave
+# copies of changed backup files), so -Rs prints the same set -Rns removes.
+remove_judged() {
+    local w rc=0
+    w=$(mktemp -d) || return 1
+    printf '%s\n' $KEEP $(cat "$BUILD/keep-driver") >"$w/keep"
+    printf '%s\n' "$@" >"$w/purge"
+    sudo pacman -Rs --print --print-format '%n' --noconfirm "$@" >"$w/sim" 2>"$w/sim.err" \
+        || { echo "the simulated removal refuses:"; cat "$w/sim.err"; rm -rf -- "$w"; return 1; }
+    removal_judge "$w/sim" "$w/keep" "$BUILD/base-packages" "$w/purge" || { rm -rf -- "$w"; return 1; }
+    echo "simulation: $(wc -l <"$w/sim") packages to remove, none of the runtime set, no base package but those named or matched"
+    sudo pacman -Rns --noconfirm "$@" >"$w/rm.log" 2>&1 || rc=$?
+    [ "$rc" = 0 ] || tail -30 "$w/rm.log"
+    echo "removed: $(grep -cE '^\([0-9]+/[0-9]+\) removing ' "$w/rm.log" || true) packages"
+    rm -rf -- "$w"
+    return "$rc"
+}
 
 # cleanup: the checked list. Each removal here is judged by `probes`, which the seal runs
 # again before it writes anything.
 cleanup() {
     [ -s "$BUILD/keep-driver" ] || { echo "the driver step has not passed; the cleanup keeps its packages"; return 1; }
-    local before keep p added purge sim brc
+    local before p added purge installed n brc
     before=$(used_bytes); brc=$?
     section before; df -h /
-    du -sh "$WA" "$WW" "$HOME/target" "$HOME/.cargo" "$HOME/.rustup" /usr/local/cuda-13.4 /usr/local/cuda-13.3 2>/dev/null
+    du -sh "$WA" "$WW" "$HOME/target" "$HOME/.cargo" "$HOME/.rustup" "$CUDA_HOME" 2>/dev/null
     # A rerun keeps the first run's figure: the size before any cleanup.
     if [ -s "$BUILD/stamp.d/size.before-cleanup-used-bytes" ]; then
         echo "kept from the first run: size.before-cleanup-used-bytes = $(cat "$BUILD/stamp.d/size.before-cleanup-used-bytes")"
@@ -650,121 +952,129 @@ cleanup() {
         record_read size.before-cleanup-used-bytes "$brc" "$before" || return 1
     fi
 
-    section "1-2. the source trees, their build directories, the Rust toolchain and cargo's caches"
+    section "1. the CUDA runtime made into a package of its own, from the toolkit's files"
+    runtime_build || return 1
+
+    section "2-3. the source trees, their build directories, the Rust toolchain and cargo's caches"
     rm -rf -- "$WA" "$WW" "$HOME/target" "$HOME/.cargo" "$HOME/.rustup" "$HOME/.cache" || return 1
     sudo rm -rf -- /root/.cargo /root/.rustup /root/.cache || return 1
 
-    section "3-4. the compilers, build tools and the CUDA toolkit's compile-time parts"
-    keep="$KEEP $(cat "$BUILD/keep-driver")"
-    # The packages installed now. A rerun finds what the first run purged gone, and
-    # apt-mark refuses the whole call on one name it cannot find (the fifth build's second
-    # run stopped there), so only installed names are marked.
-    local installed
-    installed=$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' | awk '$1 ~ /^[ih]i/ {print $2}' | sort) || return 1
+    section "4-5. the compilers, build tools, the CUDA toolkit, and cloud-init"
+    installed=$(pacman -Qq | sort) || return 1
     added=$(comm -13 "$BUILD/base-packages" <(printf '%s\n' "$installed"))
-    # Every base package still installed is marked manual, so the autoremove reaches only
-    # what the build added; what the build added is marked auto but the runtime set, which
-    # is manual.
+    # Every base package still installed is marked explicitly installed, so a removal's
+    # recursion reaches only what the build added; what the build added is marked a
+    # dependency but the runtime set, which is explicit. Only installed names are marked:
+    # a rerun finds what the first run removed gone.
+    # shellcheck disable=SC2046
+    sudo pacman -D --asexplicit --noconfirm $(comm -12 "$BUILD/base-packages" <(printf '%s\n' "$installed") | grep -vxF -f <(printf '%s\n' $PURGE_BASE)) >/dev/null || return 1
     # shellcheck disable=SC2086
-    sudo apt-mark manual $(comm -12 "$BUILD/base-packages" <(printf '%s\n' "$installed") | grep -vxF -f <(printf '%s\n' $PURGE_BASE)) >/dev/null || return 1
-    # shellcheck disable=SC2086
-    sudo apt-mark auto $added >/dev/null || return 1
-    # shellcheck disable=SC2086
-    sudo apt-mark manual $keep >/dev/null || return 1
-    # Purged by name: PURGE_BASE and every installed package BUILD_RE matches, less the
-    # runtime set. The autoremove then takes what only they held.
-    # shellcheck disable=SC2086
-    purge=$( { for p in $PURGE_BASE; do dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' "$p" 2>/dev/null; done
-               dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' | grep -E " ${BUILD_RE#^}"; } |
-             awk '$1 ~ /^ii/ {print $2}' | sort -u | grep -vxF -f <(printf '%s\n' $keep) || true)
-    echo "purged by name: $(tr '\n' ' ' <<<"${purge:-none}")"
-    # The simulation first: nothing of the runtime set may be removed, and no base package
-    # but those named or matched.
-    # shellcheck disable=SC2086
-    sim=$(sudo apt-get -s purge --autoremove -y $purge 2>&1) || { echo "$sim" | tail -20; return 1; }
-    # Fixed strings, not a regex: a name such as libstdc++6 means itself.
-    local sim_removed
-    sim_removed=$(awk '/^(Purg|Remv) / {print $2}' <<<"$sim")
-    for p in $keep; do
-        if grep -qxF -- "$p" <<<"$sim_removed"; then echo "the simulation would remove $p, which is kept"; return 1; fi
+    [ -z "$added" ] || sudo pacman -D --asdeps --noconfirm $added >/dev/null || return 1
+    # shellcheck disable=SC2046
+    sudo pacman -D --asexplicit --noconfirm $(printf '%s\n' $KEEP $(cat "$BUILD/keep-driver") | grep -xF -f <(printf '%s\n' "$installed")) >/dev/null || return 1
+    # Removed by name: PURGE_BASE and every installed package BUILD_RE matches, less the
+    # runtime set, and what only they held (pacman -Rns).
+    # shellcheck disable=SC2046
+    purge=$( { printf '%s\n' $PURGE_BASE; printf '%s\n' "$installed" | grep -E "$BUILD_RE"; } |
+             grep -xF -f <(printf '%s\n' "$installed") | sort -u | grep -vxF -f <(printf '%s\n' $KEEP $(cat "$BUILD/keep-driver")) || true)
+    # cloud-init's units, enabled by the image's builder, are disabled first: their links
+    # are no package's, and would stand with nothing behind them once the package goes.
+    if pacman -Q cloud-init >/dev/null 2>&1; then
+        sudo systemctl disable $CLOUD_INIT_UNITS 2>&1 || return 1
+    fi
+    echo "removed by name: $(tr '\n' ' ' <<<"${purge:-none}")"
+    if [ -n "$purge" ]; then
+        # shellcheck disable=SC2086
+        remove_judged $purge || return 1
+    fi
+    # Then what the build added that nothing kept needs (installed as a dependency and
+    # required by nothing), until none is left; the same judge each round.
+    for n in 1 2 3 4 5 6; do
+        p=$(pacman -Qdtq 2>/dev/null || true)
+        [ -n "$p" ] || break
+        echo "round $n, no longer needed: $(tr '\n' ' ' <<<"$p")"
+        # shellcheck disable=SC2086
+        remove_judged $p || return 1
     done
-    local gone_base
-    gone_base=$(awk '/^(Purg|Remv) / {print $2}' <<<"$sim" | grep -xF -f "$BUILD/base-packages" | grep -vxF -f <(printf '%s\n' $purge) || true)
-    [ -z "$gone_base" ] || { echo "the simulation would remove base packages not named: $(tr '\n' ' ' <<<"$gone_base")"; return 1; }
-    echo "simulation: $(grep -c '^Purg ' <<<"$sim") packages to purge, none of the runtime set, no base package but those named or matched"
+    [ -z "$(pacman -Qdtq 2>/dev/null)" ] || { echo "packages no longer needed remain after six rounds: $(pacman -Qdtq | tr '\n' ' ')"; return 1; }
+    sudo rm -rf -- /var/lib/dkms /usr/src/nvidia-* "$CUDA_HOME/include" "$CUDA_HOME/bin"
+    # cloud-init's leftovers that no package owns: the network file it wrote for the build
+    # guest (the running guest keeps its address; networkd reads the file only at a
+    # start), and the empty directory of its units' links.
+    sudo rm -f /etc/systemd/network/10-cloud-init-*.network || return 1
+    sudo rmdir /etc/systemd/system/cloud-init.target.wants 2>/dev/null || true
+    p=$(unit_links_check)
+    [ -z "$p" ] || { echo "$p"; return 1; }
+
+    section "the CUDA runtime package in the toolkit's place"
+    if ! pacman -Q "$RUNTIME_PKG" >/dev/null 2>&1; then
+        sudo pacman -U --noconfirm "$RUNTIME_DIR/$(cat "$RUNTIME_DIR/pkg.name")" || return 1
+    fi
+    runtime_check || return 1
     # shellcheck disable=SC2086
-    sudo apt-get purge --autoremove -y -q $purge >"$HOME/purge.log" 2>&1 || { tail -30 "$HOME/purge.log"; return 1; }
-    grep -E '^(Purging|Removing) ' "$HOME/purge.log" | wc -l
-    rm -f "$HOME/purge.log"
-    sudo rm -rf /var/lib/dkms /usr/src/nvidia-* /etc/apt/preferences.d/cuda-13-4-2 /etc/apt/sources.list.d/cuda*
-    section kept; dpkg-query -W -f '${Package} ${Version}\n' $keep 2>&1
+    pacman_ignore /etc/pacman.conf $PACMAN_IGNORE || return 1
+    echo "$RUNTIME_PKG installed: every file the toolkit's, owned by the package; held with the kernel and driver"
+    section kept; pacman -Q $KEEP $(cat "$BUILD/keep-driver") 2>&1
 
     section "the loader, after the removals"
     sudo ldconfig || return 1
     loader_check || return 1
 
-    section "cloud-init limited to the operator's SSH key, network and hostname"
-    # The operator's ruling of 2026-11-14: cloud-init takes three settings from a seed,
-    # runs no command and installs no package. A boot with no seed attached runs no
-    # cloud-init at all (no datasource is found). User-data and vendor-data are discarded
-    # before any module runs (so a seed cannot name modules back either); the SSH key comes
-    # from the seed's meta-data public-keys, the hostname from its local-hostname, and the
-    # network from its network-config. The modules left make the default account and the
-    # host keys, set the hostname, grow the root filesystem to the disk the operator gave,
-    # and print the host keys' fingerprints on the console (keys_to_console).
-    sudo tee /etc/cloud/cloud.cfg.d/99-weaver-appliance.cfg >/dev/null <<'EOF' || return 1
-# The appliance's cloud-init: the operator's SSH key (meta-data public-keys), network
-# (network-config) and hostname (meta-data local-hostname). No command, no package.
-allow_userdata: false
-vendor_data:
-  enabled: false
-vendor_data2:
-  enabled: false
-cloud_init_modules:
-  - growpart
-  - resizefs
-  - set_hostname
-  - update_hostname
-  - update_etc_hosts
-  - users_groups
-  - ssh
-cloud_config_modules: []
-cloud_final_modules:
-  - keys_to_console
-EOF
-    cloud_init_check || return 1
-    echo "cloud-init: user-data and vendor-data discarded; modules as listed"
+    section "the swap file removed"
+    if [ -e "$SWAP_SUBVOL" ]; then
+        sudo swapoff -a 2>&1
+        sudo btrfs subvolume delete "$SWAP_SUBVOL" 2>&1 || return 1
+    fi
+    sudo sed -i -E '\|^[^#]*[[:space:]]swap[[:space:]]|d' /etc/fstab || return 1
+    swap_check || return 1
+    echo "no swap: $SWAP_SUBVOL gone, no swap line in /etc/fstab"
 
-    section "the initramfs's catch-all network masked"
-    # The 26.04 initramfs carries dracut's systemd-networkd module, which leaves
-    # zzzz-dracut-default.network (DHCP on every link) in /run; the second build's proof boot
-    # with no seed took a lease and reached Ubuntu's NTP pool through it. A file of the same name in
-    # /etc outranks /run, so a link to /dev/null leaves the network to the seed alone.
-    sudo install -d -m 0755 /etc/systemd/network || return 1
-    sudo ln -sfn /dev/null /etc/systemd/network/zzzz-dracut-default.network || return 1
-    ls -l /etc/systemd/network/zzzz-dracut-default.network
-    # The initramfs made again with cloud-initramfs-dyn-netconf gone: no networkd in it.
-    sudo dracut -f -q --kver "$KVER" || return 1
-    initrd_network_check || return 1
-    echo "initramfs $(sudo sha256sum "/boot/initrd.img-$KVER" | cut -c1-16): no networkd, no network hook"
+    section "the EFI system partition at $ESP_DIR"
+    esp_mount || return 1
+    esp_check || return 1
+
+    section "the initramfs: no kms hook, so no nouveau"
+    # Arch's NVIDIA instructions: without the kms hook the initramfs carries no nouveau,
+    # which nvidia-utils also blacklists; the module loads from the root filesystem.
+    sudo sed -i -E '/^HOOKS=/ s/[[:space:]]kms([[:space:]])/\1/' /etc/mkinitcpio.conf || return 1
+    grep -E '^HOOKS=' /etc/mkinitcpio.conf
+    sudo mkinitcpio -P >"$HOME/mkinitcpio.log" 2>&1 || { tail -20 "$HOME/mkinitcpio.log"; return 1; }
+    rm -f -- "$HOME/mkinitcpio.log"
+    initrd_check || return 1
+    echo "initramfs $(sudo sha256sum /boot/initramfs-linux.img | cut -c1-16): no networkd, no nouveau"
 
     section "the base inbound policy: drop, but SSH"
     printf '%s\n' "$FIREWALL_RULES" | sudo tee /etc/nftables.conf >/dev/null || return 1
-    sudo install -d -m 0755 "${FIREWALL_DROPIN%/*}" || return 1
-    printf '%s\n' "$FIREWALL_STOP" | sudo tee "$FIREWALL_DROPIN" >/dev/null || return 1
     # Enabled for the next boot, not loaded now: the build guest keeps its own network.
     sudo systemctl enable nftables.service 2>&1 || return 1
     firewall_check || return 1
-    echo "nftables.service enabled with the image's table; ufw installed and inactive"
+    echo "nftables.service enabled with the image's table"
 
     section "SSH: keys alone"
     # Written now, read at the next boot: the build account logs in by key, and none of the
     # four settings bears on that.
     printf '%s\n' "$SSHD_SETTINGS" | sudo tee "$SSHD_DROPIN" >/dev/null || return 1
     sudo chmod 0644 "$SSHD_DROPIN" || return 1
+    sudo install -d -m 0755 "${USERDB_TMPFILES%/*}" || return 1
+    sudo ln -sfn /dev/null "$USERDB_TMPFILES" || return 1
+    sudo rm -f -- "$USERDB_SSH_LINK" || return 1
     sudo sshd -t 2>&1 || return 1
     sshd_check || return 1
-    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone"
+    p=$(userdb_ssh_check); [ -z "$p" ] || { echo "$p"; return 1; }
+    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone, from authorized_keys alone; userdb's key command removed and its tmpfiles line masked"
+
+    section "crashes: a journal record, no dump"
+    sudo install -d -m 0755 "${COREDUMP_DROPIN%/*}" || return 1
+    printf '%s\n' "$COREDUMP_SETTINGS" | sudo tee "$COREDUMP_DROPIN" >/dev/null || return 1
+    sudo chmod 0644 "$COREDUMP_DROPIN" || return 1
+    p=$(coredump_check); [ -z "$p" ] || { echo "$p"; return 1; }
+    echo "$COREDUMP_DROPIN: as systemd reads it, Storage=none and ProcessSizeMax=0"
+
+    section "no resolver of the image's own"
+    sudo install -d -m 0755 "${RESOLVED_DROPIN%/*}" || return 1
+    printf '%s\n' "$RESOLVED_SETTINGS" | sudo tee "$RESOLVED_DROPIN" >/dev/null || return 1
+    resolved_check || return 1
+    echo "$RESOLVED_DROPIN: FallbackDNS empty, LLMNR and multicast DNS off"
 
     section "the data mount points"
     # shellcheck disable=SC2086
@@ -774,27 +1084,33 @@ EOF
 
     section "the image's hostname"
     # The image's own hostname, in place of the build guest's, written here so that every
-    # probes pre the recipe reaches (its own probes step, then the seal's) reads it. The
+    # probes pass the recipe reaches (its own probes step, then the seal's) reads it. The
     # file alone: the running guest keeps its name, which the probes read as the build
     # guest's.
     printf '%s\n' "$IMAGE_HOSTNAME" | sudo tee /etc/hostname >/dev/null || return 1
-    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(uname -n))"
 
-    section "updates masked, sources off"
+    section "updates and the cloud metadata service masked, sources on the snapshot"
+    # pacman-init's file is the image builder's, under /etc, where a mask goes: it is
+    # removed with its link first.
+    sudo rm -f /etc/systemd/system/pacman-init.service /etc/systemd/system/multi-user.target.wants/pacman-init.service || return 1
+    # The units the appliance does not use: each disabled where it can be (its enablement
+    # links go), then all masked with the update units and imds.
+    for p in $UNUSED_UNITS; do sudo systemctl disable "$p" >/dev/null 2>&1 || true; done
     # shellcheck disable=SC2086
-    sudo systemctl mask $UPDATE_UNITS >/dev/null 2>&1
-    sudo tee /etc/apt/apt.conf.d/99-weaver-appliance >/dev/null <<'EOF'
-// The appliance is never updated in place: a new version is a new image.
-APT::Periodic::Enable "0";
-APT::Periodic::Update-Package-Lists "0";
-APT::Periodic::Unattended-Upgrade "0";
-EOF
-    if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
-        grep -qi '^Enabled:' /etc/apt/sources.list.d/ubuntu.sources ||
-            sudo sed -i '/^Types:/i Enabled: no' /etc/apt/sources.list.d/ubuntu.sources
-    fi
-    sudo apt-get clean
-    sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/*.bin /var/cache/debconf/*-old /var/crash/* /tmp/* /var/tmp/* 2>/dev/null
+    sudo systemctl mask $UPDATE_UNITS $IMDS_UNITS $UNUSED_UNITS >/dev/null || return 1
+    sudo install -d -m 0755 /etc/systemd/system-generators || return 1
+    sudo ln -sfn /dev/null "/etc/systemd/system-generators/$IMDS_GENERATOR" || return 1
+    sudo systemctl daemon-reload
+    imds_check || return 1
+    updates_check || return 1
+    # shellcheck disable=SC2086
+    p=$(masks_check $UNUSED_UNITS); [ -z "$p" ] || { echo "$p"; return 1; }
+    p=$(pacman_sources_check /etc/pacman.conf /etc/pacman.d/mirrorlist)
+    [ -z "$p" ] || { echo "$p"; return 1; }
+    sudo pacman -Scc --noconfirm >/dev/null 2>&1
+    sudo rm -rf /var/cache/pacman/pkg/* /var/lib/pacman/sync/* /tmp/* /var/tmp/* 2>/dev/null
+    echo "update units, the metadata service and $(wc -w <<<"$UNUSED_UNITS") units the appliance does not use masked; pacman names the snapshot alone; caches and sync databases gone"
 
     section after; df -h /
     local v
@@ -819,7 +1135,7 @@ loader_check() {
     out=$(env -u LD_LIBRARY_PATH LD_LIBRARY_PATH=/opt/weaver/lib ldd /opt/weaver/bin/weaver-spu /opt/weaver/lib/libggml-cuda.so.0 2>&1)
     grep -E '^[[:space:]]*lib(ggml|llama)' <<<"$out" | grep -v '=> /opt/weaver/lib/' && bad=1
     for lib in $(grep -oE '=> /[^ ]*lib(cudart|cublas|cublasLt|curand|cuda)\.so[^ ]*' <<<"$out" | awk '{print $2}' | sort -u); do
-        real=$(readlink -f "$lib"); owner=$(dpkg -S "$real" 2>/dev/null | cut -d: -f1)
+        real=$(readlink -f "$lib"); owner=$(pacman -Qoq -- "$real" 2>/dev/null)
         printf '%s -> %s (%s) %s\n' "$lib" "$real" "${owner:-no package}" "$(sha "$real" | cut -c1-16)"
         [ -n "$owner" ] || bad=1
     done
@@ -827,54 +1143,30 @@ loader_check() {
     return "$bad"
 }
 
-# initrd_network_check: the running kernel's initramfs holds no networkd and no dracut
-# network hook. Prints what it finds; exits 1 on any.
-initrd_network_check() {
-    local found
-    found=$(sudo lsinitrd "/boot/initrd.img-$KVER" 2>/dev/null |
-            grep -oE '(usr/lib/systemd/systemd-networkd|zzzz-dracut-default|dyn-netconf)[^ ]*' | sort -u)
+# initrd_check: the running kernel's initramfs holds no networkd and no nouveau. Prints what
+# it finds; exits 1 on any, or where the initramfs cannot be listed.
+initrd_check() {
+    local list found
+    list=$(sudo lsinitcpio /boot/initramfs-linux.img 2>/dev/null) && [ -n "$list" ] \
+        || { echo "lsinitcpio cannot read /boot/initramfs-linux.img"; return 1; }
+    found=$(grep -E '(systemd-networkd|/nouveau\.ko|/nouveau/)' <<<"$list" | sort -u | head -8)
     [ -z "$found" ] || { echo "$found"; return 1; }
-    sudo lsinitrd "/boot/initrd.img-$KVER" >/dev/null 2>&1 || { echo "lsinitrd cannot read /boot/initrd.img-$KVER"; return 1; }
 }
 
-# cloud_init_check: cloud-init's own merged system configuration, as the next boot reads
-# it, against the limit the cleanup writes. Prints each difference; exits 1 on any.
-cloud_init_check() {
-    sudo python3 -I - <<'PY'
-import sys
-from cloudinit.stages import Init
-c = Init(ds_deps=[]).cfg
-want = {
-    "allow_userdata": False,
-    "cloud_init_modules": ["growpart", "resizefs", "set_hostname", "update_hostname",
-                           "update_etc_hosts", "users_groups", "ssh"],
-    "cloud_config_modules": [],
-    "cloud_final_modules": ["keys_to_console"],
-}
-bad = [f"{k} is {c.get(k)!r}, not {v!r}" for k, v in want.items() if c.get(k) != v]
-bad += [f"{k} is enabled" for k in ("vendor_data", "vendor_data2")
-        if (c.get(k) or {}).get("enabled") is not False]
-if c.get("no_ssh_fingerprints"):
-    bad.append("no_ssh_fingerprints is set")
-print("\n".join(bad))
-sys.exit(1 if bad else 0)
-PY
-}
-
-# firewall_check: the base inbound policy as the next boot loads it: /etc/nftables.conf and
-# the drop-in exactly as FIREWALL_RULES and FIREWALL_STOP hold them, the file accepted by
-# nft's check, nftables.service enabled, and ufw inactive. Prints each difference; exits 1
-# on any.
+# firewall_check: the base inbound policy as the next boot loads it: /etc/nftables.conf
+# exactly as FIREWALL_RULES holds it, accepted by nft's check, nftables.service enabled,
+# and the unit, drop-ins and all, with no stop command. Prints each difference; exits 1 on
+# any.
 firewall_check() {
-    local bad=""
+    local bad="" s
     cmp -s <(printf '%s\n' "$FIREWALL_RULES") /etc/nftables.conf || bad+="/etc/nftables.conf is not the image's rules. "
-    cmp -s <(printf '%s\n' "$FIREWALL_STOP") "$FIREWALL_DROPIN" || bad+="$FIREWALL_DROPIN is not the image's drop-in. "
+    s=$(systemctl cat nftables.service 2>/dev/null | grep -E '^[[:space:]]*(ExecStop|ExecStopPost|RemainAfterExit)=' | tr '\n' ' ')
+    [ -z "$s" ] || bad+="nftables.service carries $s. "
+    grep -q '^ExecStart=/usr/bin/nft -f /etc/nftables.conf$' <<<"$(systemctl cat nftables.service 2>/dev/null)" || bad+="nftables.service does not load /etc/nftables.conf. "
     sudo nft -c -f /etc/nftables.conf >/dev/null 2>&1 || bad+="nft's check refuses /etc/nftables.conf. "
     [ "$(systemctl is-enabled nftables.service 2>/dev/null)" = enabled ] || bad+="nftables.service is not enabled. "
-    grep -qx 'ENABLED=no' /etc/ufw/ufw.conf 2>/dev/null || bad+="ufw is not inactive (/etc/ufw/ufw.conf). "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
-
 # sshd_check: the image's SSH settings as sshd reads them: SSHD_DROPIN exactly as
 # SSHD_SETTINGS holds it, and sshd's merged configuration for root naming each of the
 # four, whatever the case of its keywords (OpenSSH 10.2 prints them in lower case, 10.6 as
@@ -888,7 +1180,8 @@ sshd_check() {
         if sudo ssh-keygen -q -t ed25519 -N '' -C sshd-check -f "$d/k" </dev/null >/dev/null 2>&1 \
             && t=$(sudo sshd -T -o HostKey="$d/k" -C user=root,host=localhost,addr=127.0.0.1 2>&1); then
             for k in "passwordauthentication no" "kbdinteractiveauthentication no" \
-                     "permitemptypasswords no" "permitrootlogin prohibit-password"; do
+                     "permitemptypasswords no" "permitrootlogin prohibit-password" \
+                     "authorizedkeysfile .ssh/authorized_keys" "authorizedkeyscommand none"; do
                 grep -qixF "$k" <<<"$t" || bad+="sshd -T reads '$(grep -im1 "^${k%% *} " <<<"$t" || echo "no ${k%% *}")', not '$k'. "
             done
         else
@@ -900,7 +1193,6 @@ sshd_check() {
     fi
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
-
 # accounts_judge MODE PASSWD SHADOW GSHADOW SHELLS BACKUP...: who can log in, from the
 # account files given. MODE final is the sealed image: root's password field empty and its
 # last change 0, so login asks for no password and requires a new one at once (the
@@ -938,19 +1230,23 @@ accounts_judge() {
     ' "$shells" "$passwd" "$shadow" "$gshadow" "${b[@]}"
 }
 
-# firstboot_paths_check: systemd's first-boot paths as Ubuntu 26.04 ships them, present and
-# not masked (the operator's ruling of 2026-11-16: leave and name them). What an operator
-# feeds through them is the operator's. Prints each finding.
+# firstboot_paths_check: systemd's first-boot paths as Arch's systemd 262 ships them, present
+# and not masked (the operator's ruling of 2026-11-16: leave and name them), with the
+# network generator, through which the proof hands the guest its network (the Planner's
+# ruling of 2026-11-16). What an operator feeds through them is the operator's. Prints each
+# finding.
 firstboot_paths_check() {
     local u s
     grep -q 'ssh\.authorized_keys\.root' /usr/lib/tmpfiles.d/provision.conf 2>/dev/null \
         || echo "/usr/lib/tmpfiles.d/provision.conf does not name ssh.authorized_keys.root"
     [ -e /etc/tmpfiles.d/provision.conf ] || [ -L /etc/tmpfiles.d/provision.conf ] \
         && echo "/etc/tmpfiles.d/provision.conf stands over the shipped file"
-    for u in systemd-firstboot.service systemd-creds.socket; do
+    for u in systemd-firstboot.service systemd-creds.socket systemd-network-generator.service; do
         s=$(systemctl is-enabled "$u" 2>/dev/null)
         case $s in ""|masked*) echo "$u is ${s:-not found}" ;; esac
     done
+    s=$(systemctl is-enabled systemd-network-generator.service 2>/dev/null)
+    case $s in enabled|""|masked*) ;; *) echo "systemd-network-generator.service is $s, not enabled" ;; esac
     [ -x /usr/lib/systemd/system-generators/systemd-ssh-generator ] \
         || echo "systemd-ssh-generator is not among the system generators"
     [ -e /etc/systemd/system-generators/systemd-ssh-generator ] || [ -L /etc/systemd/system-generators/systemd-ssh-generator ] \
@@ -958,6 +1254,279 @@ firstboot_paths_check() {
     return 0
 }
 
+# The system credentials systemd 262.2's generators read, from its
+# systemd.system-credentials(7): a generator runs at every boot, enabled or not, so each is
+# listed with what it reads unless masked. The units are found by their own credential
+# settings (credential_consumers); PID 1 reads system.machine_id, system.hostname and
+# vmm.notify_socket itself.
+CREDENTIAL_GENERATORS='systemd-ssh-generator ssh.listen
+systemd-fstab-generator fstab.extra
+systemd-getty-generator getty.auto,getty.ttys.serial,getty.ttys.container
+systemd-debug-generator systemd.extra-unit.*,systemd.unit-dropin.*
+systemd-import-generator import.pull
+systemd-imds-generator imds.*'
+# credential_consumers: every consumer of a system credential in the image, the full set the
+# hypervisor can feed (the Planner's ruling of 2026-11-16: list them, disable none yet).
+# Prints one "list" line each: PID 1; each unit file whose own settings import or load a
+# credential, with its enablement and whether the boot's targets pull it in; each
+# generator of CREDENTIAL_GENERATORS present, or masked. Never a HIT.
+credential_consumers() {
+    local f u s pulled g c deps
+    deps=$(systemctl list-dependencies --plain --all --no-pager default.target sockets.target 2>/dev/null | sed 's/^[^a-z]*//' | sort -u)
+    echo "list credential consumer: PID 1 (systemd), system.machine_id system.hostname vmm.notify_socket"
+    for f in $(grep -lE '^[[:space:]]*(ImportCredential|LoadCredential|LoadCredentialEncrypted|SetCredential)=' \
+                 /usr/lib/systemd/system/*.service /usr/lib/systemd/system/*.socket /etc/systemd/system/*.service 2>/dev/null | LC_ALL=C sort -u); do
+        u=${f##*/}
+        s=$(systemctl is-enabled "$u" 2>/dev/null || true)
+        pulled=no; grep -qxF -- "$u" <<<"$deps" && pulled=yes
+        c=$(grep -hE '^[[:space:]]*(ImportCredential|LoadCredential|LoadCredentialEncrypted|SetCredential)=' "$f" | sed -E 's/^[^=]*=//' | tr '\n' ' ')
+        echo "list credential consumer: $u (${s:-unknown}; pulled in at boot: $pulled): $c"
+    done
+    while read -r g c; do
+        [ -e "/usr/lib/systemd/system-generators/$g" ] || continue
+        if [ "$(readlink "/etc/systemd/system-generators/$g" 2>/dev/null)" = /dev/null ]; then s=masked; else s="runs at every boot"; fi
+        echo "list credential consumer: generator $g ($s): $c"
+    done <<<"$CREDENTIAL_GENERATORS"
+}
+
+# imds_check: the cloud metadata service's units masked and its generator masked. Prints
+# each finding; exits 1 on any.
+# compiler_dirs: each compiler or toolchain directory that stands, one line each. /usr/lib/gcc
+# is left out where every file under it is libatomic's: a runtime library gcc-libs
+# requires, which keeps its linker link there.
+compiler_dirs() {
+    local d f o
+    for d in /usr/lib/gcc /usr/libexec/gcc /usr/lib/clang /usr/lib/llvm* "$CUDA_HOME/bin" \
+             "$CUDA_HOME/nvvm" "$CUDA_HOME/include" "$CUDA_HOME"/targets/*/include /usr/include/cccl \
+             /root/.cargo /root/.rustup /home/*/.cargo /home/*/.rustup; do
+        sudo test -e "$d" || continue
+        if [ "$d" = /usr/lib/gcc ]; then
+            o=""
+            while IFS= read -r -d '' f; do
+                [ "$(pacman -Qoq "$f" 2>/dev/null)" = libatomic ] || { o=y; break; }
+            done < <(sudo find "$d" ! -type d -print0)
+            [ -n "$o" ] || continue
+        fi
+        echo "$d"
+    done
+    return 0
+}
+# quota_check MODE: the tools for the agent home's project quota, each from its package:
+# setquota and repquota (quota-tools), chattr and lsattr (e2fsprogs), mkfs.ext4. In the pre
+# pass they are tried on a small ext4 filesystem in a file, made with the quota and project
+# features and mounted with prjquota, as the setup formats and mounts the state drive: a
+# directory given a project ID and the inherit flag, a block limit set on the project, both
+# read back, then all of it unmounted and removed. The final pass reads presence alone.
+quota_check() {
+    local c p d o
+    for c in setquota:quota-tools repquota:quota-tools chattr:e2fsprogs lsattr:e2fsprogs mkfs.ext4:e2fsprogs; do
+        p=$(command -v "${c%%:*}") || { echo "${c%%:*} is not on PATH"; continue; }
+        [ "$(pacman -Qoq "$p" 2>/dev/null)" = "${c#*:}" ] || echo "$p is not ${c#*:}'s"
+    done
+    [ "$1" = pre ] || return 0
+    d=$(mktemp -d) || { echo "no scratch directory for the quota trial"; return 0; }
+    mkdir -- "$d/m" && truncate -s 64M "$d/q.img" || { echo "the quota trial's file could not be made"; rm -rf -- "${d:?}"; return 0; }
+    if ! o=$(mkfs.ext4 -q -F -O quota,project "$d/q.img" 2>&1); then
+        echo "mkfs.ext4 -O quota,project refused: $o"
+    elif ! o=$(sudo mount -o loop,prjquota "$d/q.img" "$d/m" 2>&1); then
+        echo "mount -o prjquota refused: $o"
+    else
+        sudo mkdir -- "$d/m/home"
+        sudo chattr -p 4242 +P "$d/m/home" 2>&1 || echo "chattr -p refused"
+        o=$(lsattr -pd "$d/m/home" 2>&1)
+        [[ "$o" =~ ^[[:space:]]*4242[[:space:]]+[^[:space:]]*P ]] || echo "lsattr reads '$o', not project 4242 with the inherit flag"
+        sudo setquota -P 4242 0 10240 0 0 "$d/m" 2>&1 || echo "setquota -P refused"
+        o=$(sudo repquota -P -v "$d/m" 2>&1)
+        grep -qE "^#4242[[:space:]]+[-+]+[[:space:]]+[0-9]+[[:space:]]+0[[:space:]]+10240[[:space:]]" <<<"$o" \
+            || echo "repquota does not read project 4242's limit of 10240 blocks: $(grep -m1 '4242' <<<"$o")"
+        sudo umount "$d/m" 2>&1 || echo "the quota trial's filesystem could not be unmounted ($d/m)"
+    fi
+    findmnt -n "$d/m" >/dev/null 2>&1 || rm -rf -- "${d:?}"
+    return 0
+}
+# binutils_check: binutils installed and required by BINUTILS_FOR alone, as pacman reads
+# it; a line where it is required by anything else, or is absent.
+binutils_check() {
+    local t got want
+    t=$(LC_ALL=C pacman -Qi binutils 2>&1) || { echo "binutils is not installed, though $BINUTILS_FOR require it ($(tail -1 <<<"$t"))"; return 0; }
+    got=$(sed -n 's/^Required By *: *//p' <<<"$t" | tr -s ' ' '\n' | grep -v '^None$' | LC_ALL=C sort | tr '\n' ' ')
+    want=$(printf '%s\n' $BINUTILS_FOR | LC_ALL=C sort | tr '\n' ' ')
+    [ "$got" = "$want" ] || echo "binutils is required by '${got% }', not by $BINUTILS_FOR alone"
+    return 0
+}
+# build_trees: each kernel's module build tree that stands (/usr/lib/modules/*/build), one
+# line each; none, no line.
+build_trees() {
+    local d
+    for d in /usr/lib/modules/*/build; do [ -e "$d" ] || [ -L "$d" ] && echo "$d"; done
+    return 0
+}
+# coredump_check: the image's coredump settings, and what systemd-coredump reads in the end
+# from all of coredump.conf's files: Storage=none and ProcessSizeMax=0, the last of each
+# name deciding, as systemd-analyze cat-config prints them in the order systemd reads them.
+coredump_check() {
+    local t k v
+    [ "$(cat "$COREDUMP_DROPIN" 2>/dev/null)" = "$COREDUMP_SETTINGS" ] \
+        || echo "$COREDUMP_DROPIN is not the image's settings"
+    t=$(systemd-analyze cat-config systemd/coredump.conf 2>&1) || { echo "systemd-analyze cat-config did not run ($(head -1 <<<"$t"))"; return 0; }
+    for k in Storage=none ProcessSizeMax=0; do
+        v=$(grep -E "^[[:space:]]*${k%%=*}[[:space:]]*=" <<<"$t" | tail -1 | tr -d '[:space:]')
+        [ "$v" = "$k" ] || echo "coredump reads ${v:-no ${k%%=*}}, not $k"
+    done
+    return 0
+}
+# masks_check UNIT...: each UNIT masked, as systemctl reads it. A line for each that is not.
+masks_check() {
+    local u s
+    for u; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        [ "$s" = masked ] || echo "$u is ${s:-unknown}, not masked"
+    done
+    return 0
+}
+# userdb_ssh_check: systemd's userdb drop-in for sshd gone, and its tmpfiles line masked so
+# that no boot lays it again.
+userdb_ssh_check() {
+    [ ! -e "$USERDB_SSH_LINK" ] && [ ! -L "$USERDB_SSH_LINK" ] || echo "$USERDB_SSH_LINK stands"
+    [ "$(readlink "$USERDB_TMPFILES" 2>/dev/null)" = /dev/null ] \
+        || echo "$USERDB_TMPFILES is not a mask, so a boot lays $USERDB_SSH_LINK again"
+    return 0
+}
+# sudoers_check MODE: what WeaverAgent's create-agent.sh asks of sudo before it lays an
+# agent (WeaverAgent #581): /etc/sudoers includes /etc/sudoers.d, read with its own
+# pattern; visudo accepts the files; the nobody account stands; and sudo runs a command as
+# nobody. That last is asked only in the pre pass, as the build account, with root's own
+# rule read by sudo -l: in the final pass root's password is expired until the first
+# login, and sudo's account check refuses an expired account even to root. proof runs it
+# as root after that login.
+sudoers_check() {
+    sudo grep -qE '^[#@]includedir[[:space:]]+/etc/sudoers\.d([[:space:]]|$)' /etc/sudoers \
+        || echo "/etc/sudoers does not include /etc/sudoers.d"
+    sudo visudo -c -q >/dev/null 2>&1 || echo "visudo refuses the sudoers files"
+    getent passwd nobody >/dev/null || echo "no account nobody"
+    if [ "$1" = pre ]; then
+        /usr/bin/sudo -n -u nobody true 2>/dev/null || echo "sudo would not run a command as nobody"
+        /usr/bin/sudo -n -l -U root -u nobody /usr/bin/true >/dev/null 2>&1 || echo "root's rule does not let root run a command as nobody"
+    fi
+    return 0
+}
+# updated_check: /etc/.updated and /var/.updated each name /usr's modification time, as
+# systemd-update-done writes it (TIMESTAMP_NSEC, nanoseconds). Arch's systemd arms
+# ConditionNeedsUpdate after every pacman transaction (its hook touches /usr); with both
+# stamps at /usr's time the box's first boot runs no update unit (ldconfig, sysusers,
+# update-done itself) and writes nothing the MANIFEST does not carry.
+updated_check() {
+    local u t d
+    u=$(stat -c %.9Y /usr 2>/dev/null | tr -d .)
+    [[ "$u" =~ ^[0-9]+$ ]] || { echo "the time of /usr could not be read"; return 0; }
+    for d in /etc /var; do
+        t=$(sed -n 's/^TIMESTAMP_NSEC=//p' "$d/.updated" 2>/dev/null)
+        [ "$t" = "$u" ] || echo "$d/.updated names ${t:-no time}, not /usr's $u"
+    done
+    return 0
+}
+imds_check() {
+    local u s bad=""
+    for u in $IMDS_UNITS; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        [ "$s" = masked ] || bad+="$u is ${s:-unknown}, not masked. "
+    done
+    [ "$(readlink "/etc/systemd/system-generators/$IMDS_GENERATOR" 2>/dev/null)" = /dev/null ] \
+        || bad+="$IMDS_GENERATOR is not masked. "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# updates_check: each of UPDATE_UNITS masked, and pacman-init's file gone. Prints each
+# finding; exits 1 on any.
+updates_check() {
+    local u s bad=""
+    for u in $UPDATE_UNITS; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        [ "$s" = masked ] || bad+="$u is ${s:-unknown}, not masked. "
+    done
+    [ "$(readlink /etc/systemd/system/pacman-init.service 2>/dev/null)" = /dev/null ] \
+        || bad+="/etc/systemd/system/pacman-init.service is not a mask. "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# resolved_check: RESOLVED_DROPIN exactly as RESOLVED_SETTINGS holds it, no resolver address
+# in resolved's configuration, and no other file of it naming LLMNR or multicast DNS (a
+# later file would decide). Prints each finding; exits 1 on any.
+resolved_check() {
+    local bad="" f
+    cmp -s <(printf '%s\n' "$RESOLVED_SETTINGS") "$RESOLVED_DROPIN" || bad+="$RESOLVED_DROPIN is not the image's settings. "
+    # Each file read alone: under pipefail a pattern that matches no file would fail a pipe
+    # and hide the finding.
+    for f in /etc/systemd/resolved.conf /etc/systemd/resolved.conf.d/*.conf; do
+        [ -f "$f" ] && grep -qE '^[[:space:]]*(DNS|FallbackDNS)=[^[:space:]]' "$f" && bad+="$f names a resolver address. "
+    done
+    for f in /etc/systemd/resolved.conf /etc/systemd/resolved.conf.d/*.conf /run/systemd/resolved.conf.d/*.conf \
+             /usr/lib/systemd/resolved.conf.d/*.conf; do
+        [ -f "$f" ] && [ "$f" != "$RESOLVED_DROPIN" ] && grep -qE '^[[:space:]]*(LLMNR|MulticastDNS)=' "$f" \
+            && bad+="$f sets LLMNR or MulticastDNS. "
+    done
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# esp_partition: the one partition of the root's disk whose GPT type is the ESP's.
+esp_partition() {
+    local disk n
+    disk=$(lsblk -nrpo PKNAME "$(findmnt -nvo SOURCE /)" 2>/dev/null | head -1)
+    n=$(lsblk -nrpo PATH,PARTTYPE "$disk" 2>/dev/null | awk -v t="$ESP_TYPE" 'tolower($2) == t {print $1}')
+    [ "$(wc -w <<<"$n")" = 1 ] || { echo "the root's disk ${disk:-unknown} has $(wc -w <<<"$n") ESPs, not one" >&2; return 1; }
+    echo "$n"
+}
+# esp_mount: the ESP mounted read-only at ESP_DIR by its UUID through one fstab line,
+# root's alone. Nothing writes the bootloader after the seal (boot-update is masked, and
+# GRUB needs no mounted ESP to boot), so the line mounts it ro (the Planner's ruling of
+# 2026-11-17); no step of the build writes it. The base image's fstab names no ESP, so
+# systemd-gpt-auto-generator serves it at ESP_DIR as an automount (autofs, with the
+# partition mounted over it on first access). Once fstab names it, gpt-auto leaves it to
+# fstab at every boot. Here, in the build guest's running boot, a reload drops gpt-auto's
+# units, but their autofs mount stays in the kernel: every layer at ESP_DIR is unmounted,
+# then the partition mounted once by the fstab line, as every later boot has it.
+esp_mount() {
+    local part uuid line n
+    part=$(esp_partition) || return 1
+    uuid=$(sudo blkid -s UUID -o value "$part") && [ -n "$uuid" ] || { echo "no UUID for $part"; return 1; }
+    line="UUID=$uuid $ESP_DIR vfat ro,umask=0077 0 2"
+    sudo sed -i -E "\\|^[^#]*[[:space:]]$ESP_DIR[[:space:]]|d" /etc/fstab || return 1
+    printf '%s\n' "$line" | sudo tee -a /etc/fstab >/dev/null || return 1
+    sudo install -d -m 0755 "$ESP_DIR" || return 1
+    sudo systemctl daemon-reload || return 1
+    for n in 1 2 3; do
+        findmnt -n "$ESP_DIR" >/dev/null 2>&1 || break
+        echo "unmounted at $ESP_DIR: $(findmnt -nvo SOURCE,FSTYPE "$ESP_DIR" | tail -1)"
+        sudo umount "$ESP_DIR" || return 1
+    done
+    ! findmnt -n "$ESP_DIR" >/dev/null 2>&1 || { echo "$ESP_DIR is still mounted after three unmounts"; return 1; }
+    sudo mount "$ESP_DIR" || return 1
+    echo "/etc/fstab: $line"
+}
+# esp_check: ESP_DIR is the ESP, mounted read-only, vfat, through one fstab line naming it
+# by UUID, and holds the loader the firmware's removable path boots. Prints each finding; exits 1
+# on any.
+esp_check() {
+    local part uuid bad="" n m
+    part=$(esp_partition 2>&1) || bad+="$part. "
+    uuid=$(sudo blkid -s UUID -o value "$part" 2>/dev/null)
+    n=$(grep -cE "^[^#]*[[:space:]]$ESP_DIR[[:space:]]" /etc/fstab)
+    [ "$n" = 1 ] || bad+="/etc/fstab names $ESP_DIR $n times, not once. "
+    grep -qE "^UUID=$uuid[[:space:]]+$ESP_DIR[[:space:]]+vfat[[:space:]]+(ro|ro,[^[:space:]]*|[^[:space:]]*,ro|[^[:space:]]*,ro,[^[:space:]]*)[[:space:]]" /etc/fstab \
+        || bad+="/etc/fstab does not mount the ESP (UUID ${uuid:-unknown}) at $ESP_DIR as vfat, read-only. "
+    m=$(findmnt -nvo SOURCE "$ESP_DIR" 2>/dev/null | tr '\n' ' ')
+    [ "$m" = "$part " ] || bad+="$ESP_DIR is not $part mounted alone (findmnt reads: ${m:-nothing}). "
+    m=$(findmnt -nvo OPTIONS "$ESP_DIR" 2>/dev/null | tail -1)
+    [[ ",$m," == *,ro,* ]] || bad+="$ESP_DIR is not mounted read-only (${m:-no options}). "
+    sudo test -f "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" || bad+="$ESP_DIR holds no EFI/BOOT/BOOTX64.EFI. "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+# swap_check: no swap line in /etc/fstab, no swap subvolume, and no swap in use. Prints each
+# finding; exits 1 on any.
+swap_check() {
+    local bad=""
+    grep -qE '^[^#]*[[:space:]]swap[[:space:]]' /etc/fstab && bad+="/etc/fstab names a swap. "
+    [ ! -e "$SWAP_SUBVOL" ] || bad+="$SWAP_SUBVOL stands. "
+    [ -z "$(swapon --show --noheadings 2>/dev/null)" ] || bad+="a swap is in use: $(swapon --show --noheadings | tr '\n' ' '). "
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
 # mounts_check: the data mount points as the image lays them: /mnt/weaver holding the two
 # alone, and each a directory (not a link), root's, mode 0755, empty, and on the image's
 # own filesystem, so nothing is mounted there in the build. Prints each finding; exits 1 on
@@ -976,21 +1545,23 @@ mounts_check() {
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 
-# SEAL_KEYS: the private keys the seal removes, besides the SSH host keys.
-SEAL_KEYS="/var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der /var/lib/shim-signed/mok/.rnd
-  /var/lib/fwupd/pki/secret.key /var/lib/fwupd/pki/client.pem"
-# private_keys: files that hold a private key. A .pem is judged by its content (fwupd ships
-# its public LVFS CA certificates as .pem under /etc/pki); the other names are keys by name.
+# SEAL_KEYS: the private keys the seal removes, besides the SSH host keys: the pacman
+# keyring this guest made at its first boot, whose master key is private.
+SEAL_KEYS_DIR=/etc/pacman.d/gnupg
+# private_keys: files that hold a private key. A .pem is judged by its content; the other
+# names are keys by name; every file under the pacman keyring counts.
 private_keys() {
     sudo find /etc /var /home /root /opt /usr/local -xdev -type f \( -name '*.priv' -o -name '*.key' -o -name '*_key' \
         -o -name 'id_rsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' \) 2>/dev/null
     sudo find /etc /var /home /root /opt /usr/local -xdev -type f -name '*.pem' -exec grep -l 'PRIVATE KEY-----' {} + 2>/dev/null
+    sudo find "$SEAL_KEYS_DIR" -xdev -type f 2>/dev/null
     return 0
 }
 
 # probes MODE: the seal's checks, each printed "ok" or "HIT". MODE pre runs over SSH before
 # the final step; MODE final runs as root in it, after the build account, the identity
 # and the logs are gone, and adds the checks only true then. Any HIT refuses the seal.
+# Lines beginning "list" are records, never a HIT.
 probes() {
     local mode=$1 hits=0 c p out
     hit() { printf 'HIT  %s\n' "$*"; hits=$((hits + 1)); }
@@ -1000,52 +1571,72 @@ probes() {
     }
     section "probes ($mode)"
     out=""
+    # The linker and assembler stand where they are binutils' own, which two base packages
+    # require (BINUTILS_FOR, held by binutils_check). makepkg is pacman's, not named here.
     for c in cc gcc g++ c++ cpp clang clang++ ld ld.bfd ld.gold as rustc cargo rustup rustfmt nvcc \
              ptxas fatbinary cicc make gmake cmake ninja meson dkms pkg-config pkgconf autoconf automake \
-             libtool bison flex go git; do
-        p=$(PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin command -v "$c") && out+="$c=$p "
+             libtool bison flex go git fakeroot; do
+        p=$(PATH=/usr/local/sbin:/usr/local/bin:/usr/bin command -v "$c") || continue
+        case $c in ld|ld.bfd|ld.gold|as) [ "$(pacman -Qoq "$p" 2>/dev/null)" != binutils ] || continue ;; esac
+        out+="$c=$p "
     done
     check "compilers, toolchains and build tools on PATH" "$out"
-    check "compiler and toolchain directories" "$(sudo bash -c 'ls -d /usr/lib/gcc /usr/libexec/gcc /usr/lib/llvm-* /usr/local/cuda*/bin /usr/local/cuda*/nvvm /usr/local/cuda*/include /usr/local/cuda*/targets/*/include /root/.cargo /root/.rustup /home/*/.cargo /home/*/.rustup 2>/dev/null')"
-    check "static or device-link CUDA archives" "$(find /usr/local -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | head -5)"
-    check "build packages installed" "$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' 2>/dev/null | awk '$1 ~ /^ii/ {print $2}' | grep -E "$BUILD_RE")"
-    # man-db's index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
-    # a package owns is the distribution's (Ubuntu's Rust-built packages ship their
-    # Cargo.lock under /usr/share/doc); only what no package owns is a hit.
-    check "source trees and build directories" "$(sudo find / -xdev -path /var/cache/man -prune -o \( -name .git -o -name Cargo.toml -o -name Cargo.lock -o -name '*.rs' -o -name '*.cu' -o -name CACHEDIR.TAG -o -name .rustc_info.json -o -name WeaverAgent -o -name WeaverWeb \) -not -path '/proc/*' -print 2>/dev/null | while IFS= read -r f; do dpkg -S "$f" >/dev/null 2>&1 || echo "$f"; done | head -8)"
-    check "package caches" "$(sudo find /var/cache/apt /var/lib/apt/lists -xdev -type f \( -name '*.deb' -o -name '*_Packages*' -o -name '*.bin' \) 2>/dev/null | head -5)"
-    check "apt sources enabled" "$(grep -L -i '^Enabled: *no' /etc/apt/sources.list.d/*.sources 2>/dev/null; ls /etc/apt/sources.list.d/*.list 2>/dev/null; grep -vE '^[[:space:]]*(#|$)' /etc/apt/sources.list 2>/dev/null)"
-    check "update units not masked" "$(for u in apt-daily.timer apt-daily-upgrade.timer motd-news.timer fwupd-refresh.timer; do s=$(systemctl is-enabled "$u" 2>/dev/null); [ "$s" = masked ] || [ -z "$s" ] || echo "$u=$s"; done)"
-    check "unattended-upgrades or snapd installed" "$(dpkg-query -W -f '${db:Status-Abbrev} ${Package}\n' unattended-upgrades snapd 2>/dev/null | awk '$1 ~ /^ii/ {print $2}')"
-    check "an apt proxy" "$(grep -rhi 'proxy' /etc/apt/apt.conf /etc/apt/apt.conf.d 2>/dev/null)"
-    check "a resolver address configured" "$(grep -hE '^[[:space:]]*(DNS|FallbackDNS)=[^[:space:]]' /etc/systemd/resolved.conf /etc/systemd/resolved.conf.d/*.conf 2>/dev/null)"
-    check "networkd or NetworkManager configuration" "$(for f in /etc/systemd/network/*.network /etc/systemd/network/*.netdev /etc/NetworkManager/system-connections/*; do [ -e "$f" ] || [ -L "$f" ] || continue; [ "$f" = /etc/systemd/network/zzzz-dracut-default.network ] && [ "$(readlink "$f")" = /dev/null ] && continue; echo "$f"; done)"
-    check "networkd in the initramfs" "$(initrd_network_check 2>&1)"
-    check "the initramfs's catch-all network not masked" "$([ "$(readlink /etc/systemd/network/zzzz-dracut-default.network 2>/dev/null)" = /dev/null ] || echo "/etc/systemd/network/zzzz-dracut-default.network is not a link to /dev/null")"
-    check "an agent configured" "$(sudo ls -A /etc/weaver/admin /var/lib/weaver-agent 2>&1 | grep -vE '^(/|$)')"
+    check "compiler and toolchain directories" "$(compiler_dirs)"
+    check "static or device-link CUDA archives" "$(find /usr/local "$CUDA_HOME" -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | head -5)"
+    check "build packages installed" "$(pacman -Qq 2>/dev/null | grep -E "$BUILD_RE")"
+    check "a kernel's module build tree" "$(build_trees)"
+    check "binutils kept for more than the base packages that require it" "$(binutils_check)"
+    check "the tools for the agent home's project quota" "$(quota_check "$mode")"
+    check "test or sudo not GNU's and sudo's own" "$(o=$(pacman -Qoq /usr/bin/test 2>&1); [ "$o" = coreutils ] || echo "/usr/bin/test is ${o}'s"; o=$(pacman -Qoq /usr/bin/sudo 2>&1); [ "$o" = sudo ] || echo "/usr/bin/sudo is ${o}'s"; pacman -Qq uutils-coreutils sudo-rs 2>/dev/null)"
+    # The man index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
+    # a package owns is the distribution's; only what no package owns is a hit.
+    check "source trees and build directories" "$(sudo find / -xdev -path /var/cache/man -prune -o \( -name .git -o -name Cargo.toml -o -name Cargo.lock -o -name '*.rs' -o -name '*.cu' -o -name CACHEDIR.TAG -o -name .rustc_info.json -o -name WeaverAgent -o -name WeaverWeb \) -not -path '/proc/*' -print 2>/dev/null | while IFS= read -r f; do pacman -Qoq -- "$f" >/dev/null 2>&1 || echo "$f"; done | head -8)"
+    check "package caches and sync databases" "$(sudo find /var/cache/pacman /var/lib/pacman/sync -xdev -type f 2>/dev/null | head -5)"
+    check "package sources other than the snapshot" "$(pacman_sources_check /etc/pacman.conf /etc/pacman.d/mirrorlist)"
+    check "update units not masked" "$(updates_check 2>&1)"
+    check "the cloud metadata service not masked" "$(imds_check 2>&1)"
+    check "a resolver address configured" "$(resolved_check 2>&1)"
+    check "networkd or NetworkManager configuration" "$(for f in /etc/systemd/network/*.network /etc/systemd/network/*.netdev /etc/systemd/network/*.link /etc/NetworkManager/system-connections/*; do [ -e "$f" ] || [ -L "$f" ] || continue; echo "$f"; done; ls /usr/lib/systemd/network/*.network 2>/dev/null | while read -r f; do grep -qE '^[[:space:]]*Name=.*(eth|en)' "$f" && echo "$f"; done)"
+    check "networkd or nouveau in the initramfs" "$(initrd_check 2>&1)"
+    check "an agent configured" "$(sudo ls -A /etc/weaver/admin "$AGENT_DIR" 2>&1 | grep -vE '^(/|$)')"
+    check "the stack record's agent directory not the state mount" "$(d=$(cat /etc/weaver/stack/agent-directory 2>&1); [ "$d" = "$AGENT_DIR" ] || echo "agent-directory reads '$d', not $AGENT_DIR")"
     check "the data mount points not as laid" "$(mounts_check 2>&1)"
+    check "a swap" "$(swap_check 2>&1)"
+    check "the ESP not mounted read-only at $ESP_DIR" "$(esp_check 2>&1)"
     check "a connector config or unit" "$(ls -d /etc/weaver-web /etc/systemd/system/weaver-web-* 2>/dev/null)"
     check "the stack's members and shell" "$(for b in worker weaver-admin weaver-trace-relay weaver-gate weaver-spu weaver-state busybox busybox.applets; do [ -f "/opt/weaver/bin/$b" ] || echo "missing $b"; done)"
     check "the connectors' programs" "$(for b in gate-con admin-con; do [ -x "/opt/weaver-web/bin/$b" ] || echo "missing $b"; done)"
     check "the deploy scripts' copy" "$(for b in $DEPLOY_FILES; do [ -f "$DEPLOY_COPY/$b" ] || echo "missing $b"; done)"
     check "the loader" "$(loader_check >/dev/null 2>&1 || { echo "loader_check fails:"; loader_check 2>&1 | tail -4; })"
-    check "one kernel" "$(one_kernel >/dev/null || one_kernel; ls /boot/vmlinuz-* 2>/dev/null | grep -v "vmlinuz-$KVER\$")"
-    check "a kernel image or module package installed and not held" "$(kernel_holds)"
-    # The first boot's SSH step: SSH enabled, and sshd-keygen enabled to make the host keys
-    # at the first boot (ConditionFirstBoot, true while /etc/machine-id is uninitialized).
+    # The toolkit's digests are the build's records, in the pre pass; in both passes the
+    # package's files as built (pacman -Qkk: digest, size and mode against the package's
+    # own list) and each runtime file the install tuple names, the package's.
+    check "the CUDA runtime not as the toolkit had it" "$(if [ -d "$RUNTIME_DIR" ]; then runtime_check 2>&1; else pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1"; fi; pacman -Qkkq "$RUNTIME_PKG" 2>&1)"
+    check "a CUDA runtime file the install tuple names, not the runtime package's" "$(tuple_runtime_check /etc/weaver/stack/install-tuple)"
+    check "a unit link that leads nowhere" "$(unit_links_check)"
+    check "one kernel" "$(one_kernel 2>&1)"
+    check "the kernel or driver off its pin, or not held" "$(kernel_pins)"
+    # The first boot's SSH step: sshd enabled, and sshdgenkeys, which it wants, makes the
+    # host keys where none stands, so the seal removes them and the first boot makes them.
     # The operator reads the fingerprints after logging in (decision 16 of 2026-11-15).
-    # cloud-init, where a seed is attached, stays limited to its SSH key, network and
-    # hostname (the operator's rulings of 2026-11-14).
-    check "ssh not enabled for the first boot" "$(e=0; for u in ssh.service ssh.socket; do [ "$(systemctl is-enabled "$u" 2>/dev/null)" = enabled ] && e=1; done; [ "$e" = 1 ] || echo "neither ssh.service nor ssh.socket is enabled")"
-    check "sshd-keygen not enabled for the first boot" "$(s=$(systemctl is-enabled sshd-keygen.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd-keygen.service is ${s:-unknown}, not enabled")"
-    check "cloud-init not limited to SSH key, network and hostname" "$(cloud_init_check 2>&1)"
+    check "sshd not enabled for the first boot" "$(s=$(systemctl is-enabled sshd.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd.service is ${s:-unknown}, not enabled")"
+    check "sshd does not want sshdgenkeys" "$(grep -qx sshdgenkeys.service <<<"$(systemctl show -p Wants --value sshd.service 2>/dev/null | tr ' ' '\n')" || echo "sshd.service does not want sshdgenkeys.service")"
+    check "cloud-init installed" "$(pacman -Qq cloud-init cloud-guest-utils 2>/dev/null; command -v cloud-init)"
+    check "the QEMU guest agent installed" "$(pacman -Qq qemu-guest-agent 2>/dev/null; command -v qemu-ga)"
     # SSH by key alone, and systemd's first-boot paths left and named (the operator's
     # rulings of 2026-11-16). In both passes: the settings are written by the cleanup.
     check "SSH settings not as built" "$(sshd_check 2>&1)"
+    check "userdb's SSH key command" "$(userdb_ssh_check 2>&1)"
+    # shellcheck disable=SC2086
+    check "units the appliance does not use, not masked" "$(masks_check $UNUSED_UNITS 2>&1)"
+    check "crashes written as dumps" "$(coredump_check 2>&1)"
+    check "sudo as create-agent.sh needs it" "$(sudoers_check "$mode" 2>&1)"
     check "systemd's first-boot paths masked or missing" "$(firstboot_paths_check 2>&1)"
+    credential_consumers
     # Who can log in. The pre pass leaves out the build account and root's two fields,
     # which the final step removes and sets.
     check "an account that can log in, other than as sealed" "$(sudo bash -c "$(declare -f accounts_judge); accounts_judge $mode /etc/passwd /etc/shadow /etc/gshadow /etc/shells /etc/shadow- /etc/gshadow-" 2>&1)"
+    check "cloud-init's default account" "$(getent_absent passwd arch "the account arch"; ls -d /home/arch 2>/dev/null)"
     # The hostname: the image's own, and the build guest's name (the kernel's hostname,
     # which the seal does not change) nowhere in /etc. The pre pass leaves out the files the
     # final step removes.
@@ -1053,8 +1644,9 @@ probes() {
     check "the module" "$(driver_check_quiet)"
     check "the base inbound policy not as built" "$(firewall_check 2>&1)"
     # Private keys, in both passes, so a false hit is found before the seal's removals.
-    # The pre pass leaves out what the seal itself removes (SEAL_KEYS and the SSH host keys).
-    check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE '^/etc/ssh/ssh_host_' | grep -vxF -f <(printf '%s\n' $SEAL_KEYS); else cat; fi | head -8)"
+    # The pre pass leaves out what the seal itself removes (the pacman keyring and the SSH
+    # host keys).
+    check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE "^/etc/ssh/ssh_host_|^$SEAL_KEYS_DIR/"; else cat; fi | head -8)"
     # No key admits a login: the operator places the first one (decision 16). In both
     # passes, so a key is found before the seal's removals (the Planner's review of
     # 2026-11-15, F9). The pre pass leaves out the build account's own, which the seal
@@ -1063,15 +1655,14 @@ probes() {
     if [ "$mode" = final ]; then
         check "the build account" "$(getent_absent passwd op "the build account op"; getent_absent group op "the build account's group op"; ls -d /home/op /etc/sudoers.d/90-cloud-init-users 2>/dev/null)"
         check "shell histories" "$(find /root /home -xdev \( -name '.*_history' -o -name .lesshst -o -name .wget-hsts \) 2>/dev/null)"
-        check "cloud-init instance state" "$(ls -A /var/lib/cloud/instances /var/lib/cloud/instance 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
-        check "netplan configuration" "$(ls /etc/netplan/* 2>/dev/null)"
-        check "cloud-init not disabled" "$([ -f /etc/cloud/cloud-init.disabled ] || echo "/etc/cloud/cloud-init.disabled is absent")"
-        # The machine identity must read uninitialized, as cloud-init clean writes it: that
-        # makes the first boot a first boot, on which sshd-keygen makes the host keys
-        # (ConditionFirstBoot). An empty or absent file is a hit (F8).
-        check "machine identity" "$([ "$(cat /etc/machine-id 2>/dev/null)" = uninitialized ] || echo "machine-id is '$(head -c 40 /etc/machine-id 2>/dev/null)', not uninitialized"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret 2>/dev/null)"
+        check "cloud-init's state and configuration" "$(ls -d /var/lib/cloud /etc/cloud 2>/dev/null; ls /var/log/cloud-init*.log 2>/dev/null)"
+        # The machine identity must read uninitialized: that makes the first boot a first
+        # boot. An empty or absent file is a hit (F8).
+        check "machine identity" "$([ "$(cat /etc/machine-id 2>/dev/null)" = uninitialized ] || echo "machine-id is '$(head -c 40 /etc/machine-id 2>/dev/null)', not uninitialized"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret /var/lib/dbus/machine-id 2>/dev/null)"
+        check "the pacman keyring" "$(ls -d "$SEAL_KEYS_DIR" 2>/dev/null)"
         check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
-        check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps 2>/dev/null)"
+        check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps /usr/local/share/weaver-build 2>/dev/null)"
+        check "the first boot's update armed: a stamp not at /usr's time" "$(updated_check 2>&1)"
         check "a stamp other than the one being sealed" "$(ls "$RECORD" 2>/dev/null | grep -vxE 'stamp.part|seal-probes')"
     fi
     printf '\nprobes (%s): %s hit(s)\n' "$mode" "$hits"
@@ -1079,10 +1670,10 @@ probes() {
 }
 # image_hostname_check MODE: /etc/hostname is IMAGE_HOSTNAME alone, and no file under /etc
 # names the build guest (the kernel's hostname). MODE pre leaves out what seal_final removes:
-# the SSH host keys, the netplan files and cloud-init's sudoers rule. Prints each finding.
+# the SSH host keys and cloud-init's sudoers rule. Prints each finding.
 image_hostname_check() {
     local build
-    build=$(hostname)
+    build=$(uname -n)
     [ "$(cat /etc/hostname 2>/dev/null)" = "$IMAGE_HOSTNAME" ] || echo "/etc/hostname is '$(head -c 80 /etc/hostname 2>/dev/null)', not $IMAGE_HOSTNAME"
     if [ -z "$build" ] || [ "$build" = "$IMAGE_HOSTNAME" ]; then
         echo "the build guest's name ('$build') cannot be told from the image's"
@@ -1096,7 +1687,7 @@ image_hostname_check() {
     local re
     re=$(printf '%s' "$build" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
     sudo grep -rlE -- "(^|[^A-Za-z0-9-])$re([^A-Za-z0-9-]|\$)" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
-        grep -vE '^/etc/(ssh/ssh_host_|netplan/|sudoers\.d/90-cloud-init-users$)'; else cat; fi | head -8
+        grep -vE "^/etc/(ssh/ssh_host_|sudoers\.d/90-cloud-init-users\$|pacman\.d/gnupg/)"; else cat; fi | head -8
     return 0
 }
 driver_check_quiet() {
@@ -1129,16 +1720,16 @@ seal() {
     [ "$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)" = "$VERSION" ] \
         || { echo "the stamp's appliance.version is '$(cat "$BUILD/stamp.d/appliance.version" 2>/dev/null)', not VERSION $VERSION (the facts step records it)"; return 1; }
     # The image's own hostname was written by the cleanup; the probes judge it.
-    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(hostname))"
+    echo "/etc/hostname: $(cat /etc/hostname) (the build guest runs as $(uname -n))"
     probes pre || return 1
     # The system libraries the stack and connectors load, by package version and digest,
     # for the measurements that set this image against a host (WeaverTools#28).
     local f real key pkg ver
     for f in libc.so.6 libm.so.6 ld-linux-x86-64.so.2 libstdc++.so.6 libgcc_s.so.1; do
-        real=$(readlink -f "/usr/lib/x86_64-linux-gnu/$f") && [ -f "$real" ] || { echo "no $f"; return 1; }
+        real=$(readlink -f "/usr/lib/$f") && [ -f "$real" ] || { echo "no $f"; return 1; }
         key=syslib.$(tr '+_' 'p-' <<<"$f")
-        pkg=$(dpkg -S "$real" | cut -d: -f1) && [ -n "$pkg" ] || { echo "no package owns $real"; return 1; }
-        ver=$(dpkg-query -W -f '${Version}' "$pkg") && [ -n "$ver" ] || { echo "no version of $pkg"; return 1; }
+        pkg=$(pacman -Qoq -- "$real") && [ -n "$pkg" ] || { echo "no package owns $real"; return 1; }
+        ver=$(pacman -Q -- "$pkg" | awk '{print $2}') && [ -n "$ver" ] || { echo "no version of $pkg"; return 1; }
         record_sha "$key" "$real" "${real##*/} $pkg=$ver sha256 " || return 1
     done
     sudo install -d -m 0700 /run/weaver-seal || return 1
@@ -1162,10 +1753,10 @@ seal() {
 # section is what lets the identity see a unit masked or unmasked. The two lines below are
 # the form's one definition: lib.sh reads both from this file. links_format is the one
 # formatter text, which lib.sh carries word for word for proof's read of a booted guest;
-# the offline mock checks that the two copies are equal.
+# the offline mock checks that the two copies are equal. The scope's ESP is at /efi on
+# this base (ESP_DIR).
 LINKS_MARK='# links: path TAB target, C-locale order'
-MANIFEST_SCOPE='/usr /etc /opt /boot /boot/efi'
-
+MANIFEST_SCOPE='/usr /etc /opt /boot /efi'
 links_format() {
     local p t
     while IFS= read -r -d '' p && IFS= read -r -d '' t; do
@@ -1180,7 +1771,6 @@ links_list() {
     # shellcheck disable=SC2086
     find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0' | links_format
 }
-
 # manifest_write OUT: the MANIFEST in the form above.
 manifest_write() {
     {
@@ -1190,7 +1780,6 @@ manifest_write() {
             printf '%s\n' "$LINKS_MARK" && links_list
     } >"$1"
 }
-
 # manifest_dry OUT: the MANIFEST written to OUT and its form checked, as root, from the seal
 # step and before anything is removed: each file line a digest and a path (sha256sum puts a
 # backslash first where it escapes the name), the marker once, each link line a path, one
@@ -1210,12 +1799,12 @@ manifest_dry() {
 manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
 
 # seal_final: as root, from /run. Waits for the build account's sessions to end, removes
-# the account, the identity and the logs, runs the probes again, and writes the stamp and
-# then the MANIFEST last. A probe that hits writes SEAL-REFUSED and no MANIFEST. Either
-# way the guest powers off; the host reads the verdict from the image (build-template.sh
-# proof).
+# the account, the identity, the keys and the logs, runs the probes again, and writes the
+# stamp and then the MANIFEST last. A probe that hits writes SEAL-REFUSED and no MANIFEST.
+# Either way the guest powers off; the host reads the verdict from the image
+# (build-template.sh proof).
 seal_final() {
-    local log=/run/weaver-seal/final.log t=0 k
+    local log=/run/weaver-seal/final.log t=0 k u
     exec >"$log" 2>&1
     sudo() { "$@"; }   # root already; the shared checks call sudo
     echo "seal-final started $(date -u +%FT%TZ)"
@@ -1225,19 +1814,26 @@ seal_final() {
     pkill -KILL -u op 2>/dev/null || true; sleep 1
     userdel -r op 2>&1 || true
     getent group op >/dev/null && groupdel op
+    # cloud-init's default account, where a seed ever made it (the build's seed names op
+    # alone): the account, its home and its sudoers rule (the Planner's ruling of
+    # 2026-11-16). The probes read it absent.
+    for u in arch; do
+        ! getent passwd "$u" >/dev/null || userdel -r "$u" 2>&1 || true
+        ! getent group "$u" >/dev/null || groupdel "$u" 2>&1 || true
+        rm -rf -- "/home/$u"
+    done
     rm -f /etc/sudoers.d/90-cloud-init-users
     # Root, set at the first login (the operator's ruling of 2026-11-16): the password field
-    # emptied and the last change put at 0, so the console's login asks for no password and
-    # requires a new one before the shell. SSH refuses every password (SSHD_SETTINGS), so the
-    # first password is set at the console, and the image carries none. Every other account
-    # stays locked as shipped. The final probe reads both fields back.
+    # emptied (Arch ships it locked, '*') and the last change put at 0, so the console's
+    # login asks for no password and requires a new one before the shell. SSH refuses every
+    # password (SSHD_SETTINGS), so the first password is set at the console, and the image
+    # carries none. Every other account stays locked as shipped. The final probe reads both
+    # fields back.
     passwd -d root 2>&1; chage -d 0 root 2>&1
     echo "root: $(passwd -S root 2>&1)"
     # SSH stays enabled with no host key and no authorized key: at the first boot
-    # sshd-keygen makes the host keys (the machine-id the seal leaves uninitialized makes
-    # the boot a first boot), and the operator, logged in at the console, places a key and
-    # reads the fingerprints (decision 16 of 2026-11-15). sshd-keygen is left as its
-    # package enables it; the probes require it enabled.
+    # sshdgenkeys makes the host keys where none stands, and the operator, logged in at the
+    # console, places a key and reads the fingerprints (decision 16 of 2026-11-15).
     # systemd's random seed and its credential secret are per machine: no copy of the image
     # ships either. systemd-random-seed.service saves a seed when it stops, so left running
     # it would write one at the power-off, after the final probe. It is stopped first (its
@@ -1245,21 +1841,27 @@ seal_final() {
     # power-off. proof reads the sealed image for both files.
     systemctl stop systemd-random-seed.service 2>&1
     echo "systemd-random-seed.service: $(systemctl is-active systemd-random-seed.service 2>&1)"
-    rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret
-    # shellcheck disable=SC2086
-    rm -f $SEAL_KEYS
-    cloud-init clean --logs --seed --machine-id --configs network 2>&1
-    # cloud-init disabled in the sealed image, the package kept (the operator's ruling of
-    # 2026-11-16): an image that acts on an attached seed has a first-boot path the profile
-    # does not state. The limit written by the cleanup stays beneath it.
-    install -o root -g root -m 0644 /dev/null /etc/cloud/cloud-init.disabled
+    rm -f /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret /var/lib/dbus/machine-id
+    # The pacman keyring, made at this guest's first boot: its master key is private, and
+    # nothing installs after the seal.
+    rm -rf -- "$SEAL_KEYS_DIR"
+    # What cloud-init left once its package went: its state, its logs, any configuration
+    # left unowned. The machine identity uninitialized, so a box's first boot is a first
+    # boot (systemd makes the identity then).
+    rm -rf -- /var/lib/cloud /etc/cloud
+    rm -f /var/log/cloud-init.log /var/log/cloud-init-output.log
+    printf 'uninitialized\n' >/etc/machine-id
     rm -f /root/.bash_history /root/.lesshst /root/.wget-hsts /root/.python_history
-    rm -rf /tmp/* /var/tmp/* /var/crash/* 2>/dev/null
-    systemctl stop rsyslog.service syslog.socket 2>/dev/null || true
+    rm -rf /tmp/* /var/tmp/* 2>/dev/null
     journalctl --rotate -q; journalctl --vacuum-time=1s -q; journalctl --relinquish-var 2>&1
     rm -rf /var/log/journal/*
     find /var/log -xdev -type f \( -name '*.gz' -o -name '*.[0-9]' -o -name '*.old' \) -delete
     find /var/log -xdev -type f -exec truncate -s 0 {} +
+    # wtmp removed, not emptied: systemd-update-utmp appends its records at the power-off,
+    # after the final probe, and glibc appends only to a wtmp that stands (updwtmp opens it
+    # without creating it). A box's first boot lays it again, empty, from systemd's
+    # tmpfiles line. The proof's late-write read refused the records the power-off wrote.
+    rm -f /var/log/wtmp
     # The stamp is assembled from the build's records, which then go with the harness, so
     # the probes see the image as it will be sealed.
     install -d -o root -g root -m 0755 "$RECORD"
@@ -1275,7 +1877,13 @@ seal_final() {
         grep -qE "^$k = [0-9a-f]{40}\$" "$RECORD/stamp.part" || commits=0
     done
     grep -qE '^appliance\.version = [1-9][0-9]*\.0$' "$RECORD/stamp.part" || commits=0
-    rm -rf -- "$BUILD" /usr/local/sbin/template-steps
+    rm -rf -- "$BUILD" /usr/local/sbin/template-steps /usr/local/share/weaver-build
+    # The update the build's pacman hooks armed, marked done (updated_check): the loader
+    # cache rebuilt once more as ldconfig.service would, then both stamps written at /usr's
+    # time. Nothing touches /usr after this line.
+    ldconfig -X 2>&1
+    /usr/lib/systemd/systemd-update-done 2>&1
+    echo "update stamps: $(sed -n 's/^TIMESTAMP_NSEC=//p' /etc/.updated 2>&1), /usr $(stat -c %.9Y /usr)"
     if ! probes final >"$RECORD/seal-probes" 2>&1 || [ "$commits" = 0 ]; then
         [ "$commits" = 1 ] || echo "REFUSED: the stamp does not name weaveragent.commit, weaverweb.commit and appliance.version" >>"$RECORD/seal-probes"
         rm -f "$RECORD/stamp.part"

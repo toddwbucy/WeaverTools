@@ -16,7 +16,7 @@ check "10.20 is a respin" vin_refused 10.20 'REFUSED: VERSION 10.20 is a respin'
 for v in 1 1.0.0 0.0 01.0 1.00 v1.0 ' 1.0' '1.0 '; do
     check "'$v' is out of form" vin_refused "$v" 'REFUSED: VERSION is <release>.<respin>'
 done
-check "create refuses without VERSION, and says so" eval '! o=$( ( set -euo pipefail; OS_GIVEN=26.04 DRIVER=615.71.09 DRIVER_ROUTE=ubuntu-prebuilt COMPUTE_CAP=86 WA_COMMIT=$(printf %040d 1) WW_COMMIT=$(printf %040d 2) inputs_ok all ) 2>&1) && grep -q "name VERSION" <<<"$o"'
+check "create refuses without VERSION, and says so" eval '! o=$( ( set -euo pipefail; OS_GIVEN=arch-20261115 DRIVER=620.70.06 DRIVER_ROUTE=arch-prebuilt COMPUTE_CAP=86 WA_COMMIT=$(printf %040d 1) WW_COMMIT=$(printf %040d 2) inputs_ok all ) 2>&1) && grep -q "name VERSION" <<<"$o"'
 
 # proof's version block, from 'local ver' to its tee.
 BLOCK=$(sed -n '/^    local ver$/,/^    } 2>&1 | tee "\$out\/version.txt"$/p' "$BT")
@@ -51,17 +51,18 @@ check "seal_final takes a stamp naming 1.0" grep -qE "$pat" <(printf 'appliance.
 check "seal_final refuses one naming 1.1, or none" eval "! grep -qE '$pat' <(printf 'appliance.version = 1.1\nx = y\n')"
 
 # The prelude: everything before the file's first function, with os-release pointed at a
-# stand-in that assigns VERSION as Ubuntu's does.
-printf '%s\n' 'NAME="Ubuntu"' 'VERSION="26.04 LTS (Resolute Raccoon)"' 'VERSION_ID="26.04"' \
-    'PRETTY_NAME="Ubuntu 26.04 LTS"' 'ID=ubuntu' >"$T/os-release"
+# stand-in for Arch's that also assigns VERSION, as Ubuntu's did (Arch's own assigns none).
+printf '%s\n' 'NAME="Arch Linux"' 'PRETTY_NAME="Arch Linux"' 'ID=arch' 'BUILD_ID=rolling' \
+    'VERSION="rolling"' >"$T/os-release"
 pre=$(awk '/^[a-z_]+\(\) \{/ { exit } { print }' "$STEPS" | sed "s|/etc/os-release|$T/os-release|g")
 check "the prelude reads os-release" grep -q "$T/os-release" <<<"$pre"
 got=$(VERSION=1.0 bash -c "$pre"'
-printf "%s|%s|%s|%s\n" "$VERSION" "$VERSION_ID" "$PRETTY_NAME" "$CXX_MAJOR"' 2>&1)
-check "VERSION survives the prelude, which reads 26.04 and its name ($got)" \
-    test "$got" = "1.0|26.04|Ubuntu 26.04 LTS|15"
-sed -i 's/^VERSION_ID=.*/VERSION_ID="25.10"/' "$T/os-release"
+printf "%s|%s|%s|%s\n" "$VERSION" "$OS_ID" "$PRETTY_NAME" "$CXX_MAJOR"' 2>&1)
+check "VERSION survives the prelude, which reads Arch and its name ($got)" \
+    test "$got" = "1.0|arch|Arch Linux|15"
+printf '%s\n' 'NAME="Ubuntu"' 'VERSION="26.04 LTS (Resolute Raccoon)"' 'VERSION_ID="26.04"' \
+    'PRETTY_NAME="Ubuntu 26.04 LTS"' 'ID=ubuntu' >"$T/os-release"
 pre=$(awk '/^[a-z_]+\(\) \{/ { exit } { print }' "$STEPS" | sed "s|/etc/os-release|$T/os-release|g")
 VERSION=1.0 bash -c "$pre" >"$T/other.out" 2>&1; rc=$?
-check "another Ubuntu is refused by the prelude, status 2" test "$rc" = 2 -a "$(grep -c 'no build for Ubuntu 25.10' "$T/other.out")" = 1
+check "another distribution is refused by the prelude, status 2" test "$rc" = 2 -a "$(grep -c "no build for os-release ID 'ubuntu'" "$T/other.out")" = 1
 finish
