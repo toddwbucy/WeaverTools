@@ -1399,14 +1399,24 @@ esp_partition() {
     echo "$n"
 }
 # esp_mount: the ESP mounted at ESP_DIR by its UUID through one fstab line, root's alone.
+# The base image's fstab names no ESP, so systemd-gpt-auto-generator serves it at ESP_DIR as
+# an automount (autofs, with the partition mounted over it on first access). Once fstab names
+# it, gpt-auto leaves it to fstab at every boot; here, in the build guest's running boot, a
+# reload and a stop of gpt-auto's two units hand ESP_DIR to the fstab line now.
 esp_mount() {
-    local part uuid line
+    local part uuid line a
     part=$(esp_partition) || return 1
     uuid=$(sudo blkid -s UUID -o value "$part") && [ -n "$uuid" ] || { echo "no UUID for $part"; return 1; }
     line="UUID=$uuid $ESP_DIR vfat umask=0077 0 2"
     sudo sed -i -E "\\|^[^#]*[[:space:]]$ESP_DIR[[:space:]]|d" /etc/fstab || return 1
     printf '%s\n' "$line" | sudo tee -a /etc/fstab >/dev/null || return 1
     sudo install -d -m 0755 "$ESP_DIR" || return 1
+    sudo systemctl daemon-reload || return 1
+    if findmnt -nvo FSTYPE "$ESP_DIR" 2>/dev/null | grep -qx autofs; then
+        a=$(systemd-escape --path "$ESP_DIR")
+        sudo systemctl stop "$a.mount" "$a.automount" || return 1
+        echo "gpt-auto's automount at $ESP_DIR stopped: $a.automount, $a.mount"
+    fi
     findmnt -n "$ESP_DIR" >/dev/null || sudo mount "$ESP_DIR" || return 1
     echo "/etc/fstab: $line"
 }
@@ -1414,13 +1424,14 @@ esp_mount() {
 # and holds the loader the firmware's removable path boots. Prints each finding; exits 1
 # on any.
 esp_check() {
-    local part uuid bad="" n
+    local part uuid bad="" n m
     part=$(esp_partition 2>&1) || bad+="$part. "
     uuid=$(sudo blkid -s UUID -o value "$part" 2>/dev/null)
     n=$(grep -cE "^[^#]*[[:space:]]$ESP_DIR[[:space:]]" /etc/fstab)
     [ "$n" = 1 ] || bad+="/etc/fstab names $ESP_DIR $n times, not once. "
     grep -qE "^UUID=$uuid[[:space:]]+$ESP_DIR[[:space:]]+vfat[[:space:]]" /etc/fstab || bad+="/etc/fstab does not mount the ESP (UUID ${uuid:-unknown}) at $ESP_DIR as vfat. "
-    [ "$(findmnt -nvo SOURCE "$ESP_DIR" 2>/dev/null)" = "$part" ] || bad+="$ESP_DIR is not $part mounted. "
+    m=$(findmnt -nvo SOURCE "$ESP_DIR" 2>/dev/null | tr '\n' ' ')
+    [ "$m" = "$part " ] || bad+="$ESP_DIR is not $part mounted alone (findmnt reads: ${m:-nothing}). "
     sudo test -f "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" || bad+="$ESP_DIR holds no EFI/BOOT/BOOTX64.EFI. "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }

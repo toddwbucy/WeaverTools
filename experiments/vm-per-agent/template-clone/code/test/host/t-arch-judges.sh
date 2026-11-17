@@ -397,4 +397,36 @@ check "required by nothing: named, since it would then be a build tool kept for 
 : >"$T/bu-absent"
 check "absent: named" eval 'grep -q "^binutils is not installed" <<<"$(binutils_check)"'
 unset -f pacman
+
+# ---- 19. The ESP at /efi: gpt-auto's automount handed to the fstab line in the build guest,
+# and the check reading what is mounted there, alone (the 2.0 rehearsal of 2026-11-17: the
+# check read autofs and the partition over it).
+ESP_DIR=/efi
+EM=$(fn "$STEPS" esp_mount | sed -n '/daemon-reload/,/|| sudo mount "\$ESP_DIR"/p' | sed "s|$P||g")
+EC=$(fn "$STEPS" esp_check | sed -n '/^    m=\$(findmnt -nvo SOURCE/,/not \$part mounted alone/p')
+check "esp_mount's reload and stop, and esp_check's mount read, are in the file" \
+    test "$(wc -l <<<"$EM")" -ge 6 -a "$(wc -l <<<"$EC")" = 2
+em() { # em STATE: esp_mount's block against a stand-in /efi in STATE (auto, mounted, none)
+    bash -c 'st=$1; calls=$2; : >"$calls"
+        findmnt() { case "$st:$*" in
+            auto:"-nvo FSTYPE /efi") printf "autofs\nvfat\n" ;; mounted:"-nvo FSTYPE /efi") echo vfat ;;
+            mounted:"-n /efi") echo "/efi /dev/vda2 vfat rw" ;; *:"-n /efi") return 1 ;; *) return 1 ;; esac; }
+        systemctl() { echo "systemctl $*" >>"$calls"; [ "$1" != stop ] || st=none; }
+        mount() { echo "mount $*" >>"$calls"; }
+        systemd-escape() { [ "$*" = "--path /efi" ] && echo efi; }
+        ESP_DIR=/efi; f() { '"$EM"'
+        }; f' _ "$1" "$T/em-calls"
+}
+out=$(em auto)
+check "gpt-auto's automount: reload, both units stopped, then mounted by fstab" \
+    eval '[ "$(tr "\n" "|" <"$T/em-calls")" = "systemctl daemon-reload|systemctl stop efi.mount efi.automount|mount /efi|" ] && grep -q "efi.automount, efi.mount" <<<"$out"'
+em mounted >/dev/null
+check "already mounted by fstab: a reload, nothing stopped, no second mount" test "$(tr '\n' '|' <"$T/em-calls")" = "systemctl daemon-reload|"
+em none >/dev/null
+check "nothing at /efi: a reload, then mounted by fstab" test "$(tr '\n' '|' <"$T/em-calls")" = "systemctl daemon-reload|mount /efi|"
+ec() { bash -c 'fm=$1; findmnt() { printf "$fm"; }; part=/dev/vda2; ESP_DIR=/efi; bad=""; '"$EC"'; echo "$bad"' _ "$1"; }
+check "esp_check: the partition alone at /efi, no finding" test -z "$(ec '/dev/vda2\n')"
+check "autofs with the partition over it: a finding naming both" \
+    test "$(ec 'systemd-1\n/dev/vda2\n')" = "/efi is not /dev/vda2 mounted alone (findmnt reads: systemd-1 /dev/vda2 ). "
+check "nothing mounted: a finding" test "$(ec '')" = "/efi is not /dev/vda2 mounted alone (findmnt reads: nothing). "
 finish
