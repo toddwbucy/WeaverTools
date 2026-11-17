@@ -31,7 +31,8 @@ pages do with a member is stated in Weaver Web's own Spec.
 
 ## 1. The members
 
-Every member is required. Each string is printable ASCII (0x20 to 0x7E) within its byte
+Every member is required, except a mounted drive's members on a drive that is not
+mounted (below). Each string is printable ASCII (0x20 to 0x7E) within its byte
 bound. Each integer is a JSON integer from 0 to 2^53 - 1. A value that breaks its bound
 fails the survey; the survey never truncates a value.
 
@@ -40,8 +41,8 @@ fails the survey; the survey never truncates a value.
 | `format` | the format and its version | constant | exactly `weaver-survey/1` |
 | `stage` | which run of the survey this is | the setup script's argument | `pairing` or `drives` |
 | `taken` | when the survey read the machine | `date -u +%Y-%m-%dT%H:%M:%SZ` | RFC 3339, UTC, whole seconds, `Z` |
-| `image.version` | the image's version | `/etc/weaver-appliance/version`, one line written at the seal from the stamp's `appliance.version` | `^[0-9]+\.[0-9]+$` |
-| `image.stamp_sha256` | which build record the image carries | `sha256sum /etc/weaver-appliance/stamp` | 64 lowercase hex digits |
+| `image.version` | the image's version | the `appliance.version` line of `/etc/weaver-appliance/stamp`, which the seal writes as `appliance.version = <version>`: the value after ` = `. The survey fails unless the stamp holds exactly one such line | `^[0-9]+\.[0-9]+$` |
+| `image.manifest_sha256` | the image's identity, which the build Spec names as the MANIFEST's sha256 (its section 2). The MANIFEST lists the stamp's own digest, so it pins the stamp too | `sha256sum /etc/weaver-appliance/MANIFEST`, which the seal writes 0644 | 64 lowercase hex digits |
 | `kernel.release` | the running kernel | `uname -r` | 64 bytes |
 | `machine.virtualization` | what the guest sees under it | `systemd-detect-virt` (`kvm`, or `none` on bare metal) | 32 bytes |
 | `machine.vendor`, `machine.product`, `machine.version` | the hypervisor's machine as the guest sees it; in a QEMU guest `version` names the machine type | `/sys/class/dmi/id/sys_vendor`, `product_name` and `product_version`, which any user may read. The serial and UUID files are never read | 128 bytes each |
@@ -54,7 +55,7 @@ fails the survey; the survey never truncates a value.
 | `driver.version` | the NVIDIA driver's release | `/sys/module/nvidia/version` where the module is loaded, else `modinfo -F version nvidia`, which reads the module file and loads nothing | `^[0-9]+(\.[0-9]+){1,2}$` |
 | `driver.loaded` | whether the driver's kernel module is loaded | `/sys/module/nvidia` present | boolean |
 | `cuda_runtime.version` | the CUDA runtime the image carries | the real file name of `libcudart.so.<major>` as `ldconfig -p` finds it, after `libcudart.so.` | `^[0-9]+\.[0-9]+(\.[0-9]+)?$` |
-| `cards` | each NVIDIA card, in PCI bus order | `nvidia-smi --query-gpu=pci.bus_id,name,memory.total --format=csv,noheader,nounits`, sorted by address. The survey fails if sysfs holds an NVIDIA display function (vendor 0x10de, class 0x0300 or 0x0302) that this does not list | 0 to 16 objects |
+| `cards` | each NVIDIA card, in PCI bus order | `nvidia-smi --query-gpu=pci.bus_id,name,memory.total --format=csv,noheader,nounits`, sorted by address, run only where `driver.loaded` is true, since without the module `nvidia-smi` fails and may load it. Where the module is not loaded, `cards` is empty. The survey fails if sysfs holds an NVIDIA display function (vendor 0x10de, class 0x0300 or 0x0302) that this does not list | 0 to 16 objects |
 | `cards[].ordinal` | the card's number in PCI bus order, the number the agent gives its devices and the declaration's devices take | the card's index in that order | equal to the index, from 0 |
 | `cards[].name` | the card's model, which names the card in the deployment tuple | `name` | 96 bytes |
 | `cards[].pci_address` | the card's address as the guest sees it, the ground of its ordinal | `pci.bus_id`, lowercased, its domain written as sysfs writes it | `^[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$`, strictly ascending |
@@ -70,7 +71,8 @@ fails the survey; the survey never truncates a value.
 **A drive with `mounted` false carries `role`, `mount_point` and `mounted` alone.** At
 the stage `pairing` neither drive is mounted yet. The report states what the survey read
 and judges nothing. A box without a card is a valid report: `cards` is empty, and
-`driver.version` is read from the module file, with `driver.loaded` false.
+`driver.version` is read from the module file, with `driver.loaded` false. A box whose
+card the module does not serve fails the survey, by the sysfs check of `cards`.
 
 **The report carries none of the following:**
 - a card's serial or UUID;
@@ -100,7 +102,9 @@ A reader refuses the whole report, and reads no member of it, for any of the fol
 3. A member name given twice in one object, at any depth. Parsers differ on which one
    wins, so a reader takes neither.
 4. A `format` that is missing, or is not exactly a version string the reader knows.
-5. A member of section 1 that is missing or `null`, or of the wrong JSON type.
+5. A member of section 1 that is missing or `null`, or of the wrong JSON type. A drive
+   with `mounted` false carries `role`, `mount_point` and `mounted` alone, and its other
+   members are not missing.
 6. An integer that is negative, fractional, written with an exponent, or above
    2^53 - 1.
 7. A string outside printable ASCII, over its bound, or not matching its pattern.
@@ -109,6 +113,8 @@ A reader refuses the whole report, and reads no member of it, for any of the fol
    ascend.
 10. `drives` that is not exactly `state` then `models` with their mount points, or a
     drive with `mounted` false that carries a mounted drive's members.
+11. An integer outside its bound in section 1, more than 16 cards, or a `cpu.flags` with
+    no entry, more than 512 entries, entries out of byte order, or an entry given twice.
 
 **A member the reader does not know is kept and ignored, at any depth.** It is not a
 cause to refuse. A refused report stays stored verbatim, and nothing is read from it.
@@ -143,11 +149,12 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
 
 ## 6. A worked example
 
-**Every value of the machine below is made up, and illustrative**: the time, the stamp's
-digest, the machine, the CPU, the memory, the cards and their addresses, and the drives.
-The image's own facts are release 2.0's. The flags are cut to 20 entries; a real report
-carries the whole line. It is a box at the stage `drives`, so every member shows. At the
-stage `pairing` the same box reports each drive with `mounted` false and nothing more.
+**Every value of the machine below is made up, and illustrative**: the time, the
+MANIFEST's digest, the machine, the CPU, the memory, the cards and their addresses, and
+the drives. The image's own facts are release 2.0's. The flags are cut to 20 entries; a
+real report carries the whole line. It is a box at the stage `drives`, so every member
+shows. At the stage `pairing` the same box reports each drive with `mounted` false and
+nothing more.
 
 ```json
 {
@@ -156,7 +163,8 @@ stage `pairing` the same box reports each drive with `mounted` false and nothing
   "taken": "2026-11-17T09:00:00Z",
   "image": {
     "version": "2.0",
-    "stamp_sha256": "5b1f0c9e7a2d4486b3e0f19c2d7a65e8c41f03b9d2a7e6158c0b94f3a1d2e7c6"
+    "manifest_sha256":
+      "5b1f0c9e7a2d4486b3e0f19c2d7a65e8c41f03b9d2a7e6158c0b94f3a1d2e7c6"
   },
   "kernel": {"release": "7.3.4-arch1-2"},
   "machine": {
