@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Build the appliance image from the Arch Linux cloud image (release 2.0 on, the operator's
-# ruling of 2026-11-16; release 1.0 was built from Ubuntu 26.04 by this tree as tagged
-# appliance/1.0), one step at a time, each step's output and status kept under logs/. The
-# binaries are compiled inside this guest from the two named commits; nothing built on the
-# host enters the image (weaver-appliance-build-Spec, section 2).
+# ruling of 2026-11-16; release 1.0 was built from Ubuntu 26.04 by this tree at WeaverTools
+# main 06d42bd, its stack WeaverAgent at the tag appliance/1.0), one step at a time, each
+# step's output and status kept under logs/. The binaries are compiled inside this guest
+# from the two named commits; nothing built on the host enters the image
+# (weaver-appliance-build-Spec, section 2).
 #
 #   VM_ROOT=<dir> OS=arch-20261115 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
 #     COMPUTE_CAP=<cc> WA_COMMIT=<sha> WW_COMMIT=<sha> code/build-template.sh create
@@ -37,7 +38,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 # default, clone.sh's Ubuntu.
 OS_GIVEN=${OS:-}
 [ -z "$OS_GIVEN" ] || [ "$OS_GIVEN" = arch-20261115 ] \
-    || { printf '\nREFUSED: OS is arch-20261115, the base this tree builds, not %s (release 1.0 builds from the tag appliance/1.0)\n' "$OS_GIVEN" >&2; exit 1; }
+    || { printf '\nREFUSED: OS is arch-20261115, the base this tree builds, not %s (release 1.0'"'"'s build tree is WeaverTools main at 06d42bd, its stack WeaverAgent at the tag appliance/1.0)\n' "$OS_GIVEN" >&2; exit 1; }
 OS=arch-20261115
 # shellcheck source=lib.sh
 source "$HERE/lib.sh"

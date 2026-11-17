@@ -10,8 +10,8 @@
 # Release 2.0 builds on Arch Linux, pinned (the operator's ruling of 2026-11-16; the
 # Planner named it 2.0 under decision 4 of 2026-11-15, an OS change with a recompile): the
 # arch-boxes cloud image lib.sh names, brought to one day of the Arch Linux Archive and
-# never past it. Release 1.0 was built on Ubuntu 26.04 by this file as tagged
-# appliance/1.0.
+# never past it. Release 1.0 was built on Ubuntu 26.04 by this file at WeaverTools main
+# 06d42bd (the merge of pull request 33), its stack WeaverAgent at the tag appliance/1.0.
 set -uo pipefail
 
 # The inputs, named by the host on each step's command line: VERSION (the image's version,

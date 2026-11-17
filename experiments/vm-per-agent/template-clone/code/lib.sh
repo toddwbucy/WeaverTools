@@ -27,7 +27,8 @@ URI=qemu:///system
 #   line names it last, sig_primary_ok).
 # - 26.04: Ubuntu's cloud image as released on 2026-10-20, release 1.0's base, kept for
 #   clone.sh, which names no OS and gets 26.04, and the #21 template it clones. Release 1.0
-#   itself is rebuilt from this tree as tagged appliance/1.0.
+#   itself is rebuilt from this tree at WeaverTools main 06d42bd, its stack WeaverAgent at
+#   the tag appliance/1.0.
 # 24.04 is named and refused until its image is pinned (weaver-appliance-build-Spec,
 # section 1).
 OS=${OS:-26.04}
