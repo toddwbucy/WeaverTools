@@ -444,8 +444,8 @@ image_fs() {
 # The reads, each by the filesystem's type: image_state, image_get, image_cat, image_ls,
 # image_files and image_resolve below take the same arguments and give the same statuses
 # on either. An expected absence is image_state's call (status 1) or image_get_present's,
-# never an empty result: on btrfs, image_get, image_cat and image_files refuse by name a
-# path that did not come out of the image.
+# never an empty result: on either, image_get, image_cat and image_files refuse by name an
+# absent path, status 2. image_ls answers 1 for one, as image_state does.
 image_state() {
     local f
     f=$(image_fs "$1") || return 2
@@ -486,39 +486,54 @@ image_get_present() {
     [ "$rc" = 0 ] || return "$rc"
     image_get "$1" "$2" "$3" || return 2
 }
-# The ext4 reads, through debugfs.
-image_cat_ext4() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
-# image_ls_ext4 DIR PATH fails where PATH is absent. debugfs exits 0 on a missing path and
-# prints nothing to stdout, and a directory always lists . and .., so no output is the
-# absence.
-image_ls_ext4() {
+# The ext4 reads, through debugfs. They give the btrfs reads' statuses row for row (the
+# table in test/host/t-btrfs-reads.sh, which runs each row on both; the Planner's call of
+# 2026-11-17 on CodeRabbit's review of pull request 35). debugfs exits 0 whatever it
+# finds, so each read goes by what its stat prints. debugfs resolves a link above a path
+# inside the image, so each read finds the path with image_find_ext4, which tests the
+# directories above it as image_came_out does on btrfs and refuses a path under a link.
+#
+# image_stat_ext4 DIR PATH: debugfs's stat of PATH on stdout. stat follows no link at PATH
+# itself. 0 where PATH is found, 1 where it is not, 2, the cause on stderr, where the image
+# could not be read (no debugfs, a filesystem it cannot open, any other error).
+image_stat_ext4() {
     local o
-    o=$(debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null)
-    [ -n "$o" ] || return 1
-    printf '%s\n' "$o"
-}
-# image_state_ext4 DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where the image
-# could not be read (no debugfs, a filesystem it cannot open, any other error), the cause on
-# stderr. debugfs exits 0 in each case, so the three are told apart by what it prints:
-# "Inode:" for a path it found, "File not found by ext2_lookup" for one it did not.
-image_state_ext4() {
-    local o
-    command -v debugfs >/dev/null 2>&1 || { echo "image_state: no debugfs on this host" >&2; return 2; }
-    o=$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>&1) || { printf 'image_state: debugfs: %s\n' "$(tail -1 <<<"$o")" >&2; return 2; }
-    if grep -q '^Inode: ' <<<"$o"; then return 0; fi
+    command -v debugfs >/dev/null 2>&1 || { echo "image reads: no debugfs on this host" >&2; return 2; }
+    o=$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>&1) || { printf 'image reads: debugfs: %s\n' "$(tail -1 <<<"$o")" >&2; return 2; }
+    if grep -q '^Inode: ' <<<"$o"; then printf '%s\n' "$o"; return 0; fi
     if grep -q 'File not found by ext2_lookup' <<<"$o"; then return 1; fi
-    printf 'image_state: %s: %s\n' "$2" "$(grep -v '^debugfs [0-9]' <<<"$o" | tail -1)" >&2
+    printf 'image reads: %s: %s\n' "$2" "$(grep -v '^debugfs [0-9]' <<<"$o" | tail -1)" >&2
     return 2
 }
-# image_get_ext4 DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 0 when copied
-# whole, 1 when PATH is absent (no OUT), 2 when it could not be read, the cause on stderr
-# (image_state's, a PATH that is not a regular file, or a copy short of the inode's size).
+# image_find_ext4 DIR PATH: debugfs's stat of PATH on stdout, the directories above PATH
+# tested first, from the top down, so that no stat passes through a link. 0 where PATH is
+# found; 1 where it is absent: it is not there, or a directory above it is not, or is no
+# directory; 2, the cause on stderr, where a directory above it is a link, or a read fails.
+image_find_ext4() {
+    local a="" rest=${2#/} o
+    while [ "${rest#*/}" != "$rest" ]; do
+        a=$a/${rest%%/*}; rest=${rest#*/}
+        o=$(image_stat_ext4 "$1" "$a") || return $?
+        if grep -q 'Type: symlink' <<<"$o"; then
+            echo "image reads: $2 lies under $a, a link in the image, which the read does not follow" >&2
+            return 2
+        fi
+        grep -q 'Type: directory' <<<"$o" || return 1
+    done
+    image_stat_ext4 "$1" "$2"
+}
+# image_state_ext4 DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where
+# that cannot be told: a read that fails, or a path under a link.
+image_state_ext4() { image_find_ext4 "$1" "$2" >/dev/null; }
+# image_get_ext4 DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 2, the
+# cause on stderr, where PATH is absent (named, as on btrfs), lies under a link, is not a
+# regular file, or could not be read whole (a copy short of the inode's size).
 image_get_ext4() {
     local dir=$1 path=$2 out=$3 rc=0 o size
     rm -f -- "$out"
-    image_state_ext4 "$dir" "$path" || rc=$?
-    [ "$rc" = 0 ] || return "$rc"
-    o=$(debugfs -c -R "stat \"$path\"" "$dir/root.raw" 2>/dev/null)
+    o=$(image_find_ext4 "$dir" "$path") || rc=$?
+    [ "$rc" != 1 ] || { echo "image_get: $path is absent from the image" >&2; return 2; }
+    [ "$rc" = 0 ] || return 2
     grep -q 'Type: regular' <<<"$o" || { echo "image_get: $path is not a regular file" >&2; return 2; }
     size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | head -1)
     debugfs -c -R "dump \"$path\" \"$out\"" "$dir/root.raw" >/dev/null 2>&1
@@ -528,16 +543,42 @@ image_get_ext4() {
         return 2
     fi
 }
-# image_files_ext4 DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
-# bounded at 12. debugfs ls -p prints /inode/mode/uid/gid/name/size/ per entry, the mode in
-# six octal digits (040 a directory, 100 a regular file). Nothing where PATH is absent.
-# debugfs exits 0 on a listing it cannot make and says so on stderr, so its lines are read
-# together: its banner is passed over, and any other line, or a directory past the bound,
-# ends the listing with status 2 and a line on stderr. A listing that did not complete is
-# not an empty one. A directory debugfs lists as empty and reports nothing about is empty
-# here too.
+# image_cat_ext4 DIR PATH: PATH's bytes on stdout; image_get_ext4's refusals.
+image_cat_ext4() {
+    local t rc=0
+    t=$(mktemp "$1/cat.XXXXXX") || return 2
+    image_get_ext4 "$1" "$2" "$t" && cat -- "$t" || rc=2
+    rm -f -- "$t"
+    return "$rc"
+}
+# image_ls_ext4 DIR PATH: debugfs's "ls -p" lines for the directory PATH. 1 where PATH is
+# absent, 2, the cause on stderr, where it lies under a link, is not a directory, or cannot
+# be read or listed. A directory always lists . and .., so a listing with no line failed.
+image_ls_ext4() {
+    local o
+    o=$(image_find_ext4 "$1" "$2") || return $?
+    grep -q 'Type: directory' <<<"$o" || { echo "image_ls: $2 is not a directory in the image" >&2; return 2; }
+    o=$(debugfs -c -R "ls -p \"$2\"" "$1/root.raw" 2>/dev/null)
+    [ -n "$o" ] || { echo "image_ls: $2 could not be listed" >&2; return 2; }
+    printf '%s\n' "$o"
+}
+# image_files_ext4 DIR PATH: "SIZE PATH" for each regular file under the directory PATH, one
+# per line, depth bounded at 12. 2, the cause on stderr, where PATH is absent (named, as on
+# btrfs), lies under a link, or is not a directory. debugfs ls -p prints
+# /inode/mode/uid/gid/name/size/ per entry, the mode in six octal digits (040 a directory,
+# 100 a regular file; a link, 120, is neither listed nor followed). debugfs exits 0 on a
+# listing it cannot make and says so on stderr, so its lines are read together: its banner
+# is passed over, and any other line, or a directory past the bound, ends the listing with
+# status 2 and a line on stderr. A listing that did not complete is not an empty one. A
+# directory debugfs lists as empty and reports nothing about is empty here too.
 image_files_ext4() {
-    local dir=$1 path=${2%/} depth=${3:-0} o l ino mode uid gid name size rest
+    local dir=$1 path=${2%/} depth=${3:-0} o l ino mode uid gid name size rest rc=0
+    if [ "$depth" = 0 ]; then
+        o=$(image_find_ext4 "$dir" "$path") || rc=$?
+        [ "$rc" != 1 ] || { echo "image_files: $path is absent from the image" >&2; return 2; }
+        [ "$rc" = 0 ] || return 2
+        grep -q 'Type: directory' <<<"$o" || { echo "image_files: $path is not a directory" >&2; return 2; }
+    fi
     [ "$depth" -lt 12 ] || { echo "image_files: $path is past the depth bound of 12" >&2; return 2; }
     o=$(debugfs -c -R "ls -p \"$path\"" "$dir/root.raw" 2>&1) \
         || { echo "image_files: debugfs exited non-zero on $path" >&2; return 2; }
@@ -545,8 +586,6 @@ image_files_ext4() {
         case $l in
             /*/*/*/*/*/*/*) ;;
             '' | 'debugfs '[0-9]* | 'catastrophic mode'*) continue ;;
-            "$path: File not found by ext2_lookup"*) [ "$depth" = 0 ] && return 0
-                printf 'image_files: %s: %s\n' "$path" "$l" >&2; return 2 ;;
             *) printf 'image_files: %s: %s\n' "$path" "$l" >&2; return 2 ;;
         esac
         IFS=/ read -r _ ino mode uid gid name size rest <<<"$l"
@@ -716,7 +755,8 @@ image_link_climbs() {
 # image_resolve_btrfs DIR PATH: PATH with each symbolic link in the image followed, 8 at
 # most, to a path that came out as no link. 1, the cause on stderr, where the path or a
 # link's target did not come out. 2, refused, where a link's target climbs with "..", a
-# path lies under a link, or the read fails, so a refused link is never reported missing.
+# path lies under a link, the read fails, or there are more than 8 links, so a refused
+# link is never reported missing.
 image_resolve_btrfs() {
     local dir=$1 p=$2 n=0 r t c
     while [ "$n" -lt 8 ]; do
@@ -734,8 +774,8 @@ image_resolve_btrfs() {
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
         n=$((n + 1))
     done
-    echo "image_resolve: more than 8 links from $2" >&2
-    return 1
+    echo "image_resolve: more than 8 links from $2: refused" >&2
+    return 2
 }
 # image_late_writes DIR: what a sealed image holds that its seal's final probe refuses, so
 # written after that probe (at the power-off): systemd's random seed, its credential secret,
@@ -786,24 +826,35 @@ GGML_CUDA_LIB=/opt/weaver/lib/libggml-cuda.so.0
 GGML_CUBIN_ARCHS="sm_86 sm_89 sm_120a sm_121a"
 CUOBJDUMP=${CUOBJDUMP:-cuobjdump}
 # image_resolve_ext4 DIR PATH: PATH with each symbolic link in the image followed, 8 at
-# most, to a path that is not a link. debugfs follows none, so each target is read from its
-# stat's "Fast link dest:" line. 2, refused, where a link's target climbs with "..", as on
-# btrfs, and where its target cannot be read: a target over 60 bytes is kept in a block,
-# and stat prints no such line for it (CodeRabbit on pull request 35, 2026-11-17). A link
-# that is there is never reported missing.
+# most, to a path that is not a link, with image_resolve_btrfs's statuses: 1, the cause on
+# stderr, where the path or a link's target is absent; 2, refused, where a target climbs
+# with "..", cannot be read, a path lies under a link, a read fails, or there are more than
+# 8 links. A link that is there is never reported missing, and an absent path never comes
+# back as found. debugfs follows no link at the path it stats, so each target is read from
+# the stat's "Fast link dest:" line, or, for a target over 60 bytes, which ext4 keeps in a
+# block and stat does not print, from the link's own block with cat, its length checked
+# against the inode's size.
 image_resolve_ext4() {
-    local dir=$1 p=$2 n=0 o t
+    local dir=$1 p=$2 n=0 o t rc size
     while [ "$n" -lt 8 ]; do
-        o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
+        rc=0; o=$(image_find_ext4 "$dir" "$p") || rc=$?
+        [ "$rc" != 1 ] || { echo "image_resolve: $p is absent from the image" >&2; return 1; }
+        [ "$rc" = 0 ] || return 2
         grep -q 'Type: symlink' <<<"$o" || { printf '%s\n' "$p"; return 0; }
         t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | head -1)
-        [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2; }
+        if [ -z "$t" ]; then
+            size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | head -1)
+            t=$(debugfs -c -R "cat \"$p\"" "$dir/root.raw" 2>/dev/null)
+            if [ -z "$size" ] || [ -z "$t" ] || [ "$(printf '%s' "$t" | wc -c)" != "$size" ]; then
+                echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2
+            fi
+        fi
         ! image_link_climbs "$p" "$t" || return 2
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
         n=$((n + 1))
     done
-    echo "image_resolve: more than 8 links from $2" >&2
-    return 1
+    echo "image_resolve: more than 8 links from $2: refused" >&2
+    return 2
 }
 # device_code_check DIR TMP: the shipped ggml CUDA library, followed through its links in
 # the image opened at DIR, copied to TMP, and listed with CUOBJDUMP: no PTX image, cubins

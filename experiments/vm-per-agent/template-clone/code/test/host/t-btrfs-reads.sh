@@ -56,6 +56,8 @@ ln -s /etc "$S/etc/up"; ln -s "$HOSTSIDE" "$S/etc/out"
 # stat prints no "Fast link dest:" line for it.
 LONG=/etc/a-target-file-whose-name-runs-long-enough-that-ext4-keeps-it-in-a-block
 echo long >"$S$LONG"; ln -s "$LONG" "$S/etc/long-link"
+# A dangling link, and two links that lead to each other.
+ln -s /etc/nothing-here "$S/etc/dangling"; ln -s loop-b "$S/etc/loop-a"; ln -s loop-a "$S/etc/loop-b"
 # disk NAME KIND: T/NAME.qcow2, read-only, its root partition KIND (btrfs, ext4, none),
 # filled from DIR where given.
 disk() {
@@ -212,20 +214,25 @@ pert=$(fn "$CODE/lib.sh" image_resolve_btrfs | sed '/image_link_climbs/s/return 
 ( eval "$pert"; image_resolve "$R" /etc/d/l ) >/dev/null 2>&1; rc=$?
 check "the perturbation: with the refusal answering 1, the status is 1, which the check above fails" \
     test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_btrfs)" -a "$rc" = 1
-# A long-target link (/etc/long-link, its target 76 bytes): btrfs resolves it; on ext4,
-# whose stat prints no fast line for it, the target cannot be read, and the link is
-# refused, 2, never reported missing.
+# A long-target link (/etc/long-link, its target 76 bytes). ext4 keeps it in a block, and
+# debugfs's stat prints no fast line for it, so the ext4 reader reads the link's block with
+# cat, its length checked against the inode's size, and resolves it as btrfs does. A target
+# it cannot read whole is refused, 2, never reported missing.
 check "the long target is over 60 bytes, and debugfs prints no fast line for it" \
     eval 'test "${#LONG}" -gt 60 && ! debugfs -c -R "stat /etc/long-link" "$T/re/root.raw" 2>/dev/null | grep -q "^Fast link dest:"'
 check "btrfs resolves the long-target link to its file" test "$(image_resolve "$R" /etc/long-link)" = "$LONG"
-image_resolve "$T/re" /etc/long-link >"$T/r.out" 2>"$T/r.err"; rc=$?
-check "on ext4 it is 2, naming the link whose target cannot be read, and prints no path" \
+check "and so does ext4, from the link's block" test "$(image_resolve "$T/re" /etc/long-link)" = "$LONG"
+# A block read short of the inode's size: debugfs stood in, its cat cut to 10 bytes.
+( debugfs() { case " $* " in *' -R cat '*) command debugfs "$@" | head -c 10 ;; *) command debugfs "$@" ;; esac; }
+  image_resolve "$T/re" /etc/long-link ) >"$T/r.out" 2>"$T/r.err"; rc=$?
+check "a target read short is 2, naming the link whose target cannot be read, and prints no path" \
     test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -cF '/etc/long-link is a link whose target cannot be read' "$T/r.err")" = 1
-# The perturbation: that refusal answering 1, as it did, gives status 1, which fails it.
-pert=$(fn "$CODE/lib.sh" image_resolve_ext4 | sed '/target cannot be read/s/return 2; }$/return 1; }/')
+# The perturbation: the target read from the fast line alone, as before 2026-11-17's
+# fourth review pass, gives 2 for the long target, which the ext4 check above fails.
+pert=$(fn "$CODE/lib.sh" image_resolve_ext4 | sed 's/^\( *\)t=\$(debugfs -c -R "cat .*$/\1t=""/')
 ( eval "$pert"; image_resolve "$T/re" /etc/long-link ) >/dev/null 2>&1; rc=$?
-check "the perturbation: with the refusal answering 1, the status is 1, which the check above fails" \
-    test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_ext4)" -a "$rc" = 1
+check "the perturbation: with the fast line alone, the long target is 2, which the check above fails" \
+    test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_ext4)" -a "$rc" = 2
 
 # ---- image_late_writes on btrfs, as the proof records it.
 image_late_writes "$R" >"$T/late.out" 2>&1
@@ -245,8 +252,141 @@ mkdir -p "$T/rx"; cp "$T/e.part" "$T/rx/root.raw"; echo btrfs >"$T/rx/fs"
 image_get "$T/rx" /etc/hostname "$T/x" 2>"$T/x.err"; rc=$?
 check "an ext4 root read as btrfs: image_get is 2, naming btrfs restore's failure" \
     test "$rc" = 2 -a "$(grep -c '^image reads: btrfs restore exited' "$T/x.err")" = 1
-check "no read leaves a restore directory behind" \
-    test -z "$(find "$T/rb" "$T/rn" "$T/rx" -maxdepth 1 \( -name 'restore.*' -o -name 'cat.*' \) | head -1)"
+# ---- The shared statuses, row for row (the Planner's call of 2026-11-17, on CodeRabbit's
+# review of pull request 35): each read below gives the same status on the btrfs disk and
+# on the ext4 disk, and a read that does not answer 0 prints nothing and copies nothing.
+# For a root the reader cannot read, each disk's partition is read as the other kind.
+mkdir -p "$T/rxe"; cp "$T/b.part" "$T/rxe/root.raw"; echo ext4 >"$T/rxe/fs"
+# read_row DIR FN PATH: the read's status; what it printed, and get's copy, in $T/row.out.
+read_row() {
+    local rc=0
+    rm -f -- "$T/row.out" "$T/row.get"
+    if [ "$2" = get ]; then
+        image_get "$1" "$3" "$T/row.get" >"$T/row.out" 2>"$T/row.err" || rc=$?
+        [ ! -e "$T/row.get" ] || cat -- "$T/row.get" >>"$T/row.out"
+    else
+        "image_$2" "$1" "$3" >"$T/row.out" 2>"$T/row.err" || rc=$?
+    fi
+    return "$rc"
+}
+# row_dirs WHICH: the btrfs and the ext4 directory a row reads (WHICH: disks or unread).
+row_dirs() { if [ "$1" = unread ]; then echo "$T/rx $T/rxe"; else echo "$R $T/re"; fi; }
+#     row               which  read     path               status
+ROWS='present-file      disks  state    /etc/hostname      0
+present-file      disks  get      /etc/hostname      0
+present-file      disks  cat      /etc/hostname      0
+present-file      disks  resolve  /etc/hostname      0
+present-dir       disks  ls       /etc/d             0
+present-dir       disks  files    /etc/d             0
+absent            disks  state    /etc/hostnme       1
+absent            disks  get      /etc/hostnme       2
+absent            disks  cat      /etc/hostnme       2
+absent            disks  ls       /etc/nothing       1
+absent            disks  files    /etc/nothing       2
+absent            disks  resolve  /etc/hostnme       1
+unreadable        unread state    /etc/hostname      2
+unreadable        unread get      /etc/hostname      2
+unreadable        unread cat      /etc/hostname      2
+unreadable        unread ls       /etc               2
+unreadable        unread files    /etc               2
+unreadable        unread resolve  /etc/hostname      2
+under-link        disks  state    /etc/link-dir/e    2
+under-link        disks  state    /etc/up/hostname   2
+under-link        disks  get      /etc/up/hostname   2
+under-link        disks  cat      /etc/link-dir/e/f  2
+under-link        disks  ls       /etc/link-dir/e    2
+under-link        disks  files    /etc/up/d          2
+under-link        disks  resolve  /etc/link-dir/e    2
+under-link        disks  state    /etc/dangling/x    2
+under-file        disks  state    /etc/hostname/x    1
+under-file        disks  get      /etc/hostname/x    2
+under-file        disks  cat      /etc/hostname/x    2
+under-file        disks  ls       /etc/hostname/x    1
+under-file        disks  files    /etc/hostname/x    2
+under-file        disks  resolve  /etc/hostname/x    1
+climbing-target   disks  resolve  /etc/d/l           2
+long-target       disks  resolve  /etc/long-link     0
+dangling-target   disks  state    /etc/dangling      0
+dangling-target   disks  get      /etc/dangling      2
+dangling-target   disks  resolve  /etc/dangling      1
+link-loop         disks  resolve  /etc/loop-a        2
+dir-for-file      disks  get      /etc/d             2
+dir-for-file      disks  cat      /etc/d             2
+file-for-dir      disks  ls       /etc/hostname      2
+file-for-dir      disks  files    /etc/hostname      2
+link-for-file     disks  get      /etc/d/l           2
+link-for-dir      disks  ls       /etc/link-dir      2
+link-for-dir      disks  files    /etc/link-dir      2'
+while read -r -u 3 name which fn path want; do
+    read -r bd ed <<<"$(row_dirs "$which")"
+    sb=0; read_row "$bd" "$fn" "$path" || sb=$?; cp -- "$T/row.out" "$T/row.btrfs"
+    se=0; read_row "$ed" "$fn" "$path" || se=$?; cp -- "$T/row.out" "$T/row.ext4"
+    if [ "$want" = 0 ]; then
+        # The same output on both, but for ls, whose lines are each tool's own; state prints
+        # none.
+        check "$name: $fn $path is 0 on btrfs and on ext4, with the same output" \
+            eval '[ "$sb $se" = "0 0" ] && { [ "$fn" = state ] || [ -s "$T/row.btrfs" ]; } && { [ "$fn" = ls ] || cmp -s "$T/row.btrfs" "$T/row.ext4"; }'
+    else
+        check "$name: $fn $path is $want on btrfs and on ext4, and nothing is read" \
+            eval '[ "$sb $se" = "$want $want" ] && [ ! -s "$T/row.btrfs" ] && [ ! -s "$T/row.ext4" ]'
+    fi
+    [ "$sb $se" = "$want $want" ] || echo "     $name $fn $path: btrfs $sb, ext4 $se"
+done 3<<<"$ROWS"
+
+# The perturbations, one for each row this pass changed: each read as it stood before it
+# (the ext4 readers of 2026-11-17's third review pass, and the btrfs loop's exit), and each
+# changed row then gives its old status, which the row's check above fails.
+# pert_status TEXT DIR FN PATH: the read's status with TEXT evaluated first.
+pert_status() { ( eval "$1"; read_row "$2" "$3" "$4" ); echo $?; }
+OLD_CAT='image_cat_ext4() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }'
+OLD_LS='image_ls_ext4() { local o; o=$(debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null); [ -n "$o" ] || return 1; printf "%s\n" "$o"; }'
+OLD_RESOLVE='image_resolve_ext4() {
+    local dir=$1 p=$2 n=0 o t
+    while [ "$n" -lt 8 ]; do
+        o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
+        grep -q "Type: symlink" <<<"$o" || { printf "%s\n" "$p"; return 0; }
+        t=$(sed -n "s/^Fast link dest: \"\(.*\)\"$/\1/p" <<<"$o" | head -1)
+        [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2; }
+        ! image_link_climbs "$p" "$t" || return 2
+        case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
+        n=$((n + 1))
+    done
+    return 1
+}'
+NO_ABOVE='image_find_ext4() { image_stat_ext4 "$1" "$2"; }'
+GET_ABSENT_1=$(fn "$CODE/lib.sh" image_get_ext4 | sed '/is absent from the image/s/return 2; }$/return 1; }/')
+FILES_ABSENT_0=$(fn "$CODE/lib.sh" image_files_ext4 | sed '/is absent from the image/s/return 2; }$/return 0; }/')
+LOOP_1=$(fn "$CODE/lib.sh" image_resolve_btrfs | sed '/more than 8 links/{n;s/return 2/return 1/}')
+check "each perturbation's text differs from the reader it stands in" \
+    eval '[ "$GET_ABSENT_1" != "$(fn "$CODE/lib.sh" image_get_ext4)" ] && [ "$FILES_ABSENT_0" != "$(fn "$CODE/lib.sh" image_files_ext4)" ] && [ "$LOOP_1" != "$(fn "$CODE/lib.sh" image_resolve_btrfs)" ]'
+# pert NAME TEXT DIR "FN PATH WANT"...: each row's status under TEXT is not its WANT.
+pert() {
+    local name=$1 text=$2 dir=$3 r fn path want got bad=""; shift 3
+    for r; do
+        read -r fn path want <<<"$r"
+        got=$(pert_status "$text" "$dir" "$fn" "$path")
+        [ "$got" != "$want" ] || bad+=" $fn:$path"
+        printf '     %s: %s %s gives %s, not %s\n' "$name" "$fn" "$path" "$got" "$want"
+    done
+    check "the perturbation ($name): each row it touches fails its check" test -z "$bad"
+}
+pert "no test of the directories above, on ext4" "$NO_ABOVE" "$T/re" \
+    "state /etc/link-dir/e 2" "state /etc/up/hostname 2" "get /etc/up/hostname 2" "cat /etc/link-dir/e/f 2" \
+    "ls /etc/link-dir/e 2" "files /etc/up/d 2" "state /etc/dangling/x 2" "state /etc/hostname/x 1"
+pert "the ext4 get answering 1 for an absence" "$GET_ABSENT_1" "$T/re" "get /etc/hostnme 2"
+pert "the old ext4 cat" "$OLD_CAT" "$T/re" "cat /etc/hostnme 2" "cat /etc/d 2" "cat /etc/hostname/x 2"
+pert "the old ext4 cat, unreadable root" "$OLD_CAT" "$T/rxe" "cat /etc/hostname 2"
+pert "the old ext4 ls" "$OLD_LS" "$T/re" "ls /etc/hostname 2" "ls /etc/link-dir 2"
+pert "the old ext4 ls, unreadable root" "$OLD_LS" "$T/rxe" "ls /etc 2"
+pert "the ext4 files answering 0 for an absence" "$FILES_ABSENT_0" "$T/re" "files /etc/nothing 2"
+pert "the old ext4 resolve" "$OLD_RESOLVE" "$T/re" \
+    "resolve /etc/hostnme 1" "resolve /etc/dangling 1" "resolve /etc/long-link 0" "resolve /etc/loop-a 2" \
+    "resolve /etc/link-dir/e 2" "resolve /etc/hostname/x 1"
+pert "the old ext4 resolve, unreadable root" "$OLD_RESOLVE" "$T/rxe" "resolve /etc/hostname 2"
+pert "the btrfs loop answering 1" "$LOOP_1" "$R" "resolve /etc/loop-a 2"
+
+check "no read leaves a restore directory or a cat file behind" \
+    test -z "$(find "$T/rb" "$T/re" "$T/rn" "$T/rx" "$T/rxe" -maxdepth 1 \( -name 'restore.*' -o -name 'cat.*' \) | head -1)"
 
 for d in rb re rn; do image_close "$T/$d"; done
 check "image_close stops every export, and no FUSE export is left mounted under the test's directory" \

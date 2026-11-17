@@ -6,7 +6,7 @@
 # review of pull request 31, 2026-11-15). Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need mke2fs debugfs
-eval "$(fn "$CODE/lib.sh" image_fs image_state image_state_ext4 image_files image_files_ext4 image_late_writes)" || exit 1
+eval "$(fn "$CODE/lib.sh" image_fs image_state image_state_ext4 image_stat_ext4 image_find_ext4 image_files image_files_ext4 image_late_writes)" || exit 1
 # mk NAME: the image directory NAME, its root.raw built from $T/src-NAME, and its filesystem's
 # type recorded as image_open records it. t-btrfs-reads.sh runs the same reads on btrfs.
 mk() { mkdir -p "$T/$1" && mke2fs -q -t ext4 -d "$T/src-$1" "$T/$1/root.raw" 8M && echo ext4 >"$T/$1/fs"; }
@@ -77,10 +77,11 @@ check "an absent lastlog lists nothing, and is not a failed listing" \
 late nolog
 check "no /var/log keeps its own finding" has nolog '^PROOF-FAIL: the offline read could not list /var/log in the sealed image$'
 
-# image_files alone: status 2 on a listing that did not complete, 0 and nothing on an
-# absent path.
+# image_files alone: status 2 on a listing that did not complete, and on an absent path,
+# named, as on btrfs (an absence is image_state's call; the shared statuses of 2026-11-17).
 rc=0; image_files "$T/short" /var/log >/dev/null 2>&1 || rc=$?
 check "image_files returns 2 on a damaged directory" [ "$rc" = 2 ]
-rc=0; out=$(image_files "$T/log" /var/nothing 2>&1) || rc=$?
-check "image_files on an absent path: status 0, nothing printed" eval '[ "$rc" = 0 ] && [ -z "$out" ]'
+rc=0; out=$(image_files "$T/log" /var/nothing 2>"$T/abs.err") || rc=$?
+check "image_files on an absent path: status 2, nothing listed, the path named" \
+    eval '[ "$rc" = 2 ] && [ -z "$out" ] && grep -qx "image_files: /var/nothing is absent from the image" "$T/abs.err"'
 finish
