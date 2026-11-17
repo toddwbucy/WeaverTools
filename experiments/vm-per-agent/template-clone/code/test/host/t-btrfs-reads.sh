@@ -166,4 +166,13 @@ for d in rb re rn; do image_close "$T/$d"; done
 check "image_close stops every export" test "$(qsd_count)" = 0 -a ! -e "$T/rb/root.raw"
 check "and the image read is unchanged: the reads export it read-only and write nothing into it" \
     test "$(sha256sum "$T/b.qcow2" | cut -d' ' -f1)" = "$before" -a -z "$(grep -n 'writable=on\|read-only=off' "$CODE/lib.sh")"
+# The offline mock reads the seal's verdict through stand-in readers, by its text alone
+# (the mock runs only in a build guest): image_get_present reads image_state before
+# image_get, so each place it stands in image_get stands in image_state too (the 2.0
+# build's third attempt of 2026-11-17 stopped at the mock on that).
+MOCK=$CODE/test/offline-mock.sh
+check "image_get_present reads image_state, then image_get" \
+    eval '[ "$(fn "$CODE/lib.sh" image_get_present | grep -oE "image_(state|get) " | tr -d " " | tr "\n" " ")" = "image_state image_get " ]'
+check "the mock stands in image_state wherever it stands in image_get" \
+    eval 'n=$(grep -cE "(^|[;[:space:]])image_get\(\) \{" "$MOCK"); [ "$n" -ge 2 ] && [ "$(grep -cE "(^|[;[:space:]])image_state\(\) \{" "$MOCK")" = "$n" ]'
 finish

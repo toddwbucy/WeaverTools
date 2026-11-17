@@ -512,8 +512,8 @@ check "clone.sh step: a failed guest step exits non-zero, and nothing after it r
 check "and a step that passes goes on" test $? = 0 -a "$(grep -c '^after the step' "$T/cstep2.out")" = 1
 # seal: virsh_ and qemu-img recorded, the appliance's directory a stand-in. The final
 # step's verdict is read from IMG, a stand-in for the sealed image's root filesystem, by
-# image_open, image_get and image_close as functions. T/read-fails makes image_get fail as
-# a read error (2), not an absent file (1).
+# image_open, image_state, image_get and image_close as functions. T/read-fails makes
+# image_state and image_get fail as a read error (2), not an absent file (1).
 TD=$T/appliance
 IMG=$T/sealed-image
 A1=1111111111111111111111111111111111111111 A2=2222222222222222222222222222222222222222
@@ -555,7 +555,12 @@ sealrun() {
                        check) echo '{"image-end-offset": 4096, "allocated-clusters": 0}' ;;
                        info) case " $* " in *" --output=json "*) echo '{"cluster-size": 65536, "virtual-size": 4096}' ;; esac ;;
                    esac; }
+      # The image's reads, as lib.sh's give them on either filesystem: image_state 0 for a
+      # file that stands, 1 for one absent and 2 for a read that failed, which
+      # image_get_present reads before image_get (release 2.0's readers).
       image_open() { echo "image_open $*" >>"$T/host-calls"; }
+      image_state() { [ ! -e "$T/read-fails" ] || { echo "image_state: a stand-in read error" >&2; return 2; }
+                      [ -e "$IMG$2" ] || return 1; }
       image_get() { [ ! -e "$T/read-fails" ] || { echo "image_get: a stand-in read error" >&2; return 2; }
                     [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
       image_close() { :; }
@@ -642,7 +647,8 @@ head -c 4096 /dev/zero >"$TD/appliance.qcow2"; chmod 0644 "$TD/appliance.qcow2";
   NAME=mock-appliance DIR=$TD DISK=$TD/appliance.qcow2 WA_COMMIT=$A1 WW_COMMIT=$A2 VERSION=1.0
   virsh_() { echo "virsh_ $*" >>"$T/host-calls"; case $1 in domstate) echo "shut off" ;; dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk></devices></domain>\n" "$2" "$DISK" ;; esac; }
   qemu-img() { echo "qemu-img $*" >>"$T/host-calls"; }
-  image_open() { :; }; image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }
+  image_open() { :; }; image_state() { [ -e "$IMG$2" ] || return 1; }
+  image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }; image_close() { :; }
   seal_verdict ) >"$T/seal-leftover.out" 2>&1
 check "a compacted copy left by a run cut short is refused, kept, and nothing is marked sealed" \
     test $? = 1 -a "$(grep -c 'REFUSED: .*appliance\.compact\.part stands, left by a compaction cut short\. It may be removed by hand, alone, and verdict run again\. destroy removes the whole build, the disk with it' "$T/seal-leftover.out")" = 1 \
