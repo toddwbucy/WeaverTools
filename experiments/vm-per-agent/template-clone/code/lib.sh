@@ -613,35 +613,44 @@ image_restore() {
     rm -f -- "$out.log"
     printf '%s\n' "$out"
 }
-# image_came_out OUT PATH: 0 where PATH came out into OUT, as a file, a directory or a link.
-image_came_out() { [ -e "$1$2" ] || [ -L "$1$2" ]; }
-# image_state_btrfs DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where
-# that cannot be told. Absent means PATH did not come out and the deepest directory above
-# it that did is a directory, not a link (a path through a link is not read, status 2).
-image_state_btrfs() {
-    local out a rc
-    out=$(image_restore "$1" "$2") || return 2
-    if image_came_out "$out" "$2"; then
-        rc=0
-    else
-        a=${2%/*}
-        while [ -n "$a" ] && ! image_came_out "$out" "$a"; do a=${a%/*}; done
-        if [ -L "$out$a" ]; then
-            echo "image_state: $2 lies under $a, a link, which the read does not follow" >&2; rc=2
-        elif [ -d "$out$a" ] || [ -z "$a" ]; then rc=1
-        else rc=1   # under a regular file, nothing stands
+# image_came_out OUT PATH: 0 where PATH came out into OUT, as a file, a directory or a link;
+# 1 where it did not; 2, the cause on stderr, where a directory above it came out as a
+# link. Each directory above PATH is tested from the top down with -L, which follows no
+# link at the name it tests, so no test here passes through a link: a link restored out of
+# the image keeps its target as stored, and on the host an absolute one (/etc/d -> /etc)
+# leads out of OUT, to the host's own files (CodeRabbit on pull request 35, 2026-11-17).
+image_came_out() {
+    local a="" rest=${2#/}
+    while [ "${rest#*/}" != "$rest" ]; do
+        a=$a/${rest%%/*}; rest=${rest#*/}
+        if [ -L "$1$a" ]; then
+            echo "image reads: $2 lies under $a, a link in the image, which the read does not follow" >&2
+            return 2
         fi
-    fi
+    done
+    [ -L "$1$2" ] || [ -e "$1$2" ]
+}
+# image_state_btrfs DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where
+# that cannot be told. Absent means PATH did not come out and no directory above it came
+# out as a link (a path through a link is not read, status 2).
+image_state_btrfs() {
+    local out rc=0
+    out=$(image_restore "$1" "$2") || return 2
+    image_came_out "$out" "$2" || rc=$?
     rm -rf -- "${out:?}"
     return "$rc"
 }
 # image_get_btrfs DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 2, the
-# cause on stderr, where PATH did not come out (named) or is not a regular file.
+# cause on stderr, where PATH did not come out (named), lies under a link, or is not a
+# regular file.
 image_get_btrfs() {
-    local dir=$1 path=$2 out=$3 r rc=0
+    local dir=$1 path=$2 out=$3 r rc=0 c=0
     rm -f -- "$out"
     r=$(image_restore "$dir" "$path") || return 2
-    if ! image_came_out "$r" "$path"; then
+    image_came_out "$r" "$path" || c=$?
+    if [ "$c" = 2 ]; then
+        rc=2
+    elif [ "$c" != 0 ]; then
         echo "image_get: $path did not come out of the image (absent, or not the name asked for)" >&2; rc=2
     elif [ -L "$r$path" ] || [ ! -f "$r$path" ]; then
         echo "image_get: $path is not a regular file" >&2; rc=2
@@ -666,7 +675,7 @@ image_ls_btrfs() {
     local r rc=0
     image_state_btrfs "$1" "$2" || return $?
     r=$(image_restore "$1" "$2/**") || return 2
-    if [ -d "$r$2" ] && [ ! -L "$r$2" ]; then
+    if image_came_out "$r" "$2" && [ ! -L "$r$2" ] && [ -d "$r$2" ]; then
         find "$r$2" -mindepth 1 -maxdepth 1 -printf '%y %f\0%l\n' | sed 's/\x0\(.\)/ -> \1/; s/\x0$//' | LC_ALL=C sort
     else
         echo "image_ls: $2 did not come out of the image as a directory" >&2; rc=2
@@ -678,9 +687,12 @@ image_ls_btrfs() {
 # one a line, in C-locale order by path. 2, the cause on stderr, where PATH did not come out
 # (named) or is not a directory. An empty directory lists nothing and is status 0.
 image_files_btrfs() {
-    local dir=$1 path=${2%/} r rc=0
+    local dir=$1 path=${2%/} r rc=0 c=0
     r=$(image_restore "$dir" "$path/**") || return 2
-    if ! image_came_out "$r" "$path"; then
+    image_came_out "$r" "$path" || c=$?
+    if [ "$c" = 2 ]; then
+        rc=2
+    elif [ "$c" != 0 ]; then
         echo "image_files: $path did not come out of the image (absent, or not the name asked for)" >&2; rc=2
     elif [ -L "$r$path" ] || [ ! -d "$r$path" ]; then
         echo "image_files: $path is not a directory" >&2; rc=2
@@ -693,13 +705,16 @@ image_files_btrfs() {
 }
 # image_resolve_btrfs DIR PATH: PATH with each symbolic link in the image followed, 8 at
 # most, to a path that came out as no link. 1, the cause on stderr, where a link's target
-# or the path did not come out.
+# or the path did not come out, or lies under a link.
 image_resolve_btrfs() {
-    local dir=$1 p=$2 n=0 r t
+    local dir=$1 p=$2 n=0 r t c
     while [ "$n" -lt 8 ]; do
         r=$(image_restore "$dir" "$p") || return 1
-        if ! image_came_out "$r" "$p"; then
-            rm -rf -- "${r:?}"; echo "image_resolve: $p did not come out of the image" >&2; return 1
+        c=0; image_came_out "$r" "$p" || c=$?
+        if [ "$c" != 0 ]; then
+            rm -rf -- "${r:?}"
+            [ "$c" = 2 ] || echo "image_resolve: $p did not come out of the image" >&2
+            return 1
         fi
         if [ ! -L "$r$p" ]; then rm -rf -- "${r:?}"; printf '%s\n' "$p"; return 0; fi
         t=$(readlink -- "$r$p"); rm -rf -- "${r:?}"

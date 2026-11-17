@@ -47,6 +47,11 @@ head -c 100 /dev/zero >"$S/var/log/journal/abc/system.journal"; : >"$S/var/log/e
 head -c 32 /dev/zero >"$S/var/lib/systemd/random-seed"; echo w >"$S/var/lib/wtmpdb/wtmp.db"
 head -c 300000 /dev/urandom >"$S/opt/weaver/lib/libggml-cuda.so.0.1"
 ln -s libggml-cuda.so.0.1 "$S/opt/weaver/lib/libggml-cuda.so.0"
+# Absolute links in the image: one to /etc, and one to a stand-in for a host directory.
+# Restored, each keeps its target as stored, so on the host it leads out of the restore.
+HOSTSIDE=$T/host-side; mkdir -p "$HOSTSIDE/logs"
+echo "the host's own" >"$HOSTSIDE/hostname"; echo x >"$HOSTSIDE/logs/h.log"
+ln -s /etc "$S/etc/up"; ln -s "$HOSTSIDE" "$S/etc/out"
 # disk NAME KIND: T/NAME.qcow2, read-only, its root partition KIND (btrfs, ext4, none),
 # filled from DIR where given.
 disk() {
@@ -121,6 +126,28 @@ image_get_present "$R" /etc/weaver-appliance/SEAL-REFUSED "$T/p"; rc=$?
 check "image_get_present of an absent file is 1, and writes nothing" test "$rc" = 1 -a ! -e "$T/p"
 image_get_present "$R" /etc/weaver-appliance/stamp "$T/p"; rc=$?
 check "and of a present one is 0, the file copied" test "$rc" = 0 -a "$(cat "$T/p")" = "appliance.version = 1.1"
+
+# ---- A directory above the path that is a link in the image: never followed on the host.
+image_get "$R" /etc/up/hostname "$T/g" 2>"$T/g.err"; rc=$?
+check "image_get under an absolute link to /etc refuses, status 2, naming the link, and writes nothing" \
+    test "$rc" = 2 -a ! -e "$T/g" -a "$(grep -c 'lies under /etc/up, a link in the image' "$T/g.err")" = 1
+image_get "$R" /etc/out/hostname "$T/g" 2>"$T/g.err"; rc=$?
+check "under a link to a host directory, image_get refuses and copies nothing of the host's" \
+    test "$rc" = 2 -a ! -e "$T/g" -a "$(grep -c 'lies under /etc/out, a link in the image' "$T/g.err")" = 1
+check "image_state of that path is 2, not present" test "$(st /etc/out/hostname)" = 2
+image_files "$R" /etc/out/logs >"$T/f.out" 2>"$T/f.err"; rc=$?
+check "image_files under it is 2 and lists nothing of the host's" test "$rc" = 2 -a ! -s "$T/f.out"
+image_ls "$R" /etc/out/logs >"$T/l.out" 2>/dev/null; rc=$?
+check "image_ls under it is 2 and lists nothing" test "$rc" = 2 -a ! -s "$T/l.out"
+image_resolve "$R" /etc/out/hostname >"$T/r.out" 2>"$T/r.err"; rc=$?
+check "image_resolve under it fails, naming the link" \
+    test "$rc" = 1 -a ! -s "$T/r.out" -a "$(grep -c 'lies under /etc/out' "$T/r.err")" = 1
+# The perturbation: image_came_out as it stood until 2026-11-17, testing the whole path
+# with -e, which follows each link on the way, makes the same reads take the host's files.
+( image_came_out() { [ -e "$1$2" ] || [ -L "$1$2" ]; }
+  image_get "$R" /etc/out/hostname "$T/g-old"; image_files "$R" /etc/out/logs >"$T/f-old" ) 2>/dev/null
+check "the perturbation: with the old test, image_get copies the host's file and image_files lists the host's" \
+    test "$(cat "$T/g-old" 2>/dev/null)" = "the host's own" -a "$(cat "$T/f-old")" = "2 /etc/out/logs/h.log"
 
 # ---- image_ls, image_files, image_resolve.
 check "image_ls lists a directory's entries, a link with its target" \
