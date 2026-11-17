@@ -892,13 +892,15 @@ removal_judge() {
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 # remove_judged NAME...: NAME removed with what only it held (pacman -Rns), after a
-# simulation of the same call judged by removal_judge.
+# simulation of the same removal judged by removal_judge. The simulation is -Rs: pacman 7
+# refuses --nosave with --print, and -n chooses no package (it only skips the .pacsave
+# copies of changed backup files), so -Rs prints the same set -Rns removes.
 remove_judged() {
     local w rc=0
     w=$(mktemp -d) || return 1
     printf '%s\n' $KEEP $(cat "$BUILD/keep-driver") >"$w/keep"
     printf '%s\n' "$@" >"$w/purge"
-    sudo pacman -Rns --print --print-format '%n' --noconfirm "$@" >"$w/sim" 2>"$w/sim.err" \
+    sudo pacman -Rs --print --print-format '%n' --noconfirm "$@" >"$w/sim" 2>"$w/sim.err" \
         || { echo "the simulated removal refuses:"; cat "$w/sim.err"; rm -rf -- "$w"; return 1; }
     removal_judge "$w/sim" "$w/keep" "$BUILD/base-packages" "$w/purge" || { rm -rf -- "$w"; return 1; }
     echo "simulation: $(wc -l <"$w/sim") packages to remove, none of the runtime set, no base package but those named or matched"

@@ -361,4 +361,19 @@ ln -s ../../src/linux "$BTR/7.3.4-arch1-2/build"
 check "a build link, though it leads nowhere here: named" test "$(build_trees)" = "$BTR/7.3.4-arch1-2/build"
 rm -f -- "$BTR/7.3.4-arch1-2/build"; mkdir -p "$BTR/7.2.9-arch1-1/build"
 check "a build directory under another kernel: named" test "$(build_trees)" = "$BTR/7.2.9-arch1-1/build"
+
+# ---- 17. The judged removal's simulation, as remove_judged gives it, run against this
+# host's own pacman (7.1, the guest's), print-only and without root, on a package nothing
+# here requires: pacman accepts the options and prints the package. -Rns with --print is
+# refused by pacman 7 (the 2.0 build's fourth attempt of 2026-11-17 stopped there).
+if command -v pacman >/dev/null 2>&1 && LP=$(pacman -Qqtt 2>/dev/null | head -1) && [ -n "$LP" ]; then
+    SIM=$(fn "$STEPS" remove_judged | sed -n 's/^    sudo \(pacman -R[a-z]* --print .*--noconfirm\) "\$@" .*/\1/p')
+    check "remove_judged's simulation line is found, and is not -Rns" eval '[ -n "$SIM" ] && ! grep -q -- "-Rns" <<<"$SIM"'
+    out=$(eval "$SIM" '"$LP"' 2>&1); rc=$?
+    check "this host's pacman accepts it, print-only, and names the package ($LP)" eval '[ "$rc" = 0 ] && grep -qx -- "$LP" <<<"$out"'
+    out=$(pacman -Rns --print --print-format '%n' --noconfirm "$LP" 2>&1); rc=$?
+    check "and refuses -Rns with --print, as the guest's did" eval 'grep -q "may not be used together" <<<"$out"'
+else
+    echo "(no pacman here: the simulation's options are not read against a pacman)"
+fi
 finish
