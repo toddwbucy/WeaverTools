@@ -55,7 +55,7 @@ fails the survey; the survey never truncates a value.
 | `driver.version` | the NVIDIA driver's release | `/sys/module/nvidia/version` where the module is loaded, else `modinfo -F version nvidia`, which reads the module file and loads nothing | `^[0-9]+(\.[0-9]+){1,2}$` |
 | `driver.loaded` | whether the driver's kernel module is loaded | `/sys/module/nvidia` present | boolean |
 | `cuda_runtime.version` | the CUDA runtime the image carries | the real file name of `libcudart.so.<major>` as `ldconfig -p` finds it, after `libcudart.so.` | `^[0-9]+\.[0-9]+(\.[0-9]+)?$` |
-| `cards` | each NVIDIA card, in PCI bus order | `nvidia-smi --query-gpu=pci.bus_id,name,memory.total --format=csv,noheader,nounits`, sorted by address, run only where `driver.loaded` is true, since without the module `nvidia-smi` fails and may load it. Where the module is not loaded, `cards` is empty. The survey fails if sysfs holds an NVIDIA display function (vendor 0x10de, class 0x0300 or 0x0302) that this does not list | 0 to 16 objects |
+| `cards` | each NVIDIA card, in PCI bus order | `nvidia-smi --query-gpu=pci.bus_id,name,memory.total --format=csv,noheader,nounits`, sorted by address, run only where `driver.loaded` is true, since without the module `nvidia-smi` fails and may load it. `cards` is empty where the module is not loaded, and where `nvidia-smi` exits 6, its documented code for a query that found nothing. Any other failure fails the survey. The survey also fails if sysfs holds an NVIDIA display function (vendor 0x10de, class 0x0300 or 0x0302) that this does not list | 0 to 16 objects |
 | `cards[].ordinal` | the card's number in PCI bus order, the number the agent gives its devices and the declaration's devices take | the card's index in that order | equal to the index, from 0 |
 | `cards[].name` | the card's model, which names the card in the deployment tuple | `name` | 96 bytes |
 | `cards[].pci_address` | the card's address as the guest sees it, the ground of its ordinal | `pci.bus_id`, lowercased, its domain written as sysfs writes it | `^[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$`, strictly ascending |
@@ -212,6 +212,9 @@ nothing more.
 
 ## 8. Open
 
+- **A loaded module with no card.** Whether the open module loads where no card stands,
+  and that `nvidia-smi` then exits 6, is read from NVIDIA's documented return codes and
+  not yet measured on the image. The next cardless run of a booted image measures it.
 - **The survey's path in the image and the setup script's answer to a failed survey.**
   Settled by the setup script's act.
 - **The node kind of this document in the document graph.** The graph is suspended until
