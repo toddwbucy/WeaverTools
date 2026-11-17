@@ -787,6 +787,9 @@ EOF
                 echo "== the units running"; systemctl list-units --no-legend --no-pager --plain --state=running 2>&1 | awk "{print \$1}" | tr "\n" " "; echo
                 # create-agent.sh runs a command as nobody through sudo (WeaverAgent #581),
                 # as root once root has a password, so here, after the first login.
+                # The ESP read-only on the booted image (the Planner'"'"'s ruling of 2026-11-17).
+                echo "== the ESP at /efi"; o=$(findmnt -nvo SOURCE,FSTYPE,OPTIONS /efi 2>&1 | tail -1); echo "$o"
+                case ",$(findmnt -nvo OPTIONS /efi 2>/dev/null | tail -1)," in *,ro,*) echo "the ESP is mounted read-only" ;; *) echo "PROOF-FAIL: /efi is not mounted read-only ($o)" ;; esac
                 echo "== sudo as nobody, as root after the first login"
                 if sudo -n -u nobody true 2>&1; then echo "sudo runs a command as nobody"; else echo "PROOF-FAIL: sudo would not run a command as nobody, as root after the first login"; fi
                 echo "== the package sources after the first boot"; grep -vE "^[[:space:]]*(#|$)" /etc/pacman.d/mirrorlist || echo "(no source)"

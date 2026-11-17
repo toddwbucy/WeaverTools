@@ -185,6 +185,13 @@ check "and reads the inbound policy" test "$(fb | grep -c 'base inbound policy (
 check "the in-guest reads parse as bash" bash -n "$T/reads.sh"
 check "they time the boot: systemd-analyze's time, both critical chains, time-wait-sync and the units running" \
     test "$(grep -cE 'systemd-analyze time|critical-chain --no-pager multi-user.target|critical-chain --no-pager serial-getty@ttyS0.service|systemd-time-wait-sync.service|--state=running' "$T/reads.sh")" = 5
+# The ESP read, as the guest runs it, against a stand-in findmnt.
+EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
+er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }
+check "the ESP read: ro passes, rw is a PROOF-FAIL naming the mount" \
+    test "$(wc -l <<<"$EL")" = 2 -a "$(er ro,nosuid,umask=0077 | grep -c '^the ESP is mounted read-only$')" = 1 \
+         -a "$(er rw,nosuid | grep -c '^PROOF-FAIL: /efi is not mounted read-only (/dev/vda2 vfat rw,nosuid)$')" = 1 \
+         -a "$(er rw,nosuid | grep -c 'mounted read-only$')" = 0
 # The sudo read, as the guest runs it, against a stand-in sudo.
 SL=$(grep -F 'if sudo -n -u nobody true 2>&1; then' "$T/reads.sh")
 sr() { bash -c 'sudo() { return '"$1"'; }; '"$SL"; }

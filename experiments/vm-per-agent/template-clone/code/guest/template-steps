@@ -1398,30 +1398,35 @@ esp_partition() {
     [ "$(wc -w <<<"$n")" = 1 ] || { echo "the root's disk ${disk:-unknown} has $(wc -w <<<"$n") ESPs, not one" >&2; return 1; }
     echo "$n"
 }
-# esp_mount: the ESP mounted at ESP_DIR by its UUID through one fstab line, root's alone.
-# The base image's fstab names no ESP, so systemd-gpt-auto-generator serves it at ESP_DIR as
-# an automount (autofs, with the partition mounted over it on first access). Once fstab names
-# it, gpt-auto leaves it to fstab at every boot; here, in the build guest's running boot, a
-# reload and a stop of gpt-auto's two units hand ESP_DIR to the fstab line now.
+# esp_mount: the ESP mounted read-only at ESP_DIR by its UUID through one fstab line,
+# root's alone. Nothing writes the bootloader after the seal (boot-update is masked, and
+# GRUB needs no mounted ESP to boot), so the line mounts it ro (the Planner's ruling of
+# 2026-11-17); no step of the build writes it. The base image's fstab names no ESP, so
+# systemd-gpt-auto-generator serves it at ESP_DIR as an automount (autofs, with the
+# partition mounted over it on first access). Once fstab names it, gpt-auto leaves it to
+# fstab at every boot. Here, in the build guest's running boot, a reload drops gpt-auto's
+# units, but their autofs mount stays in the kernel: every layer at ESP_DIR is unmounted,
+# then the partition mounted once by the fstab line, as every later boot has it.
 esp_mount() {
-    local part uuid line a
+    local part uuid line n
     part=$(esp_partition) || return 1
     uuid=$(sudo blkid -s UUID -o value "$part") && [ -n "$uuid" ] || { echo "no UUID for $part"; return 1; }
-    line="UUID=$uuid $ESP_DIR vfat umask=0077 0 2"
+    line="UUID=$uuid $ESP_DIR vfat ro,umask=0077 0 2"
     sudo sed -i -E "\\|^[^#]*[[:space:]]$ESP_DIR[[:space:]]|d" /etc/fstab || return 1
     printf '%s\n' "$line" | sudo tee -a /etc/fstab >/dev/null || return 1
     sudo install -d -m 0755 "$ESP_DIR" || return 1
     sudo systemctl daemon-reload || return 1
-    if findmnt -nvo FSTYPE "$ESP_DIR" 2>/dev/null | grep -qx autofs; then
-        a=$(systemd-escape --path "$ESP_DIR")
-        sudo systemctl stop "$a.mount" "$a.automount" || return 1
-        echo "gpt-auto's automount at $ESP_DIR stopped: $a.automount, $a.mount"
-    fi
-    findmnt -n "$ESP_DIR" >/dev/null || sudo mount "$ESP_DIR" || return 1
+    for n in 1 2 3; do
+        findmnt -n "$ESP_DIR" >/dev/null 2>&1 || break
+        echo "unmounted at $ESP_DIR: $(findmnt -nvo SOURCE,FSTYPE "$ESP_DIR" | tail -1)"
+        sudo umount "$ESP_DIR" || return 1
+    done
+    ! findmnt -n "$ESP_DIR" >/dev/null 2>&1 || { echo "$ESP_DIR is still mounted after three unmounts"; return 1; }
+    sudo mount "$ESP_DIR" || return 1
     echo "/etc/fstab: $line"
 }
-# esp_check: ESP_DIR is the ESP, mounted, vfat, through one fstab line naming it by UUID,
-# and holds the loader the firmware's removable path boots. Prints each finding; exits 1
+# esp_check: ESP_DIR is the ESP, mounted read-only, vfat, through one fstab line naming it
+# by UUID, and holds the loader the firmware's removable path boots. Prints each finding; exits 1
 # on any.
 esp_check() {
     local part uuid bad="" n m
@@ -1429,9 +1434,12 @@ esp_check() {
     uuid=$(sudo blkid -s UUID -o value "$part" 2>/dev/null)
     n=$(grep -cE "^[^#]*[[:space:]]$ESP_DIR[[:space:]]" /etc/fstab)
     [ "$n" = 1 ] || bad+="/etc/fstab names $ESP_DIR $n times, not once. "
-    grep -qE "^UUID=$uuid[[:space:]]+$ESP_DIR[[:space:]]+vfat[[:space:]]" /etc/fstab || bad+="/etc/fstab does not mount the ESP (UUID ${uuid:-unknown}) at $ESP_DIR as vfat. "
+    grep -qE "^UUID=$uuid[[:space:]]+$ESP_DIR[[:space:]]+vfat[[:space:]]+(ro|ro,[^[:space:]]*|[^[:space:]]*,ro|[^[:space:]]*,ro,[^[:space:]]*)[[:space:]]" /etc/fstab \
+        || bad+="/etc/fstab does not mount the ESP (UUID ${uuid:-unknown}) at $ESP_DIR as vfat, read-only. "
     m=$(findmnt -nvo SOURCE "$ESP_DIR" 2>/dev/null | tr '\n' ' ')
     [ "$m" = "$part " ] || bad+="$ESP_DIR is not $part mounted alone (findmnt reads: ${m:-nothing}). "
+    m=$(findmnt -nvo OPTIONS "$ESP_DIR" 2>/dev/null | tail -1)
+    [[ ",$m," == *,ro,* ]] || bad+="$ESP_DIR is not mounted read-only (${m:-no options}). "
     sudo test -f "$ESP_DIR/EFI/BOOT/BOOTX64.EFI" || bad+="$ESP_DIR holds no EFI/BOOT/BOOTX64.EFI. "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
@@ -1514,7 +1522,7 @@ probes() {
     check "the stack record's agent directory not the state mount" "$(d=$(cat /etc/weaver/stack/agent-directory 2>&1); [ "$d" = "$AGENT_DIR" ] || echo "agent-directory reads '$d', not $AGENT_DIR")"
     check "the data mount points not as laid" "$(mounts_check 2>&1)"
     check "a swap" "$(swap_check 2>&1)"
-    check "the ESP not mounted at $ESP_DIR" "$(esp_check 2>&1)"
+    check "the ESP not mounted read-only at $ESP_DIR" "$(esp_check 2>&1)"
     check "a connector config or unit" "$(ls -d /etc/weaver-web /etc/systemd/system/weaver-web-* 2>/dev/null)"
     check "the stack's members and shell" "$(for b in worker weaver-admin weaver-trace-relay weaver-gate weaver-spu weaver-state busybox busybox.applets; do [ -f "/opt/weaver/bin/$b" ] || echo "missing $b"; done)"
     check "the connectors' programs" "$(for b in gate-con admin-con; do [ -x "/opt/weaver-web/bin/$b" ] || echo "missing $b"; done)"
