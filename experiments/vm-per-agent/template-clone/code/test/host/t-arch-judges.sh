@@ -376,4 +376,25 @@ if command -v pacman >/dev/null 2>&1 && LP=$(pacman -Qqtt 2>/dev/null | head -1)
 else
     echo "(no pacman here: the simulation's options are not read against a pacman)"
 fi
+
+# ---- 18. binutils: kept for the two base packages that require it, mkinitcpio and
+# libmakepkg-dropins (the 2.0 rehearsal of 2026-11-17: pacman refused its removal on both).
+eval "$(sed -n "/^BUILD_RE=/p; /^BINUTILS_FOR=/p" "$STEPS")"
+check "BUILD_RE leaves binutils, and still takes gcc and make" \
+    eval '! grep -qE "$BUILD_RE" <<<binutils && grep -qE "$BUILD_RE" <<<gcc && grep -qE "$BUILD_RE" <<<make'
+eval "$(steps binutils_check)" || exit 1
+pacman() { [ "$1 $2" = "-Qi binutils" ] || return 9
+    [ -e "$T/bu-absent" ] && { echo "error: package 'binutils' was not found"; return 1; }
+    printf 'Name            : binutils\nRequired By     : %s\nOptional For    : None\n' "$(cat "$T/bu-req")"; }
+echo "mkinitcpio  libmakepkg-dropins" >"$T/bu-req"
+check "required by the two alone, in either order: no line" test -z "$(binutils_check)"
+echo "base-devel  gcc  libmakepkg-dropins  mkinitcpio" >"$T/bu-req"
+check "required by a build package as well: named" \
+    test "$(binutils_check)" = "binutils is required by 'base-devel gcc libmakepkg-dropins mkinitcpio', not by $BINUTILS_FOR alone"
+echo "None" >"$T/bu-req"
+check "required by nothing: named, since it would then be a build tool kept for nothing" \
+    test "$(binutils_check)" = "binutils is required by '', not by $BINUTILS_FOR alone"
+: >"$T/bu-absent"
+check "absent: named" eval 'grep -q "^binutils is not installed" <<<"$(binutils_check)"'
+unset -f pacman
 finish

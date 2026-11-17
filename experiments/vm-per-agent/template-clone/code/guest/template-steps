@@ -728,7 +728,11 @@ KEEP="$RUNTIME_PKG acl gcc-libs python util-linux"
 HEADERS_RE='^(dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers)$'
 # BUILD_RE: a build package, by name, HEADERS_RE's among them. The cleanup removes every
 # installed package it matches, base or added, and the probe refuses the seal on any left.
-BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoconf|automake|bison|flex|libtool|m4|patch|pkgconf|binutils|fakeroot|debugedit|dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers|cuda|cuda-tools|cccl|nsight-.*|git|rust|rustup|cargo|meson|ninja|go|gdb)$'
+# Not binutils: two base packages require it, mkinitcpio (the initramfs the kernel package
+# depends on) and libmakepkg-dropins (which pacman depends on), so it stays, and
+# binutils_check holds it to those two (BINUTILS_FOR).
+BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoconf|automake|bison|flex|libtool|m4|patch|pkgconf|fakeroot|debugedit|dkms|nvidia(-open)?-dkms|linux(-(lts|zen|hardened|rt|rt-lts))?-headers|cuda|cuda-tools|cccl|nsight-.*|git|rust|rustup|cargo|meson|ninja|go|gdb)$'
+BINUTILS_FOR="libmakepkg-dropins mkinitcpio"
 # Base-image packages the cleanup also removes by name: cloud-init, removed outright once
 # the build seed is used (the Planner's ruling of 2026-11-16, the stronger form of the
 # operator's "off"), and growpart, which only cloud-init runs. Every other base package is
@@ -1265,6 +1269,16 @@ credential_consumers() {
 
 # imds_check: the cloud metadata service's units masked and its generator masked. Prints
 # each finding; exits 1 on any.
+# binutils_check: binutils installed and required by BINUTILS_FOR alone, as pacman reads
+# it; a line where it is required by anything else, or is absent.
+binutils_check() {
+    local t got want
+    t=$(LC_ALL=C pacman -Qi binutils 2>&1) || { echo "binutils is not installed, though $BINUTILS_FOR require it ($(head -1 <<<"$t"))"; return 0; }
+    got=$(sed -n 's/^Required By *: *//p' <<<"$t" | tr -s ' ' '\n' | grep -v '^None$' | LC_ALL=C sort | tr '\n' ' ')
+    want=$(printf '%s\n' $BINUTILS_FOR | LC_ALL=C sort | tr '\n' ' ')
+    [ "$got" = "$want" ] || echo "binutils is required by '${got% }', not by $BINUTILS_FOR alone"
+    return 0
+}
 # build_trees: each kernel's module build tree that stands (/usr/lib/modules/*/build), one
 # line each; none, no line.
 build_trees() {
@@ -1473,6 +1487,7 @@ probes() {
     check "static or device-link CUDA archives" "$(find /usr/local "$CUDA_HOME" -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | head -5)"
     check "build packages installed" "$(pacman -Qq 2>/dev/null | grep -E "$BUILD_RE")"
     check "a kernel's module build tree" "$(build_trees)"
+    check "binutils kept for more than the base packages that require it" "$(binutils_check)"
     check "test or sudo not GNU's and sudo's own" "$(o=$(pacman -Qoq /usr/bin/test 2>&1); [ "$o" = coreutils ] || echo "/usr/bin/test is ${o}'s"; o=$(pacman -Qoq /usr/bin/sudo 2>&1); [ "$o" = sudo ] || echo "/usr/bin/sudo is ${o}'s"; pacman -Qq uutils-coreutils sudo-rs 2>/dev/null)"
     # The man index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
     # a package owns is the distribution's; only what no package owns is a hit.
