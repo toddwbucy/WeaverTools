@@ -70,13 +70,32 @@ disk() {
 disk b btrfs && disk e ext4 && disk z none || exit 1
 mkdir -p "$T/noetc/var"; echo x >"$T/noetc/var/x"; disk n btrfs "$T/noetc" || exit 1
 qsd_count() { pgrep -u "$(id -u)" -f "qemu-storage-daemon.*$T/" | wc -l; }
+mounted() { findmnt -rn -o TARGET | grep -F "$T/"; }
 before=$(sha256sum "$T/b.qcow2" | cut -d' ' -f1)
+# Each export is named in OPENED before it is opened, and the EXIT trap closes every one,
+# a half-opened one included, so a stop anywhere (an exit, a failed open, a signal) leaves
+# no FUSE export on the host (CodeRabbit on pull request 35, 2026-11-17: a failure between
+# two opens exited past the closes). image_close is quiet and never fails, so the trap
+# names each export it finds still mounted, and a failed open is a FAIL line with
+# image_open's own cause above it.
+OPENED=""
+open_export() { OPENED+=" $2"; ( image_open "$1" "$2" ); }
+close_all() {
+    local d
+    for d in $OPENED; do
+        ! mounted | grep -qF "$d/" || echo "closing the export left under $d" >&2
+        image_close "$d"
+    done
+}
+trap close_all EXIT
+trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
+open_or_stop() { open_export "$1" "$2" || { no "image_open of $1 (the cause above)"; finish; exit 1; }; }
 
 # ---- image_open: the filesystem's type, and a root it cannot read refused.
-( image_open "$T/b.qcow2" "$T/rb" ) || exit 1
-( image_open "$T/e.qcow2" "$T/re" ) || exit 1
+open_or_stop "$T/b.qcow2" "$T/rb"
+open_or_stop "$T/e.qcow2" "$T/re"
 check "image_open records btrfs and ext4 by what blkid reads" test "$(cat "$T/rb/fs")" = btrfs -a "$(cat "$T/re/fs")" = ext4
-( image_open "$T/z.qcow2" "$T/rz" ) >"$T/z.out" 2>&1; rc=$?
+open_export "$T/z.qcow2" "$T/rz" >"$T/z.out" 2>&1; rc=$?
 check "a root partition with no filesystem is refused, named, and its export stopped" \
     test "$rc" = 1 -a "$(grep -c "holds 'no filesystem blkid knows', not ext4 or btrfs" "$T/z.out")" = 1 -a ! -e "$T/rz/root.raw"
 check "the reads dispatch: the same image_get reads either filesystem" \
@@ -178,7 +197,7 @@ check "the credential secret reads absent, the login record is listed, lastlog a
          -a "$(grep -cx '  2 /var/lib/wtmpdb/wtmp.db' "$T/late.out")" = 1 -a "$(grep -cx '  (absent)' "$T/late.out")" = 1
 
 # ---- A read that does not work is told apart from an absence.
-( image_open "$T/n.qcow2" "$T/rn" ) || exit 1
+open_or_stop "$T/n.qcow2" "$T/rn"
 image_state "$T/rn" /etc/hostname 2>"$T/n.err"; rc=$?
 check "a root with no /etc: image_state is 2, not an absence, and says /etc did not come out" \
     test "$rc" = 2 -a "$(grep -c '/etc did not come out' "$T/n.err")" = 1
@@ -190,7 +209,8 @@ check "no read leaves a restore directory behind" \
     test -z "$(find "$T/rb" "$T/rn" "$T/rx" -maxdepth 1 \( -name 'restore.*' -o -name 'cat.*' \) | head -1)"
 
 for d in rb re rn; do image_close "$T/$d"; done
-check "image_close stops every export" test "$(qsd_count)" = 0 -a ! -e "$T/rb/root.raw"
+check "image_close stops every export, and no FUSE export is left mounted under the test's directory" \
+    test "$(qsd_count)" = 0 -a ! -e "$T/rb/root.raw" -a -z "$(mounted)"
 check "and the image read is unchanged: the reads export it read-only and write nothing into it" \
     test "$(sha256sum "$T/b.qcow2" | cut -d' ' -f1)" = "$before" -a -z "$(grep -n 'writable=on\|read-only=off' "$CODE/lib.sh")"
 # The offline mock reads the seal's verdict through stand-in readers, by its text alone
