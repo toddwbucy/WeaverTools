@@ -92,7 +92,7 @@ DATA_MOUNTS='/mnt/weaver/models /mnt/weaver/state'
 # fixed at the build on the state mount, under which each agent is laid at setup. The
 # stack step hands it to bootstrap-stack.sh, which makes it root's, mode 0755, and empty.
 AGENT_DIR=/mnt/weaver/state
-DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
+DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh account-drop.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
 
