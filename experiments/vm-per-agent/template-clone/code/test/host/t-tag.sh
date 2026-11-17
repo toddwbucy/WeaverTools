@@ -51,11 +51,15 @@ printf '%s\n' "$B5_STACK" >"$T/b5-stack"
 check "build 5's own stack log reads 2867 passed, 0 failed" eval '[ "$(stack_tests "$T/b5-stack")" = "2867 passed, 0 failed" ]'
 
 # ---- stack_build's pipe: bootstrap's status, never tee's, and its output kept
-eval "$(fn "$STEPS" stack_build)"
+# cuda_env is the guest's own, on a stand-in toolkit directory, so CUDA_PATH comes from it
+# and never from the host's environment, which the harness clears. Until 2026-11-17 it was
+# stubbed with nothing, and stack_build's CUDA_PATH under set -u passed only on a host that
+# exports one (Codex on pull request 35).
+eval "$(fn "$STEPS" stack_build cuda_env)"
 fake=$T/wa; mkdir -p "$fake/deploy" "$T/home"
-cuda_env() { :; }; CXX_MAJOR=15 CUDA_LIBS=y COMPUTE_CAP=86; record() { :; }; record_read() { :; }
+CUDA_HOME=$T/cuda CXX_MAJOR=15 CUDA_LIBS=y COMPUTE_CAP=86; record() { :; }; record_read() { :; }
 eval "$(sed -n '/^AGENT_DIR=/p' "$STEPS")"
-sb() { printf '#!/usr/bin/env bash\necho "agent-dir=${WEAVER_AGENT_DIR:-none}"\nprintf "\\n== test\\n   9 passed, 0 failed\\n"; echo to-stderr >&2; exit %s\n' "$1" >"$fake/deploy/bootstrap-stack.sh"
+sb() { printf '#!/usr/bin/env bash\necho "agent-dir=${WEAVER_AGENT_DIR:-none}"\necho "cuda-path=${CUDA_PATH:-none}"\nprintf "\\n== test\\n   9 passed, 0 failed\\n"; echo to-stderr >&2; exit %s\n' "$1" >"$fake/deploy/bootstrap-stack.sh"
        ( WA=$fake HOME=$T/home; stack_build ) >"$T/sb.out" 2>&1; }
 sb 7; rc=$?
 check "a bootstrap that exits 7 makes stack_build return 7" test "$rc" = 7
@@ -65,6 +69,8 @@ sb 0; rc=$?
 check "a bootstrap that exits 0 makes stack_build return 0" test "$rc" = 0
 check "bootstrap is handed the agents' base on the state mount, WEAVER_AGENT_DIR=/mnt/weaver/state" \
     test "$AGENT_DIR" = /mnt/weaver/state -a "$(grep -cx 'agent-dir=/mnt/weaver/state' "$T/home/stack-out")" = 1
+check "bootstrap is handed CUDA_PATH as cuda_env sets it, the toolkit's directory, and the step's log names it" \
+    eval 'test "$(grep -cx "cuda-path=$T/cuda" "$T/home/stack-out")" = 1 && grep -q "^CUDA_PATH=$T/cuda NVCC_CCBIN=/usr/bin/g++-15 " "$T/sb.out"'
 REC='    record stack.tests "$tests (bootstrap-stack.sh'"'"'s test step)" || return 1'
 STACK_FN=$(fn "$STEPS" stack); PROOF_FN=$(fn "$BT" proof)
 check "stack records the count after the peak memory" eval 'grep -qxF -- "$REC" <<<"$(grep -A8 "record_read stack.peak-memory-mib" <<<"$STACK_FN")"'

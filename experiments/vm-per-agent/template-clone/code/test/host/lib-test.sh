@@ -28,6 +28,17 @@ BUILD_ENV_NAMES='OS VERSION DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT 
  CPUSET GUEST_ENV BASE_IMAGE DEB_ORIGINS SEAL_WAIT CI_WAIT FIRST_BOOT_CHANGES FIRST_BOOT_ADDS'
 # shellcheck disable=SC2086
 unset $BUILD_ENV_NAMES
+# The names the scripts set and export themselves, bar PATH (cuda_env, stack_build and the
+# toolchain's target directory), with CUDA_HOME, and every CUDA_ name the host exports. A
+# test that stubs the function setting one must not read the host's value in its place:
+# on 2026-11-17 t-tag stubbed cuda_env with nothing, and passed on a host that exports
+# CUDA_PATH and failed 5 checks on one that does not (Codex on pull request 35). Cleared
+# here, a test that leans on them fails on every host. t-harness-env.sh checks this list
+# against the scripts' exports.
+SET_ENV_NAMES='CUDA_HOME CUDA_PATH CARGO_TARGET_DIR NVCC_CCBIN CUDA_LIB_DIR CUDA_COMPUTE_CAP
+ WEAVER_AGENT_DIR'
+# shellcheck disable=SC2046,SC2086
+unset $SET_ENV_NAMES $(compgen -e CUDA_)
 CODE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/weaver-host-test.XXXXXX") || exit 1
 pass=0; fail=0
