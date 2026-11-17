@@ -703,21 +703,34 @@ image_files_btrfs() {
     rm -rf -- "${r:?}"
     return "$rc"
 }
+# image_link_climbs LINK TARGET: 0, the refusal on stderr, where TARGET holds a ".."
+# component. The reads never normalize such a target: a climbing path is what they do not
+# try to prove safe (the Planner's ruling of 2026-11-17, on CodeRabbit's review of pull
+# request 35), so the link is refused, not resolved, and no read is made through it.
+image_link_climbs() {
+    case /$2/ in
+        */../*) echo "image_resolve: $1 is a link to $2, which climbs with '..': refused, not resolved" >&2; return 0 ;;
+    esac
+    return 1
+}
 # image_resolve_btrfs DIR PATH: PATH with each symbolic link in the image followed, 8 at
-# most, to a path that came out as no link. 1, the cause on stderr, where a link's target
-# or the path did not come out, or lies under a link.
+# most, to a path that came out as no link. 1, the cause on stderr, where the path or a
+# link's target did not come out. 2, refused, where a link's target climbs with "..", a
+# path lies under a link, or the read fails, so a refused link is never reported missing.
 image_resolve_btrfs() {
     local dir=$1 p=$2 n=0 r t c
     while [ "$n" -lt 8 ]; do
-        r=$(image_restore "$dir" "$p") || return 1
+        r=$(image_restore "$dir" "$p") || return 2
         c=0; image_came_out "$r" "$p" || c=$?
         if [ "$c" != 0 ]; then
             rm -rf -- "${r:?}"
-            [ "$c" = 2 ] || echo "image_resolve: $p did not come out of the image" >&2
+            [ "$c" = 2 ] && return 2
+            echo "image_resolve: $p did not come out of the image" >&2
             return 1
         fi
         if [ ! -L "$r$p" ]; then rm -rf -- "${r:?}"; printf '%s\n' "$p"; return 0; fi
         t=$(readlink -- "$r$p"); rm -rf -- "${r:?}"
+        ! image_link_climbs "$p" "$t" || return 2
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
         n=$((n + 1))
     done
@@ -774,7 +787,7 @@ GGML_CUBIN_ARCHS="sm_86 sm_89 sm_120a sm_121a"
 CUOBJDUMP=${CUOBJDUMP:-cuobjdump}
 # image_resolve_ext4 DIR PATH: PATH with each symbolic link in the image followed, 8 at
 # most, to a path that is not a link. debugfs follows none, so each target is read from its
-# stat.
+# stat. 2, refused, where a link's target climbs with "..", as on btrfs.
 image_resolve_ext4() {
     local dir=$1 p=$2 n=0 o t
     while [ "$n" -lt 8 ]; do
@@ -782,6 +795,7 @@ image_resolve_ext4() {
         grep -q 'Type: symlink' <<<"$o" || { printf '%s\n' "$p"; return 0; }
         t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | head -1)
         [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 1; }
+        ! image_link_climbs "$p" "$t" || return 2
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
         n=$((n + 1))
     done

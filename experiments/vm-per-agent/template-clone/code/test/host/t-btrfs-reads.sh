@@ -159,8 +159,8 @@ check "image_files under it is 2 and lists nothing of the host's" test "$rc" = 2
 image_ls "$R" /etc/out/logs >"$T/l.out" 2>/dev/null; rc=$?
 check "image_ls under it is 2 and lists nothing" test "$rc" = 2 -a ! -s "$T/l.out"
 image_resolve "$R" /etc/out/hostname >"$T/r.out" 2>"$T/r.err"; rc=$?
-check "image_resolve under it fails, naming the link" \
-    test "$rc" = 1 -a ! -s "$T/r.out" -a "$(grep -c 'lies under /etc/out' "$T/r.err")" = 1
+check "image_resolve under it is 2, refused, naming the link" \
+    test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -c 'lies under /etc/out' "$T/r.err")" = 1
 # The perturbation: image_came_out as it stood until 2026-11-17, testing the whole path
 # with -e, which follows each link on the way, makes the same reads take the host's files.
 ( image_came_out() { [ -e "$1$2" ] || [ -L "$1$2" ]; }
@@ -186,6 +186,28 @@ check "image_resolve follows a link in the image to its file" \
     test "$(image_resolve "$R" /opt/weaver/lib/libggml-cuda.so.0)" = /opt/weaver/lib/libggml-cuda.so.0.1
 image_resolve "$R" /opt/weaver/lib/libnothing.so >/dev/null 2>&1; rc=$?
 check "and fails on a path that did not come out" test "$rc" = 1
+# A link whose target climbs with "..": /etc/d/l -> ../a.b, though /etc/a.b stands. It is
+# refused, 2, never resolved and never reported missing (the Planner's ruling of
+# 2026-11-17, on CodeRabbit's review of pull request 35), and no read is made through it:
+# each restore the resolve asks for is logged, and only the link itself is asked for.
+resolve_logged() {
+    ( eval "orig_$(declare -f image_restore)"
+      image_restore() { printf '%s\n' "${*:2}" >>"$T/restores"; orig_image_restore "$@"; }
+      image_resolve "$1" "$2" ) >"$T/r.out" 2>"$T/r.err"
+}
+: >"$T/restores"; resolve_logged "$R" /etc/d/l; rc=$?
+check "image_resolve of a link that climbs with '..' is 2, naming the link and its target, and prints no path" \
+    test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -cF "/etc/d/l is a link to ../a.b, which climbs with '..'" "$T/r.err")" = 1
+check "and reads only the link: no restore is asked for through it" test "$(cat "$T/restores")" = /etc/d/l
+image_resolve "$T/re" /etc/d/l >"$T/r.out" 2>"$T/r.err"; rc=$?
+check "the ext4 reader refuses it the same way, 2, naming it" \
+    test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -cF "/etc/d/l is a link to ../a.b, which climbs with '..'" "$T/r.err")" = 1
+# The perturbation: the climb's refusal answering 1, as image_resolve answered before,
+# fails the check above.
+pert=$(fn "$CODE/lib.sh" image_resolve_btrfs | sed '/image_link_climbs/s/return 2$/return 1/')
+( eval "$pert"; image_resolve "$R" /etc/d/l ) >/dev/null 2>&1; rc=$?
+check "the perturbation: with the refusal answering 1, the status is 1, which the check above fails" \
+    test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_btrfs)" -a "$rc" = 1
 
 # ---- image_late_writes on btrfs, as the proof records it.
 image_late_writes "$R" >"$T/late.out" 2>&1
