@@ -62,9 +62,9 @@ PRETTY_NAME=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-}")
 KVER=$(uname -r)
 # No dkms and no kernel headers: the driver's module comes prebuilt (driver, below).
 # base-devel holds the C toolchain, make, patch, fakeroot and makepkg's helpers; clang
-# carries libclang; openssl its headers.
+# carries libclang; openssl its headers. quota-tools is kept (KEEP).
 PACKAGES="base-devel gcc$CXX_MAJOR git curl ca-certificates cmake clang pkgconf python bzip2
-  make acl openssl jq sqlite"
+  make acl openssl jq sqlite quota-tools"
 
 # The build's fixed layout: one account (op, made by the seed), one checkout path and one
 # target path, since the binaries carry their build paths (the WeaverAgent seat counted
@@ -730,8 +730,11 @@ tuple_runtime_check() {
 # added is marked a dependency, and removed once nothing kept needs it): the CUDA runtime
 # package, the driver's packages (the route's list), acl (decommission's setfacl), the C++
 # runtime the members load (gcc-libs: libstdc++ and libgcc_s), python (the deploy scripts;
-# create-agent.sh needs 3.11 or later), and util-linux (runuser, root's drops to accounts).
-KEEP="$RUNTIME_PKG acl gcc-libs python util-linux"
+# create-agent.sh needs 3.11 or later), util-linux (runuser, root's drops to accounts), and
+# quota-tools: setquota sets the ext4 project quota on the agent's home, so the agent's own
+# writes cannot fill the state drive (the operator's ruling of 2026-11-17; create-agent.sh's
+# option, WeaverAgent #585). e2fsprogs, in the base image, carries chattr -p.
+KEEP="$RUNTIME_PKG acl gcc-libs python util-linux quota-tools"
 # HEADERS_RE: what builds a module against a kernel, by package: DKMS, the driver's DKMS
 # forms, and the headers of each of Arch's kernels (linux, -lts, -zen, -hardened, -rt,
 # -rt-lts). Not linux-api-headers: the kernel's userspace interface, which glibc and
@@ -747,10 +750,13 @@ BUILD_RE='^(base-devel|gcc|gcc[0-9]+|clang|llvm|lld|compiler-rt|cmake|make|autoc
 BINUTILS_FOR="libmakepkg-dropins mkinitcpio"
 # Base-image packages the cleanup also removes by name: cloud-init, removed outright once
 # the build seed is used (the Planner's ruling of 2026-11-16, the stronger form of the
-# operator's "off"), and growpart, which only cloud-init runs. Every other base package is
+# operator's "off"), growpart, which only cloud-init runs, and the QEMU guest agent, which
+# the image's builder installs and udev starts wherever the hypervisor offers its channel,
+# and which nothing in the appliance uses (the Planner's ruling of 2026-11-17): a host's
+# shutdown reaches the guest by ACPI, which the proof reads. Every other base package is
 # marked explicitly installed first, so it stays; the simulation refuses a base package
 # that would go and is not named here or matched by BUILD_RE.
-PURGE_BASE="cloud-init cloud-guest-utils"
+PURGE_BASE="cloud-init cloud-guest-utils qemu-guest-agent"
 CLOUD_INIT_UNITS="cloud-init-local.service cloud-init-main.service cloud-init-network.service
   cloud-config.service cloud-final.service"
 # unit_links_check: no link under /etc/systemd that leads nowhere: an enablement whose unit
@@ -828,9 +834,12 @@ UPDATE_UNITS="archlinux-keyring-wkd-sync.timer archlinux-keyring-wkd-sync.servic
 #   member of the appliance reads them.
 # - userdbd: nss-systemd and PID 1's dynamic users answer without it, and its one user
 #   here, sshd's key command, is removed (USERDB_SSH_LINK).
-# - journalctl's metrics socket, mountfsd, nsresourced and machines.target: no member of
-#   the appliance reads metrics, mounts images unprivileged, asks for a user namespace
-#   range or runs machines.
+# - journalctl's and networkd's metrics sockets, mountfsd, nsresourced and machines.target:
+#   no member of the appliance reads metrics, mounts images unprivileged, asks for a user
+#   namespace range or runs machines. networkd, without its metrics socket, serves none.
+# - time-wait-sync, which the image's builder enables: where no time server answers, it
+#   holds time-sync.target and the boot never finishes (the 2.0 rehearsal's proof of
+#   2026-11-17). timesyncd stays enabled, so the clock syncs where a server answers.
 # - boot-update, which would rewrite a systemd-boot in the ESP after the seal (the image
 #   boots by GRUB, which it would leave alone, but the rule takes the bootloader in), and
 #   boot-clear-sysfail (no boot counting).
@@ -851,6 +860,7 @@ UNUSED_UNITS="systemd-sysext.service systemd-sysext.socket systemd-sysext@.servi
   systemd-report-sign-tsm@.service
   systemd-userdbd.socket systemd-userdbd.service
   systemd-journalctl-metrics.socket systemd-journalctl-metrics@.service
+  systemd-networkd-varlink-metrics.socket systemd-time-wait-sync.service
   systemd-mountfsd.socket systemd-mountfsd.service
   systemd-nsresourced.socket systemd-nsresourced.service machines.target
   systemd-boot-update.service systemd-boot-clear-sysfail.service"
@@ -1301,6 +1311,39 @@ compiler_dirs() {
     done
     return 0
 }
+# quota_check MODE: the tools for the agent home's project quota, each from its package:
+# setquota and repquota (quota-tools), chattr and lsattr (e2fsprogs), mkfs.ext4. In the pre
+# pass they are tried on a small ext4 filesystem in a file, made with the quota and project
+# features and mounted with prjquota, as the setup formats and mounts the state drive: a
+# directory given a project ID and the inherit flag, a block limit set on the project, both
+# read back, then all of it unmounted and removed. The final pass reads presence alone.
+quota_check() {
+    local c p d o
+    for c in setquota:quota-tools repquota:quota-tools chattr:e2fsprogs lsattr:e2fsprogs mkfs.ext4:e2fsprogs; do
+        p=$(command -v "${c%%:*}") || { echo "${c%%:*} is not on PATH"; continue; }
+        [ "$(pacman -Qoq "$p" 2>/dev/null)" = "${c#*:}" ] || echo "$p is not ${c#*:}'s"
+    done
+    [ "$1" = pre ] || return 0
+    d=$(mktemp -d) || { echo "no scratch directory for the quota trial"; return 0; }
+    mkdir -- "$d/m" && truncate -s 64M "$d/q.img" || { echo "the quota trial's file could not be made"; rm -rf -- "${d:?}"; return 0; }
+    if ! o=$(mkfs.ext4 -q -F -O quota,project "$d/q.img" 2>&1); then
+        echo "mkfs.ext4 -O quota,project refused: $o"
+    elif ! o=$(sudo mount -o loop,prjquota "$d/q.img" "$d/m" 2>&1); then
+        echo "mount -o prjquota refused: $o"
+    else
+        sudo mkdir -- "$d/m/home"
+        sudo chattr -p 4242 +P "$d/m/home" 2>&1 || echo "chattr -p refused"
+        o=$(lsattr -pd "$d/m/home" 2>&1)
+        [[ "$o" =~ ^[[:space:]]*4242[[:space:]]+[^[:space:]]*P ]] || echo "lsattr reads '$o', not project 4242 with the inherit flag"
+        sudo setquota -P 4242 0 10240 0 0 "$d/m" 2>&1 || echo "setquota -P refused"
+        o=$(sudo repquota -P -v "$d/m" 2>&1)
+        grep -qE "^#4242[[:space:]]+[-+]+[[:space:]]+[0-9]+[[:space:]]+0[[:space:]]+10240[[:space:]]" <<<"$o" \
+            || echo "repquota does not read project 4242's limit of 10240 blocks: $(grep -m1 '4242' <<<"$o")"
+        sudo umount "$d/m" 2>&1 || echo "the quota trial's filesystem could not be unmounted ($d/m)"
+    fi
+    findmnt -n "$d/m" >/dev/null 2>&1 || rm -rf -- "${d:?}"
+    return 0
+}
 # binutils_check: binutils installed and required by BINUTILS_FOR alone, as pacman reads
 # it; a line where it is required by anything else, or is absent.
 binutils_check() {
@@ -1543,6 +1586,7 @@ probes() {
     check "build packages installed" "$(pacman -Qq 2>/dev/null | grep -E "$BUILD_RE")"
     check "a kernel's module build tree" "$(build_trees)"
     check "binutils kept for more than the base packages that require it" "$(binutils_check)"
+    check "the tools for the agent home's project quota" "$(quota_check "$mode")"
     check "test or sudo not GNU's and sudo's own" "$(o=$(pacman -Qoq /usr/bin/test 2>&1); [ "$o" = coreutils ] || echo "/usr/bin/test is ${o}'s"; o=$(pacman -Qoq /usr/bin/sudo 2>&1); [ "$o" = sudo ] || echo "/usr/bin/sudo is ${o}'s"; pacman -Qq uutils-coreutils sudo-rs 2>/dev/null)"
     # The man index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
     # a package owns is the distribution's; only what no package owns is a hit.
@@ -1578,6 +1622,7 @@ probes() {
     check "sshd not enabled for the first boot" "$(s=$(systemctl is-enabled sshd.service 2>/dev/null); [ "$s" = enabled ] || echo "sshd.service is ${s:-unknown}, not enabled")"
     check "sshd does not want sshdgenkeys" "$(grep -qx sshdgenkeys.service <<<"$(systemctl show -p Wants --value sshd.service 2>/dev/null | tr ' ' '\n')" || echo "sshd.service does not want sshdgenkeys.service")"
     check "cloud-init installed" "$(pacman -Qq cloud-init cloud-guest-utils 2>/dev/null; command -v cloud-init)"
+    check "the QEMU guest agent installed" "$(pacman -Qq qemu-guest-agent 2>/dev/null; command -v qemu-ga)"
     # SSH by key alone, and systemd's first-boot paths left and named (the operator's
     # rulings of 2026-11-16). In both passes: the settings are written by the cleanup.
     check "SSH settings not as built" "$(sshd_check 2>&1)"

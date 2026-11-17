@@ -524,10 +524,10 @@ PY
     # The verdict: every finding of the offline read's late writes and device code, of the
     # no-seed boot's capture, of the first boot and of the disk's owner and mode fails the
     # proof, after both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/power-off.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt, $out/power-off.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     # The pass names the sealed file the seal recorded, which the proof found equal, and
@@ -780,10 +780,14 @@ EOF
                 # The boot as systemd timed it, for the Planner: the critical chains to the
                 # system and to the serial console'"'"'s login, where time-wait-sync and the
                 # network wait stand in them, the slowest units, and what runs.
-                echo "== the boot, as systemd timed it"; systemd-analyze time 2>&1
+                # A boot that has not finished by now is held by a unit that waits on what
+                # this network cannot give (time-wait-sync did, before its mask).
+                echo "== the boot, as systemd timed it"; o=$(systemd-analyze time 2>&1); echo "$o"
+                case $o in *"Bootup is not yet finished"*) echo "PROOF-FAIL: the boot had not finished after the first login: $(systemctl list-jobs --no-legend --no-pager 2>&1 | head -3 | tr "\n" " ")" ;; esac
                 echo "== the critical chain to multi-user.target"; systemd-analyze critical-chain --no-pager multi-user.target 2>&1
                 echo "== the critical chain to the serial console login"; systemd-analyze critical-chain --no-pager serial-getty@ttyS0.service 2>&1
                 echo "== time-wait-sync"; systemctl show -p UnitFileState -p ActiveState -p Result systemd-time-wait-sync.service 2>&1 | tr "\n" " "; echo
+                [ "$(systemctl is-enabled systemd-time-wait-sync.service 2>/dev/null)" = masked ] || echo "PROOF-FAIL: time-wait-sync is not masked"
                 echo "== the slowest units"; systemd-analyze blame --no-pager 2>&1 | head -15
                 echo "== the units running"; systemctl list-units --no-legend --no-pager --plain --state=running 2>&1 | awk "{print \$1}" | tr "\n" " "; echo
                 # create-agent.sh runs a command as nobody through sudo (WeaverAgent #581),
@@ -859,12 +863,44 @@ EOF
         rm -f -- "$pdir/secret/pw" "$pdir/secret/askpass.pw"
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
+    proof_power_off "$pn" "$pdir/con/console.log" 2>&1 | tee "$out/power-off.txt"
     dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     tr -d '\r' <"$pdir/con/console.log" >"$out/first-boot-console.log" || true
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
 }
 
+# proof_power_off PN LOG: the hypervisor's power button pressed (ACPI), as a host's shutdown
+# or Cockpit presses it with no guest agent in the image (the Planner's ruling of
+# 2026-11-17), and the guest powering itself off through systemd. Read: libvirt names the
+# guest's own shutdown as the stop's reason, and the serial log after the press holds
+# systemd's power-off target and the kernel's power-down line (printed at every console
+# level), with no unit failing and no stop job waited on. Each that does not hold is a
+# PROOF-FAIL line. A guest not off within PROOF_ACPI seconds is left to dom_drop.
+proof_power_off() {
+    local pn=$1 log=$2 mark t=0 st after f
+    mark=$(stat -c %s -- "$log" 2>/dev/null) || mark=0
+    echo "== the power button (ACPI), as a host's shutdown presses it"
+    if ! virsh_ shutdown "$pn" --mode acpi >/dev/null 2>&1; then
+        echo "PROOF-FAIL: the hypervisor could not press $pn's power button (virsh shutdown --mode acpi)"
+        return 0
+    fi
+    until [ "$(virsh_ domstate "$pn" 2>/dev/null)" = "shut off" ]; do
+        [ "$t" -lt "${PROOF_ACPI:-120}" ] || break
+        proof_sleep 2; t=$((t + 2))
+    done
+    st=$(virsh_ domstate "$pn" --reason 2>/dev/null) || st=""
+    echo "the domain: ${st:-unread}, ${t}s after the press"
+    [ "$st" = "shut off (shutdown)" ] || echo "PROOF-FAIL: $pn did not power itself off within ${PROOF_ACPI:-120}s of the power button (${st:-unread})"
+    after=$(tail -c +"$((mark + 1))" -- "$log" 2>/dev/null | tr -d '\r' | sed 's/\x1b\[[0-9;]*[A-Za-z]//g')
+    echo "-- the serial log after the press: $(wc -l <<<"$after") lines"
+    grep -E 'Reached target System Power Off|reboot: Power down|\[FAILED\]|A stop job is running' <<<"$after" || true
+    grep -q 'Reached target System Power Off' <<<"$after" || echo "PROOF-FAIL: the serial log after the power button does not reach systemd's power-off target"
+    grep -q 'reboot: Power down' <<<"$after" || echo "PROOF-FAIL: the serial log after the power button holds no kernel power-down line"
+    f=$(grep -cE '\[FAILED\]|A stop job is running' <<<"$after" || true)
+    [ "$f" = 0 ] || echo "PROOF-FAIL: the power-off was not clean: $f unit(s) failed or a stop job was waited on (above)"
+    return 0
+}
 # proof_console OUT PDIR: the first login, typed at the serial console through QEMU's
 # socket in PDIR/con by console-drive.py, as the operator logs in: root at the prompt, the
 # password from PDIR/secret/pw given twice when the change is asked, then, in that session,

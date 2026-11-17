@@ -262,10 +262,12 @@ eval "$(sed -n '/^UNUSED_UNITS=/,/"$/p' "$STEPS")"; const USERDB_SSH_LINK; const
 for u in systemd-sysext.service systemd-confext.service systemd-homed.service systemd-tpm2-clear.service \
          systemd-sysupdate-notify-sysext.socket systemd-report.socket systemd-report-basic.socket systemd-userdbd.socket \
          systemd-journalctl-metrics.socket systemd-mountfsd.socket systemd-nsresourced.socket machines.target \
-         systemd-boot-update.service systemd-boot-clear-sysfail.service; do
+         systemd-boot-update.service systemd-boot-clear-sysfail.service \
+         systemd-networkd-varlink-metrics.socket systemd-time-wait-sync.service; do
     check "UNUSED_UNITS names $u" grep -qw -- "$u" <<<"$UNUSED_UNITS"
 done
-for u in systemd-pstore.service systemd-coredump.socket systemd-coredumpd.service; do
+for u in systemd-pstore.service systemd-coredump.socket systemd-coredumpd.service systemd-timesyncd.service \
+         systemd-networkd.service systemd-networkd.socket systemd-networkd-varlink.socket; do
     check "UNUSED_UNITS leaves $u, which the Planner keeps" eval '! grep -qw -- "$u" <<<"$UNUSED_UNITS"'
 done
 check "and the sysupdate daemon and its socket are among the update units" \
@@ -479,4 +481,40 @@ ctypes.CDLL("libc.so.6").updwtmp(sys.argv[1].encode(), ctypes.create_string_buff
 print("created" if os.path.exists(sys.argv[1]) else "absent")' "$T/wtmp-none")
     check "glibc's updwtmp creates no wtmp where none stands" test "$out" = absent
 fi
+
+# ---- 22. The QEMU guest agent removed by name at the cleanup, and probed absent in both
+# passes (the Planner's ruling of 2026-11-17).
+const PURGE_BASE
+check "PURGE_BASE names the guest agent beside cloud-init" \
+    eval 'grep -qw qemu-guest-agent <<<"$PURGE_BASE" && grep -qw cloud-init <<<"$PURGE_BASE"'
+check "the probes read the guest agent's package and its command" \
+    eval 'grep -qF "check \"the QEMU guest agent installed\" \"\$(pacman -Qq qemu-guest-agent 2>/dev/null; command -v qemu-ga)\"" <<<"$(fn "$STEPS" probes)"'
+
+# ---- 23. The tools for the agent home's project quota (the operator's ruling of
+# 2026-11-17): quota-tools built in and kept, and quota_check against stand-ins, which play
+# the loop filesystem the pre pass makes and reads back.
+const CXX_MAJOR; eval "$(sed -n '/^PACKAGES=/,/"$/p' "$STEPS")"; const KEEP
+check "quota-tools is installed and kept" eval 'grep -qw quota-tools <<<"$PACKAGES" && grep -qw quota-tools <<<"$KEEP"'
+check "the probes run quota_check in the pass they are in" \
+    eval 'grep -qF "check \"the tools for the agent home.s project quota\" \"\$(quota_check \"\$mode\")\"" <<<"$(fn "$STEPS" probes | sed "s/home'"'"'s/home.s/")"'
+eval "$(steps quota_check)" || exit 1
+for c in setquota repquota chattr lsattr mkfs.ext4 mount umount; do eval "$c() { echo \"\$*\" >>\"\$T/q-$c\"; }"; done
+pacman() { [ "$1" = -Qoq ] || return 1; case ${2##*/} in setquota|repquota) echo "${Q_OWNER:-quota-tools}" ;; *) echo e2fsprogs ;; esac; }
+lsattr() { echo "${Q_LSATTR-    4242 --------------e-----P-- $2}"; }
+repquota() { printf '%s\n' "*** Report for project quotas on device /dev/loop0" "${Q_REP-#4242     --       4       0   10240              1     0     0}"; }
+findmnt() { return 1; }
+qrun() { rm -f -- "$T"/q-*; mkdir -p "$T/qtmp"; TMPDIR=$T/qtmp quota_check "$1" 2>&1; }
+check "pre, all as the setup needs: no line, and the trial's directory gone" \
+    eval '[ -z "$(qrun pre)" ] && [ -z "$(ls -A "$T/qtmp")" ]'
+check "pre: made with the quota and project features, mounted with prjquota" \
+    eval 'grep -q -- "-q -F -O quota,project .*/q.img\$" "$T/q-mkfs.ext4" && grep -q -- "^-o loop,prjquota .*/q.img .*/m\$" "$T/q-mount"'
+check "pre: a project ID with inheritance on the home, a block limit on the project, unmounted" \
+    eval 'grep -q -- "^-p 4242 +P .*/m/home\$" "$T/q-chattr" && grep -q -- "^-P 4242 0 10240 0 0 .*/m\$" "$T/q-setquota" && grep -q "/m\$" "$T/q-umount"'
+check "pre: lsattr reading project 0 is named" eval 'Q_LSATTR="    0 ---------------------- x" has "^lsattr reads" qrun pre'
+check "pre: repquota with no limit on the project is named" eval 'Q_REP="#4242 -- 4 0 0 1 0 0" has "^repquota does not read project 4242" qrun pre'
+mount() { echo "mount: permission denied"; return 32; }
+check "pre: a mount refused is named, nothing set, and the trial's directory gone" \
+    eval 'has "^mount -o prjquota refused: mount: permission denied" qrun pre && [ ! -e "$T/q-chattr" ] && [ -z "$(ls -A "$T/qtmp")" ]'
+check "final: presence alone, nothing made or mounted" eval '[ -z "$(qrun final)" ] && [ ! -e "$T/q-mkfs.ext4" ]'
+check "a setquota that is not quota-tools' is named" eval 'Q_OWNER=other has "setquota is not quota-tools.s" qrun final'
 finish

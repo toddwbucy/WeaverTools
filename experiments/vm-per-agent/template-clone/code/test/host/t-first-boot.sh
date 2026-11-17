@@ -22,6 +22,8 @@ fi
 BT=$CODE/build-template.sh
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
 eval "$(fn "$BT" proof_first_boot proof_network proof_keyscan proof_console proof_refusal)"
+eval "$(fn "$BT" proof_power_off | sed '1s/^proof_power_off()/real_proof_power_off()/')"
+proof_power_off() { echo "== the power button (stand-in) $1 ${2##*/}"; }
 NAME=mock-appliance PORT=2230 PROOF_OWN="" PROOF_FIRST_BOOT=4 PROOF_NORELABEL=stand-in
 for t in rsa ecdsa ed25519; do ssh-keygen -q -t $t -N '' -C x -f "$T/hk_$t" </dev/null; done
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/other_ed25519" </dev/null
@@ -184,7 +186,19 @@ check "and its MANIFEST comparison marks machine-id, the shadow file and the hos
 check "and reads the inbound policy" test "$(fb | grep -c 'base inbound policy (stand-in)')" = 1
 check "the in-guest reads parse as bash" bash -n "$T/reads.sh"
 check "they time the boot: systemd-analyze's time, both critical chains, time-wait-sync and the units running" \
-    test "$(grep -cE 'systemd-analyze time|critical-chain --no-pager multi-user.target|critical-chain --no-pager serial-getty@ttyS0.service|systemd-time-wait-sync.service|--state=running' "$T/reads.sh")" = 5
+    test "$(grep -cE 'systemd-analyze time|critical-chain --no-pager multi-user.target|critical-chain --no-pager serial-getty@ttyS0.service|systemd-time-wait-sync.service|--state=running' "$T/reads.sh")" = 6
+# The boot-finished and time-wait-sync reads, as the guest runs them, against stand-ins.
+BL=$(sed -n '/^                echo "== the boot, as systemd timed it"/,/^                case \$o in/p' "$T/reads.sh")
+br() { bash -c 'systemd-analyze() { echo "$A"; }; systemctl() { echo "systemd-time-wait-sync.service start running"; }; '"$BL" _ ; }
+check "a boot not finished is a PROOF-FAIL naming the waiting job; a finished one is read" \
+    test "$(wc -l <<<"$BL")" = 2 -a "$(A='Startup finished in 1.2s (kernel) + 3.4s (userspace) = 4.6s' br | grep -c PROOF-FAIL)" = 0 \
+         -a "$(A='Bootup is not yet finished (org.freedesktop.systemd1.Manager.FinishTimestampMonotonic=0).' br | grep -c '^PROOF-FAIL: the boot had not finished after the first login: systemd-time-wait-sync.service start running')" = 1
+WL=$(grep -F 'systemctl is-enabled systemd-time-wait-sync.service' "$T/reads.sh")
+check "time-wait-sync not masked is a PROOF-FAIL" \
+    test -n "$WL" -a -z "$(bash -c 'systemctl() { echo masked; }; '"$WL")" \
+         -a "$(bash -c 'systemctl() { echo enabled; }; '"$WL")" = "PROOF-FAIL: time-wait-sync is not masked"
+check "the power button is pressed after the reads, on the first boot's guest and its console log" \
+    test "$(cat "$T/out/power-off.txt")" = "== the power button (stand-in) mock-appliance-first console.log"
 # The ESP read, as the guest runs it, against a stand-in findmnt.
 EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
 er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }
@@ -301,6 +315,34 @@ echo pass >"$T/con-mode"; touch "$T/ssh-pw-offered"; run; rm -f -- "$T/ssh-pw-of
 check "a server that offers passwords fails each of the five tries" \
     test "$(fb | grep -c '^PROOF-FAIL: SSH as root with .*: the server offered publickey,password$')" = 5 \
          -a "$(fb | grep -c '^PROOF-FAIL: SSH as root with the proof key, not yet placed: the server offered publickey,password$')" = 1
+# proof_power_off, against a stand-in virsh: the press appends the shutdown's console text
+# to the log, as QEMU's logfile takes it; the state and the stop's reason are the case's.
+LOGF=$T/acpi.log
+OKOFF=$'[\e[0;32m  OK  \e[0m] Reached target \e[0;1;39mSystem Power Off\e[0m.\r\n[   41.002113] reboot: Power down\r\n'
+virsh_() { case $1 in
+    shutdown) printf '%s\n' "$*" >"$T/acpi-args"; [ -e "$T/acpi-refuse" ] && return 1; printf '%s' "$ACPI_TAIL" >>"$LOGF" ;;
+    domstate) if [ "${3:-}" = --reason ]; then echo "$ACPI_REASON"; else echo "$ACPI_STATE"; fi ;;
+    esac; }
+pr() { printf '[\e[0;1;31mFAILED\e[0m] Failed to start an earlier unit.\r\nweaver-appliance login: ' >"$LOGF"
+    ( set -euo pipefail; real_proof_power_off mock-appliance-first "$LOGF" ) 2>&1; }
+ACPI_STATE="shut off" ACPI_REASON="shut off (shutdown)" ACPI_TAIL=$OKOFF
+check "a clean ACPI power-off: no PROOF-FAIL, the reason read, a failure before the press not counted" \
+    eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 0 ] && grep -qx "the domain: shut off (shutdown), 0s after the press" <<<"$o" && grep -q "reboot: Power down" <<<"$o"'
+check "the press is ACPI's, on the named domain" test "$(cat "$T/acpi-args")" = "shutdown mock-appliance-first --mode acpi"
+ACPI_TAIL=$'[  OK  ] Reached target System Power Off.\r\n'
+check "no kernel power-down line is a PROOF-FAIL" eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 1 ] && grep -q "^PROOF-FAIL: the serial log after the power button holds no kernel power-down line" <<<"$o"'
+ACPI_TAIL=$'[\e[0;1;31mFAILED\e[0m] Failed unmounting /efi.\r\n[ ***  ] A stop job is running for x (5s / 1min 30s)\r\n'"$OKOFF"
+check "a unit failing and a stop job waited on: one PROOF-FAIL counting both" \
+    eval 'grep -q "^PROOF-FAIL: the power-off was not clean: 2 unit(s) failed or a stop job was waited on" <<<"$(pr)"'
+ACPI_TAIL=""; ACPI_STATE=running ACPI_REASON="running (booted)"
+check "a guest that does not power off: PROOF-FAILs for the reason, the target and the kernel line, at the bound" \
+    eval 'o=$(PROOF_ACPI=6 pr); grep -q "^PROOF-FAIL: mock-appliance-first did not power itself off within 6s of the power button (running (booted))" <<<"$o" && grep -qx "the domain: running (booted), 6s after the press" <<<"$o" && [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 3 ]'
+touch "$T/acpi-refuse"
+check "a press the hypervisor refuses: one PROOF-FAIL, and nothing more read" \
+    eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 1 ] && grep -q "could not press mock-appliance-first.s power button" <<<"$o" && ! grep -q "the domain:" <<<"$o"'
+rm -f -- "$T/acpi-refuse"
+check "and the proof gathers the power-off's findings with the others" \
+    eval 'grep -q "\"\$out/first-boot.txt\" \"\$out/power-off.txt\" \"\$out/disk.txt\" >\"\$out/PROOF-FAILED\"" "$BT"'
 # A VM_ROOT whose socket path a unix socket cannot hold refuses before anything boots.
 long=$T/$(printf 'x%.0s' $(seq 120)); mkdir -p "$long"
 rm -f -- "$T/vi-args"; ( set -euo pipefail; VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?

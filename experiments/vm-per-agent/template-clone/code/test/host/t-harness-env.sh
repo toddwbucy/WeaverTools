@@ -20,7 +20,7 @@ wrong() {
         OS) echo 24.04 ;; VERSION) echo 9.9 ;; DRIVER) echo 1.2.3 ;; COMPUTE_CAP) echo 12 ;;
         DRIVER_ROUTE) echo cuda-runfile ;;
         WA_COMMIT) printf '1%.0s' {1..40} ;; WW_COMMIT) printf '2%.0s' {1..40} ;;
-        PORT|PROOF_PORT|VCPUS|MEMORY|SEAL_WAIT|CI_WAIT|PROOF_BOOT|PROOF_FIRST_BOOT) echo 1 ;;
+        PORT|PROOF_PORT|VCPUS|MEMORY|SEAL_WAIT|CI_WAIT|PROOF_BOOT|PROOF_FIRST_BOOT|PROOF_ACPI) echo 1 ;;
         *) echo "/wrong/$1" ;;
     esac
 }
