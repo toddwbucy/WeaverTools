@@ -260,8 +260,13 @@ check "and the final probe reads the stamps" \
 # userdb's SSH key command gone; the lists name each unit the Planner named.
 eval "$(sed -n '/^UNUSED_UNITS=/,/"$/p' "$STEPS")"; const USERDB_SSH_LINK; const USERDB_TMPFILES
 for u in systemd-sysext.service systemd-confext.service systemd-homed.service systemd-tpm2-clear.service \
-         systemd-sysupdate-notify-sysext.socket systemd-report.socket systemd-report-basic.socket systemd-userdbd.socket; do
+         systemd-sysupdate-notify-sysext.socket systemd-report.socket systemd-report-basic.socket systemd-userdbd.socket \
+         systemd-journalctl-metrics.socket systemd-mountfsd.socket systemd-nsresourced.socket machines.target \
+         systemd-boot-update.service systemd-boot-clear-sysfail.service; do
     check "UNUSED_UNITS names $u" grep -qw -- "$u" <<<"$UNUSED_UNITS"
+done
+for u in systemd-pstore.service systemd-coredump.socket systemd-coredumpd.service; do
+    check "UNUSED_UNITS leaves $u, which the Planner keeps" eval '! grep -qw -- "$u" <<<"$UNUSED_UNITS"'
 done
 check "and the sysupdate daemon and its socket are among the update units" \
     eval 'grep -qw systemd-sysupdated.service <<<"$UPDATE_UNITS" && grep -qw systemd-sysupdate.socket <<<"$UPDATE_UNITS"'
@@ -308,4 +313,32 @@ guard() { bash -c "nft() { $1; }; $GL" >/dev/null 2>&1; }
 check "the gate is in the facts step" test "$(wc -l <<<"$GL")" = 2
 check "a guard table as the seed loads it: passes" guard 'printf "table inet hostguard {\n chain out {\n  ip daddr 10.0.2.2 counter packets 0 bytes 0 drop\n }\n}\n"'
 check "no table: refused" eval '! guard "echo Error: No such file or directory >&2; return 1"'
+
+# ---- 15. Crashes: a journal record, no dump (the Planner's ruling of 2026-11-17).
+# coredump_check against a stand-in drop-in and a stand-in systemd-analyze that prints the
+# files as cat-config does, the main file's commented defaults first.
+eval "$(sed -n "/^COREDUMP_DROPIN=/,/^ProcessSizeMax=0'\$/p" "$STEPS")"
+check "the settings: Storage=none and ProcessSizeMax=0 under [Coredump]" \
+    test "$(grep -cxE '\[Coredump\]|Storage=none|ProcessSizeMax=0' <<<"$COREDUMP_SETTINGS")" = 3
+CD=$T/coredump; mkdir -p "$CD"
+eval "$(steps coredump_check | sed "s|\"\$COREDUMP_DROPIN\"|\"\$CD/dropin\"|")" || exit 1
+printf '%s\n' "$COREDUMP_SETTINGS" >"$CD/dropin"
+systemd-analyze() { [ "$1 $2" = "cat-config systemd/coredump.conf" ] || return 9
+    printf '# /etc/systemd/coredump.conf\n[Coredump]\n#Storage=external\n#ProcessSizeMax=32G\n\n'
+    [ -e "$CD/later" ] && cat "$CD/later"
+    printf '# %s\n%s\n' "$COREDUMP_DROPIN" "$(cat "$CD/dropin")"
+    [ -e "$CD/after" ] && cat "$CD/after"; return 0; }
+check "the drop-in as the image writes it, read last: no line" test -z "$(coredump_check)"
+printf '[Coredump]\nStorage = external\n' >"$CD/after"
+check "a later file that stores dumps wins, and is named by what it sets" \
+    test "$(coredump_check)" = "coredump reads Storage=external, not Storage=none"
+rm -f -- "$CD/after"; printf '[Coredump]\nStorage=external\nProcessSizeMax=2G\n' >"$CD/later"
+check "an earlier file that stores dumps: the drop-in decides, no line" test -z "$(coredump_check)"
+printf '[Coredump]\nStorage=none\n' >"$CD/dropin"
+check "a drop-in without ProcessSizeMax=0: not the image's, and the core is written while processed" \
+    test "$(coredump_check | tr '\n' '|')" = "$COREDUMP_DROPIN is not the image's settings|coredump reads ProcessSizeMax=2G, not ProcessSizeMax=0|"
+systemd-analyze() { echo "Failed to connect"; return 1; }
+check "a cat-config that does not run is a finding, never a pass" \
+    eval 'grep -q "systemd-analyze cat-config did not run (Failed to connect)" <<<"$(coredump_check)"'
+unset -f systemd-analyze
 finish

@@ -789,9 +789,10 @@ UPDATE_UNITS="archlinux-keyring-wkd-sync.timer archlinux-keyring-wkd-sync.servic
   systemd-sysupdate-reboot.service systemd-sysupdate-update.timer
   systemd-sysupdate-update.service systemd-sysupdate-auto-enable.service
   systemd-sysupdated.service systemd-sysupdate.socket systemd-sysupdate@.service pacman-init.service"
-# What the appliance does not use, masked at the seal (the Planner's rule of 2026-11-16:
-# nothing changes /usr or /etc after the seal, and nothing the appliance does not use
-# runs). Masked, not disabled: a box's first boot applies systemd's presets, which would
+# What the appliance does not use, masked at the seal (the Planner's rule of 2026-11-16,
+# as worded on 2026-11-17: nothing installs, overlays or updates software after the seal,
+# the bootloader included, and nothing runs that the appliance does not use). Masked, not
+# disabled: a box's first boot applies systemd's presets, which would
 # enable a disabled unit again (Arch's 90-systemd.preset enables each of these but the
 # sysroot units), and presets leave a mask alone.
 # - sysext and confext: an image file dropped on disk would overlay /usr or /etc.
@@ -801,6 +802,14 @@ UPDATE_UNITS="archlinux-keyring-wkd-sync.timer archlinux-keyring-wkd-sync.servic
 #   member of the appliance reads them.
 # - userdbd: nss-systemd and PID 1's dynamic users answer without it, and its one user
 #   here, sshd's key command, is removed (USERDB_SSH_LINK).
+# - journalctl's metrics socket, mountfsd, nsresourced and machines.target: no member of
+#   the appliance reads metrics, mounts images unprivileged, asks for a user namespace
+#   range or runs machines.
+# - boot-update, which would rewrite a systemd-boot in the ESP after the seal (the image
+#   boots by GRUB, which it would leave alone, but the rule takes the bootloader in), and
+#   boot-clear-sysfail (no boot counting).
+# Kept: pstore, which only archives the kernel's crash records under /var, and coredump,
+# which logs each crash to the journal and writes no dump (COREDUMP_SETTINGS).
 UNUSED_UNITS="systemd-sysext.service systemd-sysext.socket systemd-sysext@.service
   systemd-sysext-sysroot.service systemd-confext.service systemd-confext-sysroot.service
   systemd-homed.service systemd-homed-activate.service systemd-homed-firstboot.service
@@ -814,7 +823,21 @@ UNUSED_UNITS="systemd-sysext.service systemd-sysext.socket systemd-sysext@.servi
   systemd-report-sign-plain@.service systemd-report-sign-tpm2.socket
   systemd-report-sign-tpm2@.service systemd-report-sign-tsm.socket
   systemd-report-sign-tsm@.service
-  systemd-userdbd.socket systemd-userdbd.service"
+  systemd-userdbd.socket systemd-userdbd.service
+  systemd-journalctl-metrics.socket systemd-journalctl-metrics@.service
+  systemd-mountfsd.socket systemd-mountfsd.service
+  systemd-nsresourced.socket systemd-nsresourced.service machines.target
+  systemd-boot-update.service systemd-boot-clear-sysfail.service"
+# A crash is a journal record and nothing more (the Planner's ruling of 2026-11-17): no
+# dump is written, kept or not, so that a worker holding large host buffers cannot fill
+# the root disk. Storage=none alone would still write the core to /var/lib/systemd/coredump
+# while it is processed, up to ProcessSizeMax (32G on 64-bit); ProcessSizeMax=0 with it
+# leaves the log entry alone (coredump.conf(5)).
+COREDUMP_DROPIN=/etc/systemd/coredump.conf.d/10-weaver-appliance.conf
+COREDUMP_SETTINGS='# The appliance image'"'"'s crash handling: a journal record, no dump written.
+[Coredump]
+Storage=none
+ProcessSizeMax=0'
 # systemd 262's cloud metadata service. Its generator pulls these units in where the
 # machine's DMI identity names one of the cloud vendors udev's hwdb lists (40-imds.hwdb:
 # EC2, Azure, GCE, Hetzner, Oracle, Scaleway, Tencent, Alibaba, Vultr) or the kernel line
@@ -1001,6 +1024,13 @@ cleanup() {
     sshd_check || return 1
     p=$(userdb_ssh_check); [ -z "$p" ] || { echo "$p"; return 1; }
     echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone, from authorized_keys alone; userdb's key command removed and its tmpfiles line masked"
+
+    section "crashes: a journal record, no dump"
+    sudo install -d -m 0755 "${COREDUMP_DROPIN%/*}" || return 1
+    printf '%s\n' "$COREDUMP_SETTINGS" | sudo tee "$COREDUMP_DROPIN" >/dev/null || return 1
+    sudo chmod 0644 "$COREDUMP_DROPIN" || return 1
+    p=$(coredump_check); [ -z "$p" ] || { echo "$p"; return 1; }
+    echo "$COREDUMP_DROPIN: as systemd reads it, Storage=none and ProcessSizeMax=0"
 
     section "no resolver of the image's own"
     sudo install -d -m 0755 "${RESOLVED_DROPIN%/*}" || return 1
@@ -1223,6 +1253,20 @@ credential_consumers() {
 
 # imds_check: the cloud metadata service's units masked and its generator masked. Prints
 # each finding; exits 1 on any.
+# coredump_check: the image's coredump settings, and what systemd-coredump reads in the end
+# from all of coredump.conf's files: Storage=none and ProcessSizeMax=0, the last of each
+# name deciding, as systemd-analyze cat-config prints them in the order systemd reads them.
+coredump_check() {
+    local t k v
+    [ "$(cat "$COREDUMP_DROPIN" 2>/dev/null)" = "$COREDUMP_SETTINGS" ] \
+        || echo "$COREDUMP_DROPIN is not the image's settings"
+    t=$(systemd-analyze cat-config systemd/coredump.conf 2>&1) || { echo "systemd-analyze cat-config did not run ($(head -1 <<<"$t"))"; return 0; }
+    for k in Storage=none ProcessSizeMax=0; do
+        v=$(grep -E "^[[:space:]]*${k%%=*}[[:space:]]*=" <<<"$t" | tail -1 | tr -d '[:space:]')
+        [ "$v" = "$k" ] || echo "coredump reads ${v:-no ${k%%=*}}, not $k"
+    done
+    return 0
+}
 # masks_check UNIT...: each UNIT masked, as systemctl reads it. A line for each that is not.
 masks_check() {
     local u s
@@ -1450,6 +1494,7 @@ probes() {
     check "userdb's SSH key command" "$(userdb_ssh_check 2>&1)"
     # shellcheck disable=SC2086
     check "units the appliance does not use, not masked" "$(masks_check $UNUSED_UNITS 2>&1)"
+    check "crashes written as dumps" "$(coredump_check 2>&1)"
     check "sudo as create-agent.sh needs it" "$(sudoers_check "$mode" 2>&1)"
     check "systemd's first-boot paths masked or missing" "$(firstboot_paths_check 2>&1)"
     credential_consumers

@@ -11,6 +11,14 @@
 # Each run has its own VM_ROOT. Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need ssh-keygen python3
+# Each stand-in proof's console socket lies under this run's directory, and proof_console
+# refuses a socket path longer than a unix socket allows (107 bytes), rightly. Refuse here,
+# once and by name, where TMPDIR is too long for that, not in each stand-in proof.
+s=$T/vmroot.XXXXXX/first/con/console.sock
+if [ "${#s}" -gt 107 ]; then
+    no "TMPDIR is too long for the proof's console socket: $s is ${#s} bytes, over the 107 a unix socket allows; set TMPDIR shorter"
+    finish; exit
+fi
 BT=$CODE/build-template.sh
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
 eval "$(fn "$BT" proof_first_boot proof_network proof_keyscan proof_console proof_refusal)"
