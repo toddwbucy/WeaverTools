@@ -14,7 +14,7 @@ eval "$(sed -n '/^IMAGE_HOSTNAME=/p' "$STEPS")"
 eval "$(awk '/^FIREWALL_RULES=/ { f = 1 } f { print } f && /^}'"'"'$/ { exit }' "$STEPS")"
 check "the image's firewall text is in the file, and names the build Spec" grep -q 'weaver-appliance-build-Spec' <<<"$FIREWALL_RULES"
 BUILD_NAME=weaver-appliance-build
-hostname() { echo "$BUILD_NAME"; }
+uname() { [ "$1" = -n ] && echo "$BUILD_NAME"; }
 fresh() {
     ETC=$(mktemp -d "$T/etc.XXXXXX"); RECORD=$ETC/weaver-appliance
     eval "$(sed "s|/etc|$ETC|g" <<<"$body")"

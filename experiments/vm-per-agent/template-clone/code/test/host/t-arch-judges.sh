@@ -436,4 +436,34 @@ check "the partition alone, rw: a finding naming its options" \
     test "$(ec '/dev/vda2\n' 'rw,nosuid\n')" = "/efi is not mounted read-only (rw,nosuid). "
 check "an option that only holds ro is not ro (errors=remount-ro)" \
     test "$(ec '/dev/vda2\n' 'rw,errors=remount-ro\n')" = "/efi is not mounted read-only (rw,errors=remount-ro). "
+
+# ---- 20. The probes after the cleanup (the 2.0 rehearsal of 2026-11-17): pacman's warning
+# for the sync databases the cleanup removes dropped, and that alone; binutils' linker and
+# assembler, and libatomic's link under /usr/lib/gcc, not taken for a toolchain.
+PB=$T/pacbin; mkdir -p "$PB"
+cat >"$PB/pacman" <<'EOF'
+#!/bin/bash
+echo "warning: database file for 'core' does not exist (use '-Sy' to download)" >&2
+echo "warning: database file for 'extra' does not exist (use '-Sy' to download)" >&2
+case "$*" in -Qoq*) echo coreutils ;; -Qi*) echo "error: package 'x' was not found" >&2; exit 1 ;; esac
+EOF
+chmod 0755 "$PB/pacman"
+eval "$(fn "$STEPS" pacman)" || exit 1
+out=$(PATH=$PB:$PATH pacman -Qoq /usr/bin/test 2>&1); rc=$?
+check "pacman's sync-database warning dropped: the query reads as pacman's own" test "$rc" = 0 -a "$out" = coreutils
+out=$(PATH=$PB:$PATH pacman -Qi x 2>&1); rc=$?
+check "and an error stands, with pacman's status" test "$rc" = 1 -a "$out" = "error: package 'x' was not found"
+unset -f pacman
+check "the PATH probe lets ld and as stand where binutils owns them, and names makepkg-template no more" \
+    eval 'b=$(fn "$STEPS" probes); grep -qF "case \$c in ld|ld.bfd|ld.gold|as) [ \"\$(pacman -Qoq \"\$p\" 2>/dev/null)\" != binutils ] || continue ;; esac" <<<"$b" && ! grep -q makepkg-template <<<"$b"'
+CG=$T/cdirs; mkdir -p "$CG/usr/lib/gcc/x86_64-pc-linux-gnu/16"; ln -s ../../../../libatomic.so.1.2.0 "$CG/usr/lib/gcc/x86_64-pc-linux-gnu/16/libatomic.so"
+eval "$(steps compiler_dirs | sed -e "s|/usr/lib/gcc /usr/libexec/gcc /usr/lib/clang /usr/lib/llvm\*|$CG/usr/lib/gcc $CG/usr/libexec/gcc|" -e "s|\"\$d\" = /usr/lib/gcc|\"\$d\" = $CG/usr/lib/gcc|" -e "s|/root/.cargo /root/.rustup /home/\*/.cargo /home/\*/.rustup|$CG/root/.cargo|" -e "s| /usr/include/cccl | $CG/usr/include/cccl |")" || exit 1
+CUDA_HOME=$CG/opt/cuda
+pacman() { [ "$1" = -Qoq ] || return 9; case $2 in *libatomic.so) echo libatomic ;; *) echo gcc ;; esac; }
+check "compiler_dirs: /usr/lib/gcc holding libatomic's link alone: no line" test -z "$(compiler_dirs)"
+: >"$CG/usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1"
+check "a file of gcc's there too: /usr/lib/gcc named" test "$(compiler_dirs)" = "$CG/usr/lib/gcc"
+rm -f -- "$CG/usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1"; mkdir -p "$CG/opt/cuda/bin" "$CG/root/.cargo"
+check "the toolkit's bin and a cargo home: each named" test "$(compiler_dirs | tr '\n' '|')" = "$CG/opt/cuda/bin|$CG/root/.cargo|"
+unset -f pacman
 finish
