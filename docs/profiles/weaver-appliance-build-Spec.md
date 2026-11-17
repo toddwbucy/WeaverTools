@@ -1,7 +1,8 @@
 # The appliance image build - Spec
 
-**Status:** DRAFT. Not merged. Moved on 2026-11-15 from section 10 of `template-clone-Spec`,
-where it stood on pull request 31.
+**Status:** Merged with release 1.0 (pull request 33, 2026-11-16); revised for release
+2.0 in pull request 35, not merged. Moved on 2026-11-15 from section 10 of
+`template-clone-Spec`, where it stood on pull request 31.
 **Date filed:** 2026-11-15
 **Document ID:** `weaver-appliance-build-Spec`
 **Parent:** `weaver-appliance-profile` (this directory), whose own artifact this build makes
@@ -392,20 +393,21 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     - The compilers, the build tools, the CUDA toolkit, cloud-init and the QEMU guest
       agent. Every base package still installed, less the three base packages named
       below, is marked explicitly installed first, what the build added is marked a
-      dependency, and the runtime set is marked explicit. Then these are removed by name, with what only they held (`pacman
-      -Rns`): every installed package the build-package pattern matches, base or added,
-      less the runtime set, and three base packages: `cloud-init`, `cloud-guest-utils`
-      (above), and `qemu-guest-agent`. The image's builder installs the guest agent,
-      udev starts it wherever the hypervisor offers its channel, and nothing in the
-      appliance uses it (the Planner's ruling of 2026-11-17): a host's shutdown reaches
-      the guest by ACPI, which the proof reads. Then what the build added that nothing
-      kept needs is removed, round by round, until none is left. Each removal is
-      simulated first (`pacman -Rs --print`, which prints the set `-Rns` removes, since
-      pacman 7 refuses `--nosave` with `--print`). The simulation must remove no package
-      of the runtime set and no base package but those named or matched. binutils is not
-      a build package here: `mkinitcpio`, which the kernel package needs for its
-      initramfs, and `libmakepkg-dropins`, which pacman needs, require it. So it stays,
-      with `ld` and `as` on PATH, and a probe holds it to those two.
+      dependency, and the runtime set is marked explicit. Then these are removed by
+      name, with what only they held (`pacman -Rns`): every installed package the
+      build-package pattern matches, base or added, less the runtime set, and three base
+      packages: `cloud-init`, `cloud-guest-utils` (above), and `qemu-guest-agent`. The
+      image's builder installs the guest agent, udev starts it wherever the hypervisor
+      offers its channel, and nothing in the appliance uses it (the Planner's ruling of
+      2026-11-17): a host's shutdown reaches the guest by ACPI, which the proof reads.
+      Then what the build added that nothing kept needs is removed, round by round,
+      until none is left. Each removal is simulated first (`pacman -Rs --print`, which
+      prints the set `-Rns` removes, since pacman 7 refuses `--nosave` with `--print`).
+      The simulation must remove no package of the runtime set and no base package but
+      those named or matched. binutils is not a build package here: `mkinitcpio`, which
+      the kernel package needs for its initramfs, and `libmakepkg-dropins`, which pacman
+      needs, require it. So it stays, with `ld` and `as` on PATH, and a probe holds it
+      to those two.
     - The runtime package installed in the toolkit's place, each file read back as the
       toolkit had it and owned by the package, and held with the kernel and driver.
     - `ldconfig` and the loader check.
