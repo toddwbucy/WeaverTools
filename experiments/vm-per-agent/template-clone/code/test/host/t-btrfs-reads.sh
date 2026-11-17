@@ -52,6 +52,10 @@ ln -s libggml-cuda.so.0.1 "$S/opt/weaver/lib/libggml-cuda.so.0"
 HOSTSIDE=$T/host-side; mkdir -p "$HOSTSIDE/logs"
 echo "the host's own" >"$HOSTSIDE/hostname"; echo x >"$HOSTSIDE/logs/h.log"
 ln -s /etc "$S/etc/up"; ln -s "$HOSTSIDE" "$S/etc/out"
+# A link whose target is over 60 bytes: ext4 keeps such a target in a block, and debugfs's
+# stat prints no "Fast link dest:" line for it.
+LONG=/etc/a-target-file-whose-name-runs-long-enough-that-ext4-keeps-it-in-a-block
+echo long >"$S$LONG"; ln -s "$LONG" "$S/etc/long-link"
 # disk NAME KIND: T/NAME.qcow2, read-only, its root partition KIND (btrfs, ext4, none),
 # filled from DIR where given.
 disk() {
@@ -208,6 +212,20 @@ pert=$(fn "$CODE/lib.sh" image_resolve_btrfs | sed '/image_link_climbs/s/return 
 ( eval "$pert"; image_resolve "$R" /etc/d/l ) >/dev/null 2>&1; rc=$?
 check "the perturbation: with the refusal answering 1, the status is 1, which the check above fails" \
     test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_btrfs)" -a "$rc" = 1
+# A long-target link (/etc/long-link, its target 76 bytes): btrfs resolves it; on ext4,
+# whose stat prints no fast line for it, the target cannot be read, and the link is
+# refused, 2, never reported missing.
+check "the long target is over 60 bytes, and debugfs prints no fast line for it" \
+    eval 'test "${#LONG}" -gt 60 && ! debugfs -c -R "stat /etc/long-link" "$T/re/root.raw" 2>/dev/null | grep -q "^Fast link dest:"'
+check "btrfs resolves the long-target link to its file" test "$(image_resolve "$R" /etc/long-link)" = "$LONG"
+image_resolve "$T/re" /etc/long-link >"$T/r.out" 2>"$T/r.err"; rc=$?
+check "on ext4 it is 2, naming the link whose target cannot be read, and prints no path" \
+    test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -cF '/etc/long-link is a link whose target cannot be read' "$T/r.err")" = 1
+# The perturbation: that refusal answering 1, as it did, gives status 1, which fails it.
+pert=$(fn "$CODE/lib.sh" image_resolve_ext4 | sed '/target cannot be read/s/return 2; }$/return 1; }/')
+( eval "$pert"; image_resolve "$T/re" /etc/long-link ) >/dev/null 2>&1; rc=$?
+check "the perturbation: with the refusal answering 1, the status is 1, which the check above fails" \
+    test "$pert" != "$(fn "$CODE/lib.sh" image_resolve_ext4)" -a "$rc" = 1
 
 # ---- image_late_writes on btrfs, as the proof records it.
 image_late_writes "$R" >"$T/late.out" 2>&1

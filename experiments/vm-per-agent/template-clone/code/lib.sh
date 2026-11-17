@@ -787,14 +787,17 @@ GGML_CUBIN_ARCHS="sm_86 sm_89 sm_120a sm_121a"
 CUOBJDUMP=${CUOBJDUMP:-cuobjdump}
 # image_resolve_ext4 DIR PATH: PATH with each symbolic link in the image followed, 8 at
 # most, to a path that is not a link. debugfs follows none, so each target is read from its
-# stat. 2, refused, where a link's target climbs with "..", as on btrfs.
+# stat's "Fast link dest:" line. 2, refused, where a link's target climbs with "..", as on
+# btrfs, and where its target cannot be read: a target over 60 bytes is kept in a block,
+# and stat prints no such line for it (CodeRabbit on pull request 35, 2026-11-17). A link
+# that is there is never reported missing.
 image_resolve_ext4() {
     local dir=$1 p=$2 n=0 o t
     while [ "$n" -lt 8 ]; do
         o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
         grep -q 'Type: symlink' <<<"$o" || { printf '%s\n' "$p"; return 0; }
         t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | head -1)
-        [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 1; }
+        [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2; }
         ! image_link_climbs "$p" "$t" || return 2
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
         n=$((n + 1))
