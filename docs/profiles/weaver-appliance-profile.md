@@ -414,8 +414,7 @@ still has to be captured into the binary or held by the image.
   after pairing. SSH takes that key and never a password (the addendum, as the suite
   Planner recorded it). The setup script's drive-setup run fetches the key over the
   paired link and writes it, since writing it is a root act and the connectors hold no
-  root, and running the setup command again writes a changed key (the suite Planner's
-  brief, recorded with the rulings). The next act.
+  root, and running the setup command again writes a changed key. The next act.
 - The survey script, run locally, its report crossing over TLS (the operator's rulings
   of 2026-11-16 on the setup pages). The next act. The report's form is stated in
   `weaver-survey-format.md` in this directory.
