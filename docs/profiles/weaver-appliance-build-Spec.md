@@ -553,6 +553,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     for release 1.0's ext4. Neither follows a symbolic link. `btrfs restore` copies out
     the paths a regex names, and each path asked for must come out or be refused by
     name: an expected absence is its own call, and a path through a link is not read.
+    A link whose target climbs with `..` is refused, not resolved.
     Nothing writes to the sealed image or to an overlay before a boot. Then the sealed
     file itself: its sha256 must be the one the seal recorded after its compaction, and
     the file must be compact. `compact_check` reads the file's end offset and its
