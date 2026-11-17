@@ -7,7 +7,8 @@
 # that fails exits non-zero and the host keeps its output. Nothing here is a WeaverAgent
 # or WeaverWeb script; the deploy scripts run unmodified from their checkouts.
 #
-# Release 1.1 builds on Arch Linux, pinned (the operator's ruling of 2026-11-16): the
+# Release 2.0 builds on Arch Linux, pinned (the operator's ruling of 2026-11-16; the
+# Planner named it 2.0 under decision 4 of 2026-11-15, an OS change with a recompile): the
 # arch-boxes cloud image lib.sh names, brought to one day of the Arch Linux Archive and
 # never past it. Release 1.0 was built on Ubuntu 26.04 by this file as tagged
 # appliance/1.0.
@@ -44,8 +45,8 @@ CCCL_SHA256=71107144147f149f81532bad5bf92ca52ac82f5e204065e7279b937fd3a409e9
 # 2026-11-16). Arch's cuda.sh would name its base g++ (16).
 CXX_MAJOR=15
 CUDA_HOME=/opt/cuda
-# The canonical CUDA library directory. The loader reaches it through /opt/cuda/lib64, the
-# link cuda.conf names.
+# The canonical CUDA library directory. The runtime package's own loader file names it
+# alone (RUNTIME_LDCONF).
 CUDA_LIBS=$CUDA_HOME/targets/x86_64-linux/lib
 # candle's kernels read the compute capability from a card. The build guest has none, so it
 # is a named input, COMPUTE_CAP (the capability without its dot, such as 86 for 8.6), which
@@ -218,7 +219,11 @@ facts() {
     section python; python3 --version
     section identity; cat /etc/machine-id
     section network; ip -4 -o addr show scope global; ip -4 route; resolvectl dns
-    section hostguard; sudo nft list table inet hostguard
+    # The seed's guard, which keeps this guest off the host (lib.sh's write_seed): a gate,
+    # since the build guest's network is otherwise open. Its first boot on Arch is here.
+    section hostguard
+    local g; g=$(sudo nft list table inet hostguard 2>&1); echo "$g"
+    grep -q 'ip daddr 10\.0\.2\.2 counter' <<<"$g" || { echo "the seed's host guard is not loaded: this guest could reach the host"; return 1; }
     section pacman; pacman -V | sed -n 's/^ *\(Pacman v.*\)/\1/p'; pacman -Q | wc -l
     sudo pacman-key --list-keys >/dev/null 2>&1 && echo "keyring: made at this guest's first boot (pacman-init)" || echo "keyring: NONE"
     section enabled-units; systemctl list-unit-files --state=enabled --no-legend --no-pager | awk '{print $1}' | tr '\n' ' '; echo
@@ -253,7 +258,7 @@ facts() {
 }
 
 # The two OS reads the WeaverAgent seat asked of the base, now gates (the operator's ruling
-# of 2026-11-16 moved 1.1 to Arch because Ubuntu 26.04 failed both): whether `test` run
+# of 2026-11-16 moved the next release to Arch because Ubuntu 26.04 failed both): whether `test` run
 # through sudo honours supplementary groups (uutils' did not), and whether visudo takes
 # the connector rule's Defaults line (sudo-rs did not). Arch ships GNU coreutils and the
 # original sudo, and both are expected to pass; the step fails where either does not. A
@@ -577,8 +582,10 @@ driver_check() {
 # The CUDA runtime the image keeps (the Planner's ruling of 2026-11-16, form b): Arch's cuda
 # is one package, toolkit and runtime together, so the runtime is made into a package of
 # its own inside this guest, from the toolkit's own files, unchanged: the libraries the
-# installed members and engine load (RUNTIME_LIBS), each soname link to them, the
-# /opt/cuda/lib64 link the loader's path names, and cuda's loader file. makepkg builds it as
+# installed members and engine load (RUNTIME_LIBS), each soname link to them and the
+# /opt/cuda/lib64 link; and one file of its own, the loader file RUNTIME_LDCONF, naming
+# CUDA_LIBS alone (the Planner's ruling of 2026-11-16: the toolkit's cuda.conf also names
+# nvvm/lib64, which goes with the toolkit, and ldconfig would warn of it). makepkg builds it as
 # the build account under fakeroot, with nothing stripped. Each file's sha256 is taken from
 # the toolkit before the build and read again from the installed package; the cleanup then
 # removes cuda and installs this package in its place, so pacman owns every file the
@@ -588,10 +595,11 @@ RUNTIME_PKG=weaver-cuda-runtime
 RUNTIME_LIBS="cudart cublas cublasLt curand nvrtc nvrtc-builtins"
 RUNTIME_DIR=$BUILD/runtime
 PKGBUILD_SRC=/usr/local/share/weaver-build/cuda-runtime/PKGBUILD
+RUNTIME_LDCONF=/etc/ld.so.conf.d/cuda.conf
 # runtime_list LIBDIR: the runtime package's files, one absolute path a line in C-locale
 # order: each regular file in LIBDIR named lib<one of RUNTIME_LIBS>.so.<version>, each link
-# in LIBDIR that resolves to one of them, the link LIBDIR's parent's lib64 where it names
-# LIBDIR, and the loader file.
+# in LIBDIR that resolves to one of them, and the link LIBDIR's parent's lib64 where it
+# names LIBDIR. The toolkit's files alone: the loader file is the package's own.
 runtime_list() {
     local dir=$1 f l n
     {
@@ -605,7 +613,6 @@ runtime_list() {
         done
         f=$CUDA_HOME/lib64
         [ -L "$f" ] && [ "$(readlink -f "$f")" = "$(readlink -f "$dir")" ] && echo "$f"
-        echo /etc/ld.so.conf.d/cuda.conf
     } | LC_ALL=C sort -u
     rm -f -- "$RUNTIME_DIR/real.tmp"
 }
@@ -653,11 +660,12 @@ runtime_build() {
     v=${PIN_CUDA%-*}
     cp "$PKGBUILD_SRC" "$w/PKGBUILD" || return 1
     (cd "$w" && WEAVER_RUNTIME_LIST=$RUNTIME_DIR/files WEAVER_RUNTIME_VER=$v \
+        WEAVER_RUNTIME_LDCONF=$RUNTIME_LDCONF WEAVER_RUNTIME_LDDIR=$CUDA_LIBS \
         PKGDEST="$w/out" SRCDEST="$w" BUILDDIR="$w/build" makepkg --noconfirm --nocheck 2>&1) || return 1
     f=$(ls "$w/out/$RUNTIME_PKG-$v-1-x86_64.pkg.tar.zst") || return 1
     # The package's own list, set against the file list: every file and link in it, and
     # nothing else but the directories that hold them.
-    out=$(diff <(LC_ALL=C sort "$RUNTIME_DIR/files") \
+    out=$(diff <({ cat "$RUNTIME_DIR/files"; echo "$RUNTIME_LDCONF"; } | LC_ALL=C sort) \
                <(pacman -Qlpq "$f" | grep -v '/$' | sed 's|^|/|; s|//|/|' | LC_ALL=C sort))
     [ -z "$out" ] || { echo "the package's files are not the list:"; echo "$out"; return 1; }
     echo "$RUNTIME_PKG metadata, as makepkg wrote it: $(bsdtar -xOf "$f" .PKGINFO | grep -E '^(depend|provides|license) = ' | tr '\n' ' ')"
@@ -672,7 +680,7 @@ runtime_build() {
 # regular file's sha256, each link's target), and owned by the package. Prints each
 # finding; exits 1 on any.
 runtime_check() {
-    local now f bad=""
+    local now f w bad=""
     pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1" >/dev/null || bad+="$(pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1"). "
     now=$(mktemp) || return 1
     runtime_hashes "$RUNTIME_DIR/files" "$now"
@@ -680,7 +688,11 @@ runtime_check() {
     rm -f -- "$now"
     while IFS= read -r f; do
         [ "$(pacman -Qoq -- "$f" 2>/dev/null)" = "$RUNTIME_PKG" ] || bad+="$f is not $RUNTIME_PKG's. "
-    done <"$RUNTIME_DIR/files"
+    done < <(cat "$RUNTIME_DIR/files"; echo "$RUNTIME_LDCONF")
+    [ "$(cat "$RUNTIME_LDCONF" 2>/dev/null)" = "$CUDA_LIBS" ] || bad+="$RUNTIME_LDCONF does not name $CUDA_LIBS alone. "
+    # A directory the loader's files name and that does not stand (the toolkit's nvvm/lib64).
+    w=$(sudo ldconfig -X 2>&1)
+    ! grep -q "Can't stat" <<<"$w" || bad+="ldconfig cannot stat: $(grep "Can't stat" <<<"$w" | head -2 | tr '\n' ' '). "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 
@@ -754,11 +766,20 @@ table inet weaver_appliance {
 # value it reads for each keyword, and Arch's sshd_config includes sshd_config.d's files,
 # in name order, before its own settings, so this file, first by name, decides all four.
 SSHD_DROPIN=/etc/ssh/sshd_config.d/10-weaver-appliance.conf
-SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone.
+SSHD_SETTINGS='# The appliance image'"'"'s SSH settings (weaver-appliance-build-Spec): keys alone,
+# from root'"'"'s authorized_keys alone.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitEmptyPasswords no
-PermitRootLogin prohibit-password'
+PermitRootLogin prohibit-password
+AuthorizedKeysFile .ssh/authorized_keys
+AuthorizedKeysCommand none'
+# systemd's sshd drop-in that asks userdbctl for a user's keys, a link systemd-tmpfiles lays
+# at every boot from its own line. Keys come from root's authorized_keys alone, which setup
+# writes from Weaver Web (the Planner's ruling of 2026-11-16): the tmpfiles line is masked
+# and the link removed, and SSHD_SETTINGS names no key command besides.
+USERDB_SSH_LINK=/etc/ssh/sshd_config.d/20-systemd-userdb.conf
+USERDB_TMPFILES=/etc/tmpfiles.d/20-systemd-userdb.conf
 # The units that would update the image or its keys from the network, masked: the
 # keyring's weekly sync, systemd-sysupdate, and pacman-init, which would make a pacman
 # master key, a private key, at every box's first boot (its file is the image builder's,
@@ -766,7 +787,34 @@ PermitRootLogin prohibit-password'
 UPDATE_UNITS="archlinux-keyring-wkd-sync.timer archlinux-keyring-wkd-sync.service
   systemd-sysupdate.timer systemd-sysupdate.service systemd-sysupdate-reboot.timer
   systemd-sysupdate-reboot.service systemd-sysupdate-update.timer
-  systemd-sysupdate-update.service systemd-sysupdate-auto-enable.service pacman-init.service"
+  systemd-sysupdate-update.service systemd-sysupdate-auto-enable.service
+  systemd-sysupdated.service systemd-sysupdate.socket systemd-sysupdate@.service pacman-init.service"
+# What the appliance does not use, masked at the seal (the Planner's rule of 2026-11-16:
+# nothing changes /usr or /etc after the seal, and nothing the appliance does not use
+# runs). Masked, not disabled: a box's first boot applies systemd's presets, which would
+# enable a disabled unit again (Arch's 90-systemd.preset enables each of these but the
+# sysroot units), and presets leave a mask alone.
+# - sysext and confext: an image file dropped on disk would overlay /usr or /etc.
+# - homed: no home directories of its own (its first-boot unit makes accounts from
+#   home.create credentials).
+# - sysupdate's notification sockets, the TPM clear (no TPM), and the report sockets: no
+#   member of the appliance reads them.
+# - userdbd: nss-systemd and PID 1's dynamic users answer without it, and its one user
+#   here, sshd's key command, is removed (USERDB_SSH_LINK).
+UNUSED_UNITS="systemd-sysext.service systemd-sysext.socket systemd-sysext@.service
+  systemd-sysext-sysroot.service systemd-confext.service systemd-confext-sysroot.service
+  systemd-homed.service systemd-homed-activate.service systemd-homed-firstboot.service
+  systemd-sysupdate-notify-bootctl.socket systemd-sysupdate-notify-bootctl@.service
+  systemd-sysupdate-notify-pcrlock.socket systemd-sysupdate-notify-pcrlock@.service
+  systemd-sysupdate-notify-sysext.socket systemd-sysupdate-notify-sysext@.service
+  systemd-tpm2-clear.service
+  systemd-report.socket systemd-report@.service systemd-report-basic.socket
+  systemd-report-basic@.service systemd-report-cgroup.socket systemd-report-cgroup@.service
+  systemd-report-files.socket systemd-report-files@.service systemd-report-sign-plain.socket
+  systemd-report-sign-plain@.service systemd-report-sign-tpm2.socket
+  systemd-report-sign-tpm2@.service systemd-report-sign-tsm.socket
+  systemd-report-sign-tsm@.service
+  systemd-userdbd.socket systemd-userdbd.service"
 # systemd 262's cloud metadata service. Its generator pulls these units in where the
 # machine's DMI identity names one of the cloud vendors udev's hwdb lists (40-imds.hwdb:
 # EC2, Azure, GCE, Hetzner, Oracle, Scaleway, Tencent, Alibaba, Vultr) or the kernel line
@@ -946,9 +994,13 @@ cleanup() {
     # four settings bears on that.
     printf '%s\n' "$SSHD_SETTINGS" | sudo tee "$SSHD_DROPIN" >/dev/null || return 1
     sudo chmod 0644 "$SSHD_DROPIN" || return 1
+    sudo install -d -m 0755 "${USERDB_TMPFILES%/*}" || return 1
+    sudo ln -sfn /dev/null "$USERDB_TMPFILES" || return 1
+    sudo rm -f -- "$USERDB_SSH_LINK" || return 1
     sudo sshd -t 2>&1 || return 1
     sshd_check || return 1
-    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone"
+    p=$(userdb_ssh_check); [ -z "$p" ] || { echo "$p"; return 1; }
+    echo "$SSHD_DROPIN: as sshd reads it for root, no password, no empty password, root by key alone, from authorized_keys alone; userdb's key command removed and its tmpfiles line masked"
 
     section "no resolver of the image's own"
     sudo install -d -m 0755 "${RESOLVED_DROPIN%/*}" || return 1
@@ -974,18 +1026,23 @@ cleanup() {
     # pacman-init's file is the image builder's, under /etc, where a mask goes: it is
     # removed with its link first.
     sudo rm -f /etc/systemd/system/pacman-init.service /etc/systemd/system/multi-user.target.wants/pacman-init.service || return 1
+    # The units the appliance does not use: each disabled where it can be (its enablement
+    # links go), then all masked with the update units and imds.
+    for p in $UNUSED_UNITS; do sudo systemctl disable "$p" >/dev/null 2>&1 || true; done
     # shellcheck disable=SC2086
-    sudo systemctl mask $UPDATE_UNITS $IMDS_UNITS >/dev/null || return 1
+    sudo systemctl mask $UPDATE_UNITS $IMDS_UNITS $UNUSED_UNITS >/dev/null || return 1
     sudo install -d -m 0755 /etc/systemd/system-generators || return 1
     sudo ln -sfn /dev/null "/etc/systemd/system-generators/$IMDS_GENERATOR" || return 1
     sudo systemctl daemon-reload
     imds_check || return 1
     updates_check || return 1
+    # shellcheck disable=SC2086
+    p=$(masks_check $UNUSED_UNITS); [ -z "$p" ] || { echo "$p"; return 1; }
     p=$(pacman_sources_check /etc/pacman.conf /etc/pacman.d/mirrorlist)
     [ -z "$p" ] || { echo "$p"; return 1; }
     sudo pacman -Scc --noconfirm >/dev/null 2>&1
     sudo rm -rf /var/cache/pacman/pkg/* /var/lib/pacman/sync/* /tmp/* /var/tmp/* 2>/dev/null
-    echo "update units and the metadata service masked; pacman names the snapshot alone; caches and sync databases gone"
+    echo "update units, the metadata service and $(wc -w <<<"$UNUSED_UNITS") units the appliance does not use masked; pacman names the snapshot alone; caches and sync databases gone"
 
     section after; df -h /
     local v
@@ -1055,7 +1112,8 @@ sshd_check() {
         if sudo ssh-keygen -q -t ed25519 -N '' -C sshd-check -f "$d/k" </dev/null >/dev/null 2>&1 \
             && t=$(sudo sshd -T -o HostKey="$d/k" -C user=root,host=localhost,addr=127.0.0.1 2>&1); then
             for k in "passwordauthentication no" "kbdinteractiveauthentication no" \
-                     "permitemptypasswords no" "permitrootlogin prohibit-password"; do
+                     "permitemptypasswords no" "permitrootlogin prohibit-password" \
+                     "authorizedkeysfile .ssh/authorized_keys" "authorizedkeyscommand none"; do
                 grep -qixF "$k" <<<"$t" || bad+="sshd -T reads '$(grep -im1 "^${k%% *} " <<<"$t" || echo "no ${k%% *}")', not '$k'. "
             done
         else
@@ -1165,6 +1223,41 @@ credential_consumers() {
 
 # imds_check: the cloud metadata service's units masked and its generator masked. Prints
 # each finding; exits 1 on any.
+# masks_check UNIT...: each UNIT masked, as systemctl reads it. A line for each that is not.
+masks_check() {
+    local u s
+    for u; do
+        s=$(systemctl is-enabled "$u" 2>/dev/null)
+        [ "$s" = masked ] || echo "$u is ${s:-unknown}, not masked"
+    done
+    return 0
+}
+# userdb_ssh_check: systemd's userdb drop-in for sshd gone, and its tmpfiles line masked so
+# that no boot lays it again.
+userdb_ssh_check() {
+    [ ! -e "$USERDB_SSH_LINK" ] && [ ! -L "$USERDB_SSH_LINK" ] || echo "$USERDB_SSH_LINK stands"
+    [ "$(readlink "$USERDB_TMPFILES" 2>/dev/null)" = /dev/null ] \
+        || echo "$USERDB_TMPFILES is not a mask, so a boot lays $USERDB_SSH_LINK again"
+    return 0
+}
+# sudoers_check MODE: what WeaverAgent's create-agent.sh asks of sudo before it lays an
+# agent (WeaverAgent #581): /etc/sudoers includes /etc/sudoers.d, read with its own
+# pattern; visudo accepts the files; the nobody account stands; and sudo runs a command as
+# nobody. That last is asked only in the pre pass, as the build account, with root's own
+# rule read by sudo -l: in the final pass root's password is expired until the first
+# login, and sudo's account check refuses an expired account even to root. proof runs it
+# as root after that login.
+sudoers_check() {
+    sudo grep -qE '^[#@]includedir[[:space:]]+/etc/sudoers\.d([[:space:]]|$)' /etc/sudoers \
+        || echo "/etc/sudoers does not include /etc/sudoers.d"
+    sudo visudo -c -q >/dev/null 2>&1 || echo "visudo refuses the sudoers files"
+    getent passwd nobody >/dev/null || echo "no account nobody"
+    if [ "$1" = pre ]; then
+        /usr/bin/sudo -n -u nobody true 2>/dev/null || echo "sudo would not run a command as nobody"
+        /usr/bin/sudo -n -l -U root -u nobody /usr/bin/true >/dev/null 2>&1 || echo "root's rule does not let root run a command as nobody"
+    fi
+    return 0
+}
 # updated_check: /etc/.updated and /var/.updated each name /usr's modification time, as
 # systemd-update-done writes it (TIMESTAMP_NSEC, nanoseconds). Arch's systemd arms
 # ConditionNeedsUpdate after every pacman transaction (its hook touches /usr); with both
@@ -1354,6 +1447,10 @@ probes() {
     # SSH by key alone, and systemd's first-boot paths left and named (the operator's
     # rulings of 2026-11-16). In both passes: the settings are written by the cleanup.
     check "SSH settings not as built" "$(sshd_check 2>&1)"
+    check "userdb's SSH key command" "$(userdb_ssh_check 2>&1)"
+    # shellcheck disable=SC2086
+    check "units the appliance does not use, not masked" "$(masks_check $UNUSED_UNITS 2>&1)"
+    check "sudo as create-agent.sh needs it" "$(sudoers_check "$mode" 2>&1)"
     check "systemd's first-boot paths masked or missing" "$(firstboot_paths_check 2>&1)"
     credential_consumers
     # Who can log in. The pre pass leaves out the build account and root's two fields,

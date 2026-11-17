@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The offline reads of a btrfs root (release 1.1), lib.sh's own: image_path_regex, the
+# The offline reads of a btrfs root (release 2.0), lib.sh's own: image_path_regex, the
 # reads through btrfs restore with their guards (the Planner's rulings of 2026-11-16: each
 # path asked for must come out or be refused by name, an expected absence is its own call,
 # a misspelled path refuses, a path with regex metacharacters matches only itself, a

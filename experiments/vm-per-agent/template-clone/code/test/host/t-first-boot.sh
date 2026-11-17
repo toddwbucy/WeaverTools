@@ -175,6 +175,13 @@ check "and its MANIFEST comparison marks machine-id, the shadow file and the hos
     test "$(fb | grep -c '(expected)$')" = 3 -a "$(fb | grep -c '/etc/shadow.*(expected)$')" = 1 -a "$(fb | grep -c ', 0 finding(s)$')" = 1
 check "and reads the inbound policy" test "$(fb | grep -c 'base inbound policy (stand-in)')" = 1
 check "the in-guest reads parse as bash" bash -n "$T/reads.sh"
+check "they time the boot: systemd-analyze's time, both critical chains, time-wait-sync and the units running" \
+    test "$(grep -cE 'systemd-analyze time|critical-chain --no-pager multi-user.target|critical-chain --no-pager serial-getty@ttyS0.service|systemd-time-wait-sync.service|--state=running' "$T/reads.sh")" = 5
+# The sudo read, as the guest runs it, against a stand-in sudo.
+SL=$(grep -F 'if sudo -n -u nobody true 2>&1; then' "$T/reads.sh")
+sr() { bash -c 'sudo() { return '"$1"'; }; '"$SL"; }
+check "sudo as nobody after the first login: read, and a refusal is a PROOF-FAIL" \
+    test -n "$SL" -a "$(sr 0)" = "sudo runs a command as nobody" -a "$(sr 1 | grep -c '^PROOF-FAIL: sudo would not run a command as nobody')" = 1
 check "a seed is attached, as a SATA cdrom beside the overlay" \
     test "$(cat "$T/iso-path")" = "$VM_ROOT/first/seed.iso" -a "$(grep -cxF -- "path=$VM_ROOT/first/seed.iso,device=cdrom,bus=sata" "$T/vi-args")" = 1
 check "its meta-data names a hostname of its own and the proof key" \

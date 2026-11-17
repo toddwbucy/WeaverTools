@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the appliance image from the Arch Linux cloud image (release 1.1 on, the operator's
+# Build the appliance image from the Arch Linux cloud image (release 2.0 on, the operator's
 # ruling of 2026-11-16; release 1.0 was built from Ubuntu 26.04 by this tree as tagged
 # appliance/1.0), one step at a time, each step's output and status kept under logs/. The
 # binaries are compiled inside this guest from the two named commits; nothing built on the
@@ -776,6 +776,19 @@ EOF
                 echo "== the network as the credential named it"; ip -br addr; ip route; resolvectl dns 2>&1
                 ls /run/credentials/@system 2>&1; ls /run/systemd/network 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
+                # The boot as systemd timed it, for the Planner: the critical chains to the
+                # system and to the serial console'"'"'s login, where time-wait-sync and the
+                # network wait stand in them, the slowest units, and what runs.
+                echo "== the boot, as systemd timed it"; systemd-analyze time 2>&1
+                echo "== the critical chain to multi-user.target"; systemd-analyze critical-chain --no-pager multi-user.target 2>&1
+                echo "== the critical chain to the serial console login"; systemd-analyze critical-chain --no-pager serial-getty@ttyS0.service 2>&1
+                echo "== time-wait-sync"; systemctl show -p UnitFileState -p ActiveState -p Result systemd-time-wait-sync.service 2>&1 | tr "\n" " "; echo
+                echo "== the slowest units"; systemd-analyze blame --no-pager 2>&1 | head -15
+                echo "== the units running"; systemctl list-units --no-legend --no-pager --plain --state=running 2>&1 | awk "{print \$1}" | tr "\n" " "; echo
+                # create-agent.sh runs a command as nobody through sudo (WeaverAgent #581),
+                # as root once root has a password, so here, after the first login.
+                echo "== sudo as nobody, as root after the first login"
+                if sudo -n -u nobody true 2>&1; then echo "sudo runs a command as nobody"; else echo "PROOF-FAIL: sudo would not run a command as nobody, as root after the first login"; fi
                 echo "== the package sources after the first boot"; grep -vE "^[[:space:]]*(#|$)" /etc/pacman.d/mirrorlist || echo "(no source)"
                 echo "== ssh units"; systemctl is-enabled sshd.service sshdgenkeys.service; systemctl is-active sshd.service
                 # sshdgenkeys made the host keys: its first-boot condition held and it ran.

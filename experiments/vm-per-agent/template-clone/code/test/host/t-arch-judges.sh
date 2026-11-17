@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The Arch base's judges (release 1.1), each from its own file's text, on stand-ins: the
+# The Arch base's judges (release 2.0), each from its own file's text, on stand-ins: the
 # signature check of the cloud image's SHA256 file (lib.sh's sig_primary_ok), and from
 # guest/template-steps the removal judge, pacman's sources and hold, the one kernel, unit
 # links that lead nowhere, the CUDA runtime's file list and the tuple's runtime files, and
@@ -141,10 +141,10 @@ ln -s libcudart.so.13.4.39 "$L/libcudart.so.13"; ln -s libcudart.so.13 "$L/libcu
 ln -s libcublasLt.so.13.4.1.2 "$L/libcublasLt.so.13"; ln -s libcufft.so.12.4.0.7 "$L/libcufft.so.12"
 echo "$CUDA_HOME/lib64" >"$C/etc/ld.so.conf.d/cuda.conf"
 runtime_list "$L" >"$T/files"
-want=$(printf '%s\n' "$CUDA_HOME/lib64" "$C/etc/ld.so.conf.d/cuda.conf" "$L/libcublas.so.13.4.1.2" "$L/libcublasLt.so.13" "$L/libcublasLt.so.13.4.1.2" \
+want=$(printf '%s\n' "$CUDA_HOME/lib64" "$L/libcublas.so.13.4.1.2" "$L/libcublasLt.so.13" "$L/libcublasLt.so.13.4.1.2" \
        "$L/libcudart.so" "$L/libcudart.so.13" "$L/libcudart.so.13.4.39" "$L/libcurand.so.10.4.1.9" \
        "$L/libnvrtc-builtins.so.13.4.42" "$L/libnvrtc.so.13.4.42" | LC_ALL=C sort)
-check "the list: the six real files, links to them at any depth, lib64 and the loader's file" test "$(cat "$T/files")" = "$want"
+check "the list: the six real files, links to them at any depth and lib64; not the toolkit's loader file" test "$(cat "$T/files")" = "$want"
 check "and nothing of cufft, the static archive, or the list's scratch file" \
     test "$(grep -c 'cufft\|_static' "$T/files")" = 0 -a ! -e "$RUNTIME_DIR/real.tmp"
 printf '\tlibcudart.so.13 => %s/lib64/libcudart.so.13 (0x0)\n\tlibc.so.6 => /usr/lib/libc.so.6 (0x0)\n' "$CUDA_HOME" >"$T/ldd"
@@ -153,7 +153,7 @@ printf '\tlibcufft.so.12 => %s/lib64/libcufft.so.12 (0x0)\n' "$CUDA_HOME" >>"$T/
 check "one outside it: named" has "libcufft.so.12 .* resolves for the stack and is not in the runtime package" runtime_resolved_check "$T/files" "$T/ldd"
 runtime_hashes "$T/files" "$T/hashes"
 check "the hashes: a sha256 line for each file, a LINK line for each link, nothing missing" \
-    test "$(grep -c '^LINK ' "$T/hashes")" = 4 -a "$(grep -cE '^[0-9a-f]{64}  ' "$T/hashes")" = 7 -a "$(grep -c '^MISSING' "$T/hashes")" = 0
+    test "$(grep -c '^LINK ' "$T/hashes")" = 4 -a "$(grep -cE '^[0-9a-f]{64}  ' "$T/hashes")" = 6 -a "$(grep -c '^MISSING' "$T/hashes")" = 0
 check "a link's line names its target as written" grep -qxF "LINK $L/libcudart.so -> libcudart.so.13" "$T/hashes"
 # The tuple's runtime lines: "runtime.<name> = <sha256> <path>", each a file pacman says the
 # runtime package owns, at that digest.
@@ -255,4 +255,57 @@ check "seal_final marks the update done after removing the harness and before th
          -a "$(at 'ldconfig -X')" -lt "$(at '/usr/lib/systemd/systemd-update-done')" -a "$(at '/usr/lib/systemd/systemd-update-done')" -lt "$(at 'if ! probes final')"
 check "and the final probe reads the stamps" \
     eval 'grep -q "check \"the first boot.s update armed: a stamp not at /usr.s time\" \"\$(updated_check 2>&1)\"" <<<"$(fn "$STEPS" probes)"'
+
+# ---- 12. What the appliance does not use, masked (the Planner's rule of 2026-11-16), and
+# userdb's SSH key command gone; the lists name each unit the Planner named.
+eval "$(sed -n '/^UNUSED_UNITS=/,/"$/p' "$STEPS")"; const USERDB_SSH_LINK; const USERDB_TMPFILES
+for u in systemd-sysext.service systemd-confext.service systemd-homed.service systemd-tpm2-clear.service \
+         systemd-sysupdate-notify-sysext.socket systemd-report.socket systemd-report-basic.socket systemd-userdbd.socket; do
+    check "UNUSED_UNITS names $u" grep -qw -- "$u" <<<"$UNUSED_UNITS"
+done
+check "and the sysupdate daemon and its socket are among the update units" \
+    eval 'grep -qw systemd-sysupdated.service <<<"$UPDATE_UNITS" && grep -qw systemd-sysupdate.socket <<<"$UPDATE_UNITS"'
+eval "$(steps masks_check userdb_ssh_check)" || exit 1
+systemctl() { [ "$1" = is-enabled ] && case $2 in *homed*) echo enabled ;; *gone*) return 1 ;; *) echo masked ;; esac; }
+check "masks_check: every unit masked, no line" test -z "$(masks_check systemd-sysext.service systemd-userdbd.socket)"
+check "one enabled, one unknown: each named" \
+    test "$(masks_check systemd-homed.service x-gone.service | tr '\n' '|')" = "systemd-homed.service is enabled, not masked|x-gone.service is unknown, not masked|"
+unset -f systemctl
+eval "$(steps userdb_ssh_check | sed -e "s|\"\$USERDB_SSH_LINK\"|\"\$UD\$USERDB_SSH_LINK\"|g" -e "s|\"\$USERDB_TMPFILES\"|\"\$UD\$USERDB_TMPFILES\"|g")" || exit 1
+UD=$T/userdb; mkdir -p "$UD/etc/ssh/sshd_config.d" "$UD/etc/tmpfiles.d"
+ln -s /dev/null "$UD$USERDB_TMPFILES"
+check "the link gone and the tmpfiles line masked: no line" test -z "$(userdb_ssh_check)"
+ln -s ../../../usr/lib/systemd/sshd_config.d/20-systemd-userdb.conf "$UD$USERDB_SSH_LINK"
+check "the link left, though it leads nowhere here: named" eval 'grep -q "20-systemd-userdb.conf stands" <<<"$(userdb_ssh_check)"'
+rm -f -- "$UD$USERDB_SSH_LINK" "$UD$USERDB_TMPFILES"
+check "the tmpfiles line unmasked: named, since a boot lays the link again" eval 'grep -q "is not a mask, so a boot lays" <<<"$(userdb_ssh_check)"'
+
+# ---- 13. sudo as WeaverAgent's create-agent.sh asks it (#581): the include read with its
+# own pattern, visudo, nobody, and a command as nobody, that last in the pre pass alone.
+SU=$T/sudo; mkdir -p "$SU"
+# Its root prefixes dropped by name (the common one would take visudo's own letters too).
+eval "$(fn "$STEPS" sudoers_check | sed -e "s|/usr/bin/sudo |sudo_stub |g" -e "s|${P}grep |grep |; s|${P}visudo |visudo |" -e "s| /etc/sudoers | $SU/sudoers |")" || exit 1
+check "the include pattern is create-agent.sh's own" \
+    grep -qF "grep -qE '^[#@]includedir[[:space:]]+/etc/sudoers\.d([[:space:]]|\$)' /etc/sudoers" <<<"$(fn "$STEPS" sudoers_check)"
+visudo() { [ ! -e "$SU/visudo-refuses" ]; }
+sudo_stub() { echo "$*" >>"$SU/calls"; [ ! -e "$SU/sudo-refuses" ]; }
+printf 'root ALL=(ALL:ALL) ALL\n@includedir /etc/sudoers.d\n' >"$SU/sudoers"
+check "Arch's sudoers, with its @includedir: no line in the final pass, and no sudo run" \
+    eval '[ -z "$(sudoers_check final)" ] && [ ! -e "$SU/calls" ]'
+check "and in the pre pass, sudo run as nobody and root's rule read, no line" \
+    eval '[ -z "$(sudoers_check pre)" ] && grep -qx -- "-n -u nobody true" "$SU/calls" && grep -qx -- "-n -l -U root -u nobody /usr/bin/true" "$SU/calls"'
+printf 'root ALL=(ALL:ALL) ALL\n#includedir /etc/sudoers.d\n' >"$SU/sudoers"
+check "the older #includedir form counts, as create-agent.sh reads it" test -z "$(sudoers_check final)"
+printf 'root ALL=(ALL:ALL) ALL\n## @includedir /etc/sudoers.d\n' >"$SU/sudoers"
+check "a commented include: named" test "$(sudoers_check final)" = "/etc/sudoers does not include /etc/sudoers.d"
+printf '@includedir /etc/sudoers.d\n' >"$SU/sudoers"; : >"$SU/visudo-refuses"; : >"$SU/sudo-refuses"
+check "visudo refusing, and sudo refusing both asks in the pre pass: each named" \
+    test "$(sudoers_check pre | wc -l)" = 3
+
+# ---- 14. The facts step refuses where the seed's host guard is not loaded.
+GL=$(fn "$STEPS" facts | sed -n "/^    local g; g=\$(sudo nft list table inet hostguard/,/^    grep -q 'ip daddr/p" | sed -e "s|$P||g" -e 's|^    local g; |    |' -e 's|return 1|exit 1|')
+guard() { bash -c "nft() { $1; }; $GL" >/dev/null 2>&1; }
+check "the gate is in the facts step" test "$(wc -l <<<"$GL")" = 2
+check "a guard table as the seed loads it: passes" guard 'printf "table inet hostguard {\n chain out {\n  ip daddr 10.0.2.2 counter packets 0 bytes 0 drop\n }\n}\n"'
+check "no table: refused" eval '! guard "echo Error: No such file or directory >&2; return 1"'
 finish

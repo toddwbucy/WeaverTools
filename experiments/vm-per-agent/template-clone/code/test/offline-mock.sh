@@ -2,7 +2,7 @@
 # The offline mock of template-clone-Spec.md section 8: the real put, fetch_round,
 # driver-install, uris_sha256, ci_judge, cloud_init_verdict, netdev_ok, ensure_key, harness
 # preflight and clone-steps' relaxed, and the host scripts' step and seal, with no virtual
-# machine, no network beyond loopback and no sudo. Since release 1.1 the build guest is
+# machine, no network beyond loopback and no sudo. Since release 2.0 the build guest is
 # Arch's (OS=arch-20261115) and guest/template-steps carries no relaxed: Arch's kernel
 # allows unprivileged user namespaces and its /bin/sh is bash, which the stack step checks.
 #

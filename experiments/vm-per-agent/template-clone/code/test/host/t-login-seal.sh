@@ -65,21 +65,28 @@ sed -i 's/^daemon:\*:/daemon::/' "$A/shadow"
 check "the pre pass still finds an account that is not locked" test "$(judge pre)" = "daemon: not locked"
 
 # 2. sshd_check against this host's sshd. A stand-in sshd_config that includes the
-# drop-in directory first and then names the opposite of each setting, as Ubuntu's order
-# is; the drop-in as the image writes it; and a later file naming the opposite again.
+# drop-in directory first and then names the opposite of each setting, as Arch's order is;
+# the drop-in as the image writes it; and a later file naming the opposite again, among
+# it systemd's userdb key command as its drop-in (20-systemd-userdb.conf) names it.
 S=$T/ssh; mkdir -p "$S/conf.d" "$T/run"
-eval "$(sed -n "/^SSHD_DROPIN=/,/^PermitRootLogin prohibit-password'\$/p" "$TS")"
-check "the settings name the four, no password and root by key alone" \
-    test "$(grep -cxE 'PasswordAuthentication no|KbdInteractiveAuthentication no|PermitEmptyPasswords no|PermitRootLogin prohibit-password' <<<"$SSHD_SETTINGS")" = 4
+eval "$(sed -n "/^SSHD_DROPIN=/,/^AuthorizedKeysCommand none'\$/p" "$TS")"
+check "the settings name the six: no password, root by key alone, keys from authorized_keys alone" \
+    test "$(grep -cxE 'PasswordAuthentication no|KbdInteractiveAuthentication no|PermitEmptyPasswords no|PermitRootLogin prohibit-password|AuthorizedKeysFile .ssh/authorized_keys|AuthorizedKeysCommand none' <<<"$SSHD_SETTINGS")" = 6
 SSHD_DROPIN=$S/conf.d/10-weaver-appliance.conf
-printf 'Include %s/conf.d/*.conf\nPasswordAuthentication yes\nKbdInteractiveAuthentication yes\nPermitEmptyPasswords yes\nPermitRootLogin yes\nUsePAM yes\n' "$S" >"$S/sshd_config"
+printf 'Include %s/conf.d/*.conf\nPasswordAuthentication yes\nKbdInteractiveAuthentication yes\nPermitEmptyPasswords yes\nPermitRootLogin yes\nAuthorizedKeysFile .ssh/authorized_keys .ssh/authorized_keys2\nUsePAM yes\n' "$S" >"$S/sshd_config"
 printf '%s\n' "$SSHD_SETTINGS" >"$SSHD_DROPIN"
+printf 'AuthorizedKeysCommand /usr/bin/userdbctl ssh-authorized-keys %%u\nAuthorizedKeysCommandUser root\n' >"$S/conf.d/20-systemd-userdb.conf"
 printf 'PasswordAuthentication yes\nPermitRootLogin yes\n' >"$S/conf.d/90-later.conf"
 sc=$(fn "$TS" sshd_check | sed -e "s|$P||g" -e "s|/run/weaver-sshd-check|$T/run/weaver-sshd-check|g" -e "s|t=\$(sshd -T |t=\$(sshd -f $S/sshd_config -T |")
 eval "$sc"
 check "the stand-in configuration is the one sshd reads here, not this host's" grep -qF "t=\$(sshd -f $S/sshd_config -T " <<<"$sc"
 out=$(sshd_check 2>&1); rc=$?
-check "the drop-in first by name decides all four, over the main file and a later file" test "$rc" = 0 -a -z "$out"
+check "the drop-in first by name decides all six, over the main file, userdb's key command and a later file" test "$rc" = 0 -a -z "$out"
+rm -f -- "$S/conf.d/20-systemd-userdb.conf"; printf 'AuthorizedKeysCommand /usr/bin/userdbctl ssh-authorized-keys %%u\nAuthorizedKeysCommandUser root\n' >"$S/conf.d/05-earlier.conf"
+out=$(sshd_check 2>&1); rc=$?
+check "userdb's key command in an earlier file wins, and sshd's own reading finds it" \
+    test "$rc" = 1 -a "$(grep -ci "sshd -T reads 'authorizedkeyscommand /usr/bin/userdbctl ssh-authorized-keys %u', not 'authorizedkeyscommand none'" <<<"$out")" = 1
+rm -f -- "$S/conf.d/05-earlier.conf"
 check "and its throwaway host key is gone after" test -z "$(ls -A "$T/run")"
 printf 'PasswordAuthentication yes\n' >"$S/conf.d/05-earlier.conf"
 out=$(sshd_check 2>&1); rc=$?

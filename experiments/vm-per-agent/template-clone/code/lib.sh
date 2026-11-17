@@ -16,7 +16,7 @@ URI=qemu:///system
 # The guest operating system, a named input (OS): its cloud image by digest, checked
 # against a digest file signed by the image's key, and the key pinned by fingerprint
 # before the first fetch.
-# - arch-20261115: the arch-boxes cloud image v20261115.625457, release 1.1's base (the
+# - arch-20261115: the arch-boxes cloud image v20261115.625457, release 2.0's base (the
 #   operator's ruling of 2026-11-16), which build-template.sh builds. Its .SHA256 file is
 #   signed by the Arch Linux image signing key, its primary key's fingerprint below. The
 #   key was read on 2026-11-16 from three sources that agree: the arch-boxes README (the
@@ -397,7 +397,7 @@ guest_env() {
 # root and no loop device. The root partition is the one GPT names "Linux root (x86-64)"
 # (the arch-boxes image's type 8304 and Ubuntu's alike). Its filesystem's type, read by
 # blkid from the export, is kept in DIR/fs, and the image_* reads below go by it: ext4
-# (release 1.0, the #21 template) through debugfs, btrfs (release 1.1) through btrfs
+# (release 1.0, the #21 template) through debugfs, btrfs (release 2.0) through btrfs
 # restore. Neither follows a symbolic link. Nothing here writes to an image: the proof
 # hands its first boot a network as a credential, not a file. image_close stops the
 # export.
