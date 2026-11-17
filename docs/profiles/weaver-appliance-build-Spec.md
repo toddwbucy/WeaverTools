@@ -72,7 +72,7 @@ cleaned by a checked list and sealed. Nothing built on the host enters the image
 
 Release 2.0 builds on Arch Linux (the operator's ruling of 2026-11-16), pinned: the
 arch-boxes cloud image `OS` names, its packages brought to one day of the Arch Linux
-Archive and never past it. The Planner named it 2.0 on 2026-11-17, under decision 4 of
+Archive and never past it. It is release 2.0 under the operator's decision 4 of
 2026-11-15: an OS change with a recompile moves the release. Release 1.0 was built on
 Ubuntu 26.04. Its build tree is WeaverTools `main` at `06d42bd` (the merge of pull
 request 33), whose copy of this document is its Spec, and its stack is WeaverAgent at
@@ -176,8 +176,8 @@ Arch's build falls back to public resolvers, and LLMNR and multicast DNS off, bo
 Arch's build, where LLMNR listens on every address and the image's listeners beyond
 loopback are SSH alone (ruling 4). The initramfs, made again at the cleanup, holds no
 networkd, and a probe reads it. systemd 262's cloud metadata service is masked with its
-generator (the Planner's ruling of 2026-11-16): the generator pulls the service in where
-the machine's DMI identity names a cloud vendor udev's hwdb lists, and the service then
+generator: the generator pulls the service in where the machine's DMI identity names a
+cloud vendor udev's hwdb lists, and the service then
 reads metadata over the network. An operator's hypervisor can present such an identity,
 so the service is not shown inert, and is masked. The record build's boot with no seed
 sent no frame (step 12). The network is the one the operator sets after logging in
@@ -229,9 +229,10 @@ none`. Arch's `sshd_config` includes that directory's files, in name order, befo
 own settings, and sshd keeps the first value it reads for each keyword, so this file,
 first by name, decides all six. systemd-tmpfiles lays a second drop-in at every boot,
 `20-systemd-userdb.conf`, which asks `userdbctl` for a user's keys. Keys come from
-root's `authorized_keys` alone, which setup writes from Weaver Web (the Planner's ruling
-of 2026-11-16), so the cleanup removes that link and masks its tmpfiles line. The text
-is defined once in `guest/template-steps`, and a probe reads sshd's own merged
+root's `authorized_keys` alone, which setup writes from Weaver Web (the operator's
+addendum of 2026-11-16, as the suite Planner recorded it), so the cleanup removes that
+link and masks its tmpfiles line. The text is defined once in `guest/template-steps`,
+and a probe reads sshd's own merged
 configuration for root. So the first password is set at the console, never over SSH.
 Every other account stays locked as Arch ships it, and none has a login shell. The image
 ships no cron. Measured by the record build's proof on 2026-11-17 (step 12):
@@ -263,9 +264,10 @@ carries no model and no state, so a probe requires each mount point empty, on th
 image's own filesystem, and `/mnt/weaver` to hold the two alone. The proof's first boot
 reads them with no disk attached. They are not in the MANIFEST: its scope is `/usr`,
 `/etc`, `/opt`, `/boot` and `/efi`, and it lists regular files and links only. The
-stack's agent directory is the state mount, `/mnt/weaver/state` (the Planner's note of
-2026-11-16): the stack step hands it to `bootstrap-stack.sh`, which leaves it root's,
-mode 0755 and empty, and a probe reads the stack record naming it. Whether a load finds
+stack's agent directory is the state mount, `/mnt/weaver/state` (the operator's rulings
+of 2026-11-16 on the setup pages): the stack step hands it to `bootstrap-stack.sh`,
+which leaves it root's, mode 0755 and empty, and a probe reads the stack record naming
+it. Whether a load finds
 a separate filesystem on each is admin's test, made at every load
 (`weaver-admin-Spec-vm-environment` section 1, merged in WeaverAgent at 6b91747e). It
 judges the filesystem and not what lies on it, so an empty directory on the image's root
@@ -281,16 +283,16 @@ masks none. A probe reads each present and not masked:
 - `systemd-firstboot.service` and `systemd-creds.socket`
 - `systemd-network-generator.service`, enabled. It writes a credential named
   `network.network.<name>` to `/run/systemd/network/<name>.network`, where networkd
-  reads it. The proof hands its first boot the network this way (the Planner's ruling of
-  2026-11-16; step 12).
+  reads it. The proof hands its first boot the network this way (step 12).
 - `systemd-ssh-generator`, among the system generators
 
 The probes also list every consumer of a system credential in the image, the whole set a
-hypervisor can feed (the Planner's ruling of 2026-11-16: list them, disable none yet):
-PID 1; each unit whose own settings import or load a credential, with its enablement and
+hypervisor can feed: PID 1; each unit whose own settings import or load a credential,
+with its enablement and
 whether the boot pulls it in; and each generator that reads one, or its mask. A listed
-line is a record, never a hit. On the record build they listed PID 1, 28 units and 6
-generators, the metadata service's generator masked.
+line is a record, never a hit, and none is disabled for being listed. On the record
+build they listed PID 1, 28 units and 6 generators, the metadata service's generator
+masked.
 
 What an operator feeds through them is the operator's to account for. Two effects are
 measured. On release 1.0's base, a key given as `ssh.authorized_keys.root` reached
@@ -302,8 +304,8 @@ at the record build's first boot.
 seed, which makes the build account, pins the guest's host key and sets its network and
 its guard (`template-clone-Spec` sections 2 and 4). The cleanup then disables
 cloud-init's units and removes `cloud-init` and `cloud-guest-utils` (growpart, which
-only cloud-init runs) by name: the Planner's ruling of 2026-11-16, the stronger form of
-the operator's "off". Their leftovers that no package owns go with them: the network
+only cloud-init runs) by name, the stronger form of the operator's ruling of 2026-11-16
+that cloud-init is off. Their leftovers that no package owns go with them: the network
 file cloud-init wrote for the build guest, and the empty directory of its units' links.
 The seal removes cloud-init's state, its configuration and its logs, and its default
 account `arch` with its home and sudoers rule, where a seed ever made it. A probe reads
@@ -346,15 +348,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 5. `trees`: both repositories cloned and checked out detached at their commits. A tree
    not exactly its commit, clean, refuses, as does a toolchain file that names another
    toolchain.
-6. `toolkit`: CCCL 3.3.4-1 first, the one package from outside the snapshot (the
-   Planner's ruling of 2026-11-16). The day's `cccl` is 3.5.0, outside the window
-   WeaverAgent's bootstrap accepts (3.1.4 to 3.3.4), so it comes from the archive's
+6. `toolkit`: CCCL 3.3.4-1 first, the one package from outside the snapshot. The day's
+   `cccl` is 3.5.0, outside the window WeaverAgent's bootstrap accepts (3.1.4 to 3.3.4),
+   so it comes from the archive's
    package store, pinned by sha256, its signature checked against the build guest's
    keyring. Then Arch's `cuda` 13.4.3-1 from the snapshot, whose dependency on cccl the
    pinned package meets. No driver: the stack's build needs nvcc, not a module.
-7. `driver`: route `arch-prebuilt` (the Planner's ruling of 2026-11-16, in place of
-   release 1.0's prebuilt route): Arch's `nvidia-open` 620.70.06-3, the open module
-   prebuilt for the snapshot's one kernel (`linux` 7.3.4.arch1-2), and `nvidia-utils`
+7. `driver`: route `arch-prebuilt`, in place of release 1.0's prebuilt route: Arch's
+   `nvidia-open` 620.70.06-3, the open module prebuilt for the snapshot's one kernel
+   (`linux` 7.3.4.arch1-2), and `nvidia-utils`
    620.70.06-1, its userspace at the module's version (libcuda, NVML, `nvidia-smi`,
    `nvidia-modprobe`, `nvidia-persistenced`), each package named. No DKMS, kernel
    headers or compiler touches the driver: the step refuses on DKMS or any headers
@@ -374,8 +376,8 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    refuses unless `weaver-spu` resolves `libcuda.so.1`, which the driver carries (the
    first build's break, 2026-11-14).
 8. `stack`: WeaverAgent's `deploy/bootstrap-stack.sh --install`, unmodified, with nvcc's
-   host compiler `g++-15` (the Planner's ruling of 2026-11-16, as release 1.0 compiled;
-   Arch's base g++ is 16), the canonical CUDA library directory, the compute capability
+   host compiler `g++-15` (as release 1.0 compiled; Arch's base g++ is 16), the
+   canonical CUDA library directory, the compute capability
    (no card) and the agents' base, `/mnt/weaver/state`, named. The two settings its test
    step needs, unprivileged user namespaces with a uid map and `/bin/sh` as bash, are
    read and never changed: Arch gives both, where release 1.0 set them for the step and
@@ -398,9 +400,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
       build-package pattern matches, base or added, less the runtime set, and three base
       packages: `cloud-init`, `cloud-guest-utils` (above), and `qemu-guest-agent`. The
       image's builder installs the guest agent, udev starts it wherever the hypervisor
-      offers its channel, and nothing in the appliance uses it (the Planner's ruling of
-      2026-11-17): a host's shutdown reaches the guest by ACPI, which the proof reads.
-      Then what the build added that nothing kept needs is removed, round by round,
+      offers its channel, and nothing in the appliance uses it: a host's shutdown
+      reaches the guest by ACPI, which the proof reads. Then what the build added that
+      nothing kept needs is removed, round by round,
       until none is left. Each removal is simulated first (`pacman -Rs --print`, which
       prints the set `-Rns` removes, since pacman 7 refuses `--nosave` with `--print`).
       The simulation must remove no package of the runtime set and no base package but
@@ -411,11 +413,10 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     - The runtime package installed in the toolkit's place, each file read back as the
       toolkit had it and owned by the package, and held with the kernel and driver.
     - `ldconfig` and the loader check.
-    - The cloud image's swap file removed, its subvolume and its fstab line (the
-      Planner's ruling of 2026-11-16).
+    - The cloud image's swap file removed, its subvolume and its fstab line.
     - The EFI system partition mounted read-only at `/efi` by one fstab line naming it
-      by UUID (the Planner's ruling of 2026-11-17). The cloud image installs GRUB's EFI
-      loader there and leaves the partition out of fstab, so without the line the
+      by UUID. The cloud image installs GRUB's EFI loader there and leaves the partition
+      out of fstab, so without the line the
       MANIFEST would not cover the loader. Nothing writes the bootloader after the seal,
       and GRUB needs no mounted ESP to boot. In the build guest, systemd's gpt-auto
       generator served the partition as an automount, whose layer stays in the kernel
@@ -427,9 +428,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
       networkd and no nouveau.
     - The base inbound policy written and enabled, and the SSH settings written and read
       back as sshd reads them for root, with userdb's key command removed (above).
-    - Crashes made a journal record and nothing more (the Planner's ruling of
-      2026-11-17), so that a worker holding large host buffers cannot fill the root
-      disk. A drop-in sets `Storage=none` with `ProcessSizeMax=0`: `Storage=none` alone
+    - Crashes made a journal record and nothing more, so that a worker holding large
+      host buffers cannot fill the root disk. A drop-in sets `Storage=none` with
+      `ProcessSizeMax=0`: `Storage=none` alone
       would still write the core under `/var/lib/systemd/coredump` while it is
       processed, up to `ProcessSizeMax` (32G on 64-bit). The probe reads what
       `systemd-coredump` reads in the end, through `systemd-analyze cat-config`.
@@ -442,10 +443,11 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
       and 43 units the appliance does not use, masked too (below). pacman's sources are
       read on the snapshot alone, and its package caches and sync databases emptied.
 
-    **Masked, not disabled** (the Planner's rule of 2026-11-16, as worded on 2026-11-17:
-    nothing installs, overlays or updates software after the seal, the bootloader
-    included, and nothing runs that the appliance does not use). A box's first boot
-    applies systemd's presets, which would enable a disabled unit again, and presets
+    **Masked, not disabled**, under the operator's direction of 2026-11-14 that nothing
+    is installed into a box after it is made. Nothing installs, overlays or updates
+    software after the seal, the bootloader included, and nothing runs that the
+    appliance does not use. A box's first boot applies systemd's presets, which would
+    enable a disabled unit again, and presets
     leave a mask alone. The 43: sysext and confext (an image file dropped on disk would
     overlay `/usr` or `/etc`); homed (its first-boot unit makes accounts from
     credentials); sysupdate's notification sockets, the TPM clear (no TPM) and the
@@ -462,9 +464,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 11. `seal`: the probes over SSH, the system libraries' records, a dry run of the
     MANIFEST, then a root oneshot once the session ends. The image's own hostname is
     `weaver-appliance`. The cleanup writes it to `/etc/hostname` in place of the build
-    guest's own, so a box does not greet with the build's name (the Planner's note of
-    2026-11-15), and so the recipe's `probes` step, which runs before the seal, reads it
-    as the seal's probes do. Until 2026-11-16 the seal wrote it, and the `probes` step
+    guest's own, so a box does not greet with the build's name, and so the recipe's
+    `probes` step, which runs before the seal, reads it as the seal's probes do. Until
+    2026-11-16 the seal wrote it, and the `probes` step
     before it always found the build guest's name. The running guest keeps its name, and
     the probes read that name as the build guest's. `create` refuses a `NAME` equal to
     the image's hostname. The dry run writes the MANIFEST as root to a scratch file in
@@ -713,15 +715,15 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     the proof reads the login prompt from.
     **The power button.** After the reads, the proof presses the first boot's power
     button by ACPI (`virsh shutdown --mode acpi`), as a host's shutdown or Cockpit
-    presses it with no guest agent in the image (the Planner's ruling of 2026-11-17),
-    and waits up to `PROOF_ACPI` seconds for the guest to power itself off. libvirt must
+    presses it with no guest agent in the image, and waits up to `PROOF_ACPI` seconds
+    for the guest to power itself off. libvirt must
     name the guest's own shutdown as the stop's reason (`shut off (shutdown)`). The
     serial log after the press must reach systemd's `Reached target System Power Off`
     and the kernel's `reboot: Power down`, which it prints at every console level, with
     no `[FAILED]` line and no stop job waited on. A guest not off by then is stopped as
     every boot ends. The record build's guest was off 2 s after the press, cleanly.
-    **The sealed disk is not relabelled** (the Planner's ruling of 2026-11-15). Each
-    boot names its overlay with a DAC security label that libvirt must not relabel, and
+    **The sealed disk is not relabelled.** Each boot names its overlay with a DAC
+    security label that libvirt must not relabel, and
     the label holds for the overlay's whole backing chain. Without it, libvirt's DAC
     driver relabels every image in the chain to `QEMU_USER` and restores none that is
     read-only. On the fifth build that left the sealed disk owned by the account every
@@ -823,9 +825,9 @@ option, WeaverAgent #585). e2fsprogs, in the base image, carries `chattr -p`. Th
 drive's format and mount options are the setup script's act.
 
 Arch's `cuda` is one package, toolkit and runtime together, so the runtime is made into
-a package of its own inside the build guest, `weaver-cuda-runtime` (the Planner's ruling
-of 2026-11-16, form b). It is made from the toolkit's own files, unchanged: the
-libraries the installed members and engine load, each soname link to them, and the
+a package of its own inside the build guest, `weaver-cuda-runtime`. It is made from the
+toolkit's own files, unchanged: the libraries the installed members and engine load,
+each soname link to them, and the
 `/opt/cuda/lib64` link. The libraries are cudart, cuBLAS, cuBLASLt, cuRAND, and NVRTC
 with its builtins (cuBLASLt names NVRTC, and it is kept until a carded load shows it is
 never mapped). Its one file of its own is the loader file `/etc/ld.so.conf.d/cuda.conf`,
@@ -986,9 +988,8 @@ identity is the MANIFEST's sha256, which covers both parts.
   tab and newline are escaped as `\\`, `\t` and `\n`.
 
 Both parts are in C-locale order. A mask is a link, and unmasking a unit changes what the
-image does, so a MANIFEST that cannot see links does not name the image (the Planner's
-call of 2026-11-14). To check the files with `sha256sum -c`, feed it the lines above the
-marker.
+image does, so a MANIFEST that cannot see links does not name the image. To check the
+files with `sha256sum -c`, feed it the lines above the marker.
 
 **The form changed after the fourth build.** The third and fourth builds used the earlier
 form: regular files only, with no marker and no links section. Their identities

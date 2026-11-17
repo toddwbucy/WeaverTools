@@ -1,6 +1,8 @@
 # The agent appliance - deployment profile
 
-**Status:** DRAFT. Not merged.
+**Status:** Merged in pull request 32 (2026-11-16) and revised with release 1.0 in pull
+request 33 (2026-11-16); revised for release 2.0's base and the survey's format, not
+merged.
 **Date filed:** 2026-11-15
 **Document ID:** `weaver-appliance-profile`
 **Class:** deployment profile, per `deployment-profile-convention.md` in this directory
@@ -85,13 +87,14 @@ in as root, which has no password, and sets one at that first login; SSH admits 
 alone, and the image carries no secret (ruling of 2026-11-16). That SSH door is the
 operator's admin door, separate from Weaver Web, and the console never uses it (the
 operator's rulings of 2026-11-16 on the setup pages, which keep this first login as
-WeaverTools pull request 33 builds it). The image disables cloud-init (ruling of
-2026-11-16). Cloud-init is not part of this profile at this stage and is a later item,
-per section 8. systemd's own first-boot paths stay as Ubuntu ships them and are named in
-the Spec of the image build: what an operator feeds through them is the operator's to
-account for (ruling of 2026-11-16). This is the first login that version 1.0 builds. The
-next act moves root's password to the first question of the appliance's setup script and
-brings the operator's SSH key through the console over TLS, per section 8.
+WeaverTools pull request 33 builds it). Release 1.0 disabled cloud-init (ruling of
+2026-11-16). Release 2.0 removes it outright. Cloud-init is not part of this profile at
+this stage and is a later item, per section 8. systemd's own first-boot paths stay as
+the base's systemd ships them and are named in the Spec of the image build: what an
+operator feeds through them is the operator's to account for (ruling of 2026-11-16).
+This is the first login that releases 1.0 and 2.0 build. The next act moves root's
+password to the first question of the appliance's setup script and brings the operator's
+SSH key through the console over TLS, per section 8.
 
 **The shape of a deployment is the operator's choice.** The suite recommends a machine
 given to one agent. It is a recommendation and no rule. In the operator's words: "we
@@ -101,11 +104,16 @@ just bring the board and the wires".
 
 ### 3.1 What the image carries
 
-**The operating system is Ubuntu 26.04.**
+**The operating system is Arch Linux, pinned** (the operator's ruling of 2026-11-16):
+the arch-boxes cloud image of 2026-11-15, its packages brought to the Arch Linux
+Archive's snapshot of that day and never past it. That base is release 2.0, under the
+operator's decision 4 of 2026-11-15: an operating system change with a recompile moves
+the release. Release 1.0 was built on Ubuntu 26.04.
 
-**The NVIDIA driver is the distribution's own prebuilt and signed kernel module of the
-615 branch**, with the kernel held to match it. No compiler runs near the driver, and
-the module loads under Secure Boot.
+**The NVIDIA driver is Arch's own prebuilt open kernel module, release 620.70.06**, with
+the kernel held to match it. No compiler runs near the driver. Arch signs no module with
+a key that a firmware trusts, so Secure Boot stays off. Release 1.0 carried Ubuntu's
+prebuilt and signed module of the 615 branch, which loaded under Secure Boot.
 
 **The binaries of the WeaverAgent system are compiled inside the image from named
 commits.** After the build, the build tooling and the source trees are removed and the
@@ -130,7 +138,9 @@ attaches.
 2026-11-16 on the setup pages and his addendum of the same day). The appliance's console
 goes straight to the setup script, which pairs the appliance with the console and lays
 its disks, per section 3.5. The survey script runs locally, and its report crosses over
-TLS. Both are the next act. Version 1.0 carries neither, and section 8 names them.
+TLS. The report's form is `weaver-survey/1`, stated in `weaver-survey-format.md` in this
+directory. Both scripts are the next act. Releases 1.0 and 2.0 carry neither, and
+section 8 names them.
 
 **The image does not update itself.** Automatic package updates and firmware updates are
 off. What the operator changes after boot is the operator's, per section 1.
@@ -141,8 +151,8 @@ compacted file.**
 ### 3.2 Inbound
 
 **The image's own boot rules drop inbound traffic and accept SSH** (ruling of
-2026-11-15). In version 1.0 the appliance listens on SSH alone. The setup and the
-console use no listener but SSH (the operator's addendum of 2026-11-16 to the
+2026-11-15). In releases 1.0 and 2.0 the appliance listens on SSH alone. The setup and
+the console use no listener but SSH (the operator's addendum of 2026-11-16 to the
 setup-pages rulings, item 9). A port that a declaration names is the agent's own
 surface, and declared ports are later work (the operator's design-first ruling of
 2026-11-16).
@@ -195,15 +205,15 @@ the setup-pages rulings, items 15 and 19), per section 8.
 
 **The automatic save point that the unload writes is in scope, on the state disk** (the
 operator's rulings of 2026-11-16 on the setup pages). It is the existing save point
-path, in the agent's folder, and no new persistent store. In version 1.0 the agent's
-folder is in its territory on the image's root (above), so a save point written there
-outlives a restart of the virtual machine but not the image's replacement. It is on the
-state disk once the next act moves the agent's home, with the folder inside it, onto the
-state drive. The first agent "declares
-a store and keeps the system prompt" (ruling of 2026-11-16) and keeps that save point.
-Its test puts a prompt into state, loads, unloads, shuts the virtual machine down,
-restarts, reloads, and finds the prompt restored. Save points that the operator manages
-stay out of scope. Section 8 names them as a later item.
+path, in the agent's folder, and no new persistent store. In releases 1.0 and 2.0 the
+agent's folder is in its territory on the image's root (above), so a save point written
+there outlives a restart of the virtual machine but not the image's replacement. It is
+on the state disk once the next act moves the agent's home, with the folder inside it,
+onto the state drive. The first agent "declares a store and keeps the system prompt"
+(ruling of 2026-11-16) and keeps that save point. Its test puts a prompt into state,
+loads, unloads, shuts the virtual machine down, restarts, reloads, and finds the prompt
+restored. Save points that the operator manages stay out of scope. Section 8 names them
+as a later item.
 
 ### 3.5 The agent service
 
@@ -258,7 +268,7 @@ each agent, and each choice is part of that agent's arrangement.
 | The model | the declaration | The bytes live on the models mount. |
 | Whether the agent elects a store (the engine) | the declaration | It stays a choice for each agent. The state mount is required for every agent either way, at least 10 GiB, and whether a smaller drive is refused or warned of is open (the operator's rulings of 2026-11-16 on the setup pages). The first agent declares a store and keeps the system prompt (ruling of 2026-11-16). |
 | Where the trace goes | a field on Weaver Web's declaration page, set when the agent is created | The suite sends the trace where it is told. A file, `/dev/null` or anything else: what stands behind it is the operator's. |
-| The ports of a tool or of the gate | the declaration | Later work: none in version 1.0, per section 3.2 (the operator's design-first ruling of 2026-11-16). |
+| The ports of a tool or of the gate | the declaration | Later work: none in releases 1.0 and 2.0, per section 3.2 (the operator's design-first ruling of 2026-11-16). |
 | The card, and the virtual CPU model | the hypervisor | Both are members of the tuple, per section 5. |
 | What the appliance may reach | the operator's network | The image places no limit. |
 
@@ -338,9 +348,11 @@ side. The kernel modules were separate builds of one driver version. The C libra
 math library and the C++ runtime were each distribution's own. Nothing was
 pre-registered. The host was not run again after the guest.
 
-**They do not cover the image.** The image compiles its binaries in place and carries
-the 615 branch of the driver. A run of the sealed image against that host varies the
-build site, the driver branch and the system libraries at once.
+**They do not cover the image.** The image compiles its binaries in place. Release 2.0
+carries driver 620.70.06, the release the counts ran, as Arch's prebuilt open module,
+on Arch Linux; release 1.0 carried the 615 branch on Ubuntu. A run of the sealed image
+against that host varies the build site, the operating system and its libraries, and the
+driver's build at once.
 
 **The build site is a participant.** A measurement on 2026-11-14 compared repeated
 builds from the same commits. Two shipped files differed between builds: the SPU and the
@@ -355,6 +367,10 @@ found SSH as the only listener, every file and link of the manifest in place, no
 first-boot seed, no secret, and the held kernel. That image predates the rulings of
 2026-11-15. It is a proof artifact and is not version 1. The proof's result note is not
 in a repository. It is owed with the Spec of the image build.
+
+**Release 2.0's evidence stands in the Spec of the image build**
+(`weaver-appliance-build-Spec`, in this directory), which records its record build and
+the cardless proof of the sealed image.
 
 ### 7.2 What is owed
 
@@ -398,10 +414,10 @@ still has to be captured into the binary or held by the image.
   after pairing. SSH takes that key and never a password (the addendum, as the suite
   Planner recorded it). The setup script's drive-setup run fetches the key over the
   paired link and writes it, since writing it is a root act and the connectors hold no
-  root, and running the setup command again writes a changed key (the suite Planner's
-  brief, recorded with the rulings). The next act.
+  root, and running the setup command again writes a changed key. The next act.
 - The survey script, run locally, its report crossing over TLS (the operator's rulings
-  of 2026-11-16 on the setup pages). The next act.
+  of 2026-11-16 on the setup pages). The next act. The report's form is stated in
+  `weaver-survey-format.md` in this directory.
 - The accounts the agent needs, shipped in the image: a fixed agent account,
   `weaver-agent` as proposed, and the two connectors' accounts, which today
   `create-agent.sh` lays at agent creation (the operator's answers of 2026-11-16,
