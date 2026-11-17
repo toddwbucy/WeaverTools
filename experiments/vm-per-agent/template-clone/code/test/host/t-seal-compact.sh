@@ -35,7 +35,7 @@ run() {
                      dumpxml) printf "<domain><name>%s</name><devices><disk type='file' device='disk'><source file='%s'/></disk></devices></domain>\n" "$2" "$DISK" ;;
                  esac; }
       image_open() { :; }; image_close() { :; }
-      image_get() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
+      image_get_present() { [ -e "$IMG$2" ] || return 1; cat "$IMG$2" >"$3"; }
       sha256sum() { echo "sha256sum $*" >>"$CALLS"; command sha256sum "$@"; }
       chmod() { echo "chmod $*" >>"$CALLS"; command chmod "$@"; }
       sync() { echo "sync $*" >>"$CALLS"; command sync "$@"; }

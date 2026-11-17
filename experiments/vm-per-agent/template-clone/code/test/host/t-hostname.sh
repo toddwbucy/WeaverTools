@@ -18,7 +18,7 @@ hostname() { echo "$BUILD_NAME"; }
 fresh() {
     ETC=$(mktemp -d "$T/etc.XXXXXX"); RECORD=$ETC/weaver-appliance
     eval "$(sed "s|/etc|$ETC|g" <<<"$body")"
-    mkdir -p "$ETC/ssh" "$ETC/netplan"
+    mkdir -p "$ETC/ssh" "$ETC/sudoers.d" "$ETC/pacman.d/gnupg"
     echo "$IMAGE_HOSTNAME" >"$ETC/hostname"; echo "127.0.0.1 localhost" >"$ETC/hosts"
     printf '%s\n' "$FIREWALL_RULES" >"$ETC/nftables.conf"
 }
@@ -31,9 +31,10 @@ fresh; echo "127.0.1.1 $BUILD_NAME" >>"$ETC/hosts"
 check "the build's name in /etc/hosts: a finding naming the file" test "$(image_hostname_check final)" = "$ETC/hosts"
 fresh; echo "127.0.1.1 $BUILD_NAME.lan $BUILD_NAME" >"$ETC/hosts"; echo "x root@$BUILD_NAME" >"$ETC/motd"
 check "the name before a dot, or after an @: findings" test "$(image_hostname_check final | wc -l)" = 2
-fresh; echo "ssh-ed25519 AAAA root@$BUILD_NAME" >"$ETC/ssh/ssh_host_ed25519_key.pub"; echo "x $BUILD_NAME" >"$ETC/netplan/50-cloud-init.yaml"
+fresh; echo "ssh-ed25519 AAAA root@$BUILD_NAME" >"$ETC/ssh/ssh_host_ed25519_key.pub"
+echo "# made for $BUILD_NAME" >"$ETC/sudoers.d/90-cloud-init-users"; echo "uid $BUILD_NAME" >"$ETC/pacman.d/gnupg/pubring.kbx"
 check "in the pre pass, the files the final step removes are left out" test -z "$(image_hostname_check pre)"
-check "and in the final pass they are findings" test "$(image_hostname_check final | wc -l)" = 2
+check "and in the final pass they are findings" test "$(image_hostname_check final | wc -l)" = 3
 fresh; BUILD_NAME=$IMAGE_HOSTNAME
 check "a build guest named as the image is a finding, not a pass" test -n "$(image_hostname_check final)"
 fresh; BUILD_NAME=weaver-appliance-build5; echo "weaver-appliance-build" >"$ETC/mailname"

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The sealed image's first login (the operator's rulings of 2026-11-16: root, set at first
-# login; systemd's first-boot paths left and named), from guest/template-steps' own text:
+# login; systemd's first-boot paths left and named, the network generator among them), from
+# guest/template-steps' own text:
 # accounts_judge on stand-in account files, sshd_check against this host's sshd with a
 # stand-in configuration, firstboot_paths_check against a stand-in tree and a stand-in
 # systemctl, and where each is wired: the cleanup writes the SSH settings and checks them,
@@ -105,9 +106,15 @@ shipped() {
     printf '#!/bin/sh\n' >"$F/usr/lib/systemd/system-generators/systemd-ssh-generator"; chmod 0755 "$F/usr/lib/systemd/system-generators/systemd-ssh-generator"
     ln -s /dev/null "$F/etc/systemd/system-generators/systemd-gpt-auto-generator"
     echo static >"$F/state-systemd-firstboot.service"; echo static >"$F/state-systemd-creds.socket"
+    echo enabled >"$F/state-systemd-network-generator.service"
 }
 shipped
-check "as Ubuntu 26.04 ships them, with another generator masked: no finding" test -z "$(firstboot_paths_check)"
+check "as Arch's systemd 262 ships them, with another generator masked: no finding" test -z "$(firstboot_paths_check)"
+echo disabled >"$F/state-systemd-network-generator.service"
+check "the network generator disabled: named" test "$(firstboot_paths_check)" = "systemd-network-generator.service is disabled, not enabled"
+echo masked >"$F/state-systemd-network-generator.service"
+check "the network generator masked: named once" test "$(firstboot_paths_check)" = "systemd-network-generator.service is masked"
+shipped
 echo masked >"$F/state-systemd-firstboot.service"
 check "systemd-firstboot masked: named" test "$(firstboot_paths_check)" = "systemd-firstboot.service is masked"
 shipped; rm -f -- "$F/state-systemd-creds.socket"

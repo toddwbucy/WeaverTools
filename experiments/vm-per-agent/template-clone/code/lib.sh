@@ -14,22 +14,41 @@ VM_ROOT=$(realpath -m -- "$VM_ROOT") || { printf '\nREFUSED: VM_ROOT %s cannot b
 
 URI=qemu:///system
 # The guest operating system, a named input (OS): its cloud image by digest, checked
-# against SHA256SUMS signed by the Ubuntu cloud image key. 26.04 is the cloud image as
-# released on 2026-10-20. 24.04 is named and refused until its image is pinned
-# (weaver-appliance-build-Spec, section 1). clone.sh names no OS and gets 26.04.
+# against a digest file signed by the image's key, and the key pinned by fingerprint
+# before the first fetch.
+# - arch-20261115: the arch-boxes cloud image v20261115.625457, release 1.1's base (the
+#   operator's ruling of 2026-11-16), which build-template.sh builds. Its .SHA256 file is
+#   signed by the Arch Linux image signing key, its primary key's fingerprint below. The
+#   key was read on 2026-11-16 from three sources that agree: the arch-boxes README (the
+#   key block added on 2022-05-29 in its commit b3919744a4), keyserver.ubuntu.com by
+#   fingerprint, and the Arch Linux infrastructure repository's misc/keys/README.md. Its
+#   signing subkey expires on 2027-05-28: an image pinned later needs the key read again.
+#   The digest file's signature must be made by a key under that primary (gpg's VALIDSIG
+#   line names it last, sig_primary_ok).
+# - 26.04: Ubuntu's cloud image as released on 2026-10-20, release 1.0's base, kept for
+#   clone.sh, which names no OS and gets 26.04, and the #21 template it clones. Release 1.0
+#   itself is rebuilt from this tree as tagged appliance/1.0.
+# 24.04 is named and refused until its image is pinned (weaver-appliance-build-Spec,
+# section 1).
 OS=${OS:-26.04}
-IMAGE_KEY=D2EB44626FDDC30B513D5BB71A5D6C4C7DB87C81
 case $OS in
+    arch-20261115)
+        IMAGE_NAME=Arch-Linux-x86_64-cloudimg-20261115.625457.qcow2
+        IMAGE_URL=https://geo.mirror.pkgbuild.com/images/v20261115.625457
+        IMAGE_SHA256=dbd02830f6eb0fe07ef6e5edaddbae8b577ce4296d9e79118904704cce0a1f60
+        IMAGE_KEY=1B9A16984A4E8CB448712D2AE0B78BF4326C6F8F
+        OS_VARIANT=archlinux ;;
     26.04)
         IMAGE_NAME=ubuntu-26.04-server-cloudimg-amd64.img
         IMAGE_URL=https://cloud-images.ubuntu.com/releases/resolute/release
         IMAGE_SHA256=5645d0318ad21f643ebb1ac4567514620e9893380b07b0201fda163baa5b7eb5
+        IMAGE_KEY=D2EB44626FDDC30B513D5BB71A5D6C4C7DB87C81
         OS_VARIANT=ubuntu26.04 ;;
     24.04)
         printf '\nREFUSED: no Ubuntu 24.04 cloud image is pinned yet (weaver-appliance-build-Spec, section 1)\n' >&2
         exit 1 ;;
     *)
-        printf '\nREFUSED: OS is 26.04 (or 24.04 once pinned), not %s\n' "$OS" >&2
+        printf '\nREFUSED: OS is arch-20261115 or 26.04 (or 24.04 once pinned), not %s\n' "$OS" >&2
         exit 1 ;;
 esac
 IMAGE=$VM_ROOT/images/$IMAGE_NAME
@@ -44,8 +63,51 @@ virsh_() { virsh -c "$URI" "$@"; }
 say() { printf '\n== %s\n' "$*"; }
 die() { printf '\nREFUSED: %s\n' "$*" >&2; exit 1; }
 
-# fetch_image: the cloud image, its SHA256SUMS and their signature, each checked.
+# fetch_image: the cloud image, its signed digest file and that file's signature, each
+# checked, by the base's own route.
 fetch_image() {
+    case $OS in
+        arch-*) fetch_image_arch ;;
+        *) fetch_image_ubuntu ;;
+    esac
+}
+# sig_primary_ok STATUS FPR: 0 where gpg's --status-fd output STATUS names a good signature
+# (GOODSIG) made by a key whose primary key is FPR (VALIDSIG's last field), and no bad,
+# expired, revoked or unchecked signature. Any other STATUS is 1.
+sig_primary_ok() {
+    awk -v want="$2" '
+        $1 != "[GNUPG:]" { next }
+        $2 == "GOODSIG" { good = 1 }
+        $2 == "VALIDSIG" { if ($NF == want) valid = 1; else bad = 1 }
+        $2 ~ /^(BADSIG|ERRSIG|EXPSIG|EXPKEYSIG|REVKEYSIG|NO_PUBKEY)$/ { bad = 1 }
+        END { exit !(good && valid && !bad) }' <<<"$1"
+}
+# fetch_image_arch: the image's .SHA256 file and its detached signature fetched and kept
+# beside the image, the signature checked against IMAGE_KEY's primary fingerprint in a
+# keyring of this fetch's own, the file checked to name the pinned digest, then the image
+# fetched and its digest checked.
+fetch_image_arch() {
+    local dir=$VM_ROOT/images gnupg st
+    mkdir -p "$dir"
+    if [ ! -f "$IMAGE" ]; then
+        curl -fsS --proto '=https' -o "$IMAGE.SHA256" "$IMAGE_URL/$IMAGE_NAME.SHA256"
+        curl -fsS --proto '=https' -o "$IMAGE.SHA256.sig" "$IMAGE_URL/$IMAGE_NAME.SHA256.sig"
+        gnupg=$(mktemp -d)
+        GNUPGHOME=$gnupg gpg --batch -q --keyserver hkps://keyserver.ubuntu.com --recv-keys "$IMAGE_KEY" \
+            || { rm -rf -- "${gnupg:?}"; die "the image key $IMAGE_KEY could not be fetched"; }
+        st=$(GNUPGHOME=$gnupg gpg --batch -q --status-fd 1 --verify "$IMAGE.SHA256.sig" "$IMAGE.SHA256" 2>/dev/null) || true
+        rm -rf -- "${gnupg:?}"
+        sig_primary_ok "$st" "$IMAGE_KEY" \
+            || die "$IMAGE_NAME.SHA256 does not verify as signed under the primary key $IMAGE_KEY"
+        [ "$(cat "$IMAGE.SHA256")" = "$IMAGE_SHA256  $IMAGE_NAME" ] \
+            || die "the signed $IMAGE_NAME.SHA256 does not carry the pinned digest alone"
+        curl -fsS --proto '=https' -o "$IMAGE.part" "$IMAGE_URL/$IMAGE_NAME"
+        mv "$IMAGE.part" "$IMAGE"
+    fi
+    echo "$IMAGE_SHA256  $IMAGE" | sha256sum -c --quiet || die "$IMAGE is not the pinned image"
+}
+# fetch_image_ubuntu: the cloud image, its SHA256SUMS and their signature, each checked.
+fetch_image_ubuntu() {
     local dir=$VM_ROOT/images gnupg
     mkdir -p "$dir"
     if [ ! -f "$IMAGE" ]; then
@@ -330,22 +392,17 @@ guest_env() {
     [ -z "$out" ] || printf 'env%s ' "$out"
 }
 
-# image_open DISK DIR [rw]: DISK's root filesystem, read-only, as the file DIR/root.raw, which
+# image_open DISK DIR: DISK's root filesystem, read-only, as the file DIR/root.raw, which
 # qemu-storage-daemon exports over FUSE as this user: a FUSE mount this user owns, with no
-# root and no loop device.
-# The root partition is the one GPT names "Linux root (x86-64)". image_cat and image_ls
-# read through debugfs, which follows no symbolic link; image_close stops the export.
-# With rw the export is writable, for image_put, and only for an overlay: a DISK that names
-# no backing file (the sealed image names none) is refused. QEMU opens the backing file
-# read-only, so nothing written reaches it.
+# root and no loop device. The root partition is the one GPT names "Linux root (x86-64)"
+# (the arch-boxes image's type 8304 and Ubuntu's alike). Its filesystem's type, read by
+# blkid from the export, is kept in DIR/fs, and the image_* reads below go by it: ext4
+# (release 1.0, the #21 template) through debugfs, btrfs (release 1.1) through btrfs
+# restore. Neither follows a symbolic link. Nothing here writes to an image: the proof
+# hands its first boot a network as a credential, not a file. image_close stops the
+# export.
 image_open() {
-    local disk=$1 dir=$2 part start size pid ro=on wr=off lock=off
-    if [ "${3:-}" = rw ]; then
-        qemu-img info --output=json "$disk" 2>/dev/null \
-            | python3 -I -c 'import json, sys; sys.exit(0 if json.load(sys.stdin).get("backing-filename") else 1)' \
-            || die "image_open writes only to an overlay, a file that names a backing file; $disk names none, or could not be read"
-        ro=off; wr=on; lock=on
-    fi
+    local disk=$1 dir=$2 part start size pid ro=on wr=off lock=off fs
     mkdir -p -- "$dir"
     : >"$dir/whole.raw"; : >"$dir/root.raw"
     qemu-storage-daemon \
@@ -367,55 +424,83 @@ print(p[0]["start"], p[0]["size"]) if len(p) == 1 else sys.exit(1)') || part=""
         --blockdev "driver=raw,node-name=p,file=q,offset=$((start * 512)),size=$((size * 512)),read-only=$ro" \
         --export "type=fuse,id=r,node-name=p,mountpoint=$dir/root.raw,writable=$wr,allow-other=off" \
         --pidfile "$dir/qsd-root.pid" --daemonize || die "no export of $disk's root partition"
+    fs=$(blkid -p -o value -s TYPE "$dir/root.raw" 2>/dev/null) || fs=""
+    case $fs in
+        ext4|btrfs) printf '%s\n' "$fs" >"$dir/fs" ;;
+        *) image_close "$dir"; die "$disk's root partition holds '${fs:-no filesystem blkid knows}', not ext4 or btrfs" ;;
+    esac
 }
-# image_put DIR SRC PATH MODE: the local file SRC written as PATH into a root filesystem
-# opened writable (image_open DISK DIR rw), in place of any file there, root's, with MODE
-# (octal, with the file type, such as 0100600). PATH's directory must stand. debugfs prints
-# its errors and exits 0, so its output is kept in DIR/put.log and the caller reads the
-# result back from the disk opened again (image_got). A filesystem that is not clean, or
-# whose journal awaits recovery, is refused: debugfs writes past the journal.
-image_put() {
-    local dir=$1 src=$2 path=$3 mode=$4 st
-    [ -f "$src" ] || die "image_put: no file $src"
-    st=$(debugfs -c -R stats "$dir/root.raw" 2>/dev/null)
-    grep -qE '^Filesystem state: +clean$' <<<"$st" && ! grep -qE '^Filesystem features:.*needs_recovery' <<<"$st" \
-        || die "image_put: the filesystem is not clean, or its journal awaits recovery; nothing written"
-    image_state "$dir" "${path%/*}" || die "image_put: ${path%/*} is not in the image, or could not be read; nothing written"
-    printf 'rm "%s"\nwrite "%s" "%s"\nsif "%s" mode %s\nsif "%s" uid 0\nsif "%s" gid 0\n' \
-        "$path" "$src" "$path" "$path" "$mode" "$path" "$path" >"$dir/put.cmd"
-    echo "== image_put $path" >>"$dir/put.log"
-    debugfs -w -f "$dir/put.cmd" "$dir/root.raw" >>"$dir/put.log" 2>&1
+# image_fs DIR: the root filesystem's type image_open read, ext4 or btrfs. Otherwise a line
+# on stderr and status 2.
+image_fs() {
+    local fs
+    fs=$(cat "$1/fs" 2>/dev/null)
+    case $fs in
+        ext4|btrfs) printf '%s\n' "$fs" ;;
+        *) echo "image reads: $1 was not opened by image_open (no filesystem type recorded)" >&2; return 2 ;;
+    esac
 }
-# image_got DIR SRC PATH MODE: PATH, read from the disk (opened read-only again after
-# image_put), holds SRC's bytes, as a regular file, root's, with MODE's permission bits.
-# Prints one line; exits 1 on any difference.
-image_got() {
-    local dir=$1 src=$2 path=$3 mode=$4 o got_mode owner rc=0
-    image_get "$dir" "$path" "$dir/got" || rc=$?
-    [ "$rc" = 0 ] || { echo "$path: not read back (image_get exited $rc)"; return 1; }
-    cmp -s -- "$src" "$dir/got" || { rm -f -- "$dir/got"; echo "$path: read back with other bytes than written"; return 1; }
-    rm -f -- "$dir/got"
-    o=$(debugfs -c -R "stat \"$path\"" "$dir/root.raw" 2>/dev/null)
-    got_mode=$(sed -n 's/.*Type: regular *Mode: *\([0-7]*\).*/\1/p' <<<"$o" | head -1)
-    owner=$(sed -n 's/^User: *\([0-9]*\) *Group: *\([0-9]*\).*/\1:\2/p' <<<"$o" | head -1)
-    [ "$got_mode" = "0${mode: -3}" ] && [ "$owner" = 0:0 ] \
-        || { echo "$path: a regular file with mode '${got_mode:-unread}' and owner '${owner:-unread}', not 0${mode: -3} and 0:0"; return 1; }
-    echo "$path: read back, $(stat -c %s -- "$src") bytes, mode $got_mode, owner $owner"
+# The reads, each by the filesystem's type: image_state, image_get, image_cat, image_ls,
+# image_files and image_resolve below take the same arguments and give the same statuses
+# on either. An expected absence is image_state's call (status 1) or image_get_present's,
+# never an empty result: on btrfs, image_get, image_cat and image_files refuse by name a
+# path that did not come out of the image.
+image_state() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_state_$f" "$@"
 }
-image_cat() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
-# image_ls DIR PATH fails where PATH is absent. debugfs exits 0 on a missing path and prints
-# nothing to stdout, and a directory always lists . and .., so no output is the absence.
+image_get() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_get_$f" "$@"
+}
+image_cat() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_cat_$f" "$@"
+}
 image_ls() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_ls_$f" "$@"
+}
+image_files() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_files_$f" "$@"
+}
+image_resolve() {
+    local f
+    f=$(image_fs "$1") || return 2
+    "image_resolve_$f" "$@"
+}
+# image_get_present DIR PATH OUT: PATH copied to OUT where image_state finds it (0), nothing
+# where image_state finds it absent (1), and 2 where either read fails. The one read for a
+# file whose absence is expected (a seal's SEAL-REFUSED).
+image_get_present() {
+    local rc=0
+    rm -f -- "$3"
+    image_state "$1" "$2" || rc=$?
+    [ "$rc" = 0 ] || return "$rc"
+    image_get "$1" "$2" "$3" || return 2
+}
+# The ext4 reads, through debugfs.
+image_cat_ext4() { debugfs -c -R "cat $2" "$1/root.raw" 2>/dev/null; }
+# image_ls_ext4 DIR PATH fails where PATH is absent. debugfs exits 0 on a missing path and
+# prints nothing to stdout, and a directory always lists . and .., so no output is the
+# absence.
+image_ls_ext4() {
     local o
     o=$(debugfs -c -R "ls -p $2" "$1/root.raw" 2>/dev/null)
     [ -n "$o" ] || return 1
     printf '%s\n' "$o"
 }
-# image_state DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where the image
+# image_state_ext4 DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where the image
 # could not be read (no debugfs, a filesystem it cannot open, any other error), the cause on
 # stderr. debugfs exits 0 in each case, so the three are told apart by what it prints:
 # "Inode:" for a path it found, "File not found by ext2_lookup" for one it did not.
-image_state() {
+image_state_ext4() {
     local o
     command -v debugfs >/dev/null 2>&1 || { echo "image_state: no debugfs on this host" >&2; return 2; }
     o=$(debugfs -c -R "stat \"$2\"" "$1/root.raw" 2>&1) || { printf 'image_state: debugfs: %s\n' "$(tail -1 <<<"$o")" >&2; return 2; }
@@ -424,13 +509,13 @@ image_state() {
     printf 'image_state: %s: %s\n' "$2" "$(grep -v '^debugfs [0-9]' <<<"$o" | tail -1)" >&2
     return 2
 }
-# image_get DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 0 when copied
+# image_get_ext4 DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 0 when copied
 # whole, 1 when PATH is absent (no OUT), 2 when it could not be read, the cause on stderr
 # (image_state's, a PATH that is not a regular file, or a copy short of the inode's size).
-image_get() {
+image_get_ext4() {
     local dir=$1 path=$2 out=$3 rc=0 o size
     rm -f -- "$out"
-    image_state "$dir" "$path" || rc=$?
+    image_state_ext4 "$dir" "$path" || rc=$?
     [ "$rc" = 0 ] || return "$rc"
     o=$(debugfs -c -R "stat \"$path\"" "$dir/root.raw" 2>/dev/null)
     grep -q 'Type: regular' <<<"$o" || { echo "image_get: $path is not a regular file" >&2; return 2; }
@@ -442,7 +527,7 @@ image_get() {
         return 2
     fi
 }
-# image_files DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
+# image_files_ext4 DIR PATH: "SIZE PATH" for each regular file under PATH, one per line, depth
 # bounded at 12. debugfs ls -p prints /inode/mode/uid/gid/name/size/ per entry, the mode in
 # six octal digits (040 a directory, 100 a regular file). Nothing where PATH is absent.
 # debugfs exits 0 on a listing it cannot make and says so on stderr, so its lines are read
@@ -450,7 +535,7 @@ image_get() {
 # ends the listing with status 2 and a line on stderr. A listing that did not complete is
 # not an empty one. A directory debugfs lists as empty and reports nothing about is empty
 # here too.
-image_files() {
+image_files_ext4() {
     local dir=$1 path=${2%/} depth=${3:-0} o l ino mode uid gid name size rest
     [ "$depth" -lt 12 ] || { echo "image_files: $path is past the depth bound of 12" >&2; return 2; }
     o=$(debugfs -c -R "ls -p \"$path\"" "$dir/root.raw" 2>&1) \
@@ -466,10 +551,162 @@ image_files() {
         IFS=/ read -r _ ino mode uid gid name size rest <<<"$l"
         case $name in '' | . | ..) continue ;; esac
         case $mode in
-            040*) image_files "$dir" "$path/$name" $((depth + 1)) || return 2 ;;
+            040*) image_files_ext4 "$dir" "$path/$name" $((depth + 1)) || return 2 ;;
             100*) printf '%s %s\n' "${size:-0}" "$path/$name" ;;
         esac
     done <<<"$o"
+}
+# The btrfs reads, through btrfs restore, which copies the paths its --path-regex matches out
+# of the filesystem into a directory, links as links (-S), and says nothing of a path it
+# did not find. Each read therefore restores into a new directory of its own under DIR,
+# always with /etc beside what it asks for, and checks what came out: /etc not a directory
+# there means the read itself did not work (status 2), and a path asked for that did not
+# come out is refused by name, except by image_state, whose call an absence is. No owner,
+# mode or time is restored or compared: no offline check reads one.
+#
+# image_path_regex PATH...: the POSIX extended regex that matches exactly each PATH and each
+# directory above it, and, for a PATH ending "/**", everything under it. Each name is
+# matched as written, with every regex metacharacter escaped. A PATH that is not absolute,
+# is "/" itself, or holds an empty, "." or ".." component is refused, status 2.
+image_path_regex() {
+    python3 -I - "$@" <<'PY'
+import sys
+def esc(s):
+    return "".join("\\" + c if c in ".[]()*+?{}|^$\\" else c for c in s)
+alts = {""}
+for p in sys.argv[1:]:
+    sub = p.endswith("/**")
+    q = p[:-3] if sub else p
+    parts = q[1:].split("/") if q.startswith("/") else None
+    if not parts or any(c in ("", ".", "..") for c in parts) or "\n" in q:
+        print(f"image_path_regex: '{p}' is not an absolute path of plain names", file=sys.stderr)
+        sys.exit(2)
+    for i in range(1, len(parts) + 1):
+        alts.add(esc("/".join(parts[:i])))
+    if sub:
+        alts.add(esc("/".join(parts)) + "/.*")
+if len(sys.argv) < 2:
+    print("image_path_regex: no path asked for", file=sys.stderr)
+    sys.exit(2)
+print("^/(" + "|".join(sorted(alts)) + ")$")
+PY
+}
+# image_restore DIR PATH...: PATHs, and /etc, restored out of the btrfs root filesystem
+# opened at DIR into a new directory under DIR, whose name it prints. btrfs restore asks
+# on its terminal whether to go on with a file of many extents, so it is answered "a"
+# (always) from a file. 2, the cause on stderr, where the regex cannot be made, the
+# restore fails, or /etc did not come out as a directory.
+image_restore() {
+    local dir=$1 out re rc=0; shift
+    command -v btrfs >/dev/null 2>&1 || { echo "image reads: no btrfs on this host" >&2; return 2; }
+    re=$(image_path_regex /etc "$@") || return 2
+    out=$(mktemp -d "$dir/restore.XXXXXX") || { echo "image reads: no directory under $dir" >&2; return 2; }
+    printf 'a\n%.0s' {1..4096} >"$out.answers"
+    btrfs restore -S --path-regex "$re" "$dir/root.raw" "$out" <"$out.answers" >"$out.log" 2>&1 || rc=$?
+    rm -f -- "$out.answers"
+    if [ "$rc" != 0 ] || [ ! -d "$out/etc" ] || [ -L "$out/etc" ]; then
+        echo "image reads: btrfs restore exited $rc, and /etc $([ -d "$out/etc" ] && echo came out || echo did not come out): $(tail -2 "$out.log" | tr '\n' ' ')" >&2
+        rm -rf -- "${out:?}" "$out.log"
+        return 2
+    fi
+    rm -f -- "$out.log"
+    printf '%s\n' "$out"
+}
+# image_came_out OUT PATH: 0 where PATH came out into OUT, as a file, a directory or a link.
+image_came_out() { [ -e "$1$2" ] || [ -L "$1$2" ]; }
+# image_state_btrfs DIR PATH: 0 where PATH is in the image, 1 where it is absent, 2 where
+# that cannot be told. Absent means PATH did not come out and the deepest directory above
+# it that did is a directory, not a link (a path through a link is not read, status 2).
+image_state_btrfs() {
+    local out a rc
+    out=$(image_restore "$1" "$2") || return 2
+    if image_came_out "$out" "$2"; then
+        rc=0
+    else
+        a=${2%/*}
+        while [ -n "$a" ] && ! image_came_out "$out" "$a"; do a=${a%/*}; done
+        if [ -L "$out$a" ]; then
+            echo "image_state: $2 lies under $a, a link, which the read does not follow" >&2; rc=2
+        elif [ -d "$out$a" ] || [ -z "$a" ]; then rc=1
+        else rc=1   # under a regular file, nothing stands
+        fi
+    fi
+    rm -rf -- "${out:?}"
+    return "$rc"
+}
+# image_get_btrfs DIR PATH OUT: PATH, a regular file, copied out of the image to OUT. 2, the
+# cause on stderr, where PATH did not come out (named) or is not a regular file.
+image_get_btrfs() {
+    local dir=$1 path=$2 out=$3 r rc=0
+    rm -f -- "$out"
+    r=$(image_restore "$dir" "$path") || return 2
+    if ! image_came_out "$r" "$path"; then
+        echo "image_get: $path did not come out of the image (absent, or not the name asked for)" >&2; rc=2
+    elif [ -L "$r$path" ] || [ ! -f "$r$path" ]; then
+        echo "image_get: $path is not a regular file" >&2; rc=2
+    else
+        cp -- "$r$path" "$out" || rc=2
+    fi
+    rm -rf -- "${r:?}"
+    return "$rc"
+}
+# image_cat_btrfs DIR PATH: PATH's bytes on stdout; image_get_btrfs's refusals.
+image_cat_btrfs() {
+    local t rc=0
+    t=$(mktemp "$1/cat.XXXXXX") || return 2
+    image_get_btrfs "$1" "$2" "$t" && cat -- "$t" || rc=2
+    rm -f -- "$t"
+    return "$rc"
+}
+# image_ls_btrfs DIR PATH: one line for each entry of the directory PATH, "TYPE NAME" (find's
+# %y letters), with " -> TARGET" for a link, in C-locale order. 1 where image_state finds
+# PATH absent, 2 where it cannot tell, PATH did not come out, or is not a directory.
+image_ls_btrfs() {
+    local r rc=0
+    image_state_btrfs "$1" "$2" || return $?
+    r=$(image_restore "$1" "$2/**") || return 2
+    if [ -d "$r$2" ] && [ ! -L "$r$2" ]; then
+        find "$r$2" -mindepth 1 -maxdepth 1 -printf '%y %f\0%l\n' | sed 's/\x0\(.\)/ -> \1/; s/\x0$//' | LC_ALL=C sort
+    else
+        echo "image_ls: $2 did not come out of the image as a directory" >&2; rc=2
+    fi
+    rm -rf -- "${r:?}"
+    return "$rc"
+}
+# image_files_btrfs DIR PATH: "SIZE PATH" for each regular file under the directory PATH,
+# one a line, in C-locale order by path. 2, the cause on stderr, where PATH did not come out
+# (named) or is not a directory. An empty directory lists nothing and is status 0.
+image_files_btrfs() {
+    local dir=$1 path=${2%/} r rc=0
+    r=$(image_restore "$dir" "$path/**") || return 2
+    if ! image_came_out "$r" "$path"; then
+        echo "image_files: $path did not come out of the image (absent, or not the name asked for)" >&2; rc=2
+    elif [ -L "$r$path" ] || [ ! -d "$r$path" ]; then
+        echo "image_files: $path is not a directory" >&2; rc=2
+    else
+        (cd "$r" && find ".$path" -type f -printf '%s %P\0' | LC_ALL=C sort -z -t ' ' -k 2) \
+            | while IFS= read -r -d '' l; do printf '%s %s/%s\n' "${l%% *}" "$path" "${l#* }"; done
+    fi
+    rm -rf -- "${r:?}"
+    return "$rc"
+}
+# image_resolve_btrfs DIR PATH: PATH with each symbolic link in the image followed, 8 at
+# most, to a path that came out as no link. 1, the cause on stderr, where a link's target
+# or the path did not come out.
+image_resolve_btrfs() {
+    local dir=$1 p=$2 n=0 r t
+    while [ "$n" -lt 8 ]; do
+        r=$(image_restore "$dir" "$p") || return 1
+        if ! image_came_out "$r" "$p"; then
+            rm -rf -- "${r:?}"; echo "image_resolve: $p did not come out of the image" >&2; return 1
+        fi
+        if [ ! -L "$r$p" ]; then rm -rf -- "${r:?}"; printf '%s\n' "$p"; return 0; fi
+        t=$(readlink -- "$r$p"); rm -rf -- "${r:?}"
+        case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
+        n=$((n + 1))
+    done
+    echo "image_resolve: more than 8 links from $2" >&2
+    return 1
 }
 # image_late_writes DIR: what a sealed image holds that its seal's final probe refuses, so
 # written after that probe (at the power-off): systemd's random seed, its credential secret,
@@ -502,7 +739,12 @@ image_late_writes() {
     fi
     for p in /var/lib/wtmpdb /var/lib/lastlog; do
         echo "== $p, listed and not judged"
-        { image_files "$dir" "$p" 2>&1 || echo "(this listing did not complete)"; } | sed 's/^/  /'
+        rc=0; image_state "$dir" "$p" 2>/dev/null || rc=$?
+        case $rc in
+            0) { image_files "$dir" "$p" 2>&1 || echo "(this listing did not complete)"; } | sed 's/^/  /' ;;
+            1) echo "  (absent)" ;;
+            *) echo "  (whether it stands could not be read)" ;;
+        esac
     done
 }
 # The ggml CUDA library the image ships, and the device code it must carry (the operator's
@@ -514,9 +756,10 @@ image_late_writes() {
 GGML_CUDA_LIB=/opt/weaver/lib/libggml-cuda.so.0
 GGML_CUBIN_ARCHS="sm_86 sm_89 sm_120a sm_121a"
 CUOBJDUMP=${CUOBJDUMP:-cuobjdump}
-# image_resolve DIR PATH: PATH with each symbolic link in the image followed, 8 at most, to a
-# path that is not a link. debugfs follows none, so each target is read from its stat.
-image_resolve() {
+# image_resolve_ext4 DIR PATH: PATH with each symbolic link in the image followed, 8 at
+# most, to a path that is not a link. debugfs follows none, so each target is read from its
+# stat.
+image_resolve_ext4() {
     local dir=$1 p=$2 n=0 o t
     while [ "$n" -lt 8 ]; do
         o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
@@ -856,21 +1099,24 @@ links_format() {
 }
 manifest_links() { M=$LINKS_MARK awk '$0 == ENVIRON["M"] { l = 1; next } l' "$1"; }
 
-# The proof's own network file, written into its first boot's overlay (proof_place), and
-# the MAC address its NIC is given.
-PROOF_NETPLAN=/etc/netplan/90-weaver-proof.yaml
+# The proof's own network, handed to its first boot as a systemd credential (proof_network),
+# the credential's name, and the MAC address its NIC is given. systemd-network-generator
+# writes a credential named network.network.NAME to /run/systemd/network/NAME.network, out
+# of the MANIFEST's scope.
+PROOF_CREDENTIAL=network.network.50-weaver-proof
 PROOF_MAC=52:54:00:57:45:01
 # What the proof's first boot changes in the MANIFEST's scope by design, with no seed and no
 # cloud-init (decision 16 of 2026-11-15). Changed: the machine identity, which the seal
 # leaves uninitialized, and the shadow file, where the first login at the console sets
 # root's password (the operator's ruling of 2026-11-16). Added: the host keys' public
-# halves, which sshd-keygen makes (the private halves are never listed), the proof's own
-# network file, and the account tools' lock file, which any account tool leaves. The fourth
-# and fifth builds' first boots ran cloud-init from a seed, which also changed the account
-# files and the hostname and added its own netplan file and sudoers rule; none of those is
-# expected now. No link is expected to change. The offline mock names its own.
+# halves, which sshdgenkeys makes (the private halves are never listed), and the account
+# tools' lock file, which any account tool leaves where none stands. The proof's network
+# comes as a credential and lands under /run. The fourth and fifth builds' first boots ran
+# cloud-init from a seed, which also changed the account files and the hostname and added
+# its own netplan file and sudoers rule; none of those is expected now. No link is expected
+# to change. The offline mock names its own.
 FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/machine-id /etc/shadow}
-FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub $PROOF_NETPLAN /etc/.pwd.lock}
+FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub /etc/.pwd.lock}
 # manifest_compare SEALED FILES LINKS: the sealed MANIFEST set against a booted guest's
 # listing of the same scope: FILES as sha256sum writes them, LINKS as links_format writes
 # them. Each difference is printed by its path, never with a digest: a file or link

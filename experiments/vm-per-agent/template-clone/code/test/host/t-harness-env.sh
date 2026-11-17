@@ -37,11 +37,11 @@ check "each name exported wrong is unset once the harness is sourced; the kept n
 [ -z "$left" ] || echo "     left: $left"
 
 # Every name the scripts read with a default, bar the kept and the internal: DIR (set in
-# build-template.sh), PRETTY_NAME and VERSION_ID (os-release's, read in subshells).
+# build-template.sh), ID and PRETTY_NAME (os-release's, read in subshells).
 read_names=$(grep -ohE '\$\{[A-Z][A-Z0-9_]*:[-=?+]' "$CODE/build-template.sh" "$CODE/lib.sh" "$CODE/guest/template-steps" \
     | sed -E 's/^\$\{([A-Z0-9_]+):.*/\1/' | sort -u)
 missing=$(for n in $read_names; do
-    case " CUOBJDUMP DIR PRETTY_NAME VERSION_ID " in *" $n "*) continue ;; esac
+    case " CUOBJDUMP DIR ID PRETTY_NAME " in *" $n "*) continue ;; esac
     grep -qw "$n" <<<"$BUILD_ENV_NAMES" || echo "$n"
 done)
 check "the list covers every name the three scripts read from the environment" test -z "$missing"

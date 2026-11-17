@@ -1,0 +1,27 @@
+# The CUDA runtime the appliance image keeps (weaver-appliance-build-Spec): a package made
+# inside the build guest by guest/template-steps (runtime_build) from the CUDA toolkit's
+# own files, unchanged, so that pacman owns every runtime file once the toolkit is removed.
+# Not one of Arch's packages, and built nowhere but there: the files are named one absolute
+# path a line in the list WEAVER_RUNTIME_LIST names, and the version is the toolkit's,
+# WEAVER_RUNTIME_VER. Nothing is stripped, compressed or removed on the way.
+pkgname=weaver-cuda-runtime
+pkgver=${WEAVER_RUNTIME_VER:?the toolkit version, such as 13.4.3}
+pkgrel=1
+pkgdesc="CUDA runtime libraries for the Weaver appliance image, copied from the build guest's CUDA toolkit"
+arch=(x86_64)
+url='https://github.com/toddwbucy/WeaverTools'
+license=(LicenseRef-NVIDIA-CUDA)
+# autodeps is makepkg.conf's alone (makepkg 7.1 refuses it here); runtime_build records the
+# dependencies and provisions the build guest's makepkg added, if any.
+options=(!strip !debug !lto !emptydirs !zipman !libtool !staticlibs !purge !docs)
+
+package() {
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [[ "$f" == /* ]] || { echo "not an absolute path: $f" >&2; return 1; }
+    install -d -- "$pkgdir$(dirname -- "$f")"
+    # A link is copied as a link, a file with its mode and time.
+    cp -a --no-preserve=ownership -- "$f" "$pkgdir$f"
+  done <"${WEAVER_RUNTIME_LIST:?the list of files}"
+}

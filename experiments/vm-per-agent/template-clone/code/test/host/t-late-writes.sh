@@ -6,9 +6,10 @@
 # review of pull request 31, 2026-11-15). Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 need mke2fs debugfs
-eval "$(fn "$CODE/lib.sh" image_state image_files image_late_writes)" || exit 1
-# mk NAME: the image directory NAME, its root.raw built from $T/src-NAME.
-mk() { mkdir -p "$T/$1" && mke2fs -q -t ext4 -d "$T/src-$1" "$T/$1/root.raw" 8M; }
+eval "$(fn "$CODE/lib.sh" image_fs image_state image_state_ext4 image_files image_files_ext4 image_late_writes)" || exit 1
+# mk NAME: the image directory NAME, its root.raw built from $T/src-NAME, and its filesystem's
+# type recorded as image_open records it. t-btrfs-reads.sh runs the same reads on btrfs.
+mk() { mkdir -p "$T/$1" && mke2fs -q -t ext4 -d "$T/src-$1" "$T/$1/root.raw" 8M && echo ext4 >"$T/$1/fs"; }
 # late NAME: image_late_writes on image NAME, as the proof records it (both streams).
 late() { image_late_writes "$T/$1" >"$T/$1.out" 2>&1; }
 has() { grep -qE -- "$2" "$T/$1.out"; }

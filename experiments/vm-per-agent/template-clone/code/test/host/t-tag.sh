@@ -53,7 +53,7 @@ check "build 5's own stack log reads 2867 passed, 0 failed" eval '[ "$(stack_tes
 # ---- stack_build's pipe: bootstrap's status, never tee's, and its output kept
 eval "$(fn "$STEPS" stack_build)"
 fake=$T/wa; mkdir -p "$fake/deploy" "$T/home"
-cuda_env() { :; }; CCCL_INCLUDE=x CXX_MAJOR=15 CUDA_LIBS=y COMPUTE_CAP=86; record() { :; }
+cuda_env() { :; }; CXX_MAJOR=15 CUDA_LIBS=y COMPUTE_CAP=86; record() { :; }; record_read() { :; }
 sb() { printf '#!/usr/bin/env bash\nprintf "\\n== test\\n   9 passed, 0 failed\\n"; echo to-stderr >&2; exit %s\n' "$1" >"$fake/deploy/bootstrap-stack.sh"
        ( WA=$fake HOME=$T/home; stack_build ) >"$T/sb.out" 2>&1; }
 sb 7; rc=$?

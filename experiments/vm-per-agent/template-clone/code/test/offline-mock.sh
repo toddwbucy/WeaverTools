@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # The offline mock of template-clone-Spec.md section 8: the real put, fetch_round,
 # driver-install, uris_sha256, ci_judge, cloud_init_verdict, netdev_ok, ensure_key, harness
-# preflight and relaxed, and the host scripts' step and seal, with no virtual machine, no
-# network beyond loopback and no sudo.
+# preflight and clone-steps' relaxed, and the host scripts' step and seal, with no virtual
+# machine, no network beyond loopback and no sudo. Since release 1.1 the build guest is
+# Arch's (OS=arch-20261115) and guest/template-steps carries no relaxed: Arch's kernel
+# allows unprivileged user namespaces and its /bin/sh is bash, which the stack step checks.
 #
 #   code/test/offline-mock.sh        exit 0 when every check passes; the first failure stops
 #   KEEP=1 code/test/offline-mock.sh keeps its temporary directory for reading
@@ -713,7 +715,7 @@ check "links_format's two copies, lib.sh's and guest/template-steps', are the sa
 # The seal's own functions on a stand-in scope, run with this guest's find, sort and
 # sha256sum: the dry run, then a "booted" copy changed as a first boot would, and beyond.
 MS=$T/mscope
-mkdir -p "$MS/usr/lib" "$MS/etc/netplan" "$MS/rec"
+mkdir -p "$MS/usr/lib" "$MS/etc/ssh" "$MS/rec"
 echo a >"$MS/usr/lib/a"; echo p >"$MS/etc/passwd"; echo o >"$MS/etc/other"; echo g >"$MS/etc/gone"
 printf 'b\n' >"$MS/etc/back\\slash"; ln -s ../usr/lib/a "$MS/etc/link1"; ln -s /dev/null "$MS/etc/masked.service"
 manifest_fns() {
@@ -727,12 +729,12 @@ check "the seal's dry run passes on a stand-in scope with an escaped name and a 
 check "and fails, with find's error shown, where a scope directory is missing" \
     test $? = 1 -a "$(grep -c 'No such file or directory' "$T/mdry2.out")" -ge 1
 echo p2 >"$MS/etc/passwd"; echo o2 >"$MS/etc/other"; rm "$MS/etc/gone"
-echo n >"$MS/etc/netplan/50-cloud-init.yaml"; ln -s /x "$MS/etc/newlink"
+echo n >"$MS/etc/ssh/ssh_host_ed25519_key.pub"; ln -s /x "$MS/etc/newlink"
 ( manifest_fns
   # shellcheck disable=SC2086
   find $MANIFEST_SCOPE -xdev -type f -not -path "$RECORD/MANIFEST*" -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum >"$T/m.files"
   links_list >"$T/m.links" )
-( FIRST_BOOT_CHANGES="$MS/etc/passwd" FIRST_BOOT_ADDS="$MS/etc/netplan/*"
+( FIRST_BOOT_CHANGES="$MS/etc/passwd" FIRST_BOOT_ADDS="$MS/etc/ssh/ssh_host_*_key.pub"
   manifest_compare "$T/m.sealed" "$T/m.files" "$T/m.links" ) >"$T/mcmp.out" 2>&1
 check "proof's comparison passes a change and an addition on the expected lists, and fails a change, a removal and a link beyond them" \
     test "$(grep -c '^PROOF-FAIL: ' "$T/mcmp.out")" = 3 -a "$(grep -c '(expected)$' "$T/mcmp.out")" = 2 \
@@ -744,7 +746,7 @@ manifest_compare "$T/m.earlier" "$T/m.files" "$T/m.links" >"$T/mcmp2.out" 2>&1
 check "a MANIFEST without its marker (an earlier form, or a marker that drifted) fails the comparison" \
     test "$(grep -c '^PROOF-FAIL: the sealed MANIFEST does not carry the links marker once' "$T/mcmp2.out")" = 1
 
-echo "== relaxed puts both settings back (template-steps and clone-steps)"
+echo "== relaxed puts both settings back (clone-steps)"
 # relaxed as each guest file defines it, with sysctl, readlink, ln and sudo as functions
 # over two files: R/userns, the sysctl's value, and R/sh, where /bin/sh points (empty: not
 # a link). R/ln-fails makes the change to bash fail. The lock is R/lock, held with the
@@ -777,7 +779,7 @@ relaxed_in() { # relaxed_in FILE COMMAND...: relaxed COMMAND in a subshell; prin
     )
 }
 relaxed_state() { echo "$(cat "$R/userns") $(cat "$R/sh")"; }
-for f in template-steps clone-steps; do
+for f in clone-steps; do
     rr() { echo 1 >"$R/userns"; echo dash >"$R/sh"; rm -f "$R/during" "$R/ln-fails" "$R/restore-fails" "$R/restore-silent" "$R/child-fds" "$R/held-during" "$R/lock"; }
     rr; relaxed_in "$f" during >/dev/null 2>&1
     check "$f: relaxed runs the command relaxed and restores both, its traps gone, its lock 0600" \
