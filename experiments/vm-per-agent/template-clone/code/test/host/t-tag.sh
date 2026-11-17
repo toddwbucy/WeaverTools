@@ -54,7 +54,8 @@ check "build 5's own stack log reads 2867 passed, 0 failed" eval '[ "$(stack_tes
 eval "$(fn "$STEPS" stack_build)"
 fake=$T/wa; mkdir -p "$fake/deploy" "$T/home"
 cuda_env() { :; }; CXX_MAJOR=15 CUDA_LIBS=y COMPUTE_CAP=86; record() { :; }; record_read() { :; }
-sb() { printf '#!/usr/bin/env bash\nprintf "\\n== test\\n   9 passed, 0 failed\\n"; echo to-stderr >&2; exit %s\n' "$1" >"$fake/deploy/bootstrap-stack.sh"
+eval "$(sed -n '/^AGENT_DIR=/p' "$STEPS")"
+sb() { printf '#!/usr/bin/env bash\necho "agent-dir=${WEAVER_AGENT_DIR:-none}"\nprintf "\\n== test\\n   9 passed, 0 failed\\n"; echo to-stderr >&2; exit %s\n' "$1" >"$fake/deploy/bootstrap-stack.sh"
        ( WA=$fake HOME=$T/home; stack_build ) >"$T/sb.out" 2>&1; }
 sb 7; rc=$?
 check "a bootstrap that exits 7 makes stack_build return 7" test "$rc" = 7
@@ -62,6 +63,8 @@ check "and its output is kept, stdout and stderr" eval 'grep -qx "   9 passed, 0
 check "and still streams to the step's log" grep -qx "   9 passed, 0 failed" "$T/sb.out"
 sb 0; rc=$?
 check "a bootstrap that exits 0 makes stack_build return 0" test "$rc" = 0
+check "bootstrap is handed the agents' base on the state mount, WEAVER_AGENT_DIR=/mnt/weaver/state" \
+    test "$AGENT_DIR" = /mnt/weaver/state -a "$(grep -cx 'agent-dir=/mnt/weaver/state' "$T/home/stack-out")" = 1
 REC='    record stack.tests "$tests (bootstrap-stack.sh'"'"'s test step)" || return 1'
 STACK_FN=$(fn "$STEPS" stack); PROOF_FN=$(fn "$BT" proof)
 check "stack records the count after the peak memory" eval 'grep -qxF -- "$REC" <<<"$(grep -A8 "record_read stack.peak-memory-mib" <<<"$STACK_FN")"'

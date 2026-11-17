@@ -87,6 +87,10 @@ IMAGE_HOSTNAME='weaver-appliance'
 # each is admin's test, at every load, not the image's. Defined once, here: lib.sh reads it
 # for proof.
 DATA_MOUNTS='/mnt/weaver/models /mnt/weaver/state'
+# The agents' base (the Planner's note of 2026-11-16): the stack record's agent-directory,
+# fixed at the build on the state mount, under which each agent is laid at setup. The
+# stack step hands it to bootstrap-stack.sh, which makes it root's, mode 0755, and empty.
+AGENT_DIR=/mnt/weaver/state
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
@@ -420,7 +424,8 @@ stack_build() {
     export NVCC_CCBIN=/usr/bin/g++-$CXX_MAJOR
     export CUDA_LIB_DIR=$CUDA_LIBS
     export CUDA_COMPUTE_CAP=$COMPUTE_CAP
-    echo "CUDA_PATH=$CUDA_PATH NVCC_CCBIN=$NVCC_CCBIN CUDA_LIB_DIR=$CUDA_LIB_DIR CUDA_COMPUTE_CAP=$CUDA_COMPUTE_CAP"
+    export WEAVER_AGENT_DIR=$AGENT_DIR
+    echo "CUDA_PATH=$CUDA_PATH NVCC_CCBIN=$NVCC_CCBIN CUDA_LIB_DIR=$CUDA_LIB_DIR CUDA_COMPUTE_CAP=$CUDA_COMPUTE_CAP WEAVER_AGENT_DIR=$WEAVER_AGENT_DIR"
     local v
     v=$("$NVCC_CCBIN" --version | head -1); record_read build.nvcc-host-compiler $? "$NVCC_CCBIN: $v" || return 1
     v=$(cc --version | head -1); record_read build.cc $? "$(readlink -f "$(command -v cc)"): $v" || return 1
@@ -1322,7 +1327,8 @@ probes() {
     check "a resolver address configured" "$(resolved_check 2>&1)"
     check "networkd or NetworkManager configuration" "$(for f in /etc/systemd/network/*.network /etc/systemd/network/*.netdev /etc/systemd/network/*.link /etc/NetworkManager/system-connections/*; do [ -e "$f" ] || [ -L "$f" ] || continue; echo "$f"; done; ls /usr/lib/systemd/network/*.network 2>/dev/null | while read -r f; do grep -qE '^[[:space:]]*Name=.*(eth|en)' "$f" && echo "$f"; done)"
     check "networkd or nouveau in the initramfs" "$(initrd_check 2>&1)"
-    check "an agent configured" "$(sudo ls -A /etc/weaver/admin /var/lib/weaver-agent 2>&1 | grep -vE '^(/|$)')"
+    check "an agent configured" "$(sudo ls -A /etc/weaver/admin "$AGENT_DIR" 2>&1 | grep -vE '^(/|$)')"
+    check "the stack record's agent directory not the state mount" "$(d=$(cat /etc/weaver/stack/agent-directory 2>&1); [ "$d" = "$AGENT_DIR" ] || echo "agent-directory reads '$d', not $AGENT_DIR")"
     check "the data mount points not as laid" "$(mounts_check 2>&1)"
     check "a swap" "$(swap_check 2>&1)"
     check "the ESP not mounted at $ESP_DIR" "$(esp_check 2>&1)"
