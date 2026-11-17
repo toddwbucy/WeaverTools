@@ -466,4 +466,17 @@ check "a file of gcc's there too: /usr/lib/gcc named" test "$(compiler_dirs)" = 
 rm -f -- "$CG/usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1"; mkdir -p "$CG/opt/cuda/bin" "$CG/root/.cargo"
 check "the toolkit's bin and a cargo home: each named" test "$(compiler_dirs | tr '\n' '|')" = "$CG/opt/cuda/bin|$CG/root/.cargo|"
 unset -f pacman
+
+# ---- 21. wtmp removed at the seal, after /var/log is emptied, so the power-off's records
+# have no file to go into (glibc's updwtmp creates none; read here against this host's
+# glibc) (the 2.0 rehearsal's proof of 2026-11-17 refused /var/log/wtmp).
+SF=$(fn "$STEPS" seal_final)
+check "seal_final removes /var/log/wtmp after emptying /var/log" \
+    eval 'a=$(grep -n "find /var/log -xdev -type f -exec truncate -s 0" <<<"$SF" | cut -d: -f1); b=$(grep -nx "    rm -f /var/log/wtmp" <<<"$SF" | cut -d: -f1); [ -n "$a" ] && [ -n "$b" ] && [ "$b" -gt "$a" ]'
+if command -v python3 >/dev/null 2>&1; then
+    out=$(python3 -I -c 'import ctypes, os, sys
+ctypes.CDLL("libc.so.6").updwtmp(sys.argv[1].encode(), ctypes.create_string_buffer(384))
+print("created" if os.path.exists(sys.argv[1]) else "absent")' "$T/wtmp-none")
+    check "glibc's updwtmp creates no wtmp where none stands" test "$out" = absent
+fi
 finish

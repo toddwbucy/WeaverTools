@@ -1812,6 +1812,11 @@ seal_final() {
     rm -rf /var/log/journal/*
     find /var/log -xdev -type f \( -name '*.gz' -o -name '*.[0-9]' -o -name '*.old' \) -delete
     find /var/log -xdev -type f -exec truncate -s 0 {} +
+    # wtmp removed, not emptied: systemd-update-utmp appends its records at the power-off,
+    # after the final probe, and glibc appends only to a wtmp that stands (updwtmp opens it
+    # without creating it). A box's first boot lays it again, empty, from systemd's
+    # tmpfiles line. The proof's late-write read refused the records the power-off wrote.
+    rm -f /var/log/wtmp
     # The stamp is assembled from the build's records, which then go with the harness, so
     # the probes see the image as it will be sealed.
     install -d -o root -g root -m 0755 "$RECORD"

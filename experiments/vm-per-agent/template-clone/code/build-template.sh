@@ -762,7 +762,8 @@ EOF
                     2) echo "not made: the default account" ;;
                     *) echo "PROOF-FAIL: getent exited $g, so whether the default account exists is not known" ;;
                 esac
-                echo "== the hostname"; hostname
+                # The kernel'"'"'s hostname (Arch ships no hostname command).
+                echo "== the hostname"; uname -n
                 # The data mount points, with no disk attached: laid by the image, empty,
                 # owned by root, and nothing mounted on them.
                 echo "== the data mount points, with no disk attached"
@@ -772,7 +773,7 @@ EOF
                     [ "$s" = "directory 0:0 755" ] && [ "$n" = 0 ] || echo "PROOF-FAIL: $d is not an empty directory root owns with mode 755"
                     [ -z "$s" ] || [ "$(stat -c %d -- "$d")" = "$(stat -c %d -- /)" ] || echo "PROOF-FAIL: $d has a filesystem mounted on it, with no disk attached"
                 done
-                [ "$(hostname)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(hostname), not '"$IMAGE_HOSTNAME"'"
+                [ "$(uname -n)" = '"$IMAGE_HOSTNAME"' ] || echo "PROOF-FAIL: the hostname is $(uname -n), not '"$IMAGE_HOSTNAME"'"
                 echo "== the network as the credential named it"; ip -br addr; ip route; resolvectl dns 2>&1
                 ls /run/credentials/@system 2>&1; ls /run/systemd/network 2>&1
                 echo "== the wait for the network"; systemd-analyze blame 2>/dev/null | grep -E "wait-online" || echo "(not in blame)"
