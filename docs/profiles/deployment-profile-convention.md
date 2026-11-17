@@ -1,6 +1,7 @@
 # Deployment profiles - convention
 
-**Status:** DRAFT. Not merged.
+**Status:** Merged in pull request 32 (2026-11-16); revised for format documents, not
+merged.
 **Date filed:** 2026-11-15
 **Document ID:** `deployment-profile-convention`
 **Authority:** the operator's ruling of 2026-11-15 that the agent appliance is one
@@ -62,6 +63,11 @@ contracts. A Spec does not cite a profile as authority.
 
 **One exception has a narrow scope.** The build of a profile's own artifact, such as an
 image, has a Spec in this repository under the profile. That Spec represents the build
+and nothing else.
+
+**A profile may also carry a format document.** Beside its build Spec, a profile may
+carry a document for a wire format that two repositories meet on, such as a report that
+its image writes and the console reads. The profile cites it, and it decides that format
 and nothing else.
 
 **A profile states no claim that is not measured or ruled.** A sentence in a profile is

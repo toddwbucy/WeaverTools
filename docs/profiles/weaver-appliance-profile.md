@@ -138,8 +138,9 @@ attaches.
 2026-11-16 on the setup pages and his addendum of the same day). The appliance's console
 goes straight to the setup script, which pairs the appliance with the console and lays
 its disks, per section 3.5. The survey script runs locally, and its report crosses over
-TLS. Both are the next act. Releases 1.0 and 2.0 carry neither, and section 8 names
-them.
+TLS. The report's form is `weaver-survey/1`, stated in `weaver-survey-format.md` in this
+directory. Both scripts are the next act. Releases 1.0 and 2.0 carry neither, and
+section 8 names them.
 
 **The image does not update itself.** Automatic package updates and firmware updates are
 off. What the operator changes after boot is the operator's, per section 1.
@@ -416,7 +417,8 @@ still has to be captured into the binary or held by the image.
   root, and running the setup command again writes a changed key (the suite Planner's
   brief, recorded with the rulings). The next act.
 - The survey script, run locally, its report crossing over TLS (the operator's rulings
-  of 2026-11-16 on the setup pages). The next act.
+  of 2026-11-16 on the setup pages). The next act. The report's form is stated in
+  `weaver-survey-format.md` in this directory.
 - The accounts the agent needs, shipped in the image: a fixed agent account,
   `weaver-agent` as proposed, and the two connectors' accounts, which today
   `create-agent.sh` lays at agent creation (the operator's answers of 2026-11-16,
