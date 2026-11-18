@@ -60,7 +60,8 @@ exactness, in:
 
   On the host the agent is laid by the same script at the same commit, with the same
   options apart from the operator and the model's path. Each side's declaration is
-  recorded by sha256, and the two are compared apart from their paths.
+  recorded by sha256, and the two are compared apart from their paths and the access
+  rule's `allowed-uids` (section 7).
 - **The prompt in force** is the worker's compiled system prompt at `be56d8c2`:
   "You are a careful assistant. Answer from what you know, say plainly when you do not
   know, and keep answers as short as the question allows."
@@ -122,8 +123,11 @@ pinned order in every load.
 | O3 | about 700 words | "Explain this text in about 700 words." |
 | O4 | the cap, 4096 tokens | "Write a detailed commentary on this text of at least 5000 words." |
 
-O4 ends at the declaration's cap, finish `length`, the only exact column. O1 to O3 are
-bands, read from the pilot (section 9).
+O4 ends at the declaration's cap, finish `length`, the only exact column. An O4 cell
+that finishes before the cap is compared like any other turn, since the prediction is
+exact agreement wherever a turn stops. It is named in section 9 and in the result note
+with its counts, and the question of output at the cap is then answered by the O4 cells
+that reach it. O1 to O3 are bands, read from the pilot (section 9).
 
 **Each ask** is `Here is a text.`, a blank line, the excerpt between a `<<<TEXT` line
 and a `TEXT>>>` line, a blank line and the column's instruction, with no trailing
@@ -169,9 +173,16 @@ turn by turn, and no ask is repeated inside a load.
 - **The site's card condition**, applied and read back on each card before every load,
   again after the load answers idle and before any turn, and after the last turn. A load
   whose cards do not read back as applied after it is unloaded with no turn sent, and is
-  not counted. In the appliance, `nvidia-persistenced`, which the image ships and does
-  not enable, is started for each boot before the condition is applied. Whether a sealed
-  image should enable it is #40.
+  not counted. A load whose cards read back as applied after it but not after its last
+  turn has sent its turns under a condition that did not hold to the end. It is not
+  counted either: its readings and its trace are kept, and one further load on the same
+  side takes its place, on the same boot in the appliance. Its trace is still compared
+  with load 1's, and that comparison is reported beside the counted ones, marked as
+  outside the held conditions, so that no load is set aside without showing what it
+  said. The site holds this condition for its own reasons; it is not predicted to change
+  any compared field. In the appliance, `nvidia-persistenced`, which the image ships and
+  does not enable, is started for each boot before the condition is applied. Whether a
+  sealed image should enable it is #40.
 - **The model**, by sha256 before each session on the host and at each boot in the
   appliance.
 - **The asks**, by `SHA256SUMS` at each boot and before each host session.
@@ -197,8 +208,10 @@ boots and within the host.
 - Between the host and the appliance:
   - in the load event, `cause` (the operator: root in the appliance, the operator's own
     account on the host), `boundary` (a digest over the agent's accounts), `declaration`
-    (its digest, through the model's and the territory's paths), `library_path` and
-    `stack` (a host build at `be56d8c2` against the appliance's own build of it);
+    (its digest, through the model's and the territory's paths and the access rule's
+    `allowed-uids`, the gate connector's uid, which each box assigns when it lays that
+    account), `library_path` and `stack` (a host build at `be56d8c2` against the
+    appliance's own build of it);
   - the CPU's memory total in the device facts;
   - the engine libraries' paths and digests.
 
@@ -224,7 +237,11 @@ result note names every held field that turned out to differ.
   dropped in silence.
 - **Turn 1 of the pilot's second load** against its first load's.
 - **The load event's members** that differ by construction between the host and the
-  appliance, if the pilot shows any not listed in section 7.
+  appliance, if the pilot shows any not listed in section 7. The appliance's side is
+  read from the cardless rehearsal at the same commit: its loads refuse at the device,
+  but each writes a whole load event first. Nothing from the rehearsal is counted. The
+  device facts come only with a card, so the one of them that differs by construction,
+  the CPU's memory total, is ruled in section 7 without an appliance reading.
 
 ## 10. Where the evidence goes
 
