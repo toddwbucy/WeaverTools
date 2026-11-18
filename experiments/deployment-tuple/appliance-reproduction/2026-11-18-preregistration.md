@@ -202,10 +202,11 @@ boots and within the host.
 
 **Run-level fields ruled before the run to differ by construction:**
 
-- Never compared: the run identifier and every time and wall clock.
-- Between any two loads: the load event's history members. `lineage` is absent on an
-  agent's first load, and on a load after a clean unload it names the prior run's save
-  point. `reset` names the prior run when that run ended without a clean unload.
+- Never compared: the run identifier, every time and wall clock, and the load event's
+  `lineage`. `lineage` is absent on an agent's first load, and on a load after a clean
+  unload it names the prior run's save point, so it differs in every pair.
+- Between any two loads: the load event's `reset`, which names the prior run when that
+  run ended without a clean unload.
 - Between the host and the appliance:
   - in the load event, `cause` (the operator: root in the appliance, the operator's own
     account on the host), `declaration` (its digest, through the model's and the
@@ -294,8 +295,8 @@ the one of them that differs by construction, the CPU's memory total, is ruled i
 section 7 without an appliance reading.
 - **`lineage`** is absent on an agent's first load. On a load after a clean unload it
   names the prior run's save point: its digest, the run, the event's sequence and the
-  turn. Pilot load 2 carries it, naming load 1's wind-down turn. It is added to section
-  7 as differing between any two loads.
+  turn. Pilot load 2 carries it, naming load 1's wind-down turn. Since it differs in
+  every pair, it is added to section 7 as never compared.
 - **`reset`** is carried by the rehearsal's second load, naming its first with the
   reason `no-clean-unload`, since that load refused at the device. Pilot load 2, after a
   clean unload, carries none. Section 7 now states when each history member appears.
