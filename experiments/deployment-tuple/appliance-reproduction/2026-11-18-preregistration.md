@@ -203,15 +203,15 @@ boots and within the host.
 **Run-level fields ruled before the run to differ by construction:**
 
 - Never compared: the run identifier and every time and wall clock.
-- Between any two loads: the load event's `reset`, absent on an agent's first load and
-  naming the prior run on a later one.
+- Between any two loads: the load event's history members. `lineage` is absent on an
+  agent's first load, and on a load after a clean unload it names the prior run's save
+  point. `reset` names the prior run when that run ended without a clean unload.
 - Between the host and the appliance:
   - in the load event, `cause` (the operator: root in the appliance, the operator's own
-    account on the host), `boundary` (a digest over the agent's accounts), `declaration`
-    (its digest, through the model's and the territory's paths and the access rule's
-    `allowed-uids`, the gate connector's uid, which each box assigns when it lays that
-    account), `library_path` and `stack` (a host build at `be56d8c2` against the
-    appliance's own build of it);
+    account on the host), `declaration` (its digest, through the model's and the
+    territory's paths and the access rule's `allowed-uids`, the gate connector's uid,
+    which each box assigns when it lays that account), `library_path` and `stack` (a
+    host build at `be56d8c2` against the appliance's own build of it);
   - the CPU's memory total in the device facts;
   - the engine libraries' paths and digests.
 
@@ -232,16 +232,79 @@ result note names every held field that turned out to differ.
 
 ## 9. Filled from the pilot, before the first counted load
 
-- **Each cell's measured counts:** the excerpt's input tokens, and the output tokens and
-  finish. A cell outside its band, O1 to O3, is named here with its counts, never
-  dropped in silence.
-- **Turn 1 of the pilot's second load** against its first load's.
-- **The load event's members** that differ by construction between the host and the
-  appliance, if the pilot shows any not listed in section 7. The appliance's side is
-  read from the cardless rehearsal at the same commit: its loads refuse at the device,
-  but each writes a whole load event first. Nothing from the rehearsal is counted. The
-  device facts come only with a card, so the one of them that differs by construction,
-  the CPU's memory total, is ruled in section 7 without an appliance reading.
+The pilot ran on the host on 2026-11-18, at `be56d8c2`, with the agent laid as section 3
+states:
+- load 1, run `2026-11-18T14:28:52.529Z-granitebase-8e0a3a04bf32d7e3`, from 14:28Z;
+- load 2, run `2026-11-18T15:07:13.726Z-granitebase-f69587eac791d5d1`, from 15:07Z.
+
+Every turn closed clean. Nothing from the pilot is counted.
+
+**The evidence.** The sink as copied after load 2 holds both loads, sha256
+`b8eb05406c7fbe1250fca68f5f9044384f15cad1ddde1a48ecc2a32c158b65cf`. The figures below
+are read from it by `read-pilot.py`, sha256
+`b104a8cea23e9feb7fd9b07fff8d420ef664a3d9bdb1f755ed1a06238a344179`. Both are carried in
+the deposit with the reader's tests. The reader's first version placed the excerpt's
+opening at the end of the requests' common prefix. All six excerpts open with the same
+eight tokens, so that prefix runs into the text, and the reader's own boundary checks
+failed. The version used here finds the two markers by their tokens.
+
+**Each cell's measured counts.** The excerpt is counted from the token after the opening
+`<<<TEXT` line to the token before the closing `TEXT`, so its count includes the line
+break that ends it. Output tokens and finish are the trace's. Words are the emission
+split on white space. Every finish is `completed` unless marked.
+
+| Row | Excerpt tokens | O1 | O2 | O3 | O4 |
+| --- | --- | --- | --- | --- | --- |
+| P1 | 18 | 1 (1 word) | 165 (140) | 1158 (921) | 4096 (2918), `length` |
+| P2 | 256 | 2 (1) | 154 (115) | 674 (523) | 2831 (1787) |
+| P3 | 1007 | 2 (1) | 197 (160) | 638 (482) | 3968 (2673) |
+| P4 | 4095 | 2 (1) | 436 (325) | 764 (567) | 3827 (2693) |
+| P5 | 8041 | 1 (1) | 208 (153) | 863 (607) | 1925 (1369) |
+| P6 | 11614 | 1 (1) | 62 (40) | 1581 (1031) | 1316 (873) |
+
+- **The prompt axis.** P1 is the first sentence of its source alone. P2 to P6 run at
+  3.9 to 4.1 characters a token, as the cuts were made. Around the excerpt, the request
+  adds the same number of tokens in every row of a column: 77 in O1, 70 in O2, 69 in O3
+  and 74 in O4. The deepest a load's context reaches is 13,265 tokens
+  (P6-O3), of the declaration's 32,768.
+- **The bands, O1 to O3.** O1 is one word. O2 and O3 run from half to twice their
+  instruction's words: O2 from 75 to 300 words, O3 from 350 to 1,400. Two cells are
+  outside:
+  - P4-O2, 436 tokens and 325 words, above its band;
+  - P6-O2, 62 tokens and 40 words, below it. The model declines to summarize, saying the
+    text holds only placeholders (the sources are masked text).
+
+  Every O1 cell is one word, and every O3 cell is inside its band.
+- **O4 short of the cap.** P1-O4 alone ends at the cap, 4,096 tokens, finish `length`.
+  The other five finish `completed` short of it. Each opens by declining the 5,000-word
+  length, citing the text's placeholders or its thinness, and then writes a shorter
+  commentary. Under section 4 they are compared like any other turn, and output at the
+  cap is answered by P1-O4 alone, at the shortest prompt.
+
+**Turn 1 of the pilot's second load against its first load's:** identical in every
+compared field, request, input, output, surprisal, entropy, emission and resident. Both
+answer the one word "implementation". The pinned comparison exited 1 on one run-level
+member, `lineage`, which the second load carries and the first cannot (below). Every
+other run-level field is equal, the engine, device, weights hash and model included.
+
+**The load event's members.** The appliance's side is read from the cardless rehearsal
+at the same commit: its loads refuse at the device, but each writes a whole load event
+first. Nothing from the rehearsal is counted. The device facts come only with a card, so
+the one of them that differs by construction, the CPU's memory total, is ruled in
+section 7 without an appliance reading.
+- **`lineage`** is absent on an agent's first load. On a load after a clean unload it
+  names the prior run's save point: its digest, the run, the event's sequence and the
+  turn. Pilot load 2 carries it, naming load 1's wind-down turn. It is added to section
+  7 as differing between any two loads.
+- **`reset`** is carried by the rehearsal's second load, naming its first with the
+  reason `no-clean-unload`, since that load refused at the device. Pilot load 2, after a
+  clean unload, carries none. Section 7 now states when each history member appears.
+- **Host against appliance**, first load against first and second against second:
+  `cause`, `declaration`, `library_path` and `stack` differ, as section 7 rules. The
+  declaration differs beyond its two paths only in the access rule's `allowed-uids`,
+  which section 7 lists. `boundary` reads equal on both sides, one digest on all four
+  loads, so it is removed from section 7's list, and a difference in it would be a
+  finding. No other member differs, apart from the history members above.
 
 ## 10. Where the evidence goes
 
