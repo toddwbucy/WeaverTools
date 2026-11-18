@@ -470,6 +470,13 @@ stack_tests() {
 }
 stack() {
     [ -d "$WA" ] || { echo "no checkout; run trees first"; return 1; }
+    # Every deploy script the image copies stands in the checkout before anything builds:
+    # a commit without one would fail at its install after the whole stack build, without
+    # naming it (CodeRabbit on pull request 38).
+    local d
+    for d in $DEPLOY_FILES; do
+        [ -f "$WA/deploy/$d" ] || { echo "WeaverAgent at ${WA_COMMIT:-} has no deploy/$d"; return 1; }
+    done
     stack_preconditions || return 1
     stack_build || return 1
     local tuple=/etc/weaver/stack/install-tuple c
