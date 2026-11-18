@@ -383,7 +383,9 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    read and never changed: Arch gives both, where release 1.0 set them for the step and
    put them back. The install tuple's commit must equal `WA_COMMIT`. The test step's
    count is recorded in the stamp as `stack.tests` (the tag, above). The deploy scripts
-   are copied to `/opt/weaver/deploy` before the checkout goes.
+   are copied to `/opt/weaver/deploy` before the checkout goes. The step refuses first,
+   before bootstrap runs, unless each file the deploy copy names is a regular file in
+   the checkout.
 9. `connectors`: `gate-con` and `admin-con` built with no default features and installed.
    No unit is laid: the image half of WeaverWeb's staging is that repository's act. From
    the fifth build on, `build-template.sh mock` runs the offline mock after this step
