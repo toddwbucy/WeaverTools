@@ -230,9 +230,10 @@ as a later item.
 
 ### 3.5 The agent service
 
-**Nothing in the image starts the agent.** After a boot the connectors come up and the
-console sees the appliance. The agent stays unloaded until the console asks admin to
-load it. An operator's own packaging is the operator's business.
+**Nothing in the image starts the agent.** From phase 2, per section 8, the connectors
+come up after a boot and the console sees the appliance. Release 5.0 installs no
+connector unit, so it starts no connector. The agent stays unloaded until the console
+asks admin to load it. An operator's own packaging is the operator's business.
 
 **Connector keys and certificates live on the image's root disk.** Each box makes its
 two keys at its first boot, before any login (section 3.1). So a new image is a new
@@ -263,10 +264,11 @@ beneath the addendum:
 
 The pairing step belongs to the connectors. The setup script and its drive setup are the
 image's, phase 2's, per section 8. In the rulings: "Every root act runs on the box at a
-screen the operator is sitting at, so admin's grant does not grow." The connectors dial
-the console on every boot and redial a dropped link, and load and unload do not drop
-them (the addendum, item 9). From pairing onward the console's whole reach is its
-connectors. The appliance dials the console. The console does not dial the appliance.
+screen the operator is sitting at, so admin's grant does not grow." From phase 2, per
+section 8, the connectors dial the console on every boot and redial a dropped link, and
+load and unload do not drop them (the addendum, item 9). From pairing onward the
+console's whole reach is its connectors. The appliance dials the console. The console
+does not dial the appliance.
 
 **SSH is the operator's admin door, separate from Weaver Web, and setup never uses it**
 (the operator's rulings of 2026-11-16 on the setup pages, and the addendum's items 4 and

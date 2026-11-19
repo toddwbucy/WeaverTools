@@ -390,9 +390,12 @@ The unit:
   refuses a config that stands, and a request without its key is no request. A first
   boot cut short before a connector writes its config is completed at the next boot. One
   cut between the config and its request leaves the config standing alone, a state a
-  real box can reach, and every later boot refuses it. The refusal says what clears it:
-  that connector's config removed as root and a boot again, or the virtual machine made
-  again from the template.
+  real box can reach, and every later boot refuses it. The refusal says what clears it,
+  naming the file that stands alone: that connector's config, or its request where the
+  request stands without its config, removed as root and a boot again, or the virtual
+  machine made again from the template. Where a request was renamed into place but its
+  folder could not be synced to disk, both files stand: the refusal says the request is
+  in place and that a boot again finds both, and removes nothing.
 - prints one line on the console when it is done. It is `weaver-appliance: ready`,
   naming what it made or found, or, where it refused, `weaver-appliance: refused`,
   naming the connector and the cause, and the unit then fails. It reads a command's
@@ -423,11 +426,12 @@ last line: the host tests, `create`, the guest steps `facts` to `connectors` thr
 environment, passes them on, and refuses before the host tests where an input `create`
 needs is unset. Each step's start, end and exit status go to one log in the build's
 directory under `VM_ROOT`, with the step's own output beside it. A second run into the
-same `VM_ROOT` is refused, so a run's record is never written over. Each step runs in a
-process group of its own, so that on INT, TERM or HUP the step in hand is sent TERM
-whole, its children with it, and the build's own traps answer it at once rather than
-after a child ends; the log then names the step where the run stopped. Nothing is teed.
-`HOST_TESTS` names the command that runs the host tests, by default
+same `VM_ROOT` is refused, so a run's record is never written over: a run takes its
+folder with a plain `mkdir`, so two runs started together cannot both pass. Each step
+runs in a process group of its own, so that on INT, TERM or HUP the step in hand is sent
+TERM whole, its children with it, and the build's own traps answer it at once rather
+than after a child ends; the log then names the step where the run stopped. Nothing is
+teed. `HOST_TESTS` names the command that runs the host tests, by default
 `test/host/run-all.sh`. A host that
 confines its tests names its own runner, so no fact of a host enters the tree. `tag`
 prints the tag's message and applies nothing. There is no script that changes a sealed
@@ -875,7 +879,10 @@ folders under `/etc/weaver-web`.
     every boot ends. The record build's guest was off 2 s after the press, cleanly.
     **The second boot** (the operator's rulings of 2026-11-19). Once the first boot's
     guest is off by its own power button, the proof boots the same overlay again, with
-    the same network credential, and waits for the login prompt. It logs in over SSH
+    the same network credential, and waits for the login prompt and then for SSH to
+    answer as root, within one bound, since nothing orders `sshd` before the prompt. SSH
+    not answering within it is a finding that names SSH, with nothing read. Once SSH
+    answers, the proof logs in as root over SSH
     with the key it placed and reads that nothing was remade: the console's
     `weaver-appliance: ready` line naming both connectors as found, the unit's run a
     success, each config of the same inode, size, owner, mode and modification time as
@@ -1209,12 +1216,13 @@ on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-al
 runs them all. No test leaves a folder in the temporary directory on a pass, since
 `/tmp` is often memory (the operator's rule of 2026-11-18): each test's work folder goes
 at its exit when every check passed, and so does the folder `run-all.sh` makes new for
-each test. On a failed check or a stop by INT, TERM or HUP both are kept and named; on a
-skip the run's folder is kept and named, for the skip's reason. Every build's host tests
-before release 5.0 left one folder per test in it, on a pass as on a fail.
-`t-test-folders.sh` checks the rule with stand-in tests, stopped runs included. On
-2026-11-17, at the record build's first step, the 22 tests ran 627 checks and all
-passed, on a host with CUDA 13.4's `nvcc` and OpenSSH 10.6p1.
+each test. On a failed check, an exit before `finish` or a stop by INT, TERM or HUP both
+are kept and named, and an exit 0 before `finish` is made a failure, so a test that
+stops early never counts as passed; on a skip the run's folder is kept and named, for
+the skip's reason. Every build's host tests before release 5.0 left one folder per test
+in it, on a pass as on a fail. `t-test-folders.sh` checks the rule with stand-in tests,
+stopped runs included. On 2026-11-17, at the record build's first step, the 22 tests ran
+627 checks and all passed, on a host with CUDA 13.4's `nvcc` and OpenSSH 10.6p1.
 `t-first-boot.sh` stands a server on the unix socket the proof names to QEMU, which
 plays getty, the forced change and a shell, and the ways each can go wrong, checks that
 the ready row is read after the first login and the second boot after the first power
@@ -1253,16 +1261,18 @@ against stand-in SSH, a stand-in hypervisor and a stand-in console. `t-pipefail.
 refuses, in the scripts the build runs (`build-template.sh`, `lib.sh`,
 `guest/template-steps`, `make-template.sh` and the request script) and in the host tests
 themselves, any producer piped into a reader that can exit early: `head`, or `grep` with
-`-q`, `-m`, `-l` or `-L`. Under `pipefail` such a pipeline fails with the producer's
-SIGPIPE whenever the reader exits first, and whether a line's status decides something
-cannot be read reliably from its text, so the scripts and the tests read a command's
-output first and match it after, and print first lines with `sed`, which reads its input
-to the end. The build runs the host tests first, so a test that could fail on that
-signal could stop an unattended build, or, negated, pass a check it should fail. Only
-`t-pipefail.sh`'s own stand-in lines and its control, each marked at its end, are left
-out of its scan. `t-make-template.sh` runs `make-template.sh` with `build-template.sh`
-and the host tests stood in, and checks the steps' order, the stop at the first refusal
-and its log, and the refusal of an unset input.
+`-q`, `-m`, `-l` or `-L`. The scan reads `grep`'s options up to its pattern, skipping
+the word that `-e` or `-f` takes; options after the pattern, which GNU `grep` also
+takes, are not found. Under `pipefail` such a pipeline fails with the producer's SIGPIPE
+whenever the reader exits first, and whether a line's status decides something cannot be
+read reliably from its text, so the scripts and the tests read a command's output first
+and match it after, and print first lines with `sed`, which reads its input to the end.
+The build runs the host tests first, so a test that could fail on that signal could stop
+an unattended build, or, negated, pass a check it should fail. Only `t-pipefail.sh`'s
+own stand-in lines and its control, each marked at its end, are left out of its scan.
+`t-make-template.sh` runs `make-template.sh` with `build-template.sh` and the host tests
+stood in, and checks the steps' order, the stop at the first refusal and its log, and
+the refusal of an unset input.
 
 ## 3. Open
 
