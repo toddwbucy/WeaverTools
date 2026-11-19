@@ -388,8 +388,11 @@ The unit:
   request both stand, it leaves them. Where neither stands, it makes both. Where one
   stands without the other, it refuses for that connector and removes nothing: `request`
   refuses a config that stands, and a request without its key is no request. A first
-  boot cut short is completed at the next boot, or refused with its cause on the
-  console.
+  boot cut short before a connector writes its config is completed at the next boot. One
+  cut between the config and its request leaves the config standing alone, a state a
+  real box can reach, and every later boot refuses it. The refusal says what clears it:
+  that connector's config removed as root and a boot again, or the virtual machine made
+  again from the template.
 - prints one line on the console when it is done. It is `weaver-appliance: ready`,
   naming what it made or found, or, where it refused, `weaver-appliance: refused`,
   naming the connector and the cause, and the unit then fails. It reads a command's
@@ -419,8 +422,13 @@ last line: the host tests, `create`, the guest steps `facts` to `connectors` thr
 `seal`, `proof` and `tag`. It takes the build's parameters (section 1) from its
 environment, passes them on, and refuses before the host tests where an input `create`
 needs is unset. Each step's start, end and exit status go to one log in the build's
-directory under `VM_ROOT`, with the step's own output beside it. `HOST_TESTS` names the
-command that runs the host tests, by default `test/host/run-all.sh`. A host that
+directory under `VM_ROOT`, with the step's own output beside it. A second run into the
+same `VM_ROOT` is refused, so a run's record is never written over. Each step runs in a
+process group of its own, so that on INT, TERM or HUP the step in hand is sent TERM
+whole, its children with it, and the build's own traps answer it at once rather than
+after a child ends; the log then names the step where the run stopped. Nothing is teed.
+`HOST_TESTS` names the command that runs the host tests, by default
+`test/host/run-all.sh`. A host that
 confines its tests names its own runner, so no fact of a host enters the tree. `tag`
 prints the tag's message and applies nothing. There is no script that changes a sealed
 image: nothing is installed into an image after its seal (the operator's direction of
@@ -793,13 +801,17 @@ folders under `/etc/weaver-web`.
       2026-11-19): the request unit's `weaver-appliance: ready` line on the console
       before the login prompt; the unit's run a success, its exit before the first
       login by the guest's journal; the three accounts in the box's shape and the six
-      folders as step 10 lays them, on the root filesystem; each connector's config a
+      folders as step 10 lays them, on the root filesystem, with nothing under
+      `/etc/weaver-web` but those folders, the two configs and the two requests, and
+      nothing mounted there; each connector's config a
       regular file of its own account, mode 0600, read by its attributes alone, so that
       no key is read or copied; each request file root's, mode 0644, one line of the
       form `{"event":"request","request":"<PEM>"}` within 16 KiB, whose PEM the host
       reads as a certificate request and checks against its own signature (`openssl req
       -verify`); and the survey run as `nobody` with `--stage pairing`, exiting 0, its
       output one object that the reader of `weaver-survey-format` section 3 accepts.
+      The two requests and the survey's output are kept in the proof's log; the
+      configs never leave the guest.
 
     Then two more tries over SSH, each refused as before: the password the console set,
     and a wrong one. It then sets the MANIFEST against the booted guest, on the host,
@@ -1201,8 +1213,10 @@ before release 5.0 left one folder per test in it, on a pass as on a fail.
 2026-11-17, at the record build's first step, the 22 tests ran 627 checks and all
 passed, on a host with CUDA 13.4's `nvcc` and OpenSSH 10.6p1.
 `t-first-boot.sh` stands a server on the unix socket the proof names to QEMU, which
-plays getty, the forced change and a shell, and the ways each can go wrong, and runs the
-power button's read against a stand-in hypervisor. `t-login-seal.sh` runs `sshd_check`
+plays getty, the forced change and a shell, and the ways each can go wrong, checks that
+the ready row is read after the first login and the second boot after the first power
+button, and runs the power button's read against a stand-in hypervisor.
+`t-login-seal.sh` runs `sshd_check`
 against the host's own sshd with a stand-in configuration. `t-btrfs-reads.sh` builds
 stand-in disks, a GPT with one Linux root partition holding a btrfs that `mkfs.btrfs`
 fills from a directory, or ext4, or nothing, exports them over FUSE as the user, and
@@ -1222,10 +1236,18 @@ the probes refuse one, and the digests against stand-in stamp lines. `t-requests
 runs the request script, its `setpriv` prefix dropped, against stand-in connectors that
 write their config and their line in pieces: both made where neither stands, nothing
 remade where both stand, a refusal naming the connector where one stands without the
-other, no request file where a connector exits other than 0, prints two lines, a line
+other, with what clears it, and both made at the next run once the half-made one is
+cleared, no request file where a connector exits other than 0, prints two lines, a line
 not of the form or one over pair's bound, no temporary file left, a link at its path
 never written through, and the console's two lines. `t-survey.sh` runs the survey's
-own tests, in `guest/ready/test/`, against stand-in sources. `t-pipefail.sh` refuses, in
+own tests, in `guest/ready/test/`, against stand-in sources. `t-ready-row.sh` checks the
+proof's ready row and second boot with no guest: the console's ready line and its place,
+two requests made by the host's openssl and each way a request can be out of form or
+fail its signature, the survey's output against the format's reader and WeaverWeb's
+worked example, the guest's read run against stand-in commands for each finding it
+names, the two boots' attributes compared, and `proof_ready` and `proof_second_boot`
+against stand-in SSH, a stand-in hypervisor and a stand-in console. `t-pipefail.sh`
+refuses, in
 the scripts the build runs (`build-template.sh`, `lib.sh`, `guest/template-steps`,
 `make-template.sh` and the request script), any producer piped into a reader that can
 exit early: `head`, or `grep` with `-q`, `-m`, `-l` or `-L`. Under `pipefail` such a
