@@ -9,8 +9,8 @@ release 5.0, in the `act/appliance-template` stack (pull request 44), not merged
 directory
 **Authority:** the operator's rulings of 2026-11-16 on the setup pages (the survey runs
 locally, and its report crosses over TLS), his ruling that the deployment tuple names
-cards by model, and his rulings of 2026-11-19 on the appliance template (the image
-carries the survey).
+cards by model, and the operator's rulings of 2026-11-19 on the appliance template (the
+image carries the survey).
 **Editorial:** ASCII, absolute dates, prose at 88 characters.
 
 ---

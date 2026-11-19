@@ -9,8 +9,8 @@ request 37 (merged 2026-11-17); revised for the appliance template, release 5.0,
 **Class:** deployment profile, per `deployment-profile-convention.md` in this directory
 **Authority:** the operator's written brief of 2026-11-14 on the appliance path, his
 rulings of 2026-11-14 and 2026-11-15, his rulings of 2026-11-16, the rulings on the
-setup pages among them, and his rulings of 2026-11-19 on the appliance template. Where
-two of them differ, the later one holds.
+setup pages among them, and the operator's rulings of 2026-11-19 on the appliance
+template. Where two of them differ, the later one holds.
 **Editorial:** ASCII, absolute dates, prose at 88 characters.
 
 ---
@@ -151,9 +151,9 @@ before any login. The Spec of the image build states both (`weaver-appliance-bui
 section 2). Releases 1.0 to 4.0 carry neither.
 
 **The image will carry a setup script** (the operator's rulings of 2026-11-16 on the
-setup pages and his addendum of the same day). The appliance's console goes straight to
-the setup script, which pairs the appliance with the console, runs the survey, and lays
-its disks, per section 3.5. It is phase 2's, and section 8 names it.
+setup pages and the operator's addendum of the same day). The appliance's console goes
+straight to the setup script, which pairs the appliance with the console, runs the
+survey, and lays its disks, per section 3.5. It is phase 2's, and section 8 names it.
 
 **The image does not update itself.** Automatic package updates and firmware updates are
 off. What the operator changes after boot is the operator's, per section 1.
@@ -244,8 +244,8 @@ mounts carry them. Section 5 states what is claimed about the result.
 
 **The appliance pairs with the console by a code that the appliance shows** (the
 operator's rulings of 2026-11-16 on the setup pages, and his addendum of the same day,
-items 7 and 9, in place of the pairing line of 2026-11-14). The flow, as the suite
-Planner recorded it beneath the addendum:
+items 7 and 9, in place of the pairing line of 2026-11-14). The flow, as recorded
+beneath the addendum:
 
 1. The appliance's console goes straight to its setup script, run as root, which asks
    for the console's address and port.
@@ -433,12 +433,12 @@ still has to be captured into the binary or held by the image.
   login of section 2 and the image build's console proof. Phase 2 (the rulings of
   2026-11-19).
 - Root's password set by the setup script's first question, in place of the first login
-  of section 2 (the addendum, as the suite Planner recorded it). Phase 2.
+  of section 2 (the addendum of 2026-11-16). Phase 2.
 - The operator's SSH public key reaching the appliance through the console over TLS
-  after pairing. SSH takes that key and never a password (the addendum, as the suite
-  Planner recorded it). The setup script's drive-setup run fetches the key over the
-  paired link and writes it, since writing it is a root act and the connectors hold no
-  root, and running the setup command again writes a changed key. Phase 2.
+  after pairing. SSH takes that key and never a password (the addendum of 2026-11-16).
+  The setup script's drive-setup run fetches the key over the paired link and writes it,
+  since writing it is a root act and the connectors hold no root, and running the setup
+  command again writes a changed key. Phase 2.
 - The survey's two runs by the setup script, at the stages `pairing` and `drives`, each
   report crossing over TLS (the operator's rulings of 2026-11-16 on the setup pages).
   The image carries the survey from release 5.0 (section 3.1). Phase 2.

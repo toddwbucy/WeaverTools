@@ -242,9 +242,8 @@ own settings, and sshd keeps the first value it reads for each keyword, so this 
 first by name, decides all six. systemd-tmpfiles lays a second drop-in at every boot,
 `20-systemd-userdb.conf`, which asks `userdbctl` for a user's keys. Keys come from
 root's `authorized_keys` alone, which setup writes from Weaver Web (the operator's
-addendum of 2026-11-16, as the suite Planner recorded it), so the cleanup removes that
-link and masks its tmpfiles line. The text is defined once in `guest/template-steps`,
-and a probe reads sshd's own merged
+addendum of 2026-11-16), so the cleanup removes that link and masks its tmpfiles line.
+The text is defined once in `guest/template-steps`, and a probe reads sshd's own merged
 configuration for root. So the first password is set at the console, never over SSH.
 Every other account stays locked as Arch ships it, and none has a login shell. The image
 ships no cron. Measured by the record build's proof on 2026-11-17 (step 13):
