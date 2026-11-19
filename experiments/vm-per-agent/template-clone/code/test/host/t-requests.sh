@@ -5,9 +5,10 @@
 # stand-in connectors that make their config new and print their request line in pieces,
 # as a real producer writes. Checked: both made where neither stands; nothing remade where
 # both stand; a refusal naming the connector, with nothing removed, where one stands
-# without the other; no request file where a connector exits other than 0, prints two
-# lines, a line not of the form or one over the bound; no temporary file left; a link at a
-# request's path never written through; the console's two lines. Then the unit file.
+# without the other, with what clears it, and both made once the half-made one is cleared;
+# no request file where a connector exits other than 0, prints two lines, a line not of the
+# form or one over the bound; no temporary file left; a link at a request's path never
+# written through; the console's two lines. Then the unit file.
 # Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 RQ=$CODE/guest/ready/requests
@@ -70,12 +71,21 @@ check "nothing remade: every file as it was" test "$(cd "$R" && find . -type f -
 
 laid; ( umask 077; : >"$R/pairing/gate/gate-con.toml" ); run
 check "a config without its request: refused naming gate-con, exit 1" \
-    bash -c '[ "$1" = 1 ] && grep -qF "weaver-appliance: refused: gate-con: its config stands without its request; nothing is remade or removed (admin-con made)" <<<"$2"' _ "$rc" "$out"
+    bash -c '[ "$1" = 1 ] && grep -qF "weaver-appliance: refused: gate-con: its config stands without its request; nothing is remade or removed;" <<<"$2" && grep -qF "(admin-con made)" <<<"$2"' _ "$rc" "$out"
+# A first boot cut between the config and its request: every later boot refuses, and the
+# line says what clears it, naming the config's own path.
+check "the refusal says what clears it: the config removed as root and a boot again, or the machine made again" \
+    grep -qF "gate-con: its config stands without its request; nothing is remade or removed; to clear it, remove $R/pairing/gate/gate-con.toml as root and boot again, or make the virtual machine again from the template" <<<"$out"
 check "the config left in place, and gate-con not asked" test -f "$R/pairing/gate/gate-con.toml" -a "$(grep -c '^gate-con' "$CALLS")" = 0
+rm -f -- "$R/pairing/gate/gate-con.toml"; : >"$CALLS"; run
+check "with that config removed, the next boot makes both: gate-con made, admin-con found" \
+    test "$rc" = 0 -a "$out" = "weaver-appliance: ready (gate-con made, admin-con found)"
 
 laid; echo '{"event":"request","request":"x"}' >"$R/pairing/exchange/admin.req"; run
 check "a request without its config: refused naming admin-con, the request left" \
     bash -c '[ "$1" = 1 ] && grep -qF "admin-con: its request stands without its config" <<<"$2" && [ -s "$3" ]' _ "$rc" "$out" "$R/pairing/exchange/admin.req"
+check "and says what clears it, naming the request's path" \
+    grep -qF "to clear it, remove $R/pairing/exchange/admin.req as root and boot again, or make the virtual machine again from the template" <<<"$out"
 
 laid; export MODE_gate=fail; run
 check "a connector that exits 3: refused, no request file, no temporary file" \
@@ -84,7 +94,7 @@ check "its reason reaches standard error, the journal's" grep -qF "a stand-in fa
 for m in two form long; do
     laid; export MODE_admin=$m; run
     check "a connector that prints $m: refused, no request file, its config standing" \
-        bash -c '[ "$1" = 1 ] && grep -qF "admin-con: request printed no request line of the form pair reads" <<<"$2" && [ ! -e "$3" ] && [ -f "$4" ] && [ "$5" = 0 ]' \
+        bash -c '[ "$1" = 1 ] && grep -qF "admin-con: request printed no request line of the form pair reads; its config stands, so nothing is remade; to clear it, remove $4 as root" <<<"$2" && [ ! -e "$3" ] && [ -f "$4" ] && [ "$5" = 0 ]' \
         _ "$rc" "$out" "$R/pairing/exchange/admin.req" "$R/pairing/admin/admin-con.toml" "$(temps)"
 done
 
