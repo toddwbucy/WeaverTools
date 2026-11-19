@@ -236,7 +236,7 @@ def cards(root, runner, loaded):
         raise Fail("sysfs holds NVIDIA display function(s) the driver does not list: %s" % " ".join(unlisted))
     return [{"ordinal": i,
              "name": text(name, 96, "cards[%d].name" % i),
-             "pci_address": text(addr, 13, "cards[%d].pci_address" % i, r"[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]"),
+             "pci_address": text(addr, 16, "cards[%d].pci_address" % i, r"[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]"),
              "memory_bytes": integer(integer(mib, "cards[%d] memory.total" % i) * 1048576, "cards[%d].memory_bytes" % i)}
             for i, (addr, name, mib) in enumerate(found)]
 

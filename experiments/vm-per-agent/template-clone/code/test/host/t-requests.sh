@@ -7,8 +7,9 @@
 # both stand; a refusal naming the connector, with nothing removed, where one stands
 # without the other, with what clears it, and both made once the half-made one is cleared;
 # no request file where a connector exits other than 0, prints two lines, a line not of the
-# form or one over the bound; no temporary file left; a link at a request's path never
-# written through; the console's two lines. Then the unit file.
+# form or one over the bound; no temporary file left; words that follow what stands where
+# the request's folder could not be synced after its rename; a link at a request's path
+# never written through; the console's two lines. Then the unit file.
 # Pure logic: no root, no guest.
 source "$(dirname "$0")/lib-test.sh"
 RQ=$CODE/guest/ready/requests
@@ -97,6 +98,20 @@ for m in two form long; do
         bash -c '[ "$1" = 1 ] && grep -qF "admin-con: request printed no request line of the form pair reads; its config stands, so nothing is remade; to clear it, remove $4 as root" <<<"$2" && [ ! -e "$3" ] && [ -f "$4" ] && [ "$5" = 0 ]' \
         _ "$rc" "$out" "$R/pairing/exchange/admin.req" "$R/pairing/admin/admin-con.toml" "$(temps)"
 done
+
+# The rename made and the exchange folder's sync failed: a stand-in sync first on PATH,
+# failing for that folder alone. Both files stand, so the words say the request is in
+# place and advise a boot again, removing nothing; that boot finds both.
+mkdir -p "$T/sb"
+printf '#!/usr/bin/env bash\nfor a; do case $a in */pairing/exchange) echo "sync: a stand-in fault" >&2; exit 1 ;; esac; done\nexec /usr/bin/sync "$@"\n' >"$T/sb/sync"
+chmod 0755 "$T/sb/sync"
+laid; out=$(PATH="$T/sb:$PATH" bash "$T/requests" 2>"$T/err"); rc=$?
+check "the exchange folder's sync failing after the rename: refused for that boot, the request said to be in place" \
+    bash -c '[ "$1" = 1 ] && grep -qF "gate-con: its request is in place at $3, but its folder could not be synced to disk; nothing is removed; boot again, and the next boot finds both" <<<"$2"' _ "$rc" "$out" "$R/pairing/exchange/gate.req"
+check "and no advice to remove anything, no word that the request was not written, both files standing" \
+    bash -c '! grep -qE "could not be written|to clear it, remove" <<<"$1" && [ -s "$2" ] && [ -f "$3" ] && [ "$4" = 0 ]' _ "$out" "$R/pairing/exchange/gate.req" "$R/pairing/gate/gate-con.toml" "$(temps)"
+: >"$CALLS"; run
+check "the next boot finds both, asking no connector" test "$rc" = 0 -a "$out" = "weaver-appliance: ready (gate-con found, admin-con found)" -a ! -s "$CALLS"
 
 laid; echo kept >"$T/target"; ln -s "$T/target" "$R/pairing/exchange/gate.req"; run
 check "a link at a request's path, its config absent: refused, never written through" \

@@ -202,6 +202,13 @@ check("no card: cards empty, the driver read from the module file, not loaded",
 check("no card: modinfo asked the format's question; nvidia-smi never run",
       ["modinfo", "-F", "version", "nvidia"] in r.calls and not any(c[0] == "nvidia-smi" for c in r.calls))
 
+# 3b. A domain of eight hex digits, the widest the format allows, is kept whole as sysfs
+# writes it: 16 characters.
+rootw = machine_root("wide-domain", nvidia_fns=("1000abcd:06:00.0",))
+body, r, why = run_survey(rootw, **{"nvidia-smi": (0, "1000ABCD:06:00.0, NVIDIA RTX A5000, 24564\n")})
+check("a domain of eight hex digits: the card's address kept whole, 16 characters (%s)" % why,
+      body is not None and [c["pci_address"] for c in json.loads(body)["cards"]] == ["1000abcd:06:00.0"])
+
 # 4. Loaded, nvidia-smi exits 6 (found nothing), no NVIDIA display function in sysfs.
 root4 = machine_root("loaded-none", nvidia_fns=())
 body, r, why = run_survey(root4, **{"nvidia-smi": (6, "")})
@@ -228,6 +235,8 @@ cases = [
     ("two filesystems at one mount point", root, {"findmnt:/mnt/weaver/state": (0, json.dumps({"filesystems": [json.loads(FINDMNT_STATE)["filesystems"][0]] * 2}))},
      "not one"),
     ("a label over 16 bytes", root, {"findmnt:/mnt/weaver/state": (0, FINDMNT_STATE.replace("weaver-state", "weaver-state-long-x"))}, "over 16"),
+    ("a domain of nine hex digits", machine_root("nine-digit", nvidia_fns=()),
+     {"nvidia-smi": (0, "100000000:06:00.0, NVIDIA RTX A5000, 24564\n")}, "gave the address"),
     ("seventeen cards", machine_root("seventeen", nvidia_fns=["0000:%02x:00.0" % (0x10 + n) for n in range(17)]),
      {"nvidia-smi": (0, "".join("00000000:%02X:00.0, NVIDIA RTX A5000, 24564\n" % (0x10 + n) for n in range(17)))}, "over 16"),
 ]

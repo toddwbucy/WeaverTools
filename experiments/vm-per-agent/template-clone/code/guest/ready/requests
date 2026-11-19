@@ -66,6 +66,13 @@ one() {
         echo made; return 0
     fi
     rm -f -- "$tmp"
+    # The words follow what stands: where the rename was made and only the folder's sync
+    # failed, the request is in place beside its config, and a boot again finds both. That
+    # boot still refuses, since the write was not made safe, and nothing is removed.
+    if stands "$req"; then
+        echo "$con: its request is in place at $req, but its folder could not be synced to disk; nothing is removed; boot again, and the next boot finds both"
+        return 1
+    fi
     echo "$con: its request could not be written to $req; its config stands, so nothing is remade; $(clears "$cfg")"
     return 1
 }
