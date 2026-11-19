@@ -17,8 +17,8 @@ def no_dup(pairs):
     return dict(pairs)
 
 
-def no_float(s):
-    raise Refuse("a number that is not an integer: %s" % s)
+def no_constant(s):
+    raise Refuse("NaN or Infinity, which JSON does not have: %s" % s)
 
 
 def reader(raw):
@@ -31,7 +31,10 @@ def reader(raw):
         raise Refuse("not UTF-8")
     if t.startswith("\ufeff"):
         raise Refuse("a byte-order mark")
-    dec = json.JSONDecoder(object_pairs_hook=no_dup, parse_float=no_float, parse_constant=no_float)
+    # Fractions and exponents parse as floats: a member the reader does not know is kept and
+    # ignored at any depth (section 3), and get() refuses a float where an integer is known
+    # (CodeRabbit on pull request 44, 2026-11-19). NaN and Infinity are refused anywhere.
+    dec = json.JSONDecoder(object_pairs_hook=no_dup, parse_constant=no_constant)
     start = len(t) - len(t.lstrip(" \t\r\n"))
     try:
         obj, end = dec.raw_decode(t, start)

@@ -235,8 +235,14 @@ check "the guest read never opens a config: no read of a .toml but stat's" \
 # ---- proof_ready, against stand-in SSH. The guest's answers are read from T: the read as
 # root (the stand-in guest above, run here), each request, and the survey's output.
 OUT=$T/out; PD=$T/pd; mkdir -p "$OUT" "$PD/con"
-gssh() { local port=$1; shift; printf '%s\n' "$port $*" >>"$T/gssh.log"; printf '%s' "$*" >"$T/gssh-last"; echo "$port" >>"$T/gssh-ports"
+gssh() { local port=$1 n; shift; printf '%s\n' "$port $*" >>"$T/gssh.log"; printf '%s' "$*" >"$T/gssh-last"; echo "$port" >>"$T/gssh-ports"
+    # T/ssh-down: SSH refuses that many connections, or every one ("always").
+    if [ -s "$T/ssh-down" ] && n=$(cat "$T/ssh-down") && [ "$n" != 0 ]; then
+        [ "$n" = always ] || echo $((n - 1)) >"$T/ssh-down"
+        echo "ssh: connect to host 127.0.0.1 port $port: Connection refused" >&2; return 255
+    fi
     case $* in
+        true) ;;
         *"shape_check() {"*) bash "$T/guest.sh" ;;
         "cat /etc/weaver-web/pairing/exchange/gate.req") [ ! -e "$T/no-gate" ] || { echo "ssh: closed" >&2; return 255; }; cat "$T/rq/gate.req" ;;
         "cat /etc/weaver-web/pairing/exchange/admin.req") cat "$T/rq/admin.req" ;;
@@ -277,7 +283,7 @@ virsh_() { printf '%s\n' "$*" >>"$T/virsh.log"
             printf '%b' "$(cat "$T/second-console")" >>"$PD/con/console.log"; echo "Domain '$2' started" ;;
         *) return 9 ;;
     esac; }
-sb() { rm -f -- "$T/virsh.log" "$PD/con/first-console.log"; echo "shut off" >"$T/domstate"
+sb() { rm -f -- "$T/virsh.log" "$PD/con/first-console.log" "$T/ssh-down" "$T/gssh.log"; echo "shut off" >"$T/domstate"
     printf '%b' "$MADE\r\n$P" >"$PD/con/console.log"; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n$P" >"$T/second-console"
     printf 'Result=success\nExecMainStatus=0\nExecMainExitTimestampMonotonic=8800000\n' >"$T/second-unit"
     attrs >"$OUT/ready-attributes.txt"; { echo "the request unit: $(tr '\n' ' ' <"$T/second-unit")"; attrs; } >"$T/second-read"; }
@@ -309,4 +315,14 @@ check "a request rewritten at the second boot is a finding" \
 sb; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330)
 check "the second boot reads with the first boot's own unit and attribute text, on the proof's port" \
     eval '[ "$(cat "$T/gssh-last")" = "$(printf "U=%s\n%s\n%s" "$READY_UNIT" "$READY_UNIT_READ" "$READY_ATTRS_READ")" ] && [ "$(sort -u "$T/gssh-ports")" = 2330 ]'
+# SSH is not ordered before the login prompt: the read waits for it within the prompt's
+# bound (4 s here, a try every 2 s), and a guest whose SSH never answers is one finding
+# naming SSH, with nothing read and the button still pressed after.
+check "with SSH answering at once, the read follows one try, at 0 s" has "$o" "0 s to SSH answering as root (the same bound)"
+sb; echo 1 >"$T/ssh-down"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
+check "SSH refusing once after the prompt: waited for within the bound, then read, no finding" \
+    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 0 ] && has "$o" "2 s to SSH answering as root (the same bound)" && [ "$(grep -c "^unchanged: " <<<"$o")" = 4 ]'
+sb; echo always >"$T/ssh-down"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
+check "SSH never answering: one finding naming SSH within the bound, nothing read, status 0 so the button is pressed" \
+    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 1 ] && has "$o" "PROOF-FAIL: the second boot'"'"'s SSH did not answer as root within 4 s, so nothing was read" && ! grep -q "U=weaver-appliance-requests.service" "$T/gssh.log"'
 finish

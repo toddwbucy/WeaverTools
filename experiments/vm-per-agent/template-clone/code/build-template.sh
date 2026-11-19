@@ -924,12 +924,15 @@ proof_ready() {
 # proof_second_boot OUT PDIR PN PORT: the second boot (the operator's rulings of 2026-11-19).
 # Once the first boot's guest is off by its own power button, the same overlay is booted
 # again with the same network credential, its console written to a new file, and the proof
-# waits for the login prompt. It reads that nothing was remade: the console's ready line
-# naming both connectors as found, the unit's run a success, and each config's attributes
-# and each request's digest as at the first boot (ready_attrs_compare). Status 0 where the
-# guest was started, so its power button is pressed after; 1 where it could not be.
+# waits for the login prompt, then for SSH to answer as root, since nothing orders sshd
+# before the prompt (CodeRabbit on pull request 44, 2026-11-19); both waits share one bound,
+# and SSH not answering within it is a finding naming SSH, with nothing read. It reads that
+# nothing was remade: the console's ready line naming both connectors as found, the unit's
+# run a success, and each config's attributes and each request's digest as at the first
+# boot (ready_attrs_compare). Status 0 where the guest was started, so its power button is
+# pressed after; 1 where it could not be.
 proof_second_boot() {
-    local out=$1 pdir=$2 pn=$3 port=$4 t=0 limit=${PROOF_FIRST_BOOT:-300} st rc o
+    local out=$1 pdir=$2 pn=$3 port=$4 t=0 limit=${PROOF_FIRST_BOOT:-300} st rc o up=""
     echo "== the second boot"
     st=$(virsh_ domstate "$pn" 2>/dev/null) || st=""
     if [ "$st" != "shut off" ]; then
@@ -952,6 +955,15 @@ proof_second_boot() {
         echo "PROOF-FAIL: the second boot gave no login prompt within $limit s"
     fi
     ready_console_judge "$pdir/con/console.log" found
+    while :; do
+        if KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" true >/dev/null 2>&1; then up=1; break; fi
+        t=$((t + 2)); [ "$t" -lt "$limit" ] || break; proof_sleep 2
+    done
+    if [ -z "$up" ]; then
+        echo "PROOF-FAIL: the second boot's SSH did not answer as root within $limit s, so nothing was read"
+        return 0
+    fi
+    echo "$t s to SSH answering as root (the same bound)"
     rc=0; o=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "U=$READY_UNIT
 $READY_UNIT_READ
 $READY_ATTRS_READ" 2>&1) || rc=$?

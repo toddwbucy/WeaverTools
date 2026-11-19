@@ -56,15 +56,30 @@ def mutated(f):
     o = json.loads(ex); f(o); return json.dumps(o).encode()
 
 
+def refusal(raw):
+    try:
+        reader(raw)
+    except Refuse as e:
+        return str(e)
+    return ""
+
+
 check("the reader refuses a member given twice", refused(ex.replace(b'"stage": "drives",', b'"stage": "drives", "stage": "drives",')))
-check("the reader refuses a fractional integer", refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16.0')))
-check("the reader refuses an exponent", refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 1.6e1')))
+check("the reader refuses a known integer written as a fraction, as not an integer",
+      refusal(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16.0')) == "cpu.logical_cpus is not an integer")
+check("the reader refuses a known integer written with an exponent, as not an integer",
+      refusal(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 1.6e1')) == "cpu.logical_cpus is not an integer")
 check("the reader refuses a missing member", refused(mutated(lambda o: o["kernel"].pop("release"))))
 check("the reader refuses flags out of order", refused(mutated(lambda o: o["cpu"]["flags"].reverse())))
 check("the reader refuses a second newline after the object", refused(ex.rstrip(b"\n") + b"\n\n"))
 check("the reader refuses an unmounted drive with a label", refused(mutated(lambda o: o["drives"][0].update(mounted=False))))
 check("the reader refuses ordinals out of index", refused(mutated(lambda o: o["cards"][1].update(ordinal=0))))
 check("the reader keeps and ignores an unknown member", not refused(mutated(lambda o: o["cpu"].update(extra=[1, 2]))))
+check("the reader keeps and ignores an unknown member holding a fraction and an exponent, at depth",
+      not refused(mutated(lambda o: o["cpu"].update(extra={"deep": [1.5, 2.5e-3]}))))
+check("the reader refuses NaN or Infinity, even in an unknown member",
+      refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16, "extra": NaN'))
+      and refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16, "extra": -Infinity')))
 
 # ---- Made-up machines. ----
 T = tempfile.mkdtemp(prefix="t-weaver-survey.")

@@ -98,6 +98,15 @@ check "all unset: each named, VM_ROOT first" \
 mt; first=$(sha256sum <"$L/make-template.log"); VR_GIVEN=$VR mt
 check "a second run into the same VM_ROOT is refused, and the first's record kept" \
     eval '[ "$rc" = 1 ] && [ -z "$(calls)" ] && grep -q "^REFUSED: $L stands: a run already began in this VM_ROOT" "$T/mt.out" && [ "$(sha256sum <"$L/make-template.log")" = "$first" ]'
+# Two runs started together: the other run makes the folder between this run's check and
+# its own mkdir. A stand-in mkdir, exported to the script's shell, makes it at that moment.
+n=$((n + 1)); VR=$T/vr$n; L=$VR/appliance/make-template; rm -f -- "$CALLS"
+mkdir() { if [ "$#" = 2 ] && [ "$1" = -- ] && [ "$2" = "$OTHER" ]; then command mkdir -p -- "$OTHER" && echo other >"$OTHER/make-template.log"; fi; command mkdir "$@"; }
+export -f mkdir
+OTHER=$L env VM_ROOT="$VR" HOST_TESTS="$T/ht.sh" bash "$C/make-template.sh" >"$T/mt.out" 2>&1; rc=$?
+unset -f mkdir
+check "a run whose folder another run made after the check: refused as standing, nothing run, the other's record kept" \
+    eval '[ "$rc" = 1 ] && [ -z "$(calls)" ] && grep -q "^REFUSED: $L stands: a run already began in this VM_ROOT" "$T/mt.out" && [ "$(cat "$L/make-template.log")" = other ]'
 chmod 0644 "$T/ht.sh"; mt; chmod 0755 "$T/ht.sh"
 check "HOST_TESTS that is not an executable file: refused, nothing run" \
     eval '[ "$rc" = 1 ] && [ -z "$(calls)" ] && grep -q "^REFUSED: HOST_TESTS, $T/ht.sh, is not an executable file" "$T/mt.out"'

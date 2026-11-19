@@ -39,12 +39,16 @@ VM_ROOT=$(realpath -m -- "$VM_ROOT") || { echo "REFUSED: VM_ROOT cannot be made 
 export VM_ROOT
 D=$VM_ROOT/appliance/make-template
 # One run to a build: a second would write over the first's record, and create refuses a
-# disk that stands in any case.
-if [ -e "$D" ] || [ -L "$D" ]; then
-    echo "REFUSED: $D stands: a run already began in this VM_ROOT, and its record is kept; nothing has run"
+# disk that stands in any case. The run's folder is taken by a plain mkdir, which fails
+# where it stands, so two runs started together cannot both pass the check (CodeRabbit on
+# pull request 44, 2026-11-19).
+stands_msg="REFUSED: $D stands: a run already began in this VM_ROOT, and its record is kept; nothing has run"
+if [ -e "$D" ] || [ -L "$D" ]; then echo "$stands_msg"; exit 1; fi
+mkdir -p -- "${D%/*}" || { echo "REFUSED: ${D%/*} cannot be made; nothing has run"; exit 1; }
+if ! mkdir -- "$D" 2>/dev/null; then
+    if [ -e "$D" ] || [ -L "$D" ]; then echo "$stands_msg"; else echo "REFUSED: $D cannot be made; nothing has run"; fi
     exit 1
 fi
-mkdir -p -- "$D" || { echo "REFUSED: $D cannot be made; nothing has run"; exit 1; }
 LOGF=$D/make-template.log
 say() { local l; l="$(date -u +%FT%TZ) $*"; printf '%s\n' "$l" >>"$LOGF"; printf '%s\n' "$l"; }
 
