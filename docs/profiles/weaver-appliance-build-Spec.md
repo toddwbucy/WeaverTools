@@ -1204,19 +1204,20 @@ that it holds the listed files byte for byte and nothing else. The offline mock
 `t-wait-for.sh` takes the mock's bounded wait out of its text, checks it is the
 harness's own, and runs it, without running the mock. `t-ready-layer.sh` checks step
 10's layout and the seal's ready probes against a stand-in root: the box's-shape judge
-on stand-in account files, the folders' owners and modes, a file, a key or a mount
-where the probes refuse one, and the digests against stand-in stamp lines.
-`t-requests.sh` runs the request script, its `runuser` prefix dropped, against stand-in
-connectors that write their config and their line line by line: both made where neither
-stands, nothing remade where both stand, a refusal naming the connector where one stands
-without the other, no request file where a connector exits other than 0 or prints a
-line not of the form, no temporary file left, a link at its path never written through,
-and the console's two lines. `t-survey.sh` runs the survey's own tests, in
-`guest/ready/test/`, against stand-in sources. `t-pipefail.sh` refuses, in the tree's
-shell scripts, a producer piped into a reader that exits early (`grep -q`, `head`) where
-the pipeline's status decides something under `pipefail`. `t-make-template.sh` runs
-`make-template.sh` with `build-template.sh` and the host tests stood in, and checks the
-steps' order, the stop at the first refusal and its log, and the refusal of an unset
+on stand-in account files, the folders' owners and modes, a file, a key or a mount where
+the probes refuse one, and the digests against stand-in stamp lines. `t-requests.sh`
+runs the request script, its `runuser` prefix dropped, against stand-in connectors that
+write their config and their line line by line: both made where neither stands, nothing
+remade where both stand, a refusal naming the connector where one stands without the
+other, no request file where a connector exits other than 0 or prints a line not of the
+form, no temporary file left, a link at its path never written through, and the
+console's two lines. `t-survey.sh` runs the survey's own tests, in `guest/ready/test/`,
+against stand-in sources. `t-pipefail.sh` refuses, in the scripts the build runs
+(`build-template.sh`, `lib.sh`, `guest/template-steps`, `make-template.sh` and the
+request script), a producer piped into a reader that exits early (`grep -q`, `head`)
+where the pipeline's status decides something under `pipefail`. `t-make-template.sh`
+runs `make-template.sh` with `build-template.sh` and the host tests stood in, and checks
+the steps' order, the stop at the first refusal and its log, and the refusal of an unset
 input.
 
 ## 3. Open
