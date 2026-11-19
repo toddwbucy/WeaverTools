@@ -1,14 +1,16 @@
 # The appliance's survey report - format weaver-survey/1
 
-**Status:** DRAFT. Not merged.
+**Status:** Merged in pull request 37 (2026-11-17). Revised for the appliance template,
+release 5.0, in the `act/appliance-template` stack (pull request 44), not merged.
 **Date filed:** 2026-11-17
 **Document ID:** `weaver-survey-format`
 **Parent:** `weaver-appliance-profile` (this directory), whose image carries the survey
 **Class:** format document, per `deployment-profile-convention.md` section 3 in this
 directory
 **Authority:** the operator's rulings of 2026-11-16 on the setup pages (the survey runs
-locally, and its report crosses over TLS) and his ruling that the deployment tuple names
-cards by model.
+locally, and its report crosses over TLS), his ruling that the deployment tuple names
+cards by model, and his rulings of 2026-11-19 on the appliance template (the image
+carries the survey).
 **Editorial:** ASCII, absolute dates, prose at 88 characters.
 
 ---
@@ -133,11 +135,16 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
 
 ## 5. Where the survey runs, and what it does not do
 
-- **The image will carry the survey, and the appliance's setup script will run it.**
-  Both are the next act of the profile (its section 8). The setup script, run as root at
-  the console of the virtual machine, runs the survey twice: at the stage `pairing`,
-  once mutual TLS is up, and at the stage `drives`, after the drive setup. Each time it
-  hands the survey's standard output to admin-con's `setup report`.
+- **The image carries the survey from release 5.0, at
+  `/opt/weaver-appliance/bin/weaver-survey`** (the operator's rulings of 2026-11-19;
+  `weaver-appliance-build-Spec` section 2). The image build's proof runs it once on a
+  box's first boot, as `nobody` with `--stage pairing`, and its reader must accept the
+  output.
+- **The appliance's setup script will run it,** in phase 2 of the rulings of 2026-11-19
+  (the profile's section 8). The setup script, run as root at the console of the virtual
+  machine, runs the survey twice: at the stage `pairing`, once mutual TLS is up, and at
+  the stage `drives`, after the drive setup. Each time it hands the survey's standard
+  output to admin-con's `setup report`.
 - **The survey runs as `nobody`**, so the operating system holds it to reading. Every
   source of section 1 is readable by any user.
 - **It writes nothing.** Its output is its standard output alone: no file and no
@@ -215,8 +222,8 @@ nothing more.
 - **A loaded module with no card.** Whether the open module loads where no card stands,
   and that `nvidia-smi` then exits 6, is read from NVIDIA's documented return codes and
   not yet measured on the image. The next cardless run of a booted image measures it.
-- **The survey's path in the image and the setup script's answer to a failed survey.**
-  Settled by the setup script's act.
+- **The setup script's answer to a failed survey.** Settled by the setup script's act,
+  in phase 2.
 - **The node kind of this document in the document graph.** The graph is suspended until
   release by the ruling of 2026-09-27. Settled by the operator when the graph resumes,
   as for the profile.

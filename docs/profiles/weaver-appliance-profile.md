@@ -1,14 +1,16 @@
 # The agent appliance - deployment profile
 
 **Status:** Merged in pull request 32 (2026-11-16) and revised with release 1.0 in pull
-request 33 (2026-11-16); revised for release 2.0's base and the survey's format, not
-merged.
+request 33 (2026-11-16); revised for release 2.0's base and the survey's format in pull
+request 37 (merged 2026-11-17); revised for the appliance template, release 5.0, in the
+`act/appliance-template` stack (pull request 44), not merged.
 **Date filed:** 2026-11-15
 **Document ID:** `weaver-appliance-profile`
 **Class:** deployment profile, per `deployment-profile-convention.md` in this directory
 **Authority:** the operator's written brief of 2026-11-14 on the appliance path, his
-rulings of 2026-11-14 and 2026-11-15, and his rulings of 2026-11-16, the rulings on the
-setup pages among them. Where two of them differ, the later one holds.
+rulings of 2026-11-14 and 2026-11-15, his rulings of 2026-11-16, the rulings on the
+setup pages among them, and his rulings of 2026-11-19 on the appliance template. Where
+two of them differ, the later one holds.
 **Editorial:** ASCII, absolute dates, prose at 88 characters.
 
 ---
@@ -92,9 +94,9 @@ WeaverTools pull request 33 builds it). Release 1.0 disabled cloud-init (ruling 
 this stage and is a later item, per section 8. systemd's own first-boot paths stay as
 the base's systemd ships them and are named in the Spec of the image build: what an
 operator feeds through them is the operator's to account for (ruling of 2026-11-16).
-This is the first login that releases 1.0 and 2.0 build. The next act moves root's
-password to the first question of the appliance's setup script and brings the operator's
-SSH key through the console over TLS, per section 8.
+This is the first login that releases 1.0 to 5.0 build. Phase 2 moves root's password to
+the first question of the appliance's setup script and brings the operator's SSH key
+through the console over TLS, per section 8.
 
 **The shape of a deployment is the operator's choice.** The suite recommends a machine
 given to one agent. It is a recommendation and no rule. In the operator's words: "we
@@ -132,15 +134,26 @@ does not run this image.**
 **The image carries no model and no state.** Both live on disks that the operator
 attaches.
 
-**The image carries no shared key and no shared secret.**
+**The image carries no shared key and no shared secret.** Each box makes its two
+connectors' keys at its own first boot (the ready layer, below).
 
-**The image will carry a setup script and a survey script** (the operator's rulings of
-2026-11-16 on the setup pages and his addendum of the same day). The appliance's console
-goes straight to the setup script, which pairs the appliance with the console and lays
-its disks, per section 3.5. The survey script runs locally, and its report crosses over
-TLS. The report's form is `weaver-survey/1`, stated in `weaver-survey-format.md` in this
-directory. Both scripts are the next act. Releases 1.0 and 2.0 carry neither, and
-section 8 names them.
+**The image carries the survey and the ready layer, from release 5.0** (the operator's
+rulings of 2026-11-19). On that day the operator walked a virtual machine made from
+release 4.0 through the console's setup pages by hand, and ruled the work into two
+phases. Phase 1 is the template alone: a virtual machine made from the image holds
+everything it needs to operate as a Weaver agent appliance, with nothing typed. Phase 2
+is what an operator does with the template: pairing it, the drives, the reports and the
+agent. The survey runs locally, and its report crosses over TLS. The report's form is
+`weaver-survey/1`, stated in `weaver-survey-format.md` in this directory. The ready
+layer is the connectors' two accounts and the pairing account, the folders the pairing
+uses, and a unit that makes each connector's key and request at a box's first boot,
+before any login. The Spec of the image build states both (`weaver-appliance-build-Spec`
+section 2). Releases 1.0 to 4.0 carry neither.
+
+**The image will carry a setup script** (the operator's rulings of 2026-11-16 on the
+setup pages and his addendum of the same day). The appliance's console goes straight to
+the setup script, which pairs the appliance with the console, runs the survey, and lays
+its disks, per section 3.5. It is phase 2's, and section 8 names it.
 
 **The image does not update itself.** Automatic package updates and firmware updates are
 off. What the operator changes after boot is the operator's, per section 1.
@@ -151,7 +164,7 @@ compacted file.**
 ### 3.2 Inbound
 
 **The image's own boot rules drop inbound traffic and accept SSH** (ruling of
-2026-11-15). In releases 1.0 and 2.0 the appliance listens on SSH alone. The setup and
+2026-11-15). In releases 1.0 to 5.0 the appliance listens on SSH alone. The setup and
 the console use no listener but SSH (the operator's addendum of 2026-11-16 to the
 setup-pages rulings, item 9). A port that a declaration names is the agent's own
 surface, and declared ports are later work (the operator's design-first ruling of
@@ -198,17 +211,17 @@ the state mount is required only where the declaration elects state. The same te
 refuses a load without it.
 
 **The agent's territory is `/var/lib/weaver-agent`, on the image's root.** The image is
-disposable. What the agent keeps is on the mounts. The next act moves the agent's home,
-with the agent's folder inside it, onto the state drive at
-`/mnt/weaver/state/<agent-name>` (the operator's answers of 2026-11-16, recorded with
-the setup-pages rulings, items 15 and 19), per section 8.
+disposable. What the agent keeps is on the mounts. Phase 2 moves the agent's home, with
+the agent's folder inside it, onto the state drive at `/mnt/weaver/state/<agent-name>`
+(the operator's answers of 2026-11-16, recorded with the setup-pages rulings, items 15
+and 19), per section 8.
 
 **The automatic save point that the unload writes is in scope, on the state disk** (the
 operator's rulings of 2026-11-16 on the setup pages). It is the existing save point
-path, in the agent's folder, and no new persistent store. In releases 1.0 and 2.0 the
+path, in the agent's folder, and no new persistent store. In releases 1.0 to 5.0 the
 agent's folder is in its territory on the image's root (above), so a save point written
 there outlives a restart of the virtual machine but not the image's replacement. It is
-on the state disk once the next act moves the agent's home, with the folder inside it,
+on the state disk once phase 2 moves the agent's home, with the folder inside it,
 onto the state drive. The first agent "declares a store and keeps the system prompt"
 (ruling of 2026-11-16) and keeps that save point. Its test puts a prompt into state,
 loads, unloads, shuts the virtual machine down, restarts, reloads, and finds the prompt
@@ -221,8 +234,9 @@ as a later item.
 console sees the appliance. The agent stays unloaded until the console asks admin to
 load it. An operator's own packaging is the operator's business.
 
-**Connector keys and certificates live on the image's root disk.** So a new image is a
-new enrollment. The operator does it with the pairing code of the paragraph below (the
+**Connector keys and certificates live on the image's root disk.** Each box makes its
+two keys at its first boot, before any login (section 3.1). So a new image is a new
+enrollment. The operator does it with the pairing code of the paragraph below (the
 operator's rulings of 2026-11-16 on the setup pages).
 
 **An upgrade moves the state and the model to a machine made from the new version.** The
@@ -248,10 +262,10 @@ Planner recorded it beneath the addendum:
    digests.
 
 The pairing step belongs to the connectors. The setup script and its drive setup are the
-image's, the next act, per section 8. In the rulings: "Every root act runs on the box at
-a screen the operator is sitting at, so admin's grant does not grow." The connectors
-dial the console on every boot and redial a dropped link, and load and unload do not
-drop them (the addendum, item 9). From pairing onward the console's whole reach is its
+image's, phase 2's, per section 8. In the rulings: "Every root act runs on the box at a
+screen the operator is sitting at, so admin's grant does not grow." The connectors dial
+the console on every boot and redial a dropped link, and load and unload do not drop
+them (the addendum, item 9). From pairing onward the console's whole reach is its
 connectors. The appliance dials the console. The console does not dial the appliance.
 
 **SSH is the operator's admin door, separate from Weaver Web, and setup never uses it**
@@ -268,7 +282,7 @@ each agent, and each choice is part of that agent's arrangement.
 | The model | the declaration | The bytes live on the models mount. |
 | Whether the agent elects a store (the engine) | the declaration | It stays a choice for each agent. The state mount is required for every agent either way, at least 10 GiB, and whether a smaller drive is refused or warned of is open (the operator's rulings of 2026-11-16 on the setup pages). The first agent declares a store and keeps the system prompt (ruling of 2026-11-16). |
 | Where the trace goes | a field on Weaver Web's declaration page, set when the agent is created | The suite sends the trace where it is told. A file, `/dev/null` or anything else: what stands behind it is the operator's. |
-| The ports of a tool or of the gate | the declaration | Later work: none in releases 1.0 and 2.0, per section 3.2 (the operator's design-first ruling of 2026-11-16). |
+| The ports of a tool or of the gate | the declaration | Later work: none in releases 1.0 to 5.0, per section 3.2 (the operator's design-first ruling of 2026-11-16). |
 | The card, and the virtual CPU model | the hypervisor | Both are members of the tuple, per section 5. |
 | What the appliance may reach | the operator's network | The image places no limit. |
 
@@ -388,6 +402,15 @@ graphics clock locked from 210 to 1890 MHz.
 
 **The order is issue 28's cells, then the cap arm.**
 
+**The template's reliability, proposed for the operator's ruling.** The rulings of
+2026-11-19 ask that phase 1 be made reliable before phase 2 begins. The bar proposed in
+the `act/appliance-template` stack: three runs of `make-template.sh` from clean, one
+after another and unattended, each sealing and passing the proof with its ready row and
+its second boot. Every shipped binary is byte-equal across the three. The requests
+differ, as keys made at three first boots must. The stamps and the manifests differ only
+where each difference is explained. A run counts only if no code changed after it. The
+operator rules on the bar, and its result is recorded in the Spec of the image build.
+
 ### 7.3 Falsifier
 
 Any difference in the emitted token ids, or in the entropy of any token, on any turn of
@@ -407,26 +430,31 @@ still has to be captured into the binary or held by the image.
 - The appliance's setup script, run as root, to which the appliance's console goes
   straight in place of a login prompt, with its drive setup (the operator's rulings of
   2026-11-16 on the setup pages and his addendum of the same day). It changes the first
-  login of section 2 and the image build's console proof. The next act.
+  login of section 2 and the image build's console proof. Phase 2 (the rulings of
+  2026-11-19).
 - Root's password set by the setup script's first question, in place of the first login
-  of section 2 (the addendum, as the suite Planner recorded it). The next act.
+  of section 2 (the addendum, as the suite Planner recorded it). Phase 2.
 - The operator's SSH public key reaching the appliance through the console over TLS
   after pairing. SSH takes that key and never a password (the addendum, as the suite
   Planner recorded it). The setup script's drive-setup run fetches the key over the
   paired link and writes it, since writing it is a root act and the connectors hold no
-  root, and running the setup command again writes a changed key. The next act.
-- The survey script, run locally, its report crossing over TLS (the operator's rulings
-  of 2026-11-16 on the setup pages). The next act. The report's form is stated in
-  `weaver-survey-format.md` in this directory.
-- The accounts the agent needs, shipped in the image: a fixed agent account,
-  `weaver-agent` as proposed, and the two connectors' accounts, which today
-  `create-agent.sh` lays at agent creation (the operator's answers of 2026-11-16,
-  recorded with the setup-pages rulings, items 17 and 19). The next act.
+  root, and running the setup command again writes a changed key. Phase 2.
+- The survey's two runs by the setup script, at the stages `pairing` and `drives`, each
+  report crossing over TLS (the operator's rulings of 2026-11-16 on the setup pages).
+  The image carries the survey from release 5.0 (section 3.1). Phase 2.
+- The connectors' box facts that WeaverWeb's Spec (section 8.2) gives to the image's
+  install: `gate_socket` for gate-con, and `trace_socket`, `weaver_admin` and
+  `admin_log` for admin-con. Each is required with no default, so no connector's service
+  starts without them. Phase 2.
+- The fixed agent account, `weaver-agent` as proposed, shipped in the image (the
+  operator's answers of 2026-11-16, recorded with the setup-pages rulings, items 17 and
+  19). Phase 2, with the agent's creation. The two connectors' accounts, named in the
+  same answers, are in the image from release 5.0 (section 3.1).
 - The agent as a real user whose home directory lives on the state drive: once the agent
   is named, the setup script points the fixed account's home at
   `/mnt/weaver/state/<agent-name>`, with the agent's folder (declaration, logs, trace,
   save points) inside it, so the root disk keeps nothing (the same, items 15 and 19).
-  The next act.
+  Phase 2.
 - The console's shutdown as a stop of the agent service alone, which the console may
   start again, on a virtual machine and on a host alike (the same, items 14 and 18).
 

@@ -1,8 +1,10 @@
 # The appliance image build - Spec
 
-**Status:** Merged with release 1.0 (pull request 33, 2026-11-16); revised for release
-2.0 in pull request 35, not merged. Moved on 2026-11-15 from section 10 of
-`template-clone-Spec`, where it stood on pull request 31.
+**Status:** Merged with release 1.0 (pull request 33, 2026-11-16) and revised for
+release 2.0 (pull request 35, merged 2026-11-17). Revised for the appliance template,
+release 5.0, in the `act/appliance-template` stack (pull request 44), not merged. Moved
+on 2026-11-15 from section 10 of `template-clone-Spec`, where it stood on pull request
+31.
 **Date filed:** 2026-11-15
 **Document ID:** `weaver-appliance-build-Spec`
 **Parent:** `weaver-appliance-profile` (this directory), whose own artifact this build makes
@@ -10,7 +12,8 @@
 on it.
 **Editorial:** Per the Working Rules. ASCII, absolute dates, prose at 88 characters.
 **Landing PR:** the `act/appliance-v1` stack (release 1.0, merged as pull request 33);
-the `act/appliance-arch` stack (release 2.0, pull request 35)
+the `act/appliance-arch` stack (release 2.0, pull request 35); the
+`act/appliance-template` stack (release 5.0, pull request 44)
 
 ---
 
@@ -18,9 +21,10 @@ the `act/appliance-arch` stack (release 2.0, pull request 35)
 
 The Spec of the appliance image's build. It covers the scripts that make, seal and prove
 one image: `build-template.sh`, `guest/template-steps` and the helpers of `lib.sh` they
-use, all in `experiments/vm-per-agent/template-clone/code/`. It represents the build and
-nothing else, as `deployment-profile-convention` section 3 allows. It states no
-requirement on admin, the console or the agent.
+use, `make-template.sh`, which runs them from end to end, and the ready layer's files in
+`guest/ready/`, all in `experiments/vm-per-agent/template-clone/code/`. It represents
+the build and nothing else, as `deployment-profile-convention` section 3 allows. It
+states no requirement on admin, the console or the agent.
 
 The operator ruled on 2026-11-15 that the image build has its own Spec under its profile.
 This document took section 10 of `template-clone-Spec` whole, and the build's rows of that
@@ -58,6 +62,7 @@ to: weaver-appliance-profile
 | `PROOF_FIRST_BOOT` | the seconds `proof` waits for the first boot's login prompt on the console | 300 |
 | `PROOF_ACPI` | the seconds `proof` waits, after it presses the first boot's power button, for the guest to power itself off | 120 |
 | `CUOBJDUMP` | the host's `cuobjdump`, from a CUDA toolkit that knows the four architectures `proof` checks for (section 2) | `cuobjdump` |
+| `HOST_TESTS` | the command `make-template.sh` runs the host tests with. A host that confines its tests names its own runner | `test/host/run-all.sh` |
 | `QEMU_USER` | the account QEMU runs as under libvirt's system connection. `proof` grants it alone, by a POSIX ACL, write access to the console and capture files QEMU opens, to the directory of the first boot's console socket, and to the overlays it boots | `libvirt-qemu` |
 
 A step that needs a parameter with no default refuses before it does anything.
@@ -101,6 +106,13 @@ refused on the host with a sentence: a respin carries a release's binaries into 
 layer, and no path here does that (section 3). Every other form is refused too. The facts
 step records the version in the stamp as `appliance.version`, and the guest refuses a
 `VERSION` that is not a release.
+
+**Release 5.0 compiles the commits release 4.0 compiled.** Its change is the ready layer
+(below), which is outside the binaries: the kind of change a respin carries. This tree
+builds releases alone and the respin path is not built (section 3), so the cut is
+release 5.0, and its binaries are expected to be byte-equal to 4.0's. Its tag,
+`appliance/5.0`, stands on the same WeaverAgent commit as `appliance/4.0`. A tag is
+keyed by the version, so two tags on one commit are allowed. The operator makes the tag.
 
 **The tag** (the operator's decision 3 of 2026-11-15). Each released version is named in
 WeaverAgent by one annotated tag, `appliance/<version>`, on the WeaverAgent commit the
@@ -180,7 +192,7 @@ generator: the generator pulls the service in where the machine's DMI identity n
 cloud vendor udev's hwdb lists, and the service then
 reads metadata over the network. An operator's hypervisor can present such an identity,
 so the service is not shown inert, and is masked. The record build's boot with no seed
-sent no frame (step 12). The network is the one the operator sets after logging in
+sent no frame (step 13). The network is the one the operator sets after logging in
 (decision 16 of 2026-11-15). timesyncd stays enabled with the servers it is built with,
 unchanged here, so the clock syncs where a server answers. `systemd-time-wait-sync`,
 which the image's builder enables, is masked: where no time server answers, it holds
@@ -207,7 +219,7 @@ remove this table alone, is not carried. The text is defined once in
 drop-ins and all, loading `/etc/nftables.conf` with no stop command. The rules are
 enabled for the next boot and not loaded in the build guest. Checked on 2026-11-15 in a
 user namespace on the measuring host (nftables 1.1.7): the file loads twice, and a
-second table survives both loads. Measured on the record build's first boot (step 12):
+second table survives both loads. Measured on the record build's first boot (step 13):
 the table loaded, with its input policy drop and its SSH accept, a listener on TCP 8080
 silent from the host, and SSH answering through its forward. Admin's table is separate
 and is admin's. In nftables a drop in one table's base chain is final, so an accept in
@@ -235,7 +247,7 @@ link and masks its tmpfiles line. The text is defined once in `guest/template-st
 and a probe reads sshd's own merged
 configuration for root. So the first password is set at the console, never over SSH.
 Every other account stays locked as Arch ships it, and none has a login shell. The image
-ships no cron. Measured by the record build's proof on 2026-11-17 (step 12):
+ships no cron. Measured by the record build's proof on 2026-11-17 (step 13):
 - At the serial console `login` asked root for no password, announced the forced change,
   asked the new password twice and gave a root shell.
 - Over SSH, before the change and after it, an empty password, the password the console
@@ -283,7 +295,7 @@ masks none. A probe reads each present and not masked:
 - `systemd-firstboot.service` and `systemd-creds.socket`
 - `systemd-network-generator.service`, enabled. It writes a credential named
   `network.network.<name>` to `/run/systemd/network/<name>.network`, where networkd
-  reads it. The proof hands its first boot the network this way (step 12).
+  reads it. The proof hands its first boot the network this way (step 13).
 - `systemd-ssh-generator`, among the system generators
 
 The probes also list every consumer of a system credential in the image, the whole set a
@@ -312,14 +324,112 @@ account `arch` with its home and sudoers rule, where a seed ever made it. A prob
 cloud-init absent in both passes. A seed attached to a box is not acted on, and nothing
 grows the root filesystem at a box's boot: it stays at `SIZE`, to which the build's
 first boot grew it (read from the steps, not measured). The proof's first boot attaches
-a seed only to show it ignored (step 12).
+a seed only to show it ignored (step 13).
+
+**The ready layer** (the operator's rulings of 2026-11-19). On 2026-11-19 the operator
+walked a virtual machine made from release 4.0 through the console's setup pages by
+hand. Before it could pair, the person at its console typed three accounts, a folder
+layout and one request from each connector, and the survey came on a disk of its own.
+The operator then ruled the work into two phases. Phase 1 is the template alone: a
+virtual machine made from it holds everything it needs to operate as a Weaver agent
+appliance, with nothing typed. Phase 2 is what an operator does with the template:
+pairing it with the console, the drives, the reports and the agent. Phase 1 is release
+5.0, and the ready layer is what it adds. What is the same on every box is laid at
+build. What must differ from box to box is made at the box's first boot.
+
+Laid at build, by step 10:
+- `weaver-gatecon` and `weaver-admincon`, the box's connector accounts, one per box, by
+  the line WeaverAgent's `create-agent.sh` lays them with where they are absent:
+  `useradd --system --shell /usr/sbin/nologin --no-create-home --user-group`. Each then
+  stands in the box's shape that `create-agent.sh` accepts (WeaverAgent's
+  `deploy/HowToDeployANewAgent.md`): a uid above 0 and below `UID_MIN`, a nologin shell,
+  a primary group of its own with no member, and no other group.
+- `weaver-pair`, by the same line: the unprivileged account under which `admin-con pair`
+  runs, "an unprivileged account the image names" (WeaverWeb's Spec, section 8.2). It
+  holds no group of a connector's or an agent's, and no privilege past its own folder.
+- `/etc/weaver-web`, `/etc/weaver-web/pairing` and `/etc/weaver-web/connectors`, root's,
+  mode 0755. `pairing/gate`, owned by `weaver-gatecon`, and `pairing/admin`, owned by
+  `weaver-admincon`, each mode 0700: each connector makes its config there under its own
+  account and opens the directory to sync it. `pairing/exchange`, owned by
+  `weaver-pair`, mode 0755: `pair` reads the two requests there and writes its answer
+  there. All six are on the root filesystem, with nothing mounted at or under
+  `/etc/weaver-web`, so a config reaches its agent's directory under `connectors/` by a
+  rename and never by a copy, as WeaverWeb's section 8.2 requires.
+- The survey, `/opt/weaver-appliance/bin/weaver-survey`, root's, mode 0755: the report
+  of `weaver-survey-format` in this directory, in Python's standard library alone.
+- The request unit, `weaver-appliance-requests.service` in `/etc/systemd/system`, and
+  its script, `/opt/weaver-appliance/libexec/requests`, root's, mode 0755. The unit is
+  enabled in `multi-user.target`.
+
+Made at each box's first boot by the request unit, and never in the image: each
+connector's key and its request. A key made at build would stand in every box made from
+the image, and the image carries no shared key (`weaver-appliance-profile` section 3.1).
+The unit:
+- runs, as root and through `runuser`, `gate-con request` as `weaver-gatecon` with its
+  config at `pairing/gate/gate-con.toml`, then `admin-con request` as `weaver-admincon`
+  with its config at `pairing/admin/admin-con.toml`. Each connector makes its config
+  new, mode 0600, holding the key it made, and prints one request line,
+  `{"event":"request","request":"<PEM>"}` (WeaverWeb's section 8.2; the member's name is
+  WeaverWeb issue 172).
+- writes each line to `pairing/exchange/gate.req` and `admin.req`, root's, mode 0644, so
+  that `weaver-pair` can read it: first to a temporary file made new in the same
+  directory, never through a link, then renamed into place, only where the connector
+  exited 0 and printed exactly one line of that form. A request file is whole or absent.
+- needs no network. `request` dials nothing, so the unit is ordered after the local
+  filesystems alone and wants no network. The no-seed boot of step 13 runs it and still
+  sends no frame.
+- is ordered before logins are allowed (`systemd-user-sessions.service`), so its line
+  comes before the login prompt. The order holds no login back where the unit fails.
+- runs at every boot and remakes nothing that stands. Where a connector's config and its
+  request both stand, it leaves them. Where neither stands, it makes both. Where one
+  stands without the other, it refuses for that connector and removes nothing: `request`
+  refuses a config that stands, and a request without its key is no request. A first
+  boot cut short is completed at the next boot, or refused with its cause on the
+  console.
+- prints one line on the console when it is done. It is `weaver-appliance: ready`,
+  naming what it made or found, or, where it refused, `weaver-appliance: refused`,
+  naming the connector and the cause, and the unit then fails. It reads a command's
+  output first and matches it after, so no reader that exits early decides a status
+  under `pipefail`.
+
+What stays out of the template, as phase 2's:
+- the setup script, to which the appliance's console would go straight, and the first
+  login, which is unchanged;
+- `pair` and the box's name, the moves of the configs into `connectors/<agent>/`, and
+  the adopts;
+- the connectors' units, which WeaverWeb's staging lays (step 9);
+- the box facts each connector's config needs before its service starts, which
+  WeaverWeb's section 8.2 gives to the image's install: `gate_socket` for gate-con, and
+  `trace_socket`, `weaver_admin` and `admin_log` for admin-con. Each is required, with
+  no default, so a ready template is not yet a connector that starts;
+- both of the survey's reports, the drives and their laying, and the model's pull
+  (WeaverTools issue 39);
+- the fixed agent account and the agent;
+- any condition of one operator's site.
+
+**One script makes the template: `make-template.sh`.** The operator ruled on 2026-11-19
+that the template needs "a separate script, and all it focuses on is creating that
+template". It runs, in order, and stops at the first refusal, naming the step and its
+last line: the host tests, `create`, the guest steps `facts` to `connectors` through
+`build-template.sh step`, `mock`, the steps `ready`, `cleanup` and `probes`, then
+`seal`, `proof` and `tag`. It takes the build's parameters (section 1) from its
+environment, passes them on, and refuses before the host tests where an input `create`
+needs is unset. Each step's start, end and exit status go to one log in the build's
+directory under `VM_ROOT`, with the step's own output beside it. `HOST_TESTS` names the
+command that runs the host tests, by default `test/host/run-all.sh`. A host that
+confines its tests names its own runner, so no fact of a host enters the tree. `tag`
+prints the tag's message and applies nothing. There is no script that changes a sealed
+image: nothing is installed into an image after its seal (the operator's direction of
+2026-11-14).
 
 **The fixed layout.** The binaries carry their build paths, so the build account (`op`,
 made by the seed), the checkouts (`~/WeaverAgent`, `~/WeaverWeb`) and the targets
 (`~/target/weaveragent`, `~/target/weaverweb`) are fixed. The image lays the agent stack
 where WeaverAgent's deploy scripts put it (`/opt/weaver`, `/etc/weaver/stack`), the deploy
 scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
-`/opt/weaver-web/bin`, and its own record at `/etc/weaver-appliance`.
+`/opt/weaver-web/bin`, its own record at `/etc/weaver-appliance`, the survey and the
+request script under `/opt/weaver-appliance`, and the connectors' pairing and config
+folders under `/etc/weaver-web`.
 
 **The steps, in order.**
 
@@ -390,7 +500,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
    No unit is laid: the image half of WeaverWeb's staging is that repository's act. From
    the fifth build on, `build-template.sh mock` runs the offline mock after this step
    (`template-clone-Spec` section 8).
-10. `cleanup`, the checked list, in this order:
+10. `ready`: the ready layer (above), after the connectors and before the cleanup, so
+    the cleanup, the probes and the MANIFEST all cover it. It installs the files of
+    `guest/ready/`, lays the three accounts and the six folders, enables the request
+    unit, and records the stamp's `ready.*` lines. A rerun accepts what stands exactly
+    as the step lays it and refuses anything else, so it never lays a thing twice. The
+    cleanup removes none of it: each file is root's, outside every removal pattern, and
+    no package owns it.
+11. `cleanup`, the checked list, in this order:
     - The CUDA runtime made into a package of its own from the toolkit's files (the
       runtime set, below).
     - The source trees, their build directories, the Rust toolchain and cargo's caches.
@@ -437,7 +554,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
       processed, up to `ProcessSizeMax` (32G on 64-bit). The probe reads what
       `systemd-coredump` reads in the end, through `systemd-analyze cat-config`.
     - resolved's drop-in (the network, above), the two data mount points laid empty, and
-      the image's own hostname (step 11).
+      the image's own hostname (step 12).
     - Last, the units that would update the image or its keys masked: the keyring's
       weekly sync, systemd-sysupdate's units, and `pacman-init.service`, which would
       make a pacman master key, a private key, at every box's first boot (its file, the
@@ -463,7 +580,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
 
     A rerun keeps the first run's size before the cleanup and its runtime package, and
     marks only the base packages still installed.
-11. `seal`: the probes over SSH, the system libraries' records, a dry run of the
+12. `seal`: the probes over SSH, the system libraries' records, a dry run of the
     MANIFEST, then a root oneshot once the session ends. The image's own hostname is
     `weaver-appliance`. The cleanup writes it to `/etc/hostname` in place of the build
     guest's own, so a box does not greet with the build's name, and so the recipe's
@@ -499,7 +616,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     and no authorized key. `sshd.service` wants `sshdgenkeys.service`, as Arch's openssh
     ships them, and at the first boot it makes the host keys where none stands
     (`ssh-keygen -A`); the proof reads its condition met and its run a success (step
-    12). After the console login the operator places a key and sets the network, and
+    13). After the console login the operator places a key and sets the network, and
     reads the host keys' fingerprints (decision 16 of 2026-11-15). If any probe hits, it
     writes `SEAL-REFUSED` and no MANIFEST. Otherwise it writes the stamp and then the
     MANIFEST last. If the MANIFEST cannot be written whole, the stamp goes too and it
@@ -517,7 +634,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     read-only disk and the undefine. The seal's removals cannot be undone, so a refused
     image is destroyed and the build begins again from `create`. The read tells a file
     that is absent from one it could not read (on this base's btrfs root: no `btrfs` on
-    the host, a restore that fails, a path that did not come out of the image; step 12).
+    the host, a restore that fails, a path that did not come out of the image; step 13).
     A read that fails stops `seal` with nothing changed. `seal` cannot run twice,
     because the guest is off and its account gone, so `build-template.sh verdict` reads
     the verdict again from the shut-off guest and goes on from there. `proof` tells the
@@ -531,7 +648,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     domain is still defined, `qemu-img convert` writes the disk again as a new
     standalone file of the allocated, non-zero clusters alone, beside it, and the copy
     is synced. The copy must compare equal to the disk, guest byte for guest byte
-    (`qemu-img compare`), and pass `compact_check` (step 12) before it replaces the disk
+    (`qemu-img compare`), and pass `compact_check` (step 13) before it replaces the disk
     by a rename, and the directory is synced after. Then the sha256 and the file's
     figures are recorded, with the domain still defined and the disk writable, so a seal
     cut short there is finished by `build-template.sh verdict`. Only then is the disk
@@ -550,7 +667,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     clusters of zeroes), compares equal to the original, and two compactions of the same
     file wrote byte-identical files. The record build of release 2.0 compacted
     12,246,843,392 bytes to 2,224,750,592, compared equal.
-12. `proof`, on the host: the stamp, the MANIFEST, the probe record, and the network and
+13. `proof`, on the host: the stamp, the MANIFEST, the probe record, and the network and
     update configuration read out of the sealed image without root. qemu-storage-daemon
     exports the image's root partition over FUSE as the user, and the reads go by the
     filesystem blkid finds on it: `btrfs restore` for this base's btrfs root, debugfs
@@ -667,7 +784,18 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     - pacman's sources after the first boot;
     - SSH's units, and whether `sshdgenkeys.service` ran: its condition met and its
       result a success;
-    - the listening sockets (below), and the stamp's commits.
+    - the listening sockets (below), and the stamp's commits;
+    - the ready layer, with nothing typed but the first login (the operator's rulings of
+      2026-11-19): the request unit's `weaver-appliance: ready` line on the console
+      before the login prompt; the unit's run a success, its exit before the first
+      login by the guest's journal; the three accounts in the box's shape and the six
+      folders as step 10 lays them, on the root filesystem; each connector's config a
+      regular file of its own account, mode 0600, read by its attributes alone, so that
+      no key is read or copied; each request file root's, mode 0644, one line of the
+      form `{"event":"request","request":"<PEM>"}` within 16 KiB, whose PEM the host
+      reads as a certificate request and checks against its own signature (`openssl req
+      -verify`); and the survey run as `nobody` with `--stage pairing`, exiting 0, its
+      output one object that the reader of `weaver-survey-format` section 3 accepts.
 
     Then two more tries over SSH, each refused as before: the password the console set,
     and a wrong one. It then sets the MANIFEST against the booted guest, on the host,
@@ -686,14 +814,16 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     sshd counts against the forward's one source address. The probe is TCP over IPv4
     alone: the proof's network has IPv6 off, and no UDP or IPv6 packet reaches the guest
     on the wire. The guest's files are listed as the seal lists them, less the host
-    keys' private halves, so no digest of a private key is made. Its links are formatted
+    keys' private halves and the two connectors' configs, whose paths alone are listed,
+    so no digest of a private key is made. Its links are formatted
     on the host by the seal's own formatter text. Each file or link removed, added or
     changed is printed by its path, never with a digest. A difference the first boot
     makes by design is marked expected. With no cloud-init, the list is short. Changed:
     the machine identity, which the seal leaves uninitialized, and the shadow file,
     where the first login sets root's password. Added: the host keys' public halves,
-    which `sshdgenkeys.service` makes, and the account tools' lock file, which the list
-    allows and does not require. The proof's network lands under `/run`, out of the
+    which `sshdgenkeys.service` makes, the two connectors' configs and their two
+    requests, which the request unit makes, and the account tools' lock file, which the
+    list allows and does not require. The proof's network lands under `/run`, out of the
     scope. The fourth and fifth builds' first boots ran cloud-init from a seed, which
     also changed the account files and the hostname and added its own netplan file and
     sudoers rule. None of those is expected now. Measured on the record build: 41,653
@@ -724,6 +854,14 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     and the kernel's `reboot: Power down`, which it prints at every console level, with
     no `[FAILED]` line and no stop job waited on. A guest not off by then is stopped as
     every boot ends. The record build's guest was off 2 s after the press, cleanly.
+    **The second boot** (the operator's rulings of 2026-11-19). Once the first boot's
+    guest is off by its own power button, the proof boots the same overlay again, with
+    the same network credential, and waits for the login prompt. It logs in over SSH
+    with the key it placed and reads that nothing was remade: the console's
+    `weaver-appliance: ready` line naming both connectors as found, the unit's run a
+    success, each config of the same inode, size, owner, mode and modification time as
+    at the first boot, read by its attributes alone, and each request file of the same
+    sha256. It then presses the power button again, read as after the first boot.
     **The sealed disk is not relabelled.** Each boot names its overlay with a DAC
     security label that libvirt must not relabel, and
     the label holds for the overlay's whole backing chain. Without it, libvirt's DAC
@@ -733,13 +871,13 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     operator could no longer change its mode without root. With the label, libvirt leaves
     the sealed disk's owner and mode alone, and QEMU reads it as the 0444 file it is. The
     overlay is QEMU's to write by the same kind of ACL as the console files. The proof
-    reads the sealed disk's owner and mode before its offline read and again after both
-    boots, and a change fails it. A disk already relabelled by an earlier proof (the
+    reads the sealed disk's owner and mode before its offline read and again after every
+    boot, and a change fails it. A disk already relabelled by an earlier proof (the
     fifth build's kept image is one) stays owned by `QEMU_USER` until root re-owns it.
     The proof cannot undo that and does not try, and re-owning is the operator's root
     step.
     **The proof refuses as well as reads.** An image with no MANIFEST, or with a seal
-    refusal, is not booted at all. After both boots, each finding of the sealed file
+    refusal, is not booted at all. After every boot, each finding of the sealed file
     (its sha256 and its compactness), of the stamp's version, of the shipped library's
     device code, each finding the first boot recorded, and each finding of the power
     button fails the proof (a non-zero exit, and the findings in `PROOF-FAILED`). The
@@ -761,7 +899,13 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     commits, the image's table not loaded or not dropping inbound by default or not
     accepting SSH, a listener on TCP 8080 that does not answer on the guest's loopback
     or that answers from the host, SSH not answering through its forward, and any
-    listening socket beyond loopback other than SSH on TCP 22. The power button's
+    listening socket beyond loopback other than SSH on TCP 22. The ready layer's are
+    the ready line absent or after the login prompt, the request unit failed or its exit
+    after the first login, an account, a folder, a config or a request file not as
+    above, a request whose PEM does not verify, and the survey exiting other than 0 as
+    `nobody` or giving an output the reader refuses. The second boot's are a boot that
+    gives no login prompt, the ready line not naming both connectors as found, a config
+    or a request remade, and each finding of its power button. The power button's
     findings are a press the hypervisor cannot make, a guest not off within `PROOF_ACPI`
     seconds or off for another reason than its own shutdown, a serial log that does not
     reach the power-off target or the kernel's power-down line, and each failed unit or
@@ -787,7 +931,7 @@ scripts an enrolled box runs at `/opt/weaver/deploy`, the connectors at
     were checked against stand-in filesystem images of both kinds. The fifth build's
     sealed image passed them, and so did the record build of release 2.0: no seed, no
     secret, no non-empty log. In the 2.0 rehearsal they found `/var/log/wtmp` written at
-    the power-off, which the seal now removes (step 11). The seal removes both files
+    the power-off, which the seal now removes (step 12). The seal removes both files
     before its final probe, which names them. `systemd-random-seed.service` saves a seed
     when it stops, so left running it would write one at the power-off, after that
     probe. The seal stops it first (that stop saves a seed, which the seal then
@@ -864,8 +1008,16 @@ NVML and `nvidia-persistenced`, and the image enables no NVIDIA unit.
 - a resolver address, or a file of resolved's other than the image's setting LLMNR or
   multicast DNS; networkd or NetworkManager configuration; networkd or nouveau in the
   initramfs
-- an agent configured, the stack record's agent directory other than the state mount, a
-  connector config or unit
+- an agent configured, the stack record's agent directory other than the state mount, or
+  a connector's unit
+- the ready layer not as step 10 lays it: any of the three accounts absent, not in the
+  box's shape, or holding a group other than its own; under `/etc/weaver-web`, other
+  than the six folders, or any of them a link, or of another owner or mode; anything in
+  the three folders below `pairing` or in `connectors`, so that no config, key or
+  request stands at the seal; any of the six on another filesystem than the image's
+  root, or anything mounted at or under `/etc/weaver-web`; the request unit absent,
+  masked or not enabled; the survey, the request script or the unit's file not of the
+  digest its `ready.*` line names
 - the data mount points not as laid: `/mnt/weaver` holding other than the two, or either
   of them absent, a link, not root's with mode 0755, not empty, or on another filesystem
   than the image's root
@@ -922,7 +1074,8 @@ NVML and `nvidia-persistenced`, and the image enables no NVIDIA unit.
   record, which it writes while it runs.
 - private-key files. The pre pass leaves out the files the seal itself removes (the SSH
   host keys and the pacman keyring), so a hit is found before the removals. A `.pem` is
-  judged by its content, so a public certificate is not a hit.
+  judged by its content, so a public certificate is not a hit, and so is every file
+  under `/etc/weaver-web`, where a connector's config holds its key.
 - an authorized-keys file with any content under `/root`, `/home` or `/etc/ssh`, read as
   root. The pre pass leaves out the build account's own, which the seal removes with the
   account, so any other key is found before the removals.
@@ -971,6 +1124,9 @@ then `manifest.scope` (which form the MANIFEST has) last. The records are these.
   connector's sha256, the connectors' build command and the two unit templates' digests.
 - The C library, the math library, the loader, the C++ runtime and `libgcc_s`, each by
   package version and sha256 (for setting the image against a host, WeaverTools#28).
+- The ready layer: each of the three accounts by name, uid and gid (`ready.accounts`),
+  and the digests of the survey, the request script and the unit's file
+  (`ready.survey`, `ready.requests`, `ready.unit`).
 - The build's vCPUs, memory and peak memory, and the sizes before and after the cleanup.
 
 Every record is checked when written. A record that cannot be written fails its step,
@@ -981,7 +1137,7 @@ The stamp is where a later reader finds the commits the image was compiled from,
 build log: `weaveragent.commit` and `weaverweb.commit`, with their origins.
 
 `/etc/weaver-appliance/MANIFEST` covers `/usr`, `/etc`, `/opt`, `/boot` and `/efi`, the
-EFI system partition the cleanup mounts read-only (step 10), in two parts. The image's
+EFI system partition the cleanup mounts read-only (step 11), in two parts. The image's
 identity is the MANIFEST's sha256, which covers both parts.
 - **Regular files:** the sha256 of each one, as `sha256sum` writes it, less the MANIFEST
   itself and GRUB's environment block, which GRUB writes at boot.
@@ -998,21 +1154,23 @@ form: regular files only, with no marker and no links section. Their identities
 (`cd1ce9c4...` and `1374f698...`) do not cover the masks or any other link. The stamp's
 `manifest.scope` line says which form an image has.
 
-**Seams left clean.** The image boots with no agent, no connector config, no unit
-instance, no credential, no key and no password. Root alone can log in, at the console,
-with no password, and must set one there (the operator's ruling of 2026-11-16). SSH is
-enabled, with host keys the first boot makes, and admits a login by key alone, once the
-operator has placed one. There is no guest agent: a host's shutdown reaches the
+**Seams left clean.** The sealed image holds no agent, no connector config, no unit
+instance, no credential, no key and no password. A box's first boot makes the two
+connectors' keys, their configs and their requests, by the ready layer (above), and
+nothing more: no connector starts and nothing dials. Root alone can log in, at the
+console, with no password, and must set one there (the operator's ruling of 2026-11-16).
+SSH is enabled, with host keys the first boot makes, and admits a login by key alone,
+once the operator has placed one. There is no guest agent: a host's shutdown reaches the
 appliance by ACPI. The hostname is `weaver-appliance`. There is no site-check hook and
 no image key (both ruled out by the operator on 2026-11-14). A condition of the
 operator's site is a unit the operator adds over SSH to their own VM, and the image
 never learns of it. The appliance's setup script, to which its console goes straight in
-place of a login prompt, its drive setup, the survey script and the console's download
-(the profile's sections 3.5 and 8, by the operator's rulings of 2026-11-16 on the setup
-pages and his addendum of that day) are later acts. The script's first question setting
-root's password, and the operator's SSH key arriving through the console over TLS,
-change the first login above and the console proof of step 12. The pairing itself
-belongs to the connectors.
+place of a login prompt, its drive setup and the console's download (the profile's
+sections 3.5 and 8, by the operator's rulings of 2026-11-16 on the setup pages and his
+addendum of that day) are later acts. The script's first question setting root's
+password, and the operator's SSH key arriving through the console over TLS, change the
+first login above and the console proof of step 13. The pairing itself belongs to the
+connectors.
 
 **The host logic tests run on a host, with no root and no guest.** They are in
 `test/host/` beside the scripts. Each `t-*.sh` takes the functions it tests out of
@@ -1045,7 +1203,22 @@ package with the host's makepkg, under fakeroot, from a stand-in toolkit, and ch
 that it holds the listed files byte for byte and nothing else. The offline mock
 (`template-clone-Spec` section 8) is not one of them, and runs only in a build guest.
 `t-wait-for.sh` takes the mock's bounded wait out of its text, checks it is the
-harness's own, and runs it, without running the mock.
+harness's own, and runs it, without running the mock. `t-ready-layer.sh` checks step
+10's layout and the seal's ready probes against a stand-in root: the box's-shape judge
+on stand-in account files, the folders' owners and modes, a file, a key or a mount
+where the probes refuse one, and the digests against stand-in stamp lines.
+`t-requests.sh` runs the request script, its `runuser` prefix dropped, against stand-in
+connectors that write their config and their line line by line: both made where neither
+stands, nothing remade where both stand, a refusal naming the connector where one stands
+without the other, no request file where a connector exits other than 0 or prints a
+line not of the form, no temporary file left, a link at its path never written through,
+and the console's two lines. `t-survey.sh` runs the survey's own tests, in
+`guest/ready/test/`, against stand-in sources. `t-pipefail.sh` refuses, in the tree's
+shell scripts, a producer piped into a reader that exits early (`grep -q`, `head`) where
+the pipeline's status decides something under `pipefail`. `t-make-template.sh` runs
+`make-template.sh` with `build-template.sh` and the host tests stood in, and checks the
+steps' order, the stop at the first refusal and its log, and the refusal of an unset
+input.
 
 ## 3. Open
 
