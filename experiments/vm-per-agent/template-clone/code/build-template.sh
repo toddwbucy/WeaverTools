@@ -364,6 +364,10 @@ proof_overlay() {
         && setfacl -b "$1" && setfacl -m "u:${QEMU_USER:-libvirt-qemu}:rw" "$1" \
         || die "cannot make the overlay $1, writable by its owner and ${QEMU_USER:-libvirt-qemu} alone"
 }
+# proof_now: the host's clock in whole seconds. The second boot's two waits share one bound
+# by it, so the time an SSH try takes counts against the bound as well as the sleeps between
+# tries (CodeRabbit on pull request 44, 2026-11-19).
+proof_now() { date +%s; }
 PROOF_SLEEP=""
 proof_sleep() {
     ( exec {PROOF_LOCK_FD}>&-; exec sleep "$1" ) & PROOF_SLEEP=$!
@@ -925,14 +929,17 @@ proof_ready() {
 # Once the first boot's guest is off by its own power button, the same overlay is booted
 # again with the same network credential, its console written to a new file, and the proof
 # waits for the login prompt, then for SSH to answer as root, since nothing orders sshd
-# before the prompt (CodeRabbit on pull request 44, 2026-11-19); both waits share one bound,
-# and SSH not answering within it is a finding naming SSH, with nothing read. It reads that
+# before the prompt (CodeRabbit on pull request 44, 2026-11-19). Both waits share one bound,
+# read on the host's clock from just before the guest is started (proof_now), so a try's
+# own time counts: a prompt or an SSH answer counts only where it is seen within the bound,
+# and the time printed is the clock's. SSH not answering within it, or answering only after it, is a finding naming
+# SSH and the seconds, with nothing read. It reads that
 # nothing was remade: the console's ready line naming both connectors as found, the unit's
 # run a success, and each config's attributes and each request's digest as at the first
 # boot (ready_attrs_compare). Status 0 where the guest was started, so its power button is
 # pressed after; 1 where it could not be.
 proof_second_boot() {
-    local out=$1 pdir=$2 pn=$3 port=$4 t=0 limit=${PROOF_FIRST_BOOT:-300} st rc o up=""
+    local out=$1 pdir=$2 pn=$3 port=$4 t=0 limit=${PROOF_FIRST_BOOT:-300} st rc o up="" seen="" start
     echo "== the second boot"
     st=$(virsh_ domstate "$pn" 2>/dev/null) || st=""
     if [ "$st" != "shut off" ]; then
@@ -941,26 +948,38 @@ proof_second_boot() {
     fi
     mv -- "$pdir/con/console.log" "$pdir/con/first-console.log" || { echo "PROOF-FAIL: no second boot: the first boot's console could not be set aside"; return 1; }
     qemu_file "$pdir/con/console.log"
+    start=$(proof_now)
     rc=0; o=$(virsh_ start "$pn" 2>&1) || rc=$?
     if [ "$rc" != 0 ]; then
         echo "PROOF-FAIL: no second boot: $pn could not be started: $(tr '\n' ' ' <<<"$o")"
         return 1
     fi
-    until grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); do
-        t=$((t + 2)); [ "$t" -lt "$limit" ] || break; proof_sleep 2
+    while :; do
+        if grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); then seen=1; fi
+        t=$(( $(proof_now) - start ))
+        [ -z "$seen" ] && [ "$t" -lt "$limit" ] || break
+        proof_sleep 2
     done
-    if grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); then
+    if [ -n "$seen" ] && [ "$t" -le "$limit" ]; then
         echo "$t s to the console's login prompt (bound $limit s)"
+    elif [ -n "$seen" ]; then
+        echo "PROOF-FAIL: the second boot gave no login prompt within $limit s (it was first seen at $t s)"
     else
         echo "PROOF-FAIL: the second boot gave no login prompt within $limit s"
     fi
     ready_console_judge "$pdir/con/console.log" found
     while :; do
-        if KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" true >/dev/null 2>&1; then up=1; break; fi
-        t=$((t + 2)); [ "$t" -lt "$limit" ] || break; proof_sleep 2
+        if KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" true >/dev/null 2>&1; then up=1; fi
+        t=$(( $(proof_now) - start ))
+        [ -z "$up" ] && [ "$t" -lt "$limit" ] || break
+        proof_sleep 2
     done
     if [ -z "$up" ]; then
-        echo "PROOF-FAIL: the second boot's SSH did not answer as root within $limit s, so nothing was read"
+        echo "PROOF-FAIL: the second boot's SSH did not answer as root within $limit s (its last try ended at $t s), so nothing was read"
+        return 0
+    fi
+    if [ "$t" -gt "$limit" ]; then
+        echo "PROOF-FAIL: the second boot's SSH answered as root only at $t s, past the bound of $limit s, so nothing was read"
         return 0
     fi
     echo "$t s to SSH answering as root (the same bound)"

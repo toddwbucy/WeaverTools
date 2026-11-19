@@ -242,7 +242,11 @@ check "the guest read never opens a config: no read of a .toml but stat's" \
 # ---- proof_ready, against stand-in SSH. The guest's answers are read from T: the read as
 # root (the stand-in guest above, run here), each request, and the survey's output.
 OUT=$T/out; PD=$T/pd; mkdir -p "$OUT" "$PD/con"
-gssh() { local port=$1 n; shift; printf '%s\n' "$port $*" >>"$T/gssh.log"; printf '%s' "$*" >"$T/gssh-last"; echo "$port" >>"$T/gssh-ports"
+gssh() { local port=$1 n c="" rest=""; shift; printf '%s\n' "$port $*" >>"$T/gssh.log"; printf '%s' "$*" >"$T/gssh-last"; echo "$port" >>"$T/gssh-ports"
+    # T/ssh-cost: the seconds each connection takes on the stand-in clock, one word per
+    # connection, in order, whether it is refused or answered.
+    [ ! -s "$T/ssh-cost" ] || read -r c rest <"$T/ssh-cost" || true
+    if [ -n "$c" ]; then echo $(( $(cat "$T/clock") + c )) >"$T/clock"; printf '%s\n' "$rest" >"$T/ssh-cost"; fi
     # T/ssh-down: SSH refuses that many connections, or every one ("always").
     if [ -s "$T/ssh-down" ] && n=$(cat "$T/ssh-down") && [ "$n" != 0 ]; then
         [ "$n" = always ] || echo $((n - 1)) >"$T/ssh-down"
@@ -281,7 +285,12 @@ check "a ready line after the prompt fails proof_ready" eval 'has "$o" "PROOF-FA
 # ---- proof_second_boot, against a stand-in hypervisor whose start writes the second boot's
 # console where QEMU's logfile is.
 qemu_file() { : >"$1"; }
-proof_sleep() { :; }
+# A stand-in clock in T/clock: proof_now reads it, a sleep moves it on, and so does each SSH
+# connection by its T/ssh-cost. T/prompt-at: the reading from which the second boot's
+# console holds its login prompt, written at the sleep that reaches it.
+proof_now() { cat "$T/clock"; }
+proof_sleep() { echo $(( $(cat "$T/clock") + $1 )) >"$T/clock"
+    if [ -s "$T/prompt-at" ] && [ "$(cat "$T/clock")" -ge "$(cat "$T/prompt-at")" ]; then printf '%b' "$P" >>"$PD/con/console.log"; rm -f -- "$T/prompt-at"; fi; }
 PROOF_FIRST_BOOT=4
 virsh_() { printf '%s\n' "$*" >>"$T/virsh.log"
     case $1 in
@@ -290,7 +299,7 @@ virsh_() { printf '%s\n' "$*" >>"$T/virsh.log"
             printf '%b' "$(cat "$T/second-console")" >>"$PD/con/console.log"; echo "Domain '$2' started" ;;
         *) return 9 ;;
     esac; }
-sb() { rm -f -- "$T/virsh.log" "$PD/con/first-console.log" "$T/ssh-down" "$T/gssh.log"; echo "shut off" >"$T/domstate"
+sb() { rm -f -- "$T/virsh.log" "$PD/con/first-console.log" "$T/ssh-down" "$T/ssh-cost" "$T/prompt-at" "$T/gssh.log"; echo 0 >"$T/clock"; echo "shut off" >"$T/domstate"
     printf '%b' "$MADE\r\n$P" >"$PD/con/console.log"; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n$P" >"$T/second-console"
     printf 'Result=success\nExecMainStatus=0\nExecMainExitTimestampMonotonic=8800000\n' >"$T/second-unit"
     attrs >"$OUT/ready-attributes.txt"; { echo "the request unit: $(tr '\n' ' ' <"$T/second-unit")"; attrs; } >"$T/second-read"; }
@@ -309,6 +318,13 @@ check "a domain that will not start: a finding naming the hypervisor's answer, s
     eval '[ "$rc" = 1 ] && has "$o" "PROOF-FAIL: no second boot: mock-appliance-first could not be started: error: Failed to start domain "'
 sb; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n" >"$T/second-console"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
 check "no login prompt within the bound is a finding" eval '[ "$rc" = 0 ] && has "$o" "PROOF-FAIL: the second boot gave no login prompt within 4 s"'
+# A prompt that comes only after the bound, by the clock, is no prompt within it: with a
+# bound of 3 s and the prompt written at 3 s, the try after the sleep that reaches it sees it
+# at 4 s.
+sb; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n" >"$T/second-console"; echo 3 >"$T/prompt-at"
+o=$(PROOF_FIRST_BOOT=3 proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
+check "a login prompt first seen past the bound is a finding naming when it was seen" \
+    eval '[ "$rc" = 0 ] && has "$o" "PROOF-FAIL: the second boot gave no login prompt within 3 s (it was first seen at 4 s)"'
 sb; printf '%s' "$MADE\r\n$P" >"$T/second-console"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330)
 check "a second boot that made the connectors again is a finding" \
     eval 'has "$o" "PROOF-FAIL: the console'"'"'s weaver-appliance line is not '"'"'$FOUND'"'"'"'
@@ -323,13 +339,21 @@ sb; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330)
 check "the second boot reads with the first boot's own unit and attribute text, on the proof's port" \
     eval '[ "$(cat "$T/gssh-last")" = "$(printf "U=%s\n%s\n%s" "$READY_UNIT" "$READY_UNIT_READ" "$READY_ATTRS_READ")" ] && [ "$(sort -u "$T/gssh-ports")" = 2330 ]'
 # SSH is not ordered before the login prompt: the read waits for it within the prompt's
-# bound (4 s here, a try every 2 s), and a guest whose SSH never answers is one finding
-# naming SSH, with nothing read and the button still pressed after.
+# bound (4 s here, a try every 2 s by the stand-in clock), and a guest whose SSH never
+# answers, or answers only after the bound, is one finding naming SSH and the seconds, with
+# nothing read and the button still pressed after.
 check "with SSH answering at once, the read follows one try, at 0 s" has "$o" "0 s to SSH answering as root (the same bound)"
 sb; echo 1 >"$T/ssh-down"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
 check "SSH refusing once after the prompt: waited for within the bound, then read, no finding" \
     eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 0 ] && has "$o" "2 s to SSH answering as root (the same bound)" && [ "$(grep -c "^unchanged: " <<<"$o")" = 4 ]'
 sb; echo always >"$T/ssh-down"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
 check "SSH never answering: one finding naming SSH within the bound, nothing read, status 0 so the button is pressed" \
-    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 1 ] && has "$o" "PROOF-FAIL: the second boot'"'"'s SSH did not answer as root within 4 s, so nothing was read" && ! grep -q "U=weaver-appliance-requests.service" "$T/gssh.log"'
+    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 1 ] && has "$o" "PROOF-FAIL: the second boot'"'"'s SSH did not answer as root within 4 s (its last try ended at 4 s), so nothing was read" && ! grep -q "U=weaver-appliance-requests.service" "$T/gssh.log"'
+# A try's own time counts against the bound (CodeRabbit on pull request 44, 2026-11-19).
+sb; echo 1 >"$T/ssh-down"; echo "3 0" >"$T/ssh-cost"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
+check "a try refused after 3 s, a sleep, then an answer at 5 s: past the 4 s bound, one finding, nothing read, status 0" \
+    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 1 ] && has "$o" "PROOF-FAIL: the second boot'"'"'s SSH answered as root only at 5 s, past the bound of 4 s, so nothing was read" && ! grep -q "U=weaver-appliance-requests.service" "$T/gssh.log"'
+sb; echo 5 >"$T/ssh-cost"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
+check "one try that answers but ends at 5 s, past the 4 s bound: one finding with the clock's seconds, nothing read, status 0" \
+    eval '[ "$rc" = 0 ] && [ "$(fails "$o")" = 1 ] && has "$o" "PROOF-FAIL: the second boot'"'"'s SSH answered as root only at 5 s, past the bound of 4 s, so nothing was read" && ! grep -q "U=weaver-appliance-requests.service" "$T/gssh.log"'
 finish
