@@ -1167,6 +1167,12 @@ qemu_dir() {
 # manifest_links prints a MANIFEST's links section.
 LIB_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 LINKS_MARK=$(sed -n "s/^LINKS_MARK='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+# The ready layer as step 10 lays it, read for the proof's ready row from the one place it
+# is defined (weaver-appliance-build-Spec section 2).
+READY_ACCOUNTS=$(sed -n "s/^READY_ACCOUNTS='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+READY_DIRS=$(sed -n "s/^READY_DIRS='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
+READY_SURVEY=$(sed -n "s/^READY_SURVEY=\(.*\)\$/\1/p" "$LIB_DIR/guest/template-steps")
+READY_UNIT=$(sed -n "s/^READY_UNIT=\(.*\)\$/\1/p" "$LIB_DIR/guest/template-steps")
 MANIFEST_SCOPE=$(sed -n "s/^MANIFEST_SCOPE='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
 # The sealed image's hostname has its one definition there too.
 IMAGE_HOSTNAME=$(sed -n "s/^IMAGE_HOSTNAME='\(.*\)'\$/\1/p" "$LIB_DIR/guest/template-steps")
@@ -1199,18 +1205,23 @@ PROOF_MAC=52:54:00:57:45:01
 # comes as a credential and lands under /run. The fourth and fifth builds' first boots ran
 # cloud-init from a seed, which also changed the account files and the hostname and added
 # its own netplan file and sudoers rule; none of those is expected now. No link is expected
-# to change. The offline mock names its own.
+# to change. The offline mock names its own. Added by the request unit at the first boot
+# (weaver-appliance-build-Spec section 2, the ready layer): each connector's config and its
+# request. A config holds the connector's private key, so every file in the connectors' own
+# folders (READY_PATH_ONLY) is listed by its path alone and never digested.
 FIRST_BOOT_CHANGES=${FIRST_BOOT_CHANGES:-/etc/machine-id /etc/shadow}
-FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub /etc/.pwd.lock}
-# manifest_compare SEALED FILES LINKS: the sealed MANIFEST set against a booted guest's
-# listing of the same scope: FILES as sha256sum writes them, LINKS as links_format writes
-# them. Each difference is printed by its path, never with a digest: a file or link
+FIRST_BOOT_ADDS=${FIRST_BOOT_ADDS:-/etc/ssh/ssh_host_*_key.pub /etc/.pwd.lock /etc/weaver-web/pairing/gate/gate-con.toml /etc/weaver-web/pairing/admin/admin-con.toml /etc/weaver-web/pairing/exchange/gate.req /etc/weaver-web/pairing/exchange/admin.req}
+READY_PATH_ONLY='/etc/weaver-web/pairing/gate /etc/weaver-web/pairing/admin'
+# manifest_compare SEALED FILES LINKS [PATHS]: the sealed MANIFEST set against a booted
+# guest's listing of the same scope: FILES as sha256sum writes them, LINKS as links_format
+# writes them, and PATHS, where given, files listed by their path alone, one a line, never
+# digested (READY_PATH_ONLY's). Each difference is printed by its path, never with a digest: a file or link
 # removed, added or changed, marked "(expected)" where FIRST_BOOT_CHANGES names a changed
 # file or FIRST_BOOT_ADDS (shell patterns) an added one. Every other difference is a
 # PROOF-FAIL line, as are a MANIFEST that does not carry the marker once (an earlier form,
 # or a marker that drifted) and a line out of form on either side.
 manifest_compare() {
-    M=$LINKS_MARK FB_CHANGES=$FIRST_BOOT_CHANGES FB_ADDS=$FIRST_BOOT_ADDS python3 -I - "$1" "$2" "$3" <<'PY'
+    M=$LINKS_MARK FB_CHANGES=$FIRST_BOOT_CHANGES FB_ADDS=$FIRST_BOOT_ADDS python3 -I - "$1" "$2" "$3" ${4:+"$4"} <<'PY'
 import fnmatch, os, re, sys
 mark, changes, adds = os.environ["M"], set(os.environ["FB_CHANGES"].split()), os.environ["FB_ADDS"].split()
 def read(p):
@@ -1240,12 +1251,18 @@ def links(lines, side):
     return d
 sf, sl = files(sealed[:k], "sealed"), links(sealed[k + 1:], "sealed")
 bf, bl = files(read(sys.argv[2]), "booted"), links(read(sys.argv[3]), "booted")
+# A file listed by its path alone stands with no digest, so it can be added or removed but
+# never shown unchanged against a digest the seal recorded.
+for p in (read(sys.argv[4]) if len(sys.argv) > 4 else []):
+    if not p.startswith("/"): fail("a line of the booted path-only list is out of form")
+    elif p in bf: fail(f"a file listed both with a digest and by its path alone: {p}")
+    else: bf[p] = None
 def report(what, kind, path, expected, extra=""):
     print(f"{kind} {what}: {path}{extra}" + (" (expected)" if expected else ""))
     if not expected: fail(f"the first boot {kind} a MANIFEST {what} outside the expected list: {path}")
 for p in sorted(sf.keys() | bf.keys()):
     if p not in bf: report("file", "removed", p, False)
-    elif p not in sf: report("file", "added", p, any(fnmatch.fnmatchcase(p, g) for g in adds))
+    elif p not in sf: report("file", "added", p, any(fnmatch.fnmatchcase(p, g) for g in adds), " (by its path alone)" if bf[p] is None else "")
     elif sf[p] != bf[p]: report("file", "changed", p, p in changes)
 for p in sorted(sl.keys() | bl.keys()):
     if p not in bl: report("link", "removed", p, False, f" (sealed -> {sl[p]})")
@@ -1254,6 +1271,205 @@ for p in sorted(sl.keys() | bl.keys()):
 print(f"MANIFEST against the booted guest: {len(sf)} files and {len(sl)} links sealed, "
       f"{len(bf)} files and {len(bl)} links booted, {fails} finding(s)")
 PY
+}
+
+# ---- The proof's ready row and second boot (weaver-appliance-build-Spec section 2, step 13;
+# the operator's rulings of 2026-11-19). Each judge prints what it read and a PROOF-FAIL line
+# for each finding, and returns 0, as the first boot's other reads do; a judge that cannot
+# run is a PROOF-FAIL line too, never an exit that ends the proof under errexit.
+
+# ready_console_judge LOG WORD: the request unit's line on the console LOG (QEMU's logfile):
+# exactly one weaver-appliance line, before the first login prompt, and it reads
+# "weaver-appliance: ready (gate-con WORD, admin-con WORD)": made at the first boot, found
+# at the second.
+ready_console_judge() {
+    python3 -I -B - "$1" "$2" <<'PY' || echo "PROOF-FAIL: the console's ready line could not be judged (exit $?)"
+import re, sys
+try:
+    t = open(sys.argv[1], "rb").read().decode("utf-8", "replace")
+except OSError as e:
+    print(f"PROOF-FAIL: the console log could not be read: {e}"); sys.exit(0)
+# CSI sequences (colours, cursor moves) and OSC sequences (systemd's 3008 context marks)
+# are not text; neither is a carriage return.
+t = re.sub(r"\x1b\][^\x07\x1b]*(\x07|\x1b\\)", "", t)
+lines = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", t.replace("\r", "")).split("\n")
+want = "weaver-appliance: ready (gate-con %s, admin-con %s)" % (sys.argv[2], sys.argv[2])
+found = [(i, m.group(0)) for i, l in enumerate(lines)
+         for m in [re.search(r"weaver-appliance: (ready \([^)]*\)|refused: .*)$", l)] if m]
+prompt = next((i for i, l in enumerate(lines) if re.match(r"^[^\s]+ login:", l)), None)
+for _, l in found:
+    print("on the console: " + l)
+if not found:
+    print("PROOF-FAIL: no weaver-appliance line on the console")
+else:
+    i, l = found[0]
+    if l != want:
+        print(f"PROOF-FAIL: the console's weaver-appliance line is not '{want}'")
+    if len(found) > 1:
+        print(f"PROOF-FAIL: {len(found)} weaver-appliance lines on the console, not one")
+    if prompt is None:
+        print("PROOF-FAIL: no login prompt on the console, so the line's place is not known")
+    elif i > prompt:
+        print("PROOF-FAIL: the weaver-appliance line comes after the login prompt")
+    else:
+        print("the line comes before the login prompt")
+PY
+}
+
+# ready_requests_judge DIR: DIR/gate.req and DIR/admin.req, as read off the guest: each one
+# line of ASCII ending in its newline, within WeaverWeb's first frame bound (16 KiB, the
+# newline included), a JSON object of exactly the members event, "request", and request, a
+# PEM certificate request, which the host's openssl reads and checks against its own
+# signature. The two are not the same request.
+ready_requests_judge() {
+    python3 -I -B - "$1" <<'PY' || echo "PROOF-FAIL: the requests could not be judged (exit $?)"
+import json, os, subprocess, sys
+d, pems = sys.argv[1], {}
+BEGIN, END = "-----BEGIN CERTIFICATE REQUEST-----\n", "-----END CERTIFICATE REQUEST-----\n"
+for plane in ("gate", "admin"):
+    p = os.path.join(d, plane + ".req")
+    try:
+        raw = open(p, "rb").read()
+    except OSError as e:
+        print(f"PROOF-FAIL: the {plane} request could not be read off the guest: {e}"); continue
+    if raw.count(b"\n") != 1 or not raw.endswith(b"\n"):
+        print(f"PROOF-FAIL: the {plane} request is not one line ending in its newline"); continue
+    if len(raw) > 16384:
+        print(f"PROOF-FAIL: the {plane} request is {len(raw)} bytes, over the 16384 pair reads"); continue
+    try:
+        obj = json.loads(raw.decode("ascii"))
+    except (UnicodeDecodeError, ValueError) as e:
+        print(f"PROOF-FAIL: the {plane} request is not a line of ASCII JSON: {e}"); continue
+    if not isinstance(obj, dict) or set(obj) != {"event", "request"} or obj["event"] != "request" \
+            or not isinstance(obj["request"], str) or not obj["request"].startswith(BEGIN) \
+            or not obj["request"].endswith(END):
+        print(f"PROOF-FAIL: the {plane} request is not of the form {{\"event\":\"request\",\"request\":\"<PEM>\"}}"); continue
+    try:
+        r = subprocess.run(["openssl", "req", "-noout", "-verify", "-subject"], input=obj["request"].encode(),
+                           capture_output=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f"PROOF-FAIL: openssl could not read the {plane} request: {e}"); continue
+    said = " ".join((r.stdout + r.stderr).decode("utf-8", "replace").split())
+    if r.returncode != 0:
+        print(f"PROOF-FAIL: the {plane} request's PEM does not verify as a certificate request: {said}"); continue
+    pems[plane] = obj["request"]
+    print(f"{plane}: one line, {len(raw)} bytes, of the form pair reads; openssl: {said}")
+if len(pems) == 2 and pems["gate"] == pems["admin"]:
+    print("PROOF-FAIL: the two connectors' requests are the same request")
+PY
+}
+
+# ready_survey_judge FILE STATUS: the survey's output FILE and its exit STATUS, run as nobody
+# with --stage pairing: status 0, and one object the reader of weaver-survey-format section 3
+# (guest/ready/test/survey_reader.py) accepts.
+ready_survey_judge() {
+    python3 -I -B - "$1" "$2" "$LIB_DIR/guest/ready/test/survey_reader.py" <<'PY' || echo "PROOF-FAIL: the survey's output could not be judged (exit $?)"
+import importlib.util, sys
+f, rc, rp = sys.argv[1:4]
+spec = importlib.util.spec_from_file_location("survey_reader", rp)
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+try:
+    raw = open(f, "rb").read()
+except OSError as e:
+    print(f"PROOF-FAIL: the survey's output could not be read: {e}"); sys.exit(0)
+if rc != "0":
+    print(f"PROOF-FAIL: the survey exited {rc} as nobody, not 0")
+try:
+    members = m.reader(raw)
+    print(f"the survey: exit {rc}, {len(raw)} bytes, one object the reader accepts ({len(members)} members)")
+except m.Refuse as e:
+    print(f"PROOF-FAIL: the reader refuses the survey's output: {e}")
+PY
+}
+
+# ready_attrs_compare FIRST SECOND: the configs' attributes and the requests' digests, as the
+# first boot read them (FIRST) and the second (SECOND), one "attr PATH ..." or "sum PATH
+# DIGEST" line each: the same four lines, so nothing was remade.
+ready_attrs_compare() {
+    python3 -I -B - "$1" "$2" <<'PY' || echo "PROOF-FAIL: the two boots' attributes could not be compared (exit $?)"
+import sys
+def read(p):
+    try:
+        return {l.split(" ", 2)[0] + " " + l.split(" ", 2)[1]: l for l in open(p).read().split("\n") if l.count(" ") >= 2}
+    except OSError:
+        return {}
+a, b = read(sys.argv[1]), read(sys.argv[2])
+if len(a) != 4:
+    print(f"PROOF-FAIL: the first boot read {len(a)} of the four attribute and digest lines")
+for k in sorted(a.keys() | b.keys()):
+    what = ("the config's attributes" if k.startswith("attr ") else "the request's digest") + " at " + k.split(" ", 1)[1]
+    if k not in b: print(f"PROOF-FAIL: the second boot did not read {what}")
+    elif k not in a: print(f"PROOF-FAIL: the second boot read {what}, which the first did not")
+    elif a[k] != b[k]: print(f"PROOF-FAIL: remade: {what} changed between the boots")
+    else: print(f"unchanged: {what}")
+PY
+}
+
+# ready_unit_read: guest text that prints the request unit's run as systemd holds it, and a
+# PROOF-FAIL line where the run was not a success.
+READY_UNIT_READ='
+p=$(systemctl show -p Result -p ExecMainStatus -p ExecMainExitTimestampMonotonic "$U" 2>&1)
+echo "the request unit: $(tr "\n" " " <<<"$p")"
+{ grep -qx Result=success <<<"$p" && grep -qx ExecMainStatus=0 <<<"$p"; } || echo "PROOF-FAIL: the request unit'"'"'s run was not a success"'
+# READY_ATTRS_READ: guest text that prints each config's attributes, read without opening it
+# (inode, size, owner, mode and modification time), and each request's sha256.
+READY_ATTRS_READ='
+for c in gate:gate-con admin:admin-con; do
+    f=/etc/weaver-web/pairing/${c%%:*}/${c#*:}.toml
+    echo "attr $f $(stat -c "%i %s %U:%G %a %Y" -- "$f" 2>&1)"
+done
+for r in /etc/weaver-web/pairing/exchange/gate.req /etc/weaver-web/pairing/exchange/admin.req; do
+    s=$(sha256sum -- "$r" 2>&1); echo "sum $r ${s%% *}"
+done'
+
+# ready_guest_read: the first boot's guest text for the ready row, as root: the unit's run
+# and its exit before the first login, by the journal's monotonic clock (logind's first
+# "New session"); the three accounts in the box's shape (template-steps' own shape_check);
+# the six folders as step 10 lays them, on the root filesystem; each config a regular file
+# of its own account, mode 0600, and each request root's, mode 0644, by their attributes
+# alone; nothing else and nothing mounted under /etc/weaver-web; then READY_ATTRS_READ.
+ready_guest_read() {
+    printf 'U=%q\nREADY_ACCOUNTS=%q\nREADY_DIRS=%q\n' "$READY_UNIT" "$READY_ACCOUNTS" "$READY_DIRS"
+    sed -n '/^shape_check() {/,/^}/p' "$LIB_DIR/guest/template-steps"
+    printf '%s\n' "$READY_UNIT_READ"
+    cat <<'EOF'
+ue=$(sed -n 's/^ExecMainExitTimestampMonotonic=//p' <<<"$p")
+le=$(journalctl -b -o json --no-pager _SYSTEMD_UNIT=systemd-logind.service 2>/dev/null | python3 -c '
+import json, sys
+ts = []
+for l in sys.stdin:
+    try:
+        j = json.loads(l)
+    except ValueError:
+        continue
+    if str(j.get("MESSAGE", "")).startswith("New session"):
+        ts.append(int(j["__MONOTONIC_TIMESTAMP"]))
+print(min(ts) if ts else "")')
+echo "the unit exited at ${ue:-unread} us; the first login session began at ${le:-unread} us (this boot's monotonic clock, by the journal)"
+{ [[ $ue =~ ^[1-9][0-9]*$ ]] && [[ $le =~ ^[1-9][0-9]*$ ]] && [ "$ue" -lt "$le" ]; } || echo "PROOF-FAIL: the request unit's exit is not before the first login by the journal"
+for a in $READY_ACCOUNTS; do
+    o=$(shape_check "$a"); if [ -z "$o" ]; then echo "$a: in the box's shape"; else echo "PROOF-FAIL: $o"; fi
+done
+rd=$(stat -c %d /); want=""
+for d in $READY_DIRS; do
+    IFS=: read -r path owner mode <<<"$d"; want+="$path"$'\n'
+    s=$(stat -c "%F %U:%G %a %d" -- "$path" 2>/dev/null); echo "$path: ${s:-absent}"
+    [ "$s" = "directory $owner:$owner $mode $rd" ] || echo "PROOF-FAIL: $path is '${s:-absent}', not a directory $owner:$owner $mode on the root filesystem"
+done
+for c in gate-con:weaver-gatecon:gate admin-con:weaver-admincon:admin; do
+    IFS=: read -r con acct plane <<<"$c"
+    f=/etc/weaver-web/pairing/$plane/$con.toml; r=/etc/weaver-web/pairing/exchange/$plane.req; want+="$f"$'\n'"$r"$'\n'
+    s=$(stat -c "%F %U:%G %a" -- "$f" 2>/dev/null); echo "$f: ${s:-absent}"
+    [ "$s" = "regular file $acct:$acct 600" ] || echo "PROOF-FAIL: $f is '${s:-absent}', not a regular file $acct:$acct 600"
+    s=$(stat -c "%F %U:%G %a" -- "$r" 2>/dev/null); echo "$r: ${s:-absent}"
+    [ "$s" = "regular file root:root 644" ] || echo "PROOF-FAIL: $r is '${s:-absent}', not a regular file root:root 644"
+done
+got=$(find /etc/weaver-web -xdev 2>&1 | LC_ALL=C sort); want=$(printf "%s" "$want" | LC_ALL=C sort)
+[ "$got" = "$want" ] || echo "PROOF-FAIL: /etc/weaver-web holds other than the six folders, the two configs and the two requests: $(LC_ALL=C comm -3 <(printf "%s\n" "$want") <(printf "%s\n" "$got") | tr -d "\t" | tr "\n" " ")"
+m=$(findmnt -rn -o TARGET 2>&1 | awk '$0 == "/etc/weaver-web" || index($0, "/etc/weaver-web/") == 1')
+[ -z "$m" ] || echo "PROOF-FAIL: mounted at or under /etc/weaver-web: $(tr "\n" " " <<<"$m")"
+EOF
+    printf '%s\n' "$READY_ATTRS_READ"
 }
 
 # pool_drop DIR: the storage pool virt-install made for DIR, where one stands, destroyed and
