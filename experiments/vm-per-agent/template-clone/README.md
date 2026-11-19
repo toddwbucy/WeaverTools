@@ -147,6 +147,7 @@ that way from its first boot.
 
 **Since 2026-11-14 the tree cannot rebuild this template.** Since then
 `code/build-template.sh` builds the appliance image instead (`docs/profiles/weaver-appliance-build-Spec.md`), at its own path.
+From release 5.0, `code/make-template.sh` runs that build from end to end.
 This section records the template of 2026-11-11 as it was built then. `code/clone.sh`
 still clones that sealed template, and refuses an appliance image (Spec, section 0).
 
