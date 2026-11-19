@@ -1320,11 +1320,12 @@ PY
 # line of ASCII ending in its newline, within WeaverWeb's first frame bound (16 KiB, the
 # newline included), a JSON object of exactly the members event, "request", and request, a
 # PEM certificate request, which the host's openssl reads and checks against its own
-# signature. The two are not the same request. openssl's verdict is read as well as its
-# status: a request passes only on exit 0 with "verify OK" in openssl's output and "verify
-# failure" nowhere in it, since some versions print the failure and exit 0 (OpenSSL 3.0,
-# by its review of 2026-11-19; 1.1.1 prints the short "verify OK"). The host's openssl
-# version is printed once first.
+# signature. The two are not the same request. A request passes only on openssl's exit 0
+# with "verify OK" in its output and "verify failure" nowhere in it. The verdict is read
+# as well as the status because one version is reported to print the failure and exit 0
+# (Codex on pull request 47, 2026-11-19, of OpenSSL 3.0.13; not measured here, where
+# 4.1.0 exits 1). "verify OK" is matched without the words before it, so a shorter
+# wording of the verdict also passes. The host's openssl version is printed once first.
 ready_requests_judge() {
     python3 -I -B - "$1" <<'PY' || echo "PROOF-FAIL: the requests could not be judged (exit $?)"
 import json, os, subprocess, sys

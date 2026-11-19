@@ -809,7 +809,8 @@ folders under `/etc/weaver-web`.
       form `{"event":"request","request":"<PEM>"}` within 16 KiB, whose PEM the host
       reads as a certificate request and checks against its own signature (`openssl req
       -verify`), passing only on openssl's exit 0 with `verify OK` in its output and
-      `verify failure` nowhere in it, since some versions print the failure and exit 0;
+      `verify failure` nowhere in it, since openssl's status alone is reported not to
+      hold on every version;
       and the survey run as `nobody` with `--stage pairing`, exiting 0, its output one
       object that the reader of `weaver-survey-format` section 3 accepts. The two
       requests, the survey's output and the host's openssl version are kept in the
