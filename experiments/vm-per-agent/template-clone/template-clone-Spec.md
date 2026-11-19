@@ -462,7 +462,7 @@ another, is refused, as are an argument with no SSH forward on `PORT` and one no
 
 `put` (section 5) refuses a destination that stands, and a path holding `..`.
 
-`inbound_probe` (`weaver-appliance-build-Spec` section 2, step 12), against loopback
+`inbound_probe` (`weaver-appliance-build-Spec` section 2, step 13), against loopback
 servers: one that speaks first is answered with its first line, one that answers a
 request is answered, one that accepts and never speaks is silent, and one that closes is
 closed.
@@ -481,7 +481,7 @@ The host scripts' steps (section 0):
   verdict and marks the image sealed, and refuses a shut-off domain of the build guest's
   name on another disk, changing nothing, though that disk's path ends with the build
   disk's. A seal that passes goes on to all three.
-- the seal's compaction (`weaver-appliance-build-Spec` section 2, step 11) comes before the
+- the seal's compaction (`weaver-appliance-build-Spec` section 2, step 12) comes before the
   undefine and leaves no copy behind. A compaction that fails, and one whose copy does
   not compare equal, each stop the seal before the undefine, the read-only disk and the
   checksum, and remove the copy. A copy left by a run cut short is refused and kept, and
@@ -575,4 +575,5 @@ a domain argument a caller passes. That network is the operator's to rule (`READ
 
 Moved on 2026-11-15 to its own Spec, `docs/profiles/weaver-appliance-build-Spec.md`
 (Document ID `weaver-appliance-build-Spec`), under the appliance's deployment profile, on the operator's
-ruling of that day. `build-template.sh` and `guest/template-steps` are stated there.
+ruling of that day. `build-template.sh`, `guest/template-steps`, `make-template.sh` and
+the ready layer's files in `guest/ready/` are stated there.

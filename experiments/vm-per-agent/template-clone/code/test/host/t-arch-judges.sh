@@ -249,7 +249,7 @@ check "/usr touched after (a pacman hook): both named" test "$(updated_check | g
 stamp /etc "$(stat -c %.9Y "$Y/usr" | tr -d .)"; stamp /var "$(stat -c %.9Y "$Y/usr" | tr -d .)"; rm -f -- "$Y/etc/.updated"
 check "an absent stamp: named" test "$(updated_check)" = "/etc/.updated names no time, not /usr's $(stat -c %.9Y "$Y/usr" | tr -d .)"
 SF=$(fn "$STEPS" seal_final)
-at() { grep -n -F -- "$1" <<<"$SF" | head -1 | cut -d: -f1; }
+at() { grep -n -F -- "$1" <<<"$SF" | sed -n '1s/:.*//p'; }
 check "seal_final marks the update done after removing the harness and before the final probe" \
     test -n "$(at '/usr/lib/systemd/systemd-update-done')" -a "$(at 'rm -rf -- "$BUILD" /usr/local/sbin/template-steps')" -lt "$(at 'ldconfig -X')" \
          -a "$(at 'ldconfig -X')" -lt "$(at '/usr/lib/systemd/systemd-update-done')" -a "$(at '/usr/lib/systemd/systemd-update-done')" -lt "$(at 'if ! probes final')"
@@ -368,7 +368,7 @@ check "a build directory under another kernel: named" test "$(build_trees)" = "$
 # host's own pacman (7.1, the guest's), print-only and without root, on a package nothing
 # here requires: pacman accepts the options and prints the package. -Rns with --print is
 # refused by pacman 7 (the 2.0 build's fourth attempt of 2026-11-17 stopped there).
-if command -v pacman >/dev/null 2>&1 && LP=$(pacman -Qqtt 2>/dev/null | head -1) && [ -n "$LP" ]; then
+if command -v pacman >/dev/null 2>&1 && LP=$(pacman -Qqtt 2>/dev/null) && LP=$(sed -n 1p <<<"$LP") && [ -n "$LP" ]; then
     SIM=$(fn "$STEPS" remove_judged | sed -n 's/^    sudo \(pacman -R[a-z]* --print .*--noconfirm\) "\$@" .*/\1/p')
     check "remove_judged's simulation line is found, and is not -Rns" eval '[ -n "$SIM" ] && ! grep -q -- "-Rns" <<<"$SIM"'
     out=$(eval "$SIM" '"$LP"' 2>&1); rc=$?

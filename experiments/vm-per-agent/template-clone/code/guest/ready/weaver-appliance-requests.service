@@ -1,0 +1,19 @@
+# The appliance's request unit (weaver-appliance-build-Spec section 2, the ready layer):
+# each connector's key and request, made at a box's first boot and never remade. It needs
+# no network and is given none. It runs before logins are allowed, so its line comes
+# before the login prompt, and a failure holds no login back.
+[Unit]
+Description=Weaver appliance: the connectors' keys and requests
+After=local-fs.target
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/weaver-appliance/libexec/requests
+PrivateNetwork=yes
+StandardOutput=journal+console
+StandardError=journal
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# requests: the appliance's request unit (weaver-appliance-build-Spec section 2, the ready
+# layer; the operator's rulings of 2026-11-19). Run as root by
+# weaver-appliance-requests.service at every boot, before logins are allowed.
+#
+# For each connector:
+# - its config and its request both stand: it is left as it is ("found");
+# - neither stands: the connector makes its key and its config under its own account, and
+#   its one request line is written whole into the exchange folder, root's and mode 0644,
+#   for the pairing account to read ("made");
+# - one stands without the other: refused, and nothing is remade or removed. A first boot
+#   cut between the connector writing its config and the request landing leaves that
+#   state, and every later boot refuses it, so the refusal says what clears it: that file
+#   removed as root and a boot again, or the virtual machine made again from the template.
+#
+# A request line is written first to a file made new in the pairing folder, which root
+# alone writes, then renamed into the exchange folder, so it is never written through a
+# link and is whole or absent. It dials nothing: the connectors' request makes no
+# connection, and the unit gives it no network. Its last line, on the console, is
+# "weaver-appliance: ready (...)" or "weaver-appliance: refused: ...", and a refusal exits
+# 1. Each command's output is read first and matched after, so no reader that exits early
+# decides a status under pipefail.
+set -uo pipefail
+umask 022
+export LC_ALL=C PATH=/usr/bin:/usr/sbin
+PAIRING=/etc/weaver-web/pairing
+EXCHANGE=$PAIRING/exchange
+BIN=/opt/weaver-web/bin
+# WeaverWeb's first frame bound, which pair holds a request file to (16 KiB, its newline
+# included).
+BOUND=16384
+HEAD='{"event":"request","request":"-----BEGIN CERTIFICATE REQUEST-----'
+TAIL='-----END CERTIFICATE REQUEST-----\n"}'
+# CONNECTORS: each connector, its account and its plane, as the ready layer lays them.
+CONNECTORS='gate-con:weaver-gatecon:gate admin-con:weaver-admincon:admin'
+
+stands() { [ -e "$1" ] || [ -L "$1" ]; }
+
+# clears PATH: what an operator does about a connector left half made.
+clears() { echo "to clear it, remove $1 as root and boot again, or make the virtual machine again from the template"; }
+
+# request_line LINE: status 0 where LINE is one request line of the form pair reads.
+request_line() {
+    case $1 in *$'\n'*|*$'\r'*) return 1 ;; esac
+    [ $((${#1} + 1)) -le "$BOUND" ] || return 1
+    [[ $1 == "$HEAD"* ]] && [[ $1 == *"$TAIL" ]]
+}
+
+# one CONNECTOR ACCOUNT PLANE: "made" or "found" on standard output and status 0, or a
+# refusal sentence and status 1.
+one() {
+    local con=$1 acct=$2 plane=$3 cfg req tmp line rc
+    cfg=$PAIRING/$plane/$con.toml
+    req=$EXCHANGE/$plane.req
+    if stands "$cfg" && stands "$req"; then
+        [ -f "$req" ] && [ ! -L "$req" ] || { echo "$con: $req is not a regular file"; return 1; }
+        echo found; return 0
+    fi
+    stands "$cfg" && { echo "$con: its config stands without its request; nothing is remade or removed; $(clears "$cfg")"; return 1; }
+    stands "$req" && { echo "$con: its request stands without its config; nothing is remade or removed; $(clears "$req")"; return 1; }
+    line=$(setpriv --reuid="$acct" --regid="$acct" --init-groups --reset-env --no-new-privs -- "$BIN/$con" request --config "$cfg"); rc=$?
+    [ "$rc" = 0 ] || { echo "$con: request exited $rc; its reason is in the journal"; return 1; }
+    request_line "$line" || { echo "$con: request printed no request line of the form pair reads; its config stands, so nothing is remade; $(clears "$cfg")"; return 1; }
+    tmp=$(mktemp "$PAIRING/.$plane.req.XXXXXX") || { echo "$con: no file could be made new for its request"; return 1; }
+    if printf '%s\n' "$line" >"$tmp" && chmod 0644 "$tmp" && sync -- "$tmp" && mv -T -- "$tmp" "$req" && sync -- "$EXCHANGE"; then
+        echo made; return 0
+    fi
+    rm -f -- "$tmp"
+    # The words follow what stands: where the rename was made and only the folder's sync
+    # failed, the request is in place beside its config, and a boot again finds both. That
+    # boot still refuses, since the write was not made safe, and nothing is removed.
+    if stands "$req"; then
+        echo "$con: its request is in place at $req, but its folder could not be synced to disk; nothing is removed; boot again, and the next boot finds both"
+        return 1
+    fi
+    echo "$con: its request could not be written to $req; its config stands, so nothing is remade; $(clears "$cfg")"
+    return 1
+}
+
+main() {
+    local c con acct plane out made="" refused=""
+    for c in $CONNECTORS; do
+        IFS=: read -r con acct plane <<<"$c"
+        if out=$(one "$con" "$acct" "$plane"); then
+            made+="${made:+, }$con $out"
+        else
+            refused+="${refused:+; }$out"
+        fi
+    done
+    if [ -n "$refused" ]; then
+        echo "weaver-appliance: refused: $refused${made:+ ($made)}"
+        return 1
+    fi
+    echo "weaver-appliance: ready ($made)"
+}
+
+main "$@"
