@@ -163,7 +163,9 @@ find() { cat "$T/find"; }
 findmnt() { cat "$T/mounts"; }
 sha256sum() { local p=${!#}; printf '%s  %s\n' "$(awk -v k="$p" '$1 == k { print $2 }' "$T/sums")" "$p"; }
 SH
-guest() { printf 'T=%q\n' "$T"; cat "$T/standins.sh"; ready_guest_read | sed "s|/etc/login.defs|$T/login.defs|"; }
+# login.defs is pointed at T by a literal "$T/login.defs", which the script expands, so no
+# character of TMPDIR enters the sed program (CodeRabbit on pull request 44, 2026-11-19).
+guest() { printf 'T=%q\n' "$T"; cat "$T/standins.sh"; ready_guest_read | sed 's|/etc/login.defs|"$T/login.defs"|'; }
 laid() {
     printf 'UID_MIN 1000\n' >"$T/login.defs"; : >"$T/passwd"; : >"$T/group"; : >"$T/idgroups"
     local a u=970 d path owner mode
@@ -192,7 +194,12 @@ laid() {
 }
 gr() { guest >"$T/guest.sh"; bash "$T/guest.sh" 2>&1; }
 laid; o=$(gr)
-check "the guest as the unit leaves it: no finding" eval '[ "$(fails "$o")" = 0 ]' || printf '%s\n' "$o" | grep '^PROOF-FAIL' | sed 's/^/    /'
+# A finding where none is wanted is printed from inside the check, since check returns 0
+# whether it held or not (CodeRabbit on pull request 44, 2026-11-19).
+unwanted() { [ "$(fails "$1")" = 0 ] || { grep '^PROOF-FAIL' <<<"$1" | sed 's/^/    /'; return 1; }; }
+check "the guest as the unit leaves it: no finding" unwanted "$o"
+check "the guest script reads login.defs at T by a literal, with no other login.defs left" \
+    bash -c 'grep -qF "\"\$T/login.defs\"" <<<"$1" && ! grep -qF "/etc/login.defs" <<<"$1"' _ "$(guest)"
 check "it reads the unit's run, its exit before the first session, the accounts and the six folders" \
     eval 'grep -q "^the request unit: Result=success ExecMainStatus=0" <<<"$o" && has "$o" "the unit exited at 9100000 us; the first login session began at 61000000 us (this boot'"'"'s monotonic clock, by the journal)" && [ "$(grep -c ": in the box.s shape$" <<<"$o")" = 3 ] && [ "$(grep -c "^/etc/weaver-web[a-z/]*: directory " <<<"$o")" = 6 ]'
 check "and prints the configs' attributes and the requests' digests for the second boot, four lines" \
@@ -253,7 +260,7 @@ gssh() { local port=$1 n; shift; printf '%s\n' "$port $*" >>"$T/gssh.log"; print
 pr() { rm -f -- "$T/gssh.log" "$T/gssh-ports" "$OUT/ready-attributes.txt"; laid; reqs; guest >"$T/guest.sh"; cp -- "$EX" "$T/survey-out"
     printf '%b' "[  OK  ] Started x.\r\n$MADE\r\n$P" >"$PD/con/console.log"; }
 pr; o=$(proof_ready "$OUT" "$PD" 2330)
-check "proof_ready on a guest as laid: no finding" eval '[ "$(fails "$o")" = 0 ]' || printf '%s\n' "$o" | grep '^PROOF-FAIL' | sed 's/^/    /'
+check "proof_ready on a guest as laid: no finding" unwanted "$o"
 check "it reads the console, the guest, both requests and the survey, in that order" \
     eval 'a=$(grep -n "^on the console: " <<<"$o" | cut -d: -f1); b=$(grep -n "^the request unit: " <<<"$o" | cut -d: -f1); c=$(grep -n "^gate: one line" <<<"$o" | cut -d: -f1); d=$(grep -n "^the survey: exit 0" <<<"$o" | cut -d: -f1); [ -n "$a" ] && [ "$a" -lt "$b" ] && [ "$b" -lt "$c" ] && [ "$c" -lt "$d" ]'
 check "the requests are kept in the proof's log, as read off the guest" \

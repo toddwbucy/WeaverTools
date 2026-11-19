@@ -21,14 +21,15 @@ stand_in "$H" t-a-pass.sh 'echo work >"$T/work"; check "a stand-in check that ho
 stand_in "$H" t-b-fail.sh 'echo work >"$T/work"; check "a stand-in check that fails" false; finish'
 stand_in "$H" t-c-skip.sh 'need a-tool-no-host-has-for-this-test; finish'
 stand_in "$H" t-d-exit.sh 'echo work >"$T/work"; exit 3'
+stand_in "$H" t-e-zero.sh 'echo work >"$T/work"; check "a stand-in check before an early exit 0" true; exit 0'
 
 out=$(TMPDIR=$T/tmp bash "$H/run-all.sh" 2>&1); rc=$?
 printf '%s\n' "$out" | sed 's/^/    /'
 check "the run exits 1: a test failed" test "$rc" = 1
-check "its totals: 1 passed, 2 failed, 1 skipped" grep -qxF '== 1 passed, 2 failed, 1 skipped' <<<"$out"
+check "its totals: 1 passed, 3 failed, 1 skipped" grep -qxF '== 1 passed, 3 failed, 1 skipped' <<<"$out"
 left=$(find "$T/tmp" -mindepth 1 -maxdepth 1 | LC_ALL=C sort)
 named=$(sed -n 's/^      its folder kept: //p' <<<"$out" | LC_ALL=C sort)
-check "three folders left, for the failing, the exiting and the skipped test" test "$(grep -c . <<<"$left")" = 3
+check "four folders left, for the failing, the two exiting and the skipped test" test "$(grep -c . <<<"$left")" = 4
 check "each folder left is named by the run, and each named folder is left" test "$left" = "$named"
 holds() { grep -lF -- "$1" "$T"/tmp/*/out 2>/dev/null; }
 check "nothing left holds the passing test's output" eval '[ -z "$(holds "a stand-in check that holds")" ]'
@@ -40,6 +41,10 @@ fd=$(holds "== exit 3 before every check passed"); fd=${fd%/out}
 inner=$(find "$fd" -mindepth 1 -maxdepth 1 -type d -name 'weaver-host-test.*')
 check "the exiting test's folder holds its work folder, which its last line names" \
     eval '[ -f "$inner/work" ] && [ "$(tail -n 1 "$fd/out")" = "== exit 3 before every check passed; its folder kept: $inner" ]'
+fz=$(holds "== exit 0 before every check passed"); fz=${fz%/out}
+inner=$(find "$fz" -mindepth 1 -maxdepth 1 -type d -name 'weaver-host-test.*')
+check "a test that exits 0 before finish is counted failed, and keeps the work folder its last line names" \
+    eval 'grep -q "^FAIL  t-e-zero.sh" <<<"$out" && [ -f "$inner/work" ] && [ "$(tail -n 1 "$fz/out")" = "== exit 0 before every check passed; its folder kept: $inner" ]'
 fc=$(holds "SKIP: t-c-skip.sh needs"); fc=${fc%/out}
 check "the skipped test's empty work folder is removed; its output is kept for its reason" \
     eval '[ -n "$fc" ] && [ -z "$(find "$fc" -mindepth 1 -maxdepth 1 -type d)" ]'
@@ -51,6 +56,11 @@ o=$(TMPDIR=$T/alone bash "$H/t-b-fail.sh" 2>&1); rc=$?
 a=$(find "$T/alone" -mindepth 1 -maxdepth 1)
 check "a failing test run alone leaves exactly the folder its last line names" \
     eval '[ "$rc" = 1 ] && [ "$(grep -c . <<<"$a")" = 1 ] && [ "$(tail -n 1 <<<"$o")" = "== 0 passed, 1 failed (its folder kept: $a)" ]'
+case $a in "$T"/alone/weaver-host-test.??????) rm -rf -- "$a" ;; esac
+o=$(TMPDIR=$T/alone bash "$H/t-e-zero.sh" 2>&1); rc=$?
+a=$(find "$T/alone" -mindepth 1 -maxdepth 1)
+check "a test that exits 0 before finish, run alone, exits 1 and leaves the folder its last line names" \
+    eval '[ "$rc" = 1 ] && [ "$(grep -c . <<<"$a")" = 1 ] && [ "$(tail -n 1 <<<"$o")" = "== exit 0 before every check passed; its folder kept: $a" ]'
 case $a in "$T"/alone/weaver-host-test.??????) rm -rf -- "$a" ;; esac
 TMPDIR=$T/alone bash "$H/t-c-skip.sh" >/dev/null 2>&1; rc=$?
 check "a skipped test run alone exits 77 and leaves nothing" eval '[ "$rc" = 77 ] && [ -z "$(ls -A "$T/alone")" ]'

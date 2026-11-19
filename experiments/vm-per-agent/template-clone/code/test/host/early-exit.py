@@ -4,11 +4,17 @@ reader that can exit before its input ends: head, or grep with -q, -m, -l or -L 
 long forms). Under pipefail such a pipeline fails with the producer's SIGPIPE (status 141)
 whenever the reader exits first, so a check built on it can read as failed, or, negated,
 as passed. Whole-line comments are skipped; a pipe is a lone '|', not '||' or '|&'.
-Prints FILE:LINE: TEXT for each, and exits 1 if there is any. Standard library only.
-t-pipefail.sh runs it (weaver-appliance-build-Spec section 2, the host tests)."""
+An option that takes the next word (-e, -f, --regexp, --file, or a cluster ending in e or
+f) has that word skipped, so `grep -e PAT -q` is found (CodeRabbit on pull request 44,
+2026-11-19). Left: grep's options after its pattern, which GNU grep also takes (`grep PAT
+-q`); a split on whitespace cannot tell such a line from a quoted pattern holding "-q", so
+it is not found. Prints FILE:LINE: TEXT for each, and exits 1 if there is any. Standard
+library only. t-pipefail.sh runs it (weaver-appliance-build-Spec section 2, the host
+tests)."""
 import re, sys
 
 EARLY_GREP = re.compile(r"^-[A-Za-z]*[qmlL]|^--(quiet|silent|max-count|files-with)")
+TAKES_NEXT = re.compile(r"-[A-Za-z]*[ef]|--regexp|--file")
 PIPE = re.compile(r"(?<![|])\|(?![|&])")
 
 
@@ -20,11 +26,16 @@ def early(segment):
     if words[0] == "head":
         return True
     if words[0] == "grep":
+        skip = False
         for w in words[1:]:
+            if skip:
+                skip = False
+                continue
             if not w.startswith("-") or w == "--":
                 return False
             if EARLY_GREP.match(w):
                 return True
+            skip = bool(TAKES_NEXT.fullmatch(w))
     return False
 
 

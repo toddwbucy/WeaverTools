@@ -11,7 +11,8 @@
 # memory, so the directory goes at exit when every check passed, by a removal that
 # matches its pattern and stays on one filesystem; a skip removes it where it is empty.
 # On a failed check, an exit before finish or a stop by INT, TERM or HUP it is kept and
-# named on the last line. The removal runs from the EXIT trap, after a test's own
+# named on the last line. An exit 0 before finish is no pass: its status is made 1, so a
+# runner counts it failed and keeps its folder (CodeRabbit on pull request 44, 2026-11-19). The removal runs from the EXIT trap, after a test's own
 # closes: a test that sets its own EXIT trap calls lib_exit last in it, handing it the
 # status the trap was entered with, and sets no INT, TERM or HUP trap of its own
 # (t-test-folders.sh checks both). Every host test run through run-all.sh leaving its
@@ -66,6 +67,7 @@ lib_exit() {
         :
     elif [ -z "$lib_named" ]; then
         echo "== exit $rc before every check passed; its folder kept: $T"
+        [ "$rc" != 0 ] || exit 1
     fi
 }
 # lib_stopped SIGNAL STATUS: a stop by a signal exits, so the EXIT trap's closes run and

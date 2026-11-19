@@ -113,7 +113,12 @@ check "HOST_TESTS that is not an executable file: refused, nothing run" \
 n=$((n + 1)); rm -f -- "$CALLS"; env VM_ROOT="$T/vr$n" bash "$C/make-template.sh" >"$T/mt.out" 2>&1; rc=$?
 check "HOST_TESTS unset: test/host/run-all.sh beside the script" test "$rc" = 0 -a "$(calls | sed -n 1p)" = "run-all (the default)"
 
-# Stopped by TERM while the trees step waits on its child.
+# Stopped by TERM while the trees step waits on its child. The run in the background is
+# this test's own: if the test is stopped while it waits, its EXIT trap sends that run TERM
+# by its recorded pid and waits for it, then calls lib_exit last (CodeRabbit on pull request
+# 44, 2026-11-19). The pid is let go after each wait, so the trap signals no finished run.
+mp=""
+trap 'lib_rc=$?; [ -z "$mp" ] || { kill -TERM "$mp" 2>/dev/null; wait "$mp" 2>/dev/null; }; lib_exit "$lib_rc"' EXIT
 echo "step trees" >"$HANG_AT"; n=$((n + 1)); L=$T/vr$n/appliance/make-template; rm -f -- "$CALLS" "$READY" "$TRAPPED"
 env VM_ROOT="$T/vr$n" HOST_TESTS="$T/ht.sh" bash "$C/make-template.sh" >"$T/mt.out" 2>&1 &
 mp=$!
@@ -122,6 +127,7 @@ if wait_for "$mp" 20 test -s "$READY"; then
 else
     rc=none secs=none; kill -TERM "$mp" 2>/dev/null; wait "$mp" 2>/dev/null
 fi
+mp=""
 rm -f -- "$HANG_AT"
 left=$(pgrep -f -- "$MARK" || true)
 check "a run sent TERM in a part exits 143 within 20 s, not after the part's child" \

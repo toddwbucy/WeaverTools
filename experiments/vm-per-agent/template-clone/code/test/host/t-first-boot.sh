@@ -23,12 +23,12 @@ BT=$CODE/build-template.sh
 export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
 eval "$(fn "$BT" proof_first_boot proof_network proof_keyscan proof_console proof_refusal)"
 eval "$(fn "$BT" proof_power_off | sed '1s/^proof_power_off()/real_proof_power_off()/')"
-proof_power_off() { echo "== the power button (stand-in) $1 ${2##*/}"; }
+proof_power_off() { echo press >>"$T/presses"; echo "== the power button (stand-in) $1 ${2##*/}"; }
 # The ready row and the second boot have their own test (t-ready-row.sh). Here they stand
 # in, and the second boot says it started (or, with T/no-second, that it could not), so its
 # power button is pressed after it or not at all.
 proof_ready() { echo "== the ready layer (stand-in) ${1##*/} $3"; }
-proof_second_boot() { echo "== the second boot (stand-in) $3"; [ ! -e "$T/no-second" ]; }
+proof_second_boot() { echo second-boot >>"$T/presses"; echo "== the second boot (stand-in) $3"; [ ! -e "$T/no-second" ]; }
 NAME=mock-appliance PORT=2230 PROOF_OWN="" PROOF_FIRST_BOOT=4 PROOF_NORELABEL=stand-in
 for t in rsa ecdsa ed25519; do ssh-keygen -q -t $t -N '' -C x -f "$T/hk_$t" </dev/null; done
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/other_ed25519" </dev/null
@@ -145,7 +145,12 @@ gssh() { shift
         *"cloud-init: not installed"*) printf '%s\n' "$*" >"$T/reads.sh"; echo "== cloud-init, with a seed attached"; echo "cloud-init: not installed"
             echo "== the seed's asks"; echo "not run: bootcmd"; echo "not run: runcmd"; echo "not made: the default account"
             echo "== the hostname"; echo "$IMAGE_HOSTNAME" ;;
-        *"-xdev -type f -print") [ ! -e "$T/ready-files" ] || printf '%s\n' /etc/weaver-web/pairing/admin/admin-con.toml /etc/weaver-web/pairing/gate/gate-con.toml ;;
+        *"-xdev -type f -print") printf '%s\n' "$*" >"$T/path-only-cmd"
+            # The path-only query must name both connectors' folders; one that names one is
+            # answered as an error, so the configs it leaves out are never taken as listed.
+            case " $* " in *" /etc/weaver-web/pairing/gate "*) ;; *) echo "the path-only query names no gate folder: $*" >&2; return 9 ;; esac
+            case " $* " in *" /etc/weaver-web/pairing/admin "*) ;; *) echo "the path-only query names no admin folder: $*" >&2; return 9 ;; esac
+            [ ! -e "$T/ready-files" ] || printf '%s\n' /etc/weaver-web/pairing/admin/admin-con.toml /etc/weaver-web/pairing/gate/gate-con.toml ;;
         *"-type f"*) printf '%s\n' "$*" >"$T/files-cmd"
             [ ! -e "$T/ready-files" ] || printf '%s  /etc/weaver-web/pairing/exchange/%s.req\n' "$E" admin "$E" gate
             printf '%s  /etc/machine-id\n' "$E"; printf '%s  %s\n' "$([ -e "$T/booted-extra" ] && echo "$E" || echo "$D")" /etc/passwd
@@ -153,7 +158,7 @@ gssh() { shift
         *"-type l"*) printf '/etc/x\0/dev/null\0' ;;
         *) echo "unexpected: $*" ;;
     esac; }
-run() { VM_ROOT=$(mktemp -d "$T/vmroot.XXXXXX"); rm -f -- "$T/out/first-boot.txt" "$T/scan-count" "$T/vi-args" "$T/out/first-boot-session.log" "$T/askpass.log" "$T/con-got"
+run() { VM_ROOT=$(mktemp -d "$T/vmroot.XXXXXX"); rm -f -- "$T/presses" "$T/path-only-cmd" "$T/out/first-boot.txt" "$T/scan-count" "$T/vi-args" "$T/out/first-boot-session.log" "$T/askpass.log" "$T/con-got"
     # build-template.sh's own shell options: under errexit an expected failure (a refused
     # ssh, 255) must be judged, not end the proof (the rehearsal of 2026-11-16).
     ( set -euo pipefail; proof_first_boot "$T/out" ) >"$T/run.out" 2>&1; local rc=$?
@@ -213,14 +218,18 @@ check "the ready row is read after the first login and before the tries after it
 check "the second boot follows the first press, and its own press follows it" \
     test "$(cat "$T/out/second-boot.txt")" = "== the second boot (stand-in) mock-appliance-first" \
          -a "$(cat "$T/out/second-power-off.txt")" = "== the power button (stand-in) mock-appliance-first console.log"
+check "in that order and no more: a press, the second boot, a press" test "$(tr '\n' ' ' <"$T/presses")" = "press second-boot press "
 check "the booted listing leaves out the connectors' own folders, which are listed by path alone" \
     eval 'grep -qF -- "-not -path '"'"'/etc/weaver-web/pairing/gate/*'"'"' -not -path '"'"'/etc/weaver-web/pairing/admin/*'"'"' -print0" "$T/files-cmd"'
 touch "$T/no-second"; run; rm -f -- "$T/no-second"
 check "no second boot: no second press, and the record says so" \
-    test "$(cat "$T/out/second-power-off.txt")" = "no second boot, so no second press of the power button"
+    test "$(cat "$T/out/second-power-off.txt")" = "no second boot, so no second press of the power button" \
+         -a "$(tr '\n' ' ' <"$T/presses")" = "press second-boot "
 touch "$T/ready-files"; run; rm -f -- "$T/ready-files"
 check "the configs, by path alone, and the requests, by digest, are the first boot's expected additions" \
     eval 'fbo=$(fb) && [ "$(grep -c "^PROOF-FAIL" <<<"$fbo")" = 0 ] && grep -qx "added file: /etc/weaver-web/pairing/gate/gate-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/admin/admin-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/gate.req (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/admin.req (expected)" <<<"$fbo"'
+check "the path-only listing names both connectors' folders, as find's operands" \
+    eval 'grep -qF -- "find /etc/weaver-web/pairing/gate /etc/weaver-web/pairing/admin -xdev -type f -print" "$T/path-only-cmd"'
 # The ESP read, as the guest runs it, against a stand-in findmnt.
 EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
 er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }

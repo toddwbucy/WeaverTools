@@ -16,9 +16,11 @@ EE=$CODE/test/host/early-exit.py
 finds() { printf '%s\n' "$1" >"$T/s.sh"; python3 -I "$EE" "$T/s.sh" >/dev/null; [ $? = 1 ]; }
 FOUND=('a | grep -q x' 'a | grep -F -q x' 'a | grep -qxF -- x || rc=$?' 'x=$(a | head -1) || return 1'  # stand-in
        'a | head' 'a | grep -m1 x' 'a | grep --quiet x' 'a | grep -l x' '! a 2>/dev/null | grep -qE "^b$"'  # stand-in
-       'b=$(a | sed -n 1p | head -2)' 'gssh p "if ss | grep -q .; then :; fi"')  # stand-in
+       'b=$(a | sed -n 1p | head -2)' 'gssh p "if ss | grep -q .; then :; fi"'  # stand-in
+       'a | grep -e PAT -q' 'a | grep -f F -q' 'a | grep --regexp PAT --quiet' 'a | grep -ie PAT -l')  # stand-in
 NOT_FOUND=('a || grep -q x' 'grep -q x <<<"$v"' '# a | head -1' 'a | grep -c x' 'a | sed -n 1,5p'  # stand-in
-           'a | grep -E "q|head"' 'a | grep -vE "^(#|$)"' 'a |& tee f' 'v=$(a); grep -qx b <<<"$v"')  # stand-in
+           'a | grep -E "q|head"' 'a | grep -vE "^(#|$)"' 'a |& tee f' 'v=$(a); grep -qx b <<<"$v"'  # stand-in
+           'a | grep -e -q x' 'a | grep -f -l x')  # stand-in
 for l in "${FOUND[@]}"; do check "found: $l" finds "$l"; done
 for l in "${NOT_FOUND[@]}"; do check "not found: $l" eval '! finds "$l"'; done
 # The control: under pipefail a producer cut by grep -q fails the pipeline with its
