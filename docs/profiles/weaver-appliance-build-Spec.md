@@ -880,9 +880,13 @@ folders under `/etc/weaver-web`.
     **The second boot** (the operator's rulings of 2026-11-19). Once the first boot's
     guest is off by its own power button, the proof boots the same overlay again, with
     the same network credential, and waits for the login prompt and then for SSH to
-    answer as root, within one bound, since nothing orders `sshd` before the prompt. SSH
-    not answering within it is a finding that names SSH, with nothing read. Once SSH
-    answers, the proof logs in as root over SSH
+    answer as root, within one bound, since nothing orders `sshd` before the prompt.
+    The bound is read on the host's clock from just before the guest is started, so
+    the time each SSH try takes counts against it as well as the waits between tries.
+    A prompt seen only after the bound is a finding, with the clock's seconds. SSH not
+    answering within it, or answering only after it, is a finding that names SSH and
+    the seconds, with nothing read. Once SSH answers within it, the proof logs in as
+    root over SSH
     with the key it placed and reads that nothing was remade: the console's
     `weaver-appliance: ready` line naming both connectors as found, the unit's run a
     success, each config of the same inode, size, owner, mode and modification time as
@@ -1257,19 +1261,22 @@ two requests made by the host's openssl and each way a request can be out of for
 fail its signature, the survey's output against the format's reader and WeaverWeb's
 worked example, the guest's read run against stand-in commands for each finding it
 names, the two boots' attributes compared, and `proof_ready` and `proof_second_boot`
-against stand-in SSH, a stand-in hypervisor and a stand-in console. `t-pipefail.sh`
-refuses, in the scripts the build runs (`build-template.sh`, `lib.sh`,
+against stand-in SSH, a stand-in hypervisor, a stand-in console and a stand-in clock.
+`t-pipefail.sh` refuses, in the scripts the build runs (`build-template.sh`, `lib.sh`,
 `guest/template-steps`, `make-template.sh` and the request script) and in the host tests
 themselves, any producer piped into a reader that can exit early: `head`, or `grep` with
-`-q`, `-m`, `-l` or `-L`. The scan reads `grep`'s options up to its pattern, skipping
-the word that `-e` or `-f` takes; options after the pattern, which GNU `grep` also
-takes, are not found. Under `pipefail` such a pipeline fails with the producer's SIGPIPE
-whenever the reader exits first, and whether a line's status decides something cannot be
-read reliably from its text, so the scripts and the tests read a command's output first
-and match it after, and print first lines with `sed`, which reads its input to the end.
-The build runs the host tests first, so a test that could fail on that signal could stop
-an unattended build, or, negated, pass a check it should fail. Only `t-pipefail.sh`'s
-own stand-in lines and its control, each marked at its end, are left out of its scan.
+`-q`, `-m`, `-l` or `-L`. The scan reads `grep`'s options up to its pattern, a cluster
+of short options one letter at a time: a letter that takes a word (`-e`, `-f`, `-A`,
+`-B`, `-C`, `-d` or `-D`) ends the cluster, and the next word is skipped where nothing
+follows the letter, as it is after `--regexp` or `--file`. Options after the pattern,
+which GNU `grep` also takes, and the other long options that take a separate word are
+not found. Under `pipefail` such a pipeline fails with the producer's SIGPIPE whenever
+the reader exits first, and whether a line's status decides something cannot be read
+reliably from its text, so the scripts and the tests read a command's output first and
+match it after, and print first lines with `sed`, which reads its input to the end. The
+build runs the host tests first, so a test that could fail on that signal could stop an
+unattended build, or, negated, pass a check it should fail. Only `t-pipefail.sh`'s own
+stand-in lines and its control, each marked at its end, are left out of its scan.
 `t-make-template.sh` runs `make-template.sh` with `build-template.sh` and the host tests
 stood in, and checks the steps' order, the stop at the first refusal and its log, and
 the refusal of an unset input.
