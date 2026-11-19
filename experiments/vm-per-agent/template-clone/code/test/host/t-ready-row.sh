@@ -319,8 +319,8 @@ check "a domain that will not start: a finding naming the hypervisor's answer, s
 sb; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n" >"$T/second-console"; o=$(proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
 check "no login prompt within the bound is a finding" eval '[ "$rc" = 0 ] && has "$o" "PROOF-FAIL: the second boot gave no login prompt within 4 s"'
 # A prompt that comes only after the bound, by the clock, is no prompt within it: with a
-# bound of 3 s and the prompt written at 3 s, the try after the sleep that reaches it sees it
-# at 4 s.
+# bound of 3 s and the prompt written at 3 s, the try after the sleep that reaches it
+# sees it at 4 s.
 sb; printf '%s' "[  OK  ] Started x.\r\n$FOUND\r\n" >"$T/second-console"; echo 3 >"$T/prompt-at"
 o=$(PROOF_FIRST_BOOT=3 proof_second_boot "$OUT" "$PD" mock-appliance-first 2330); rc=$?
 check "a login prompt first seen past the bound is a finding naming when it was seen" \

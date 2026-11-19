@@ -929,11 +929,11 @@ proof_ready() {
 # Once the first boot's guest is off by its own power button, the same overlay is booted
 # again with the same network credential, its console written to a new file, and the proof
 # waits for the login prompt, then for SSH to answer as root, since nothing orders sshd
-# before the prompt (CodeRabbit on pull request 44, 2026-11-19). Both waits share one bound,
-# read on the host's clock from just before the guest is started (proof_now), so a try's
-# own time counts: a prompt or an SSH answer counts only where it is seen within the bound,
-# and the time printed is the clock's. SSH not answering within it, or answering only after it, is a finding naming
-# SSH and the seconds, with nothing read. It reads that
+# before the prompt (CodeRabbit on pull request 44, 2026-11-19). Both waits share one
+# bound, read on the host's clock from just before the guest is started (proof_now), so a
+# try's own time counts: a prompt or an SSH answer counts only where it is seen within the
+# bound, and the time printed is the clock's. SSH not answering within it, or answering
+# only after it, is a finding naming SSH and the seconds, with nothing read. It reads that
 # nothing was remade: the console's ready line naming both connectors as found, the unit's
 # run a success, and each config's attributes and each request's digest as at the first
 # boot (ready_attrs_compare). Status 0 where the guest was started, so its power button is
