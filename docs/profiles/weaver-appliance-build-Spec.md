@@ -364,19 +364,24 @@ Made at each box's first boot by the request unit, and never in the image: each
 connector's key and its request. A key made at build would stand in every box made from
 the image, and the image carries no shared key (`weaver-appliance-profile` section 3.1).
 The unit:
-- runs, as root and through `runuser`, `gate-con request` as `weaver-gatecon` with its
+- runs, as root and through `setpriv`, `gate-con request` as `weaver-gatecon` with its
   config at `pairing/gate/gate-con.toml`, then `admin-con request` as `weaver-admincon`
-  with its config at `pairing/admin/admin-con.toml`. Each connector makes its config
+  with its config at `pairing/admin/admin-con.toml`. `setpriv` takes the account's uid,
+  its gid and its one group, clears the environment, sets no-new-privileges and opens no
+  login session: `runuser` passes through PAM, whose session stack on Arch registers a
+  login session and starts a user manager. Each connector makes its config
   new, mode 0600, holding the key it made, and prints one request line,
   `{"event":"request","request":"<PEM>"}` (WeaverWeb's section 8.2; the member's name is
   WeaverWeb issue 172).
 - writes each line to `pairing/exchange/gate.req` and `admin.req`, root's, mode 0644, so
-  that `weaver-pair` can read it: first to a temporary file made new in the same
-  directory, never through a link, then renamed into place, only where the connector
-  exited 0 and printed exactly one line of that form. A request file is whole or absent.
-- needs no network. `request` dials nothing, so the unit is ordered after the local
-  filesystems alone and wants no network. The no-seed boot of step 13 runs it and still
-  sends no frame.
+  that `weaver-pair` can read it: first to a file made new in `pairing`, which root
+  alone writes, then renamed into `exchange`, so it is never written through a link,
+  and only where the connector exited 0 and printed exactly one line of that form, no
+  longer than pair's first frame bound (16 KiB, its newline included). A request file
+  is whole or absent.
+- needs no network and is given none (`PrivateNetwork=yes`). `request` dials nothing,
+  so the unit is ordered after the local filesystems alone and wants no network. The
+  no-seed boot of step 13 runs it and still sends no frame.
 - is ordered before logins are allowed (`systemd-user-sessions.service`), so its line
   comes before the login prompt. The order holds no login back where the unit fails.
 - runs at every boot and remakes nothing that stands. Where a connector's config and its
@@ -963,7 +968,8 @@ folders under `/etc/weaver-web`.
 **The runtime set kept.** It is marked explicitly installed, so the removals' recursion
 never reaches it: the CUDA runtime package, the driver's packages, `acl` (decommission's
 `setfacl`), `gcc-libs` (the C++ runtime the members load), `python` (the deploy scripts;
-`create-agent.sh` needs 3.11 or later), `util-linux` (`runuser`) and `quota-tools`.
+`create-agent.sh` needs 3.11 or later), `util-linux` (`runuser`, and `setpriv` for the
+request unit) and `quota-tools`.
 `setquota` sets the ext4 project quota on the agent's home, so the agent's own writes
 cannot fill the state drive (the operator's ruling of 2026-11-17; `create-agent.sh`'s
 option, WeaverAgent #585). e2fsprogs, in the base image, carries `chattr -p`. The state
@@ -1185,8 +1191,15 @@ knobs before any test reads them, so a test runs the same in a clean shell and i
 that has exported a build's inputs, as the recipe does (`t-harness-env.sh` checks it).
 `t-device-code.sh` builds its stand-in libraries only where `nvcc` and `cuobjdump` are
 on the host, and reads a sealed image only where `KEPT_IMAGE` names one. `run-all.sh`
-runs them all. On 2026-11-17, at the record build's first step, the 22 tests ran 627
-checks and all passed, on a host with CUDA 13.4's `nvcc` and OpenSSH 10.6p1.
+runs them all. No test leaves a folder in the temporary directory on a pass, since
+`/tmp` is often memory (the operator's rule of 2026-11-18): each test's work folder goes
+at its exit when every check passed, and so does the folder `run-all.sh` makes new for
+each test. On a failed check or a stop by INT, TERM or HUP both are kept and named; on a
+skip the run's folder is kept and named, for the skip's reason. Every build's host tests
+before release 5.0 left one folder per test in it, on a pass as on a fail.
+`t-test-folders.sh` checks the rule with stand-in tests, stopped runs included. On
+2026-11-17, at the record build's first step, the 22 tests ran 627 checks and all
+passed, on a host with CUDA 13.4's `nvcc` and OpenSSH 10.6p1.
 `t-first-boot.sh` stands a server on the unix socket the proof names to QEMU, which
 plays getty, the forced change and a shell, and the ways each can go wrong, and runs the
 power button's read against a stand-in hypervisor. `t-login-seal.sh` runs `sshd_check`
@@ -1206,19 +1219,22 @@ harness's own, and runs it, without running the mock. `t-ready-layer.sh` checks 
 10's layout and the seal's ready probes against a stand-in root: the box's-shape judge
 on stand-in account files, the folders' owners and modes, a file, a key or a mount where
 the probes refuse one, and the digests against stand-in stamp lines. `t-requests.sh`
-runs the request script, its `runuser` prefix dropped, against stand-in connectors that
-write their config and their line line by line: both made where neither stands, nothing
+runs the request script, its `setpriv` prefix dropped, against stand-in connectors that
+write their config and their line in pieces: both made where neither stands, nothing
 remade where both stand, a refusal naming the connector where one stands without the
-other, no request file where a connector exits other than 0 or prints a line not of the
-form, no temporary file left, a link at its path never written through, and the
-console's two lines. `t-survey.sh` runs the survey's own tests, in `guest/ready/test/`,
-against stand-in sources. `t-pipefail.sh` refuses, in the scripts the build runs
-(`build-template.sh`, `lib.sh`, `guest/template-steps`, `make-template.sh` and the
-request script), a producer piped into a reader that exits early (`grep -q`, `head`)
-where the pipeline's status decides something under `pipefail`. `t-make-template.sh`
-runs `make-template.sh` with `build-template.sh` and the host tests stood in, and checks
-the steps' order, the stop at the first refusal and its log, and the refusal of an unset
-input.
+other, no request file where a connector exits other than 0, prints two lines, a line
+not of the form or one over pair's bound, no temporary file left, a link at its path
+never written through, and the console's two lines. `t-survey.sh` runs the survey's
+own tests, in `guest/ready/test/`, against stand-in sources. `t-pipefail.sh` refuses, in
+the scripts the build runs (`build-template.sh`, `lib.sh`, `guest/template-steps`,
+`make-template.sh` and the request script), any producer piped into a reader that can
+exit early: `head`, or `grep` with `-q`, `-m`, `-l` or `-L`. Under `pipefail` such a
+pipeline fails with the producer's SIGPIPE whenever the reader exits first, and whether
+a line's status decides something cannot be read reliably from its text, so the scripts
+read a command's output first and match it after, and print first lines with `sed`,
+which reads its input to the end. `t-make-template.sh` runs `make-template.sh` with
+`build-template.sh` and the host tests stood in, and checks the steps' order, the stop
+at the first refusal and its log, and the refusal of an unset input.
 
 ## 3. Open
 
