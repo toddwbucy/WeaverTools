@@ -139,7 +139,7 @@ check "provision.conf without root's key credential: named" \
 # 4. Where each is wired.
 probes=$(fn "$TS" probes); seal_final=$(fn "$TS" seal_final); cleanup=$(fn "$TS" cleanup)
 final_at=$(grep -n -F 'if [ "$mode" = final ]; then' <<<"$probes" | cut -d: -f1)
-at() { grep -n -F "$1" <<<"$probes" | head -1 | cut -d: -f1; }
+at() { grep -n -F "$1" <<<"$probes" | sed -n '1s/:.*//p'; }
 check "the probes run the SSH settings, the first-boot paths and the accounts in both passes" \
     test -n "$(at 'check "SSH settings not as built" "$(sshd_check 2>&1)"')" -a "$(at 'check "SSH settings not as built"')" -lt "$final_at" \
          -a -n "$(at "check \"systemd's first-boot paths masked or missing\" \"\$(firstboot_paths_check 2>&1)\"")" -a "$(at "check \"systemd's first-boot paths")" -lt "$final_at" \
@@ -158,7 +158,7 @@ check "root as shipped passes the pre pass and is a hit in the final" \
     test "$got_pre" = "an account that can log in, other than as sealed|" -a "$(grep -c 'root: the password field is not empty' <<<"$got_final2")" = 1
 pu=$(grep -n -F 'userdel -r op' <<<"$seal_final" | cut -d: -f1)
 pd=$(grep -n -xF '    passwd -d root 2>&1; chage -d 0 root 2>&1' <<<"$seal_final" | cut -d: -f1)
-pf=$(grep -n -F 'probes final' <<<"$seal_final" | head -1 | cut -d: -f1)
+pf=$(grep -n -F 'probes final' <<<"$seal_final" | sed -n '1s/:.*//p')
 check "the final step empties root's password field and requires the change, after the build account goes and before the final probe" \
     eval '[ -n "$pd" ] && [ -n "$pu" ] && [ -n "$pf" ] && [ "$pu" -lt "$pd" ] && [ "$pd" -lt "$pf" ]'
 check "the cleanup writes the SSH settings to the drop-in and checks them as sshd reads them" \

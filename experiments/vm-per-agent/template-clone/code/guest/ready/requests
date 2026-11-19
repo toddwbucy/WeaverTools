@@ -8,7 +8,10 @@
 # - neither stands: the connector makes its key and its config under its own account, and
 #   its one request line is written whole into the exchange folder, root's and mode 0644,
 #   for the pairing account to read ("made");
-# - one stands without the other: refused, and nothing is remade or removed.
+# - one stands without the other: refused, and nothing is remade or removed. A first boot
+#   cut between the connector writing its config and the request landing leaves that
+#   state, and every later boot refuses it, so the refusal says what clears it: that file
+#   removed as root and a boot again, or the virtual machine made again from the template.
 #
 # A request line is written first to a file made new in the pairing folder, which root
 # alone writes, then renamed into the exchange folder, so it is never written through a
@@ -33,6 +36,9 @@ CONNECTORS='gate-con:weaver-gatecon:gate admin-con:weaver-admincon:admin'
 
 stands() { [ -e "$1" ] || [ -L "$1" ]; }
 
+# clears PATH: what an operator does about a connector left half made.
+clears() { echo "to clear it, remove $1 as root and boot again, or make the virtual machine again from the template"; }
+
 # request_line LINE: status 0 where LINE is one request line of the form pair reads.
 request_line() {
     case $1 in *$'\n'*|*$'\r'*) return 1 ;; esac
@@ -50,17 +56,17 @@ one() {
         [ -f "$req" ] && [ ! -L "$req" ] || { echo "$con: $req is not a regular file"; return 1; }
         echo found; return 0
     fi
-    stands "$cfg" && { echo "$con: its config stands without its request; nothing is remade or removed"; return 1; }
-    stands "$req" && { echo "$con: its request stands without its config; nothing is remade or removed"; return 1; }
+    stands "$cfg" && { echo "$con: its config stands without its request; nothing is remade or removed; $(clears "$cfg")"; return 1; }
+    stands "$req" && { echo "$con: its request stands without its config; nothing is remade or removed; $(clears "$req")"; return 1; }
     line=$(setpriv --reuid="$acct" --regid="$acct" --init-groups --reset-env --no-new-privs -- "$BIN/$con" request --config "$cfg"); rc=$?
     [ "$rc" = 0 ] || { echo "$con: request exited $rc; its reason is in the journal"; return 1; }
-    request_line "$line" || { echo "$con: request printed no request line of the form pair reads; its config stands, so nothing is remade"; return 1; }
+    request_line "$line" || { echo "$con: request printed no request line of the form pair reads; its config stands, so nothing is remade; $(clears "$cfg")"; return 1; }
     tmp=$(mktemp "$PAIRING/.$plane.req.XXXXXX") || { echo "$con: no file could be made new for its request"; return 1; }
     if printf '%s\n' "$line" >"$tmp" && chmod 0644 "$tmp" && sync -- "$tmp" && mv -T -- "$tmp" "$req" && sync -- "$EXCHANGE"; then
         echo made; return 0
     fi
     rm -f -- "$tmp"
-    echo "$con: its request could not be written to $req; its config stands, so nothing is remade"
+    echo "$con: its request could not be written to $req; its config stands, so nothing is remade; $(clears "$cfg")"
     return 1
 }
 

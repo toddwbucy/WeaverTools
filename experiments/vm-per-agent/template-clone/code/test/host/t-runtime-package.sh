@@ -21,7 +21,7 @@ ln -s libcudart.so.13.4.39 "$L/libcudart.so.13"; ln -s libcudart.so.13 "$L/libcu
 ln -s targets/x86_64-linux/lib "$R/opt/cuda/lib64"; printf '/opt/cuda/lib64\n/opt/cuda/nvvm/lib64\n' >"$R/etc/ld.so.conf.d/cuda.conf"
 RUNTIME_LDCONF=$R/etc/ld.so.conf.d/cuda.conf CUDA_LIBS=$L
 check "the stand-in library carries debug sections, so a strip would change it" \
-    eval 'readelf -S "$L/libcudart.so.13.4.39" | grep -q "\.debug_info"'
+    eval 'sec=$(readelf -S "$L/libcudart.so.13.4.39") && grep -q "\.debug_info" <<<"$sec"'
 RUNTIME_DIR=$T/runtime; mkdir -p "$RUNTIME_DIR"
 printf '%s\n' "$R/opt/cuda/lib64" "$L/libcublas.so.13.4.1.2" "$L/libcublasLt.so.13.4.1.2" \
     "$L/libcudart.so" "$L/libcudart.so.13" "$L/libcudart.so.13.4.39" "$L/libnvrtc-builtins.so.13.4.42" >"$RUNTIME_DIR/files"
@@ -49,7 +49,7 @@ done <"$RUNTIME_DIR/files"
 check "each file byte for byte with its mode, each link with its target as written" test "$same" = 1
 check "the package's loader file names the library directory alone, mode 0644, not the toolkit's nvvm" \
     test "$(cat "$X$RUNTIME_LDCONF")" = "$L" -a "$(stat -c %a "$X$RUNTIME_LDCONF")" = 644
-check "the library keeps its debug sections: nothing stripped" eval 'readelf -S "$X$L/libcudart.so.13.4.39" | grep -q "\.debug_info"'
+check "the library keeps its debug sections: nothing stripped" eval 'sec=$(readelf -S "$X$L/libcudart.so.13.4.39") && grep -q "\.debug_info" <<<"$sec"'
 check "the package's owner is root, as fakeroot records it" test "$(bsdtar -tvf "$f" | grep -F "${L#/}/libcudart.so.13.4.39" | awk '{print $3}')" = root
 PI=$X/.PKGINFO
 check "its metadata: the name, the version, the license" \

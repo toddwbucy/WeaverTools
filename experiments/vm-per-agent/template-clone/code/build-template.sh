@@ -326,7 +326,7 @@ proof_cleanup() {
         [ -d "$VM_ROOT/$d" ] || continue
         # The first boot's console log sits beside its socket, under con/. The password
         # file under secret/ goes with the directory.
-        for f in console.log con/console.log boot.pcap; do
+        for f in console.log con/console.log con/first-console.log boot.pcap; do
             [ ! -s "$VM_ROOT/$d/$f" ] || cp "$VM_ROOT/$d/$f" "$LOG/proof/interrupted-$d-${f##*/}" 2>/dev/null || true
         done
         pool_drop "$VM_ROOT/$d" || true
@@ -530,10 +530,10 @@ PY
     # The verdict: every finding of the offline read's late writes and device code, of the
     # no-seed boot's capture, of the first boot and of the disk's owner and mode fails the
     # proof, after both boots' records are kept.
-    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/power-off.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
+    grep -h '^PROOF-FAIL: ' "$out/sealed-file.txt" "$out/version.txt" "$out/late-writes.txt" "$out/device-code.txt" "$out/boot-frames.txt" "$out/first-boot.txt" "$out/power-off.txt" "$out/second-boot.txt" "$out/second-power-off.txt" "$out/disk.txt" >"$out/PROOF-FAILED" || true
     if [ -s "$out/PROOF-FAILED" ]; then
         cat "$out/PROOF-FAILED"
-        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt, $out/power-off.txt and $out/disk.txt"
+        die "the proof failed on $(wc -l <"$out/PROOF-FAILED") finding(s); see $out/sealed-file.txt, $out/version.txt, $out/late-writes.txt, $out/device-code.txt, $out/boot-frames.txt, $out/first-boot.txt, $out/power-off.txt, $out/second-boot.txt, $out/second-power-off.txt and $out/disk.txt"
     fi
     rm -f "$out/PROOF-FAILED"
     # The pass names the sealed file the seal recorded, which the proof found equal, and
@@ -836,6 +836,7 @@ EOF
                 [ "$n" = 2 ] || echo "PROOF-FAIL: the stamp names $n of the two commits"
                 echo "== the MANIFEST itself"; sha256sum /etc/weaver-appliance/MANIFEST' 2>&1 \
                 || echo "PROOF-FAIL: the login as root, or its reads, exited $?"
+            proof_ready "$out" "$pdir" "$port"
             # The password is set now, and SSH must still refuse it.
             echo "== SSH as root after the first login"
             proof_refusal "$port" "$pdir/scanned" "$pdir" "the password set at the console" "$pdir/secret/pw"
@@ -849,16 +850,21 @@ EOF
             # sha256sum succeed. The booted listings stay in the overlay's directory and go
             # with it.
             echo "== the MANIFEST against the booted guest"
+            local po="" d
+            for d in $READY_PATH_ONLY; do po+="-not -path '$d/*' "; done
             if ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
-                    "bash -o pipefail -c \"find $MANIFEST_SCOPE -xdev -type f -not -path '/etc/weaver-appliance/MANIFEST*' -not -path /boot/grub/grubenv -not -name 'ssh_host_*_key' -print0 | LC_ALL=C sort -zu | xargs -0 sha256sum\"" \
+                    "bash -o pipefail -c \"find $MANIFEST_SCOPE -xdev -type f -not -path '/etc/weaver-appliance/MANIFEST*' -not -path /boot/grub/grubenv -not -name 'ssh_host_*_key' $po-print0 | LC_ALL=C sort -zu | xargs -0 sha256sum\"" \
                     >"$pdir/files-booted" 2>"$pdir/files-booted.err"; then
                 echo "PROOF-FAIL: the booted guest's files could not be listed: $(tail -2 "$pdir/files-booted.err" | tr '\n' ' ')"
+            elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
+                    "find $READY_PATH_ONLY -xdev -type f -print" >"$pdir/files-path-only" 2>"$pdir/files-path-only.err"; then
+                echo "PROOF-FAIL: the files listed by their path alone could not be listed: $(tail -2 "$pdir/files-path-only.err" | tr '\n' ' ')"
             elif ! KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
                     "find $MANIFEST_SCOPE -xdev -type l -printf '%p\0%l\0'" 2>"$pdir/links-booted.err" \
                     | links_format >"$pdir/links-booted"; then
                 echo "PROOF-FAIL: the booted guest's links could not be listed: $(tail -2 "$pdir/links-booted.err" | tr '\n' ' ')"
             else
-                manifest_compare "$out/MANIFEST" "$pdir/files-booted" "$pdir/links-booted"
+                manifest_compare "$out/MANIFEST" "$pdir/files-booted" "$pdir/links-booted" "$pdir/files-path-only"
             fi
             proof_inbound "$port" "$dport" "$pdir/scanned"
         else
@@ -870,10 +876,90 @@ EOF
     } >"$out/first-boot.txt" 2>&1
     cat "$out/first-boot.txt"
     proof_power_off "$pn" "$pdir/con/console.log" 2>&1 | tee "$out/power-off.txt"
-    dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     tr -d '\r' <"$pdir/con/console.log" >"$out/first-boot-console.log" || true
+    if proof_second_boot "$out" "$pdir" "$pn" "$port" >"$out/second-boot.txt" 2>&1; then
+        cat "$out/second-boot.txt"
+        proof_power_off "$pn" "$pdir/con/console.log" 2>&1 | tee "$out/second-power-off.txt"
+        tr -d '\r' <"$pdir/con/console.log" >"$out/second-boot-console.log" || true
+    else
+        cat "$out/second-boot.txt"
+        echo "no second boot, so no second press of the power button" | tee "$out/second-power-off.txt"
+    fi
+    dom_drop "$pn" "$pdir/overlay.qcow2" || die "$pn was not stopped and undefined (above); proof's cleanup keeps $pdir where it still runs"
     pool_drop "$pdir"
     rm -rf -- "${pdir:?}"; PROOF_OWN=${PROOF_OWN/ first/}
+}
+
+# proof_ready OUT PDIR PORT: the ready row, read at the first boot after the first login, as
+# root over SSH under the keys SSH presented (weaver-appliance-build-Spec section 2, step 13;
+# the operator's rulings of 2026-11-19): the console's ready line before the login prompt,
+# naming both connectors as made (ready_console_judge); the guest's own reads
+# (ready_guest_read); each request read off the guest into OUT/ready-requests and judged on
+# the host, its PEM by openssl (ready_requests_judge); and the survey run as nobody with
+# --stage pairing, its output kept as OUT/ready-survey.json and judged by the format's reader
+# (ready_survey_judge). The configs' attributes and the requests' digests are kept in
+# OUT/ready-attributes.txt for the second boot. Every finding is a PROOF-FAIL line.
+proof_ready() {
+    local out=$1 pdir=$2 port=$3 o rc plane
+    echo "== the ready layer, with nothing typed but the first login"
+    ready_console_judge "$pdir/con/console.log" made
+    rc=0; o=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "$(ready_guest_read)" 2>&1) || rc=$?
+    printf '%s\n' "$o"
+    [ "$rc" = 0 ] || echo "PROOF-FAIL: the ready layer's read as root exited $rc"
+    grep -E '^(attr|sum) ' <<<"$o" >"$out/ready-attributes.txt" || true
+    mkdir -p -- "$out/ready-requests"
+    for plane in gate admin; do
+        rc=0; KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "cat /etc/weaver-web/pairing/exchange/$plane.req" \
+            >"$out/ready-requests/$plane.req" 2>"$pdir/ready-$plane.err" || rc=$?
+        [ "$rc" = 0 ] || echo "PROOF-FAIL: the $plane request could not be read off the guest (exit $rc): $(tail -n 1 "$pdir/ready-$plane.err")"
+    done
+    ready_requests_judge "$out/ready-requests"
+    echo "-- the survey, as nobody, --stage pairing"
+    rc=0; KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "cd / && sudo -n -u nobody $READY_SURVEY --stage pairing" \
+        >"$out/ready-survey.json" 2>"$pdir/ready-survey.err" || rc=$?
+    [ ! -s "$pdir/ready-survey.err" ] || sed -n 's/^/  its standard error: /; 1,5p' "$pdir/ready-survey.err"
+    ready_survey_judge "$out/ready-survey.json" "$rc"
+}
+
+# proof_second_boot OUT PDIR PN PORT: the second boot (the operator's rulings of 2026-11-19).
+# Once the first boot's guest is off by its own power button, the same overlay is booted
+# again with the same network credential, its console written to a new file, and the proof
+# waits for the login prompt. It reads that nothing was remade: the console's ready line
+# naming both connectors as found, the unit's run a success, and each config's attributes
+# and each request's digest as at the first boot (ready_attrs_compare). Status 0 where the
+# guest was started, so its power button is pressed after; 1 where it could not be.
+proof_second_boot() {
+    local out=$1 pdir=$2 pn=$3 port=$4 t=0 limit=${PROOF_FIRST_BOOT:-300} st rc o
+    echo "== the second boot"
+    st=$(virsh_ domstate "$pn" 2>/dev/null) || st=""
+    if [ "$st" != "shut off" ]; then
+        echo "PROOF-FAIL: no second boot: $pn is '${st:-unread}', not shut off by its own power button"
+        return 1
+    fi
+    mv -- "$pdir/con/console.log" "$pdir/con/first-console.log" || { echo "PROOF-FAIL: no second boot: the first boot's console could not be set aside"; return 1; }
+    qemu_file "$pdir/con/console.log"
+    rc=0; o=$(virsh_ start "$pn" 2>&1) || rc=$?
+    if [ "$rc" != 0 ]; then
+        echo "PROOF-FAIL: no second boot: $pn could not be started: $(tr '\n' ' ' <<<"$o")"
+        return 1
+    fi
+    until grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); do
+        t=$((t + 2)); [ "$t" -lt "$limit" ] || break; proof_sleep 2
+    done
+    if grep -aqE '^[^[:space:]]+ login:' < <(tr -d '\r' <"$pdir/con/console.log" 2>/dev/null); then
+        echo "$t s to the console's login prompt (bound $limit s)"
+    else
+        echo "PROOF-FAIL: the second boot gave no login prompt within $limit s"
+    fi
+    ready_console_judge "$pdir/con/console.log" found
+    rc=0; o=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "U=$READY_UNIT
+$READY_UNIT_READ
+$READY_ATTRS_READ" 2>&1) || rc=$?
+    printf '%s\n' "$o"
+    [ "$rc" = 0 ] || echo "PROOF-FAIL: the second boot's read as root exited $rc"
+    grep -E '^(attr|sum) ' <<<"$o" >"$pdir/second-attributes.txt" || true
+    ready_attrs_compare "$out/ready-attributes.txt" "$pdir/second-attributes.txt"
+    return 0
 }
 
 # proof_power_off PN LOG: the hypervisor's power button pressed (ACPI), as a host's shutdown

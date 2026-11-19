@@ -4,12 +4,13 @@
 # has exported a build's inputs, as COMMANDS.md's recipe block does. Checked here:
 # - every name, exported to a wrong value of its own form, is unset once lib-test.sh is
 #   sourced, and the names a test may read (KEPT_IMAGE, NVCC, CUOBJDUMP, TMPDIR) are kept;
-# - the list covers every name the three scripts read from the environment;
+# - the list covers every name the four scripts (build-template.sh, lib.sh,
+#   guest/template-steps and make-template.sh) read from the environment;
 # - every test file sources lib-test.sh before any other command, so a file run alone
 #   gets the clearing too;
 # - the names the scripts set themselves (SET_ENV_NAMES) and every CUDA_ name the host
 #   exports are unset once lib-test.sh is sourced, and the list covers every name the
-#   three scripts export, bar PATH;
+#   four scripts export, bar PATH;
 # - the two tests that read those names (t-version, t-tag; measured 2026-11-16) pass with
 #   every name exported wrong, with the same count as in a clean shell. Every test this
 #   file runs inherits the harness's clearing, so none of them sees the host's CUDA_
@@ -56,9 +57,9 @@ set_left=$(env "${setwrongs[@]}" TMPDIR="$T" bash -c '
 check "each name the scripts set, and each CUDA_ name exported, is unset once the harness is sourced" test -z "$set_left"
 [ -z "$set_left" ] || echo "     left: $set_left"
 
-# Every name the three scripts export, bar PATH, which the scripts prepend to.
+# Every name the four scripts export, bar PATH, which the scripts prepend to.
 exported=$(grep -ohE '^[[:space:]]*export [A-Za-z_][A-Za-z0-9_]*=' "$CODE/build-template.sh" "$CODE/lib.sh" \
-    "$CODE/guest/template-steps" | sed -E 's/^[[:space:]]*export ([A-Za-z0-9_]+)=.*/\1/' | sort -u)
+    "$CODE/guest/template-steps" "$CODE/make-template.sh" | sed -E 's/^[[:space:]]*export ([A-Za-z0-9_]+)=.*/\1/' | sort -u)
 missing_set=$(for n in $exported; do
     [ "$n" = PATH ] && continue
     grep -qw "$n" <<<"$SET_ENV_NAMES" || echo "$n"
@@ -69,17 +70,17 @@ check "the scripts' exports are found, and the list covers each of them, bar PAT
 
 # Every name the scripts read with a default, bar the kept and the internal: DIR (set in
 # build-template.sh), ID and PRETTY_NAME (os-release's, read in subshells).
-read_names=$(grep -ohE '\$\{[A-Z][A-Z0-9_]*:[-=?+]' "$CODE/build-template.sh" "$CODE/lib.sh" "$CODE/guest/template-steps" \
+read_names=$(grep -ohE '\$\{[A-Z][A-Z0-9_]*:[-=?+]' "$CODE/build-template.sh" "$CODE/lib.sh" "$CODE/guest/template-steps" "$CODE/make-template.sh" \
     | sed -E 's/^\$\{([A-Z0-9_]+):.*/\1/' | sort -u)
 missing=$(for n in $read_names; do
     case " CUOBJDUMP DIR ID PRETTY_NAME " in *" $n "*) continue ;; esac
     grep -qw "$n" <<<"$BUILD_ENV_NAMES" || echo "$n"
 done)
-check "the list covers every name the three scripts read from the environment" test -z "$missing"
+check "the list covers every name the four scripts read from the environment" test -z "$missing"
 [ -z "$missing" ] || echo "     not cleared: $missing"
 
 late=$(for t in "$H"/t-*.sh; do
-    first=$(grep -vE '^[[:space:]]*(#|$)' "$t" | head -1)
+    first=$(grep -vE '^[[:space:]]*(#|$)' "$t" | sed -n 1p)
     [ "$first" = 'source "$(dirname "$0")/lib-test.sh"' ] || echo "${t##*/}"
 done)
 check "every test file sources the harness before any other command" test -z "$late"

@@ -24,6 +24,11 @@ export VM_ROOT=$T/vmroot; mkdir -p "$VM_ROOT"; source "$CODE/lib.sh"
 eval "$(fn "$BT" proof_first_boot proof_network proof_keyscan proof_console proof_refusal)"
 eval "$(fn "$BT" proof_power_off | sed '1s/^proof_power_off()/real_proof_power_off()/')"
 proof_power_off() { echo "== the power button (stand-in) $1 ${2##*/}"; }
+# The ready row and the second boot have their own test (t-ready-row.sh). Here they stand
+# in, and the second boot says it started (or, with T/no-second, that it could not), so its
+# power button is pressed after it or not at all.
+proof_ready() { echo "== the ready layer (stand-in) ${1##*/} $3"; }
+proof_second_boot() { echo "== the second boot (stand-in) $3"; [ ! -e "$T/no-second" ]; }
 NAME=mock-appliance PORT=2230 PROOF_OWN="" PROOF_FIRST_BOOT=4 PROOF_NORELABEL=stand-in
 for t in rsa ecdsa ed25519; do ssh-keygen -q -t $t -N '' -C x -f "$T/hk_$t" </dev/null; done
 ssh-keygen -q -t ed25519 -N '' -C x -f "$T/other_ed25519" </dev/null
@@ -140,7 +145,10 @@ gssh() { shift
         *"cloud-init: not installed"*) printf '%s\n' "$*" >"$T/reads.sh"; echo "== cloud-init, with a seed attached"; echo "cloud-init: not installed"
             echo "== the seed's asks"; echo "not run: bootcmd"; echo "not run: runcmd"; echo "not made: the default account"
             echo "== the hostname"; echo "$IMAGE_HOSTNAME" ;;
-        *"-type f"*) printf '%s  /etc/machine-id\n' "$E"; printf '%s  %s\n' "$([ -e "$T/booted-extra" ] && echo "$E" || echo "$D")" /etc/passwd
+        *"-xdev -type f -print") [ ! -e "$T/ready-files" ] || printf '%s\n' /etc/weaver-web/pairing/admin/admin-con.toml /etc/weaver-web/pairing/gate/gate-con.toml ;;
+        *"-type f"*) printf '%s\n' "$*" >"$T/files-cmd"
+            [ ! -e "$T/ready-files" ] || printf '%s  /etc/weaver-web/pairing/exchange/%s.req\n' "$E" admin "$E" gate
+            printf '%s  /etc/machine-id\n' "$E"; printf '%s  %s\n' "$([ -e "$T/booted-extra" ] && echo "$E" || echo "$D")" /etc/passwd
             printf '%s  /etc/shadow\n%s  /etc/ssh/ssh_host_ed25519_key.pub\n' "$E" "$E" ;;
         *"-type l"*) printf '/etc/x\0/dev/null\0' ;;
         *) echo "unexpected: $*" ;;
@@ -199,6 +207,20 @@ check "time-wait-sync not masked is a PROOF-FAIL" \
          -a "$(bash -c 'systemctl() { echo enabled; }; '"$WL")" = "PROOF-FAIL: time-wait-sync is not masked"
 check "the power button is pressed after the reads, on the first boot's guest and its console log" \
     test "$(cat "$T/out/power-off.txt")" = "== the power button (stand-in) mock-appliance-first console.log"
+at() { grep -n -F -- "$1" "$T/out/first-boot.txt" | sed -n 1p | cut -d: -f1; }
+check "the ready row is read after the first login and before the tries after it, on the proof's port" \
+    eval 'r=$(at "== the ready layer (stand-in) out 2330"); [ -n "$r" ] && [ "$(at "== the first login, at the console")" -lt "$r" ] && [ "$r" -lt "$(at "== SSH as root after the first login")" ]'
+check "the second boot follows the first press, and its own press follows it" \
+    test "$(cat "$T/out/second-boot.txt")" = "== the second boot (stand-in) mock-appliance-first" \
+         -a "$(cat "$T/out/second-power-off.txt")" = "== the power button (stand-in) mock-appliance-first console.log"
+check "the booted listing leaves out the connectors' own folders, which are listed by path alone" \
+    eval 'grep -qF -- "-not -path '"'"'/etc/weaver-web/pairing/gate/*'"'"' -not -path '"'"'/etc/weaver-web/pairing/admin/*'"'"' -print0" "$T/files-cmd"'
+touch "$T/no-second"; run; rm -f -- "$T/no-second"
+check "no second boot: no second press, and the record says so" \
+    test "$(cat "$T/out/second-power-off.txt")" = "no second boot, so no second press of the power button"
+touch "$T/ready-files"; run; rm -f -- "$T/ready-files"
+check "the configs, by path alone, and the requests, by digest, are the first boot's expected additions" \
+    eval 'fbo=$(fb) && [ "$(grep -c "^PROOF-FAIL" <<<"$fbo")" = 0 ] && grep -qx "added file: /etc/weaver-web/pairing/gate/gate-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/admin/admin-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/gate.req (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/admin.req (expected)" <<<"$fbo"'
 # The ESP read, as the guest runs it, against a stand-in findmnt.
 EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
 er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }
@@ -207,7 +229,7 @@ check "the ESP read: ro passes, rw is a PROOF-FAIL naming the mount" \
          -a "$(er rw,nosuid | grep -c '^PROOF-FAIL: /efi is not mounted read-only (/dev/vda2 vfat rw,nosuid)$')" = 1 \
          -a "$(er rw,nosuid | grep -c 'mounted read-only$')" = 0
 check "the hostname reads are the kernel's (uname -n), with no hostname command" \
-    eval '[ "$(grep -o "uname -n" "$T/reads.sh" | wc -l)" = 3 ] && ! grep -vE "^[[:space:]]*#" "$T/reads.sh" | grep -qE "(^|[;(])[[:space:]]*hostname[[:space:]]*([);]|\$)"'
+    eval '[ "$(grep -o "uname -n" "$T/reads.sh" | wc -l)" = 3 ] && nonc=$(grep -vE "^[[:space:]]*#" "$T/reads.sh") && ! grep -qE "(^|[;(])[[:space:]]*hostname[[:space:]]*([);]|\$)" <<<"$nonc"'
 # The sudo read, as the guest runs it, against a stand-in sudo.
 SL=$(grep -F 'if sudo -n -u nobody true 2>&1; then' "$T/reads.sh")
 sr() { bash -c 'sudo() { return '"$1"'; }; '"$SL"; }
@@ -228,7 +250,7 @@ check "the in-guest reads require cloud-init absent, its directories gone, and n
 # the credential and carries the network file the proof keeps, base64 and with no comma
 # (QEMU's option separator); the file matches the NIC's MAC and names the static address,
 # gateway and resolver QEMU's user network serves.
-sm=$(grep -oE -- '-smbios [^ ]+' "$T/vi-args" | head -1); sm=${sm#-smbios }
+sm=$(grep -oE -- '-smbios [^ ]+' "$T/vi-args" | sed -n 1p); sm=${sm#-smbios }
 check "the first boot is given one -smbios argument, a type 11 credential named $PROOF_CREDENTIAL" \
     test "$(grep -oE -- '-smbios ' "$T/vi-args" | wc -l)" = 1 -a "${sm%%=*}" = "type" \
          -a "$(grep -c "^type=11,value=io.systemd.credential.binary:$PROOF_CREDENTIAL=[A-Za-z0-9+/=]*\$" <<<"$sm")" = 1
@@ -341,8 +363,8 @@ touch "$T/acpi-refuse"
 check "a press the hypervisor refuses: one PROOF-FAIL, and nothing more read" \
     eval 'o=$(pr); [ "$(grep -c "^PROOF-FAIL" <<<"$o")" = 1 ] && grep -q "could not press mock-appliance-first.s power button" <<<"$o" && ! grep -q "the domain:" <<<"$o"'
 rm -f -- "$T/acpi-refuse"
-check "and the proof gathers the power-off's findings with the others" \
-    eval 'grep -q "\"\$out/first-boot.txt\" \"\$out/power-off.txt\" \"\$out/disk.txt\" >\"\$out/PROOF-FAILED\"" "$BT"'
+check "and the proof gathers the power-offs' and the second boot's findings with the others" \
+    eval 'grep -q "\"\$out/first-boot.txt\" \"\$out/power-off.txt\" \"\$out/second-boot.txt\" \"\$out/second-power-off.txt\" \"\$out/disk.txt\" >\"\$out/PROOF-FAILED\"" "$BT"'
 # A VM_ROOT whose socket path a unix socket cannot hold refuses before anything boots.
 long=$T/$(printf 'x%.0s' $(seq 120)); mkdir -p "$long"
 rm -f -- "$T/vi-args"; ( set -euo pipefail; VM_ROOT=$long; proof_first_boot "$T/out" ) >"$T/long.out" 2>&1; rc=$?

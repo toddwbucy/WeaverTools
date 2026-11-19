@@ -100,11 +100,24 @@ check "a test with its own EXIT trap, run alone and sent HUP, exits 129 and name
 check "the naming is its last line, after its own trap closed what it opened" \
     test "$(tail -n 2 "$T/w.out" | sed -n 1p)" = "closing what it opened"
 
-# Every host test's traps.
+# Every host test's traps, read in the test's own code: less its comments and the text of
+# its heredocs, since a stand-in script a test writes (t-make-template.sh's has a TERM trap
+# of its own) is not the test.
+own_code() { awk '
+    skip != "" { if ($0 == skip || $0 ~ ("^\t*" skip "$")) skip = ""; next }
+    /^[[:space:]]*#/ { next }
+    { print
+      if (match($0, /<<-?[[:space:]]*["\047]?[A-Za-z_][A-Za-z0-9_]*["\047]?/)) {
+          t = substr($0, RSTART, RLENGTH); sub(/^<<-?[[:space:]]*/, "", t); gsub(/["\047]/, "", t); skip = t } }' "$1"; }
+printf '%s\n' 'cat >"$T/s.sh" <<'"'"'SH'"'"'' "trap 'x' TERM" 'SH' 'echo "$(wc -l <<<"$x")"' "trap 'y' HUP" >"$T/own.sh"
+check "a test's own code keeps its lines and a trap after a heredoc, and drops the heredoc's text" \
+    test "$(own_code "$T/own.sh")" = "cat >\"\$T/s.sh\" <<'SH'
+echo \"\$(wc -l <<<\"\$x\")\"
+trap 'y' HUP"
 own_exit="" own_signal=""
 re="lib_exit[^;]*'[[:space:]]+EXIT\$"
 for f in "$CODE"/test/host/t-*.sh; do
-    code=$(grep -vE '^[[:space:]]*#' "$f")
+    code=$(own_code "$f")
     while IFS= read -r l; do
         [[ $l =~ $re ]] || own_exit+="${f##*/}: $l; "
     done < <(grep -E "^[[:space:]]*trap .*[[:space:]]EXIT$" <<<"$code")
