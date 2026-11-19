@@ -122,7 +122,7 @@ check "its whole group was sent TERM: the child is gone and the part's own trap 
     eval '[ -z "$left" ] && [ "$(cat "$TRAPPED" 2>/dev/null)" = "its trap ran" ]'
 check "the log names where the run stopped, and nothing ran after the part" \
     eval 'grep -q " STOPPED by SIGTERM in step-trees: the part was sent TERM; its output is $L/step-trees.out$" "$L/make-template.log" && [ "$(calls | sed -n "\$p")" = "step trees" ]'
-[ -z "$left" ] || pkill -f -- "$MARK" || true
+[ -z "$left" ] || kill $left || true
 
 check "nothing is teed" bash -c '! grep -qwE "tee" <(grep -v "^[[:space:]]*#" "$1")' _ "$CODE/make-template.sh"
 finish

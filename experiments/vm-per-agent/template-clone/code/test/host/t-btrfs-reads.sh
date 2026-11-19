@@ -89,9 +89,10 @@ before=$(sha256sum "$T/b.qcow2" | cut -d' ' -f1)
 OPENED=""
 open_export() { OPENED+=" $2"; ( image_open "$1" "$2" ); }
 close_all() {
-    local d
+    local d m
     for d in $OPENED; do
-        ! mounted | grep -qF "$d/" || echo "closing the export left under $d" >&2
+        if ! m=$(findmnt -rn -o TARGET); then echo "the mounts could not be read before closing $d" >&2
+        elif grep -qF "$d/" <<<"$m"; then echo "closing the export left under $d" >&2; fi
         image_close "$d"
     done
 }
@@ -220,11 +221,11 @@ check "the perturbation: with the refusal answering 1, the status is 1, which th
 # cat, its length checked against the inode's size, and resolves it as btrfs does. A target
 # it cannot read whole is refused, 2, never reported missing.
 check "the long target is over 60 bytes, and debugfs prints no fast line for it" \
-    eval 'test "${#LONG}" -gt 60 && ! debugfs -c -R "stat /etc/long-link" "$T/re/root.raw" 2>/dev/null | grep -q "^Fast link dest:"'
+    eval 'test "${#LONG}" -gt 60 && lst=$(debugfs -c -R "stat /etc/long-link" "$T/re/root.raw" 2>/dev/null) && grep -q "Type: symlink" <<<"$lst" && ! grep -q "^Fast link dest:" <<<"$lst"'
 check "btrfs resolves the long-target link to its file" test "$(image_resolve "$R" /etc/long-link)" = "$LONG"
 check "and so does ext4, from the link's block" test "$(image_resolve "$T/re" /etc/long-link)" = "$LONG"
 # A block read short of the inode's size: debugfs stood in, its cat cut to 10 bytes.
-( debugfs() { case " $* " in *' -R cat '*) command debugfs "$@" | head -c 10 ;; *) command debugfs "$@" ;; esac; }
+( debugfs() { case " $* " in *' -R cat '*) command debugfs "$@" | { head -c 10; cat >/dev/null; } ;; *) command debugfs "$@" ;; esac; }
   image_resolve "$T/re" /etc/long-link ) >"$T/r.out" 2>"$T/r.err"; rc=$?
 check "a target read short is 2, naming the link whose target cannot be read, and prints no path" \
     test "$rc" = 2 -a ! -s "$T/r.out" -a "$(grep -cF '/etc/long-link is a link whose target cannot be read' "$T/r.err")" = 1
@@ -346,7 +347,7 @@ OLD_RESOLVE='image_resolve_ext4() {
     while [ "$n" -lt 8 ]; do
         o=$(debugfs -c -R "stat \"$p\"" "$dir/root.raw" 2>/dev/null)
         grep -q "Type: symlink" <<<"$o" || { printf "%s\n" "$p"; return 0; }
-        t=$(sed -n "s/^Fast link dest: \"\(.*\)\"$/\1/p" <<<"$o" | head -1)
+        t=$(sed -n "s/^Fast link dest: \"\(.*\)\"$/\1/p" <<<"$o" | sed -n 1p)
         [ -n "$t" ] || { echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2; }
         ! image_link_climbs "$p" "$t" || return 2
         case $t in /*) p=$t ;; *) p=${p%/*}/$t ;; esac
@@ -386,8 +387,8 @@ pert "the old ext4 resolve" "$OLD_RESOLVE" "$T/re" \
 pert "the old ext4 resolve, unreadable root" "$OLD_RESOLVE" "$T/rxe" "resolve /etc/hostname 2"
 pert "the btrfs loop answering 1" "$LOOP_1" "$R" "resolve /etc/loop-a 2"
 
-check "no read leaves a restore directory or a cat file behind" \
-    test -z "$(find "$T/rb" "$T/re" "$T/rn" "$T/rx" "$T/rxe" -maxdepth 1 \( -name 'restore.*' -o -name 'cat.*' \) | head -1)"
+stray=$(find "$T/rb" "$T/re" "$T/rn" "$T/rx" "$T/rxe" -maxdepth 1 \( -name 'restore.*' -o -name 'cat.*' \)); rc=$?
+check "no read leaves a restore directory or a cat file behind" test "$rc" = 0 -a -z "$stray"
 
 for d in rb re rn; do image_close "$T/$d"; done
 check "image_close stops every export, and no FUSE export is left mounted under the test's directory" \

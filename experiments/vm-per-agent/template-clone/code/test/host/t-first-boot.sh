@@ -220,7 +220,7 @@ check "no second boot: no second press, and the record says so" \
     test "$(cat "$T/out/second-power-off.txt")" = "no second boot, so no second press of the power button"
 touch "$T/ready-files"; run; rm -f -- "$T/ready-files"
 check "the configs, by path alone, and the requests, by digest, are the first boot's expected additions" \
-    eval '[ "$(fb | grep -c "^PROOF-FAIL")" = 0 ] && fb | grep -qx "added file: /etc/weaver-web/pairing/gate/gate-con.toml (by its path alone) (expected)" && fb | grep -qx "added file: /etc/weaver-web/pairing/admin/admin-con.toml (by its path alone) (expected)" && fb | grep -qx "added file: /etc/weaver-web/pairing/exchange/gate.req (expected)" && fb | grep -qx "added file: /etc/weaver-web/pairing/exchange/admin.req (expected)"'
+    eval 'fbo=$(fb) && [ "$(grep -c "^PROOF-FAIL" <<<"$fbo")" = 0 ] && grep -qx "added file: /etc/weaver-web/pairing/gate/gate-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/admin/admin-con.toml (by its path alone) (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/gate.req (expected)" <<<"$fbo" && grep -qx "added file: /etc/weaver-web/pairing/exchange/admin.req (expected)" <<<"$fbo"'
 # The ESP read, as the guest runs it, against a stand-in findmnt.
 EL=$(sed -n '/^                echo "== the ESP at \/efi"/,/^                case ",\$(findmnt -nvo OPTIONS \/efi/p' "$T/reads.sh")
 er() { bash -c 'eo=$1; findmnt() { case "$*" in "-nvo OPTIONS /efi") echo "$eo" ;; *) echo "/dev/vda2 vfat $eo" ;; esac; }; '"$EL" _ "$1"; }
@@ -229,7 +229,7 @@ check "the ESP read: ro passes, rw is a PROOF-FAIL naming the mount" \
          -a "$(er rw,nosuid | grep -c '^PROOF-FAIL: /efi is not mounted read-only (/dev/vda2 vfat rw,nosuid)$')" = 1 \
          -a "$(er rw,nosuid | grep -c 'mounted read-only$')" = 0
 check "the hostname reads are the kernel's (uname -n), with no hostname command" \
-    eval '[ "$(grep -o "uname -n" "$T/reads.sh" | wc -l)" = 3 ] && ! grep -vE "^[[:space:]]*#" "$T/reads.sh" | grep -qE "(^|[;(])[[:space:]]*hostname[[:space:]]*([);]|\$)"'
+    eval '[ "$(grep -o "uname -n" "$T/reads.sh" | wc -l)" = 3 ] && nonc=$(grep -vE "^[[:space:]]*#" "$T/reads.sh") && ! grep -qE "(^|[;(])[[:space:]]*hostname[[:space:]]*([);]|\$)" <<<"$nonc"'
 # The sudo read, as the guest runs it, against a stand-in sudo.
 SL=$(grep -F 'if sudo -n -u nobody true 2>&1; then' "$T/reads.sh")
 sr() { bash -c 'sudo() { return '"$1"'; }; '"$SL"; }
@@ -250,7 +250,7 @@ check "the in-guest reads require cloud-init absent, its directories gone, and n
 # the credential and carries the network file the proof keeps, base64 and with no comma
 # (QEMU's option separator); the file matches the NIC's MAC and names the static address,
 # gateway and resolver QEMU's user network serves.
-sm=$(grep -oE -- '-smbios [^ ]+' "$T/vi-args" | head -1); sm=${sm#-smbios }
+sm=$(grep -oE -- '-smbios [^ ]+' "$T/vi-args" | sed -n 1p); sm=${sm#-smbios }
 check "the first boot is given one -smbios argument, a type 11 credential named $PROOF_CREDENTIAL" \
     test "$(grep -oE -- '-smbios ' "$T/vi-args" | wc -l)" = 1 -a "${sm%%=*}" = "type" \
          -a "$(grep -c "^type=11,value=io.systemd.credential.binary:$PROOF_CREDENTIAL=[A-Za-z0-9+/=]*\$" <<<"$sm")" = 1

@@ -1247,16 +1247,19 @@ fail its signature, the survey's output against the format's reader and WeaverWe
 worked example, the guest's read run against stand-in commands for each finding it
 names, the two boots' attributes compared, and `proof_ready` and `proof_second_boot`
 against stand-in SSH, a stand-in hypervisor and a stand-in console. `t-pipefail.sh`
-refuses, in
-the scripts the build runs (`build-template.sh`, `lib.sh`, `guest/template-steps`,
-`make-template.sh` and the request script), any producer piped into a reader that can
-exit early: `head`, or `grep` with `-q`, `-m`, `-l` or `-L`. Under `pipefail` such a
-pipeline fails with the producer's SIGPIPE whenever the reader exits first, and whether
-a line's status decides something cannot be read reliably from its text, so the scripts
-read a command's output first and match it after, and print first lines with `sed`,
-which reads its input to the end. `t-make-template.sh` runs `make-template.sh` with
-`build-template.sh` and the host tests stood in, and checks the steps' order, the stop
-at the first refusal and its log, and the refusal of an unset input.
+refuses, in the scripts the build runs (`build-template.sh`, `lib.sh`,
+`guest/template-steps`, `make-template.sh` and the request script) and in the host tests
+themselves, any producer piped into a reader that can exit early: `head`, or `grep` with
+`-q`, `-m`, `-l` or `-L`. Under `pipefail` such a pipeline fails with the producer's
+SIGPIPE whenever the reader exits first, and whether a line's status decides something
+cannot be read reliably from its text, so the scripts and the tests read a command's
+output first and match it after, and print first lines with `sed`, which reads its input
+to the end. The build runs the host tests first, so a test that could fail on that
+signal could stop an unattended build, or, negated, pass a check it should fail. Only
+`t-pipefail.sh`'s own stand-in lines and its control, each marked at its end, are left
+out of its scan. `t-make-template.sh` runs `make-template.sh` with `build-template.sh`
+and the host tests stood in, and checks the steps' order, the stop at the first refusal
+and its log, and the refusal of an unset input.
 
 ## 3. Open
 

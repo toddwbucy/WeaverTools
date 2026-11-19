@@ -36,8 +36,8 @@ OSP=$(fn "$TS" os_probes) || exit 1
 PROBES=$(fn "$TS" probes) || exit 1
 check "os_probes reads the probe account and group through getent_absent" \
     bash -c 'grep -qF "getent_absent passwd \"\$u\"" <<<"$1" && grep -qF "getent_absent group \"\$g\"" <<<"$1"' _ "$OSP"
-check "os_probes has no other getent read" bash -c '! grep -E "(^|[^_])getent " <<<"$1" | grep -v getent_absent | grep -q .' _ "$OSP"
+check "os_probes has no other getent read" bash -c 'o=$(grep -E "(^|[^_])getent " <<<"$1"); [ $? -le 1 ] && [ -z "$(grep -v getent_absent <<<"$o")" ]' _ "$OSP"
 check "the final probe reads the build account and its group through getent_absent" \
     bash -c 'grep -qF "getent_absent passwd op" <<<"$1" && grep -qF "getent_absent group op" <<<"$1"' _ "$PROBES"
-check "the probes have no other getent read" bash -c '! grep -E "(^|[^_])getent " <<<"$1" | grep -v getent_absent | grep -q .' _ "$PROBES"
+check "the probes have no other getent read" bash -c 'o=$(grep -E "(^|[^_])getent " <<<"$1"); [ $? -le 1 ] && [ -z "$(grep -v getent_absent <<<"$o")" ]' _ "$PROBES"
 finish

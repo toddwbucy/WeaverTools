@@ -80,7 +80,7 @@ check "the list covers every name the four scripts read from the environment" te
 [ -z "$missing" ] || echo "     not cleared: $missing"
 
 late=$(for t in "$H"/t-*.sh; do
-    first=$(grep -vE '^[[:space:]]*(#|$)' "$t" | head -1)
+    first=$(grep -vE '^[[:space:]]*(#|$)' "$t" | sed -n 1p)
     [ "$first" = 'source "$(dirname "$0")/lib-test.sh"' ] || echo "${t##*/}"
 done)
 check "every test file sources the harness before any other command" test -z "$late"
