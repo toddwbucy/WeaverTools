@@ -62,6 +62,12 @@ mkdir -p "$S" "$T/tmp2"
 cp "$H/run-all.sh" "$H/lib-test.sh" "$S/"
 stand_in "$S" t-w-wait.sh 'mkfifo "$T/f"; printf "%s\n" "$T" >"$READY.part" && mv "$READY.part" "$READY"
 read -r -t 30 _ <>"$T/f"; echo "the wait ended by itself, status $?"; finish'
+# The same, with an EXIT trap of its own that closes something, as t-btrfs-reads.sh does;
+# in a directory of its own, so the run above has one test.
+S2=$T/s2
+mkdir -p "$S2"; cp "$H/lib-test.sh" "$S2/"
+stand_in "$S2" t-w-close.sh 'mkfifo "$T/f"; trap '"'"'lib_rc=$?; echo "closing what it opened"; lib_exit "$lib_rc"'"'"' EXIT
+printf "%s\n" "$T" >"$READY.part" && mv "$READY.part" "$READY"; read -r -t 30 _ <>"$T/f"; finish'
 export READY=$T/ready
 TMPDIR=$T/tmp2 bash "$S/run-all.sh" >"$T/s.out" 2>&1 &
 rp=$!
@@ -81,7 +87,7 @@ check "the stopped test named its own work folder, which stands inside the run's
 check "the test was stopped, not left to end by itself" eval '! grep -q "the wait ended by itself" "$kept/out"'
 check "no stand-in test still runs" test -z "$(pgrep -f "$S/t-w-wait.sh")"
 rm -f -- "$READY"
-TMPDIR=$T/alone bash "$S/t-w-wait.sh" >"$T/w.out" 2>&1 &
+TMPDIR=$T/alone bash "$S2/t-w-close.sh" >"$T/w.out" 2>&1 &
 wp=$!
 if wait_for "$wp" 10 test -s "$READY"; then
     kill -HUP "$wp"; wait "$wp"; rc=$?
@@ -89,8 +95,10 @@ else
     rc=none; kill -TERM "$wp" 2>/dev/null; wait "$wp" 2>/dev/null
 fi
 w=$(cat "$READY" 2>/dev/null)
-check "a test run alone and sent HUP exits 129 and names the folder it kept" \
+check "a test with its own EXIT trap, run alone and sent HUP, exits 129 and names its folder" \
     eval '[ "$rc" = 129 ] && [ -d "$w" ] && [ "$(tail -n 1 "$T/w.out")" = "== stopped by SIGHUP; its folder kept: $w" ]'
+check "the naming is its last line, after its own trap closed what it opened" \
+    test "$(tail -n 2 "$T/w.out" | sed -n 1p)" = "closing what it opened"
 
 # Every host test's traps.
 own_exit="" own_signal=""

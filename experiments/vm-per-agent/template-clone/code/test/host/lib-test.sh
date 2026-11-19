@@ -49,10 +49,10 @@ SET_ENV_NAMES='CUDA_HOME CUDA_PATH CARGO_TARGET_DIR NVCC_CCBIN CUDA_LIB_DIR CUDA
 unset $SET_ENV_NAMES $(compgen -e CUDA_)
 CODE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/weaver-host-test.XXXXXX") || exit 1
-pass=0; fail=0; lib_passed=""; lib_named=""
+pass=0; fail=0; lib_passed=""; lib_named=""; lib_stop=""
 # lib_exit [STATUS]: at exit, the directory removed where finish found every check passed,
 # removed where a skip (STATUS 77, by default the status the trap was entered with) left it
-# empty, and otherwise named, once.
+# empty, and otherwise named, once, on the last line: after a test's own closes.
 lib_exit() {
     local rc=${1:-$?}
     if [ -n "$lib_passed" ]; then
@@ -60,15 +60,17 @@ lib_exit() {
             */weaver-host-test.??????) rm -rf --one-file-system -- "$T" || echo "== its folder could not be removed whole: $T" ;;
             *) echo "== its folder is not of the pattern, so it is kept: $T" ;;
         esac
+    elif [ -n "$lib_stop" ]; then
+        echo "== stopped by SIG$lib_stop; its folder kept: $T"
     elif [ "$rc" = 77 ] && rmdir -- "$T" 2>/dev/null; then
         :
     elif [ -z "$lib_named" ]; then
         echo "== exit $rc before every check passed; its folder kept: $T"
     fi
 }
-# lib_stopped SIGNAL STATUS: a stop by a signal names the directory and exits, so the EXIT
-# trap's closes still run.
-lib_stopped() { lib_named=1; echo "== stopped by SIG$1; its folder kept: $T"; exit "$2"; }
+# lib_stopped SIGNAL STATUS: a stop by a signal exits, so the EXIT trap's closes run and
+# lib_exit then names the directory.
+lib_stopped() { lib_stop=$1; exit "$2"; }
 trap lib_exit EXIT
 trap 'lib_stopped INT 130' INT; trap 'lib_stopped TERM 143' TERM; trap 'lib_stopped HUP 129' HUP
 ok() { echo "ok   $*"; pass=$((pass + 1)); }
