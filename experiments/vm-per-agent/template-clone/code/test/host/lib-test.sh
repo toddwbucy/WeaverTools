@@ -12,13 +12,14 @@
 # matches its pattern and stays on one filesystem; a skip removes it where it is empty.
 # On a failed check, an exit before finish or a stop by INT, TERM or HUP it is kept and
 # named on the last line. An exit 0 before finish is no pass: its status is made 1, so a
-# runner counts it failed and keeps its folder (CodeRabbit on pull request 44, 2026-11-19). The removal runs from the EXIT trap, after a test's own
-# closes: a test that sets its own EXIT trap calls lib_exit last in it, handing it the
-# status the trap was entered with, and sets no INT, TERM or HUP trap of its own
-# (t-test-folders.sh checks both). Every host test run through run-all.sh leaving its
-# directory behind, pass or fail, is what this replaced (the operator's rule on /tmp of
-# 2026-11-18). The offline mock (../offline-mock.sh) is not one of these: it runs only
-# inside a build guest.
+# runner counts it failed and keeps its folder (CodeRabbit on pull request 44,
+# 2026-11-19). The removal runs from the EXIT trap, after a test's own closes: a test
+# that sets its own EXIT trap calls lib_exit last in it, handing it the status the trap
+# was entered with, and sets no INT, TERM or HUP trap of its own (t-test-folders.sh
+# checks both). Every host test run through run-all.sh leaving its directory behind,
+# pass or fail, is what this replaced (the operator's rule on /tmp of 2026-11-18). The
+# offline mock (../offline-mock.sh) is not one of these: it runs only inside a build
+# guest.
 #
 # The tools are the guest's: GNU grep, sed and awk, bash, coreutils and python3. A test
 # that needs more (qemu-img, debugfs, nvcc) says so and is skipped where a tool is absent,

@@ -4,17 +4,23 @@ reader that can exit before its input ends: head, or grep with -q, -m, -l or -L 
 long forms). Under pipefail such a pipeline fails with the producer's SIGPIPE (status 141)
 whenever the reader exits first, so a check built on it can read as failed, or, negated,
 as passed. Whole-line comments are skipped; a pipe is a lone '|', not '||' or '|&'.
-An option that takes the next word (-e, -f, --regexp, --file, or a cluster ending in e or
-f) has that word skipped, so `grep -e PAT -q` is found (CodeRabbit on pull request 44,
-2026-11-19). Left: grep's options after its pattern, which GNU grep also takes (`grep PAT
--q`); a split on whitespace cannot tell such a line from a quoted pattern holding "-q", so
-it is not found. Prints FILE:LINE: TEXT for each, and exits 1 if there is any. Standard
-library only. t-pipefail.sh runs it (weaver-appliance-build-Spec section 2, the host
-tests)."""
+A cluster of short options is read one letter at a time, and a letter that takes a word
+(-e, -f, -A, -B, -C, -d or -D) ends it: the rest of the cluster is that word where
+anything follows the letter, and the next word is skipped where nothing does. So `grep -e
+PAT -q` and `grep -eproof -q` are found, and `grep -eq x`, whose pattern is q, is not.
+--regexp and --file have the next word skipped (CodeRabbit on pull request 44,
+2026-11-19). Left, and not found: grep's options after its pattern, which GNU grep also
+takes (`grep PAT -q`), since a split on whitespace cannot tell such a line from a quoted
+pattern holding "-q"; and the other long options that take a separate word (`grep
+--context 2 -q`), whose word is read as the pattern. Prints FILE:LINE: TEXT for each, and
+exits 1 if there is any. Standard library only. t-pipefail.sh runs it
+(weaver-appliance-build-Spec section 2, the host tests)."""
 import re, sys
 
-EARLY_GREP = re.compile(r"^-[A-Za-z]*[qmlL]|^--(quiet|silent|max-count|files-with)")
-TAKES_NEXT = re.compile(r"-[A-Za-z]*[ef]|--regexp|--file")
+EARLY_SHORT = "qmlL"
+TAKES_WORD = "efABCdD"
+EARLY_LONG = re.compile(r"^--(quiet|silent|max-count|files-with)")
+LONG_TAKES_NEXT = ("--regexp", "--file")
 PIPE = re.compile(r"(?<![|])\|(?![|&])")
 
 
@@ -33,9 +39,17 @@ def early(segment):
                 continue
             if not w.startswith("-") or w == "--":
                 return False
-            if EARLY_GREP.match(w):
-                return True
-            skip = bool(TAKES_NEXT.fullmatch(w))
+            if w.startswith("--"):
+                if EARLY_LONG.match(w):
+                    return True
+                skip = w in LONG_TAKES_NEXT
+                continue
+            for i, c in enumerate(w[1:], 1):
+                if c in EARLY_SHORT:
+                    return True
+                if c in TAKES_WORD:
+                    skip = i == len(w) - 1
+                    break
     return False
 
 
