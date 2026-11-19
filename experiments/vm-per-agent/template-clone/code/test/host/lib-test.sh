@@ -7,9 +7,17 @@
 # the commands a guest or a hypervisor would answer. No test stubs a privileged command:
 # where a guest function calls one, the test drops that prefix from the function's text.
 #
-# Each run works in a fresh directory of its own, made here with mktemp and named on the
-# last line. Nothing is removed afterwards. The offline mock (../offline-mock.sh) is not
-# one of these: it runs only inside a build guest.
+# Each run works in a fresh directory of its own, made here with mktemp. /tmp is often
+# memory, so the directory goes at exit when every check passed, by a removal that
+# matches its pattern and stays on one filesystem; a skip removes it where it is empty.
+# On a failed check, an exit before finish or a stop by INT, TERM or HUP it is kept and
+# named on the last line. The removal runs from the EXIT trap, after a test's own
+# closes: a test that sets its own EXIT trap calls lib_exit last in it, handing it the
+# status the trap was entered with, and sets no INT, TERM or HUP trap of its own
+# (t-test-folders.sh checks both). Every host test run through run-all.sh leaving its
+# directory behind, pass or fail, is what this replaced (the operator's rule on /tmp of
+# 2026-11-18). The offline mock (../offline-mock.sh) is not one of these: it runs only
+# inside a build guest.
 #
 # The tools are the guest's: GNU grep, sed and awk, bash, coreutils and python3. A test
 # that needs more (qemu-img, debugfs, nvcc) says so and is skipped where a tool is absent,
@@ -41,7 +49,28 @@ SET_ENV_NAMES='CUDA_HOME CUDA_PATH CARGO_TARGET_DIR NVCC_CCBIN CUDA_LIB_DIR CUDA
 unset $SET_ENV_NAMES $(compgen -e CUDA_)
 CODE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 T=$(mktemp -d "${TMPDIR:-/tmp}/weaver-host-test.XXXXXX") || exit 1
-pass=0; fail=0
+pass=0; fail=0; lib_passed=""; lib_named=""
+# lib_exit [STATUS]: at exit, the directory removed where finish found every check passed,
+# removed where a skip (STATUS 77, by default the status the trap was entered with) left it
+# empty, and otherwise named, once.
+lib_exit() {
+    local rc=${1:-$?}
+    if [ -n "$lib_passed" ]; then
+        case $T in
+            */weaver-host-test.??????) rm -rf --one-file-system -- "$T" || echo "== its folder could not be removed whole: $T" ;;
+            *) echo "== its folder is not of the pattern, so it is kept: $T" ;;
+        esac
+    elif [ "$rc" = 77 ] && rmdir -- "$T" 2>/dev/null; then
+        :
+    elif [ -z "$lib_named" ]; then
+        echo "== exit $rc before every check passed; its folder kept: $T"
+    fi
+}
+# lib_stopped SIGNAL STATUS: a stop by a signal names the directory and exits, so the EXIT
+# trap's closes still run.
+lib_stopped() { lib_named=1; echo "== stopped by SIG$1; its folder kept: $T"; exit "$2"; }
+trap lib_exit EXIT
+trap 'lib_stopped INT 130' INT; trap 'lib_stopped TERM 143' TERM; trap 'lib_stopped HUP 129' HUP
 ok() { echo "ok   $*"; pass=$((pass + 1)); }
 no() { echo "FAIL $*"; fail=$((fail + 1)); }
 check() { local what=$1; shift; if "$@"; then ok "$what"; else no "$what"; fi; }
@@ -74,4 +103,11 @@ wait_for() {
         n=$((n - 1)); sleep 0.1
     done
 }
-finish() { echo "== $pass passed, $fail failed (in $T)"; [ "$fail" = 0 ]; }
+# finish: the totals on the last line; where a check failed, the directory named and kept.
+finish() {
+    if [ "$fail" = 0 ]; then
+        lib_passed=1; echo "== $pass passed, 0 failed"
+    else
+        lib_named=1; echo "== $pass passed, $fail failed (its folder kept: $T)"; return 1
+    fi
+}
