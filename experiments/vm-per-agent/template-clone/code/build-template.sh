@@ -87,10 +87,15 @@ inputs_env() {
 # steps_in: the guest's copy of the steps, and the CUDA runtime's PKGBUILD the cleanup
 # builds from (guest/template-steps, runtime_build). The seal removes both.
 steps_in() {
-    gscp "$PORT" "$HERE/guest/template-steps" "$HERE/guest/cuda-runtime/PKGBUILD" /tmp/
+    gscp "$PORT" "$HERE/guest/template-steps" "$HERE/guest/cuda-runtime/PKGBUILD" \
+        "$HERE/guest/ready/weaver-survey" "$HERE/guest/ready/requests" \
+        "$HERE/guest/ready/weaver-appliance-requests.service" /tmp/
+    # The ready layer's three files go where the ready step reads them; the seal removes
+    # the folder with the harness (weaver-appliance-build-Spec section 2, step 10).
     gssh "$PORT" 'sudo install -m 0755 /tmp/template-steps /usr/local/sbin/template-steps \
         && sudo install -D -m 0644 /tmp/PKGBUILD /usr/local/share/weaver-build/cuda-runtime/PKGBUILD \
-        && rm -f /tmp/template-steps /tmp/PKGBUILD'
+        && sudo install -D -m 0644 -t /usr/local/share/weaver-build/ready /tmp/weaver-survey /tmp/requests /tmp/weaver-appliance-requests.service \
+        && rm -f /tmp/template-steps /tmp/PKGBUILD /tmp/weaver-survey /tmp/requests /tmp/weaver-appliance-requests.service'
 }
 
 create() {
@@ -191,13 +196,13 @@ seal_verdict() {
     local got want
     for v in weaveragent.commit:WA_COMMIT weaverweb.commit:WW_COMMIT; do
         want=${v##*:}; v=${v%%:*}
-        got=$(sed -n "s/^$v = \([0-9a-f]\{40\}\)\$/\1/p" "$LOG/sealed-stamp" 2>/dev/null | head -1)
+        got=$(sed -n "s/^$v = \([0-9a-f]\{40\}\)\$/\1/p" "$LOG/sealed-stamp" 2>/dev/null | sed -n 1p)
         [ -n "$got" ] || die "the image's stamp names no $v; the image is not sealed"
         [ "$got" = "${!want}" ] || die "the image's stamp names $v $got, not $want ${!want}; the image is not sealed"
     done
     # And the version the host names: an image stamped with another version is not this
     # build's.
-    got=$(sed -n 's/^appliance\.version = \([0-9][0-9.]*\)$/\1/p' "$LOG/sealed-stamp" 2>/dev/null | head -1)
+    got=$(sed -n 's/^appliance\.version = \([0-9][0-9.]*\)$/\1/p' "$LOG/sealed-stamp" 2>/dev/null | sed -n 1p)
     [ -n "$got" ] || die "the image's stamp names no appliance.version; the image is not sealed"
     [ "$got" = "$VERSION" ] || die "the image's stamp names appliance.version $got, not VERSION $VERSION; the image is not sealed"
     # The seal ends with a compaction, while the domain is still defined: one that fails
@@ -533,7 +538,7 @@ PY
     rm -f "$out/PROOF-FAILED"
     # The pass names the sealed file the seal recorded, which the proof found equal, and
     # the MANIFEST: tag reads it.
-    echo "proof passed: sealed file sha256 $(cut -d' ' -f1 "$LOG/appliance-sha256.txt"), MANIFEST sha256 $(cut -c1-64 "$out/identity.txt" | head -1)" \
+    echo "proof passed: sealed file sha256 $(cut -d' ' -f1 "$LOG/appliance-sha256.txt"), MANIFEST sha256 $(cut -c1-64 "$out/identity.txt" | sed -n 1p)" \
         | tee "$out/passed.txt"
 }
 
@@ -784,12 +789,12 @@ EOF
                 # A boot that has not finished by now is held by a unit that waits on what
                 # this network cannot give (time-wait-sync did, before its mask).
                 echo "== the boot, as systemd timed it"; o=$(systemd-analyze time 2>&1); echo "$o"
-                case $o in *"Bootup is not yet finished"*) echo "PROOF-FAIL: the boot had not finished after the first login: $(systemctl list-jobs --no-legend --no-pager 2>&1 | head -3 | tr "\n" " ")" ;; esac
+                case $o in *"Bootup is not yet finished"*) echo "PROOF-FAIL: the boot had not finished after the first login: $(systemctl list-jobs --no-legend --no-pager 2>&1 | sed -n 1,3p | tr "\n" " ")" ;; esac
                 echo "== the critical chain to multi-user.target"; systemd-analyze critical-chain --no-pager multi-user.target 2>&1
                 echo "== the critical chain to the serial console login"; systemd-analyze critical-chain --no-pager serial-getty@ttyS0.service 2>&1
                 echo "== time-wait-sync"; systemctl show -p UnitFileState -p ActiveState -p Result systemd-time-wait-sync.service 2>&1 | tr "\n" " "; echo
                 [ "$(systemctl is-enabled systemd-time-wait-sync.service 2>/dev/null)" = masked ] || echo "PROOF-FAIL: time-wait-sync is not masked"
-                echo "== the slowest units"; systemd-analyze blame --no-pager 2>&1 | head -15
+                echo "== the slowest units"; systemd-analyze blame --no-pager 2>&1 | sed -n 1,15p
                 echo "== the units running"; systemctl list-units --no-legend --no-pager --plain --state=running 2>&1 | awk "{print \$1}" | tr "\n" " "; echo
                 # create-agent.sh runs a command as nobody through sudo (WeaverAgent #581),
                 # as root once root has a password, so here, after the first login.
@@ -1008,7 +1013,7 @@ proof_inbound() {
     lpid=$(KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" '
         d=$(mktemp -d) && cd "$d" || exit 1
         setsid nohup python3 -m http.server 8080 --bind 0.0.0.0 >/dev/null 2>&1 </dev/null & p=$!
-        for i in $(seq 50); do ss -Hltn "sport = :8080" | grep -q . && break; sleep 0.2; done
+        for i in $(seq 50); do o=$(ss -Hltn "sport = :8080"); [ -n "$o" ] && break; sleep 0.2; done
         echo "$p"' 2>/dev/null) || lpid=""
     if ! [[ "$lpid" =~ ^[0-9]+$ ]]; then
         echo "PROOF-FAIL: the listener on TCP 8080 did not start in the guest (${lpid:-no PID})"
@@ -1022,7 +1027,7 @@ proof_inbound() {
         echo "-- TCP 8080 from the host, through the forward: $ans"
         [ "$ans" = silent ] || echo "PROOF-FAIL: inbound to TCP 8080 was not dropped ($ans)"
         KNOWN_HOSTS=$known GUEST_USER=root gssh "$port" "kill $lpid 2>/dev/null; sleep 1
-            if ss -Hltn 'sport = :8080' | grep -q .; then echo 'the listener still listens'; else echo 'the listener is stopped'; fi" 2>&1 || true
+            o=\$(ss -Hltn 'sport = :8080'); if [ -n \"\$o\" ]; then echo 'the listener still listens'; else echo 'the listener is stopped'; fi" 2>&1 || true
     fi
     ans=$(inbound_probe "$port" 10)
     echo "-- SSH from the host, through the forward: $ans"

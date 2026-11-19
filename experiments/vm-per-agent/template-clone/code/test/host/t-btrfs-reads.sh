@@ -83,7 +83,9 @@ before=$(sha256sum "$T/b.qcow2" | cut -d' ' -f1)
 # no FUSE export on the host (CodeRabbit on pull request 35, 2026-11-17: a failure between
 # two opens exited past the closes). image_close is quiet and never fails, so the trap
 # names each export it finds still mounted, and a failed open is a FAIL line with
-# image_open's own cause above it.
+# image_open's own cause above it. lib-test.sh's traps on INT, TERM and HUP name the work
+# folder and exit, so this trap runs on a signal too; lib_exit, last, removes the folder
+# on a pass once the exports are closed.
 OPENED=""
 open_export() { OPENED+=" $2"; ( image_open "$1" "$2" ); }
 close_all() {
@@ -93,8 +95,7 @@ close_all() {
         image_close "$d"
     done
 }
-trap close_all EXIT
-trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
+trap 'lib_rc=$?; close_all; lib_exit "$lib_rc"' EXIT
 open_or_stop() { open_export "$1" "$2" || { no "image_open of $1 (the cause above)"; finish; exit 1; }; }
 
 # ---- image_open: the filesystem's type, and a root it cannot read refused.

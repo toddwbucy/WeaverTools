@@ -39,7 +39,8 @@ check "the list names the seven inputs, VM_ROOT, NAME and PORT" \
 left=$(env "${wrongs[@]}" KEPT_IMAGE=/k NVCC=/n CUOBJDUMP=/c TMPDIR="$T" bash -c '
     source "$1/lib-test.sh"
     for n in $BUILD_ENV_NAMES; do [ -z "${!n+set}" ] || echo "$n"; done
-    [ "$KEPT_IMAGE $NVCC $CUOBJDUMP $TMPDIR" = "/k /n /c $2" ] || echo "a kept name was cleared"' _ "$H" "$T" 2>&1)
+    [ "$KEPT_IMAGE $NVCC $CUOBJDUMP $TMPDIR" = "/k /n /c $2" ] || echo "a kept name was cleared"
+    finish >/dev/null' _ "$H" "$T" 2>&1)
 check "each name exported wrong is unset once the harness is sourced; the kept names stay" test -z "$left"
 [ -z "$left" ] || echo "     left: $left"
 
@@ -50,7 +51,8 @@ for n in $SET_ENV_NAMES; do setwrongs+=("$n=/wrong/$n"); done
 set_left=$(env "${setwrongs[@]}" TMPDIR="$T" bash -c '
     source "$1/lib-test.sh"
     for n in $SET_ENV_NAMES CUDA_DEVICE_ORDER CUDA_VISIBLE_DEVICES; do [ -z "${!n+set}" ] || echo "$n"; done
-    compgen -e CUDA_' _ "$H" 2>&1)
+    compgen -e CUDA_
+    finish >/dev/null' _ "$H" 2>&1)
 check "each name the scripts set, and each CUDA_ name exported, is unset once the harness is sourced" test -z "$set_left"
 [ -z "$set_left" ] || echo "     left: $set_left"
 
@@ -84,8 +86,8 @@ check "every test file sources the harness before any other command" test -z "$l
 [ -z "$late" ] || echo "     late: $late"
 
 for t in t-version.sh t-tag.sh; do
-    clean=$(TMPDIR=$T bash "$H/$t" 2>&1 | tail -1 | sed 's/ (in .*//'); rc1=$?
-    under=$(env "${wrongs[@]}" "${setwrongs[@]}" TMPDIR="$T" bash "$H/$t" 2>&1 | tail -1 | sed 's/ (in .*//')
+    clean=$(TMPDIR=$T bash "$H/$t" 2>&1 | tail -1 | sed 's/ (its folder kept: .*//'); rc1=$?
+    under=$(env "${wrongs[@]}" "${setwrongs[@]}" TMPDIR="$T" bash "$H/$t" 2>&1 | tail -1 | sed 's/ (its folder kept: .*//')
     check "$t passes with every name exported wrong, with the clean count ($clean)" \
         bash -c '[[ "$1" =~ ^==\ [0-9]+\ passed,\ 0\ failed$ ]] && [ "$1" = "$2" ]' _ "$clean" "$under"
 done

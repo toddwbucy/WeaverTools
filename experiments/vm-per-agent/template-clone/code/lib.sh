@@ -535,7 +535,7 @@ image_get_ext4() {
     [ "$rc" != 1 ] || { echo "image_get: $path is absent from the image" >&2; return 2; }
     [ "$rc" = 0 ] || return 2
     grep -q 'Type: regular' <<<"$o" || { echo "image_get: $path is not a regular file" >&2; return 2; }
-    size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | head -1)
+    size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | sed -n 1p)
     debugfs -c -R "dump \"$path\" \"$out\"" "$dir/root.raw" >/dev/null 2>&1
     if [ ! -f "$out" ] || [ -z "$size" ] || [ "$(stat -c %s "$out")" != "$size" ]; then
         echo "image_get: $path: copied $(stat -c %s "$out" 2>/dev/null || echo 0) of ${size:-unknown} bytes" >&2
@@ -841,9 +841,9 @@ image_resolve_ext4() {
         [ "$rc" != 1 ] || { echo "image_resolve: $p is absent from the image" >&2; return 1; }
         [ "$rc" = 0 ] || return 2
         grep -q 'Type: symlink' <<<"$o" || { printf '%s\n' "$p"; return 0; }
-        t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | head -1)
+        t=$(sed -n 's/^Fast link dest: "\(.*\)"$/\1/p' <<<"$o" | sed -n 1p)
         if [ -z "$t" ]; then
-            size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | head -1)
+            size=$(sed -n 's/.*[[:space:]]Size: \([0-9][0-9]*\).*/\1/p' <<<"$o" | sed -n 1p)
             t=$(debugfs -c -R "cat \"$p\"" "$dir/root.raw" 2>/dev/null)
             if [ -z "$size" ] || [ -z "$t" ] || [ "$(printf '%s' "$t" | wc -c)" != "$size" ]; then
                 echo "image_resolve: $p is a link whose target cannot be read" >&2; return 2
@@ -876,7 +876,7 @@ device_code_check() {
         echo "PROOF-FAIL: no $CUOBJDUMP on this host, so the device code could not be listed"
         return 0
     fi
-    echo "listed with $CUOBJDUMP $("$CUOBJDUMP" --version 2>&1 | grep -oE 'V[0-9][0-9.]*' | head -1 || true)"
+    echo "listed with $CUOBJDUMP $("$CUOBJDUMP" --version 2>&1 | grep -oE 'V[0-9][0-9.]*' | sed -n 1p || true)"
     rc=0; ptx=$("$CUOBJDUMP" --list-ptx "$tmp/libggml-cuda.so" 2>&1) || rc=$?
     [ "$rc" = 0 ] || { echo "PROOF-FAIL: $CUOBJDUMP --list-ptx exited $rc: $(tail -1 <<<"$ptx")"; fails=1; }
     rc=0; elf=$("$CUOBJDUMP" --list-elf "$tmp/libggml-cuda.so" 2>&1) || rc=$?
@@ -927,13 +927,14 @@ device_code_check() {
 # qsd-whole, DIR/root.raw for qsd-root). A pidfile left by a crash or a SIGKILL may name
 # another process by now, which is never sent a signal.
 qsd_pid() {
-    local pid f a0
+    local pid f a0 c
     pid=$(cat "$1/$2.pid" 2>/dev/null) && [[ "$pid" =~ ^[0-9]+$ ]] || return 1
     case $2 in qsd-whole) f=$1/whole.raw ;; qsd-root) f=$1/root.raw ;; *) return 1 ;; esac
     [ -r "/proc/$pid/cmdline" ] || return 1
-    a0=$(tr '\0' '\n' 2>/dev/null <"/proc/$pid/cmdline" | head -1) || return 1
+    c=$(tr '\0' '\n' 2>/dev/null <"/proc/$pid/cmdline") || return 1
+    a0=${c%%$'\n'*}
     [ "${a0##*/}" = qemu-storage-daemon ] || return 1
-    tr '\0' '\n' 2>/dev/null <"/proc/$pid/cmdline" | grep -qF "mountpoint=$f," || return 1
+    grep -qF -- "mountpoint=$f," <<<"$c" || return 1
     printf '%s\n' "$pid"
 }
 # image_close stops both exports where they still run (each only through qsd_pid), unmounts
@@ -1274,7 +1275,7 @@ pool_drop() {
 dom_known() {
     local names rc=0
     names=$(virsh_ list --all --name 2>/dev/null) || return 2
-    printf '%s\n' "$names" | grep -qxF -- "$1" || rc=$?
+    grep -qxF -- "$1" <<<"$names" || rc=$?
     case $rc in 0) return 0 ;; 1) return 1 ;; *) return 2 ;; esac
 }
 
@@ -1343,7 +1344,8 @@ dom_drop() {
 
 # step_ok LOG NAME: 0 when LOG/NAME.txt, as run_step wrote it, ends with exit 0.
 step_ok() {
-    [ -f "$1/$2.txt" ] && tail -n 1 "$1/$2.txt" | grep -qE "^# step $2, exit 0, [0-9]+s\$"
+    local l
+    [ -f "$1/$2.txt" ] && l=$(tail -n 1 "$1/$2.txt") && grep -qE "^# step $2, exit 0, [0-9]+s\$" <<<"$l"
 }
 
 # origin_ok URL: 0 when URL starts with one of DEB_ORIGINS and the rest is a plain path,

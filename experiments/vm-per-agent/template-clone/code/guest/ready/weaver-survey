@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+"""weaver-survey: the appliance's survey of its machine, format weaver-survey/1
+(WeaverTools docs/profiles/weaver-survey-format.md at e16aecd, sections 1, 2 and 5).
+
+    weaver-survey --stage pairing|drives
+
+The image carries it at /opt/weaver-appliance/bin/weaver-survey (weaver-appliance-build-Spec
+section 2, the ready layer).
+
+Reads each source of section 1, read only, and writes one JSON object and one newline to
+standard output: format first, every member nested as section 1 names it. It writes no
+file and no temporary file, loads no module, mounts nothing, changes no setting of a card
+and opens no socket. nvidia-smi runs only where /sys/module/nvidia stands. It never gives
+a partial report: where a source cannot be read or a value breaks its bound, it writes
+nothing to standard output, writes the cause to standard error, and exits 1. A usage
+error exits 2. Every source is readable by any user, so it may run as nobody.
+
+Standard library only. The commands run with a fixed PATH and the C locale, each under a
+time bound.
+"""
+import hashlib, json, os, re, subprocess, sys, time
+
+FORMAT = "weaver-survey/1"
+BOUND = 65536
+INT_MAX = (1 << 53) - 1
+MOUNTS = (("state", "/mnt/weaver/state"), ("models", "/mnt/weaver/models"))
+ENV = {"PATH": "/usr/bin:/usr/sbin", "LANG": "C", "LC_ALL": "C"}
+NVIDIA_SMI = ["nvidia-smi", "--query-gpu=pci.bus_id,name,memory.total", "--format=csv,noheader,nounits"]
+
+
+class Fail(Exception):
+    """A source not read, or a value outside its bound: the survey writes nothing."""
+
+
+def run(argv, timeout=60):
+    """(exit status, standard output) of a command, its standard error discarded."""
+    try:
+        p = subprocess.run(argv, env=ENV, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.DEVNULL, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise Fail("%s could not be run: %s" % (argv[0], e))
+    return p.returncode, p.stdout.decode("utf-8", "replace")
+
+
+def text(value, bound, what, pattern=None):
+    """value, if printable ASCII within bound bytes and matching pattern; never cut."""
+    if not isinstance(value, str) or any(not (0x20 <= ord(c) <= 0x7E) for c in value):
+        raise Fail("%s is not printable ASCII: %r" % (what, value))
+    if len(value) > bound:
+        raise Fail("%s is %d bytes, over %d: %r" % (what, len(value), bound, value))
+    if pattern is not None and not re.fullmatch(pattern, value):
+        raise Fail("%s does not match %s: %r" % (what, pattern, value))
+    return value
+
+
+def integer(value, what, low=0, high=INT_MAX):
+    """value as an integer within low and high."""
+    if isinstance(value, bool):
+        raise Fail("%s is not an integer: %r" % (what, value))
+    if isinstance(value, str):
+        if not re.fullmatch(r"[0-9]+", value):
+            raise Fail("%s is not an integer: %r" % (what, value))
+        value = int(value)
+    if not isinstance(value, int) or not (low <= value <= high):
+        raise Fail("%s is %r, outside %d to %d" % (what, value, low, high))
+    return value
+
+
+def read(root, path, what):
+    try:
+        with open(os.path.join(root, path.lstrip("/")), "rb") as f:
+            return f.read().decode("utf-8", "replace")
+    except OSError as e:
+        raise Fail("%s (%s) could not be read: %s" % (what, path, e.strerror or e))
+
+
+def one_line(s):
+    """A sysfs or proc value: the text before its newline."""
+    return s[:-1] if s.endswith("\n") else s
+
+
+def image(root):
+    stamp = read(root, "/etc/weaver-appliance/stamp", "the stamp")
+    lines = [l for l in stamp.split("\n") if l.startswith("appliance.version = ")]
+    if len(lines) != 1:
+        raise Fail("the stamp holds %d appliance.version lines, not one" % len(lines))
+    version = text(lines[0][len("appliance.version = "):], BOUND, "image.version", r"[0-9]+\.[0-9]+")
+    try:
+        with open(os.path.join(root, "etc/weaver-appliance/MANIFEST"), "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+    except OSError as e:
+        raise Fail("the MANIFEST could not be read: %s" % (e.strerror or e))
+    return {"version": version, "manifest_sha256": digest}
+
+
+def machine(root, runner):
+    rc, out = runner(["systemd-detect-virt"])
+    virt = one_line(out)
+    if not (rc == 0 or (rc == 1 and virt == "none")) or "\n" in virt:
+        raise Fail("systemd-detect-virt exited %d with %r" % (rc, out))
+    dmi = {}
+    for member, f in (("vendor", "sys_vendor"), ("product", "product_name"), ("version", "product_version")):
+        dmi[member] = text(one_line(read(root, "/sys/class/dmi/id/" + f, "the DMI " + f)), 128, "machine." + member)
+    return {"virtualization": text(virt, 32, "machine.virtualization"), **dmi}
+
+
+def cpu(root):
+    blocks, cur = [], {}
+    count = 0
+    for line in read(root, "/proc/cpuinfo", "the CPU information").split("\n"):
+        if not line.strip():
+            if cur:
+                blocks.append(cur); cur = {}
+            continue
+        if ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        k, v = k.strip(), v.strip()
+        if k == "processor":
+            count += 1
+        cur.setdefault(k, v)
+    if cur:
+        blocks.append(cur)
+    procs = [b for b in blocks if "processor" in b]
+    if not procs or count != len(procs):
+        raise Fail("/proc/cpuinfo holds no processor block, or a block with two processor lines")
+    p0 = procs[0]
+    for k in ("vendor_id", "model name", "cpu family", "model", "stepping", "flags"):
+        if k not in p0:
+            raise Fail("processor 0 has no %r line" % k)
+    flags = sorted(set(p0["flags"].split()), key=lambda s: s.encode())
+    for b in procs[1:]:
+        if sorted(set(b.get("flags", "").split()), key=lambda s: s.encode()) != flags:
+            raise Fail("processor %s's flags differ from processor 0's" % b["processor"])
+    if not (1 <= len(flags) <= 512):
+        raise Fail("cpu.flags has %d entries, outside 1 to 512" % len(flags))
+    for f in flags:
+        text(f, 32, "a cpu.flags entry", r"[a-z0-9_]{1,32}")
+    return {
+        "vendor": text(p0["vendor_id"], 32, "cpu.vendor"),
+        "model_name": text(p0["model name"], 128, "cpu.model_name"),
+        "family": integer(p0["cpu family"], "cpu.family", 0, 65535),
+        "model": integer(p0["model"], "cpu.model", 0, 65535),
+        "stepping": integer(p0["stepping"], "cpu.stepping", 0, 65535),
+        "logical_cpus": integer(count, "cpu.logical_cpus", 1, 4096),
+        "flags": flags,
+    }
+
+
+def memory(root):
+    m = re.search(r"^MemTotal:\s+([0-9]+) kB$", read(root, "/proc/meminfo", "the memory information"), re.M)
+    if not m:
+        raise Fail("/proc/meminfo has no MemTotal line in kB")
+    return {"total_bytes": integer(int(m.group(1)) * 1024, "memory.total_bytes")}
+
+
+def driver(root, runner):
+    loaded = os.path.isdir(os.path.join(root, "sys/module/nvidia"))
+    if loaded:
+        version = one_line(read(root, "/sys/module/nvidia/version", "the loaded driver's version"))
+    else:
+        rc, out = runner(["modinfo", "-F", "version", "nvidia"])
+        if rc != 0 or out.count("\n") > 1:
+            raise Fail("modinfo -F version nvidia exited %d with %r" % (rc, out))
+        version = one_line(out)
+    return {"version": text(version, BOUND, "driver.version", r"[0-9]+(\.[0-9]+){1,2}"), "loaded": loaded}
+
+
+def cuda_runtime(root, runner):
+    rc, out = runner(["ldconfig", "-p"])
+    if rc != 0:
+        raise Fail("ldconfig -p exited %d" % rc)
+    pairs = [m.groups() for m in re.finditer(r"^\s*(libcudart\.so\.[0-9]+) \(libc6,x86-64\) => (\S+)$", out, re.M)]
+    found = sorted({name for name, _ in pairs})
+    paths = sorted({path for _, path in pairs})
+    if len(found) != 1 or len(paths) != 1:
+        raise Fail("ldconfig -p finds %d libcudart.so.<major> name(s) and %d path(s), not one" % (len(found), len(paths)))
+    real = os.path.basename(os.path.realpath(os.path.join(root, paths[0].lstrip("/"))))
+    if not real.startswith("libcudart.so."):
+        raise Fail("%s's real file is %s, not libcudart.so.<version>" % (paths[0], real))
+    return {"version": text(real[len("libcudart.so."):], BOUND, "cuda_runtime.version", r"[0-9]+\.[0-9]+(\.[0-9]+)?")}
+
+
+def sysfs_address(bus_id):
+    """nvidia-smi's pci.bus_id, lowercased, its domain written as sysfs writes it (%04x)."""
+    m = re.fullmatch(r"([0-9a-f]{4,8}):([0-9a-f]{2}):([0-9a-f]{2})\.([0-7])", bus_id.strip().lower())
+    if not m:
+        raise Fail("nvidia-smi gave the address %r" % bus_id)
+    return "%04x:%s:%s.%s" % (int(m.group(1), 16), m.group(2), m.group(3), m.group(4))
+
+
+def address_key(a):
+    d, b, rest = a.split(":")
+    dev, fn = rest.split(".")
+    return (int(d, 16), int(b, 16), int(dev, 16), int(fn))
+
+
+def display_functions(root):
+    """The NVIDIA display functions sysfs holds: vendor 0x10de, class 0x0300 or 0x0302."""
+    base = os.path.join(root, "sys/bus/pci/devices")
+    try:
+        names = sorted(os.listdir(base))
+    except OSError as e:
+        raise Fail("/sys/bus/pci/devices could not be read: %s" % (e.strerror or e))
+    out = []
+    for n in names:
+        vendor = one_line(read(root, "/sys/bus/pci/devices/%s/vendor" % n, "a PCI function's vendor")).lower()
+        klass = one_line(read(root, "/sys/bus/pci/devices/%s/class" % n, "a PCI function's class")).lower()
+        if vendor == "0x10de" and klass[:6] in ("0x0300", "0x0302"):
+            out.append(n)
+    return out
+
+
+def cards(root, runner, loaded):
+    found = []
+    if loaded:
+        rc, out = runner(NVIDIA_SMI)
+        if rc == 0:
+            for line in out.split("\n"):
+                if not line.strip():
+                    continue
+                parts = [p.strip() for p in line.split(",")]
+                if len(parts) != 3:
+                    raise Fail("nvidia-smi gave the line %r" % line)
+                found.append((sysfs_address(parts[0]), parts[1], parts[2]))
+        elif rc != 6:
+            raise Fail("nvidia-smi exited %d" % rc)
+    found.sort(key=lambda c: address_key(c[0]))
+    if len(found) > 16:
+        raise Fail("%d cards, over 16" % len(found))
+    listed = [c[0] for c in found]
+    if len(set(listed)) != len(listed):
+        raise Fail("nvidia-smi names an address twice")
+    unlisted = [a for a in display_functions(root) if a not in listed]
+    if unlisted:
+        raise Fail("sysfs holds NVIDIA display function(s) the driver does not list: %s" % " ".join(unlisted))
+    return [{"ordinal": i,
+             "name": text(name, 96, "cards[%d].name" % i),
+             "pci_address": text(addr, 13, "cards[%d].pci_address" % i, r"[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]"),
+             "memory_bytes": integer(integer(mib, "cards[%d] memory.total" % i) * 1048576, "cards[%d].memory_bytes" % i)}
+            for i, (addr, name, mib) in enumerate(found)]
+
+
+def drives(runner):
+    out = []
+    for role, mp in MOUNTS:
+        rc, text_out = runner(["findmnt", "-J", "-b", "--mountpoint", mp, "-o", "FSTYPE,LABEL,OPTIONS,SIZE,AVAIL"])
+        if rc == 1 and not text_out.strip():
+            out.append({"role": role, "mount_point": mp, "mounted": False})
+            continue
+        if rc != 0:
+            raise Fail("findmnt at %s exited %d" % (mp, rc))
+        try:
+            fs = json.loads(text_out)["filesystems"]
+        except (ValueError, KeyError, TypeError):
+            raise Fail("findmnt at %s gave %r" % (mp, text_out[:200]))
+        if not isinstance(fs, list) or len(fs) != 1 or not isinstance(fs[0], dict):
+            raise Fail("findmnt at %s finds %s filesystems, not one" % (mp, len(fs) if isinstance(fs, list) else "no list of"))
+        f = fs[0]
+        options = f.get("options")
+        if not isinstance(options, str):
+            raise Fail("findmnt at %s gives no options" % mp)
+        out.append({
+            "role": role, "mount_point": mp, "mounted": True,
+            "label": text(f.get("label") or "", 16, "drives[%s].label" % role),
+            "filesystem": text(f.get("fstype") or "", 16, "drives[%s].filesystem" % role),
+            "bytes": integer(f.get("size"), "drives[%s].bytes" % role),
+            "free_bytes": integer(f.get("avail"), "drives[%s].free_bytes" % role),
+            "project_quota": "prjquota" in options.split(","),
+        })
+    return out
+
+
+def survey(stage, root="/", runner=run, now=None):
+    """The report as its bytes; raises Fail."""
+    if stage not in ("pairing", "drives"):
+        raise Fail("the stage is %r, not pairing or drives" % stage)
+    t = time.gmtime() if now is None else now
+    report = {"format": FORMAT, "stage": stage, "taken": time.strftime("%Y-%m-%dT%H:%M:%SZ", t)}
+    report["image"] = image(root)
+    report["kernel"] = {"release": text(os.uname().release if root == "/" else one_line(read(root, "/proc/sys/kernel/osrelease", "the kernel release")), 64, "kernel.release")}
+    report["machine"] = machine(root, runner)
+    report["cpu"] = cpu(root)
+    report["memory"] = memory(root)
+    report["driver"] = driver(root, runner)
+    report["cuda_runtime"] = cuda_runtime(root, runner)
+    report["cards"] = cards(root, runner, report["driver"]["loaded"])
+    report["drives"] = drives(runner)
+    body = (json.dumps(report, ensure_ascii=True, indent=1) + "\n").encode("ascii")
+    if len(body) > BOUND:
+        raise Fail("the report is %d bytes, over %d" % (len(body), BOUND))
+    return body
+
+
+def main(argv):
+    if len(argv) != 3 or argv[1] != "--stage" or argv[2] not in ("pairing", "drives"):
+        sys.stderr.write("usage: weaver-survey --stage pairing|drives\n")
+        return 2
+    try:
+        body = survey(argv[2])
+    except Fail as e:
+        sys.stderr.write("weaver-survey: no report: %s\n" % e)
+        return 1
+    sys.stdout.buffer.write(body)
+    sys.stdout.buffer.flush()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -95,6 +95,20 @@ AGENT_DIR=/mnt/weaver/state
 DEPLOY_FILES="create-agent.sh retired-python.sh verify-load.sh agent_tuple.py turn.py decommission.sh account-drop.sh"
 WW_TEMPLATES="install/units/weaver-web-gate-con@.service.in install/units/weaver-web-admin-con@.service.in"
 CONNECTORS_CMD="cargo build --locked --release --no-default-features --bin gate-con --bin admin-con"
+# The ready layer (weaver-appliance-build-Spec section 2; the operator's rulings of
+# 2026-11-19): the connectors' accounts and the pairing account, the folders the pairing
+# uses, the survey and the request unit. A box's first boot makes each connector's key and
+# request; the image carries none. Defined once, here: lib.sh reads them for proof.
+READY_ACCOUNTS='weaver-gatecon weaver-admincon weaver-pair'
+READY_WEB=/etc/weaver-web
+# Each folder as path:owner:mode, parents first. The owner's own group is its group.
+READY_DIRS='/etc/weaver-web:root:755 /etc/weaver-web/pairing:root:755 /etc/weaver-web/pairing/gate:weaver-gatecon:700 /etc/weaver-web/pairing/admin:weaver-admincon:700 /etc/weaver-web/pairing/exchange:weaver-pair:755 /etc/weaver-web/connectors:root:755'
+READY_SURVEY=/opt/weaver-appliance/bin/weaver-survey
+READY_REQUESTS=/opt/weaver-appliance/libexec/requests
+READY_UNIT=weaver-appliance-requests.service
+READY_UNIT_FILE=/etc/systemd/system/$READY_UNIT
+# Where build-template.sh copies guest/ready/ in; the seal removes it with the harness.
+READY_SRC=/usr/local/share/weaver-build/ready
 
 section() { printf '\n== %s\n' "$*"; }
 cuda_env() {
@@ -182,7 +196,7 @@ ignored_check() {
     local conf=$1 n line bad=""; shift
     n=$(grep -cE '^[[:space:]]*IgnorePkg[[:space:]]*=' "$conf")
     [ "$n" = 1 ] || bad+="pacman.conf has $n IgnorePkg lines, not one. "
-    line=" $(grep -E '^[[:space:]]*IgnorePkg[[:space:]]*=' "$conf" | head -1 | sed -E 's/^[^=]*=//') "
+    line=" $(grep -E '^[[:space:]]*IgnorePkg[[:space:]]*=' "$conf" | sed -n 1p | sed -E 's/^[^=]*=//') "
     for n; do case $line in *" $n "*) ;; *) bad+="IgnorePkg does not name $n. " ;; esac; done
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
@@ -227,7 +241,7 @@ facts() {
     section os; cat /etc/os-release
     section kernel; uname -a
     section cpu-memory-disk; nproc; free -g; df -h / /tmp
-    section init; systemctl --version | head -1; stat -fc %T /sys/fs/cgroup
+    section init; systemctl --version | sed -n 1p; stat -fc %T /sys/fs/cgroup
     section python; python3 --version
     section identity; cat /etc/machine-id
     section network; ip -4 -o addr show scope global; ip -4 route; resolvectl dns
@@ -444,8 +458,8 @@ stack_build() {
     export WEAVER_AGENT_DIR=$AGENT_DIR
     echo "CUDA_PATH=$CUDA_PATH NVCC_CCBIN=$NVCC_CCBIN CUDA_LIB_DIR=$CUDA_LIB_DIR CUDA_COMPUTE_CAP=$CUDA_COMPUTE_CAP WEAVER_AGENT_DIR=$WEAVER_AGENT_DIR"
     local v
-    v=$("$NVCC_CCBIN" --version | head -1); record_read build.nvcc-host-compiler $? "$NVCC_CCBIN: $v" || return 1
-    v=$(cc --version | head -1); record_read build.cc $? "$(readlink -f "$(command -v cc)"): $v" || return 1
+    v=$("$NVCC_CCBIN" --version | sed -n 1p); record_read build.nvcc-host-compiler $? "$NVCC_CCBIN: $v" || return 1
+    v=$(cc --version | sed -n 1p); record_read build.cc $? "$(readlink -f "$(command -v cc)"): $v" || return 1
     local rc=0 sampler
     ( while :; do awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{print int((t-a)/1024)}' /proc/meminfo; sleep 5; done ) \
         >"$HOME/mem-samples" 2>/dev/null &
@@ -524,6 +538,45 @@ connectors() {
     record_sha connectors.gate-con /opt/weaver-web/bin/gate-con || return 1
     record_sha connectors.admin-con /opt/weaver-web/bin/admin-con || return 1
     for f in $WW_TEMPLATES; do record_sha "connectors.template.${f##*/}" "$WW/$f" '' ' (not laid)' || return 1; done
+}
+
+# ready: the ready layer, after the connectors and before the cleanup, so the cleanup,
+# the probes and the MANIFEST all cover it (weaver-appliance-build-Spec section 2, step 10).
+# The accounts by create-agent.sh's own line where they are absent; the folders, the
+# survey, the request script and the unit laid as ready_check judges them; the unit
+# enabled, never started: it would make keys here, which the seal's probes refuse. A rerun
+# lays the same again, and ready_check refuses anything else.
+ready() {
+    local a f d path owner mode g v
+    for f in weaver-survey requests "$READY_UNIT"; do
+        [ -f "$READY_SRC/$f" ] || { echo "no $READY_SRC/$f: build-template.sh copies guest/ready/ in"; return 1; }
+    done
+    for a in $READY_ACCOUNTS; do
+        getent passwd "$a" >/dev/null; g=$?
+        case $g in
+            0) echo "$a stands; ready_check judges its shape" ;;
+            2) sudo useradd --system --shell /usr/sbin/nologin --no-create-home --user-group "$a" || return 1
+               echo "laid $a" ;;
+            *) echo "getent exited $g for $a, so whether it stands is not known"; return 1 ;;
+        esac
+    done
+    for d in $READY_DIRS; do
+        IFS=: read -r path owner mode <<<"$d"
+        sudo install -d -o "$owner" -g "$owner" -m "0$mode" "$path" || return 1
+    done
+    sudo install -d -o root -g root -m 0755 /opt/weaver-appliance /opt/weaver-appliance/bin /opt/weaver-appliance/libexec || return 1
+    sudo install -o root -g root -m 0755 "$READY_SRC/weaver-survey" "$READY_SURVEY" || return 1
+    sudo install -o root -g root -m 0755 "$READY_SRC/requests" "$READY_REQUESTS" || return 1
+    sudo install -o root -g root -m 0644 "$READY_SRC/$READY_UNIT" "$READY_UNIT_FILE" || return 1
+    sudo systemctl daemon-reload || return 1
+    sudo systemctl enable "$READY_UNIT" || return 1
+    v=$(for a in $READY_ACCOUNTS; do getent passwd "$a" || exit 1; done) || { echo "record: the accounts could not be read"; return 1; }
+    record_read ready.accounts 0 "$(awk -F: '{ printf "%s%s:%s:%s", (NR > 1 ? " " : ""), $1, $3, $4 }' <<<"$v")" || return 1
+    record_sha ready.survey "$READY_SURVEY" || return 1
+    record_sha ready.requests "$READY_REQUESTS" || return 1
+    record_sha ready.unit "$READY_UNIT_FILE" || return 1
+    v=$(ready_check 2>&1) || { echo "the ready layer is not as laid: $v"; return 1; }
+    section "the ready layer"; echo "$READY_ACCOUNTS; $READY_WEB's six folders; $READY_SURVEY; $READY_REQUESTS; $READY_UNIT enabled"
 }
 
 # The driver, by the Arch route (the Planner's ruling of 2026-11-16, route B's equivalent):
@@ -676,7 +729,7 @@ runtime_build() {
     done >"$w/ldd"
     out=$(runtime_resolved_check "$RUNTIME_DIR/files" "$w/ldd")
     [ -z "$out" ] || { echo "$out"; return 1; }
-    out=$(while IFS= read -r f; do pacman -Qoq -- "$f" 2>/dev/null | grep -qx cuda || echo "$f is not cuda's"; done <"$RUNTIME_DIR/files")
+    out=$(while IFS= read -r f; do o=$(pacman -Qoq -- "$f" 2>/dev/null); grep -qx cuda <<<"$o" || echo "$f is not cuda's"; done <"$RUNTIME_DIR/files")
     [ -z "$out" ] || { echo "$out"; return 1; }
     runtime_hashes "$RUNTIME_DIR/files" "$RUNTIME_DIR/toolkit.hashes" || return 1
     ! grep -q '^MISSING ' "$RUNTIME_DIR/toolkit.hashes" || { grep '^MISSING ' "$RUNTIME_DIR/toolkit.hashes"; return 1; }
@@ -707,7 +760,7 @@ runtime_check() {
     pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1" >/dev/null || bad+="$(pin_check "$RUNTIME_PKG" "${PIN_CUDA%-*}-1"). "
     now=$(mktemp) || return 1
     runtime_hashes "$RUNTIME_DIR/files" "$now"
-    cmp -s "$RUNTIME_DIR/toolkit.hashes" "$now" || bad+="installed files differ from the toolkit's: $(diff "$RUNTIME_DIR/toolkit.hashes" "$now" | grep '^[<>]' | head -4 | tr '\n' ' '). "
+    cmp -s "$RUNTIME_DIR/toolkit.hashes" "$now" || bad+="installed files differ from the toolkit's: $(diff "$RUNTIME_DIR/toolkit.hashes" "$now" | grep '^[<>]' | sed -n 1,4p | tr '\n' ' '). "
     rm -f -- "$now"
     while IFS= read -r f; do
         [ "$(pacman -Qoq -- "$f" 2>/dev/null)" = "$RUNTIME_PKG" ] || bad+="$f is not $RUNTIME_PKG's. "
@@ -715,7 +768,7 @@ runtime_check() {
     [ "$(cat "$RUNTIME_LDCONF" 2>/dev/null)" = "$CUDA_LIBS" ] || bad+="$RUNTIME_LDCONF does not name $CUDA_LIBS alone. "
     # A directory the loader's files name and that does not stand (the toolkit's nvvm/lib64).
     w=$(sudo ldconfig -X 2>&1)
-    ! grep -q "Can't stat" <<<"$w" || bad+="ldconfig cannot stat: $(grep "Can't stat" <<<"$w" | head -2 | tr '\n' ' '). "
+    ! grep -q "Can't stat" <<<"$w" || bad+="ldconfig cannot stat: $(grep "Can't stat" <<<"$w" | sed -n 1,2p | tr '\n' ' '). "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
 
@@ -1156,7 +1209,7 @@ initrd_check() {
     local list found
     list=$(sudo lsinitcpio /boot/initramfs-linux.img 2>/dev/null) && [ -n "$list" ] \
         || { echo "lsinitcpio cannot read /boot/initramfs-linux.img"; return 1; }
-    found=$(grep -E '(systemd-networkd|/nouveau\.ko|/nouveau/)' <<<"$list" | sort -u | head -8)
+    found=$(grep -E '(systemd-networkd|/nouveau\.ko|/nouveau/)' <<<"$list" | sort -u | sed -n 1,8p)
     [ -z "$found" ] || { echo "$found"; return 1; }
 }
 
@@ -1475,7 +1528,7 @@ resolved_check() {
 # esp_partition: the one partition of the root's disk whose GPT type is the ESP's.
 esp_partition() {
     local disk n
-    disk=$(lsblk -nrpo PKNAME "$(findmnt -nvo SOURCE /)" 2>/dev/null | head -1)
+    disk=$(lsblk -nrpo PKNAME "$(findmnt -nvo SOURCE /)" 2>/dev/null | sed -n 1p)
     n=$(lsblk -nrpo PATH,PARTTYPE "$disk" 2>/dev/null | awk -v t="$ESP_TYPE" 'tolower($2) == t {print $1}')
     [ "$(wc -w <<<"$n")" = 1 ] || { echo "the root's disk ${disk:-unknown} has $(wc -w <<<"$n") ESPs, not one" >&2; return 1; }
     echo "$n"
@@ -1534,6 +1587,74 @@ swap_check() {
     [ -z "$(swapon --show --noheadings 2>/dev/null)" ] || bad+="a swap is in use: $(swapon --show --noheadings | tr '\n' ' '). "
     [ -z "$bad" ] || { echo "$bad"; return 1; }
 }
+# shape_check ACCOUNT: nothing, and status 0, where ACCOUNT stands in the box's shape that
+# WeaverAgent's create-agent.sh accepts (judge_box_account at b74062bf): a uid above 0 and
+# below UID_MIN, a nologin shell, no home standing, a primary group of its own name that
+# no other account holds and that has no other member, and no other group. Otherwise a
+# sentence, and status 1.
+shape_check() {
+    local a=$1 line uid gid home shell umin gl gname members sharers groups
+    line=$(getent passwd "$a") || { echo "$a does not stand. "; return 1; }
+    IFS=: read -r _ _ uid gid _ home shell <<<"$line"
+    umin=$(awk '$1 == "UID_MIN" { v = $2 } END { print v }' /etc/login.defs 2>/dev/null)
+    [[ "$umin" =~ ^[0-9]+$ ]] || umin=1000
+    [[ "$uid" =~ ^[0-9]+$ ]] && [ "$uid" -gt 0 ] && [ "$uid" -lt "$umin" ] || { echo "$a has uid $uid, not above 0 and below UID_MIN $umin. "; return 1; }
+    case $shell in /usr/sbin/nologin|/sbin/nologin|/usr/bin/nologin) ;; *) echo "$a has the shell '$shell', not nologin. "; return 1 ;; esac
+    [ ! -e "$home" ] && [ ! -L "$home" ] || { echo "$a has a home standing at $home. "; return 1; }
+    gl=$(getent group "$gid") || { echo "$a's primary group $gid does not resolve. "; return 1; }
+    IFS=: read -r gname _ _ members <<<"$gl"
+    [ "$gname" = "$a" ] || { echo "$a's primary group is $gname, not its own. "; return 1; }
+    [ -z "$members" ] || [ "$members" = "$a" ] || { echo "$a's group has the members $members. "; return 1; }
+    sharers=$(getent passwd | awk -F: -v g="$gid" -v n="$a" '$4 == g && $1 != n { printf "%s ", $1 }')
+    [ -z "$sharers" ] || { echo "$a's group is the primary group of ${sharers% } too. "; return 1; }
+    groups=$(id -Gn -- "$a" 2>/dev/null) || { echo "$a's groups could not be read. "; return 1; }
+    [ "$groups" = "$a" ] || { echo "$a holds the groups '$groups', not its own alone. "; return 1; }
+}
+
+# ready_recorded KEY: the stamp's value of KEY: from the build's records, or, in the final
+# pass, after the records are gone, from the stamp being assembled.
+ready_recorded() {
+    if [ -f "$BUILD/stamp.d/$1" ]; then
+        cat -- "$BUILD/stamp.d/$1"
+    else
+        awk -v k="$1 = " 'index($0, k) == 1 { print substr($0, length(k) + 1) }' "$RECORD/stamp.part" 2>/dev/null
+    fi
+}
+
+# ready_check: the ready layer exactly as the ready step lays it: the three accounts in the
+# box's shape; under READY_WEB the six folders alone, each a directory of its owner and
+# mode on the root filesystem, so nothing stands in them (no config, key or request at the
+# seal) and a config moves by a rename; nothing mounted at or under READY_WEB; the unit
+# enabled; the three files root's, each of the digest its ready line names. Prints each
+# finding; status 1 on any.
+ready_check() {
+    local bad="" a d path owner mode s rd want got m k f fmode
+    for a in $READY_ACCOUNTS; do bad+=$(shape_check "$a"); done
+    rd=$(sudo stat -c %d -- / 2>/dev/null)
+    for d in $READY_DIRS; do
+        IFS=: read -r path owner mode <<<"$d"
+        s=$(sudo stat -c '%F %U:%G %a %d' -- "$path" 2>/dev/null)
+        [ "$s" = "directory $owner:$owner $mode $rd" ] || bad+="$path is '${s:-absent}', not a directory $owner:$owner $mode on the root filesystem. "
+    done
+    want=$(for d in $READY_DIRS; do echo "${d%%:*}"; done | LC_ALL=C sort)
+    got=$(sudo find "$READY_WEB" -xdev 2>/dev/null | LC_ALL=C sort)
+    [ "$got" = "$want" ] || bad+="$READY_WEB holds other than the six folders: $(comm -13 <(printf '%s\n' "$want") <(printf '%s\n' "$got") | awk 'NR <= 5' | tr '\n' ' ')"
+    m=$(findmnt -rn -o TARGET 2>/dev/null) || bad+="the mount table could not be read. "
+    m=$(awk -v w="$READY_WEB" '$0 == w || index($0, w "/") == 1' <<<"$m")
+    [ -z "$m" ] || bad+="mounted at or under $READY_WEB: $(tr '\n' ' ' <<<"$m")"
+    s=$(systemctl is-enabled "$READY_UNIT" 2>/dev/null)
+    [ "$s" = enabled ] || bad+="$READY_UNIT is '${s:-unknown}', not enabled. "
+    for k in survey:$READY_SURVEY:755 requests:$READY_REQUESTS:755 unit:$READY_UNIT_FILE:644; do
+        IFS=: read -r k f fmode <<<"$k"; k=ready.$k
+        want=$(ready_recorded "$k")
+        got=$(sudo sha256sum -- "$f" 2>/dev/null); got=${got%% *}
+        [[ "$want" =~ ^[0-9a-f]{64}$ ]] && [ "$got" = "$want" ] || bad+="$f is '${got:-unreadable}', not the stamp's $k '${want}'. "
+        s=$(sudo stat -c '%F %U:%G %a' -- "$f" 2>/dev/null)
+        [ "$s" = "regular file root:root $fmode" ] || bad+="$f is '${s:-absent}', not a regular file root:root $fmode. "
+    done
+    [ -z "$bad" ] || { echo "$bad"; return 1; }
+}
+
 # mounts_check: the data mount points as the image lays them: /mnt/weaver holding the two
 # alone, and each a directory (not a link), root's, mode 0755, empty, and on the image's
 # own filesystem, so nothing is mounted there in the build. Prints each finding; exits 1 on
@@ -1561,6 +1682,8 @@ private_keys() {
     sudo find /etc /var /home /root /opt /usr/local -xdev -type f \( -name '*.priv' -o -name '*.key' -o -name '*_key' \
         -o -name 'id_rsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' \) 2>/dev/null
     sudo find /etc /var /home /root /opt /usr/local -xdev -type f -name '*.pem' -exec grep -l 'PRIVATE KEY-----' {} + 2>/dev/null
+    # A connector's config holds its key, whatever its name: none stands at the seal.
+    sudo find "$READY_WEB" -xdev -type f -exec grep -l 'PRIVATE KEY-----' {} + 2>/dev/null
     sudo find "$SEAL_KEYS_DIR" -xdev -type f 2>/dev/null
     return 0
 }
@@ -1589,7 +1712,7 @@ probes() {
     done
     check "compilers, toolchains and build tools on PATH" "$out"
     check "compiler and toolchain directories" "$(compiler_dirs)"
-    check "static or device-link CUDA archives" "$(find /usr/local "$CUDA_HOME" -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | head -5)"
+    check "static or device-link CUDA archives" "$(find /usr/local "$CUDA_HOME" -xdev \( -name '*.a' -o -name '*_static*' \) 2>/dev/null | sed -n 1,5p)"
     check "build packages installed" "$(pacman -Qq 2>/dev/null | grep -E "$BUILD_RE")"
     check "a kernel's module build tree" "$(build_trees)"
     check "binutils kept for more than the base packages that require it" "$(binutils_check)"
@@ -1597,8 +1720,8 @@ probes() {
     check "test or sudo not GNU's and sudo's own" "$(o=$(pacman -Qoq /usr/bin/test 2>&1); [ "$o" = coreutils ] || echo "/usr/bin/test is ${o}'s"; o=$(pacman -Qoq /usr/bin/sudo 2>&1); [ "$o" = sudo ] || echo "/usr/bin/sudo is ${o}'s"; pacman -Qq uutils-coreutils sudo-rs 2>/dev/null)"
     # The man index carries a CACHEDIR.TAG of its own; it is not a build directory. A file
     # a package owns is the distribution's; only what no package owns is a hit.
-    check "source trees and build directories" "$(sudo find / -xdev -path /var/cache/man -prune -o \( -name .git -o -name Cargo.toml -o -name Cargo.lock -o -name '*.rs' -o -name '*.cu' -o -name CACHEDIR.TAG -o -name .rustc_info.json -o -name WeaverAgent -o -name WeaverWeb \) -not -path '/proc/*' -print 2>/dev/null | while IFS= read -r f; do pacman -Qoq -- "$f" >/dev/null 2>&1 || echo "$f"; done | head -8)"
-    check "package caches and sync databases" "$(sudo find /var/cache/pacman /var/lib/pacman/sync -xdev -type f 2>/dev/null | head -5)"
+    check "source trees and build directories" "$(sudo find / -xdev -path /var/cache/man -prune -o \( -name .git -o -name Cargo.toml -o -name Cargo.lock -o -name '*.rs' -o -name '*.cu' -o -name CACHEDIR.TAG -o -name .rustc_info.json -o -name WeaverAgent -o -name WeaverWeb \) -not -path '/proc/*' -print 2>/dev/null | while IFS= read -r f; do pacman -Qoq -- "$f" >/dev/null 2>&1 || echo "$f"; done | sed -n 1,8p)"
+    check "package caches and sync databases" "$(sudo find /var/cache/pacman /var/lib/pacman/sync -xdev -type f 2>/dev/null | sed -n 1,5p)"
     check "package sources other than the snapshot" "$(pacman_sources_check /etc/pacman.conf /etc/pacman.d/mirrorlist)"
     check "update units not masked" "$(updates_check 2>&1)"
     check "the cloud metadata service not masked" "$(imds_check 2>&1)"
@@ -1610,7 +1733,8 @@ probes() {
     check "the data mount points not as laid" "$(mounts_check 2>&1)"
     check "a swap" "$(swap_check 2>&1)"
     check "the ESP not mounted read-only at $ESP_DIR" "$(esp_check 2>&1)"
-    check "a connector config or unit" "$(ls -d /etc/weaver-web /etc/systemd/system/weaver-web-* 2>/dev/null)"
+    check "a connector's unit" "$(ls -d /etc/systemd/system/weaver-web-* 2>/dev/null)"
+    check "the ready layer not as laid" "$(ready_check 2>&1)"
     check "the stack's members and shell" "$(for b in worker weaver-admin weaver-trace-relay weaver-gate weaver-spu weaver-state busybox busybox.applets; do [ -f "/opt/weaver/bin/$b" ] || echo "missing $b"; done)"
     check "the connectors' programs" "$(for b in gate-con admin-con; do [ -x "/opt/weaver-web/bin/$b" ] || echo "missing $b"; done)"
     check "the deploy scripts' copy" "$(for b in $DEPLOY_FILES; do [ -f "$DEPLOY_COPY/$b" ] || echo "missing $b"; done)"
@@ -1653,7 +1777,7 @@ probes() {
     # Private keys, in both passes, so a false hit is found before the seal's removals.
     # The pre pass leaves out what the seal itself removes (the pacman keyring and the SSH
     # host keys).
-    check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE "^/etc/ssh/ssh_host_|^$SEAL_KEYS_DIR/"; else cat; fi | head -8)"
+    check "private-key files" "$(private_keys | if [ "$mode" = pre ]; then grep -vE "^/etc/ssh/ssh_host_|^$SEAL_KEYS_DIR/"; else cat; fi | sed -n 1,8p)"
     # No key admits a login: the operator places the first one (decision 16). In both
     # passes, so a key is found before the seal's removals (the Planner's review of
     # 2026-11-15, F9). The pre pass leaves out the build account's own, which the seal
@@ -1667,7 +1791,7 @@ probes() {
         # boot. An empty or absent file is a hit (F8).
         check "machine identity" "$([ "$(cat /etc/machine-id 2>/dev/null)" = uninitialized ] || echo "machine-id is '$(head -c 40 /etc/machine-id 2>/dev/null)', not uninitialized"; ls /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret /var/lib/dbus/machine-id 2>/dev/null)"
         check "the pacman keyring" "$(ls -d "$SEAL_KEYS_DIR" 2>/dev/null)"
-        check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | head -5)"
+        check "logs" "$(find /var/log -xdev -type f -size +0 2>/dev/null | sed -n 1,5p)"
         check "the build's records and harness" "$(ls -d "$BUILD" /usr/local/sbin/template-steps /usr/local/share/weaver-build 2>/dev/null)"
         check "the first boot's update armed: a stamp not at /usr's time" "$(updated_check 2>&1)"
         check "a stamp other than the one being sealed" "$(ls "$RECORD" 2>/dev/null | grep -vxE 'stamp.part|seal-probes')"
@@ -1694,7 +1818,7 @@ image_hostname_check() {
     local re
     re=$(printf '%s' "$build" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
     sudo grep -rlE -- "(^|[^A-Za-z0-9-])$re([^A-Za-z0-9-]|\$)" /etc 2>/dev/null | grep -vxF "$RECORD/seal-probes" | if [ "$1" = pre ]; then
-        grep -vE "^/etc/(ssh/ssh_host_|sudoers\.d/90-cloud-init-users\$|pacman\.d/gnupg/)"; else cat; fi | head -8
+        grep -vE "^/etc/(ssh/ssh_host_|sudoers\.d/90-cloud-init-users\$|pacman\.d/gnupg/)"; else cat; fi | sed -n 1,8p
     return 0
 }
 driver_check_quiet() {
@@ -1929,6 +2053,7 @@ trees) trees ;;
 toolkit) toolkit ;;
 stack) stack ;;
 connectors) connectors ;;
+ready) ready ;;
 driver) driver ;;
 cleanup) cleanup ;;
 probes) probes pre ;;
