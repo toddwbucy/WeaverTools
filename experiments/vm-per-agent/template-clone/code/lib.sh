@@ -1320,12 +1320,21 @@ PY
 # line of ASCII ending in its newline, within WeaverWeb's first frame bound (16 KiB, the
 # newline included), a JSON object of exactly the members event, "request", and request, a
 # PEM certificate request, which the host's openssl reads and checks against its own
-# signature. The two are not the same request.
+# signature. The two are not the same request. openssl's verdict is read as well as its
+# status: a request passes only on exit 0 with "verify OK" in openssl's output and "verify
+# failure" nowhere in it, since some versions print the failure and exit 0 (OpenSSL 3.0,
+# by its review of 2026-11-19; 1.1.1 prints the short "verify OK"). The host's openssl
+# version is printed once first.
 ready_requests_judge() {
     python3 -I -B - "$1" <<'PY' || echo "PROOF-FAIL: the requests could not be judged (exit $?)"
 import json, os, subprocess, sys
 d, pems = sys.argv[1], {}
 BEGIN, END = "-----BEGIN CERTIFICATE REQUEST-----\n", "-----END CERTIFICATE REQUEST-----\n"
+try:
+    v = subprocess.run(["openssl", "version"], capture_output=True, timeout=30)
+    print("the host's openssl: " + (" ".join(v.stdout.decode("utf-8", "replace").split()) or "no version printed (exit %d)" % v.returncode))
+except (OSError, subprocess.TimeoutExpired) as e:
+    print(f"the host's openssl: unread ({e})")
 for plane in ("gate", "admin"):
     p = os.path.join(d, plane + ".req")
     try:
@@ -1350,8 +1359,8 @@ for plane in ("gate", "admin"):
     except (OSError, subprocess.TimeoutExpired) as e:
         print(f"PROOF-FAIL: openssl could not read the {plane} request: {e}"); continue
     said = " ".join((r.stdout + r.stderr).decode("utf-8", "replace").split())
-    if r.returncode != 0:
-        print(f"PROOF-FAIL: the {plane} request's PEM does not verify as a certificate request: {said}"); continue
+    if r.returncode != 0 or "verify OK" not in said or "verify failure" in said:
+        print(f"PROOF-FAIL: the {plane} request's PEM does not verify as a certificate request (openssl exit {r.returncode}): {said}"); continue
     pems[plane] = obj["request"]
     print(f"{plane}: one line, {len(raw)} bytes, of the form pair reads; openssl: {said}")
 if len(pems) == 2 and pems["gate"] == pems["admin"]:

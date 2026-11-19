@@ -70,6 +70,31 @@ PY
 reqline "$T/bad.csr" >"$T/rq/gate.req"; o=$(ready_requests_judge "$T/rq")
 check "a request whose signature does not hold is a finding naming its plane" \
     eval '[ "$(fails "$o")" = 1 ] && grep -q "^PROOF-FAIL: the gate request.s PEM does not verify as a certificate request" <<<"$o"'
+# openssl's verdict, read as well as its status: a stand-in openssl first on PATH for one
+# judge each. One prints the failure and exits 0, as OpenSSL 3.0 does (its review of
+# 2026-11-19); its mirror prints "verify OK" and exits 1; one prints both and exits 0; one
+# prints 1.1.1's short "verify OK" and exits 0, which passes.
+stand_ssl() { local n=$1 st=$2 l; shift 2; mkdir -p "$T/ssl-$n"
+    { echo '#!/usr/bin/env bash'; echo 'if [ "$1" = version ]; then echo "OpenSSL stand-in '"$n"'"; exit 0; fi'
+      echo 'cat >/dev/null'; for l; do printf 'echo %q >&2\n' "$l"; done; echo "exit $st"; } >"$T/ssl-$n/openssl"
+    chmod 0755 "$T/ssl-$n/openssl"; }
+stand_ssl fail0 0 "Certificate request self-signature verify failure"
+stand_ssl ok1 1 "Certificate request self-signature verify OK"
+stand_ssl both0 0 "Certificate request self-signature verify OK" "Certificate request self-signature verify failure"
+stand_ssl short0 0 "verify OK"
+reqs; o=$(PATH="$T/ssl-fail0:$PATH" ready_requests_judge "$T/rq")
+check "openssl printing the failure and exiting 0, as 3.0 does: a finding for each request, with its status" \
+    eval '[ "$(fails "$o")" = 2 ] && grep -qx "PROOF-FAIL: the gate request.s PEM does not verify as a certificate request (openssl exit 0): Certificate request self-signature verify failure" <<<"$o"'
+o=$(PATH="$T/ssl-ok1:$PATH" ready_requests_judge "$T/rq")
+check "openssl printing verify OK and exiting 1: a finding for each request" \
+    eval '[ "$(fails "$o")" = 2 ] && grep -qx "PROOF-FAIL: the admin request.s PEM does not verify as a certificate request (openssl exit 1): Certificate request self-signature verify OK" <<<"$o"'
+o=$(PATH="$T/ssl-both0:$PATH" ready_requests_judge "$T/rq")
+check "openssl printing both verdicts and exiting 0: a finding for each request" test "$(fails "$o")" = 2
+o=$(PATH="$T/ssl-short0:$PATH" ready_requests_judge "$T/rq")
+check "openssl 1.1.1's short verify OK with exit 0 passes, its version printed once, first" \
+    eval '[ "$(fails "$o")" = 0 ] && [ "$(grep -cE "^(gate|admin): one line" <<<"$o")" = 2 ] && [ "$(sed -n 1p <<<"$o")" = "the host'"'"'s openssl: OpenSSL stand-in short0" ] && [ "$(grep -c "^the host.s openssl: " <<<"$o")" = 1 ]'
+reqs; o=$(ready_requests_judge "$T/rq")
+check "with the host's own openssl, its version is the judge's first line" eval 'grep -q "^the host.s openssl: OpenSSL [0-9]" <<<"$(sed -n 1p <<<"$o")"'
 reqs; printf 'more\n' >>"$T/rq/admin.req"; o=$(ready_requests_judge "$T/rq")
 check "a request of two lines is a finding" eval 'has "$o" "PROOF-FAIL: the admin request is not one line ending in its newline"'
 reqs; printf '%s' "$(cat "$T/rq/admin.req")" >"$T/rq/admin.req"; o=$(ready_requests_judge "$T/rq")
