@@ -378,10 +378,11 @@ phase. The throwaway network-probe guests were removed.
 
 Added on 2026-11-20, after release 5.0. This section is not part of the measurement of
 2026-11-11 above. `code/make-template.sh` makes one release of the appliance image from
-end to end (the operator's ruling of 2026-11-19). Its header gives the command, the inputs, what the host needs, how to read
-the end and what follows. This section lists the parts it runs and says when a new pair
-of commits is enough and when the build code has to change with them. The Spec is
-`docs/profiles/weaver-appliance-build-Spec.md`, whose section 2 states each part in full.
+end to end (the operator's ruling of 2026-11-19). Its header gives the command, the
+inputs, what the host needs, how to read the end and what follows. This section lists
+the parts it runs and says when a new pair of commits is enough and when the build code
+has to change with them. The Spec is `docs/profiles/weaver-appliance-build-Spec.md`,
+whose section 2 states each part in full.
 
 ### The parts, in order
 

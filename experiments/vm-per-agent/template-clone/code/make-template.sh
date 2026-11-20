@@ -48,7 +48,10 @@
 # that knows the four architectures the proof checks (CUOBJDUMP). The host fetches the
 # cloud image, its signed digest file and the signing key over the network, and the build
 # guest downloads through QEMU's user-mode network. The build guest has 24 vCPUs, 64 GiB
-# of memory and a 120G disk by default.
+# of memory and a 120G disk by default. The host tests need tools of their own. run-all.sh
+# names a test skipped for a missing tool (exit 77), which does not fail the run, and its
+# last line, in host-tests.out, gives the passed, failed and skipped counts. Check that the
+# skipped count is the one this host expects.
 #
 # WHAT IT DOES, in order: the host tests, then build-template.sh's create, the guest steps
 # facts to connectors, mock, the steps ready, cleanup and probes, then seal, proof and tag
@@ -73,6 +76,10 @@
 #
 # AFTER IT. The sealed file is VM_ROOT/appliance/appliance.qcow2: read-only, standalone
 # (it names no backing file), its sha256 in VM_ROOT/logs/appliance/appliance-sha256.txt.
+# A libvirt storage pool for VM_ROOT/appliance stands after the run, since virt-install
+# makes one for each directory a disk path names. build-template.sh destroy removes it,
+# and with it VM_ROOT/appliance whole, the sealed file included, so a sealed file to keep
+# is copied out first.
 # tag applies nothing and runs no git. The tag is the operator's to make in WeaverAgent and
 # push, by the command tag prints (git tag -a appliance/VERSION, its message from
 # VM_ROOT/logs/appliance/tag-message.txt, on WA_COMMIT).
