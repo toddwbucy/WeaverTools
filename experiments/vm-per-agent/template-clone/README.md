@@ -147,7 +147,8 @@ that way from its first boot.
 
 **Since 2026-11-14 the tree cannot rebuild this template.** Since then
 `code/build-template.sh` builds the appliance image instead (`docs/profiles/weaver-appliance-build-Spec.md`), at its own path.
-From release 5.0, `code/make-template.sh` runs that build from end to end.
+From release 5.0, `code/make-template.sh` runs that build from end to end (its header, and
+"Making a release" below).
 This section records the template of 2026-11-11 as it was built then. `code/clone.sh`
 still clones that sealed template, and refuses an appliance image (Spec, section 0).
 
@@ -372,3 +373,72 @@ on those. The per-run logs are in the deposit.
 The sealed template (read-only, its domain undefined) and the clone, shut down and
 defined, holding the agent `vmagent1` created and unloaded, for a look before the GPU
 phase. The throwaway network-probe guests were removed.
+
+## Making a release
+
+Added on 2026-11-20, after release 5.0. This section is not part of the measurement of
+2026-11-11 above. `code/make-template.sh` makes one release of the appliance image from
+end to end (the operator's ruling of 2026-11-19). Its header gives the command, the inputs, what the host needs, how to read
+the end and what follows. This section lists the parts it runs and says when a new pair
+of commits is enough and when the build code has to change with them. The Spec is
+`docs/profiles/weaver-appliance-build-Spec.md`, whose section 2 states each part in full.
+
+### The parts, in order
+
+Each part's output is `PART.out` beside `make-template.log`, in
+`$VM_ROOT/appliance/make-template/`. The guest steps run `code/guest/template-steps` in
+the build guest over SSH.
+
+| Part | What it does |
+|---|---|
+| `host-tests` | the host logic tests (`code/test/host/run-all.sh`, or the runner `HOST_TESTS` names), with no root and no guest |
+| `create` | the cloud image fetched into `$VM_ROOT/images`, where no file of its name stands, after its `.SHA256` file's signature checks under the pinned key. Either way, the image must have its pinned digest. Then a standalone disk grown to `SIZE`, the seed, and the domain `NAME` defined and booted |
+| `step-facts` | the base image's packages recorded before anything is installed. The seed's guard must be loaded |
+| `step-os-probes` | `test` through sudo, visudo, and `nologin`, read as the deploy scripts need them |
+| `step-packages`, `step-rustup` | pacman on the Arch Linux Archive's snapshot of 2026-11-15 alone, the system brought to that day, the build's packages installed, then the pinned Rust toolchain |
+| `step-trees` | both repositories checked out detached at `WA_COMMIT` and `WW_COMMIT`, each clean, each pinning the toolchain the build pins |
+| `step-toolkit` | CCCL 3.3.4-1 by digest and signature, then Arch's `cuda` 13.4.3-1 |
+| `step-driver` | the prebuilt open module and its userspace at the pinned release, checked with no card |
+| `step-stack` | WeaverAgent's `deploy/bootstrap-stack.sh --install`, unmodified, with its test count recorded, and the deploy scripts copied to `/opt/weaver/deploy` |
+| `step-connectors` | `gate-con` and `admin-con` built with no default features, installed in `/opt/weaver-web/bin`, with no unit laid |
+| `mock` | the offline mock, run in the build guest (`template-clone-Spec.md`, section 8) |
+| `step-ready` | the ready layer: the three accounts, the six folders under `/etc/weaver-web`, the survey, and the request unit enabled |
+| `step-cleanup` | the checked cleanup: the CUDA runtime made a package of its own, then the trees, the toolchain, the build packages, cloud-init and the guest agent removed, and the image's settings written |
+| `step-probes` | the probes. Any hit refuses |
+| `seal` | the probes again and a dry run of the MANIFEST, then the guest seals itself and powers off. On the host, the verdict read out of the disk, the disk compacted, its sha256 recorded, the file made read-only and the domain undefined |
+| `proof` | the sealed file read offline, without root, then two boots of overlays on it: one with no seed, every frame it sends captured, and one as an operator's first boot, logged in at the console, then its second boot |
+| `tag` | the tag's message, printed. Nothing is applied |
+
+### When a new pair of commits is enough
+
+The build code needs no change where the new commits:
+- pin the Rust toolchain the build pins (`TOOLCHAIN` in `code/guest/template-steps`,
+  nightly-2026-02-13)
+- build with the build's packages (`PACKAGES`), Arch's `cuda` 13.4.3-1 and CCCL 3.3.4-1
+- load at run time only libraries that stay in the image: the stack's own, the six of the
+  CUDA runtime package, the driver's, and those of the packages the image keeps
+- ship the same stack members, deploy scripts, connectors and connector unit templates
+- compile ggml's CUDA kernels for the four architectures the proof reads
+- lay no unit, open no listener beyond loopback but SSH, and write nothing at a box's first
+  boot beyond what the proof expects.
+
+### When the build code changes with them
+
+Each list is in one place. A change to one is a change under `code/`, made with the Spec
+in the same act, and the host tests run on it. The middle column says what refuses, or
+what happens, without the change.
+
+| The commits bring | Without the change | What changes |
+|---|---|---|
+| another Rust toolchain | `step-trees` refuses: a `rust-toolchain.toml` naming another | `TOOLCHAIN` in `guest/template-steps` |
+| a new build dependency, a package | the stack's or the connectors' build fails | `PACKAGES` in `guest/template-steps`, a package of the snapshot's day (`ARCHIVE_DAY`) |
+| a package the stack needs at run time | the cleanup removes what the build added that no base or kept package needs, so the loader check fails at `step-cleanup` (a library not found) | `KEEP` in `guest/template-steps`, as well as `PACKAGES` |
+| another CUDA or CCCL version | `step-toolkit` refuses a version other than its pin | `PIN_CUDA`, or `CCCL_PIN` with `CCCL_URL` and `CCCL_SHA256`, in `guest/template-steps`. Arch's `cuda` comes from the snapshot, so another `cuda` means another snapshot day (`ARCHIVE_DAY`), with each `PIN_` read again for that day: a version that reads otherwise refuses |
+| a CUDA library the stack loads beyond the runtime package's six (cudart, cuBLAS, cuBLASLt, cuRAND, NVRTC and its builtins) | the loader check fails at `step-cleanup` | `RUNTIME_LIBS` in `guest/template-steps` |
+| ggml's kernels compiled for other architectures, or its library renamed | at the latest, `proof`'s device-code check fails | `GGML_CUBIN_ARCHS` or `GGML_CUDA_LIB` in `lib.sh` |
+| a stack member renamed or removed (`worker`, `weaver-admin`, `weaver-trace-relay`, `weaver-gate`, `weaver-spu`, `weaver-state`, `busybox` and its applet list) | the probes refuse, at `step-probes` and at `seal` | the members' list in `probes`, in `guest/template-steps`. A new member needs no change to be carried: `step-stack` records each file under `/opt/weaver/bin` and `/opt/weaver/lib`, and the loader check reads each. The probe holds only the members it names |
+| a deploy script an enrolled box runs, added, renamed or removed | `step-stack` refuses a named script the checkout lacks. An added one is not copied | `DEPLOY_FILES` in `guest/template-steps` |
+| another WeaverWeb program to ship | nothing refuses: it is not built | `CONNECTORS_CMD`, the install and record lines of `connectors`, and the connectors' list in `probes`, all in `guest/template-steps` |
+| a connector unit template moved or renamed | `step-connectors` fails: its digest cannot be read | `WW_TEMPLATES` in `guest/template-steps` |
+| a unit in the image | a connector's unit (`/etc/systemd/system/weaver-web-*`) refuses the seal. A link that systemd's preset changes at a box's first boot fails the proof, as does a listener beyond loopback other than SSH | the connectors' units are phase 2's, laid by WeaverWeb's staging. A unit of the ready layer is a change to `guest/ready/`, to `steps_in` in `build-template.sh`, to the `READY_` names, `ready` and `ready_check` in `guest/template-steps`, to the proof's reads in `lib.sh` and `build-template.sh`, and to the code digests `make-template.sh` records |
+| a file a box's first boot writes under `/usr`, `/etc`, `/opt`, `/boot` or `/efi` | `proof` fails: a MANIFEST difference outside the expected list | `FIRST_BOOT_CHANGES` or `FIRST_BOOT_ADDS` in `lib.sh` |

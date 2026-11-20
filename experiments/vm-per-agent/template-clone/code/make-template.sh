@@ -1,24 +1,95 @@
 #!/usr/bin/env bash
-# Make the appliance template from end to end (weaver-appliance-build-Spec section 2, "One
-# script makes the template"; the operator's ruling of 2026-11-19): the host tests, then
-# build-template.sh's create, the guest steps facts to connectors, mock, the steps ready,
-# cleanup and probes, then seal, proof and tag. It stops at the first refusal, naming the
-# part and its last line, and leaves the guest as it is: nothing is rerun or retried here.
-# tag prints the tag's message and applies nothing.
+# make-template.sh: make one release of the appliance template from end to end, with one
+# command (weaver-appliance-build-Spec section 2, "One script makes the template", the
+# operator's ruling of 2026-11-19). Run it once per release, after a change merges in
+# WeaverAgent or WeaverWeb. A release is a new VERSION, <release>.0, with the two commits
+# it is compiled from. This header is enough to make one. The README beside code/, in its
+# section "Making a release", lists each part and says when the build code has to change
+# with the commits. The Spec is docs/profiles/weaver-appliance-build-Spec.md.
 #
-#   VM_ROOT=<dir> OS=arch-20261115 VERSION=<release>.0 DRIVER=<release> DRIVER_ROUTE=<route> \
-#     COMPUTE_CAP=<cc> WA_COMMIT=<sha> WW_COMMIT=<sha> [HOST_TESTS=<path>] code/make-template.sh
+# THE COMMAND. Each value is illustrative, except OS and DRIVER_ROUTE, which take one value
+# each, and DRIVER, which must be the release guest/template-steps pins:
 #
-# The parameters are build-template.sh's (the Spec's section 1), taken from the environment
-# and passed on as they stand. It refuses, before the host tests, where VM_ROOT or an input
-# create needs is unset; their forms are build-template.sh's to judge. HOST_TESTS is the
-# path of the command that runs the host tests, by default test/host/run-all.sh beside this
-# script; a host that confines its tests names its own runner, so no fact of a host enters
-# the tree. Each part's start, end and exit status go to one log,
-# VM_ROOT/appliance/make-template/make-template.log, and to the standard output, with each
-# part's own output beside the log as PART.out. Nothing is teed. Each part runs in a process
-# group of its own, so on INT, TERM or HUP the part in hand is sent TERM whole (the build's
-# own traps answer it), and the log names where the run stopped.
+#   VM_ROOT=/srv/appliance/build-6.0 OS=arch-20261115 VERSION=6.0 \
+#     DRIVER=620.70.06 DRIVER_ROUTE=arch-prebuilt COMPUTE_CAP=86 \
+#     WA_COMMIT=0123456789abcdef0123456789abcdef01234567 \
+#     WW_COMMIT=89abcdef0123456789abcdef0123456789abcdef \
+#     code/make-template.sh
+#
+# THE INPUTS come from the environment and pass to build-template.sh as they stand. The
+# run refuses before the host tests where VM_ROOT or any of the next seven is unset, and
+# build-template.sh judges each one's form.
+#   VM_ROOT       a new directory for each build, made canonical. It holds this run's
+#                 record, the cloud image, the build disk, the logs and the login key. A
+#                 run refuses a VM_ROOT in which a run already began.
+#   OS            arch-20261115, the one base this tree builds.
+#   VERSION       <release>.0, such as 6.0. The release moves when the binaries move
+#                 (the operator's decision 4 of 2026-11-15). This tree always compiles,
+#                 so it builds releases alone, and refuses a respin, such as 6.1.
+#   DRIVER        the NVIDIA driver release. The driver step refuses any release but the
+#                 one guest/template-steps pins (PIN_NVIDIA, 620.70.06).
+#   DRIVER_ROUTE  arch-prebuilt, the one route this tree builds.
+#   COMPUTE_CAP   the compute capability the CUDA kernels are compiled for, without its
+#                 dot, such as 86. The build guest has no card to read it from.
+#   WA_COMMIT     the WeaverAgent commit, in full (40 hex digits).
+#   WW_COMMIT     the WeaverWeb commit, in full (40 hex digits).
+#   HOST_TESTS    optional: the command that runs the host tests, by default
+#                 test/host/run-all.sh. A relative path is read from this script's
+#                 folder. A host that confines its tests (in a sandbox of its own, for
+#                 example) names its own runner here, so the host's paths stay out of the
+#                 tree.
+# build-template.sh's other parameters (Spec section 1: NAME, PORT, VCPUS, MEMORY, SIZE,
+# CUOBJDUMP, QEMU_USER and the rest) pass through as well, each with its default.
+#
+# THE HOST. No root and no card. libvirt's system connection (qemu:///system) through virsh
+# and virt-install, with UEFI firmware, and these on PATH: qemu-img, qemu-storage-daemon
+# with FUSE (fusermount3), btrfs, blkid, ssh, scp, ssh-keygen, ssh-keyscan, gpg, curl,
+# xorriso, python3, openssl, setfacl, flock, setsid, and the cuobjdump of a CUDA toolkit
+# that knows the four architectures the proof checks (CUOBJDUMP). The host fetches the
+# cloud image, its signed digest file and the signing key over the network, and the build
+# guest downloads through QEMU's user-mode network. The build guest has 24 vCPUs, 64 GiB
+# of memory and a 120G disk by default.
+#
+# WHAT IT DOES, in order: the host tests, then build-template.sh's create, the guest steps
+# facts to connectors, mock, the steps ready, cleanup and probes, then seal, proof and tag
+# (the README lists what each does). Each part's start, end and exit status go to one log,
+# VM_ROOT/appliance/make-template/make-template.log, and to the standard output. Each
+# part's own output is beside the log as PART.out, with code-sha256.txt, the digests of the
+# code the run is made from. build-template.sh's own step logs are in VM_ROOT/logs/appliance
+# and the proof's records in VM_ROOT/logs/appliance/proof. Nothing is teed. Each part runs
+# in a process group of its own, so on INT, TERM or HUP the part in hand is sent TERM whole
+# (the build's own traps answer it), and the log names where the run stopped.
+#
+# THE END. A run that passes ends with "MADE: every part passed", then the tag's message.
+# The proof's verdict is VM_ROOT/logs/appliance/proof/passed.txt: "proof passed:", with the
+# sealed file's sha256 and the MANIFEST's. A run that fails stops at the first refusal,
+# and the log's last line names it: "STOPPED at PART (exit N):", then that part's last
+# line. PART.out holds the rest. A proof that fails lists its findings in PROOF-FAILED, in
+# its records' folder. Nothing is retried, and the guest is left as it is. A new run needs
+# a new VM_ROOT. A build guest still defined keeps its name, and a running one its SSH
+# port, and create refuses a NAME that is defined. So the next run names a NAME and PORT
+# of its own, or the guest is first removed by build-template.sh destroy, run under the
+# old VM_ROOT. destroy removes that VM_ROOT/appliance whole, the old run's record in it.
+#
+# AFTER IT. The sealed file is VM_ROOT/appliance/appliance.qcow2: read-only, standalone
+# (it names no backing file), its sha256 in VM_ROOT/logs/appliance/appliance-sha256.txt.
+# tag applies nothing and runs no git. The tag is the operator's to make in WeaverAgent and
+# push, by the command tag prints (git tag -a appliance/VERSION, its message from
+# VM_ROOT/logs/appliance/tag-message.txt, on WA_COMMIT).
+#
+# A HOST'S OWN SETTINGS (its paths, its runner) stay outside the tree. A wrapper of the
+# host's own can hold them, for example, with every path and value illustrative:
+#
+#   #!/usr/bin/env bash
+#   export VM_ROOT=/srv/appliance/build-$(date -u +%Y%m%dT%H%M%SZ)
+#   export HOST_TESTS=/srv/appliance/run-host-tests CUOBJDUMP=/usr/local/cuda/bin/cuobjdump
+#   export OS=arch-20261115 VERSION=6.0 DRIVER=620.70.06 DRIVER_ROUTE=arch-prebuilt
+#   export COMPUTE_CAP=86 WA_COMMIT=<40 hex digits> WW_COMMIT=<40 hex digits>
+#   exec /srv/src/WeaverTools/experiments/vm-per-agent/template-clone/code/make-template.sh
+#
+# WHAT IT DOES NOT DO. It makes no virtual machine from the sealed file (WeaverTools issue
+# 49), and it changes no sealed image: nothing is installed into an image after its seal
+# (the operator's direction of 2026-11-14).
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 INPUTS="OS VERSION DRIVER DRIVER_ROUTE COMPUTE_CAP WA_COMMIT WW_COMMIT"

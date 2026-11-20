@@ -436,7 +436,9 @@ teed. `HOST_TESTS` names the command that runs the host tests, by default
 confines its tests names its own runner, so no fact of a host enters the tree. `tag`
 prints the tag's message and applies nothing. There is no script that changes a sealed
 image: nothing is installed into an image after its seal (the operator's direction of
-2026-11-14).
+2026-11-14). The script's header is the guide to making a release, and the
+template-clone `README.md`, in "Making a release", says when the build code changes with
+the commits.
 
 **The fixed layout.** The binaries carry their build paths, so the build account (`op`,
 made by the seed), the checkouts (`~/WeaverAgent`, `~/WeaverWeb`) and the targets
