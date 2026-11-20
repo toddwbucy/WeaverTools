@@ -72,7 +72,11 @@
 # a new VM_ROOT. A build guest still defined keeps its name, and a running one its SSH
 # port, and create refuses a NAME that is defined. So the next run names a NAME and PORT
 # of its own, or the guest is first removed by build-template.sh destroy, run under the
-# old VM_ROOT. destroy removes that VM_ROOT/appliance whole, the old run's record in it.
+# old VM_ROOT and the old NAME (by default weaver-appliance-build). destroy undefines the
+# guest NAME names and its proof guests, NAME-proof and NAME-first, each only on its own
+# disk under that VM_ROOT, and stops at one defined on any other disk. A NAME that no guest
+# has is taken as gone. So given the wrong NAME, destroy leaves the old guest defined and
+# still removes VM_ROOT/appliance whole, with that guest's disk and the old run's record.
 #
 # AFTER IT. The sealed file is VM_ROOT/appliance/appliance.qcow2: read-only, standalone
 # (it names no backing file), its sha256 in VM_ROOT/logs/appliance/appliance-sha256.txt.
