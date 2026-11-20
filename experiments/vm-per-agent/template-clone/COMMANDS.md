@@ -194,3 +194,9 @@ export WW_COMMIT=962d0166a584842f166a3e4f43312fddefac95db   # WeaverWeb main, 20
   code/build-template.sh destroy
 )
 ```
+
+From release 5.0 (2026-11-19), `code/make-template.sh` runs this recipe from end to end
+with one command, the host tests first, with the `ready` step between `mock` and
+`cleanup`, and stops at the first refusal. It runs no `destroy`. Its header gives the
+command and its inputs, and the README's "Making a release" lists its parts and says
+when the build code changes with the commits.

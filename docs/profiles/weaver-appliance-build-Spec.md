@@ -2,9 +2,8 @@
 
 **Status:** Merged with release 1.0 (pull request 33, 2026-11-16) and revised for
 release 2.0 (pull request 35, merged 2026-11-17). Revised for the appliance template,
-release 5.0, in the `act/appliance-template` stack (pull request 44), not merged. Moved
-on 2026-11-15 from section 10 of `template-clone-Spec`, where it stood on pull request
-31.
+release 5.0 (pull request 44, merged 2026-11-19). Moved on 2026-11-15 from section 10 of
+`template-clone-Spec`, where it stood on pull request 31.
 **Date filed:** 2026-11-15
 **Document ID:** `weaver-appliance-build-Spec`
 **Parent:** `weaver-appliance-profile` (this directory), whose own artifact this build makes
@@ -436,7 +435,9 @@ teed. `HOST_TESTS` names the command that runs the host tests, by default
 confines its tests names its own runner, so no fact of a host enters the tree. `tag`
 prints the tag's message and applies nothing. There is no script that changes a sealed
 image: nothing is installed into an image after its seal (the operator's direction of
-2026-11-14).
+2026-11-14). The script's header is the guide to making a release, and the
+template-clone `README.md`, in "Making a release", says when the build code changes with
+the commits.
 
 **The fixed layout.** The binaries carry their build paths, so the build account (`op`,
 made by the seed), the checkouts (`~/WeaverAgent`, `~/WeaverWeb`) and the targets
