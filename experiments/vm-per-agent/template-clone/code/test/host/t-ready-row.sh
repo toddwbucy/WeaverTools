@@ -125,6 +125,28 @@ printf '{"format": "weaver-survey/1"} trailing\n' >"$T/survey-bad.json"; o=$(rea
 check "an output the reader refuses is a finding naming its reason" eval 'grep -q "^PROOF-FAIL: the reader refuses the survey.s output: " <<<"$o"'
 o=$(ready_survey_judge "$T/absent.json" 0)
 check "an output that cannot be read is a finding" eval 'grep -q "^PROOF-FAIL: the survey.s output could not be read" <<<"$o"'
+EX2=$CODE/guest/ready/test/fixtures/weaver-survey-2-worked-example.json
+o=$(ready_survey_judge "$EX2" 0)
+check "the format's worked example of version 2, exit 0: accepted by the reader, no finding" \
+    eval '[ "$(fails "$o")" = 0 ] && grep -q "^the survey: exit 0, $(wc -c <"$EX2") bytes, one object the reader accepts" <<<"$o"'
+
+# ---- The guest's one address, as the proof gives it to the survey's two planes.
+ipcard() { printf '{"ifindex":1,"ifname":"%s","operstate":"%s","addr_info":[%s]}' "$1" "$2" "$3"; }
+ipaddr() { printf '{"family":"inet","local":"%s","prefixlen":%s,"scope":"%s"}' "$1" "$2" "$3"; }
+LO=$(ipcard lo UNKNOWN "$(ipaddr 127.0.0.1 8 host)")
+ONE="[$LO,$(ipcard enp0s10 UP "$(ipaddr 192.0.2.15 24 global)")]"
+o=$(ready_one_address <<<"$ONE" 2>&1)
+check "one address with global scope on a card that is up: printed as address/prefix length" test "$o" = "192.0.2.15/24"
+o=$(ready_one_address <<<"[$LO,$(ipcard enp0s10 UP "$(ipaddr 192.0.2.15 24 global),$(ipaddr 192.0.2.16 24 global)")]" 2>&1); rc=$?
+check "two such addresses: status 1, the count named" eval '[ "$rc" = 1 ] && [ "$o" = "2 addresses with global scope on a card that is up, not one" ]'
+o=$(ready_one_address <<<"[$LO,$(ipcard enp0s10 DOWN "$(ipaddr 192.0.2.15 24 global)"),$(ipcard enp0s11 UP "$(ipaddr 192.0.2.16 24 link)")]" 2>&1); rc=$?
+check "an address on a card that is down, and one of link scope, are not counted" \
+    eval '[ "$rc" = 1 ] && [ "$o" = "0 addresses with global scope on a card that is up, not one" ]'
+o=$(ready_one_address <<<"[$(ipcard enp0s10 UP "$(ipaddr '1.2.3.4;reboot' 24 global)")]" 2>&1); rc=$?
+check "a listed address that is not an address is refused, never printed into a command" \
+    eval '[ "$rc" = 1 ] && grep -q "is not one the survey takes" <<<"$o"'
+o=$(ready_one_address <<<"not json" 2>&1); rc=$?
+check "an answer that is no list of cards: status 1, named" eval '[ "$rc" = 1 ] && grep -q "^ip -j addr show gave no list of cards" <<<"$o"'
 
 # ---- The two boots' attributes and digests.
 S1=1111111111111111111111111111111111111111111111111111111111111111
@@ -257,11 +279,12 @@ gssh() { local port=$1 n c="" rest=""; shift; printf '%s\n' "$port $*" >>"$T/gss
         *"shape_check() {"*) bash "$T/guest.sh" ;;
         "cat /etc/weaver-web/pairing/exchange/gate.req") [ ! -e "$T/no-gate" ] || { echo "ssh: closed" >&2; return 255; }; cat "$T/rq/gate.req" ;;
         "cat /etc/weaver-web/pairing/exchange/admin.req") cat "$T/rq/admin.req" ;;
-        *"--stage pairing") cat "$T/survey-out"; [ ! -e "$T/survey-err" ] || { echo "weaver-survey: no drives" >&2; return 3; } ;;
+        "ip -j addr show") [ ! -e "$T/no-ip" ] || { echo "ssh: closed" >&2; return 255; }; cat "$T/ip-out" ;;
+        *"--planes shared") cat "$T/survey-out"; [ ! -e "$T/survey-err" ] || { echo "weaver-survey: no drives" >&2; return 3; } ;;
         *"U=weaver-appliance-requests.service"*) cat "$T/second-read" ;;
         *) echo "unexpected: $*"; return 9 ;;
     esac; }
-pr() { rm -f -- "$T/gssh.log" "$T/gssh-ports" "$OUT/ready-attributes.txt"; laid; reqs; guest >"$T/guest.sh"; cp -- "$EX" "$T/survey-out"
+pr() { rm -f -- "$T/gssh.log" "$T/gssh-ports" "$OUT/ready-attributes.txt" "$OUT/ready-survey.json"; laid; reqs; guest >"$T/guest.sh"; cp -- "$EX2" "$T/survey-out"; printf '%s\n' "$ONE" >"$T/ip-out"
     printf '%b' "[  OK  ] Started x.\r\n$MADE\r\n$P" >"$PD/con/console.log"; }
 pr; o=$(proof_ready "$OUT" "$PD" 2330)
 check "proof_ready on a guest as laid: no finding" unwanted "$o"
@@ -270,9 +293,17 @@ check "it reads the console, the guest, both requests and the survey, in that or
 check "the requests are kept in the proof's log, as read off the guest" \
     eval 'cmp -s "$OUT/ready-requests/gate.req" "$T/rq/gate.req" && cmp -s "$OUT/ready-requests/admin.req" "$T/rq/admin.req"'
 check "the survey's output is kept, and the four attribute lines for the second boot" \
-    eval 'cmp -s "$OUT/ready-survey.json" "$EX" && [ "$(wc -l <"$OUT/ready-attributes.txt")" = 4 ]'
-check "every read is on the proof's port, the survey as nobody from /" \
-    eval '[ "$(sort -u "$T/gssh-ports")" = 2330 ] && grep -qx "2330 cd / && sudo -n -u nobody /opt/weaver-appliance/bin/weaver-survey --stage pairing" "$T/gssh.log"'
+    eval 'cmp -s "$OUT/ready-survey.json" "$EX2" && [ "$(wc -l <"$OUT/ready-attributes.txt")" = 4 ]'
+check "every read is on the proof's port, the survey as nobody from / with the format's values for the proof" \
+    eval '[ "$(sort -u "$T/gssh-ports")" = 2330 ] && grep -qx "2330 cd / && sudo -n -u nobody /opt/weaver-appliance/bin/weaver-survey --stage pairing --state-at /mnt/weaver/state --models-at /mnt/weaver/models --management 192.0.2.15/24 --data 192.0.2.15/24 --planes shared" "$T/gssh.log"'
+check "the guest's addresses are read before the survey runs" \
+    eval 'a=$(grep -n "ip -j addr show" "$T/gssh.log" | cut -d: -f1); b=$(grep -n "weaver-survey" "$T/gssh.log" | cut -d: -f1); [ -n "$a" ] && [ -n "$b" ] && [ "$a" -lt "$b" ]'
+pr; touch "$T/no-ip"; o=$(proof_ready "$OUT" "$PD" 2330); rm -f -- "$T/no-ip"
+check "addresses that cannot be read off the guest are a finding, and the survey is not run" \
+    eval 'has "$o" "PROOF-FAIL: ip -j addr show could not be read off the guest (exit 255): ssh: closed" && ! grep -q weaver-survey "$T/gssh.log" && [ ! -e "$OUT/ready-survey.json" ]'
+pr; printf '[%s]\n' "$LO" >"$T/ip-out"; o=$(proof_ready "$OUT" "$PD" 2330)
+check "a guest with no address for the planes is a finding naming the count, and the survey is not run" \
+    eval 'has "$o" "PROOF-FAIL: the guest has no one address for the survey'"'"'s planes: 0 addresses with global scope on a card that is up, not one" && ! grep -q weaver-survey "$T/gssh.log"'
 pr; touch "$T/no-gate"; o=$(proof_ready "$OUT" "$PD" 2330); rm -f -- "$T/no-gate"
 check "a request that cannot be read off the guest is a finding with its cause" \
     eval 'has "$o" "PROOF-FAIL: the gate request could not be read off the guest (exit 255): ssh: closed"'
