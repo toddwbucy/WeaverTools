@@ -61,10 +61,14 @@ def mutated(f):
 
 
 def refusal(raw):
+    """The reader's refusal, "" where it takes raw, or the exception it raised where it
+    raised one other than Refuse, so a reader that crashes fails its case by name."""
     try:
         reader(raw)
     except Refuse as e:
         return str(e)
+    except Exception as e:
+        return "raised %s: %s" % (type(e).__name__, e)
     return ""
 
 
