@@ -5,7 +5,7 @@
   "image": {
     "version": "2.0",
     "manifest_sha256":
-      "5b1f0c9e7a2d4486b3e0f19c2d7a65e8c41f03b9d2a7e6158c0b94f3a1d2e7c6"
+      "03fcfb2e3fffc40f40d87b49d7f086d1c45c0c394a6794fbfdb1ce855502c1c8"
   },
   "kernel": {"release": "7.3.4-arch1-2"},
   "machine": {

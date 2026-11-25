@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -I
 """weaver-survey: the appliance's survey of its machine, format weaver-survey/2
-(WeaverTools docs/profiles/weaver-survey-format.md at 1148b47, sections 1, 1.1, 2 and 5).
+(WeaverTools docs/profiles/weaver-survey-format.md at 4291e118, sections 1, 1.1, 2 and 5).
 
     weaver-survey --stage pairing --state-at <place> --models-at <place> \
         --management <address>/<prefix length> --data <address>/<prefix length> \
@@ -256,10 +256,11 @@ PART = re.compile(r"[A-Za-z0-9._-]{1,255}")
 
 
 def place(value, what):
-    """value, if a place in section 1.1's one spelling."""
+    """value, if a place in section 1.1's one spelling. The characters are judged first, so
+    a byte that is not UTF-8 (a lone surrogate from the argument) fails as a place does."""
     parts = value[1:].split("/") if value.startswith("/") else None
-    if parts is None or len(value.encode()) > 255 or parts == [""] \
-            or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts):
+    if parts is None or parts == [""] \
+            or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts) or len(value) > 255:
         raise Fail("%s %r is not a place in the one spelling of section 1.1" % (what, value))
     return value
 
@@ -272,6 +273,8 @@ def inside(one, other):
 
 def address(value, what):
     """value as an address, if in section 1.1's one spelling and of a kind it allows."""
+    if "%" in value:
+        raise Fail("%s %r carries a zone, which section 1.1 refuses" % (what, value))
     try:
         ip = ipaddress.ip_address(value)
     except ValueError:
@@ -403,13 +406,13 @@ def arguments(args):
     return [given[o] for o in OPTIONS]
 
 
-def main(argv):
+def main(argv, root="/", runner=run, now=None):
     values = arguments(argv[1:])
     if values is None:
         sys.stderr.write(USAGE + "\n")
         return 2
     try:
-        body = survey(*values)
+        body = survey(*values, root=root, runner=runner, now=now)
     except Fail as e:
         sys.stderr.write("weaver-survey: no report: %s\n" % e)
         return 1

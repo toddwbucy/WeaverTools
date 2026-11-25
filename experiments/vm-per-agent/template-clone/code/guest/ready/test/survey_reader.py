@@ -1,5 +1,5 @@
 """survey_reader: a reader of weaver-survey/2 and weaver-survey/1, written from the format
-document's sections 1.1 and 3 (WeaverTools docs/profiles/weaver-survey-format.md at 1148b47;
+document's sections 1, 1.1, 2 and 3 (WeaverTools docs/profiles/weaver-survey-format.md at 4291e118;
 version 1 as its section 7 states it, at e16aecd): reader(raw) returns the report's members
 or raises Refuse. A reader of N + 1 may also read N (section 4). Standard library only."""
 import ipaddress, json, re, time
@@ -26,11 +26,25 @@ def no_constant(s):
     raise Refuse("NaN or Infinity, which JSON does not have: %s" % s)
 
 
+class Signed:
+    """An integer written with a sign that is not negative, -0: neither an integer nor a
+    string, so get() refuses it wherever section 1 names a member, and a member the reader
+    does not know keeps it."""
+
+    def __init__(self, written):
+        self.written = written
+
+
+def parse_int(s):
+    return Signed(s) if s == "-0" else int(s)
+
+
 def is_place(v):
-    """Section 1.1's one spelling of a place."""
+    """Section 1.1's one spelling of a place. The characters are judged first, so a lone
+    surrogate is refused as a place, not raised."""
     parts = v[1:].split("/") if v.startswith("/") else None
-    return not (parts is None or len(v.encode()) > 255 or parts == [""]
-                or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts))
+    return not (parts is None or parts == [""]
+                or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts) or len(v) > 255)
 
 
 def inside(one, other):
@@ -39,7 +53,9 @@ def inside(one, other):
 
 
 def plane_address(v, where):
-    """Section 1.1's one spelling of an address, of a kind it allows."""
+    """Section 1.1's one spelling of an address, of a kind it allows, with no zone."""
+    if "%" in v:
+        raise Refuse("%s %r carries a zone" % (where, v))
     try:
         ip = ipaddress.ip_address(v)
     except ValueError:
@@ -65,7 +81,7 @@ def reader(raw):
     # Fractions and exponents parse as floats: a member the reader does not know is kept and
     # ignored at any depth (section 3), and get() refuses a float where an integer is known
     # (CodeRabbit on pull request 44, 2026-11-19). NaN and Infinity are refused anywhere.
-    dec = json.JSONDecoder(object_pairs_hook=no_dup, parse_constant=no_constant)
+    dec = json.JSONDecoder(object_pairs_hook=no_dup, parse_constant=no_constant, parse_int=parse_int)
     start = len(t) - len(t.lstrip(" \t\r\n"))
     try:
         obj, end = dec.raw_decode(t, start)
@@ -109,6 +125,9 @@ def reader(raw):
     try:
         if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", taken):
             raise ValueError
+        # strptime takes the seconds 60 and 61. Section 1 refuses a leap second.
+        if int(taken[17:19]) > 59:
+            raise ValueError
         time.strptime(taken, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:
         raise Refuse("taken %r" % taken)
@@ -146,7 +165,7 @@ def reader(raw):
         if i(card, "ordinal", "cards[%d]" % n) != n:
             raise Refuse("cards[%d].ordinal is not its index" % n)
         s(card, "name", 96, "cards[%d]" % n)
-        a = s(card, "pci_address", 65536, "cards[%d]" % n, r"[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]")
+        a = s(card, "pci_address", 16, "cards[%d]" % n, r"[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]")
         i(card, "memory_bytes", "cards[%d]" % n)
         key = tuple(int(x, 16) for x in re.split(r"[:.]", a))
         if prev is not None and key <= prev:

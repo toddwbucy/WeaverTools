@@ -18,7 +18,7 @@ and against the format document's worked example of version 2 (section 6, kept b
 byte as a fixture and compared with the document), before it judges any report. Prints each case; exits 1 if any fails. The folder, made under TMPDIR,
 is removed when every case passes.
 """
-import hashlib, importlib.machinery, importlib.util, json, os, re, shutil, subprocess, sys, tempfile, time
+import calendar, hashlib, importlib.machinery, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, time
 
 sys.dont_write_bytecode = True
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -134,6 +134,43 @@ check("version 2: separate planes on one address, or in one network, are refused
       and refused(mutated2(lambda o: (net(o, "data", address="192.0.2.99", prefix_length=16)))))
 check("version 2: shared planes in one network are taken",
       not refused(mutated2(lambda o: (net(o, "data", address="192.0.2.99"), o["network"].update(planes="shared")))))
+check("version 2: separate planes where only the data plane's network holds the management address are refused",
+      refused(mutated2(lambda o: (net(o, "management", address="192.0.2.10", prefix_length=24),
+                                  net(o, "data", address="192.0.3.10", prefix_length=16)))))
+check("version 2: separate planes where only the management plane's network holds the data address are refused",
+      refused(mutated2(lambda o: (net(o, "management", address="192.0.3.10", prefix_length=16),
+                                  net(o, "data", address="192.0.2.10", prefix_length=24)))))
+check("version 2: an address with a zone is refused, and named so",
+      refusal(mutated2(lambda o: (net(o, "management", address="2001:db8::10%eth0", prefix_length=64))))
+      == "network.management.address '2001:db8::10%eth0' carries a zone")
+check("version 2: a place holding a lone surrogate is refused, not raised",
+      refusal(b'{"x":1}'.replace(b'{"x":1}', mutated2(lambda o: o["drives"][1].update(mount_point="/srv/\udc80"))))
+      == "drives[1].mount_point '/srv/\\udc80' is not a place in the one spelling")
+check("version 2: a place with a .. part, and one of 256 bytes, are refused, and one of 255 taken",
+      refused(mutated2(lambda o: o["drives"][1].update(mount_point="/srv/../models")))
+      and refused(mutated2(lambda o: o["drives"][1].update(mount_point="/" + "a" * 200 + "/" + "b" * 54)))
+      and not refused(mutated2(lambda o: o["drives"][1].update(mount_point="/" + "a" * 200 + "/" + "b" * 53))))
+check("version 2: a taken of second 60 is refused, and of second 59 taken",
+      refusal(mutated2(lambda o: o.update(taken="2026-12-31T23:59:60Z"))) == "taken '2026-12-31T23:59:60Z'"
+      and not refused(mutated2(lambda o: o.update(taken="2026-12-31T23:59:59Z"))))
+check("version 2: a taken with a lowercase t or z, or a date that does not exist, is refused",
+      all(refused(mutated2(lambda o, v=v: o.update(taken=v)))
+          for v in ("2026-11-17t09:00:00Z", "2026-11-17T09:00:00z", "2026-02-30T09:00:00Z", "2026-11-17T24:00:00Z")))
+check("version 2: -0 where an integer is known is refused, and kept in a member the reader does not know",
+      refusal(ex2.replace(b'"family": 25', b'"family": -0')) == "cpu.family is not an integer"
+      and not refused(ex2.replace(b'"stage": "pairing",', b'"stage": "pairing", "later": -0,')))
+check("version 2: -0 where a string is known is refused",
+      refusal(ex2.replace(b'"label": "weaver-state"', b'"label": -0')) == "state.label is not str")
+check("version 2: cards ascend by number, not by bytes",
+      not refused(mutated2(lambda o: (o["cards"][0].update(pci_address="ffff:06:00.0"),
+                                      o["cards"][1].update(pci_address="10000:06:00.0"))))
+      and refused(mutated2(lambda o: (o["cards"][0].update(pci_address="10000:06:00.0"),
+                                      o["cards"][1].update(pci_address="ffff:06:00.0")))))
+check("version 2: the report's 64 KiB counts its newline: 65,536 bytes taken, 65,537 refused",
+      ex2.endswith(b"}\n") and not refused(b" " * (65536 - len(ex2)) + ex2)
+      and refusal(b" " * (65537 - len(ex2)) + ex2) == "over 64 KiB")
+check("version 2: whitespace before the object is taken, and after it only one newline",
+      not refused(b" \n\t" + ex2) and refused(ex2 + b"\n") and refused(ex2.rstrip(b"\n") + b"\r\n"))
 
 # ---- Made-up machines. ----
 T = tempfile.mkdtemp(prefix="t-weaver-survey.")
@@ -300,6 +337,58 @@ check("shared planes on one card, the management plane on IPv6: a report the rea
                                                                    "data": {"address": "192.0.2.10", "prefix_length": 24},
                                                                    "planes": "shared"})
 
+# 2d. The format's worked example of version 2, written by the program itself: the example's
+# machine laid out, the program driven through main with its options in another order and
+# all four values different, and its bytes compared with the example as the program writes
+# a report (section 2: an indent of one space, the members in the example's order, one
+# newline). A swap of two values between arguments and survey, a change of indent, or a
+# change of a member's order goes red here.
+EX_FLAGS = ("sse4_2 avx512vl fpu avx2 sse aes avx512f bmi1 fma avx ssse3 avx512bw sse2 "
+            "f16c avx512cd bmi2 avx512dq sse4_1 avx512_vnni avx512_bf16")
+ex_root = machine_root("worked-example", version="2.0", procs=16, flags=EX_FLAGS,
+                       model_name="AMD EPYC 9354P 32-Core Processor")
+write(ex_root, "/proc/cpuinfo", open(os.path.join(ex_root, "proc/cpuinfo")).read().replace("model\t\t: 1\n", "model\t\t: 17\n"))
+write(ex_root, "/proc/meminfo", "MemTotal:       32296504 kB\nMemFree:        12345678 kB\n")
+os.remove(os.path.join(ex_root, "usr/lib/libcudart.so.13"))
+write(ex_root, "/usr/lib/libcudart.so.13.4.92", "")
+os.symlink("libcudart.so.13.4.92", os.path.join(ex_root, "usr/lib/libcudart.so.13"))
+ex_runner = Runner(**{
+    "findmnt:/mnt/weaver/state": (0, json.dumps({"filesystems": [{"fstype": "ext4", "label": "weaver-state",
+        "options": "rw,relatime,prjquota", "size": 25191575552, "avail": 23863877632}]})),
+    "findmnt:/srv/weaver-models": (0, json.dumps({"filesystems": [{"fstype": "ext4", "label": "weaver-models",
+        "options": "rw,relatime", "size": "135089524736", "avail": "72464760832"}]}))})
+
+
+class Captured:
+    def __init__(self):
+        self.buffer = io.BytesIO()
+        self.text = ""
+
+    def write(self, t):
+        self.text += t
+
+
+out_cap, err_cap, saved = Captured(), Captured(), (sys.stdout, sys.stderr)
+sys.stdout, sys.stderr = out_cap, err_cap
+try:
+    ex_rc = ws.main(["weaver-survey", "--planes", "separate", "--data", "198.51.100.10/24",
+                     "--models-at", "/srv/weaver-models", "--management", "192.0.2.10/24",
+                     "--stage", "pairing", "--state-at", "/mnt/weaver/state"],
+                    root=ex_root, runner=ex_runner, now=time.gmtime(calendar.timegm((2026, 11, 17, 9, 0, 0))))
+finally:
+    sys.stdout, sys.stderr = saved
+written = out_cap.buffer.getvalue()
+check("the worked example through main: exit 0, nothing on standard error (%r)" % err_cap.text[:120],
+      ex_rc == 0 and err_cap.text == "")
+check("the worked example through main: the program's values are the example's", written and json.loads(written) == json.loads(ex2))
+check("the worked example through main: its bytes are the example as the program writes a report",
+      written == (json.dumps(json.loads(ex2), ensure_ascii=True, indent=1) + "\n").encode("ascii"))
+
+# 2e. One address on both planes under shared: taken.
+body, r, why = run_survey(root, management="192.0.2.10/24", data="192.0.2.10/24", planes="shared")
+check("one address on both planes under shared: a report the reader takes (%s)" % why,
+      body is not None and not refused(body) and json.loads(body)["network"]["data"]["address"] == "192.0.2.10")
+
 # 3. No card, the module not loaded: the cardless rehearsal's machine.
 root3 = machine_root("cardless", loaded=False, nvidia_fns=())
 body, r, why = run_survey(root3)
@@ -384,6 +473,20 @@ args_cases = [
     ("separate planes in one network", dict(data="192.0.2.99/24"), {"ip": (0, ONE_NET)}, "lie in one network"),
     ("ip -j addr show fails", {}, {"ip": (1, "")}, "ip -j addr show exited 1"),
     ("ip -j addr show gives no JSON", {}, {"ip": (0, "enp1s0 UP")}, "ip -j addr show gave"),
+    ("the state place inside the models place", dict(places=("/mnt/weaver/models/state", "/mnt/weaver/models")), {}, "inside"),
+    ("a place with a character outside the one spelling", dict(places=("/mnt/weaver state", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a place with a . part", dict(places=("/mnt/./state", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a multicast address", dict(management="224.0.0.1/24"), {}, "refuses"),
+    ("the limited broadcast address", dict(data="255.255.255.255/32"), {}, "refuses"),
+    ("an address with a zone", dict(management="2001:db8::10%enp1s0/64"), {}, "carries a zone"),
+    ("separate planes where only the data plane's network holds the management address",
+     dict(management="192.0.2.10/24", data="192.0.3.10/16"),
+     {"ip": (0, json.dumps([ip_card("enp1s0", "UP", ("192.0.2.10", 24, "global")),
+                            ip_card("enp2s0", "UP", ("192.0.3.10", 16, "global"))]))}, "lie in one network"),
+    ("separate planes where only the management plane's network holds the data address",
+     dict(management="192.0.3.10/16", data="192.0.2.10/24"),
+     {"ip": (0, json.dumps([ip_card("enp1s0", "UP", ("192.0.3.10", 16, "global")),
+                            ip_card("enp2s0", "UP", ("192.0.2.10", 24, "global"))]))}, "lie in one network"),
 ]
 for what, kw, over, cause in args_cases:
     body, r, why = run_survey(root, **kw, **over)
@@ -430,6 +533,10 @@ usage_cases = [
     ("an unknown option", ARGS[:-2] + ["--plane", "separate"]),
     ("an option with no value", ARGS[:-1]),
 ]
+p = subprocess.run([sys.executable, "-I", SURVEY] + [a.encode() for a in ARGS[:2]] + [b"--state-at", b"/mnt/\xff"]
+                   + [a.encode() for a in ARGS[4:]], capture_output=True, timeout=60)
+check("for real, a place holding a byte that is not UTF-8: exit 1, the place named, no traceback (%r)" % p.stderr[:160],
+      p.returncode == 1 and p.stdout == b"" and b"not a place in the one spelling" in p.stderr and b"Traceback" not in p.stderr)
 for what, args in usage_cases:
     p = for_real(args)
     check("%s: exit 2, nothing on standard output, the usage named" % what,

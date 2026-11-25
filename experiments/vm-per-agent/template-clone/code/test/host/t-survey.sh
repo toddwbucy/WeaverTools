@@ -14,7 +14,7 @@ printf '%s\n' "$out" | sed 's/^/    /'
 check "the survey's own tests pass" test "$rc" = 0
 check "and say so: none failed" grep -qE '^== [0-9]+ passed, 0 failed' <<<"$out"
 first=$(sed -n 1p "$S")
-check "the survey runs as python3 from its first line" test "$first" = "#!/usr/bin/env python3"
+check "the survey runs as python3 in isolated mode from its first line" test "$first" = "#!/usr/bin/python3 -I"
 check "its usage names it as the image carries it, with no suffix" grep -qF 'usage: weaver-survey --stage pairing --state-at <place>' "$S"
 eval "$(grep -E '^READY_SURVEY=' "$CODE/guest/template-steps")"
 check "the ready step lays it at /opt/weaver-appliance/bin/weaver-survey" test "$READY_SURVEY" = /opt/weaver-appliance/bin/weaver-survey
