@@ -329,9 +329,10 @@ with this example.
 | `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` and `stage` were rebounded, `stage` to `pairing` alone, and `network` was added as a required member |
 
 **The survey writes version 2 from its own act.** The landing order is this document,
-then Weaver Web's reader of versions 1 and 2, then the survey, then the setup script. A
-survey of version 2 on an image that pairs with a console reading version 1 alone is
-refused there, so the survey's act lands after Weaver Web's reader.
+then Weaver Web's reader of version 2, then the survey, then the setup script. That reader
+refuses a report of version 1 by its version's name. A survey of version 2 on an image
+that pairs with a console reading version 1 alone is refused there, so the survey's act
+lands after Weaver Web's reader.
 
 ## 8. Open
 
