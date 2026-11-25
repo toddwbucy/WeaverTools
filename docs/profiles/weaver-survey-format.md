@@ -3,7 +3,7 @@
 **Status:** Merged in pull request 37 (2026-11-17). Revised for the appliance template,
 release 5.0, in the `act/appliance-template` stack (pull request 44), merged on
 2026-11-19. Version 2 filed on 2026-11-25, on the branch `docs/weaver-survey-format-2`.
-The image's survey writes version 1 until the survey's own act lands (section 7).
+The image's survey writes version 2 from the survey's own act (section 7).
 **Date filed:** 2026-11-17
 **Document ID:** `weaver-survey-format`
 **Parent:** `weaver-appliance-profile` (this directory), whose image carries the survey
@@ -304,9 +304,10 @@ gave it two cards on two networks.
 | `weaver-survey/1` | 2026-11-17 | the members of section 1 without `network`. Each `drives[].mount_point` was a constant: `/mnt/weaver/state` for `state`, `/mnt/weaver/models` for `models`. Refusal 10 refused any other mount point, refusal 12 did not stand, and the report carried no address. `stage` was described as the setup script's moment, with neither drive mounted at `pairing` |
 | `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` and `stage` were rebounded, `stage` to `pairing` alone, and `network` was added as a required member |
 
-**The survey is behind this document until its own act.** The image's survey writes
-version 1 until then. The landing order is this document, then Weaver Web's reader of
-versions 1 and 2, then the survey, then the setup script.
+**The survey writes version 2 from its own act.** The landing order is this document,
+then Weaver Web's reader of versions 1 and 2, then the survey, then the setup script. A
+survey of version 2 on an image that pairs with a console reading version 1 alone is
+refused there, so the survey's act lands after Weaver Web's reader.
 
 ## 8. Open
 
