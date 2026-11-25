@@ -1,7 +1,12 @@
-"""survey_reader: a reader of weaver-survey/1 written from the format document's section 3
-(WeaverTools docs/profiles/weaver-survey-format.md at e16aecd): reader(raw) returns the
-report's members or raises Refuse. Standard library only."""
-import json, re, time
+"""survey_reader: a reader of weaver-survey/2 and weaver-survey/1, written from the format
+document's sections 1.1 and 3 (WeaverTools docs/profiles/weaver-survey-format.md at 1148b47;
+version 1 as its section 7 states it, at e16aecd): reader(raw) returns the report's members
+or raises Refuse. A reader of N + 1 may also read N (section 4). Standard library only."""
+import ipaddress, json, re, time
+
+FORMATS = ("weaver-survey/1", "weaver-survey/2")
+V1_PLACES = (("state", "/mnt/weaver/state"), ("models", "/mnt/weaver/models"))
+PART = re.compile(r"[A-Za-z0-9._-]{1,255}")
 
 
 class Refuse(Exception):
@@ -19,6 +24,32 @@ def no_dup(pairs):
 
 def no_constant(s):
     raise Refuse("NaN or Infinity, which JSON does not have: %s" % s)
+
+
+def is_place(v):
+    """Section 1.1's one spelling of a place."""
+    parts = v[1:].split("/") if v.startswith("/") else None
+    return not (parts is None or len(v.encode()) > 255 or parts == [""]
+                or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts))
+
+
+def inside(one, other):
+    a, b = one[1:].split("/"), other[1:].split("/")
+    return len(a) > len(b) and a[:len(b)] == b
+
+
+def plane_address(v, where):
+    """Section 1.1's one spelling of an address, of a kind it allows."""
+    try:
+        ip = ipaddress.ip_address(v)
+    except ValueError:
+        raise Refuse("%s %r is not an address" % (where, v))
+    if str(ip) != v:
+        raise Refuse("%s %r is not in the one spelling" % (where, v))
+    if ip.is_unspecified or ip.is_link_local or ip.is_multicast \
+            or (ip.version == 4 and v == "255.255.255.255") or (ip.version == 6 and ip.ipv4_mapped is not None):
+        raise Refuse("%s %s is of a refused kind" % (where, v))
+    return ip
 
 
 def reader(raw):
@@ -44,8 +75,10 @@ def reader(raw):
         raise Refuse("something after the object: %r" % t[end:end + 20])
     if not isinstance(obj, dict):
         raise Refuse("not one JSON object")
-    if obj.get("format") != "weaver-survey/1":
-        raise Refuse("format %r" % obj.get("format"))
+    fmt = obj.get("format")
+    if fmt not in FORMATS:
+        raise Refuse("format %r" % fmt)
+    v2 = fmt == "weaver-survey/2"
 
     def get(o, k, typ, where):
         if not isinstance(o, dict) or k not in o or o[k] is None:
@@ -70,7 +103,7 @@ def reader(raw):
         return v
 
     stage = get(obj, "stage", str, "")
-    if stage not in ("pairing", "drives"):
+    if stage not in (("pairing",) if v2 else ("pairing", "drives")):
         raise Refuse("stage %r" % stage)
     taken = get(obj, "taken", str, "")
     try:
@@ -122,15 +155,36 @@ def reader(raw):
     drives = get(obj, "drives", list, "")
     if len(drives) != 2:
         raise Refuse("drives has %d entries" % len(drives))
-    for drive, (role, mp) in zip(drives, (("state", "/mnt/weaver/state"), ("models", "/mnt/weaver/models"))):
-        if get(drive, "role", str, "drive") != role or get(drive, "mount_point", str, "drive") != mp:
-            raise Refuse("drives not state then models with their mount points")
+    for n, (drive, (role, mp)) in enumerate(zip(drives, V1_PLACES)):
+        if get(drive, "role", str, "drive") != role:
+            raise Refuse("drives not state then models")
+        at = get(drive, "mount_point", str, "drive")
+        if (v2 and not is_place(at)) or (not v2 and at != mp):
+            raise Refuse("drives[%d].mount_point %r is not a place in the one spelling" % (n, at) if v2
+                         else "drives not state then models with their mount points")
         if get(drive, "mounted", bool, "drive"):
             s(drive, "label", 16, role); s(drive, "filesystem", 16, role)
             i(drive, "bytes", role); i(drive, "free_bytes", role)
             get(drive, "project_quota", bool, role)
         elif set(drive) & {"label", "filesystem", "bytes", "free_bytes", "project_quota"}:
             raise Refuse("an unmounted drive carries a mounted drive's members")
+    if v2:
+        a, b = drives[0]["mount_point"], drives[1]["mount_point"]
+        if a == b or inside(a, b) or inside(b, a):
+            raise Refuse("the two mount points are equal, or one is inside the other")
+        net = get(obj, "network", dict, "")
+        ends = {}
+        for plane in ("management", "data"):
+            p = get(net, plane, dict, "network")
+            ip = plane_address(s(p, "address", 39, "network." + plane), "network.%s.address" % plane)
+            ends[plane] = (ip, i(p, "prefix_length", "network." + plane, 1, 32 if ip.version == 4 else 128))
+        planes = get(net, "planes", str, "network")
+        if planes not in ("separate", "shared"):
+            raise Refuse("network.planes %r" % planes)
+        (mi, mn), (di, dn) = ends["management"], ends["data"]
+        if planes == "separate" and (mi == di or (mi.version == di.version and (
+                mi in ipaddress.ip_network((di, dn), strict=False) or di in ipaddress.ip_network((mi, mn), strict=False)))):
+            raise Refuse("separate planes on one address or one network")
     return obj
 
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """t-weaver-survey.py: weaver-survey against made-up machines, and its report against a
-reader written from weaver-survey/1 section 3. Standard library only.
+reader written from weaver-survey/2 sections 1.1 and 3, which reads version 1 too.
+Standard library only.
 
-It names nvidia-smi, modinfo, findmnt and systemd-detect-virt, though it runs none of
+It names nvidia-smi, modinfo, findmnt, ip and systemd-detect-virt, though it runs none of
 them: a host that keeps tests naming a card's driver confined runs it through its own
 runner (HOST_TESTS, weaver-appliance-build-Spec section 1). test/host/t-survey.sh runs it.
 
@@ -12,8 +13,9 @@ Each machine is a fixture tree in a fresh folder (the stamp, the MANIFEST, /proc
 files) and a stand-in command runner that answers by the command's name and records what
 it was asked; no command is executed except the survey itself, run once for real at the
 end, where it must find no stamp and write nothing. The reader is checked against
-WeaverWeb's own worked example (tests/fixtures at e0575e65, blob d754dc50) before it
-judges any report. Prints each case; exits 1 if any fails. The folder, made under TMPDIR,
+WeaverWeb's own worked example of version 1 (tests/fixtures at e0575e65, blob d754dc50),
+and against the format document's worked example of version 2 (section 6, kept byte for
+byte as a fixture and compared with the document), before it judges any report. Prints each case; exits 1 if any fails. The folder, made under TMPDIR,
 is removed when every case passes.
 """
 import hashlib, importlib.machinery, importlib.util, json, os, re, shutil, subprocess, sys, tempfile, time
@@ -23,6 +25,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SURVEY = os.path.join(os.path.dirname(HERE), "weaver-survey")
 EXAMPLE = os.path.join(HERE, "fixtures", "weaver-survey-1-worked-example.json")
 EXAMPLE_SHA = "334959d40dd7c01450782852da4b7ef7982a90f0a6af70cf9c66b30656673acc"
+EXAMPLE2 = os.path.join(HERE, "fixtures", "weaver-survey-2-worked-example.json")
+FORMAT_DOC = os.path.join(HERE, *[os.pardir] * 7, "docs", "profiles", "weaver-survey-format.md")
 # The survey has no .py suffix, as the image carries it, so its loader is named.
 spec = importlib.util.spec_from_file_location(
     "weaver_survey", SURVEY, loader=importlib.machinery.SourceFileLoader("weaver_survey", SURVEY))
@@ -40,7 +44,7 @@ def check(what, cond):
         failed += 1; print("FAIL  " + what)
 
 
-# ---- The reader: weaver-survey/1 section 3 (survey_reader.py, beside this test). ----
+# ---- The reader: weaver-survey/2 sections 1.1 and 3, and version 1 (survey_reader.py). ----
 sys.path.insert(0, HERE)
 from survey_reader import Refuse, reader, refused
 
@@ -80,6 +84,53 @@ check("the reader keeps and ignores an unknown member holding a fraction and an 
 check("the reader refuses NaN or Infinity, even in an unknown member",
       refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16, "extra": NaN'))
       and refused(ex.replace(b'"logical_cpus": 16', b'"logical_cpus": 16, "extra": -Infinity')))
+
+# ---- The reader against the format's own worked example of version 2. ----
+ex2 = open(EXAMPLE2, "rb").read()
+blocks = re.findall(r"```json\n(.*?)```", open(FORMAT_DOC).read(), re.S)
+check("the version 2 example is the format document's section 6, byte for byte",
+      len(blocks) == 1 and blocks[0].encode() == ex2)
+check("the reader takes the version 2 worked example", not refused(ex2))
+
+
+def mutated2(f):
+    o = json.loads(ex2); f(o); return json.dumps(o).encode()
+
+
+def net(o, plane, **kv):
+    o["network"][plane].update(kv)
+
+
+check("version 2: a stage of drives is refused", refusal(mutated2(lambda o: o.update(stage="drives"))) == "stage 'drives'")
+check("version 1 still reads its stage of drives", not refused(ex))
+check("version 2: a place outside the one spelling is refused",
+      all(refused(mutated2(lambda o, v=v: o["drives"][1].update(mount_point=v)))
+          for v in ("/srv//weaver-models", "/srv/weaver-models/", "/srv/./models", "/", "srv/models", "/srv/weaver models")))
+check("version 2: two equal places, or one inside the other, are refused",
+      refused(mutated2(lambda o: o["drives"][1].update(mount_point="/mnt/weaver/state")))
+      and refused(mutated2(lambda o: o["drives"][1].update(mount_point="/mnt/weaver/state/models")))
+      and refused(mutated2(lambda o: o["drives"][0].update(mount_point="/srv"))))
+check("version 2: a place beside another of the same prefix is taken",
+      not refused(mutated2(lambda o: o["drives"][1].update(mount_point="/mnt/weaver/statex"))))
+check("version 2: no network is refused", refused(mutated2(lambda o: o.pop("network"))))
+check("version 2: an address outside the one spelling is refused",
+      all(refused(mutated2(lambda o, v=v: net(o, "data", address=v)))
+          for v in ("198.51.100.010", "2001:DB8::10", "2001:db8:0:0:0:0:0:10", "2001:db8::0:10")))
+check("version 2: an address of a refused kind is refused",
+      all(refused(mutated2(lambda o, v=v: net(o, "data", address=v)))
+          for v in ("0.0.0.0", "::", "169.254.1.1", "fe80::1", "224.0.0.1", "ff02::1", "255.255.255.255", "::ffff:198.51.100.10")))
+check("version 2: a loopback address is taken", not refused(mutated2(lambda o: net(o, "data", address="127.0.0.1", prefix_length=8))))
+check("version 2: a prefix length outside its family's bound is refused",
+      refused(mutated2(lambda o: net(o, "data", prefix_length=33))) and refused(mutated2(lambda o: net(o, "data", prefix_length=0))))
+check("version 2: an IPv6 plane takes a prefix length up to 128",
+      not refused(mutated2(lambda o: net(o, "data", address="2001:db8::10", prefix_length=128))))
+check("version 2: planes other than separate or shared are refused", refused(mutated2(lambda o: o["network"].update(planes="both"))))
+check("version 2: separate planes on one address, or in one network, are refused",
+      refused(mutated2(lambda o: net(o, "data", address="192.0.2.10")))
+      and refused(mutated2(lambda o: net(o, "data", address="192.0.2.99")))
+      and refused(mutated2(lambda o: (net(o, "data", address="192.0.2.99", prefix_length=16)))))
+check("version 2: shared planes in one network are taken",
+      not refused(mutated2(lambda o: (net(o, "data", address="192.0.2.99"), o["network"].update(planes="shared")))))
 
 # ---- Made-up machines. ----
 T = tempfile.mkdtemp(prefix="t-weaver-survey.")
@@ -131,6 +182,21 @@ FINDMNT_MODELS = json.dumps({"filesystems": [{"fstype": "ext4", "label": None, "
                                               "size": "84230021120", "avail": "79831982080"}]})
 
 
+def ip_card(name, state, *addrs):
+    """A card as ip -j addr show lists it: addrs are (address, prefix length, scope)."""
+    return {"ifindex": 1, "ifname": name, "operstate": state,
+            "addr_info": [{"family": "inet6" if ":" in a else "inet", "local": a, "prefixlen": n, "scope": sc}
+                          for a, n, sc in addrs]}
+
+
+IP_ADDR = json.dumps([ip_card("lo", "UNKNOWN", ("127.0.0.1", 8, "host"), ("::1", 128, "host")),
+                      ip_card("enp1s0", "UP", ("192.0.2.10", 24, "global"), ("2001:db8::10", 64, "global"),
+                              ("fe80::5054:ff:feaa:101", 64, "link")),
+                      ip_card("enp2s0", "UP", ("198.51.100.10", 24, "global")),
+                      ip_card("enp3s0", "DOWN", ("203.0.113.10", 24, "global"))])
+PLACES = ("/mnt/weaver/state", "/mnt/weaver/models")
+
+
 class Runner:
     """A stand-in for the survey's commands: answers by name, records each call, runs nothing."""
 
@@ -145,6 +211,7 @@ class Runner:
             "nvidia-smi": (0, "00000000:07:00.0, NVIDIA RTX A5000, 24564\n00000000:06:00.0, NVIDIA RTX A5000, 24564\n"),
             "findmnt:/mnt/weaver/state": (1, ""),
             "findmnt:/mnt/weaver/models": (1, ""),
+            "ip": (0, IP_ADDR),
         }
         self.answers.update(over)
 
@@ -154,21 +221,27 @@ class Runner:
         return self.answers[key]
 
 
-def run_survey(root, stage="pairing", **over):
+def run_survey(root, stage="pairing", places=PLACES, management="192.0.2.10/24", data="198.51.100.10/24",
+               planes="separate", **over):
     r = Runner(**over)
     try:
-        return ws.survey(stage, root=root, runner=r, now=NOW), r, None
+        return ws.survey(stage, places[0], places[1], management, data, planes, root=root, runner=r, now=NOW), r, None
     except ws.Fail as e:
         return None, r, str(e)
 
 
-# 1. Two cards, loaded, at pairing: nothing mounted.
+# 1. Two cards, loaded, before the drives are mounted.
 root = machine_root("two-cards")
 body, r, why = run_survey(root)
-check("two cards at pairing: a report (%s)" % why, body is not None)
+check("two cards, nothing mounted: a report (%s)" % why, body is not None)
 o = json.loads(body) if body else {}
 check("the reader takes it", body is not None and not refused(body))
-check("format first, then stage and taken", list(o)[:3] == ["format", "stage", "taken"])
+check("format first, then stage and taken, network last", list(o)[:3] == ["format", "stage", "taken"] and list(o)[-1] == "network")
+check("format is weaver-survey/2 and stage is pairing", o.get("format") == "weaver-survey/2" and o.get("stage") == "pairing")
+check("network: the two planes' addresses and prefix lengths as given, and separate",
+      o.get("network") == {"management": {"address": "192.0.2.10", "prefix_length": 24},
+                           "data": {"address": "198.51.100.10", "prefix_length": 24}, "planes": "separate"})
+check("ip asked exactly ip -j addr show, once", [c for c in r.calls if c[0] == "ip"] == [["ip", "-j", "addr", "show"]])
 check("one newline after the object, ASCII alone", body is not None and body.endswith(b"}\n") and not body.endswith(b"\n\n") and body.isascii())
 check("taken is the time read", o.get("taken") == time.strftime("%Y-%m-%dT%H:%M:%SZ", NOW))
 check("image.version is the stamp's 4.0", o.get("image", {}).get("version") == "4.0")
@@ -188,24 +261,40 @@ check("cards in PCI bus order, the domain as sysfs writes it, MiB times 1048576"
       o.get("cards") == [{"ordinal": 0, "name": "NVIDIA RTX A5000", "pci_address": "0000:06:00.0", "memory_bytes": 24564 * 1048576},
                          {"ordinal": 1, "name": "NVIDIA RTX A5000", "pci_address": "0000:07:00.0", "memory_bytes": 24564 * 1048576}])
 check("nvidia-smi asked exactly the format's query", [c for c in r.calls if c[0] == "nvidia-smi"] == [ws.NVIDIA_SMI])
-check("the drives at pairing: role, mount point and mounted false alone",
+check("the drives not mounted: role, mount point and mounted false alone",
       o.get("drives") == [{"role": "state", "mount_point": "/mnt/weaver/state", "mounted": False},
                           {"role": "models", "mount_point": "/mnt/weaver/models", "mounted": False}])
 check("findmnt asked the format's columns at each mount point",
       [c for c in r.calls if c[0] == "findmnt"] == [["findmnt", "-J", "-b", "--mountpoint", mp, "-o", "FSTYPE,LABEL,OPTIONS,SIZE,AVAIL"]
                                                     for mp in ("/mnt/weaver/state", "/mnt/weaver/models")])
-check("no command beyond the five", {c[0] for c in r.calls} <= {"systemd-detect-virt", "modinfo", "ldconfig", "nvidia-smi", "findmnt"})
+check("no command beyond the six", {c[0] for c in r.calls} <= {"systemd-detect-virt", "modinfo", "ldconfig", "nvidia-smi", "findmnt", "ip"})
 
-# 2. The same machine at drives: both mounted.
-body, r, why = run_survey(root, "drives", **{"findmnt:/mnt/weaver/state": (0, FINDMNT_STATE), "findmnt:/mnt/weaver/models": (0, FINDMNT_MODELS)})
+# 2. The same machine with both drives mounted.
+body, r, why = run_survey(root, **{"findmnt:/mnt/weaver/state": (0, FINDMNT_STATE), "findmnt:/mnt/weaver/models": (0, FINDMNT_MODELS)})
 o = json.loads(body) if body else {}
-check("at drives: a report the reader takes (%s)" % why, body is not None and not refused(body))
+check("both mounted: a report the reader takes (%s)" % why, body is not None and not refused(body))
 check("the state drive: label, ext4, sizes and the project quota",
       o.get("drives", [{}])[0] == {"role": "state", "mount_point": "/mnt/weaver/state", "mounted": True, "label": "weaver-state",
                                    "filesystem": "ext4", "bytes": 16729894912, "free_bytes": 15832121344, "project_quota": True})
 check("the models drive: no label read as empty, sizes given as strings read as integers, no project quota",
       o.get("drives", [{}, {}])[1] == {"role": "models", "mount_point": "/mnt/weaver/models", "mounted": True, "label": "",
                                        "filesystem": "ext4", "bytes": 84230021120, "free_bytes": 79831982080, "project_quota": False})
+
+# 2b. The operator's own places: findmnt reads them, and the report names them.
+mine = ("/var/lib/weaver-state", "/srv/weaver-models")
+body, r, why = run_survey(root, places=mine, **{"findmnt:/var/lib/weaver-state": (0, FINDMNT_STATE), "findmnt:/srv/weaver-models": (1, "")})
+o = json.loads(body) if body else {}
+check("the operator's own places: a report the reader takes (%s)" % why, body is not None and not refused(body))
+check("the operator's own places: findmnt asked at each, and each named as its mount point",
+      [c[4] for c in r.calls if c[0] == "findmnt"] == list(mine) and [d.get("mount_point") for d in o.get("drives", [])] == list(mine))
+
+# 2c. Shared planes on one card, the management plane on IPv6.
+body, r, why = run_survey(root, management="2001:db8::10/64", data="192.0.2.10/24", planes="shared")
+o = json.loads(body) if body else {}
+check("shared planes on one card, the management plane on IPv6: a report the reader takes (%s)" % why,
+      body is not None and not refused(body) and o["network"] == {"management": {"address": "2001:db8::10", "prefix_length": 64},
+                                                                   "data": {"address": "192.0.2.10", "prefix_length": 24},
+                                                                   "planes": "shared"})
 
 # 3. No card, the module not loaded: the cardless rehearsal's machine.
 root3 = machine_root("cardless", loaded=False, nvidia_fns=())
@@ -256,10 +345,44 @@ cases = [
      {"nvidia-smi": (0, "".join("00000000:%02X:00.0, NVIDIA RTX A5000, 24564\n" % (0x10 + n) for n in range(17)))}, "over 16"),
 ]
 for what, rt, over, cause in cases:
-    stage = "drives" if "findmnt" in "".join(over) else "pairing"
-    body, r, why = run_survey(rt, stage, **over)
+    body, r, why = run_survey(rt, **over)
     check("%s: no report, and the cause names it (%s)" % (what, why), body is None and why is not None and cause in why)
-check("the stage must be pairing or drives", run_survey(root, "pair")[0] is None)
+
+# 5b. Refusals of the arguments and the planes: each writes nothing and names its cause.
+ONE_NET = json.dumps([ip_card("enp1s0", "UP", ("192.0.2.10", 24, "global")),
+                      ip_card("enp2s0", "UP", ("192.0.2.99", 24, "global"))])
+args_cases = [
+    ("a stage of drives", dict(stage="drives"), {}, "not pairing"),
+    ("planes other than separate or shared", dict(planes="both"), {}, "not separate or shared"),
+    ("a place with an empty part", dict(places=("/mnt//state", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a place with a trailing slash", dict(places=("/mnt/weaver/state/", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a place of / alone", dict(places=("/", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a place with a .. part", dict(places=("/mnt/../state", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a relative place", dict(places=("mnt/state", "/mnt/weaver/models")), {}, "one spelling"),
+    ("a place over 255 bytes", dict(places=("/" + "a" * 200 + "/" + "b" * 60, "/mnt/weaver/models")), {}, "one spelling"),
+    ("two equal places", dict(places=("/mnt/weaver/state", "/mnt/weaver/state")), {}, "equal"),
+    ("one place inside the other", dict(places=("/mnt/weaver", "/mnt/weaver/models")), {}, "inside"),
+    ("an address in another spelling", dict(management="2001:DB8::10/64"), {}, "which writes it 2001:db8::10"),
+    ("an IPv4 address with a leading zero", dict(management="192.0.2.010/24"), {}, "not an IPv4 or IPv6 address"),
+    ("an unspecified address", dict(management="0.0.0.0/8"), {}, "refuses"),
+    ("a link-local address", dict(management="fe80::5054:ff:feaa:101/64"), {}, "refuses"),
+    ("an IPv4 address written as IPv6", dict(data="::ffff:198.51.100.10/96"), {}, "refuses"),
+    ("no prefix length", dict(management="192.0.2.10"), {}, "<address>/<prefix length>"),
+    ("a prefix length over 32 for IPv4", dict(management="192.0.2.10/33"), {}, "outside 1 to 32"),
+    ("a prefix length with a leading zero", dict(management="192.0.2.10/024"), {}, "<address>/<prefix length>"),
+    ("separate planes on one address", dict(data="192.0.2.10/24"), {}, "both are the address"),
+    ("an address ip does not list", dict(data="198.51.100.11/24"), {}, "is not listed"),
+    ("an address on a card that is down", dict(data="203.0.113.10/24"), {}, "on a card that is up"),
+    ("an address with another prefix length", dict(data="198.51.100.10/16"), {}, "prefix length 16"),
+    ("a loopback address, of host scope", dict(data="127.0.0.1/8"), {}, "global scope"),
+    ("separate planes on one card", dict(data="2001:db8::10/64"), {}, "both addresses are on the card enp1s0"),
+    ("separate planes in one network", dict(data="192.0.2.99/24"), {"ip": (0, ONE_NET)}, "lie in one network"),
+    ("ip -j addr show fails", {}, {"ip": (1, "")}, "ip -j addr show exited 1"),
+    ("ip -j addr show gives no JSON", {}, {"ip": (0, "enp1s0 UP")}, "ip -j addr show gave"),
+]
+for what, kw, over, cause in args_cases:
+    body, r, why = run_survey(root, **kw, **over)
+    check("%s: no report, and the cause names it (%s)" % (what, why), body is None and why is not None and cause in why)
 
 # 6. The script as written: it opens nothing for writing, no socket, no temporary file.
 import ast
@@ -267,7 +390,7 @@ tree = ast.parse(open(SURVEY).read())
 imported = {a.name for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names} \
     | {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)}
 check("the survey imports %s alone: no socket, no temporary file" % sorted(imported),
-      imported <= {"hashlib", "json", "os", "re", "subprocess", "sys", "time"})
+      imported <= {"hashlib", "ipaddress", "json", "os", "re", "subprocess", "sys", "time"})
 opens = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open"]
 modes = [n.args[1].value if len(n.args) > 1 and isinstance(n.args[1], ast.Constant) else ("r" if len(n.args) < 2 else None)
          for n in opens]
@@ -279,13 +402,33 @@ consts = {n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isi
 check("no command that mounts or loads", not consts & {"mount", "umount", "modprobe", "insmod", "rmmod", "nvidia-modprobe"})
 
 # 7. The survey for real, on a machine with no stamp, so nothing on standard output.
-p = subprocess.run([sys.executable, "-I", SURVEY, "--stage", "drives"], capture_output=True, timeout=60)
+ARGS = ["--stage", "pairing", "--state-at", "/mnt/weaver/state", "--models-at", "/mnt/weaver/models",
+        "--management", "192.0.2.10/24", "--data", "198.51.100.10/24", "--planes", "separate"]
+
+
+def for_real(args):
+    return subprocess.run([sys.executable, "-I", SURVEY] + args, capture_output=True, timeout=60)
+
+
+p = for_real(ARGS)
 check("for real, with no stamp: exit 1, nothing on standard output, the stamp named (%r)" % p.stderr[:120],
       p.returncode == 1 and p.stdout == b"" and b"the stamp" in p.stderr)
-p = subprocess.run([sys.executable, "-I", SURVEY], capture_output=True, timeout=60)
-check("no stage: exit 2, nothing on standard output", p.returncode == 2 and p.stdout == b"")
-p = subprocess.run([sys.executable, "-I", SURVEY, "--stage", "later"], capture_output=True, timeout=60)
-check("an unknown stage: exit 2, nothing on standard output", p.returncode == 2 and p.stdout == b"")
+p = for_real(ARGS[4:] + ARGS[:4])
+check("for real, the options in another order: read alike (%r)" % p.stderr[:80], p.returncode == 1 and b"the stamp" in p.stderr)
+usage_cases = [
+    ("no option", []),
+    ("version 1's call, --stage pairing alone", ["--stage", "pairing"]),
+    ("a stage of drives", ["--stage", "drives"] + ARGS[2:]),
+    ("an unknown stage", ["--stage", "later"] + ARGS[2:]),
+    ("planes other than separate or shared", ARGS[:-1] + ["both"]),
+    ("an option given twice", ARGS[:-2] + ["--state-at", "/srv/x"]),
+    ("an unknown option", ARGS[:-2] + ["--plane", "separate"]),
+    ("an option with no value", ARGS[:-1]),
+]
+for what, args in usage_cases:
+    p = for_real(args)
+    check("%s: exit 2, nothing on standard output, the usage named" % what,
+          p.returncode == 2 and p.stdout == b"" and p.stderr.startswith(b"usage: weaver-survey --stage pairing --state-at <place>"))
 
 print("== %d passed, %d failed (in %s)" % (passed, failed, T))
 if failed:
