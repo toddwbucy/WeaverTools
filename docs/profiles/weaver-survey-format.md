@@ -24,8 +24,8 @@ management plane and a data plane, on two networks by default).
 It states the format of the report that the appliance's survey makes of its machine,
 `weaver-survey/2`. The image's survey writes the report. Weaver Web reads it through
 admin-con, which carries one JSON object of at most 64 KiB for each report and parses
-nothing in it. The console stores the latest report verbatim, with its stage and the
-time it arrived. This document states the report's
+nothing in it. The console stores the report verbatim, with its stage and the time it
+arrived. This document states the report's
 members, its encoding, what a reader refuses, how a later version is told apart, and
 where the survey runs. Section 7 states what version 1 was.
 
@@ -46,7 +46,7 @@ fails the survey; the survey never truncates a value.
 | Member | Meaning | Source, read only | Bound |
 | --- | --- | --- | --- |
 | `format` | the format and its version | constant | exactly `weaver-survey/2` |
-| `stage` | which of the setup script's two reports this is. It says nothing of whether the drives are mounted: `drives[].mounted` says that | the setup script's argument | `pairing` or `drives` |
+| `stage` | the setup script's one report. It says nothing of whether the drives are mounted: `drives[].mounted` says that | the setup script's argument | `pairing` |
 | `taken` | when the survey read the machine | `date -u +%Y-%m-%dT%H:%M:%SZ` | RFC 3339, UTC, whole seconds, `Z` |
 | `image.version` | the image's version | the `appliance.version` line of `/etc/weaver-appliance/stamp`, which the seal writes as `appliance.version = <version>`: the value after ` = `. The survey fails unless the stamp holds exactly one such line | `^[0-9]+\.[0-9]+$` |
 | `image.manifest_sha256` | the image's identity, which the build Spec names as the MANIFEST's sha256 (its section 2). The MANIFEST lists the stamp's own digest, so it pins the stamp too | `sha256sum /etc/weaver-appliance/MANIFEST`, which the seal writes 0644 | 64 lowercase hex digits |
@@ -92,8 +92,10 @@ with neither address in the other's network. An address's network is the address
 every bit past its prefix length cleared. The report names no card, so the survey checks
 the cards and a reader checks what the addresses show.
 
-**`stage` names the report, not a state of the machine.** The setup script makes both
-reports after its drive and network steps, so both normally show the drives mounted.
+**`stage` names the report, not a state of the machine.** The setup script makes one
+report, after its drive and network steps, so it normally shows the drives mounted.
+`stage` is kept, bounded to `pairing`, so a reader keeps the shape it has. Version 1's
+second stage, `drives`, is not written.
 
 **The report carries none of the following:**
 - a card's serial or UUID;
@@ -173,7 +175,7 @@ A reader refuses the whole report, and reads no member of it, for any of the fol
 6. An integer that is negative, fractional, written with an exponent, or above
    2^53 - 1.
 7. A string outside printable ASCII, over its bound, or not matching its pattern.
-8. A `stage` other than `pairing` or `drives`, or a `taken` not in section 1's form.
+8. A `stage` other than `pairing`, or a `taken` not in section 1's form.
 9. A card whose `ordinal` is not its index, or `pci_address` values that do not strictly
    ascend.
 10. `drives` that is not exactly `state` then `models`, a `mount_point` not in the one
@@ -210,15 +212,18 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
   reader must accept the output.
 - **The appliance's setup script runs it.** The account the appliance ships with runs
   the setup script through sudo, at the console of the virtual machine or over SSH. The
-  setup script runs the survey twice, at the stage `pairing` and at the stage `drives`,
-  after its drive step and its network step and before the pairing:
+  setup script runs the survey once, after its drive step and its network step and
+  before the pairing:
 
-      weaver-survey --stage pairing|drives --state-at <place> --models-at <place> \
+      weaver-survey --stage pairing --state-at <place> --models-at <place> \
           --management <address>/<prefix length> --data <address>/<prefix length> \
           --planes separate|shared
 
-  It hands each report to admin-con, which carries it to Weaver Web. A survey that
-  fails stops the setup script, which names the survey's log.
+  The setup script writes the survey's standard output, whole and by rename, to
+  `/etc/weaver/survey.json`, owned by root, mode 0644. That file is the report.
+  admin-con carries its bytes to Weaver Web as they stand, so one digest names the file
+  and the report Weaver Web stores. A survey that fails stops the setup script, which
+  names the survey's log.
 - **The survey runs as `nobody`**, so the operating system holds it to reading. Every
   source of section 1 is readable by any user.
 - **It writes nothing.** Its output is its standard output alone: no file and no
@@ -235,14 +240,14 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
 **Every value of the machine below is made up, and illustrative**: the time, the
 MANIFEST's digest, the machine, the CPU, the memory, the cards and their addresses, the
 drives and the network. The image's own facts are release 2.0's. The flags are cut to 20
-entries; a real report carries the whole line. It is a box at the stage `drives`, so
-every member shows. Its operator mounted the models drive at a place of their own, and
+entries; a real report carries the whole line. Both its drives are mounted, so every
+member shows. Its operator mounted the models drive at a place of their own, and
 gave it two cards on two networks.
 
 ```json
 {
   "format": "weaver-survey/2",
-  "stage": "drives",
+  "stage": "pairing",
   "taken": "2026-11-17T09:00:00Z",
   "image": {
     "version": "2.0",
@@ -297,7 +302,7 @@ gave it two cards on two networks.
 | Version | Date | What it states |
 | --- | --- | --- |
 | `weaver-survey/1` | 2026-11-17 | the members of section 1 without `network`. Each `drives[].mount_point` was a constant: `/mnt/weaver/state` for `state`, `/mnt/weaver/models` for `models`. Refusal 10 refused any other mount point, refusal 12 did not stand, and the report carried no address. `stage` was described as the setup script's moment, with neither drive mounted at `pairing` |
-| `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` was rebounded and `network` was added as a required member |
+| `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` and `stage` were rebounded, `stage` to `pairing` alone, and `network` was added as a required member |
 
 **The survey is behind this document until its own act.** The image's survey writes
 version 1 until then. The landing order is this document, then Weaver Web's reader of
@@ -311,9 +316,9 @@ versions 1 and 2, then the survey, then the setup script.
 - **The image proof's arguments.** Version 2's survey takes the places and the planes as
   arguments, and the image build's proof runs it before any setup script has run. Which
   values the proof passes is the build Spec's to state.
-- **`stage` in a later version.** The setup script now makes both reports at one time.
-  Whether a later version drops `stage` and the second report is a question for Weaver
-  Web's setup pages, which store each report with its stage.
+- **`stage` in a later version.** The setup script now makes one report, and `stage`
+  holds one value. Whether a later version drops `stage` is a question for Weaver Web's
+  setup pages, which store each report with its stage.
 - **The node kind of this document in the document graph.** The graph is suspended until
   release by the ruling of 2026-09-27. Settled by the operator when the graph resumes,
   as for the profile.
