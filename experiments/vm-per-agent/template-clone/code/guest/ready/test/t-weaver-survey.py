@@ -121,7 +121,10 @@ check("version 2: an address of a refused kind is refused",
           for v in ("0.0.0.0", "::", "169.254.1.1", "fe80::1", "224.0.0.1", "ff02::1", "255.255.255.255", "::ffff:198.51.100.10")))
 check("version 2: a loopback address is taken", not refused(mutated2(lambda o: net(o, "data", address="127.0.0.1", prefix_length=8))))
 check("version 2: a prefix length outside its family's bound is refused",
-      refused(mutated2(lambda o: net(o, "data", prefix_length=33))) and refused(mutated2(lambda o: net(o, "data", prefix_length=0))))
+      all(refusal(mutated2(lambda o, n=n: (net(o, "data", prefix_length=n), o["network"].update(planes="shared"))))
+          == "network.data.prefix_length %d outside 1 to 32" % n for n in (33, 0)))
+check("version 1: a mount point other than the constant is refused",
+      refused(mutated(lambda o: o["drives"][1].update(mount_point="/srv/weaver-models"))))
 check("version 2: an IPv6 plane takes a prefix length up to 128",
       not refused(mutated2(lambda o: net(o, "data", address="2001:db8::10", prefix_length=128))))
 check("version 2: planes other than separate or shared are refused", refused(mutated2(lambda o: o["network"].update(planes="both"))))
@@ -192,7 +195,7 @@ def ip_card(name, state, *addrs):
 IP_ADDR = json.dumps([ip_card("lo", "UNKNOWN", ("127.0.0.1", 8, "host"), ("::1", 128, "host")),
                       ip_card("enp1s0", "UP", ("192.0.2.10", 24, "global"), ("2001:db8::10", 64, "global"),
                               ("fe80::5054:ff:feaa:101", 64, "link")),
-                      ip_card("enp2s0", "UP", ("198.51.100.10", 24, "global")),
+                      ip_card("enp2s0", "UP", ("198.51.100.10", 24, "global"), ("198.51.100.20", 24, "link")),
                       ip_card("enp3s0", "DOWN", ("203.0.113.10", 24, "global"))])
 PLACES = ("/mnt/weaver/state", "/mnt/weaver/models")
 
@@ -218,7 +221,8 @@ class Runner:
     def __call__(self, argv, timeout=60):
         self.calls.append(list(argv))
         key = argv[0] + (":" + argv[4] if argv[0] == "findmnt" else "")
-        return self.answers[key]
+        # A place no case names has nothing mounted there.
+        return self.answers.get(key, (1, "")) if argv[0] == "findmnt" else self.answers[key]
 
 
 def run_survey(root, stage="pairing", places=PLACES, management="192.0.2.10/24", data="198.51.100.10/24",
@@ -375,6 +379,7 @@ args_cases = [
     ("an address on a card that is down", dict(data="203.0.113.10/24"), {}, "on a card that is up"),
     ("an address with another prefix length", dict(data="198.51.100.10/16"), {}, "prefix length 16"),
     ("a loopback address, of host scope", dict(data="127.0.0.1/8"), {}, "global scope"),
+    ("an address of link scope on a card that is up", dict(data="198.51.100.20/24"), {}, "global scope"),
     ("separate planes on one card", dict(data="2001:db8::10/64"), {}, "both addresses are on the card enp1s0"),
     ("separate planes in one network", dict(data="192.0.2.99/24"), {"ip": (0, ONE_NET)}, "lie in one network"),
     ("ip -j addr show fails", {}, {"ip": (1, "")}, "ip -j addr show exited 1"),
