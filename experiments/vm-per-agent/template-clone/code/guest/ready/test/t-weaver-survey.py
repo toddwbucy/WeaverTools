@@ -496,13 +496,85 @@ for what, kw, over, cause in args_cases:
     body, r, why = run_survey(root, **kw, **over)
     check("%s: no report, and the cause names it (%s)" % (what, why), body is None and why is not None and cause in why)
 
+# 5c. The CUDA runtime from the stack record (WeaverTools issue 55, choice A): where
+# /etc/weaver/stack/library-path stands, its folder's one libcudart.so.<major> names the
+# runtime, by its real file, and the loader's list is not asked. Where none stands, the
+# loader's list as before. A record that stands but is of another shape fails the survey.
+def stack_root(name, record="/opt/weaver/lib\n", libs=(("libcudart.so.13", "libcudart.so.13.4.92"),), real=True):
+    """machine_root, whose loader's list names 13.0.96, with a stack record and its folder.
+    libs are (name, link target) pairs laid in /opt/weaver/lib; real lays each target."""
+    rt = machine_root(name)
+    if record is not None:
+        write(rt, ws.STACK_LIBRARY_PATH, record)
+    lib = os.path.join(rt, "opt/weaver/lib")
+    os.makedirs(lib, exist_ok=True)
+    for n, target in libs:
+        if real and not os.path.exists(os.path.join(lib, target)):
+            write(rt, "/opt/weaver/lib/" + target, "")
+        os.symlink(target, os.path.join(lib, n))
+    write(rt, "/opt/weaver/lib/libcublas.so.13", "")
+    return rt
+
+
+def ldconfig_asked(r):
+    return [c for c in r.calls if c[0] == "ldconfig"]
+
+
+rt = stack_root("stack-wins")
+body, r, why = run_survey(rt)
+check("the stack record wins: its folder's 13.4.92, not the loader's 13.0.96 (%s)" % why,
+      body is not None and json.loads(body)["cuda_runtime"] == {"version": "13.4.92"} and not refused(body))
+check("where the stack record stands, the loader's list is not asked", body is not None and not ldconfig_asked(r))
+body, r, why = run_survey(stack_root("stack-no-newline", record="/opt/weaver/lib"))
+check("a record without its newline is read alike (%s)" % why,
+      body is not None and json.loads(body)["cuda_runtime"] == {"version": "13.4.92"})
+body, r, why = run_survey(stack_root("stack-none", record=None))
+check("no stack record: the loader's list, asked once, names 13.0.96 (%s)" % why,
+      body is not None and json.loads(body)["cuda_runtime"] == {"version": "13.0.96"}
+      and ldconfig_asked(r) == [["ldconfig", "-p"]])
+body, r, why = run_survey(stack_root("stack-none-empty", record=None), ldconfig=(0, "\tlibc.so.6 (libc6,x86-64) => /usr/lib/libc.so.6\n"))
+check("no stack record and no libcudart in the loader's list: no report, both named (%s)" % why,
+      body is None and why is not None and "no stack record stands at /etc/weaver/stack/library-path" in why and "ldconfig -p finds 0" in why)
+
+rt_dir = stack_root("stack-record-dir", record=None)
+os.makedirs(os.path.join(rt_dir, ws.STACK_LIBRARY_PATH.lstrip("/")))
+rt_link = stack_root("stack-record-link", record=None)
+write(rt_link, "/etc/weaver/stack/elsewhere", "/opt/weaver/lib\n")
+os.symlink("elsewhere", os.path.join(rt_link, ws.STACK_LIBRARY_PATH.lstrip("/")))
+rt_notdir = stack_root("stack-not-a-folder", record=None)
+write(rt_notdir, "/etc/weaver/stack", "a file where the stack's folder stands\n")
+rt_gone = stack_root("stack-folder-gone", record="/opt/weaver/lib64\n")
+rt_two = stack_root("stack-two-majors", libs=(("libcudart.so.13", "libcudart.so.13.4.92"), ("libcudart.so.12", "libcudart.so.12.8.90")))
+rt_other = stack_root("stack-other-name", libs=(("libcudart.so.13", "libfoo.so.1"),))
+rt_dangling = stack_root("stack-dangling", libs=(("libcudart.so.13", "libcudart.so.13.4.92"),), real=False)
+rt_badver = stack_root("stack-bad-version", libs=(("libcudart.so.13", "libcudart.so.13.x"),))
+stack_cases = [
+    ("a record that is a folder", rt_dir, "is not a regular file"),
+    ("a record that is a link", rt_link, "is not a regular file"),
+    ("a record whose folder is a file", rt_notdir, "the stack record /etc/weaver/stack/library-path could not be read"),
+    ("a record of two lines", stack_root("stack-two-lines", record="/opt/weaver/lib\n/usr/lib\n"), "more than one line"),
+    ("an empty record", stack_root("stack-empty", record=""), "not a place in the one spelling"),
+    ("a record naming a relative folder", stack_root("stack-relative", record="opt/weaver/lib\n"), "not a place in the one spelling"),
+    ("a record naming a folder with a trailing slash", stack_root("stack-slash", record="/opt/weaver/lib/\n"), "not a place in the one spelling"),
+    ("a record naming a folder that is not there", rt_gone, "/opt/weaver/lib64, which the stack record /etc/weaver/stack/library-path names, could not be listed"),
+    ("a folder with no libcudart.so.<major>", stack_root("stack-no-cudart", libs=()), "holds 0 libcudart.so.<major> name(s)"),
+    ("a folder with two", rt_two, "holds 2 libcudart.so.<major> name(s), not one: libcudart.so.12 libcudart.so.13"),
+    ("a name whose real file is of another name", rt_other, "/opt/weaver/lib/libcudart.so.13's real file is libfoo.so.1"),
+    ("a name whose link names no file", rt_dangling, "/opt/weaver/lib/libcudart.so.13's real file is libcudart.so.13.4.92, not a file"),
+    ("a real file whose version is outside the pattern", rt_badver, "real file is libcudart.so.13.x"),
+]
+for what, rt, cause in stack_cases:
+    body, r, why = run_survey(rt)
+    check("the stack record, %s: no report, the cause named, the loader's list not asked (%s)" % (what, why),
+          body is None and why is not None and cause in why and not ldconfig_asked(r))
+
 # 6. The script as written: it opens nothing for writing, no socket, no temporary file.
 import ast
 tree = ast.parse(open(SURVEY).read())
 imported = {a.name for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names} \
     | {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)}
 check("the survey imports %s alone: no socket, no temporary file" % sorted(imported),
-      imported <= {"hashlib", "ipaddress", "json", "os", "re", "subprocess", "sys", "time"})
+      imported <= {"hashlib", "ipaddress", "json", "os", "re", "stat", "subprocess", "sys", "time"})
 opens = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open"]
 modes = [n.args[1].value if len(n.args) > 1 and isinstance(n.args[1], ast.Constant) else ("r" if len(n.args) < 2 else None)
          for n in opens]

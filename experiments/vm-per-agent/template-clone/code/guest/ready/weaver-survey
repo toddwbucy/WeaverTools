@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -I
 """weaver-survey: the appliance's survey of its machine, format weaver-survey/2
-(WeaverTools docs/profiles/weaver-survey-format.md at 4291e118, sections 1, 1.1, 2 and 5).
+(WeaverTools docs/profiles/weaver-survey-format.md at 0d89cdb4, sections 1, 1.1, 2 and 5).
 
     weaver-survey --stage pairing --state-at <place> --models-at <place> \
         --management <address>/<prefix length> --data <address>/<prefix length> \
@@ -26,7 +26,7 @@ planes other than separate or shared. Every source is readable by any user, so i
 Standard library only. The commands run with a fixed PATH and the C locale, each under a
 time bound.
 """
-import hashlib, ipaddress, json, os, re, subprocess, sys, time
+import hashlib, ipaddress, json, os, re, stat, subprocess, sys, time
 
 FORMAT = "weaver-survey/2"
 BOUND = 65536
@@ -176,7 +176,50 @@ def driver(root, runner):
     return {"version": text(version, BOUND, "driver.version", r"[0-9]+(\.[0-9]+){1,2}"), "loaded": loaded}
 
 
+STACK_LIBRARY_PATH = "/etc/weaver/stack/library-path"
+CUDART_NAME = r"libcudart\.so\.[0-9]+"
+CUDART_VERSION = r"[0-9]+\.[0-9]+(\.[0-9]+)?"
+
+
 def cuda_runtime(root, runner):
+    """The runtime from the stack record where it stands, else from the loader's list as
+    the image proof finds it. Never both: a record that stands but cannot be read, or
+    is of another shape, fails the survey rather than falling back."""
+    record = os.path.join(root, STACK_LIBRARY_PATH.lstrip("/"))
+    try:
+        st = os.lstat(record)
+    except FileNotFoundError:
+        return cuda_runtime_from_loader(root, runner)
+    except OSError as e:
+        raise Fail("the stack record %s could not be read: %s" % (STACK_LIBRARY_PATH, e.strerror or e))
+    if not stat.S_ISREG(st.st_mode):
+        raise Fail("the stack record %s is not a regular file" % STACK_LIBRARY_PATH)
+    return cuda_runtime_from_stack(root, read(root, STACK_LIBRARY_PATH, "the stack record"))
+
+
+def cuda_runtime_from_stack(root, record):
+    """The one libcudart.so.<major> in the folder the stack record names, by its real file."""
+    folder = record[:-1] if record.endswith("\n") else record
+    if "\n" in folder:
+        raise Fail("the stack record %s holds more than one line" % STACK_LIBRARY_PATH)
+    place(folder, "the folder the stack record %s names," % STACK_LIBRARY_PATH)
+    try:
+        names = sorted(n for n in os.listdir(os.path.join(root, folder.lstrip("/"))) if re.fullmatch(CUDART_NAME, n))
+    except OSError as e:
+        raise Fail("%s, which the stack record %s names, could not be listed: %s"
+                   % (folder, STACK_LIBRARY_PATH, e.strerror or e))
+    if len(names) != 1:
+        raise Fail("%s, which the stack record %s names, holds %d libcudart.so.<major> name(s), not one%s"
+                   % (folder, STACK_LIBRARY_PATH, len(names), (": " + " ".join(names)) if names else ""))
+    named = folder + "/" + names[0]
+    real = os.path.realpath(os.path.join(root, named.lstrip("/")))
+    m = re.fullmatch(r"libcudart\.so\.(" + CUDART_VERSION + ")", os.path.basename(real))
+    if not m or not os.path.isfile(real):
+        raise Fail("%s's real file is %s, not a file libcudart.so.<version>" % (named, os.path.basename(real)))
+    return {"version": text(m.group(1), BOUND, "cuda_runtime.version", CUDART_VERSION)}
+
+
+def cuda_runtime_from_loader(root, runner):
     rc, out = runner(["ldconfig", "-p"])
     if rc != 0:
         raise Fail("ldconfig -p exited %d" % rc)
@@ -184,11 +227,12 @@ def cuda_runtime(root, runner):
     found = sorted({name for name, _ in pairs})
     paths = sorted({path for _, path in pairs})
     if len(found) != 1 or len(paths) != 1:
-        raise Fail("ldconfig -p finds %d libcudart.so.<major> name(s) and %d path(s), not one" % (len(found), len(paths)))
+        raise Fail("no stack record stands at %s, and ldconfig -p finds %d libcudart.so.<major> name(s) and %d path(s), not one"
+                   % (STACK_LIBRARY_PATH, len(found), len(paths)))
     real = os.path.basename(os.path.realpath(os.path.join(root, paths[0].lstrip("/"))))
     if not real.startswith("libcudart.so."):
         raise Fail("%s's real file is %s, not libcudart.so.<version>" % (paths[0], real))
-    return {"version": text(real[len("libcudart.so."):], BOUND, "cuda_runtime.version", r"[0-9]+\.[0-9]+(\.[0-9]+)?")}
+    return {"version": text(real[len("libcudart.so."):], BOUND, "cuda_runtime.version", CUDART_VERSION)}
 
 
 def sysfs_address(bus_id):
