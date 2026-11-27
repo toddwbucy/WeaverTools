@@ -193,13 +193,14 @@ Any accurate source serves.
 
 ### 3.4 Storage
 
-**Two mount points are fixed: `/mnt/weaver/models` and `/mnt/weaver/state`.** The models
-mount is plural by the operator's rulings of 2026-11-16 on the setup pages, which
-supersede the singular of 2026-11-14. The operator attaches the disks in the hypervisor.
-At the appliance's console the operator chooses each disk and confirms it, and the
-appliance formats and mounts it, per section 3.5 (the same rulings). The image lays both
-as empty directories. Sizes are stated in GiB, the one unit across the setup flow (the
-same rulings).
+**Two mount points are the defaults, `/mnt/weaver/models` and `/mnt/weaver/state`, and
+the operator may choose another for either at setup (`weaver-survey-format`, version
+2).** The models mount is plural by the operator's rulings of 2026-11-16 on the setup
+pages, which supersede the singular of 2026-11-14. The operator attaches the disks in
+the hypervisor. At the appliance's console the operator chooses each disk and confirms
+it, and the appliance formats and mounts it, per section 3.5 (the same rulings). The
+image lays both as empty directories. Sizes are stated in GiB, the one unit across the
+setup flow (the same rulings).
 
 **The models mount is required.** A load is refused where the models mount is not a
 separate filesystem.
