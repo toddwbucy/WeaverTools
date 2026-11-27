@@ -3,7 +3,7 @@
 **Status:** Merged in pull request 37 (2026-11-17). Revised for the appliance template,
 release 5.0, in the `act/appliance-template` stack (pull request 44), merged on
 2026-11-19. Version 2 filed on 2026-11-25, on the branch `docs/weaver-survey-format-2`.
-The image's survey writes version 1 until the survey's own act lands (section 7).
+The image's survey writes version 2 from the survey's own act (section 7).
 **Date filed:** 2026-11-17
 **Document ID:** `weaver-survey-format`
 **Parent:** `weaver-appliance-profile` (this directory), whose image carries the survey
@@ -24,8 +24,8 @@ management plane and a data plane, on two networks by default).
 It states the format of the report that the appliance's survey makes of its machine,
 `weaver-survey/2`. The image's survey writes the report. Weaver Web reads it through
 admin-con, which carries one JSON object of at most 64 KiB for each report and parses
-nothing in it. The console stores the latest report verbatim, with its stage and the
-time it arrived. This document states the report's
+nothing in it. The console stores the report verbatim, with its stage and the time it
+arrived. This document states the report's
 members, its encoding, what a reader refuses, how a later version is told apart, and
 where the survey runs. Section 7 states what version 1 was.
 
@@ -40,14 +40,19 @@ pages do with a member is stated in Weaver Web's own Spec.
 
 Every member is required, except a mounted drive's members on a drive that is not
 mounted (below). Each string is printable ASCII (0x20 to 0x7E) within its byte
-bound. Each integer is a JSON integer from 0 to 2^53 - 1. A value that breaks its bound
-fails the survey; the survey never truncates a value.
+bound. A string whose bound names no pattern may be empty, and one with a pattern
+matches it whole. The survey writes an empty `drives[].label` where the filesystem has
+none, and an empty `drives[].filesystem` where `findmnt` gives none. Each integer is a
+JSON integer from 0 to 2^53 - 1, written as digits alone, so `-0` is not one. A value
+that breaks its bound fails the survey; the survey never truncates a value.
+`image.version`, `driver.version` and `cuda_runtime.version` have no byte bound of
+their own: their patterns and the report's 64 KiB hold them.
 
 | Member | Meaning | Source, read only | Bound |
 | --- | --- | --- | --- |
 | `format` | the format and its version | constant | exactly `weaver-survey/2` |
-| `stage` | which of the setup script's two reports this is. It says nothing of whether the drives are mounted: `drives[].mounted` says that | the setup script's argument | `pairing` or `drives` |
-| `taken` | when the survey read the machine | `date -u +%Y-%m-%dT%H:%M:%SZ` | RFC 3339, UTC, whole seconds, `Z` |
+| `stage` | the setup script's one report. It says nothing of whether the drives are mounted: `drives[].mounted` says that | the setup script's argument | `pairing` |
+| `taken` | when the survey read the machine | `date -u +%Y-%m-%dT%H:%M:%SZ` | `YYYY-MM-DDThh:mm:ssZ` in UTC, with a capital `T` and `Z`, naming a date and time that exist, the seconds from 00 to 59. A leap second, `60`, is refused |
 | `image.version` | the image's version | the `appliance.version` line of `/etc/weaver-appliance/stamp`, which the seal writes as `appliance.version = <version>`: the value after ` = `. The survey fails unless the stamp holds exactly one such line | `^[0-9]+\.[0-9]+$` |
 | `image.manifest_sha256` | the image's identity, which the build Spec names as the MANIFEST's sha256 (its section 2). The MANIFEST lists the stamp's own digest, so it pins the stamp too | `sha256sum /etc/weaver-appliance/MANIFEST`, which the seal writes 0644 | 64 lowercase hex digits |
 | `kernel.release` | the running kernel | `uname -r` | 64 bytes |
@@ -61,11 +66,11 @@ fails the survey; the survey never truncates a value.
 | `memory.total_bytes` | the memory the guest has | `/proc/meminfo`, `MemTotal` times 1024 | integer |
 | `driver.version` | the NVIDIA driver's release | `/sys/module/nvidia/version` where the module is loaded, else `modinfo -F version nvidia`, which reads the module file and loads nothing | `^[0-9]+(\.[0-9]+){1,2}$` |
 | `driver.loaded` | whether the driver's kernel module is loaded | `/sys/module/nvidia` present | boolean |
-| `cuda_runtime.version` | the CUDA runtime the image carries | the real file name of `libcudart.so.<major>` as `ldconfig -p` finds it, after `libcudart.so.` | `^[0-9]+\.[0-9]+(\.[0-9]+)?$` |
+| `cuda_runtime.version` | the CUDA runtime the machine carries for the agent: the stack's where WeaverAgent's stack is laid, else the image's | where the stack record `/etc/weaver/stack/library-path` stands, the real file name of the one `libcudart.so.<major>` in the folder its one line names, after `libcudart.so.`. Where no stack record stands, the real file name of `libcudart.so.<major>` as `ldconfig -p` finds it, after `libcudart.so.`. The survey reads one source, never both: a record that stands but is not a regular file of one line naming a folder in the one spelling of section 1.1, a folder that cannot be listed or holds no such name or more than one, or a name whose real file is not a file `libcudart.so.<version>`, fails the survey | `^[0-9]+\.[0-9]+(\.[0-9]+)?$` |
 | `cards` | each NVIDIA card, in PCI bus order | `nvidia-smi --query-gpu=pci.bus_id,name,memory.total --format=csv,noheader,nounits`, sorted by address, run only where `driver.loaded` is true, since without the module `nvidia-smi` fails and may load it. `cards` is empty where the module is not loaded, and where `nvidia-smi` exits 6, its documented code for a query that found nothing. Any other failure fails the survey. The survey also fails if sysfs holds an NVIDIA display function (vendor 0x10de, class 0x0300 or 0x0302) that this does not list | 0 to 16 objects |
 | `cards[].ordinal` | the card's number in PCI bus order, the number the agent gives its devices and the declaration's devices take | the card's index in that order | equal to the index, from 0 |
 | `cards[].name` | the card's model, which names the card in the deployment tuple | `name` | 96 bytes |
-| `cards[].pci_address` | the card's address as the guest sees it, the ground of its ordinal | `pci.bus_id`, lowercased, its domain written as sysfs writes it | `^[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$`, strictly ascending |
+| `cards[].pci_address` | the card's address as the guest sees it, the ground of its ordinal | `pci.bus_id`, lowercased, its domain written as sysfs writes it | `^[0-9a-f]{4,8}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]$`, so at most 16 bytes. Strictly ascending by number: the domain, the bus, the device and the function, read as numbers and compared in that order, not by their bytes |
 | `cards[].memory_bytes` | the card's memory as the driver reports it | `memory.total`, in MiB, times 1048576 | integer |
 | `drives` | the two mounts the setup script names | `findmnt -J -b --mountpoint <mount point> -o FSTYPE,LABEL,OPTIONS,SIZE,AVAIL` | exactly two objects, `state` then `models` |
 | `drives[].role` | which mount | constant | `state` or `models` |
@@ -75,10 +80,10 @@ fails the survey; the survey never truncates a value.
 | `drives[].filesystem` | the filesystem's type | `FSTYPE` | 16 bytes |
 | `drives[].bytes`, `drives[].free_bytes` | the filesystem's size, and the space free to a user | `SIZE`, `AVAIL` | integer |
 | `drives[].project_quota` | whether it is mounted with project quotas | `OPTIONS` holds `prjquota` | boolean |
-| `network.management.address` | the address Weaver Web manages this machine at: the management plane | the setup script's argument, as the operator chose it. The survey fails unless `ip -j addr show` lists it with global scope on a card that is up | an address in the one spelling of section 1.1, of a kind it allows |
+| `network.management.address` | the address Weaver Web manages this machine at: the management plane | the setup script's argument, as the operator chose it. The survey fails unless `ip -j addr show` lists it with global scope and with the prefix length given, on a card that is up: a card whose `operstate` is `UP` | an address in the one spelling of section 1.1, of a kind it allows, so at most 39 bytes |
 | `network.management.prefix_length` | the length of the management plane's network prefix | the prefix `ip -j addr show` lists with that address | 1 to 32 for an IPv4 address, 1 to 128 for an IPv6 address |
 | `network.data.address`, `network.data.prefix_length` | the same, for the address the agent reaches the world outside through: the data plane | the same | the same |
-| `network.planes` | whether the two planes are separate or shared, as the operator chose | the setup script's argument. The survey fails on `separate` where both addresses are on one card, or where either address lies in the other's network | `separate` or `shared` |
+| `network.planes` | whether the two planes are separate or shared, as the operator chose | the setup script's argument. The survey fails on `separate` where the two addresses are equal, where both are on one card, or where either address lies in the other's network. Where one address is IPv4 and the other IPv6, neither lies in the other's network, so only the cards are compared. `shared` promises no separation, so the survey checks none, and two addresses on two cards in two networks under `shared` give a report | `separate` or `shared` |
 
 **A drive with `mounted` false carries `role`, `mount_point` and `mounted` alone.** The
 report states what the survey read and judges nothing. A box without a card is a valid
@@ -92,8 +97,10 @@ with neither address in the other's network. An address's network is the address
 every bit past its prefix length cleared. The report names no card, so the survey checks
 the cards and a reader checks what the addresses show.
 
-**`stage` names the report, not a state of the machine.** The setup script makes both
-reports after its drive and network steps, so both normally show the drives mounted.
+**`stage` names the report, not a state of the machine.** The setup script makes one
+report, after its drive and network steps, so it normally shows the drives mounted.
+`stage` is kept, bounded to `pairing`, so a reader keeps the shape it has. Version 1's
+second stage, `drives`, is not written.
 
 **The report carries none of the following:**
 - a card's serial or UUID;
@@ -106,8 +113,11 @@ reports after its drive and network steps, so both normally show the drives moun
 
 ### 1.1 One spelling per place and per address
 
-A value has one spelling, so two reports of the same machine compare byte for byte, and
-a reader never decides between two spellings of one place or one address.
+A value has one spelling, so a reader never decides between two spellings of one place
+or one address, and two reports of one unchanged machine compare byte for byte except in
+the members that change between runs: `taken`, and each mounted drive's `free_bytes`. A
+comparison of two reports, such as the setup script's second run makes with the kept
+file, sets those members aside and compares the rest byte for byte.
 
 **A place** is an absolute path in this form:
 - it begins with `/`, and its parts are separated by one `/` each;
@@ -131,8 +141,10 @@ no leading zero (`0` itself is written `0`).
 - no `::` for a single zero group;
 - no dotted IPv4 tail.
 
-A reader parses each address and writes it again in this form. An address whose bytes
-differ from the form is refused.
+An address carries no zone: a `%` and a card's name after it is refused, though
+Python's `ipaddress` parses it and writes it back unchanged. A reader parses each
+address and writes it again in this form. An address whose bytes differ from the form is
+refused.
 
 **An address of these kinds is refused,** since none of them names one machine to Weaver
 Web in one spelling, whatever network Weaver Web calls from:
@@ -148,10 +160,13 @@ address has global scope on a card that is up (section 1, `network.management.ad
 
 ## 2. The encoding
 
-- One JSON object (RFC 8259), UTF-8, with no byte-order mark. Whitespace is free, and
-  one newline may follow the object.
-- At most 64 KiB for each report. A report of two cards and the whole flags line is
-  under 4 KiB.
+- One JSON object (RFC 8259), UTF-8, with no byte-order mark. The whitespace RFC 8259
+  allows may stand before the object and inside it. After the object stands nothing, or
+  one newline, `\n`, and nothing else.
+- The survey writes no whitespace before the object, an indent of one space inside it,
+  each member on its own line, and one `\n` after it.
+- At most 64 KiB for each report, 65,536 bytes, the newline counted. A report of two
+  cards and the whole flags line is under 4 KiB.
 - The members nest as section 1 names them: `image.version` is the member `version` of
   the object `image`. `cards` and `drives` are arrays of objects. `network` is an object
   holding the objects `management` and `data` and the string `planes`.
@@ -162,7 +177,7 @@ address has global scope on a card that is up (section 1, `network.management.ad
 A reader refuses the whole report, and reads no member of it, for any of the following:
 
 1. Bytes that are not UTF-8, that are not one JSON object, or that carry anything after
-   the object except one newline.
+   the object except one `\n`.
 2. More than 64 KiB.
 3. A member name given twice in one object, at any depth. Parsers differ on which one
    wins, so a reader takes neither.
@@ -170,12 +185,13 @@ A reader refuses the whole report, and reads no member of it, for any of the fol
 5. A member of section 1 that is missing or `null`, or of the wrong JSON type. A drive
    with `mounted` false carries `role`, `mount_point` and `mounted` alone, and its other
    members are not missing.
-6. An integer that is negative, fractional, written with an exponent, or above
-   2^53 - 1.
+6. An integer that is negative, written with a sign (`-0` included), fractional, written
+   with an exponent, or above 2^53 - 1.
 7. A string outside printable ASCII, over its bound, or not matching its pattern.
-8. A `stage` other than `pairing` or `drives`, or a `taken` not in section 1's form.
+8. A `stage` other than `pairing`, or a `taken` not in section 1's form, a leap second
+   included.
 9. A card whose `ordinal` is not its index, or `pci_address` values that do not strictly
-   ascend.
+   ascend by number.
 10. `drives` that is not exactly `state` then `models`, a `mount_point` not in the one
     spelling of section 1.1, two equal mount points or one inside the other, or a drive
     with `mounted` false that carries a mounted drive's members.
@@ -206,19 +222,25 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
 - **The image carries the survey from release 5.0, at
   `/opt/weaver-appliance/bin/weaver-survey`** (the operator's rulings of 2026-11-19;
   `weaver-appliance-build-Spec` section 2). The image build's proof runs it once on a
-  box's first boot, as `nobody` with `--stage pairing` and the arguments below, and its
-  reader must accept the output.
+  box's first boot, as `nobody`, with `--stage pairing`, the two places
+  `/mnt/weaver/state` and `/mnt/weaver/models`, and the guest's one address with global
+  scope on a card that is up given as both planes under `--planes shared`. Nothing is
+  mounted at either place then, so both drives show `mounted` false. The format's reader
+  must accept the output.
 - **The appliance's setup script runs it.** The account the appliance ships with runs
   the setup script through sudo, at the console of the virtual machine or over SSH. The
-  setup script runs the survey twice, at the stage `pairing` and at the stage `drives`,
-  after its drive step and its network step and before the pairing:
+  setup script runs the survey once, after its drive step and its network step and
+  before the pairing:
 
-      weaver-survey --stage pairing|drives --state-at <place> --models-at <place> \
+      weaver-survey --stage pairing --state-at <place> --models-at <place> \
           --management <address>/<prefix length> --data <address>/<prefix length> \
           --planes separate|shared
 
-  It hands each report to admin-con, which carries it to Weaver Web. A survey that
-  fails stops the setup script, which names the survey's log.
+  The setup script writes the survey's standard output, whole and by rename, to
+  `/etc/weaver/survey.json`, owned by root, mode 0644. That file is the report.
+  admin-con carries its bytes to Weaver Web as they stand, so one digest names the file
+  and the report Weaver Web stores. A survey that fails stops the setup script, which
+  names the survey's log.
 - **The survey runs as `nobody`**, so the operating system holds it to reading. Every
   source of section 1 is readable by any user.
 - **It writes nothing.** Its output is its standard output alone: no file and no
@@ -228,26 +250,33 @@ cause to refuse. A refused report stays stored verbatim, and nothing is read fro
   the console through admin-con alone.
 - **It never gives a partial report.** Where it cannot read a source, a value breaks
   its bound, or an argument does not match what it reads, it writes nothing to standard
-  output, writes the cause to standard error, and exits with a status other than 0.
+  output, writes the cause to standard error, and exits 1.
+- **Its exit status:** 0 with a report, 1 with no report, and 2 where its arguments are
+  not the form above, with its usage line on standard error and nothing on standard
+  output. Its first line runs the interpreter in isolated mode (`python3 -I`), so
+  neither its own folder nor `PYTHONPATH` nor the user's site reaches it, whoever calls
+  it.
 
 ## 6. A worked example
 
 **Every value of the machine below is made up, and illustrative**: the time, the
 MANIFEST's digest, the machine, the CPU, the memory, the cards and their addresses, the
 drives and the network. The image's own facts are release 2.0's. The flags are cut to 20
-entries; a real report carries the whole line. It is a box at the stage `drives`, so
-every member shows. Its operator mounted the models drive at a place of their own, and
-gave it two cards on two networks.
+entries; a real report carries the whole line. Both its drives are mounted, so every
+member shows. Its operator mounted the models drive at a place of their own, and
+gave it two cards on two networks. The MANIFEST's digest is that of a made-up MANIFEST
+of one line, so the survey's tests lay this machine out and compare the survey's report
+with this example.
 
 ```json
 {
   "format": "weaver-survey/2",
-  "stage": "drives",
+  "stage": "pairing",
   "taken": "2026-11-17T09:00:00Z",
   "image": {
     "version": "2.0",
     "manifest_sha256":
-      "5b1f0c9e7a2d4486b3e0f19c2d7a65e8c41f03b9d2a7e6158c0b94f3a1d2e7c6"
+      "03fcfb2e3fffc40f40d87b49d7f086d1c45c0c394a6794fbfdb1ce855502c1c8"
   },
   "kernel": {"release": "7.3.4-arch1-2"},
   "machine": {
@@ -297,23 +326,25 @@ gave it two cards on two networks.
 | Version | Date | What it states |
 | --- | --- | --- |
 | `weaver-survey/1` | 2026-11-17 | the members of section 1 without `network`. Each `drives[].mount_point` was a constant: `/mnt/weaver/state` for `state`, `/mnt/weaver/models` for `models`. Refusal 10 refused any other mount point, refusal 12 did not stand, and the report carried no address. `stage` was described as the setup script's moment, with neither drive mounted at `pairing` |
-| `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` was rebounded and `network` was added as a required member |
+| `weaver-survey/2` | 2026-11-25 | sections 1 to 6. N moved because `drives[].mount_point` and `stage` were rebounded, `stage` to `pairing` alone, and `network` was added as a required member |
 
-**The survey is behind this document until its own act.** The image's survey writes
-version 1 until then. The landing order is this document, then Weaver Web's reader of
-versions 1 and 2, then the survey, then the setup script.
+**The survey writes version 2 from its own act.** The landing order is this document,
+then Weaver Web's reader of version 2, then the survey, then the setup script. That reader
+refuses a report of version 1 by its version's name. A survey of version 2 on an image
+that pairs with a console reading version 1 alone is refused there, so the survey's act
+lands after Weaver Web's reader.
 
 ## 8. Open
 
 - **A loaded module with no card.** Whether the open module loads where no card stands,
   and that `nvidia-smi` then exits 6, is read from NVIDIA's documented return codes and
   not yet measured on the image. The next cardless run of a booted image measures it.
-- **The image proof's arguments.** Version 2's survey takes the places and the planes as
-  arguments, and the image build's proof runs it before any setup script has run. Which
-  values the proof passes is the build Spec's to state.
-- **`stage` in a later version.** The setup script now makes both reports at one time.
-  Whether a later version drops `stage` and the second report is a question for Weaver
-  Web's setup pages, which store each report with its stage.
+- **A place that is a symbolic link.** What `findmnt --mountpoint` does at a place that
+  is a symbolic link, and whether its error reads as nothing mounted, is not measured.
+  One run by hand on a made appliance settles both.
+- **`stage` in a later version.** The setup script now makes one report, and `stage`
+  holds one value. Whether a later version drops `stage` is a question for Weaver Web's
+  setup pages, which store each report with its stage.
 - **The node kind of this document in the document graph.** The graph is suspended until
   release by the ruling of 2026-09-27. Settled by the operator when the graph resumes,
   as for the profile.

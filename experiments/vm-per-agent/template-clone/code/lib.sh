@@ -1369,9 +1369,36 @@ if len(pems) == 2 and pems["gate"] == pems["admin"]:
 PY
 }
 
+# ready_one_address: reads ip -j addr show from standard input and prints
+# <address>/<prefix length> of the one address listed with global scope on a card whose
+# operstate is UP, the guest's address the image proof gives the survey as both planes
+# (weaver-survey-format section 5). Status 1, the cause on standard error, where the input is
+# no list of cards, where there is not exactly one such address, or where what it would print
+# is not an address and a prefix length alone, since the line goes into a command on the guest.
+ready_one_address() {
+    python3 -I -B -c '
+import ipaddress, json, sys
+try:
+    rows = [(i["local"], i["prefixlen"]) for c in json.load(sys.stdin) if c.get("operstate") == "UP"
+            for i in c.get("addr_info", []) if i.get("scope") == "global"]
+except (ValueError, KeyError, TypeError, AttributeError) as e:
+    sys.exit("ip -j addr show gave no list of cards (%s)" % e)
+if len(rows) != 1:
+    sys.exit("%d addresses with global scope on a card that is up, not one" % len(rows))
+a, n = rows[0]
+try:
+    ok = isinstance(a, str) and "%" not in a and str(ipaddress.ip_address(a)) == a \
+        and isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= (32 if ":" not in a else 128)
+except ValueError:
+    ok = False
+if not ok:
+    sys.exit("the address %r with the prefix length %r is not one the survey takes" % (a, n))
+print("%s/%d" % (a, n))'
+}
+
 # ready_survey_judge FILE STATUS: the survey's output FILE and its exit STATUS, run as nobody
-# with --stage pairing: status 0, and one object the reader of weaver-survey-format section 3
-# (guest/ready/test/survey_reader.py) accepts.
+# with the proof's values of weaver-survey-format section 5: status 0, and one object the
+# reader of weaver-survey-format section 3 (guest/ready/test/survey_reader.py) accepts.
 ready_survey_judge() {
     python3 -I -B - "$1" "$2" "$LIB_DIR/guest/ready/test/survey_reader.py" <<'PY' || echo "PROOF-FAIL: the survey's output could not be judged (exit $?)"
 import importlib.util, sys

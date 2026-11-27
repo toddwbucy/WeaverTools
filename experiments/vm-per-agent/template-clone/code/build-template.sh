@@ -899,12 +899,14 @@ EOF
 # the operator's rulings of 2026-11-19): the console's ready line before the login prompt,
 # naming both connectors as made (ready_console_judge); the guest's own reads
 # (ready_guest_read); each request read off the guest into OUT/ready-requests and judged on
-# the host, its PEM by openssl (ready_requests_judge); and the survey run as nobody with
-# --stage pairing, its output kept as OUT/ready-survey.json and judged by the format's reader
-# (ready_survey_judge). The configs' attributes and the requests' digests are kept in
+# the host, its PEM by openssl (ready_requests_judge); and the survey run as nobody with the
+# values weaver-survey-format section 5 names for the proof (--stage pairing, the two default
+# places, and the guest's one address, read off it by ip -j addr show and chosen by
+# ready_one_address, on both planes under --planes shared), its output kept as
+# OUT/ready-survey.json and judged by the format's reader (ready_survey_judge). The configs' attributes and the requests' digests are kept in
 # OUT/ready-attributes.txt for the second boot. Every finding is a PROOF-FAIL line.
 proof_ready() {
-    local out=$1 pdir=$2 port=$3 o rc plane
+    local out=$1 pdir=$2 port=$3 o rc plane addr
     echo "== the ready layer, with nothing typed but the first login"
     ready_console_judge "$pdir/con/console.log" made
     rc=0; o=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "$(ready_guest_read)" 2>&1) || rc=$?
@@ -918,8 +920,18 @@ proof_ready() {
         [ "$rc" = 0 ] || echo "PROOF-FAIL: the $plane request could not be read off the guest (exit $rc): $(tail -n 1 "$pdir/ready-$plane.err")"
     done
     ready_requests_judge "$out/ready-requests"
-    echo "-- the survey, as nobody, --stage pairing"
-    rc=0; KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "cd / && sudo -n -u nobody $READY_SURVEY --stage pairing" \
+    echo "-- the survey, as nobody, --stage pairing, the default places, the guest's one address on both planes"
+    rc=0; o=$(KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" "ip -j addr show" 2>"$pdir/ready-ip.err") || rc=$?
+    if [ "$rc" != 0 ]; then
+        echo "PROOF-FAIL: ip -j addr show could not be read off the guest (exit $rc): $(tail -n 1 "$pdir/ready-ip.err")"
+        return 0
+    fi
+    if ! addr=$(ready_one_address <<<"$o" 2>"$pdir/ready-ip.err"); then
+        echo "PROOF-FAIL: the guest has no one address for the survey's planes: $(tail -n 1 "$pdir/ready-ip.err")"
+        return 0
+    fi
+    rc=0; KNOWN_HOSTS=$pdir/scanned GUEST_USER=root gssh "$port" \
+        "cd / && sudo -n -u nobody $READY_SURVEY --stage pairing --state-at /mnt/weaver/state --models-at /mnt/weaver/models --management $addr --data $addr --planes shared" \
         >"$out/ready-survey.json" 2>"$pdir/ready-survey.err" || rc=$?
     [ ! -s "$pdir/ready-survey.err" ] || sed -n 's/^/  its standard error: /; 1,5p' "$pdir/ready-survey.err"
     ready_survey_judge "$out/ready-survey.json" "$rc"

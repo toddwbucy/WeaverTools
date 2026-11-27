@@ -1,8 +1,15 @@
-#!/usr/bin/env python3
-"""weaver-survey: the appliance's survey of its machine, format weaver-survey/1
-(WeaverTools docs/profiles/weaver-survey-format.md at e16aecd, sections 1, 2 and 5).
+#!/usr/bin/python3 -I
+"""weaver-survey: the appliance's survey of its machine, format weaver-survey/2
+(WeaverTools docs/profiles/weaver-survey-format.md at 0d89cdb4, sections 1, 1.1, 2 and 5).
 
-    weaver-survey --stage pairing|drives
+    weaver-survey --stage pairing --state-at <place> --models-at <place> \
+        --management <address>/<prefix length> --data <address>/<prefix length> \
+        --planes separate|shared
+
+The setup script runs it once, after its drive and network steps, with the places the
+operator chose for the two drives and the addresses chosen for the two planes. Each place
+and each address must be in the one spelling of section 1.1. Each address must be listed
+by ip -j addr show with global scope on a card that is up, with the prefix length given.
 
 The image carries it at /opt/weaver-appliance/bin/weaver-survey (weaver-appliance-build-Spec
 section 2, the ready layer).
@@ -13,17 +20,20 @@ file and no temporary file, loads no module, mounts nothing, changes no setting 
 and opens no socket. nvidia-smi runs only where /sys/module/nvidia stands. It never gives
 a partial report: where a source cannot be read or a value breaks its bound, it writes
 nothing to standard output, writes the cause to standard error, and exits 1. A usage
-error exits 2. Every source is readable by any user, so it may run as nobody.
+error exits 2: an option missing, unknown or given twice, a stage other than pairing, or
+planes other than separate or shared. Every source is readable by any user, so it may run as nobody.
 
 Standard library only. The commands run with a fixed PATH and the C locale, each under a
 time bound.
 """
-import hashlib, json, os, re, subprocess, sys, time
+import hashlib, ipaddress, json, os, re, stat, subprocess, sys, time
 
-FORMAT = "weaver-survey/1"
+FORMAT = "weaver-survey/2"
 BOUND = 65536
 INT_MAX = (1 << 53) - 1
-MOUNTS = (("state", "/mnt/weaver/state"), ("models", "/mnt/weaver/models"))
+OPTIONS = ("--stage", "--state-at", "--models-at", "--management", "--data", "--planes")
+USAGE = ("usage: weaver-survey --stage pairing --state-at <place> --models-at <place> "
+         "--management <address>/<prefix length> --data <address>/<prefix length> --planes separate|shared")
 ENV = {"PATH": "/usr/bin:/usr/sbin", "LANG": "C", "LC_ALL": "C"}
 NVIDIA_SMI = ["nvidia-smi", "--query-gpu=pci.bus_id,name,memory.total", "--format=csv,noheader,nounits"]
 
@@ -166,7 +176,50 @@ def driver(root, runner):
     return {"version": text(version, BOUND, "driver.version", r"[0-9]+(\.[0-9]+){1,2}"), "loaded": loaded}
 
 
+STACK_LIBRARY_PATH = "/etc/weaver/stack/library-path"
+CUDART_NAME = r"libcudart\.so\.[0-9]+"
+CUDART_VERSION = r"[0-9]+\.[0-9]+(\.[0-9]+)?"
+
+
 def cuda_runtime(root, runner):
+    """The runtime from the stack record where it stands, else from the loader's list as
+    the image proof finds it. Never both: a record that stands but cannot be read, or
+    is of another shape, fails the survey rather than falling back."""
+    record = os.path.join(root, STACK_LIBRARY_PATH.lstrip("/"))
+    try:
+        st = os.lstat(record)
+    except FileNotFoundError:
+        return cuda_runtime_from_loader(root, runner)
+    except OSError as e:
+        raise Fail("the stack record %s could not be read: %s" % (STACK_LIBRARY_PATH, e.strerror or e))
+    if not stat.S_ISREG(st.st_mode):
+        raise Fail("the stack record %s is not a regular file" % STACK_LIBRARY_PATH)
+    return cuda_runtime_from_stack(root, read(root, STACK_LIBRARY_PATH, "the stack record"))
+
+
+def cuda_runtime_from_stack(root, record):
+    """The one libcudart.so.<major> in the folder the stack record names, by its real file."""
+    folder = record[:-1] if record.endswith("\n") else record
+    if "\n" in folder:
+        raise Fail("the stack record %s holds more than one line" % STACK_LIBRARY_PATH)
+    place(folder, "the folder the stack record %s names," % STACK_LIBRARY_PATH)
+    try:
+        names = sorted(n for n in os.listdir(os.path.join(root, folder.lstrip("/"))) if re.fullmatch(CUDART_NAME, n))
+    except OSError as e:
+        raise Fail("%s, which the stack record %s names, could not be listed: %s"
+                   % (folder, STACK_LIBRARY_PATH, e.strerror or e))
+    if len(names) != 1:
+        raise Fail("%s, which the stack record %s names, holds %d libcudart.so.<major> name(s), not one%s"
+                   % (folder, STACK_LIBRARY_PATH, len(names), (": " + " ".join(names)) if names else ""))
+    named = folder + "/" + names[0]
+    real = os.path.realpath(os.path.join(root, named.lstrip("/")))
+    m = re.fullmatch(r"libcudart\.so\.(" + CUDART_VERSION + ")", os.path.basename(real))
+    if not m or not os.path.isfile(real):
+        raise Fail("%s's real file is %s, not a file libcudart.so.<version>" % (named, os.path.basename(real)))
+    return {"version": text(m.group(1), BOUND, "cuda_runtime.version", CUDART_VERSION)}
+
+
+def cuda_runtime_from_loader(root, runner):
     rc, out = runner(["ldconfig", "-p"])
     if rc != 0:
         raise Fail("ldconfig -p exited %d" % rc)
@@ -174,11 +227,12 @@ def cuda_runtime(root, runner):
     found = sorted({name for name, _ in pairs})
     paths = sorted({path for _, path in pairs})
     if len(found) != 1 or len(paths) != 1:
-        raise Fail("ldconfig -p finds %d libcudart.so.<major> name(s) and %d path(s), not one" % (len(found), len(paths)))
+        raise Fail("no stack record stands at %s, and ldconfig -p finds %d libcudart.so.<major> name(s) and %d path(s), not one"
+                   % (STACK_LIBRARY_PATH, len(found), len(paths)))
     real = os.path.basename(os.path.realpath(os.path.join(root, paths[0].lstrip("/"))))
     if not real.startswith("libcudart.so."):
         raise Fail("%s's real file is %s, not libcudart.so.<version>" % (paths[0], real))
-    return {"version": text(real[len("libcudart.so."):], BOUND, "cuda_runtime.version", r"[0-9]+\.[0-9]+(\.[0-9]+)?")}
+    return {"version": text(real[len("libcudart.so."):], BOUND, "cuda_runtime.version", CUDART_VERSION)}
 
 
 def sysfs_address(bus_id):
@@ -241,9 +295,89 @@ def cards(root, runner, loaded):
             for i, (addr, name, mib) in enumerate(found)]
 
 
-def drives(runner):
+# ---- Section 1.1: one spelling per place and per address. ----
+PART = re.compile(r"[A-Za-z0-9._-]{1,255}")
+
+
+def place(value, what):
+    """value, if a place in section 1.1's one spelling. The characters are judged first, so
+    a byte that is not UTF-8 (a lone surrogate from the argument) fails as a place does."""
+    parts = value[1:].split("/") if value.startswith("/") else None
+    if parts is None or parts == [""] \
+            or any(p in ("", ".", "..") or not PART.fullmatch(p) for p in parts) or len(value) > 255:
+        raise Fail("%s %r is not a place in the one spelling of section 1.1" % (what, value))
+    return value
+
+
+def inside(one, other):
+    """Whether the place one is inside the place other, part by part."""
+    a, b = one[1:].split("/"), other[1:].split("/")
+    return len(a) > len(b) and a[:len(b)] == b
+
+
+def address(value, what):
+    """value as an address, if in section 1.1's one spelling and of a kind it allows."""
+    if "%" in value:
+        raise Fail("%s %r carries a zone, which section 1.1 refuses" % (what, value))
+    try:
+        ip = ipaddress.ip_address(value)
+    except ValueError:
+        raise Fail("%s %r is not an IPv4 or IPv6 address" % (what, value))
+    if str(ip) != value:
+        raise Fail("%s %r is not in the one spelling of section 1.1, which writes it %s" % (what, value, ip))
+    if ip.is_unspecified or ip.is_link_local or ip.is_multicast \
+            or (ip.version == 4 and value == "255.255.255.255") or (ip.version == 6 and ip.ipv4_mapped is not None):
+        raise Fail("%s %s is of a kind section 1.1 refuses" % (what, value))
+    return ip
+
+
+def plane_argument(value, what):
+    """<address>/<prefix length> as (address, prefix length)."""
+    a, slash, n = value.rpartition("/")
+    if not slash or not re.fullmatch(r"[1-9][0-9]{0,2}", n):
+        raise Fail("%s %r is not <address>/<prefix length>" % (what, value))
+    ip = address(a, what)
+    if int(n) > (32 if ip.version == 4 else 128):
+        raise Fail("%s's prefix length %s is outside 1 to %d" % (what, n, 32 if ip.version == 4 else 128))
+    return ip, int(n)
+
+
+def network(runner, management, data, planes):
+    """The two planes, each address found as ip -j addr show lists it."""
+    rc, out = runner(["ip", "-j", "addr", "show"])
+    if rc != 0:
+        raise Fail("ip -j addr show exited %d" % rc)
+    try:
+        listed = json.loads(out)
+        rows = [(c["ifname"], c.get("operstate"), ipaddress.ip_address(i["local"]), i["prefixlen"], i.get("scope"))
+                for c in listed for i in c.get("addr_info", [])]
+    except (ValueError, KeyError, TypeError):
+        raise Fail("ip -j addr show gave %r" % out[:200])
+    found = {}
+    for plane, (ip, n) in (("management", management), ("data", data)):
+        mine = [r for r in rows if r[2] == ip]
+        good = [r for r in mine if r[1] == "UP" and r[4] == "global" and r[3] == n]
+        if not good:
+            if not mine:
+                raise Fail("network.%s.address %s is not listed by ip -j addr show" % (plane, ip))
+            raise Fail("network.%s.address %s is not listed with global scope and the prefix length %d on a card that is up"
+                       % (plane, ip, n))
+        found[plane] = good[0][0]
+    (mi, mn), (di, dn) = management, data
+    if planes == "separate":
+        if found["management"] == found["data"]:
+            raise Fail("the planes are separate, but both addresses are on the card %s" % found["data"])
+        if mi.version == di.version and (mi in ipaddress.ip_network((di, dn), strict=False)
+                                         or di in ipaddress.ip_network((mi, mn), strict=False)):
+            raise Fail("the planes are separate, but %s and %s lie in one network" % (mi, di))
+    return {"management": {"address": str(mi), "prefix_length": mn},
+            "data": {"address": str(di), "prefix_length": dn},
+            "planes": planes}
+
+
+def drives(runner, places):
     out = []
-    for role, mp in MOUNTS:
+    for role, mp in places:
         rc, text_out = runner(["findmnt", "-J", "-b", "--mountpoint", mp, "-o", "FSTYPE,LABEL,OPTIONS,SIZE,AVAIL"])
         if rc == 1 and not text_out.strip():
             out.append({"role": role, "mount_point": mp, "mounted": False})
@@ -271,10 +405,19 @@ def drives(runner):
     return out
 
 
-def survey(stage, root="/", runner=run, now=None):
-    """The report as its bytes; raises Fail."""
-    if stage not in ("pairing", "drives"):
-        raise Fail("the stage is %r, not pairing or drives" % stage)
+def survey(stage, state_at, models_at, management, data, planes, root="/", runner=run, now=None):
+    """The report as its bytes; raises Fail. management and data are <address>/<prefix length>."""
+    if stage != "pairing":
+        raise Fail("the stage is %r, not pairing" % stage)
+    if planes not in ("separate", "shared"):
+        raise Fail("the planes are %r, not separate or shared" % planes)
+    places = (("state", place(state_at, "the state drive's place")), ("models", place(models_at, "the models drive's place")))
+    if state_at == models_at or inside(state_at, models_at) or inside(models_at, state_at):
+        raise Fail("the two places %s and %s are equal, or one is inside the other" % (state_at, models_at))
+    management = plane_argument(management, "the management plane")
+    data = plane_argument(data, "the data plane")
+    if planes == "separate" and management[0] == data[0]:
+        raise Fail("the planes are separate, but both are the address %s" % management[0])
     t = time.gmtime() if now is None else now
     report = {"format": FORMAT, "stage": stage, "taken": time.strftime("%Y-%m-%dT%H:%M:%SZ", t)}
     report["image"] = image(root)
@@ -285,19 +428,35 @@ def survey(stage, root="/", runner=run, now=None):
     report["driver"] = driver(root, runner)
     report["cuda_runtime"] = cuda_runtime(root, runner)
     report["cards"] = cards(root, runner, report["driver"]["loaded"])
-    report["drives"] = drives(runner)
+    report["drives"] = drives(runner, places)
+    report["network"] = network(runner, management, data, planes)
     body = (json.dumps(report, ensure_ascii=True, indent=1) + "\n").encode("ascii")
     if len(body) > BOUND:
         raise Fail("the report is %d bytes, over %d" % (len(body), BOUND))
     return body
 
 
-def main(argv):
-    if len(argv) != 3 or argv[1] != "--stage" or argv[2] not in ("pairing", "drives"):
-        sys.stderr.write("usage: weaver-survey --stage pairing|drives\n")
+def arguments(args):
+    """The six options' values in OPTIONS order, or None: each once, each with a value."""
+    if len(args) != 2 * len(OPTIONS):
+        return None
+    given = {}
+    for name, value in zip(args[::2], args[1::2]):
+        if name not in OPTIONS or name in given:
+            return None
+        given[name] = value
+    if given["--stage"] != "pairing" or given["--planes"] not in ("separate", "shared"):
+        return None
+    return [given[o] for o in OPTIONS]
+
+
+def main(argv, root="/", runner=run, now=None):
+    values = arguments(argv[1:])
+    if values is None:
+        sys.stderr.write(USAGE + "\n")
         return 2
     try:
-        body = survey(argv[2])
+        body = survey(*values, root=root, runner=runner, now=now)
     except Fail as e:
         sys.stderr.write("weaver-survey: no report: %s\n" % e)
         return 1
